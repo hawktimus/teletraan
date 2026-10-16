@@ -29,6 +29,18 @@ export function reasonText(reason) {
   return reasonWords[reason] || reasonWords.other;
 }
 
+// What to do about each reason, in a sentence for the coach who reads the screen
+const reasonFixes = {
+  network: 'Check the cable and the router of the Mini',
+  cors: 'Add this address under API, CORS origins in Sanity',
+  denied: 'Check that the dataset in Sanity is public',
+  other: 'Sanity may be down. The last content stays on screen',
+};
+
+export function reasonFix(reason) {
+  return reasonFixes[reason] || reasonFixes.other;
+}
+
 // Works out the reason for one failed read. failure is
 //   status        the HTTP status, when Sanity answered and the page could read it. Otherwise 0.
 //   timedOut      true when the read was given up after waiting too long
@@ -95,6 +107,7 @@ export function connectionLines(info) {
     lines.push('SAMPLE CONTENT FILE NOT READ');
   } else if (offline) {
     lines.push('SANITY UNREACHABLE: ' + reasonText(status.reason).toUpperCase());
+    lines.push(reasonFix(status.reason));
     lines.push(lastRead ? 'Last good read ' + lastRead : 'No good read yet');
   } else if (sample) {
     lines.push('Sample content, Sanity not read');

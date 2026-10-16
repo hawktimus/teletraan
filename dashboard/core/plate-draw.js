@@ -138,7 +138,7 @@ export function edgedShape(id, points, fillClass, svgClass, width, height) {
   define(id, `<polygon id="${id}" points="${toPoints(points)}"/>`);
 
   return `<svg class="${svgClass}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <polygon class="${fillClass}" points="${toPoints(points)}"/>
+    <use class="${fillClass}" href="#${id}"/>
     ${edgeLayers(id)}
   </svg>`;
 }

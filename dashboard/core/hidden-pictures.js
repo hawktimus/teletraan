@@ -33,12 +33,12 @@ export const pictureFolder = 'assets/hidden/';
 
 export const hiddenPictures = {
   redEyes: [
-    { file: 'red-eyes-1.webp', width: 1672, height: 941, fit: 'cover', fill: '#000000', crisp: false },
-    { file: 'red-eyes-2.webp', width: 1920, height: 1080, fit: 'cover', fill: '#000000', crisp: false },
+    { file: 'red-eyes-1.webp', width: 1672, height: 941, fit: 'cover', fill: 'var(--hidden-fill-red-eyes)', crisp: false },
+    { file: 'red-eyes-2.webp', width: 1920, height: 1080, fit: 'cover', fill: 'var(--hidden-fill-red-eyes)', crisp: false },
   ],
   blueScreen: [
-    { file: 'blue-screen-1.png', width: 700, height: 394, fit: 'cover', fill: '#0177d7', crisp: false },
-    { file: 'blue-screen-2.png', width: 640, height: 400, fit: 'contain', fill: '#0000aa', crisp: true },
+    { file: 'blue-screen-1.png', width: 700, height: 394, fit: 'cover', fill: 'var(--hidden-fill-blue-screen-1)', crisp: false },
+    { file: 'blue-screen-2.png', width: 640, height: 400, fit: 'contain', fill: 'var(--hidden-fill-blue-screen-2)', crisp: true },
   ],
 };
 

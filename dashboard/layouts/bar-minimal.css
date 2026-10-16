@@ -20,13 +20,10 @@
 
 html[data-layout="bar"] {
   --style-body: var(--team-body);
-  --style-armor-top: #323843;
-  --style-armor-bottom: #1d2128;
   --style-chamfer: 34px;
   --style-neon: var(--team-neon);
   --style-pink: var(--team-pink);
   --style-digits: var(--team-neon);
-  --style-rust: #b4672d;
   --style-grid-size: 48px;
   --style-grid-opacity: .07;
 }
@@ -95,7 +92,7 @@ html[data-layout="bar"] .header svg.double-slash { display: none; }
 html[data-layout="bar"] .art-minimal { display: inline; }
 html[data-layout="bar"] .art-weld-dark {
   fill: none;
-  stroke: #05070a;
+  stroke: var(--plate-ink);
   stroke-opacity: .7;
   stroke-width: 3px;
 }

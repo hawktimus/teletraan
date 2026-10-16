@@ -1,7 +1,7 @@
 html, body {
   margin: 0;
   height: 100%;
-  background: #000; /* only seen if the window is not 16:9 */
+  background: var(--pure-black); /* only seen if the window is not 16:9 */
   overflow: hidden;
   cursor: none; /* wall display, no mouse pointer */
 }
@@ -99,9 +99,9 @@ html, body {
   overflow: hidden;
   pointer-events: none;
 }
-#backdrop { background: #000; }
+#backdrop { background: var(--pure-black); }
 #backdrop[data-look="blue"] { background: var(--hidden-blue-deep); }
-#backdrop[data-look="picture"] { background: var(--picture-fill, #000); }
+#backdrop[data-look="picture"] { background: var(--picture-fill, var(--pure-black)); }
 #red-wash {
   background: var(--hidden-red);
   opacity: 0;
@@ -257,7 +257,7 @@ html, body {
   width: 1920px;
   height: 1080px;
   overflow: hidden;
-  background: #000;
+  background: var(--pure-black);
 }
 #night .night-x {
   position: absolute;
@@ -845,7 +845,19 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   font-family: var(--font-text);
   font-size: var(--size-stamp);
   line-height: 24px;
-  color: #FFFFFF;
+  color: var(--pure-white);
   opacity: 0.6;
   pointer-events: none;
+}
+
+/* The screen shown when the page could not start (index.html) */
+.start-failed {
+  width: 1920px;
+  height: 1080px;
+  display: grid;
+  place-items: center;
+  background: var(--team-background);
+  color: var(--team-accent);
+  font: 700 96px/120px sans-serif;
+  text-align: center;
 }

@@ -420,9 +420,10 @@ test('the emblem is drawn once as one svg with no colour of its own', () => {
   const markup = logo.emblemMarkup();
 
   assert.ok(markup.startsWith('<svg viewBox="0 0 1100 884"'));
-  assert.equal((markup.match(/<polygon class="emblem-outline"/g) || []).length, 5, 'the five shapes of the four plates, outlined');
-  assert.equal((markup.match(/<polygon class="emblem-plate"/g) || []).length, 5, 'and filled');
-  assert.equal((markup.match(/<polygon class="emblem-stripe"/g) || []).length, 4, 'with the four stripes of the wings');
+  assert.equal((markup.match(/<use class="emblem-outline"/g) || []).length, 5, 'the five shapes of the four plates, outlined');
+  assert.equal((markup.match(/<use class="emblem-plate"/g) || []).length, 5, 'and filled');
+  assert.equal((markup.match(/<use class="emblem-stripe"/g) || []).length, 4, 'with the four stripes of the wings');
+  assert.ok(!markup.includes('<polygon'), 'the shapes are the hawk of the defs (core/logo.js, defineHawk)');
   assert.ok(markup.lastIndexOf('class="emblem-outline"') < markup.indexOf('class="emblem-plate"'), 'every outline is under every plate');
   assert.ok(markup.lastIndexOf('class="emblem-plate"') < markup.indexOf('class="emblem-stripe"'), 'and every plate is under the stripes');
   ['outline', 'plate', 'slash'].forEach(name => assert.ok(!markup.includes('class="' + name + '"'), 'no class that other rules use: ' + name));
@@ -492,7 +493,7 @@ test('the number is 64px in the display face under the logo, the sizes come from
   assert.ok(base.includes('--night-logo-w: 300px;'), 'about 300 px to start with, and the width setting replaces it');
   assert.ok(base.includes('--night-travel-x: calc(1920px - var(--night-block-w));'));
   assert.ok(base.includes('--night-travel-y: calc(1080px - var(--night-block-h));'));
-  assert.ok(base.includes('background: #000;'), 'black');
+  assert.ok(base.includes('background: var(--pure-black);'), 'black');
   assert.ok(base.includes('html[data-night="on"] #stage { visibility: hidden; }'));
   assert.ok(base.includes('.night-flash') && /\.night-flash \{[^}]*color: var\(--yellow\);[^}]*opacity: 0;/.test(base), 'the second copy of the number is gold and starts invisible');
 });

@@ -318,9 +318,10 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   const other = propertiesOf('dashboard/styles/cybertron/tokens.css');
   const same = Object.keys(one).filter(name => other[name] === one[name]).sort();
   const differ = Object.keys(one).filter(name => other[name] !== undefined && other[name] !== one[name]).sort();
-  assert.deepEqual(same, ['--style-armor-bottom', '--style-armor-top', '--style-body', '--style-grid-opacity', '--style-neon', '--style-pink', '--style-rust']);
+  // the armor colors and the rust are tokens (tokens.css), the same for the bar layout and for Cybertron
+  assert.deepEqual(same, ['--style-body', '--style-grid-opacity', '--style-neon', '--style-pink']);
   assert.deepEqual(differ, ['--style-chamfer', '--style-digits', '--style-grid-size']);
-  assert.deepEqual(Object.keys(other).filter(name => one[name] === undefined).sort(), ['--style-raised', '--style-scan-opacity']);
+  assert.deepEqual(Object.keys(other).filter(name => one[name] === undefined).sort(), ['--style-armor-bottom', '--style-armor-top', '--style-raised', '--style-rust', '--style-scan-opacity']);
   assert.deepEqual(Object.keys(one).filter(name => other[name] === undefined), [], 'Minimal sets nothing that Cybertron does not');
 
   // Both plates are the team's body color, and the cuts and the grids are different

@@ -102,7 +102,7 @@ html[data-style="cybertron"] .art-brackets {
 }
 html[data-style="cybertron"] .art-seams {
   fill: none;
-  stroke: #05070a;
+  stroke: var(--plate-ink);
   stroke-opacity: .6;
   stroke-width: 3px;
 }

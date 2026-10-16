@@ -24,6 +24,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 import { hasImports, readModule } from './helpers/read-module.mjs';
 import { importFresh } from './helpers/fresh-module.mjs';
+import { shapePoints } from './helpers/shape-points.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -2696,7 +2697,7 @@ test('the three style files each set their own custom properties for their own s
   ['panels/bar-banner/panel.css', 'panels/bar-column/panel.css'].forEach(file => {
     (withoutComments(read('dashboard/' + file)).match(/var\(--style-[a-z-]+/g) || []).forEach(text => assert.ok(known.has(text.slice(4)), file + ' reads ' + text.slice(4) + ', which no style sets'));
   });
-  assert.ok(/--team-neon: #faca2a;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css, gold for Prime');
+  assert.ok(/--team-neon: #faca2a;/.test(read('dashboard/tokens.css')), 'the team neon the styles use is set in tokens.css, gold for Prime');
 });
 
 // The stylesheets of one style, each loaded with the css it overrides: the ones index.html links apart from the other two
@@ -3323,13 +3324,15 @@ const neonIn = kind => (kind.includes('ticker') ? 7 : 10);
 
 // plate.js adds each frame's shapes to a hidden group of the page, once. A page with only that group stands in for it.
 // run is given the set of ids that were drawn into the group
+let definedText = ''; // what the page was given for its defs
 function withPlatePage(run) {
   const known = new Set();
+  definedText = '';
   return withGlobals({
     document: {
       getElementById: id => {
         if (id !== 'metal-shapes') return known.has(id) ? {} : null;
-        return { insertAdjacentHTML: (where, markup) => (markup.match(/ id="[^"]+"/g) || []).forEach(found => known.add(found.slice(5, -1))) };
+        return { insertAdjacentHTML: (where, markup) => { definedText += markup; (markup.match(/ id="[^"]+"/g) || []).forEach(found => known.add(found.slice(5, -1))); } };
       },
     },
   }, () => run(known));
@@ -3633,7 +3636,7 @@ test('on the screen every frame stays inside 0 to 1920 by 0 to 1080 with its bol
 test('the ticker\'s tag is a plate that is the same at both ends, so the mirror moves it to the other end and has nothing to turn', async () => {
   await withPlatePage(() => {
     const tag = plate.tagMarkup(328);
-    const points = /<polygon class="tag-fill" points="([^"]*)"/.exec(tag)[1].split(' ').map(pair => pair.split(',').map(Number));
+    const points = shapePoints(tag, 'tag-fill', definedText);
     assert.equal(points.length, 4);
     // top left, top right, bottom right, bottom left: the slants at the two ends are the same
     assert.ok(Math.abs((points[0][0] - points[3][0]) - (points[2][0] - points[1][0])) < 0.01, 'the same slant at both ends');
@@ -4174,7 +4177,10 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   ['--team-accent', '--team-plate', '--style-neon', '--style-pink', '--style-body', '--style-rust', '--style-grid-size', '--style-grid-opacity', '--metal-ridge'].forEach(name => assert.ok(css.includes('var(' + name + ')'), 'it reads ' + name));
 
   const first = rules[0].body;
-  assert.ok(/--style-body: var\(--team-body\);/.test(first) && /--style-rust: #[0-9a-f]{6};/.test(first) && /--style-armor-top: #[0-9a-f]{6};/.test(first) && /--style-armor-bottom: #[0-9a-f]{6};/.test(first));
+  assert.ok(/--style-body: var\(--team-body\);/.test(first));
+  // the rust and the armor colors of the bar layout are tokens
+  const barTokens = [...read('dashboard/tokens.css').matchAll(/html\[data-layout="bar"\] \{([^}]*)\}/g)].map(match => match[1]).join('\n');
+  assert.ok(/--style-rust: #[0-9a-f]{6};/.test(barTokens) && /--style-armor-top: #[0-9a-f]{6};/.test(barTokens) && /--style-armor-bottom: #[0-9a-f]{6};/.test(barTokens));
   assert.ok(!/--style-raised|--style-scan-opacity/.test(css), 'Minimal has no raised plate and no scanlines');
 
   // The page background is the team's, with the grid at 48px in a layer behind the stage, and no scanlines
@@ -4199,7 +4205,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   assert.ok(css.includes('html[data-layout="bar"] .rivets { display: inline; }') && !/plate-id/.test(css), 'the rivets, and no id');
   assert.ok(css.includes('html[data-layout="bar"] .header svg.double-slash { display: none; }'));
   const paint = name => rules.filter(rule => rule.selectors[0] === 'html[data-layout="bar"] .art-' + name)[0].body;
-  assert.ok(/stroke: #05070a;/.test(paint('weld-dark')) && /stroke-opacity: \.7;/.test(paint('weld-dark')));
+  assert.ok(/stroke: var\(--plate-ink\);/.test(paint('weld-dark')) && /stroke-opacity: \.7;/.test(paint('weld-dark')));
   assert.ok(/stroke: var\(--metal-ridge\);/.test(paint('weld-light')) && /stroke-opacity: \.2;/.test(paint('weld-light')), 'faint');
   assert.ok(/stroke: var\(--style-neon\);/.test(paint('header-line')) && /fill: var\(--style-neon\);/.test(paint('ticks')));
   assert.ok(/fill: url\(#wear-rust\);/.test(paint('smudge')) && /stroke: var\(--style-rust\);/.test(paint('wear')) && /fill: none;/.test(paint('wear')));
@@ -4376,7 +4382,7 @@ test('the housing of the war clock is one plate 766 by 128 with the edge of the 
       assert.equal(form.height, b.war.height + (form.tall ? 16 : 0), 'the size of the slot in the banner, and 8 more above and below it for two lines');
 
       // 4 inside the box, like every frame, with the cuts at the top left and the bottom right and the other two corners square
-      const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      const points = shapePoints(markup, 'war-housing-fill', definedText);
       assert.deepEqual(points, form.cut);
       assert.deepEqual([points[1][1] - points[2][1], points[2][0] - points[1][0]], [22, 22], 'the cut at the top left');
       assert.deepEqual([points[4][0] - points[5][0], points[5][1] - points[4][1]], [22, 22], 'and at the bottom right');
@@ -4567,7 +4573,7 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
 
   // The plates: #0c0b09 with a 3 px border of #2b2a26, and a gradient inside from a highlight at the top to a shade at the foot
   const clock = warRule('.war-clock');
-  assert.ok(/--war-plate: #0c0b09;/.test(clock) && /--war-plate-border: #2b2a26;/.test(clock));
+  assert.ok(/--war-plate: #0c0b09;/.test(read('dashboard/tokens.css')) && /--war-plate-border: #2b2a26;/.test(read('dashboard/tokens.css')));
   const plateRule = warRule('.war-plate');
   assert.ok(/border: 3px solid var\(--war-plate-border\);/.test(plateRule));
   const gradient = /linear-gradient\(180deg, rgba\(255, 255, 255, ([.\d]+)\) 0, rgba\(255, 255, 255, 0\) (\d+)%, rgba\(0, 0, 0, ([.\d]+)\) 100%\),\s*var\(--war-plate\);/.exec(plateRule);
@@ -4610,7 +4616,7 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
   assert.ok(/background: var\(--danger\);/.test(warRule('.war-status')), 'the red status square');
   const style = name => withoutComments(name === 'minimal' ? read('dashboard/layouts/bar-minimal.css') : read('dashboard/styles/' + name + '/tokens.css') + read('dashboard/styles/' + name + '/theme.css'));
   assert.ok(/--style-digits: #ffb327;/.test(style('cybertron')) && /--style-digits: var\(--team-neon\);/.test(style('minimal')));
-  assert.ok(/--style-rust: #[0-9a-f]{6};/.test(style('cybertron')) && /--style-rust: #[0-9a-f]{6};/.test(style('minimal')), 'both styles have the rust of the housing');
+  assert.ok(/--style-rust: #[0-9a-f]{6};/.test(style('cybertron')) && /--style-rust: #[0-9a-f]{6};/.test(read('dashboard/tokens.css').slice(read('dashboard/tokens.css').lastIndexOf('html[data-layout="bar"]'))), 'both styles have the rust of the housing');
 
   // Hidden unless a style shows it, and only these two do
   assert.ok(section.startsWith('.war-clock { display: none; }'));
@@ -4671,7 +4677,7 @@ test('the war clock\'s parts are inside the housing, clear of each other and of 
     await withPlatePage(() => {
       const markup = plate.warHousingMarkup('narrow', {}, state === 'two');
       rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), state + ': a rivet is under ' + name)));
-      const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      const points = shapePoints(markup, 'war-housing-fill', definedText);
       const corner = [time.left + time.width, time.top + time.height];
       assert.ok(distanceToLine(corner, points[4], points[5]) >= 8 + 6, state + ': the time plate is 6 clear of the rim at the cut corner');
 

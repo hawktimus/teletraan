@@ -279,7 +279,16 @@ function checkPackFilesAreData() {
     animationWords.filter(rule => rule.pattern.test(code)).forEach(rule => problems.push('dashboard/seasons/' + id + '.js has ' + rule.words + '. A pack holds no animation: name a motion from dashboard/seasons/motion.css instead'));
   });
 
-  const season = withoutJsComments(read(path.join(dashboardFolder, 'core', 'season.js')));
+  // the drawings that a pack file imports (seasons/art) are data in the same way
+  const artFolder = path.join(seasonsFolder, 'art');
+  (fs.existsSync(artFolder) ? fs.readdirSync(artFolder).filter(name => name.endsWith('.js')) : []).forEach(name => {
+    const code = withoutJsComments(read(path.join(artFolder, name)));
+    wordProblems('dashboard/seasons/art/' + name, code).forEach(text => problems.push(text));
+    animationWords.filter(rule => rule.pattern.test(code)).forEach(rule => problems.push('dashboard/seasons/art/' + name + ' has ' + rule.words + '. A pack holds no animation: name a motion from dashboard/seasons/motion.css instead'));
+  });
+
+  // season.js is a barrel of its parts, which hold the checks and the drawing
+  const season = ['season.js', 'season-check.js', 'season-draw.js'].map(name => withoutJsComments(read(path.join(dashboardFolder, 'core', name)))).join('\n');
   animationWords.filter(rule => rule.pattern.test(season)).forEach(rule => problems.push('dashboard/core/season.js has ' + rule.words + '. All the animation is in dashboard/seasons/motion.css'));
 
   const layer = withoutCssComments(read(layerFile));

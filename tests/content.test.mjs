@@ -5128,6 +5128,7 @@ test('connectionLines gives the reason and the last good read while Sanity is un
   const status = { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'cors' };
   assert.deepEqual(connectionLines({ status: status, always: false, deviceLines: fullDeviceLines }), [
     'SANITY UNREACHABLE: CORS BLOCKED',
+    'Add this address under API, CORS origins in Sanity',
     'Last good read 2:31 PM',
     'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103',
     'ssh hawktimus@100.101.102.103',
@@ -5136,9 +5137,11 @@ test('connectionLines gives the reason and the last good read while Sanity is un
 
 test('connectionLines names each of the four reasons, and says so when there has been no good read', () => {
   const words = { network: 'NETWORK DOWN', cors: 'CORS BLOCKED', denied: 'ACCESS DENIED', other: 'OTHER ERROR' };
+  // and a sentence for the coach about what to do
+  const fixes = { network: 'Check the cable and the router of the Mini', cors: 'Add this address under API, CORS origins in Sanity', denied: 'Check that the dataset in Sanity is public', other: 'Sanity may be down. The last content stays on screen' };
   Object.keys(words).forEach(reason => {
     const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: reason }, always: false });
-    assert.deepEqual(lines, ['SANITY UNREACHABLE: ' + words[reason], 'No good read yet']);
+    assert.deepEqual(lines, ['SANITY UNREACHABLE: ' + words[reason], fixes[reason], 'No good read yet']);
   });
 
   const unknown = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: '' }, always: false });
@@ -5180,6 +5183,7 @@ test('connectionLines puts the reason first and the counts after it when the swi
   const lines = connectionLines({ status: status, always: true, content: someContent, calendarsReadAt: calendarsRead, deviceLines: ['ssh hawktimus@10.0.0.5'] });
   assert.deepEqual(lines, [
     'SANITY UNREACHABLE: NETWORK DOWN',
+    'Check the cable and the router of the Mini',
     'Last good read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Team leads 5',
     'People 8 · Agenda 1 · Extra panels 3',

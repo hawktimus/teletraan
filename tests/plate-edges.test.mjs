@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 import { readModule } from './helpers/read-module.mjs';
+import { shapePoints } from './helpers/shape-points.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
@@ -52,10 +53,12 @@ function test(name, run) {
 }
 
 // plate.js adds each frame's shapes to a hidden group of the page, once. A page with only that group stands in for it.
+let definedText = ''; // what the page was given for its defs
 async function withPlatePage(run) {
   const kept = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  definedText = '';
   Object.defineProperty(globalThis, 'document', {
-    value: { getElementById: id => (id === 'metal-shapes' ? { insertAdjacentHTML: () => {} } : null) },
+    value: { getElementById: id => (id === 'metal-shapes' ? { insertAdjacentHTML: (where, markup) => { definedText += markup; } } : null) },
     configurable: true,
     writable: true,
   });
@@ -211,7 +214,7 @@ const plates = {
 async function pointsOf(width) {
   return withPlatePage(() => {
     const markup = plate.teamPlateMarkup(width);
-    return /<polygon class="team-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+    return shapePoints(markup, 'team-fill', definedText);
   });
 }
 
@@ -337,7 +340,7 @@ test('the metal and the shadow of the plate stay clear of the name above it and 
 test('the ticker\'s tag and its three frames have the same line, 1 inside, so the metal of the tag is the metal of the bar, and they are 5 higher than the row', async () => {
   const rows = ['bar-ticker', 'bar-ticker-minimal', 'cybertron-ticker'];
   const edge = thinEdge();
-  const tagPoints = await withPlatePage(() => /<polygon class="tag-fill" points="([^"]*)"/.exec(plate.tagMarkup(328))[1].split(' ').map(pair => pair.split(',').map(Number)));
+  const tagPoints = await withPlatePage(() => shapePoints(plate.tagMarkup(328), 'tag-fill', definedText));
 
   rows.forEach(kind => {
     const shape = plate.barShape(kind);

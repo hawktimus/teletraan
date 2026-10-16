@@ -6,7 +6,7 @@ import * as frame from '../frame.js';
 import { mountPanel } from './panels.js';
 import { pauseRotation, resumeRotation } from './schedule.js';
 import { hasText } from './text.js';
-import { parseLocalDateTime, pad } from './time.js';
+import { parseLocalDateTime, localDay } from './time.js';
 
 const stage = document.getElementById('stage');
 let running = null; // 'alert' or 'announcement' while something covers the screen
@@ -84,7 +84,7 @@ function alertWanted(settings, now) {
 // at 2:30:20 does not start one late. One badly filled in announcement
 // must not stop the others, so each is checked on its own.
 function dueAnnouncement(settings, now) {
-  const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  const today = localDay(now);
 
   for (const config of settings.announcements || []) {
     try {

@@ -1,5 +1,5 @@
 /* Team colors. core/teams.js sets these nine on the html element from the team on the
-   screen (the Teams list in the Studio). They start here at the Prime values, the same
+   screen (the Teams list in the Studio). They start at the Prime values (tokens.css), the same
    as primeTeam in config.js, so the screen has them before any team is chosen.
 
    The default theme takes four of its colors from them. With Prime they are the same four
@@ -8,18 +8,6 @@
    card and the darker shades stay with the theme: the team plate color is a different purple
    from --plate, and only the new styles read it. Neon, pink and body are read by Cybertron
    and Minimal only. Label is the color of a department name in a row. */
-
-:root {
-  --team-primary: #6c18b6;
-  --team-plate: #3b2a7a;
-  --team-accent: #faca2a;
-  --team-neon: #faca2a;
-  --team-pink: #b23cff;
-  --team-background: #0B0714;
-  --team-text: #ffffff;
-  --team-body: #1a0f2e;
-  --team-label: #faca2a;
-}
 
 :root,
 html.theme-hawktimus {

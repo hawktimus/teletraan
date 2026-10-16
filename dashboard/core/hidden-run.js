@@ -41,6 +41,7 @@ import { layoutNow, otherAreas } from './layout.js';
 import { swapRunning } from './swap-run.js';
 import { takeoverRunning } from './takeover.js';
 import { pileTimes } from './transitions.js';
+import { Stopped, backdrop, blueGlitch, contentGoneAfter, flySeconds, hiddenState, longestRest, pictureElements, redWash, world } from './hidden-run-state.js';
 
 // True while a hidden transition plays. The announcements the Studio pushes
 // (core/announce-run.js) ask, so they wait for it to be over.

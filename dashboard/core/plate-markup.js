@@ -163,7 +163,7 @@ export function warHousingMarkup(form = 'narrow', trim = {}, tall = false) {
   const rivets = turned ? housing.rivets.map(center => [box.width - center[0], center[1]]) : housing.rivets;
 
   return `<svg class="war-housing${tall ? ' war-housing-tall' : ''}" width="${box.width}" height="${box.height}" viewBox="0 0 ${box.width} ${box.height}">
-    <polygon class="war-housing-fill" points="${toPoints(outline)}"/>
+    <use class="war-housing-fill" href="#${id}"/>
     <path class="war-weld-dark" d="${pathData(seam)}"/>
     <path class="war-weld-light" d="${pathData(light)}"/>
     ${edgeLayers(id)}
@@ -214,7 +214,7 @@ export function frameMarkup(options = {}) {
   defineFrame(name, frame);
 
   return `<svg class="plate${red}" width="1920" height="1080" viewBox="0 0 1920 1080">
-    <polygon class="body" points="${toPoints(frame.outline)}"/>
+    <use class="body" href="#${name}-outline"/>
   </svg>` + frameHalves(name, frame, red, 'frame');
 }
 

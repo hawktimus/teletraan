@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 import { readModule } from './helpers/read-module.mjs';
+import { shapePoints } from './helpers/shape-points.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -476,7 +477,7 @@ test('the full screen frame and the war clock\'s housing have the other corners 
     const defs = read();
     sameSet(pointsOf(defs, 'screen-tr-a').concat(pointsOf(defs, 'screen-tr-b')), turnedAcross(pointsOf(defs, 'screen-a').concat(pointsOf(defs, 'screen-b')), 1920));
     assert.ok(turned.includes('href="#screen-tr-a"') && !turned.includes('href="#screen-a"'));
-    assert.deepEqual(turned.match(/class="body" points="([^"]+)"/)[1].split(' ').length, 6);
+    assert.deepEqual(shapePoints(turned, 'body', defs).length, 6);
 
     ['narrow', 'wide'].forEach(form => {
       const housing = plate.warHousingMarkup(form);
@@ -487,7 +488,7 @@ test('the full screen frame and the war clock\'s housing have the other corners 
       const size = { narrow: 766, wide: 616 }[form];
 
       assert.ok(!/NaN|undefined/.test(other));
-      const outlineOf = markup => /class="war-housing-fill" points="([^"]+)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      const outlineOf = markup => shapePoints(markup, 'war-housing-fill', read());
       sameSet(outlineOf(other), turnedAcross(outlineOf(housing), size));
       const rivets = markup => (markup.match(/class="war-rivet" d="([^"]+)"/)[1].match(/M[\d.]+ [\d.]+a/g) || []).map(text => /M([\d.]+) ([\d.]+)a/.exec(text).slice(1).map(Number)).map(point => [point[0] + 5, point[1]]); // the centres
       sameSet(rivets(other), turnedAcross(rivets(housing), size));

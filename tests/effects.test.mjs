@@ -2505,7 +2505,8 @@ test('there are two sets of two pictures, and each file is in the assets folder 
     const file = path.join(dashboardFolder, pictureAddress(picture));
     assert.ok(fs.existsSync(file), picture.file + ' is not in dashboard/assets/hidden');
     assert.deepEqual(pictureSize(readModule(file)), { width: picture.width, height: picture.height }, picture.file + ' is not the size the list says');
-    assert.ok(/^#[0-9a-f]{6}$/.test(picture.fill), picture.file + ' needs its own background colour');
+    const token = /^var\((--hidden-fill-[a-z0-9-]+)\)$/.exec(picture.fill);
+    assert.ok(token && new RegExp(token[1] + ': #[0-9a-f]{6};').test(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8')), picture.file + ' needs its own background colour, a token');
     assert.ok(picture.fit === 'cover' || picture.fit === 'contain', picture.file);
   });
   assert.equal(hiddenPictures.pictureFolder, 'assets/hidden/');
@@ -2526,15 +2527,17 @@ test('a picture is never stretched: the 16:9 ones cover the screen, and the old 
   const old = byFile['blue-screen-2.png'];
   assert.equal(old.fit, 'contain', 'it is 16:10, so cover would cut off its top and bottom');
   assert.equal(old.crisp, true, 'enlarged without smoothing');
-  assert.equal(old.fill, '#0000aa', "the picture's own blue, so the rest of the screen has no black bars");
-  assert.equal(byFile['blue-screen-1.png'].fill, '#0177d7');
+  assert.equal(old.fill, 'var(--hidden-fill-blue-screen-2)', "the picture's own blue, so the rest of the screen has no black bars");
+  assert.ok(/--hidden-fill-blue-screen-2: #0000aa;/.test(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8')), 'which is #0000aa in the tokens');
+  assert.equal(byFile['blue-screen-1.png'].fill, 'var(--hidden-fill-blue-screen-1)');
+  assert.ok(/--hidden-fill-blue-screen-1: #0177d7;/.test(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8')), 'the blue of the new blue screen');
 
   // the stylesheet says the same: contain and crisp are the exceptions
   const pictureRule = baseCss.match(/#backdrop \.picture \{[^}]*\}/)[0];
   ['object-fit: cover;', 'width: 1920px;', 'height: 1080px;', 'opacity: 0;'].forEach(line => assert.ok(pictureRule.includes(line), 'the picture rule lacks ' + line));
   assert.ok(/#backdrop \.picture\[data-fit="contain"\] \{ object-fit: contain; \}/.test(baseCss));
   assert.ok(/#backdrop \.picture\[data-crisp="on"\] \{\s*image-rendering: crisp-edges;\s*image-rendering: pixelated;\s*\}/.test(baseCss));
-  assert.ok(/#backdrop\[data-look="picture"\] \{ background: var\(--picture-fill, #000\); \}/.test(baseCss));
+  assert.ok(/#backdrop\[data-look="picture"\] \{ background: var\(--picture-fill, var\(--pure-black\)\); \}/.test(baseCss));
 });
 
 test('every set the transitions name is one that has pictures, and the pictures are preloaded in one list of all four', async () => {
@@ -2713,7 +2716,7 @@ test('scene.glitch takes a tint: red is the default and plays the old television
 });
 
 test('the desktop reveal collapses over a deep blue and red eyes over black, and nothing of the drawn wallpaper or face is left', async () => {
-  assert.ok(/#backdrop \{ background: #000; \}/.test(baseCss));
+  assert.ok(/#backdrop \{ background: var\(--pure-black\); \}/.test(baseCss));
   assert.ok(/#backdrop\[data-look="blue"\] \{ background: var\(--hidden-blue-deep\); \}/.test(baseCss));
   assert.ok(/--hidden-blue-deep: #[0-9a-f]{6};/.test(tokensCss));
   const lookOf = async kind => {

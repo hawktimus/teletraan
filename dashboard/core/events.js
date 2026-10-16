@@ -18,7 +18,7 @@
 
 import { visibleItems } from './content.js';
 import { dateIn, zoneNamed } from './theme.js';
-import { asDate, formatTimeOfDay, pad } from './time.js';
+import { asDate, formatTimeOfDay, localDay } from './time.js';
 import { isRecord } from './text.js';
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -38,10 +38,6 @@ export function isDay(text) {
   const parts = dayParts(text);
   const check = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
   return check.getUTCFullYear() === parts.year && check.getUTCMonth() === parts.month - 1 && check.getUTCDate() === parts.day;
-}
-
-function localDay(date) {
-  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
 }
 
 // Calendar filters

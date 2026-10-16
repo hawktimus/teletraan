@@ -220,8 +220,6 @@
 
 html[data-layout="bar"] .war-clock {
   --war-ink: var(--style-digits);
-  --war-plate: #0c0b09;
-  --war-plate-border: #2b2a26;
   --war-dim: .75; /* the date and the small labels, a little fainter than the digits */
   --lines-top: 14px;
   --lines-height: 34px;
@@ -280,7 +278,7 @@ html[data-layout="bar"] .war-clock[data-title="two"] .war-housing-tall { display
 html[data-layout="bar"] .war-housing-fill { fill: url(#armor-face); }
 html[data-layout="bar"] .war-weld-dark {
   fill: none;
-  stroke: #05070a;
+  stroke: var(--plate-ink);
   stroke-opacity: .7;
   stroke-width: 3px;
 }
@@ -434,9 +432,7 @@ html[data-layout="bar"] .war-cell .unit {
    the plates move down by 40. Nothing here moves: the digits change at once. */
 
 .war-clock.war-wide {
-  --war-ink: var(--style-digits, #ffb327);
-  --war-plate: #0c0b09;
-  --war-plate-border: #2b2a26;
+  --war-ink: var(--style-digits, var(--war-ink-start));
   --war-dim: .75; /* the date and the labels, a little fainter than the digits */
   --lines-height: 44px;
   --lines-leading: 44px;
@@ -478,7 +474,7 @@ html[data-layout="bar"] .war-cell .unit {
 .war-clock.war-wide .war-housing-fill { fill: url(#armor-face); }
 .war-clock.war-wide .war-weld-dark {
   fill: none;
-  stroke: #05070a;
+  stroke: var(--plate-ink);
   stroke-opacity: .7;
   stroke-width: 3px;
 }
@@ -491,7 +487,7 @@ html[data-layout="bar"] .war-cell .unit {
 .war-clock.war-wide .war-smudge { fill: url(#wear-rust); }
 .war-clock.war-wide .war-wear {
   fill: none;
-  stroke: var(--style-rust, #b4672d);
+  stroke: var(--style-rust);
   stroke-opacity: .55;
   stroke-linecap: round;
   stroke-width: 4px;

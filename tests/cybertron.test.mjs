@@ -16,6 +16,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { copyModule } from './helpers/copy-module.mjs';
 import { hasImports, readModule } from './helpers/read-module.mjs';
+import { shapePoints } from './helpers/shape-points.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -76,13 +77,15 @@ async function withGlobals(values, run) {
 
 // plate.js adds each frame's shapes to a hidden group of the page, once. A page with only that group stands in for it.
 // run is given the set of ids that were drawn into the group
+let definedText = ''; // what the page was given for its defs
 function withPlatePage(run) {
   const known = new Set();
+  definedText = '';
   return withGlobals({
     document: {
       getElementById: id => {
         if (id !== 'metal-shapes') return known.has(id) ? {} : null;
-        return { insertAdjacentHTML: (where, markup) => (markup.match(/ id="[^"]+"/g) || []).forEach(found => known.add(found.slice(5, -1))) };
+        return { insertAdjacentHTML: (where, markup) => { definedText += markup; (markup.match(/ id="[^"]+"/g) || []).forEach(found => known.add(found.slice(5, -1))); } };
       },
     },
   }, () => run(known));
@@ -672,7 +675,7 @@ test('the wide housing is one steel plate 616 by 200 with the edge of the frames
     assert.ok(/^<svg class="war-housing" width="616" height="200" viewBox="0 0 616 200">/.test(markup));
     assert.equal(countOf(markup, '<svg '), 1, 'one drawing');
 
-    const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+    const points = shapePoints(markup, 'war-housing-fill', definedText);
     assert.deepEqual(points, [[4, 196], [4, 38], [38, 4], [612, 4], [612, 162], [578, 196]]);
     assert.deepEqual([points[1][1] - points[2][1], points[2][0] - points[1][0]], [34, 34], 'the cut at the top left');
     assert.deepEqual([points[4][0] - points[5][0], points[5][1] - points[4][1]], [34, 34], 'and at the bottom right');
@@ -698,7 +701,7 @@ test('the wide housing is one steel plate 616 by 200 with the edge of the frames
     const tall = plate.warHousingMarkup('wide', {}, true);
     assert.ok(isBalanced(tall));
     assert.ok(/^<svg class="war-housing war-housing-tall" width="616" height="240" viewBox="0 0 616 240">/.test(tall));
-    const tallPoints = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(tall)[1].split(' ').map(pair => pair.split(',').map(Number));
+    const tallPoints = shapePoints(tall, 'war-housing-fill', definedText);
     assert.deepEqual(tallPoints, [[4, 236], [4, 38], [38, 4], [612, 4], [612, 202], [578, 236]]);
     assert.deepEqual((tall.match(/<use class="edge-[a-z]+" href="#war-housing-wide-tall-shape"\/>/g) || []).length, 5, 'the five layers of the edge, on a shape of its own');
     assert.deepEqual(rivetsIn(tall), [[30, 38], [586, 38], [30, 218], [572, 218]]);
@@ -858,7 +861,7 @@ test('the parts of the wide war clock are inside the housing, clear of each othe
     await withPlatePage(() => {
       const markup = plate.warHousingMarkup('wide', {}, state === 'two');
       rivetsIn(markup).forEach(([x, y]) => names.forEach(name => assert.ok(apart({ x: x - 5, y: y - 5, width: 10, height: 10 }, boxOf(parts[name])), state + ': a rivet is under ' + name)));
-      const points = /<polygon class="war-housing-fill" points="([^"]*)"/.exec(markup)[1].split(' ').map(pair => pair.split(',').map(Number));
+      const points = shapePoints(markup, 'war-housing-fill', definedText);
       const time = parts['war-time-plate'];
       const corner = [time.left + time.width, time.top + time.height];
       assert.ok(distanceToLine(corner, points[4], points[5]) >= 8 + 6, state + ': the time plate is 6 clear of the rim at the cut corner');
@@ -930,8 +933,10 @@ test('the digits and the labels of the wide war clock fit their boxes in the dis
 test('the wide war clock has the colors of the narrow one: amber digits from the style, orange in the last month, white with red borders in the last week, and nothing in it moves', () => {
   const css = wideSection();
   const clock = wideRule('');
-  assert.ok(/--war-ink: var\(--style-digits, #ffb327\);/.test(clock) && /color: var\(--war-ink\);/.test(clock), 'the digits and the labels are the style\'s digits, amber when no style sets them');
-  assert.ok(/--war-plate: #0c0b09;/.test(clock) && /--war-plate-border: #2b2a26;/.test(clock), 'the plates of the narrow clock');
+  assert.ok(/--war-ink: var\(--style-digits, var\(--war-ink-start\)\);/.test(clock) && /color: var\(--war-ink\);/.test(clock), 'the digits and the labels are the style\'s digits, amber when no style sets them');
+  const tokens = read('dashboard/tokens.css');
+  assert.ok(/--war-ink-start: #ffb327;/.test(tokens), 'the amber is a token');
+  assert.ok(/--war-plate: #0c0b09;/.test(tokens) && /--war-plate-border: #2b2a26;/.test(tokens), 'the plates of the narrow clock, in the tokens');
   assert.ok(/--war-ink: var\(--danger-bright\);/.test(ruleOf(css, '.war-clock.war-wide[data-level="tense"]')));
   const critical = ruleOf(css, '.war-clock.war-wide[data-level="critical"]');
   assert.ok(/--war-ink: var\(--white\);/.test(critical) && /--war-plate-border: var\(--danger\);/.test(critical));

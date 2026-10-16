@@ -1205,20 +1205,21 @@ function blocksOf(text) {
   return blocks;
 }
 
-test('teams.css starts the nine team colors at the Prime ones, and has no other rule than the four the default theme follows', () => {
+test('tokens.css starts the nine team colors at the Prime ones, and teams.css has no other rule than the four the default theme follows', () => {
   const blocks = blocksOf(teamsCss);
-  assert.equal(blocks.length, 2);
+  assert.equal(blocks.length, 1);
 
-  assert.deepEqual(blocks[0].selectors, [':root']);
+  const start = blocksOf(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')).find(block => '--team-primary' in block.declarations);
+  assert.deepEqual(start.selectors, [':root']);
   const colors = config.primeTeam.colors;
-  assert.deepEqual(Object.keys(blocks[0].declarations), ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label']);
+  assert.deepEqual(Object.keys(start.declarations), ['--team-primary', '--team-plate', '--team-accent', '--team-neon', '--team-pink', '--team-background', '--team-text', '--team-body', '--team-label']);
   Object.keys(propertiesOf(config.primeTeam)).forEach(name => {
-    assert.equal(blocks[0].declarations[name].toLowerCase(), propertiesOf(config.primeTeam)[name].toLowerCase(), name);
+    assert.equal(start.declarations[name].toLowerCase(), propertiesOf(config.primeTeam)[name].toLowerCase(), name);
   });
   assert.equal(colors.primary.toLowerCase(), '#6c18b6');
 
-  assert.deepEqual(blocks[1].selectors, [':root', 'html.theme-hawktimus'], 'the default theme only: another theme keeps its own colors');
-  assert.deepEqual(blocks[1].declarations, {
+  assert.deepEqual(blocks[0].selectors, [':root', 'html.theme-hawktimus'], 'the default theme only: another theme keeps its own colors');
+  assert.deepEqual(blocks[0].declarations, {
     '--purple': 'var(--team-primary)',
     '--yellow': 'var(--team-accent)',
     '--ground': 'var(--team-background)',

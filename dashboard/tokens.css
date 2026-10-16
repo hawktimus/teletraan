@@ -355,3 +355,62 @@ html.palette-inverted {
   --team-chip: #6c18b6;
   --team-chip-text: #ffffff;
 }
+
+
+/* The colors that other stylesheets and scripts name. A color is written here, in the tokens of a theme
+   or in a theme file, and nowhere else (tests/graphics.test.mjs). */
+
+/* The team colors start at the Prime values, the same as primeTeam in config.js, so the screen has them before
+   any team is chosen. core/teams.js sets all nine on the html element from the team on the screen. */
+:root {
+  --team-primary: #6c18b6;
+  --team-plate: #3b2a7a;
+  --team-accent: #faca2a;
+  --team-neon: #faca2a;
+  --team-pink: #b23cff;
+  --team-background: #0B0714;
+  --team-text: #ffffff;
+  --team-body: #1a0f2e;
+  --team-label: #faca2a;
+}
+
+:root {
+  --pure-black: #000000;
+  --pure-white: #ffffff;
+  --plate-ink: #05070a; /* the dark seam lines of the plates */
+
+  /* the three status dots (status-dots.css) */
+  --dot-off: #9a9a9a;
+  --dot-green: #2fd27a;
+  --dot-amber: #ffb300;
+  --dot-red: #ff3b3b;
+
+  /* the tags of the two teams on a Monday card, the same on every team's screen (monday.css) */
+  --prime-tag: #faca2a;
+  --nova-tag: #c58cff;
+
+  /* the war clock (panels/countdown/panel.css) and the colors the armor gradients start from */
+  --war-plate: #0c0b09;
+  --war-plate-border: #2b2a26;
+  --war-ink-start: #ffb327;
+  --style-armor-top: #333a45;
+  --style-armor-bottom: #1f242c;
+  --style-rust: #b4672d;
+
+  /* the neon kit (neon-kit.css) and the subtheme sprites (subthemes.css) */
+  --kit-dim: #17808f; /* a dull cyan: a line at rest, the tail of a packet */
+  --kit-pale: #d9fbff; /* the head of a packet and the sweeping line */
+  --subtheme-accent: #d9b24a;
+
+  /* the backing of the pictures of the hidden transitions, the color of the edge of each (core/hidden-pictures.js) */
+  --hidden-fill-red-eyes: #000000;
+  --hidden-fill-blue-screen-1: #0177d7;
+  --hidden-fill-blue-screen-2: #0000aa;
+}
+
+/* The bar layout draws its armor plates a little darker (layouts/bar-minimal.css) */
+html[data-layout="bar"] {
+  --style-armor-top: #323843;
+  --style-armor-bottom: #1d2128;
+  --style-rust: #b4672d;
+}

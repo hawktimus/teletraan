@@ -15,11 +15,11 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #9a9a9a;
+  background: var(--dot-off);
 }
 #status-dots .status-dot[data-dot="monday"] { top: 0; }
 #status-dots .status-dot[data-dot="band"] { top: 28px; }
 #status-dots .status-dot[data-dot="sanity"] { top: 56px; }
-#status-dots .status-dot[data-state="green"] { background: #2fd27a; }
-#status-dots .status-dot[data-state="amber"] { background: #ffb300; }
-#status-dots .status-dot[data-state="red"] { background: #ff3b3b; }
+#status-dots .status-dot[data-state="green"] { background: var(--dot-green); }
+#status-dots .status-dot[data-state="amber"] { background: var(--dot-amber); }
+#status-dots .status-dot[data-state="red"] { background: var(--dot-red); }

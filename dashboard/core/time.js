@@ -8,6 +8,11 @@ export function pad(number) {
   return String(number).padStart(2, '0');
 }
 
+// The day of a date on the clock of the computer, written 2026-12-31
+export function localDay(date) {
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+}
+
 // 3:07 PM comes back as { time: '3:07', suffix: 'PM' }
 export function formatClock(date) {
   let hours = date.getHours() % 12;

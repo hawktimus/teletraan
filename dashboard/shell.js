@@ -40,6 +40,7 @@ import { defaultSettings, metals } from './config.js';
 import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { askForSample } from './core/source.js';
 import { makeSilverGradients } from './core/plate.js';
+import { defineHawk } from './core/logo.js';
 import { holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
 import { holdForLayout, startLayout } from './core/layout-apply.js';
 import { layoutNow } from './core/layout.js';
@@ -67,6 +68,7 @@ onScreenChange(() => {
 run();
 
 async function run() {
+  defineHawk(); // the shapes of the hawk go into the hidden defs before any logo points at them
   // The style and the layout go on first of all, so that no region, area or panel is ever
   // drawn in the wrong place. The layout is the one the last saved content chose: the
   // theme's, or the one the style forces (Minimal), or ?theme= and ?style=.

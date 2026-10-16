@@ -26,7 +26,7 @@
 
 .subtheme-sprite {
   position: absolute;
-  color: var(--accent, #d9b24a);
+  color: var(--accent, var(--subtheme-accent));
   fill: none;
   stroke: currentColor;
   stroke-width: 4px;

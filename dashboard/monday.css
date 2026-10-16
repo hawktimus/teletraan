@@ -101,8 +101,6 @@ html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px
    of the teams on the cards of both teams, the same on every team's screen. */
 .monday {
   --scroll-step: 420px;
-  --prime-tag: #faca2a;
-  --nova-tag: #c58cff;
 }
 .monday .rows-window {
   height: 420px;

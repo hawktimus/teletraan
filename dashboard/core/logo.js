@@ -12,20 +12,33 @@
 // Each shape is drawn three times, back to front: a dark copy moved down and
 // right (shadow), a fat metal line (outline) and the purple (fill). The
 // colours and the moves are in the section called "The logo" in frame.css.
+//
+// The polygons are written once, in the hidden defs of the page (defineHawk), and every
+// logo points at them with <use>, so the banner, the side column, the team tile and the
+// night screen share one copy of each shape.
 
-const wingLeft = '29,27 95,299.5 251,430 442,430 385,266 231,150 200,27';
+import { define } from './plate-draw.js';
+
+// id -> points. shape() writes a polygon into this list and hands back its id
+const polygons = {};
+function shape(id, points) {
+  polygons[id] = points;
+  return id;
+}
+
+const wingLeft = shape('hawk-wing-left', '29,27 95,299.5 251,430 442,430 385,266 231,150 200,27');
 const wingLeftSlashes = [
-  '155.5,160 155.5,198 333.5,337.5 333.5,300',
-  '169.5,242.5 169.5,280.5 309.5,392.5 309.5,356',
+  shape('hawk-wing-left-slash-1', '155.5,160 155.5,198 333.5,337.5 333.5,300'),
+  shape('hawk-wing-left-slash-2', '169.5,242.5 169.5,280.5 309.5,392.5 309.5,356'),
 ];
-const wingRight = '900,27 869,150 715,266 658,430 849,430 1005,299.5 1071,27';
+const wingRight = shape('hawk-wing-right', '900,27 869,150 715,266 658,430 849,430 1005,299.5 1071,27');
 const wingRightSlashes = [
-  '766.5,300 766.5,337.5 944.5,198 944.5,160',
-  '790.5,356 790.5,392.5 930.5,280.5 930.5,242.5',
+  shape('hawk-wing-right-slash-1', '766.5,300 766.5,337.5 944.5,198 944.5,160'),
+  shape('hawk-wing-right-slash-2', '790.5,356 790.5,392.5 930.5,280.5 930.5,242.5'),
 ];
-const face = '326.5,559 341.5,808 437.5,856.5 484,743 616,743 662.5,856.5 758.5,808 773.5,559 647.5,461.5 647.5,657 452.5,657 452.5,461.5';
-const jaw = '465.5,853 634.5,853 601.5,762 498.5,762';
-const head = '430.5,290.5 478.5,435 478.5,632 621.5,632 621.5,435 669.5,290.5 550,362';
+const face = shape('hawk-face', '326.5,559 341.5,808 437.5,856.5 484,743 616,743 662.5,856.5 758.5,808 773.5,559 647.5,461.5 647.5,657 452.5,657 452.5,461.5');
+const jaw = shape('hawk-jaw', '465.5,853 634.5,853 601.5,762 498.5,762');
+const head = shape('hawk-crest', '430.5,290.5 478.5,435 478.5,632 621.5,632 621.5,435 669.5,290.5 550,362');
 
 // name, shapes, slashes. The slashes are the metal stripes on a plate.
 const emblem = [
@@ -35,35 +48,40 @@ const emblem = [
   ['head', [head], []],
 ];
 
-const farWing = '610,290 770,272 815,330 862,440 878,560 852,655 800,640 760,560 700,470 640,380';
-const tailTip = '22,366 84,314 154,316 154,422 46,424';
-const tailBase = '166,316 285,318 285,402 240,420 166,422';
-const tailSlash = '236,326 222,410 262,408 276,324';
-const hawkBody = '270,345 430,302 650,270 765,275 805,312 772,362 670,402 440,412 290,395';
-const hawkHead = '752,290 770,222 826,196 890,202 930,236 934,266 900,292 846,318 790,318';
-const beak = '926,240 994,264 984,308 956,290 934,274';
-const eye = '838,232 908,242 908,258 848,252';
-const nearWing = '360,330 680,280 748,352 762,494 371,494 360,440';
-const nearWingSlash = '448,436 448,476 706,372 706,332';
-const nearPanel2 = '373,506 761,506 724,668 446,656 404,686 384,560';
-const nearPanel2Slash = '476,606 476,642 696,558 696,522';
-const nearPanel3 = '452,668 721,680 640,866 596,790 556,828 520,736 478,768';
-const nearPanel3Slash = '548,726 548,758 660,718 660,688';
+const farWing = shape('hawk-far-wing', '610,290 770,272 815,330 862,440 878,560 852,655 800,640 760,560 700,470 640,380');
+const tailTip = shape('hawk-tail-tip', '22,366 84,314 154,316 154,422 46,424');
+const tailBase = shape('hawk-tail-base', '166,316 285,318 285,402 240,420 166,422');
+const tailSlash = shape('hawk-tail-slash', '236,326 222,410 262,408 276,324');
+const hawkBody = shape('hawk-torso', '270,345 430,302 650,270 765,275 805,312 772,362 670,402 440,412 290,395');
+const hawkHead = shape('hawk-skull', '752,290 770,222 826,196 890,202 930,236 934,266 900,292 846,318 790,318');
+const beak = shape('hawk-beak', '926,240 994,264 984,308 956,290 934,274');
+const eye = shape('hawk-eye', '838,232 908,242 908,258 848,252');
+const nearWing = shape('hawk-near-wing', '360,330 680,280 748,352 762,494 371,494 360,440');
+const nearWingSlash = shape('hawk-near-wing-slash', '448,436 448,476 706,372 706,332');
+const nearPanel2 = shape('hawk-near-panel-2', '373,506 761,506 724,668 446,656 404,686 384,560');
+const nearPanel2Slash = shape('hawk-near-panel-2-slash', '476,606 476,642 696,558 696,522');
+const nearPanel3 = shape('hawk-near-panel-3', '452,668 721,680 640,866 596,790 556,828 520,736 478,768');
+const nearPanel3Slash = shape('hawk-near-panel-3-slash', '548,726 548,758 660,718 660,688');
 
-function polygon(className, points) {
-  return `<polygon class="${className}" points="${points}"/>`;
+function polygon(className, id) {
+  return `<use class="${className}" href="#${id}"/>`;
+}
+
+// Writes the polygons into the hidden defs of the page, once. shell.js calls it before anything is drawn
+export function defineHawk() {
+  Object.keys(polygons).forEach(id => define(id, `<polygon id="${id}" points="${polygons[id]}"/>`));
 }
 
 // All the shadows, then all the outlines, then all the fills. When a plate
 // has two shapes this keeps the outline of one from covering the fill of the other.
 function drawn(shapes, fill) {
   return ['shadow', 'outline', fill]
-    .map(layer => shapes.map(points => polygon(layer, points)).join(''))
+    .map(layer => shapes.map(id => polygon(layer, id)).join(''))
     .join('');
 }
 
 function slashes(list) {
-  return list.map(points => polygon('slash', points)).join('');
+  return list.map(id => polygon('slash', id)).join('');
 }
 
 function plate(className, inner) {
@@ -150,8 +168,8 @@ export function emblemMarkup() {
   const stripes = emblem.reduce((all, part) => all.concat(part[2]), []);
 
   return '<svg viewBox="0 0 1100 884" aria-hidden="true">' +
-    shapes.map(points => polygon('emblem-outline', points)).join('') +
-    shapes.map(points => polygon('emblem-plate', points)).join('') +
-    stripes.map(points => polygon('emblem-stripe', points)).join('') +
+    shapes.map(id => polygon('emblem-outline', id)).join('') +
+    shapes.map(id => polygon('emblem-plate', id)).join('') +
+    stripes.map(id => polygon('emblem-stripe', id)).join('') +
     '</svg>';
 }

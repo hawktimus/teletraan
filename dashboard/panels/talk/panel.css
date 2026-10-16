@@ -12,7 +12,7 @@
   cursor: none;
   outline: none;
 }
-#talk[data-ground="black"] { background: #000; }
+#talk[data-ground="black"] { background: var(--pure-black); }
 
 /* Under a card or the slides the dashboard is not drawn, which saves the old Mini
    the work. presentation-run.js sets data-talk once the picture covers it. */
@@ -101,7 +101,7 @@ html[data-talk="on"] #stage { visibility: hidden; }
 
 /* The slides: one picture at a time on black, shown whole. A picture is put in and
    taken out with no fade and no move, so nothing here has a transition or an animation. */
-.talk.slides { background: #000; }
+.talk.slides { background: var(--pure-black); }
 .talk .slide-host,
 .talk .slide {
   position: absolute;
@@ -113,7 +113,7 @@ html[data-talk="on"] #stage { visibility: hidden; }
 .talk .slide {
   display: block;
   object-fit: contain;
-  background: #000;
+  background: var(--pure-black);
   transition: none;
   animation: none;
 }
