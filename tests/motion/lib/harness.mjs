@@ -40,12 +40,16 @@ export function makeContext(browser, base) {
     await page.addInitScript({ path: probeFile });
     await page.goto(base + addressFor(extra), { waitUntil: 'load' });
     try {
-      await page.waitForFunction(() => window.teletraanTest && document.documentElement.dataset.view, null, { timeout: 90000 });
+      await page.waitForFunction(() => window.teletraanTest && window.teletraanStarted && document.querySelector('#region-grid1 .page'), null, { timeout: 90000 });
     } catch (error) {
       const state = await page.evaluate(() => [Boolean(window.teletraanTest), document.documentElement.dataset.view, window.teletraanStarted, document.title]).catch(() => ['no page']);
       throw new Error('the dashboard did not start in 90 seconds (' + JSON.stringify(state) + '). ' + (errors.length > 0 ? 'The page said: ' + errors[0] : 'The page said nothing.'));
     }
     await page.waitForTimeout(options.settleMs === undefined ? 2500 : options.settleMs);
+    if (extra.style) {
+      const style = await page.evaluate(() => document.documentElement.dataset.style);
+      if (style !== extra.style) throw new Error('the look ' + extra.style + ' did not go on, the page has ' + style);
+    }
     page.pageErrors = errors;
     return page;
   }

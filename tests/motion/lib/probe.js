@@ -245,6 +245,43 @@
 
   motion.swapDone = () => motion.swap && motion.swap.phase === 'reform';
 
+  // A Monday card scrolls its rows (scrollCard in frame.js): the list moves up by one page of rows in 600 ms. It is
+  // looked at every 100 ms of that.
+  motion.armScroll = function () {
+    const scroll = motion.scroll = { done: false, samples: [] };
+
+    motion.recording = true;
+    motion.onBatch = made => {
+      const item = made.find(entry => entry.element.hasAttribute('data-scroll-list'));
+      if (!item) return;
+
+      try {
+        const list = item.element;
+        const clip = list.parentElement;
+        const panel = list.closest('.panel') || clip;
+        const where = place();
+        const timing = item.animation.effect.getComputedTiming();
+
+        scroll.duration = timing.duration;
+        scroll.properties = Array.from(new Set(item.animation.effect.getKeyframes().flatMap(keyframe => Object.keys(keyframe)).filter(name => !['offset', 'computedOffset', 'easing', 'composite'].includes(name))));
+        scroll.overflow = window.getComputedStyle(clip).overflow;
+        scroll.clip = rectOf(clip, where);
+        scroll.panel = rectOf(panel, where);
+        item.animation.pause();
+        for (let time = 0; time <= 600; time += 100) {
+          item.animation.currentTime = time;
+          scroll.samples.push({ time: time, rows: Array.from(list.children).map((row, index) => Object.assign({ name: nameOf(row) + ' ' + (index + 1), kind: 'content' }, rectOf(row, where))) });
+        }
+        item.animation.currentTime = 600;
+        scroll.done = true;
+        motion.recording = false;
+      } catch (error) {
+        scroll.error = String(error && error.stack || error);
+        scroll.done = true;
+      }
+    };
+  };
+
   // A hidden transition (core/hidden-run.js): the state of the screen at each change of it, and where the pieces are at
   // the moments that matter. The pieces of the rise are seen at the end of their animation.
   function state() {
