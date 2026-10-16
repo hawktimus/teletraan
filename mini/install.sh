@@ -135,6 +135,11 @@ if [ ! -f "$root/local.env" ]; then
   say "Made $root/local.env from the example. The Mac tool fills in the keys."
 fi
 chmod 600 "$root/local.env"
+# Port 3229 now belongs to the control page. An older local.env that gave it to the dashboard would stop the web server from starting.
+if grep -q "^TELETRAAN_PORT=['\"]\{0,1\}3229['\"]\{0,1\}$" "$root/local.env"; then
+  sed "s/^TELETRAAN_PORT=.*/TELETRAAN_PORT='8080'/" "$root/local.env" > "$root/local.env.new" && cat "$root/local.env.new" > "$root/local.env" && rm -f "$root/local.env.new"
+  say "TELETRAAN_PORT was 3229. It is 8080 now, because the control page uses 3229."
+fi
 for name in TELETRAAN_UID TELETRAAN_GID TELETRAAN_ROOT; do
   if ! grep -q "^$name=" "$root/local.env"; then
     case $name in
