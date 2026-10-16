@@ -1,0 +1,262 @@
+/* The Foundry theme (core/style.js, Style in Dashboard Settings): blued steel. A frame has a steel rim with a
+   highlight edge, a flange of bolts along the top and the bottom, weld stitches down the sides, a strip of hazard
+   stripes along the foot and a caution plate at the bottom right. The header is a steel plate with an accent bar
+   under the right of it. Gears stand half hidden behind the corner cuts and turn all the time, and pistons stroke
+   at the sides of the large and the small frame. The banner and the ticker are the same steel with a bolt flange.
+   The team's colors appear on the accent bar, the TEAM plate and the ticker's tag; the steel is the same for
+   every team. The background is a dark shop floor (background.js in this folder).
+
+   The frames are drawn by core/theme-art.js, one svg for each area and an element for each gear and piston, and
+   are in the page for every theme. This file shows them while the theme is on and the layout is the standard one;
+   the bar layout draws Minimal's frames in every theme, so only the background of the theme reaches it. The frames
+   of plate.js (the gold metal) are not drawn by this theme. Nothing here changes any size of the layout.
+
+   Motion: the gears turn about their middle and the rod of a piston slides 10 pixels, both with transform only
+   (frame.css in this folder). Calm and no motion draw them still, at the end of this file.
+
+   The gears and the pistons are two to three elements for each large frame and are the only things that move
+   on the Mini besides the background; there is no filter, no blur and no animated shadow. */
+
+/* The frames of the standard layout */
+html[data-style="foundry"][data-layout="standard"] .theme-art,
+html[data-style="foundry"][data-layout="standard"] .theme-art .art-foundry { display: block; }
+html[data-style="foundry"][data-layout="standard"] .area > .plate,
+html[data-style="foundry"][data-layout="standard"] .banner > .plate { display: none; }
+html[data-style="foundry"][data-layout="standard"] .banner .banner-text { position: relative; }
+
+.theme-art .fa-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+
+/* The block of shadow behind the rim, moved down and to the right, hard edged */
+.fa-shadow {
+  fill: var(--style-ink);
+  fill-opacity: .6;
+  transform: translate(7px, 9px);
+}
+.fa-body { fill: var(--style-panel); }
+.fa-grain { fill: url(#theme-grain); }
+
+/* The rim: a dark line, the steel over it, and a thin bright line moved up and to the left, which is the lit edge */
+.fa-rim-dark {
+  fill: none;
+  stroke: var(--style-steel-dark);
+  stroke-width: 22px;
+  stroke-linejoin: miter;
+}
+.fa-rim {
+  fill: none;
+  stroke: url(#theme-steel);
+  stroke-width: 14px;
+}
+.fa-rim-light {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .7;
+  stroke-width: 2px;
+  transform: translate(-5px, -5px);
+}
+.theme-art-banner .fa-rim-dark,
+.theme-art-ticker .fa-rim-dark { stroke-width: 14px; }
+.theme-art-banner .fa-rim,
+.theme-art-ticker .fa-rim { stroke-width: 8px; }
+.theme-art-banner .fa-rim-light,
+.theme-art-ticker .fa-rim-light {
+  stroke-width: 1.5px;
+  transform: translate(-3px, -3px);
+}
+
+/* The bolt flange: round heads along the rim, 64 apart, a dark ring and a steel face */
+.fa-flange {
+  fill: none;
+  stroke: var(--style-steel-dark);
+  stroke-width: 16px;
+  stroke-linecap: round;
+  stroke-dasharray: 0 64;
+}
+.fa-flange-face {
+  fill: none;
+  stroke: var(--style-bolt);
+  stroke-width: 10px;
+  stroke-linecap: round;
+  stroke-dasharray: 0 64;
+}
+.theme-art-banner .fa-flange,
+.theme-art-ticker .fa-flange { stroke-width: 11px; }
+.theme-art-banner .fa-flange-face,
+.theme-art-ticker .fa-flange-face { stroke-width: 6px; }
+
+.fa-stitch {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .5;
+  stroke-width: 3px;
+  stroke-dasharray: 10 14;
+}
+.fa-hazard { fill: url(#theme-hazard); }
+.fa-caution {
+  fill: var(--style-hazard);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fa-caution-mark { fill: var(--style-steel-dark); }
+
+/* The header: a steel plate with the line along its foot, and the accent bar under the right of it */
+.fa-header { fill: var(--style-plate); }
+.fa-header-grain { fill: url(#theme-grain); }
+.fa-header-line {
+  fill: none;
+  stroke: var(--style-steel-6);
+  stroke-width: 6px;
+}
+.fa-accent { fill: var(--team-accent); }
+
+/* The gears: steel, with holes, behind the frame. The big one and the far one turn clockwise and the small one,
+   which meshes with the big one, the other way. --gear-turn is the seconds for a turn. */
+.art-foundry .fa-gear {
+  position: absolute;
+  overflow: visible;
+  animation: fa-spin var(--gear-turn, 90s) linear infinite;
+}
+.art-foundry .fa-gear-small { animation-name: fa-spin-back; }
+.fa-gear-body {
+  fill: var(--style-steel-5);
+  fill-rule: evenodd;
+  stroke: var(--style-steel-dark);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.fa-gear-hub {
+  fill: var(--style-steel-dark);
+  stroke: var(--style-steel-5);
+  stroke-width: 3px;
+}
+
+/* The pistons: a cylinder that stays, and a rod that slides 10 pixels in and out */
+.art-foundry .fa-piston {
+  position: absolute;
+  overflow: visible;
+}
+.fa-piston-body {
+  fill: var(--style-steel-3);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fa-piston-rod {
+  fill: var(--style-steel-1);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+  animation: fa-stroke var(--stroke, 7s) ease-in-out infinite alternate;
+  animation-delay: var(--wait, 0s);
+}
+
+/* The // mark at the end of a header is left off, where the accent bar ends. The thin bars between rows are steel. */
+html[data-style="foundry"][data-layout="standard"] .header svg.double-slash { display: none; }
+html[data-style="foundry"][data-layout="standard"] .area .row-bar .edge-shadow,
+html[data-style="foundry"][data-layout="standard"] .area .row-bar .edge-shade,
+html[data-style="foundry"][data-layout="standard"] .area .row-bar .edge-ridge,
+html[data-style="foundry"][data-layout="standard"] .area .row-bar .edge-rim { display: none; }
+html[data-style="foundry"][data-layout="standard"] .area .row-bar .edge-face {
+  stroke: var(--style-steel-5);
+  stroke-width: 4px;
+}
+
+/* The TEAM plate and the ticker's tag: the team's primary on a steel rim, with the header ink on top */
+html[data-style="foundry"] .team-fill,
+html[data-style="foundry"] .tag-fill { fill: var(--team-primary); }
+html[data-style="foundry"] .team-plate-art .edge-shadow,
+html[data-style="foundry"] .team-plate-art .edge-shade,
+html[data-style="foundry"] .team-plate-art .edge-ridge,
+html[data-style="foundry"] .tag-plate .edge-shadow,
+html[data-style="foundry"] .tag-plate .edge-shade,
+html[data-style="foundry"] .tag-plate .edge-ridge { display: none; }
+html[data-style="foundry"] .team-plate-art .edge-rim,
+html[data-style="foundry"] .tag-plate .edge-rim { stroke: var(--style-steel-dark); }
+html[data-style="foundry"] .team-plate-art .edge-face,
+html[data-style="foundry"] .tag-plate .edge-face { stroke: url(#theme-steel); }
+html[data-style="foundry"] .banner .team-plate span,
+html[data-style="foundry"] .banner .team-plate b,
+html[data-style="foundry"] .ticker .tag span { color: var(--style-header-ink); }
+
+/* The background: a dark floor with a grain, the work light, two creeping bands of hazard stripes along the top and
+   the bottom edge, six specks of dust and a hook that crosses the rail now and then */
+html[data-style="foundry"] #theme-bg .bg-foundry { display: block; }
+html[data-style="foundry"] #screen::before { display: none; }
+#theme-bg .fy-floor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background:
+    repeating-linear-gradient(90deg, var(--style-grain) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, var(--style-floor-light), transparent 40%, var(--style-floor-shade)),
+    var(--style-floor);
+}
+#theme-bg .fy-lamp {
+  position: absolute;
+  left: -500px;
+  top: -200px;
+  width: 1200px;
+  height: 1500px;
+  background: radial-gradient(ellipse at 50% 30%, var(--style-lamp) 0, var(--style-lamp-soft) 35%, transparent 65%);
+  animation: fy-lamp 70s ease-in-out infinite alternate;
+}
+#theme-bg .fy-hazard {
+  position: absolute;
+  left: -120px;
+  width: 2160px;
+  height: 10px;
+  background: repeating-linear-gradient(135deg, var(--style-hazard-dim) 0 24px, var(--style-hazard-ink) 24px 48px);
+  opacity: .35;
+  animation: fy-creep 9s linear infinite;
+}
+#theme-bg .fy-hazard-top { top: 0; }
+#theme-bg .fy-hazard-bottom { top: 1070px; }
+#theme-bg .fy-mote {
+  position: absolute;
+  left: var(--x, 0px);
+  top: var(--y, 0px);
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  border-radius: 50%;
+  background: var(--style-mote);
+  opacity: .18;
+  animation: fy-mote var(--drift, 12s) ease-in-out infinite alternate;
+  animation-delay: var(--lag, 0s);
+}
+#theme-bg .fy-rail {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 1920px;
+  height: 6px;
+  background: var(--style-chain);
+  opacity: .8;
+}
+#theme-bg .fy-hook {
+  position: absolute;
+  left: -200px;
+  top: 12px;
+  animation: fy-hook 150s linear infinite;
+}
+.fy-trolley { fill: var(--style-trolley); }
+.fy-chain {
+  fill: none;
+  stroke: var(--style-chain);
+  stroke-width: 5px;
+  stroke-dasharray: 9 4;
+}
+.fy-hook-curve {
+  fill: none;
+  stroke: var(--style-chain);
+  stroke-width: 6px;
+  stroke-linecap: round;
+}
+
+/* Calm and no motion: the gears, the pistons and the background stand still */
+html:not([data-motion="full"]) .art-foundry .fa-gear,
+html:not([data-motion="full"]) .art-foundry .fa-piston-rod { animation: none; }

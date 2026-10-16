@@ -9,7 +9,7 @@ export const settingsId = 'dashboardSettings';
 
 export const holdMinutes = { least: 1, most: 60 };
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
-export const themeIds = ['original', 'cybertron', 'retro'];
+export const themeIds = ['original', 'cybertron', 'retro', 'foundry'];
 const previewMinutes = 10;
 export const viewMinutes = { least: 10, most: 120, usual: 30 };
 const pauseMinutes = { least: 5, most: 120, usual: 60 };

@@ -43,6 +43,7 @@
 
 import * as frame from '../frame.js';
 import { areaMarkup, frameKind } from './plate.js';
+import { themeArtMarkup } from './theme-art.js';
 import { hostFor, placeWholePanel } from './panels.js';
 import { changeThemeNow } from './theme-apply.js';
 import { changeTeamNow, trimNow } from './teams.js';
@@ -66,7 +67,7 @@ function makeArea(region) {
   element.dataset.frame = kind;
   element.dataset.state = 'in';
   if (region !== 'ticker') element.dataset.metal = frame.firstFinish(); // the page frame's own metal, see tokens.css
-  element.innerHTML = (kind === 'ticker' ? '' : areaMarkup(kind)) + '<div class="page-host"></div>';
+  element.innerHTML = (kind === 'ticker' ? '' : areaMarkup(kind)) + themeArtMarkup(kind) + '<div class="page-host"></div>';
 
   document.getElementById('region-' + region).appendChild(element);
   areaOf[region] = element;
@@ -96,7 +97,7 @@ export function redrawFrames() {
     Array.from(area.children)
       .filter(child => !child.classList.contains('page-host'))
       .forEach(child => child.remove());
-    if (kind !== 'ticker') area.insertAdjacentHTML('afterbegin', areaMarkup(kind));
+    area.insertAdjacentHTML('afterbegin', (kind === 'ticker' ? '' : areaMarkup(kind)) + themeArtMarkup(kind));
     area.dataset.frame = kind;
   });
 }

@@ -79,7 +79,7 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 
 | Folder | What it holds |
 |--------|---------------|
-| `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/<theme>/` (original, cybertron and retro), `themes/` (color files and seasonal packs), `layouts/` and `data/` |
+| `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/<theme>/` (original, cybertron, retro and foundry), `themes/` (color files and seasonal packs), `layouts/` and `data/` |
 | `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the view defaults and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
 | `control/` | The control page service (Node, standard library only) and its pages: updates (Update from GitHub, or a folder), rollback, what is on the wall, the keys and the log (docs/control-page.md) |
 | `computer/` | Everything that runs on the Teletraan computer: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |

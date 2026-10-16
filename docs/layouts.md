@@ -16,7 +16,7 @@ A layout is where the regions of the screen sit. A view names one (docs/views.md
   across the whole bottom. There is no small frame. The Prime, Nova and Family views
   have it, whatever theme is on (see "The bar layout").
 
-In this page a **theme** is one of the folders of `dashboard/styles/` (original, cybertron and retro),
+In this page a **theme** is one of the folders of `dashboard/styles/` (original, cybertron, retro and foundry),
 chosen for each day of the week on the Themes page, and "style" is the older word for the same
 thing in the code (`data-style`, `core/style.js`, `?style=`). A **color file** is one of the CSS files
 of `dashboard/themes/`. A **view** is what plays (General, Prime, Nova or Family). "Minimal" is the name the
@@ -2116,22 +2116,45 @@ Then run every test (docs/where-things-are.md, "Checking your work").
 ## Themes
 
 A theme is the look of the frames, the textures and the type. The themes are `original`, `cybertron` and
-`retro`. Each one is a folder, `dashboard/styles/<id>/`, with four files:
+`retro` and `foundry`. Each one is a folder, `dashboard/styles/<id>/`, with five files:
 
 | File | What it holds |
 |------|---------------|
 | `tokens.css` | the theme-level overrides of the team tokens (`--style-*` for Cybertron, none for Original) |
 | `theme.css` | the frames, textures and type of the theme |
 | `frame.css` | keyframes and animation rules that only this theme has |
-| `transitions.js` | the swap variant, which is the pull apart of `core/swap-plan.js` unless the theme moves differently |
+| `transitions.js` | the swap variant, which is the pull apart of `core/swap-plan.js` unless the theme moves differently, and `kit`, which holds the id of the theme until the transitions fill it in |
+| `background.js` | the markup of the background of the theme, which `core/theme-bg.js` puts behind the stage |
 
 `index.html` links the three stylesheets of every theme, and `core/style-loader.js` finds the folder from an
 id, adds a link a page lacks and loads the swap variant. The id goes on the page as `data-style`.
 `?style=` and the weekday schedule give the id.
 
-Retro is a placeholder. It is a copy of Original, marked by the file `dashboard/styles/retro/PLACEHOLDER`, and
-the Studio says "Retro is not designed yet; it looks like Original" (`studio/inputs/theme-styles.js`) until the
-marker and the note are removed.
+What each theme draws:
+
+- Original is the screen as it has always been. Its background is the setting Background (Dashboard Settings, Look
+  tab): `sweep` draws nothing more than the light band of the frames, and `blueprint`, `rays`, `spotlight` and
+  `embers` draw a few layers behind the panels. Only Original reads the setting, and the field is hidden in the
+  Studio while no day of the week plays Original. `?background=` in the address wins for that page.
+- Cybertron draws readout panels: a translucent body, notched corners, a double hairline border that runs from the
+  neon of the team to its pink, brackets outside two corners, a ruler of ticks along the top edge, a faint hex field,
+  and on the tall frames a LINK 04 mark made of lines, not letters. The header is a translucent wedge of the accent.
+  The background is near black with a grid of 64 pixels that rises on a 16 second loop and a scan line every 9
+  seconds.
+- Retro draws rounded cel frames (radius 44) in the plate color of the team with an ink line, a hard block of ink
+  behind, white strokes at the top left, a halftone shade at the bottom right, small stars, and a flat header plate
+  in the accent with the title inked dark. The team name is white with an ink outline. The background is a deep blue
+  sky with eleven twinkling stars and a sunburst that turns once in 180 seconds.
+- Foundry draws a steel rim, a bolt flange, weld stitches, a hazard strip, a caution plate, a steel header with an
+  accent bar, gears behind the corner cuts (90 seconds, 67.5 for the one that meshes the other way, 120 for the far
+  one) and pistons that stroke every 6 to 7.5 seconds. The background is a dark shop floor with a work light that
+  pans over 70 seconds, creeping hazard bands, six specks of dust and a hook on a rail that crosses once in 150
+  seconds. Foundry is not in the starting week.
+
+Retro and Foundry are drawn by `core/theme-art.js`, which adds the markup to every frame of the standard layout for
+every theme, and the stylesheet of the theme shows it. The bar layout still draws Minimal's frames in every theme;
+the background of the theme reaches it. All of it moves with transform and opacity only, and calm and no motion draw
+it still.
 
 Minimal is not a theme. The bar layout draws as Minimal drew, in every theme, in `layouts/bar-minimal.css`:
 the frames, the steel, the rivets and the grid. That file is a placeholder for the look of the views. In

@@ -1,6 +1,6 @@
 // The shape of a bar frame and its options (part of plate.js).
 
-import { barBracketOutset, barConduitInset, barNeonInset, hazardHeight, hazardPath, offsetOutline, offsetPoint, slashCount, slashPath, slashPitch, slashSlant, slashWidth, thinEdge, tickPath, wearOf, weldGap } from './plate-trim.js';
+import { barBracketOutset, barConduitInset, barNeonInset, hazardHeight, hazardPath, linkMarkPath, linkMarkWidth, offsetOutline, offsetPoint, slashCount, slashPath, slashPitch, slashSlant, slashWidth, thinEdge, tickPath, wearOf, weldGap } from './plate-trim.js';
 import { halves, largeHeader, pathData, rivetsOf, shapes, slantDegrees, tabTop, tenth, toPoints } from './plate-shapes.js';
 
 // The shape of one bar frame. options:
@@ -20,6 +20,8 @@ import { halves, largeHeader, pathData, rivetsOf, shapes, slantDegrees, tabTop, 
 //                   bars of the edge end, along the top, down the right side and along the
 //                   bottom (each a pair of numbers) and down the left side (one)
 //   headerLine      a neon line along the foot of the header, with a row of ticks over it
+//   ruler, link, hex  what the Cybertron theme draws on its readout panels: a row of ticks along the top
+//                   edge, the LINK 04 mark at the foot (tall frames only) and the faint hex field over the body
 //   weld            the x of a vertical weld seam under the header
 //   rivets          true for a row of rivets along every long straight edge
 //   wear            the length of the arcs of rust at the two bottom corners
@@ -160,6 +162,10 @@ export function makeBarShape(options) {
     shape.art.brackets = pathData(shape.bracketLines);
   }
 
+  if (options.ruler) shape.art.ruler = tickPath(left + chamfer + 40, right - chamfer - 40, top + neonAt + 18);
+  if (options.link) shape.art.link = linkMarkPath(turned ? left + chamfer + 24 : right - chamfer - linkMarkWidth - 24, bottom - neonAt - 28);
+  if (options.hex) shape.art.hex = toPoints(shape.body);
+
   if (options.pieces) shape.pieces = barPieces(shape, options.pieces === true ? undefined : options.pieces, turned);
   return shape;
 }
@@ -184,7 +190,10 @@ export function decorMarkup(shape) {
   const art = shape.art;
   const path = (style, name, data) => (data ? `<path class="art-${style} art-${name}" d="${data}"/>` : '');
 
-  return path('cybertron', 'seams', art.seams) + path('cybertron', 'hazard', art.hazard) + path('cybertron', 'conduit', art.conduit) +
+  const hex = art.hex ? `<polygon class="art-cybertron art-hex" points="${art.hex}"/>` : '';
+
+  return hex + path('cybertron', 'seams', art.seams) + path('cybertron', 'hazard', art.hazard) + path('cybertron', 'conduit', art.conduit) +
+    path('cybertron', 'ruler', art.ruler) + path('cybertron', 'link', art.link) +
     path('cybertron', 'slashes', art.slashes) + path('cybertron', 'brackets', art.brackets) +
     path('minimal', 'weld-dark', art.weldDark) + path('minimal', 'weld-light', art.weldLight) +
     path('glow', 'glow-header-2', art.headerLine) + path('glow', 'glow-header-1', art.headerLine) +
@@ -320,19 +329,19 @@ export const barOptions = {
     width: 1152, height: 708, chamfer: 56, step: 24, run: 150,
     bolts: [1, 2, 5, 6, 7, 0], legs: [60, 70],
     header: largeHeader,
-    hazard: true, seams: [264, 408, 552], conduit: true, slashes: true,
+    hazard: true, seams: [264, 408, 552], conduit: true, slashes: true, ruler: true, link: true, hex: true,
     pieces: { top: [230, 750], right: [170, 520], bottom: [480, 930], left: 230 },
   },
   'cybertron-grid2': {
     width: 656, height: 372, chamfer: 56, step: 24, run: 120,
     bolts: [1, 2, 5, 6, 7, 0], legs: [40, 50],
     header: { bottom: 84, tabTop: 480, tabBottom: 462 },
-    hazard: true, seams: [160, 252], conduit: true, slashes: true,
+    hazard: true, seams: [160, 252], conduit: true, slashes: true, ruler: true, hex: true,
     pieces: { top: [160, 480], right: [100, 240], bottom: [260, 500], left: 140 },
   },
   'cybertron-banner': {
     width: 1840, height: 228, chamfer: 32, step: 16, run: 100,
-    bolts: [1, 2, 5, 6, 7, 0], legs: [40, 50], conduit: true,
+    bolts: [1, 2, 5, 6, 7, 0], legs: [40, 50], conduit: true, ruler: true, hex: true,
   },
   'cybertron-ticker': {
     width: 1840, height: 77, chamfer: 32, step: 16, run: 100,

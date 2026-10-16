@@ -2,19 +2,17 @@
 // textures, type treatment and transitions. The ids are the folders of dashboard/styles/ and are stored
 // in themeByWeekday of Dashboard Settings, so never rename one. tests/schemas.test.mjs fails when a
 // list differs from the dashboard's.
-//
-// placeholder is true for a theme that is a copy of another until it is designed. Remove it from the
-// line, and the dashboard/styles/<id>/PLACEHOLDER marker, together.
 
 export const themeChoices = [
   { id: 'original', title: 'Original', description: 'The screen as it has always looked.' },
   { id: 'cybertron', title: 'Cybertron', description: 'The same arrangement in gunmetal plates.' },
-  { id: 'retro', title: 'Retro', description: 'Retro is not designed yet; it looks like Original.', placeholder: true },
+  { id: 'retro', title: 'Retro', description: 'Rounded cel frames with an ink line, on a deep blue sky.' },
+  { id: 'foundry', title: 'Foundry', description: 'Blued steel, bolts, hazard strips and gears, on a dark shop floor.' },
 ];
 
 export const themeIds = themeChoices.map(theme => theme.id);
 
-// The days of the week, Monday first, with the theme each plays to start with. Retro is not scheduled.
+// The days of the week, Monday first, with the theme each plays to start with. Retro and Foundry are not in the starting schedule.
 export const themeWeekdays = [
   { name: 'monday', title: 'Monday', start: 'original' },
   { name: 'tuesday', title: 'Tuesday', start: 'cybertron' },

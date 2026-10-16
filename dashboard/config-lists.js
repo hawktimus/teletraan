@@ -24,16 +24,17 @@ export const looks = ['polished', 'flat', 'plain'];
 // the folder from the id. The id goes on the page as data-style (core/style.js). The Studio copies this list.
 //   original   the screen as it has always been
 //   cybertron  the sharp theme: gunmetal plates with a steel edge and neon
-//   retro      a placeholder that looks like Original until its folder loses the file PLACEHOLDER
-export const themeIds = ['original', 'cybertron', 'retro'];
+//   retro      rounded cel frames in flat team color with an ink line, on a deep blue sky
+//   foundry    blued steel with bolt flanges, hazard strips, turning gears and a dark shop floor
+export const themeIds = ['original', 'cybertron', 'retro', 'foundry'];
 
 // Minimal is not a theme any more: the bar layout draws as Minimal drew, in every theme (layouts/bar-minimal.css).
 // The word stays as a name a Screen or a preview may still hold. It means the Original theme in the bar layout,
 // until the Views (docs/layouts.md) have the layout of their own.
 export const barStyle = 'minimal';
 
-// The names a Screen, a preview and Style in Dashboard Settings hold. Retro is not in the list yet: ?style= and the weekday
-// schedule of themes reach it through themeIds (core/style.js, isStyle), and the Studio lists follow when it is designed.
+// The names a Screen, a preview and Style in Dashboard Settings hold. Retro and Foundry are not in the list: ?style= and the
+// weekday schedule of themes reach them through themeIds (core/style.js, isStyle).
 export const styles = ['original', 'cybertron', barStyle];
 
 // The Screens (core/screens.js): three documents in the Studio, one for each style. The id of a document says its
@@ -250,9 +251,9 @@ export const screenLimits = {
 };
 
 // The Views and the theme schedule (Studio: Look tab of Dashboard Settings, and the Themes page). The keys are the four
-// Views in the order they take the screen. A day of the week plays one of the scheduled themes; Retro is not scheduled.
+// Views in the order they take the screen. A day of the week plays one of the scheduled themes; Retro and Foundry are not in the starting schedule.
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
-export const scheduledThemeIds = ['original', 'cybertron', 'retro'];
+export const scheduledThemeIds = ['original', 'cybertron', 'retro', 'foundry'];
 export const defaultThemeByWeekday = {
   monday: 'original',
   tuesday: 'cybertron',
@@ -329,3 +330,8 @@ export const defaultViews = {
 
 // The panels of the Family view are fixed
 export const familyPanels = ['monday-overall', 'monday-status-depts'];
+
+// The background of the Original theme (Look tab of Dashboard Settings, field background). sweep is the screen as it has
+// always been, the light band that crosses each frame. The other four are drawn behind the panels (core/theme-bg.js, and
+// styles/original/theme.css). The other themes draw their own background and ignore the setting.
+export const backgrounds = ['sweep', 'blueprint', 'rays', 'spotlight', 'embers'];
