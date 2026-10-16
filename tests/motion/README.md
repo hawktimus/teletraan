@@ -20,7 +20,7 @@ If Playwright is not installed the runner prints one line, `skip  motion tests`,
 ## How a test works
 
 1. `run.mjs` serves `dashboard/` on a free port of this computer and starts the browser.
-2. Each page is opened with `?sample=1&clock=fixed&motion=full&night=off`. `clock=fixed` makes the clock of the page start at 14:00 on Wednesday 14 October 2026, so the night hours and the weekday themes are the same on every run. With `?sample=1` and `clock=fixed` the page has `window.teletraanTest` (`dashboard/core/test-hook.js`, and nothing on the wall). `window.teletraanTest.play(name)` starts one transition: `view-swap`, `team-swap`, `blue-screen`, `red-eyes`, `monday-scroll`, `photo-cross`, `name-glitch`, `hawk-flap`.
+2. Each page is opened with `?sample=1&clock=fixed&motion=full&night=off`. `clock=fixed` makes the clock of the page start at 14:00 on Wednesday 14 October 2026, so the night hours and the weekday themes are the same on every run. With `?sample=1` and `clock=fixed` the page has `window.teletraanTest` (`dashboard/core/test-hook.js`, and nothing on the wall). `window.teletraanTest.play(name)` starts one transition: `view-swap`, `team-swap`, `reform-panel`, `reform-view`, `blue-screen`, `red-eyes`, `monday-scroll`, `photo-cross`, `name-glitch`, `hawk-flap`.
 3. `lib/probe.js` runs inside the page. It wraps `Element.animate`, so it knows every animation when it is made, pauses them and sets their time. So "at 200 ms" is the screen at exactly 200 ms, whatever the computer is doing. The measurements go back to the test, which judges them.
 
 ## The rules
@@ -28,6 +28,7 @@ If Playwright is not installed the runner prints one line, `skip  motion tests`,
 | File | Rules |
 |------|-------|
 | `swap.mjs` | Pull-apart swap, for a change of view and for a change of team: at 0 ms every piece is in place; at 200 and 350 ms no two blocks of text overlap and no piece is outside the canvas by more than its own size; at 1250 ms every piece has landed within 1px with opacity 1; the hawk stays on the canvas and ends in the slot of the logo. The team swap also lands mirrored. |
+| `reform.mjs` | The panel transition and the view transition in the Original theme (docs/transitions.md), one scene of each, at 1920 x 1080 with the CPU at normal speed. No frame of the three seconds is longer than 34 ms (a frame of a 60 Hz screen is 16.7 ms, a held 30 frames a second is 33.3 ms), and the element counts of the run are printed (the order's budget is about 220 animated elements for a panel and 660 for a view). Every animation moves transform or opacity, and the stage has the only perspective. At 0 ms the page is the old page, and at 3 s it is the new page with no seam (fewer than 2 percent of the pixels differ by more than 48 from the page that was there, and from the real page that takes over). The hawk stays on the canvas from start to end. |
 | `hidden.mjs` | Blue screen and red eyes: the collapse leaves no piece out of the pile and no content showing, the effect plays, the cube rises from below the screen, shrinks and ends, every piece and bolt returns within 1px, and the collapse, cube and rebuild take no more than 6 seconds more than the effect. |
 | `monday.mjs` | The three Monday cards that scroll, in every look: five row heights in 600 ms by transform only, and no row shows outside the clip. |
 | `photo.mjs` | The photo cross changes opacity only, and two photos are never both above 0.9. |
@@ -40,6 +41,10 @@ If Playwright is not installed the runner prints one line, `skip  motion tests`,
 ## Where a rule is looser than the order
 
 Say so here and in the commit that did it, so nobody wonders.
+
+- The frame limit of `reform.mjs` is 34 ms and not 33: a screen of 60 Hz shows a frame for 16.7, 33.3 or 50 ms, and 33.3 is the held 30 frames a second. The first frame that waits for a third refresh (50 ms) fails. The run is let go at full speed, so it is measured in the headless browser of this computer, which draws with software and is slower than a computer with a graphics card; the numbers say nothing certain about the Mini.
+- The frame rule of `reform.mjs` is as the order says for the panel transition: no frame over 34 ms. For the view transition, which draws four regions, 128 squares and the hawk, it lets one frame in twelve be over 34 ms and none be over 100 ms, because the headless browser draws with software and this computer takes about 22 ms a frame on average for the view (17 ms is an idle page). On a computer that draws with a graphics card the rule can be tightened to the order's. The numbers are printed by every run.
+- The run of `reform.mjs` holds the run on the screen for its looks (`window.__reformHold`), because the run ends by its own clock and the rules set the time of every animation one at a time.
 
 - Letters of one word, and a bracket that touches the line under it, are not text blocks that overlap (`swap.mjs`): only ink that overlaps by more than 4px does.
 - A seam is a run of at least 8 pixels along an edge. A pinhole of a few pixels where three pieces meet at a corner is not counted (`seams.mjs`).

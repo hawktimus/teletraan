@@ -113,10 +113,10 @@ await test('the rivets pop up in a run from the corners to the middle of each ed
   assert.ok(plan.rivetStops(1)[2][0] < plan.rivetStops(0)[2][0], 'and the one nearer the middle seats first');
 });
 
-await test('the screws spin out two turns and lift toward the camera, and spin in last', () => {
+await test('the screws spin out two turns and lift, and spin in last', () => {
   const stops = plan.screwStops();
   assert.ok(/rotate\(-720deg\)/.test(stops[1][1]));
-  assert.ok(/translate3d\(0px,-14px,90px\)/.test(stops[1][1]));
+  assert.ok(/scale\(1.35\)/.test(stops[1][1]), 'it lifts: it is larger, as it is nearer');
   assert.ok(stops[1][0] <= 400, 'out by 0.40');
   assert.ok(stops[stops.length - 2][0] >= 2700, 'in during the last part of the tighten');
 });
@@ -126,7 +126,7 @@ await test('every track moves transform or opacity, and no track names a color, 
   const tracks = [
     ['transform', plan.cameraStops()], ['transform', plan.squareStops(squares[10])], ['opacity', plan.squareShadeStops(squares[10])],
     ['transform', plan.jointStops('h', 2)], ['opacity', plan.jointShadeStops('v', 3)], ['opacity', plan.chassisStops()],
-    ['opacity', plan.coverOldStops()], ['opacity', plan.coverNewStops()], ['opacity', plan.coverNewStops(true)], ['opacity', plan.strapFadeStops()], ['opacity', plan.hiddenStops()],
+    ['opacity', plan.coverOldStops()], ['opacity', plan.coverNewStops()], ['opacity', plan.coverNewStops(true)], ['opacity', plan.coverEdgesStops()], ['opacity', plan.hiddenStops()],
   ];
   plan.hardwareList(main).forEach(item => tracks.push(['transform', item.stops]));
 
@@ -205,10 +205,11 @@ await test('a page change gets the panel transition inside a view and the view t
   });
   assert.equal(plan.kindToPlay('reform', Object.assign({}, free, { busy: true })), '');
   assert.equal(plan.kindToPlay('reformView', Object.assign({}, free, { running: true, looked: true })), '', 'only one transition plays');
+  assert.equal(plan.kindToPlay('reform', Object.assign({}, free, { slow: true })), '', 'a screen that draws slowly gets the plain change');
 });
 
 await test('the code of the transitions draws no filter, no blur and no shadow animation, and writes no color', () => {
-  const files = ['core/reform-plan.js', 'core/reform-bake.js', 'core/reform-draw.js', 'core/reform-hawk.js', 'core/reform-run.js', 'core/reform-panel.js', 'core/reform-view.js', 'reform.css', 'styles/original/reform-kit.css'];
+  const files = ['core/reform-plan.js', 'core/reform-bake.js', 'core/reform-draw.js', 'core/reform-hawk.js', 'core/reform-run.js', 'core/reform-panel.js', 'core/reform-view.js', 'reform.css', 'reform-kit.css'];
 
   files.forEach(file => {
     const text = read(file).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1');
@@ -223,7 +224,7 @@ await test('the code of the transitions draws no filter, no blur and no shadow a
 
 await test('only the parts that have a back face or a folding chain keep their 3D, and a square has a back with the face hidden', () => {
   const css = read('reform.css');
-  const kit = read('styles/original/reform-kit.css');
+  const kit = read('reform-kit.css');
 
   assert.ok(/\.reform-face,\s*\.reform-back \{[^}]*backface-visibility: hidden/.test(css));
   assert.ok(/\.reform-square \{[^}]*transform-style: preserve-3d/.test(css));
