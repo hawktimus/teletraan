@@ -43,6 +43,7 @@ export const mondayPanels = [
   { title: 'Monday: Overall progress', value: 'monday-overall' },
   { title: 'Monday: Timeline by team', value: 'monday-timeline' },
   { title: 'Monday: Board by team', value: 'monday-board' },
+  { title: 'Monday: Status pie by team', value: 'monday-pie' },
 ];
 
 // The older Monday panels, only so that a saved row can still be named in a list line
@@ -64,6 +65,7 @@ export const mondayKinds = {
   'monday-overall': 'none',
   'monday-timeline': 'team',
   'monday-board': 'team',
+  'monday-pie': 'team',
 };
 
 // The large panels whose items carry a Team field and are filtered by the team on the screen

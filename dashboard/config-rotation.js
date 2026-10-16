@@ -29,6 +29,6 @@ export const rosterPageRows = 6;
 // the side column at the left) and every other panel is split (the main panel at the left, the countdown at the top right and
 // Panel B at the bottom right, which is the standard layout).
 export const roboticsWidePanels = [
-  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'roster',
+  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie', 'roster', 'driveHours',
   'robotStatus', 'wireframe',
 ];

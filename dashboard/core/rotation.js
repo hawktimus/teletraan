@@ -38,6 +38,11 @@ function knownPanel(id) {
   return Boolean(found && found.region === 'grid1' && !found.testOnly);
 }
 
+function smallPanel(id) {
+  const found = panels.find(item => item.id === id);
+  return Boolean(found && found.region === 'grid2' && !found.testOnly && !found.lastResort);
+}
+
 // One row, tidy, or null when it cannot be played at all (no view, no known panel)
 export function tidyRotationRow(raw) {
   if (!isRecord(raw)) return null;
@@ -49,6 +54,8 @@ export function tidyRotationRow(raw) {
   const row = { view: view, panel: panel, shown: raw.shown !== false };
   if (typeof raw.seconds === 'number' && isFinite(raw.seconds) && raw.seconds > 0) row.seconds = Math.round(keepInRange(raw.seconds, { min: 6, max: 120 }, 6));
   if (typeof raw.department === 'string' && raw.department.trim() !== '') row.department = raw.department.trim();
+  if (raw.part === 1 || raw.part === 2) row.part = raw.part;
+  if (typeof raw.side === 'string' && smallPanel(raw.side.trim())) row.side = raw.side.trim();
   if (panel === 'photo') {
     row.photoCount = Math.round(keepInRange(raw.photoCount, { min: 1, max: 20 }, 4));
     row.secondsPerPhoto = Math.round(keepInRange(raw.secondsPerPhoto, { min: 5, max: 60 }, 10));
@@ -93,7 +100,7 @@ export function mainRowOf(row, content) {
   const team = row.view === 'robotics' ? '' : resolveView(content, viewKeyOfRotation(row.view)).team;
   const main = { panel: row.panel, team: team };
 
-  ['seconds', 'department', 'photoCount', 'secondsPerPhoto'].forEach(name => {
+  ['seconds', 'department', 'photoCount', 'secondsPerPhoto', 'side', 'part'].forEach(name => {
     if (row[name] !== undefined) main[name] = row[name];
   });
   return main;

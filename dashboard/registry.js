@@ -74,6 +74,7 @@ export const panels = [
   { id: 'monday-overall', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-timeline', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-board', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-pie', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-milestones', region: 'grid1', topic: 'monday', monday: true, older: true },
   { id: 'monday-progress', region: 'grid1', topic: 'monday', monday: true, older: true },
   { id: 'monday-milestones-both', region: 'grid1', topic: 'monday', monday: true, older: true },

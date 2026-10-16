@@ -11,6 +11,12 @@ export const handledKey = 'teletraan-next-look-handled';
 
 const teamCode = /^[a-z0-9]+$/;
 
+// The large panels that can name a department, the ones that can be one half of a list (a first and a second part), and the
+// small panels a row can pair with (core/rotation.js, the side of a row)
+const departmentPanels = ['roster'];
+const halfPanels = ['events', 'roster'];
+const sideIds = panels.filter(item => item.region === 'grid2' && !item.testOnly && !item.lastResort).map(item => item.id);
+
 function panelOf(id) {
   return panels.find(item => item.id === id);
 }
@@ -54,6 +60,7 @@ export function tidyMainRow(raw, bothTeams = false) {
   if (!panel || panel.region !== 'grid1' || panel.testOnly) return null;
 
   let team = tidyTeam(raw.team);
+  const named = typeof raw.department === 'string' && raw.department.trim() !== '';
   let id = panel.id;
   let older = false;
   if (panel.monday) {
@@ -64,14 +71,17 @@ export function tidyMainRow(raw, bothTeams = false) {
     const kind = mondayKinds[id];
     if (!kind) return null;
     if (kind === 'none') team = '';
-    // a tasks row with no team is a department of both teams, which only the Robotics view plays (bothTeams)
-    else if (team === 'both' || (team === '' && !(bothTeams && kind === 'department'))) return null;
+    // a row with no team and a department is a department of both teams, which only the Robotics view plays (bothTeams)
+    else if (team === 'both' || (team === '' && !(bothTeams && (kind === 'department' || named)))) return null;
   } else if (!teamPanels.includes(panel.id) || team === 'both') {
     team = '';
   }
 
   const row = { panel: id, team: team };
-  if (panel.monday && mondayKinds[id] === 'department') row.department = typeof raw.department === 'string' && !older ? raw.department.trim() : '';
+  if (panel.monday && mondayKinds[id] === 'department') row.department = named && !older ? raw.department.trim() : '';
+  else if (named && !older && (panel.monday || departmentPanels.includes(panel.id))) row.department = raw.department.trim();
+  if (halfPanels.includes(panel.id) && (raw.part === 1 || raw.part === 2)) row.part = raw.part;
+  if (typeof raw.side === 'string' && sideIds.includes(raw.side.trim())) row.side = raw.side.trim();
   const seconds = tidySeconds(raw.seconds);
   if (seconds) row.seconds = seconds;
   if (older) Object.defineProperty(row, 'older', { value: true, enumerable: false });
