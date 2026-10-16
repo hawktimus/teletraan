@@ -153,7 +153,7 @@ export const contentQuery = `{
   },
   "frc": *[_id == "frc-status"][0],
   "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) },
-  "mini": *[_id == "status-mini"][0] { lastCalendarSyncAt, "calendarErrors": count(*[_id == "calendar-status"][0].calendars[defined(error)]) }
+  "mini": *[_id == "status-mini"][0] { lastCalendarSyncAt }
 }`;
 
 const requestSeconds = 15;

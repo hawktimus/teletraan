@@ -73,7 +73,7 @@ export function dotStates(facts, now = new Date()) {
   };
 }
 
-// The part of status-mini and calendar-status that the screen asks for (core/sanity.js). Empty when there is none.
+// The part of status-mini and the calendar status document that the screen asks for (core/sanity.js). Empty when there is none.
 export function tidyMini(raw) {
   const source = isRecord(raw) ? raw : {};
 
