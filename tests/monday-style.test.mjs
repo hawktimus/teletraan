@@ -231,7 +231,6 @@ test('a step that comes from outside the views, a competition card, plays in the
   assert.deepEqual(world.log, ['checkTheme'], 'the Monday cards end, and no swap is queued');
   assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'minimal', monday: false }, 'in the team and the style of the view');
 });
-});
 
 test('a step is asked about as the team it is drawn for, without that team being held', async () => {
   const world = await start();
