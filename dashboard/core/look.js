@@ -19,7 +19,7 @@ const switchesOf = {
 // settings are the cleaned Dashboard Settings. asked is what the page address
 // has: asked.look, asked.finish and asked.glint, each null when it is not there.
 // The address wins, for this page only: ?look= over the setting, and ?finish=
-// and ?glint= over what the look says, so the old test addresses keep their meaning.
+// and ?glint= over what the look says.
 // Returns the three values to put on the html element: look, finish and glint.
 export function pageSwitchesFor(settings, asked) {
   let look = defaultSettings.look;

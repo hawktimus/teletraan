@@ -20,6 +20,7 @@
 import { calendarKinds, noCalendarKind } from '../config.js';
 import { forcingRule } from './events.js';
 import { asDate } from './time.js';
+import { timeZoneOf } from './theme.js';
 
 // Four rows of 144px fill the 576px body (panels/events/panel.css)
 export const eventsPerPage = 4;
@@ -83,7 +84,7 @@ function byStart(first, second) {
 // so an event that is happening now stays. A page with no rows is not shown (shownPages).
 export function eventPages(content, now = new Date()) {
   const settings = content.settings || {};
-  const zone = (content.theme || {}).timeZone;
+  const zone = timeZoneOf(content);
 
   const rows = (content.events || [])
     .filter(event => !isNaN(asDate(event.start)) && finishOf(event) >= now)

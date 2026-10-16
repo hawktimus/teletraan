@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 
@@ -20,7 +21,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-presentation
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'core/constants.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const presentation = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation.js')).href);
 const constants = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/constants.js')).href);

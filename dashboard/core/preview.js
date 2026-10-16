@@ -28,6 +28,7 @@ import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
 import { previewStyle } from './style.js';
 import { previewTeam } from './teams.js';
 import { isKnownOverlay, previewPack } from './theme.js';
+import { isRecord } from './text.js';
 
 export const handledKey = 'teletraan-preview-handled';
 export const activeKey = 'teletraan-preview-active';
@@ -45,10 +46,6 @@ export const previewKinds = {
 };
 
 const nothingHeld = { team: '', style: '', pack: '' };
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 export function isKind(id) {
   return typeof id === 'string' && Object.prototype.hasOwnProperty.call(previewKinds, id);

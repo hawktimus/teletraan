@@ -13,6 +13,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const workFolders = [];
@@ -23,7 +25,7 @@ function test(name, run) {
 }
 
 function read(file) {
-  return fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  return readModule(path.join(dashboardFolder, file), 'utf8');
 }
 
 // The dashboard files are browser modules named .js. Copying them next to a
@@ -41,7 +43,7 @@ function copyScripts() {
   files.forEach(file => {
     const target = path.join(folder, 'dashboard', file);
     fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.copyFileSync(path.join(dashboardFolder, file), target);
+    copyModule(path.join(dashboardFolder, file), target);
   });
   return pathToFileURL(path.join(folder, 'dashboard')).href + '/';
 }

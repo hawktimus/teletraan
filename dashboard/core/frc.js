@@ -12,16 +12,13 @@
 // sample, such as [1234], are both just what the card writes.
 
 import { visibleItems } from './content.js';
+import { isRecord } from './text.js';
 
 const plainDate = /^\d{4}-\d{2}-\d{2}$/;
 const teamCode = /^[a-z0-9]+$/;
 
 // How many of each the cards can draw. The Mini keeps at most these as well.
 const most = { events: 12, districtEvents: 30, results: 8, people: 4, picks: 4, awards: 20, snapshots: 120, notes: 5 };
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 function listOf(value) {
   return Array.isArray(value) ? value.filter(isRecord) : [];

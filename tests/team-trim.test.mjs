@@ -13,6 +13,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -23,7 +25,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-trim-'));
 
 function copyInto(folder, from, to) {
   fs.mkdirSync(path.dirname(path.join(folder, to)), { recursive: true });
-  fs.copyFileSync(path.join(root, from), path.join(folder, to));
+  copyModule(path.join(root, from), path.join(folder, to));
 }
 
 function makeTree(name, files) {
@@ -35,7 +37,7 @@ function makeTree(name, files) {
 }
 
 const urlOf = (folder, file) => pathToFileURL(path.join(folder, file)).href;
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => readModule(path.join(root, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
 // The files every tree has: the configuration, the registries and everything in core/

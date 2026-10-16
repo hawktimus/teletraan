@@ -3,20 +3,16 @@
 // can run it. core/subthemes-layer.js draws the result.
 
 import { anchorBox, anchorNames, fitInBox } from './anchors.js';
-import { dateIn, isTimeZone } from './theme.js';
-import { defaultThemeSettings } from '../config.js';
+import { dateIn, zoneNamed } from './theme.js';
+import { isRecord } from './text.js';
 
 export const subthemeMotions = ['none', 'drift', 'blink', 'fall'];
-export const sizeLeast = 40;
-export const sizeMost = 240;
+const sizeLeast = 40;
+const sizeMost = 240;
 
 const themeIds = ['original', 'cybertron', 'retro'];
 const viewKeys = ['general', 'prime', 'nova', 'family'];
 const dayForm = /^\d{4}-\d{2}-\d{2}$/;
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 function dayOf(value) {
   return typeof value === 'string' && dayForm.test(value) ? value : '';
@@ -73,7 +69,7 @@ export function isLive(subtheme, day) {
 // The one that is drawn: of the live ones the highest priority, and the first in the list when
 // they tie. The day is the day in the kiosk time zone.
 export function liveSubtheme(list, now, timeZone) {
-  const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
+  const zone = zoneNamed(timeZone);
   const day = dateIn(zone, now);
   let best = null;
 

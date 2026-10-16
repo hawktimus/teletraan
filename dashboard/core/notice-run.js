@@ -110,7 +110,7 @@ async function hiddenIsPlaying() {
 }
 
 // Called once a second with the content. Does something only when the announcement that is up changes.
-export async function lookAtNotices(getContent, now = new Date()) {
+async function lookAtNotices(getContent, now = new Date()) {
   const bar = document.getElementById('notice');
   const content = getContent();
   if (!bar || !content) return;

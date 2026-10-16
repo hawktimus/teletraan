@@ -10,10 +10,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
 // The dashboard files are browser modules named .js. Copying them next to a
@@ -22,13 +24,13 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-views-'));
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'registry.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+['config.js', 'registry.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
 // The parts of the screen that need a page are stand-ins that write down what they were asked
@@ -75,7 +77,7 @@ function test(name, body) {
 const at = text => new Date(text);
 const monday12 = at('2026-10-12T16:00:00Z');
 
-const sampleRaw = () => JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
+const sampleRaw = () => JSON.parse(readModule(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
 
 // The sample, cleaned as the screen cleans it, with every day of the week on Original. change is given the raw sample.
 function contentWith(change) {
@@ -371,7 +373,7 @@ test('Nova is the mirrored view: the Nova team carries the mirror switch, and th
   const prime = content.teams.find(team => team.code === 'prime');
   assert.equal(nova.mirror, true);
   assert.equal(prime.mirror, false);
-  assert.ok(fs.readFileSync(path.join(dashboardFolder, 'layouts/bar.css'), 'utf8').includes('html.mirrored[data-layout="bar"] #bar-middle'));
+  assert.ok(readModule(path.join(dashboardFolder, 'layouts/bar.css'), 'utf8').includes('html.mirrored[data-layout="bar"] #bar-middle'));
 });
 
 test('the view is written on the page only when it changes, and a name that is not a view leaves the page alone', () => {
@@ -748,8 +750,8 @@ test('the shell starts the views in place of the Screens, holds the first view b
   assert.ok(shell.includes("startOptional('./core/views-run.js', module => module.startViews(getContent, params.has('style') || params.has('team')));"));
   assert.ok(!shell.includes('screens-run'));
   assert.ok(shell.includes('holdBootView(savedContent(), new Date());'));
-  assert.ok(shell.includes('withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))'));
-  assert.ok(shell.includes('withStandIns(withPages(viewSidePlaylist(content)))'));
+  assert.ok(shell.includes('withPages(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()))'));
+  assert.ok(shell.includes('withStandIns(withPages(viewSidePlaylist(shellState.content)))'));
   assert.ok(/function showDecorations\(look\) \{\s*useLayout\(look\);\s*useStyle\(look\);\s*useView\(look\);/.test(shell));
   assert.ok(shell.indexOf("'./core/views-run.js'") > shell.indexOf("'./core/team-run.js'"), 'after the ones it asks about');
   assert.ok(/if \(addressAsks\) return;/.test(read('core/views-run.js')));
@@ -757,7 +759,7 @@ test('the shell starts the views in place of the Screens, holds the first view b
 });
 
 test('the docs say how the views go', () => {
-  const text = fs.readFileSync(path.join(docsFolder, 'views.md'), 'utf8').replace(/\s+/g, ' ');
+  const text = readModule(path.join(docsFolder, 'views.md'), 'utf8').replace(/\s+/g, ' ');
   ['viewOrder', 'minutes', 'swap', 'generalViewTitle', 'two hours', 'Open-Meteo', 'monday: false', 'comes back', 'Family'].forEach(word => assert.ok(text.includes(word), 'views.md names ' + word));
   assert.ok(!/[—–]/.test(text) && !/!/.test(text), 'written plainly');
 });

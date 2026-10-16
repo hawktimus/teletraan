@@ -16,3 +16,13 @@ export function escapeHtml(text) {
 export function hasText(value) {
   return value !== undefined && value !== null && String(value).trim() !== '';
 }
+
+// True for a plain object: not null, not a list
+export function isRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+// A string without the spaces at its ends, and '' for anything that is not a string
+export function trimText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}

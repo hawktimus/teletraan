@@ -10,9 +10,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying the three files the rule reads next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -20,7 +22,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-screen-seed-
 fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'core/panel-order.js', 'core/screen-seed.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');

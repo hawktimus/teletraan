@@ -13,13 +13,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-small-foot-'));
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
-fs.copyFileSync(path.join(root, 'dashboard/core/plate.js'), path.join(workFolder, 'dashboard/core/plate.js'));
+copyModule(path.join(root, 'dashboard/core/plate.js'), path.join(workFolder, 'dashboard/core/plate.js'));
 
 const plate = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/plate.js')).href);
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');

@@ -23,6 +23,8 @@
 // Every shape is flat polygons with hard edges, in the faceted style of the logo.
 // There is no blur, no glow, no shadow and no gradient. There is no text.
 
+import { round, shape } from '../core/svg-pieces.js';
+
 // Each heart tone is a lit left half, a shaded right half and a small bright facet
 const pink = { lit: '#ff7aa5', shade: '#d63a68', light: '#ffc2d6' };
 const red = { lit: '#f4527a', shade: '#c42a50', light: '#ff9ab0' };
@@ -39,19 +41,6 @@ const creamShade = '#d8c3a6';
 
 
 // Small helpers that write svg. They only make text: nothing here moves.
-
-function round(number) {
-  return Math.round(number * 10) / 10;
-}
-
-function polygon(points, fill) {
-  return '<polygon points="' + points + '" fill="' + fill + '"/>';
-}
-
-// A polygon from a list of [x, y] pairs
-function shape(pairs, fill) {
-  return polygon(pairs.map(pair => round(pair[0]) + ',' + round(pair[1])).join(' '), fill);
-}
 
 // A heart on a grid 24 wide and 22 high, with its point at the bottom: two lobes
 // and a point, cut in half down the middle, with a bright facet on the left lobe

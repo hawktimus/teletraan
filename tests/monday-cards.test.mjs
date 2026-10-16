@@ -12,11 +12,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -24,13 +26,13 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-monday-'));
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'registry.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+['config.js', 'registry.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
 const singleNames = ['tasks', 'milestones', 'progress'];
@@ -39,7 +41,7 @@ const cardNames = singleNames.concat(bothNames);
 const cardIds = cardNames.map(name => 'monday-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
+  copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -62,7 +64,7 @@ const at = text => new Date(text); // always written with a Z, so it means the s
 // The sample also holds the tasks of the one task board (showOnBoard), which these tests were not written for and which
 // tests/monday-panels.test.mjs uses. They run on the tasks that came before.
 const sampleRaw = () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   raw.tasks = raw.tasks.filter(task => task.showOnBoard === undefined);
   return raw;
 };
@@ -965,9 +967,9 @@ test('every class a card writes has a rule in its own stylesheet or in monday.cs
 // The docs
 
 test('the docs say what each card shows, where the code is, and where the cards are played', () => {
-  const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
-  const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
-  const where = fs.readFileSync(path.join(docsFolder, 'where-things-are.md'), 'utf8').replace(/\s+/g, ' ');
+  const layouts = readModule(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
+  const editing = readModule(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
+  const where = readModule(path.join(docsFolder, 'where-things-are.md'), 'utf8').replace(/\s+/g, ' ');
 
   assert.ok(layouts.includes('## The Monday cards'));
   ['monday-tasks', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'core/monday.js', 'BUILD TEAM', 'This week', '+3 later', '+N more', 'items left', 'Monday rows', 'Monday to Sunday', 'showOnTv', 'scrollPages', 'scrollCard'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));

@@ -20,12 +20,9 @@
 
 import { competitionPreviewSeconds } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
+import { isRecord } from './text.js';
 
 export const handledKey = 'teletraan-competition-preview-handled';
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // The time in competitionPreviewRequest of Dashboard Settings, or empty when it is not a time
 export function requestTimeOf(settings) {

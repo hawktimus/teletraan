@@ -9,7 +9,8 @@
 // what has no data, because the Screen chooses it (core/monday.js, mondaySteps).
 
 import { chartMarkup, emptyMarkup, textAt, cut } from '../../core/competition-draw.js';
-import { countdownMarker, todayOf, zoneOf } from '../../core/competition.js';
+import { countdownMarker, todayOf } from '../../core/competition.js';
+import { timeZoneOf } from '../../core/theme.js';
 import { daysFromTo, shortDate } from '../../core/frc.js';
 import { dueDateOf, groupsFor, statuses as stacks } from '../../core/monday.js';
 import { headerMarkup, noRowsSentence, pageMarkup, teamNameShown } from '../../core/monday-draw.js';
@@ -66,7 +67,7 @@ export function lineFor(content, now) {
 
   const picked = thinOut(counts, mostPoints);
   const settings = content.settings && content.settings.countdown ? content.settings.countdown : {};
-  const countdown = countdownMarker(settings, zoneOf(content), todayOf(content, now));
+  const countdown = countdownMarker(settings, timeZoneOf(content), todayOf(content, now));
 
   const firstDay = picked[0].date;
   const lastDay = picked[picked.length - 1].date;

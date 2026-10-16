@@ -16,17 +16,13 @@
 // date of an event for the screen, and every panel that shows one uses it, so
 // they all agree. Plain functions only, so tests/content.test.mjs can run them.
 
-import { defaultThemeSettings } from '../config.js';
 import { visibleItems } from './content.js';
-import { dateIn, isTimeZone } from './theme.js';
+import { dateIn, zoneNamed } from './theme.js';
 import { asDate, formatTimeOfDay, pad } from './time.js';
+import { isRecord } from './text.js';
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const weekdayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // Dates written like 2027-04-02
 
@@ -139,7 +135,7 @@ function byStart(first, second) {
 // left out. An event with no usable start is left out.
 // The list passed in is not changed.
 export function mergeEvents(bandEvents, timeZone, now, filterList) {
-  const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
+  const zone = zoneNamed(timeZone);
   const moment = now || new Date();
   const today = dateIn(zone, moment);
 
@@ -187,7 +183,7 @@ function daysOf(event, timeZone) {
   if (isDay(event.firstDay) && isDay(event.lastDay)) return event;
   if (!event.start || isNaN(asDate(event.start))) return null;
 
-  const zone = isTimeZone(timeZone) ? timeZone : defaultThemeSettings.timeZone;
+  const zone = zoneNamed(timeZone);
   return withDays(event, zone);
 }
 

@@ -11,15 +11,13 @@
 // green means a good read inside 5 minutes (plus a short slack, because a read that is due
 // lands a moment after the 5 minutes are up).
 
+import { isRecord } from './text.js';
+
 export const dotNames = ['monday', 'band', 'sanity'];
 
-export const bandMinutes = 15;
-export const sanityMinutes = 5;
-export const sanitySlackSeconds = 30;
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
+const bandMinutes = 15;
+const sanityMinutes = 5;
+const sanitySlackSeconds = 30;
 
 function minutesBetween(then, now) {
   return Math.floor((now.getTime() - then) / 60000);

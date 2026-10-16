@@ -5,7 +5,7 @@
      name-outline       ticker-bar         accent-neon
 
    Prime's values have no class and every rule here is for one of these, so Prime is drawn as it always was.
-   The bird pose, another trim field, is not used any more and has no class.
+   The bird pose, another trim field, has no class.
    The shape of the frames is drawn by core/plate.js: corner-cut-tr cuts the top right and bottom left
    corners and header-slant ends the tab in one slant, and the frames are drawn again when the team changes
    (core/areas.js, redrawFrames). What is left of corner-cut-tr is the cards, in the second part here, and

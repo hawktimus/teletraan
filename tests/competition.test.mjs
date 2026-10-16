@@ -12,10 +12,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -23,21 +25,21 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-competition-
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-fs.copyFileSync(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
-fs.copyFileSync(path.join(dashboardFolder, 'registry.js'), path.join(root, 'registry.js'));
+copyModule(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
+copyModule(path.join(dashboardFolder, 'registry.js'), path.join(root, 'registry.js'));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
 const cardNames = ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district', 'last-season'];
 const cardIds = cardNames.map(name => 'competition-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
+  copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -58,7 +60,7 @@ function test(name, run) {
 }
 
 const at = text => new Date(text); // always written with a Z, so it means the same on every computer
-const sampleRaw = () => JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+const sampleRaw = () => JSON.parse(readModule(sampleFile, 'utf8'));
 const countOf = (text, piece) => text.split(piece).length - 1;
 const primeOf = frc => frc.teams.find(team => team.team === 'prime');
 
@@ -1175,8 +1177,8 @@ test('requestTimeOf reads the time of the request and nothing else, and the hand
 
 test('the screen starts the preview runner after the other runners, hands the large panel its list through withCompetition, and the page glue asks the right questions', () => {
   const shell = read('shell.js');
-  assert.ok(shell.includes("import { withCompetition } from './core/competition.js';"));
-  assert.ok(shell.includes("withCompetition(viewPlaylist(content, new Date()), content, new Date())"));
+  assert.ok(hasImports(shell, ['withCompetition'], './core/competition.js'));
+  assert.ok(shell.includes("withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date())"));
   assert.ok(shell.indexOf("./core/preview-run.js") < shell.indexOf("./core/competition-preview-run.js") && shell.indexOf('./core/competition-preview-run.js') < shell.indexOf('./core/team-run.js'));
   assert.ok(shell.includes("startOptional('./core/competition-preview-run.js', module => module.startCompetitionPreviewRunner(getContent));"));
   assert.ok(!shell.includes('withCompetition(sidePlaylist('), 'the small panel has no cards');

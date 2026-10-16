@@ -73,7 +73,7 @@ export function headerMarkup(title, chip, status, now) {
 // (the age is not known) says only the lead. When the board has not been read for twice the read interval,
 // or Sanity cannot be reached, an amber chip STALE · N MIN stands in the place of the words (monday.stale),
 // and it is there on every one of these panels. content is the whole content, for the status and the interval.
-export function boardWords(lead, status, now, noAge = false) {
+function boardWords(lead, status, now, noAge = false) {
   const age = noAge ? '' : agoWords(status, now);
   return [lead, age].filter(part => hasText(part)).join(' · ');
 }
@@ -140,13 +140,6 @@ export function pageMarkup(cardId, header, inner, scrolls = false) {
 
 
 // The pieces of a row
-
-const statusWords = { 'up-next': 'BACKLOG', 'in-progress': 'IN PROGRESS', done: 'DONE' };
-
-// The status as a colored label with its word
-export function statusChip(status) {
-  return `<span class="status status-${status}">${statusWords[status] || ''}</span>`;
-}
 
 // The priority as a shape: a filled triangle for high, an outlined one for medium and nothing for low. The
 // space is kept either way, so the rows line up.

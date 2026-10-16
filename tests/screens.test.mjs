@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 
@@ -20,10 +21,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');

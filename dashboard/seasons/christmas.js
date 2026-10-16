@@ -20,6 +20,8 @@
 // Every shape is flat polygons with hard edges, in the faceted style of the
 // logo. There is no blur, no glow, no shadow and no gradient.
 
+import { round, polygon, shape, ball } from '../core/svg-pieces.js';
+
 const snow = '#f4f7ff';
 const snowMid = '#c9d6f2';
 const snowFar = '#8fa3d6';
@@ -39,27 +41,6 @@ const bulbColours = ['#ff5a52', '#ffd05a', '#6fe39a', '#6aa8ff'];
 
 
 // Small helpers that write svg. They only make text: nothing here moves.
-
-function round(number) {
-  return Math.round(number * 10) / 10;
-}
-
-function polygon(points, fill) {
-  return '<polygon points="' + points + '" fill="' + fill + '"/>';
-}
-
-// A polygon from a list of [x, y] pairs
-function shape(pairs, fill) {
-  return polygon(pairs.map(pair => round(pair[0]) + ',' + round(pair[1])).join(' '), fill);
-}
-
-// An octagon, the faceted stand-in for a circle, with its right half in shade
-function ball(cx, cy, r, lit, shade) {
-  const s = r * 0.38;
-  const whole = [[cx - s, cy - r], [cx + s, cy - r], [cx + r, cy - s], [cx + r, cy + s], [cx + s, cy + r], [cx - s, cy + r], [cx - r, cy + s], [cx - r, cy - s]];
-  const half = [[cx, cy - r], [cx + s, cy - r], [cx + r, cy - s], [cx + r, cy + s], [cx + s, cy + r], [cx, cy + r]];
-  return shape(whole, lit) + shape(half, shade);
-}
 
 
 // A string of lights hung in swags along a strip. The wire and the little caps

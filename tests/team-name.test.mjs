@@ -12,28 +12,30 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(repo, 'dashboard');
-const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
+const read = file => readModule(path.join(repo, file), 'utf8');
 
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-team-name-'));
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'registry.js', 'frame.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+['config.js', 'registry.js', 'frame.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
 const panelIds = ['monday-tasks', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster', 'team-tile'];
 panelIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
+  copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -179,7 +181,7 @@ test('the dashboard code writes no team name or number as text, except the built
       if (entry.name !== 'data') walk(full);
       return;
     }
-    if (!entry.name.endsWith('.js') || full.endsWith(path.join('dashboard', 'config.js'))) return;
+    if (!entry.name.endsWith('.js') || /dashboard.config(-[a-z]+)?\.js$/.test(full)) return;
 
     read(path.relative(repo, full)).split('\n').forEach((line, index) => {
       const code = line.replace(/^\s*(\/\/|\*|\/\*).*$/, '').replace(/\s\/\/ .*$/, '');

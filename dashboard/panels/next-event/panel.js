@@ -5,6 +5,7 @@ import { rowBarMarkup } from '../../core/plate.js';
 import { escapeHtml } from '../../core/text.js';
 import { eventDate, timeText } from '../../core/events.js';
 import { asDate } from '../../core/time.js';
+import { timeZoneOf } from '../../core/theme.js';
 
 // An event with no end time is over when it starts
 function endOf(event) {
@@ -24,7 +25,7 @@ export function hasContent(content) {
 
 export function mount(host, content) {
   const event = nextEvent(content);
-  const zone = (content.theme || {}).timeZone;
+  const zone = timeZoneOf(content);
 
   host.innerHTML = `
     <section class="page next-event">

@@ -22,9 +22,9 @@
 // cards in it each time the next page is chosen (core/schedule.js asks for the playlist
 // again every time).
 
-import { competitionLeadDays, competitionModes, competitionPreviewSeconds, defaultSettings, defaultThemeSettings } from '../config.js';
+import { competitionLeadDays, competitionModes, competitionPreviewSeconds, defaultSettings } from '../config.js';
 import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
-import { dateIn, isTimeZone } from './theme.js';
+import { dateIn, timeZoneOf } from './theme.js';
 import { parseLocalDateTime } from './time.js';
 
 // The most dates the season timeline draws as dots, not counting today. The card says how many more there are.
@@ -69,14 +69,9 @@ export function frcOf(content, now = new Date()) {
 
 // The clock
 
-export function zoneOf(content) {
-  const zone = content && content.theme && content.theme.timeZone;
-  return isTimeZone(zone) ? zone : defaultThemeSettings.timeZone;
-}
-
 // The date today in the time zone of the Look page, written 2027-03-12
 export function todayOf(content, now = new Date()) {
-  return dateIn(zoneOf(content), now);
+  return dateIn(timeZoneOf(content), now);
 }
 
 function endOf(event) {
@@ -86,7 +81,7 @@ function endOf(event) {
 // What the days of the team's events say about today. near is true from two days before the
 // first day of an event to its last day, onNow on those days of the event, and started once
 // the first event of the season has begun. Dates are plain dates (core/frc.js).
-export function eventFacts(entry, today, leadDays = competitionLeadDays) {
+function eventFacts(entry, today, leadDays = competitionLeadDays) {
   const events = entry.events;
 
   return {
@@ -129,7 +124,7 @@ export function countdownMarker(settings, zone, today) {
 export function timelineMarkers(content, entry, now = new Date(), limit = timelineDates) {
   const frc = frcOf(content, now);
   const settings = content && content.settings ? content.settings : defaultSettings;
-  const zone = zoneOf(content);
+  const zone = timeZoneOf(content);
   const today = dateIn(zone, now);
   const markers = [];
 

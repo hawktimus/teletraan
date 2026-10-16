@@ -8,8 +8,8 @@ import { daysWords, overallView } from '../../core/monday-views.js';
 import { escapeHtml } from '../../core/text.js';
 
 // Red under this many days, and the green from this percent
-export const soonDays = 7;
-export const nearlyDone = 80;
+const soonDays = 7;
+const nearlyDone = 80;
 
 export function hasContent(content) {
   return overallView(content, new Date()) !== null;

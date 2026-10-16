@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
@@ -27,20 +28,20 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-monday-fill-
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'registry.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+['config.js', 'registry.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
 const cardNames = ['tasks', 'milestones', 'progress', 'milestones-both', 'progress-both'];
 const cardIds = cardNames.map(name => 'monday-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
+  copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -317,7 +318,7 @@ test('the weld seam of Minimal is not drawn while a Monday card is on screen, an
 const areasTree = path.join(workFolder, 'areas-tree');
 fs.mkdirSync(path.join(areasTree, 'dashboard/core'), { recursive: true });
 fs.writeFileSync(path.join(areasTree, 'package.json'), '{ "type": "module" }\n');
-fs.copyFileSync(path.join(dashboardFolder, 'core/areas.js'), path.join(areasTree, 'dashboard/core/areas.js'));
+copyModule(path.join(dashboardFolder, 'core/areas.js'), path.join(areasTree, 'dashboard/core/areas.js'));
 fs.writeFileSync(path.join(areasTree, 'dashboard/frame.js'), [
   "export const firstFinish = () => 'gold';",
   "export const planChange = () => ({ style: 'slat', finish: null });",

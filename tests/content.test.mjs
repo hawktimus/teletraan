@@ -8,6 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
@@ -29,16 +31,19 @@ async function loadCopy(name, changeConfig) {
 
   const config = fs.readFileSync(path.join(dashboardFolder, 'config.js'), 'utf8');
   fs.writeFileSync(path.join(root, 'dashboard/config.js'), changeConfig(config));
+  fs.readdirSync(dashboardFolder)
+    .filter(file => /^config-.*\.js$/.test(file))
+    .forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, 'dashboard', file)));
   fs.readdirSync(path.join(dashboardFolder, 'core'))
     .filter(file => file.endsWith('.js'))
     .forEach(file => {
-      fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'dashboard/core', file));
+      copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'dashboard/core', file));
     });
 
   // core/theme.js reads the two registries of themes and overlays, and core/screens.js the registry of panels
   fs.mkdirSync(path.join(root, 'dashboard/themes/overlays'), { recursive: true });
   ['registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-    fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, 'dashboard', file));
+    copyModule(path.join(dashboardFolder, file), path.join(root, 'dashboard', file));
   });
 
   // the Events panel and the Next event tile draw the merged list, and the Roster panel draws the roster pages, so they are tested too.
@@ -48,7 +53,7 @@ async function loadCopy(name, changeConfig) {
   ['events/panel.js', 'next-event/panel.js', 'roster/panel.js', 'leadership/panel.js', 'photo/panel.js', 'team-leads/panel.js', 'tonight/panel.js',
     'tasks/panel.js', 'task-counts/panel.js', 'spotlight/panel.js', 'sponsor-feature/panel.js', 'sponsor-logo/panel.js', 'custom/panel.js', 'ticker/panel.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
-    fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
+    copyModule(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
 
   const base = pathToFileURL(path.join(root, 'dashboard')).href + '/';
@@ -443,7 +448,7 @@ function test(name, run) {
 
 test('normalizeContent turns a full Sanity result into the sample content shape', () => {
   const content = normalizeContent(sanityFixture(), today);
-  const sampleContent = withDefaults(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  const sampleContent = withDefaults(JSON.parse(readModule(sampleFile, 'utf8')));
 
   // The sample also carries a Meeting day to show its shape. The booking script reads those, not the screen.
   // And the drawings of the boot and shutdown screens, which the screen does not read.
@@ -1005,7 +1010,7 @@ test('Polished sets the metal finish and follows the Glint setting, Flat and Pla
 });
 
 test('Polished sets nothing new: it is the look, the finish and the glint that index.html starts with', () => {
-  const tag = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8').match(/<html [^>]*>/)[0];
+  const tag = readModule(path.join(dashboardFolder, 'index.html'), 'utf8').match(/<html [^>]*>/)[0];
   const attribute = name => (tag.match(new RegExp(' data-' + name + '="([^"]*)"')) || [])[1];
 
   const starting = pageSwitchesFor(live.config.defaultSettings, noAddress);
@@ -1013,7 +1018,7 @@ test('Polished sets nothing new: it is the look, the finish and the glint that i
   assert.equal(starting.look, 'polished');
 
   // the sample content has the look too, and it is Polished
-  const sample = JSON.parse(fs.readFileSync(sampleFile, 'utf8')).settings;
+  const sample = JSON.parse(readModule(sampleFile, 'utf8')).settings;
   assert.equal(sample.look, 'polished');
   assert.deepEqual(pageSwitchesFor(normalizeSample({ settings: sample }).settings, noAddress), starting);
 });
@@ -1103,10 +1108,10 @@ test('style is original, cybertron or minimal, and anything else becomes origina
 });
 
 test('the sample content has the original style, which is what index.html starts with', () => {
-  const sample = JSON.parse(fs.readFileSync(sampleFile, 'utf8')).settings;
+  const sample = JSON.parse(readModule(sampleFile, 'utf8')).settings;
   assert.equal(sample.style, 'original');
   assert.equal(normalizeSample({ settings: sample }).settings.style, 'original');
-  assert.ok(/<html [^>]*data-style="original"/.test(fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8')));
+  assert.ok(/<html [^>]*data-style="original"/.test(readModule(path.join(dashboardFolder, 'index.html'), 'utf8')));
 });
 
 test('savedStyle gives the style in the saved copy, and nothing when the copy, the style or the storage is missing or broken, or the screen starts on the sample', async () => {
@@ -1150,7 +1155,7 @@ function cssFilesIn(folder) {
 
 test('the rules for Plain are in base.css and hide only the screws and the default // in the panel headers, and only Neon Prime reads the look besides', () => {
   const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
-  const readCss = file => withoutComments(fs.readFileSync(file, 'utf8'));
+  const readCss = file => withoutComments(readModule(file, 'utf8'));
 
   // base.css has the rules for Plain. Neon Prime's decor file is the one other reader: see the next lines
   const readers = ['base.css', 'themes/decor/neon-prime-decor.css'];
@@ -1183,7 +1188,7 @@ test('the rules for Plain are in base.css and hide only the screws and the defau
   }]);
 
   // the screws are the two classes plate.js draws, and a header's slashes are the svg that marks.js draws
-  const plate = fs.readFileSync(path.join(dashboardFolder, 'core/plate.js'), 'utf8');
+  const plate = readModule(path.join(dashboardFolder, 'core/plate.js'), 'utf8');
   assert.ok(plate.includes('<use class="screw-shadow"') && plate.includes('<use class="screw"'));
   assert.ok(live.marks.doubleSlash().startsWith('<svg class="double-slash"'));
 });
@@ -1219,7 +1224,7 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
   // in the seasonal packs the class double-slash is only ever on a g, never on an svg of its own
   const seasonsFolder = path.join(dashboardFolder, 'seasons');
   fs.readdirSync(seasonsFolder).filter(file => file.endsWith('.js')).forEach(file => {
-    const tags = fs.readFileSync(path.join(seasonsFolder, file), 'utf8').match(/<\w+[^<>]*class="double-slash"/g) || [];
+    const tags = readModule(path.join(seasonsFolder, file), 'utf8').match(/<\w+[^<>]*class="double-slash"/g) || [];
     tags.forEach(tag => assert.ok(tag.startsWith('<g '), file + ': ' + tag));
   });
 
@@ -1230,7 +1235,7 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
     const file = path.join(panelsFolder, name, 'panel.js');
     if (!fs.existsSync(file)) return;
 
-    const code = fs.readFileSync(file, 'utf8');
+    const code = readModule(file, 'utf8');
     const uses = code.split('${doubleSlash()}').length - 1 + code.split('${markBeside(').length - 1;
     if (uses === 0) return;
 
@@ -1243,14 +1248,14 @@ test('the rules for Plain never match a pack mark or a status shape, and the pan
 });
 
 test('shell.js applies Look through core/look.js at the start and at every content change, so a change in Studio shows at once', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
 
-  assert.ok(shell.includes("import { pageSwitchesFor } from './core/look.js';"));
+  assert.ok(hasImports(shell, ['pageSwitchesFor'], './core/look.js'));
   assert.ok(/function useLookSetting\(settings\) \{\s*const switches = pageSwitchesFor\(settings, \{ look: params\.get\('look'\), finish: params\.get\('finish'\), glint: params\.get\('glint'\) \}\);\s*Object\.keys\(switches\)\.forEach\(name => setPageSwitch\(name, switches\[name\]\)\);/.test(shell));
   assert.equal(shell.split('useLookSetting(defaultSettings);').length - 1, 1, 'once at the start, so the address shows before the content arrives');
 
   const rebuild = shell.slice(shell.indexOf('function rebuild() {'), shell.indexOf('// The logo settings of Dashboard Settings (Look tab)'));
-  assert.ok(rebuild.includes('useLookSetting(content.settings);'), 'rebuild() runs at every content change');
+  assert.ok(rebuild.includes('useLookSetting(shellState.content.settings);'), 'rebuild() runs at every content change');
 
   // nothing else sets the finish or the glint
   assert.equal(/dataset\.(finish|glint|look)|setPageSwitch\('(finish|glint|look)'/.test(shell), false);
@@ -1531,7 +1536,7 @@ test('a saved copy from before the Look document existed still gives a theme', a
 });
 
 test('the sample content has a Look document with the defaults and two example seasonal pack rules, and they come through cleaned', () => {
-  const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const file = JSON.parse(readModule(sampleFile, 'utf8'));
   const defaults = live.config.defaultThemeSettings;
   const apartFromSchedule = theme => Object.assign({}, theme, { schedule: [] });
 
@@ -1618,7 +1623,7 @@ test('a saved copy from before the Demo document existed still gives a demo', as
 });
 
 test('the sample content has a Demo document with the defaults and no request, and it comes through unchanged', () => {
-  const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const file = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.deepEqual(file.demo, live.config.defaultDemo);
   assert.deepEqual(normalizeSample(file).demo, live.config.defaultDemo);
   assert.deepEqual(withDefaults(file).demo, live.config.defaultDemo);
@@ -1632,7 +1637,7 @@ test('a change to the request alone is a change of content, so the screen hears 
 });
 
 test('the sample content file carries the new settings and they come through unchanged', () => {
-  const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const file = JSON.parse(readModule(sampleFile, 'utf8'));
   const settings = normalizeSample(file).settings;
 
   logoSettingNames.concat(['frameMetal', 'glint', 'look', 'pageSeconds', 'crt']).forEach(name => {
@@ -1643,7 +1648,7 @@ test('the sample content file carries the new settings and they come through unc
 
 test('sample mode reads the sample file and reads it again every 30 seconds', async () => {
   await inWorld(async world => {
-    const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+    const file = JSON.parse(readModule(sampleFile, 'utf8'));
     world.handler = async () => jsonResponse(copyOf(file));
 
     const first = await readSample(world.onChange);
@@ -1801,7 +1806,7 @@ test('chosenSource: production, unless ?sample=1 was asked for, or there is no S
 // each answers, and a test can change it while the screen runs. The screen asks
 // Sanity for the content only: it asks no question about which content to show.
 function serve(world, server) {
-  world.server = Object.assign({ content: sanityFixture(), file: JSON.parse(fs.readFileSync(sampleFile, 'utf8')) }, server);
+  world.server = Object.assign({ content: sanityFixture(), file: JSON.parse(readModule(sampleFile, 'utf8')) }, server);
 
   world.handler = async url => {
     if (url === queryUrl(live.config.sanity)) return sanityReply(copyOf(world.server.content));
@@ -1973,7 +1978,7 @@ test('source: an empty project ID always shows the sample and asks Sanity for no
 });
 
 test('source: shell.js reads ?sample= from the address before the style, the layout and the content', () => {
-  const code = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const code = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   const asked = code.indexOf("askForSample(params.get('sample'));");
   assert.ok(asked > code.indexOf('async function run()'), 'it is asked in run()');
   assert.ok(asked < code.indexOf("startStyle(params.get('style'), savedStyle)"), 'before the style, which reads the saved copy');
@@ -2116,7 +2121,7 @@ test('sanity: no saved copy and no network gives empty content, never the sample
     assert.equal(world.errors.length, 1);
     assert.equal(world.storage.size, 0);
 
-    const sampleTitle = JSON.parse(fs.readFileSync(sampleFile, 'utf8')).tasks[0].title;
+    const sampleTitle = JSON.parse(readModule(sampleFile, 'utf8')).tasks[0].title;
     assert.equal(JSON.stringify(first.content).includes(sampleTitle), false);
 
     await world.advance(2 * minute);
@@ -2659,7 +2664,7 @@ test('the other fields of a subteam come through next to the members', () => {
 });
 
 test('the sample subteams have members as marked placeholders, a different number each, and two pages for one', () => {
-  const sample = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  const sample = normalizeSample(JSON.parse(readModule(sampleFile, 'utf8')));
   const counts = sample.subteams.map(subteam => subteam.members.length);
 
   assert.equal(new Set(counts).size, counts.length, 'two sample subteams have the same number of members');
@@ -2674,7 +2679,7 @@ test('the sample subteams have members as marked placeholders, a different numbe
 });
 
 test('the sample people have no photos, so the sample shows silhouettes', () => {
-  const people = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8'))).people;
+  const people = normalizeSample(JSON.parse(readModule(sampleFile, 'utf8'))).people;
   assert.ok(people.length > 0);
   people.forEach(person => assert.equal(photoAddress(person), ''));
 });
@@ -3041,7 +3046,7 @@ test('sample talks are cleaned the same way as talks from Sanity, and a sample w
 
   assert.deepEqual(normalizeSample({}).presentations, []);
   assert.deepEqual(normalizeSample({ presentations: 'oops' }).presentations, []);
-  assert.deepEqual(normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8'))).presentations.filter(talk => !(talk.start instanceof Date)), []);
+  assert.deepEqual(normalizeSample(JSON.parse(readModule(sampleFile, 'utf8'))).presentations.filter(talk => !(talk.start instanceof Date)), []);
 });
 
 test('a saved copy from before talks existed still gives an empty list of talks', async () => {
@@ -3177,7 +3182,7 @@ test('rules that are not a list, and entries that are not rules, give an empty l
 });
 
 test('the sample content carries the two example rules, cleaned like the rules from Sanity', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.equal(raw.calendarFilters.length, 2);
 
   assert.deepEqual(normalizeSample(raw).calendarFilters, [
@@ -3410,7 +3415,7 @@ test('Photo order and Seconds per photo are checked like the other settings', ()
 });
 
 test('the sample content keeps its photo list, now inside the content, and the Photos settings', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const content = normalizeSample(raw);
 
   assert.equal(content.photos.length, 3);
@@ -3474,7 +3479,7 @@ test('the Night mode settings: the starting values, the two choices and the logo
 });
 
 test('the sample content carries the Night mode settings', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const settings = normalizeSample(raw).settings;
 
   nightSettingNames.forEach(name => {
@@ -3539,7 +3544,7 @@ test('the Presentations settings: the starting value and the switch, through all
 });
 
 test('the sample content carries the Presentations settings', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const settings = normalizeSample(raw).settings;
 
   presentationSettingNames.forEach(name => {
@@ -3549,7 +3554,7 @@ test('the sample content carries the Presentations settings', () => {
 });
 
 test('the sample content carries one Meeting day, one talk with its text in square brackets, and six slides with a manifest', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const sample = normalizeSample(raw);
 
   // the talk fits the Studio: a name up to 12 characters, a title up to 40, a length of 5 to 30 minutes
@@ -3573,7 +3578,7 @@ test('the sample content carries one Meeting day, one talk with its text in squa
 
   // the folder is where the screen looks for the slides of a sample talk, and the manifest has the shape the Mini writes
   const folder = path.join(dashboardFolder, live.presentation.slidesFolder(true, talk));
-  const manifest = JSON.parse(fs.readFileSync(path.join(folder, 'manifest.json'), 'utf8'));
+  const manifest = JSON.parse(readModule(path.join(folder, 'manifest.json'), 'utf8'));
   assert.deepEqual(Object.keys(manifest), ['ok', 'pages', 'fetchedAt', 'refreshed']);
   assert.equal(manifest.ok, true);
   assert.equal(manifest.refreshed, false);
@@ -3584,7 +3589,7 @@ test('the sample content carries one Meeting day, one talk with its text in squa
 
   // each slide is a picture of 1920 by 1080 with the word SLIDE and its number, in text of 44px or more and lines of 3px or more
   manifest.pages.forEach((page, index) => {
-    const svg = fs.readFileSync(path.join(folder, page), 'utf8');
+    const svg = readModule(path.join(folder, page), 'utf8');
     assert.match(svg, /viewBox="0 0 1920 1080"/, page);
     assert.ok(svg.includes('>SLIDE ' + (index + 1) + '</text>'), page);
     (svg.match(/font-size="(\d+)"/g) || []).forEach(size => assert.ok(Number(size.match(/\d+/)[0]) >= 44, page + ' ' + size));
@@ -3614,7 +3619,7 @@ test('the last push from the Studio is kept as a kind and a time, and anything t
 });
 
 test('the sample content carries the Hidden settings and no push', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const settings = normalizeSample(raw).settings;
 
   hiddenSettingNames.forEach(name => {
@@ -3644,7 +3649,7 @@ test('the last click of Play announcements is kept as a time, and anything that 
   assert.deepEqual(stored.announceRequest, request);
 
   // it does not touch the announcements themselves, and the sample carries no request
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.ok(!('announceRequest' in raw.settings), 'a request is never part of the sample');
   assert.deepEqual(normalizeSample(raw).settings.announceRequest, { requestedAt: '' });
   assert.deepEqual(stored.announcements, live.config.defaultSettings.announcements, 'a page with no announcements list still has the starting ones');
@@ -3671,7 +3676,7 @@ test('the last click of Next look now and of Preview competition is kept as a ti
     assert.deepEqual(stored[name], request, name);
 
     // the sample carries no request
-    const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+    const raw = JSON.parse(readModule(sampleFile, 'utf8'));
     assert.ok(!(name in raw.settings), name + ' is never part of the sample');
     assert.deepEqual(normalizeSample(raw).settings[name], { requestedAt: '' }, name);
   });
@@ -3710,7 +3715,7 @@ test('the Teams settings: Prime only and 5 minutes to start with, one of three m
 });
 
 test('the sample content carries the Teams settings', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const settings = normalizeSample(raw).settings;
 
   teamSettingNames.forEach(name => {
@@ -3738,7 +3743,7 @@ test('the last click of Run presentation test is kept as a time, and anything th
   assert.deepEqual(stored.presentationTestRequest, request);
 
   // it does not touch the other Presentations settings, and the sample carries no request
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.ok(!('presentationTestRequest' in raw.settings), 'a request is never part of the sample');
   assert.deepEqual(normalizeSample(raw).settings.presentationTestRequest, { requestedAt: '' });
   assert.equal(stored.presentationsEnabled, true);
@@ -3768,14 +3773,14 @@ test('the last click of a Preview button is kept as a kind and a time, and anyth
   assert.deepEqual(stored.previewRequest, request);
 
   // it does not touch the style or the Teams settings, and the sample carries no request
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.ok(!('previewRequest' in raw.settings), 'a request is never part of the sample');
   assert.deepEqual(normalizeSample(raw).settings.previewRequest, { kind: '', requestedAt: '' });
   assert.deepEqual([stored.style, stored.teamMode, stored.alternateMinutes], ['original', 'prime', 5]);
 });
 
 test('photos are read from Sanity with the rest of the content, and nothing reads a photos.json any more', () => {
-  const code = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const code = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const scripts = [];
   (function walk(folder) {
     fs.readdirSync(path.join(dashboardFolder, folder), { withFileTypes: true }).forEach(entry => {
@@ -3798,8 +3803,8 @@ test('photos are read from Sanity with the rest of the content, and nothing read
 });
 
 test('the Photo panel uses the visible photos, the order setting, the credit at 30px on the team plate, and loads the next photo', () => {
-  const panel = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/panel.js'), 'utf8');
-  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/panel.css'), 'utf8');
+  const panel = readModule(path.join(dashboardFolder, 'panels/photo/panel.js'), 'utf8');
+  const style = readModule(path.join(dashboardFolder, 'panels/photo/panel.css'), 'utf8');
 
   assert.ok(panel.includes('queue.takeTurn(photosToShow(content), settings.photoOrder, plan.photos)'));
   assert.ok(panel.includes('return photosToShow(content).length > 0;'));
@@ -3813,7 +3818,7 @@ test('the Photo panel uses the visible photos, the order setting, the credit at 
   assert.ok(/\.photo \.caption\s*\{[^}]*font: 500 var\(--size-label\)\/52px/.test(style), 'the caption is not at 44px');
   const note = style.match(/\.photo \.note\s*\{[^}]*\}/)[0];
   assert.ok(note.includes('background: var(--team-plate);') && note.includes('color: var(--white);'), 'the plate is not white on the team plate color');
-  assert.ok(/--size-label: 44px;/.test(fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8')));
+  assert.ok(/--size-label: 44px;/.test(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8')));
   assert.equal(/blur|box-shadow|text-shadow|filter/.test(style), false, 'the photo panel uses an effect that is not allowed');
 });
 
@@ -3918,7 +3923,7 @@ test('a slot has the portrait, the name and the role, as one slat, and escapes w
 }));
 
 test('the silhouette is drawn once in index.html, from the logo\'s numbers, with every colour a variable', () => {
-  const html = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const html = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   const start = html.indexOf('<symbol id="person-silhouette"');
   const symbol = html.slice(start, html.indexOf('</symbol>', start));
   assert.ok(start > 0, 'index.html has no symbol called person-silhouette');
@@ -3931,11 +3936,11 @@ test('the silhouette is drawn once in index.html, from the logo\'s numbers, with
   // the numbers it uses are on the logo's grid: the head plate's sides and the chin, the jaw's top and the face plate's width
   ['430.5', '669.5', '478.5', '621.5', '290.5', '632', '498.5', '601.5', '326.5', '773.5'].forEach(number => {
     assert.ok(symbol.includes(number), 'the silhouette does not use ' + number + ' from logo.js');
-    assert.ok(fs.readFileSync(path.join(dashboardFolder, 'core/logo.js'), 'utf8').includes(number), 'logo.js does not have ' + number);
+    assert.ok(readModule(path.join(dashboardFolder, 'core/logo.js'), 'utf8').includes(number), 'logo.js does not have ' + number);
   });
 
-  const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
-  const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
+  const tokens = readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8');
+  const base = readModule(path.join(dashboardFolder, 'base.css'), 'utf8');
   ['light', 'shade', 'cut', 'slash'].forEach(name => {
     assert.ok(tokens.includes('--silhouette-' + name + ':'), 'tokens.css has no --silhouette-' + name);
     assert.ok(base.includes('.bust-' + name + ' { fill: var(--silhouette-' + name + '); }'), 'base.css does not colour .bust-' + name + ' from a variable');
@@ -3943,8 +3948,8 @@ test('the silhouette is drawn once in index.html, from the logo\'s numbers, with
 });
 
 test('the portrait sizes in portrait.js, base.css and the text sizes agree', () => {
-  const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-  const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
+  const base = readModule(path.join(dashboardFolder, 'base.css'), 'utf8');
+  const tokens = readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8');
 
   // the photo is asked for at 280 and, at full size, drawn at 280. The sizes in base.css are the
   // fallbacks of the variables that portrait.js sets, so they are the full size
@@ -3999,7 +4004,7 @@ test('Portrait size and Photo size start at 100, are whole percents from 60 to 2
 });
 
 test('the sample content has both sizes at 100', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.equal(raw.settings.portraitScale, 100);
   assert.equal(raw.settings.photoScale, 100);
 
@@ -4248,11 +4253,11 @@ test('the Subteam roster panel escapes what editors typed, and shows the lead\'s
 }));
 
 test('the Subteam roster panel is in the registry with the topic of the other subteam panels, and uses the shared pieces', () => {
-  const registry = fs.readFileSync(path.join(dashboardFolder, 'registry.js'), 'utf8');
+  const registry = readModule(path.join(dashboardFolder, 'registry.js'), 'utf8');
   assert.ok(registry.includes("{ id: 'roster', region: 'grid1', topic: 'subteams' },"));
 
-  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/panel.js'), 'utf8');
-  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/panel.css'), 'utf8');
+  const code = readModule(path.join(dashboardFolder, 'panels/roster/panel.js'), 'utf8');
+  const style = readModule(path.join(dashboardFolder, 'panels/roster/panel.css'), 'utf8');
   ['slotMarkup(', 'watchPhotos(', 'preloadLeadPhotos(', 'leadAddress(', 'makeRosterTurns(', 'markBeside(', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, 'the roster panel has animation code');
   assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(style), false, 'panels/roster/panel.css uses an effect that is not allowed');
@@ -4323,7 +4328,7 @@ test('the query does not ask for the Events Calendar entries, and normalizeConte
 });
 
 test('the sample content has no Events Calendar entries, since its events are in the sample calendar', () => {
-  const file = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const file = JSON.parse(readModule(sampleFile, 'utf8'));
   assert.equal('extraEvents' in file, false);
   assert.equal('extraEvents' in normalizeSample(file), false);
 });
@@ -4842,8 +4847,8 @@ test('the Daily Agenda panel draws a plan row as it always did, the heading AGEN
 });
 
 test('the stylesheet of the Daily Agenda keeps text at 44px or more and lines at 3px or more, and the tag of a talk follows the badge', () => {
-  const css = fs.readFileSync(path.join(dashboardFolder, 'panels/tonight/panel.css'), 'utf8');
-  const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
+  const css = readModule(path.join(dashboardFolder, 'panels/tonight/panel.css'), 'utf8');
+  const tokens = readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8');
   const size = name => Number((new RegExp('--' + name + ': (\\d+)px;').exec(tokens) || [])[1]);
 
   const sizes = Array.from(css.matchAll(/font:\s*\d+ var\(--(size-[a-z-]+)\)\//g));
@@ -4862,11 +4867,11 @@ test('the stylesheet of the Daily Agenda keeps text at 44px or more and lines at
 });
 
 test('shell.js merges the events when content changes and once a minute', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
-  assert.ok(shell.includes("import { mergeEvents } from './core/events.js';"));
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  assert.ok(hasImports(shell, ['mergeEvents'], './core/events.js'));
   assert.ok(shell.includes('content.events = mergedEvents();'), 'rebuild() should merge');
-  assert.ok(/setInterval\(\(\) => \{\s*if \(content\) content\.events = mergedEvents\(\);\s*\}, 60 \* 1000\);/.test(shell), 'a timer should merge once a minute');
-  assert.ok(shell.includes('base.theme.timeZone'), 'the Look time zone should be used');
+  assert.ok(/setInterval\(\(\) => \{\s*if \(shellState\.content\) shellState\.content\.events = mergedEvents\(\);\s*\}, 60 \* 1000\);/.test(shell), 'a timer should merge once a minute');
+  assert.ok(shell.includes('shellState.base.theme.timeZone'), 'the Look time zone should be used');
 });
 
 // The Mini's name and addresses, shown inside the connection status text while Sanity cannot be reached
@@ -5268,32 +5273,32 @@ test('drawConnection does nothing when the page has no connection status box', (
 });
 
 test('shell.js draws the connection text from the status and the switch, and keeps the calendar read time', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
-  assert.ok(shell.includes("import { connectionLines, drawConnection } from './core/connection.js';"));
-  assert.ok(shell.includes("import { showDeviceInfo } from './core/device.js';"));
-  assert.ok(shell.includes('showDeviceInfo(Boolean(status && status.offline), useDeviceLines);'), 'rebuild() should pass status.offline');
-  assert.ok(shell.includes('always: content.settings.showConnectionStatus,'), 'the switch should be passed');
-  assert.ok(shell.includes("drawConnection(lines, status && status.offline ? 'warning' : 'info');"));
-  assert.ok(/if \(result\.failed\.length === 0\) calendarsReadAt = now;/.test(shell), 'readEvents should record when the calendars were read');
-  assert.ok(/calendarsReadAt = null;/.test(shell), 'a change of source should forget the time');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  assert.ok(hasImports(shell, ['connectionLines', 'drawConnection'], './core/connection.js'));
+  assert.ok(hasImports(shell, ['showDeviceInfo'], './core/device.js'));
+  assert.ok(shell.includes('showDeviceInfo(Boolean(shellState.status && shellState.status.offline), useDeviceLines);'), 'rebuild() should pass status.offline');
+  assert.ok(shell.includes('always: shellState.content.settings.showConnectionStatus,'), 'the switch should be passed');
+  assert.ok(shell.includes("drawConnection(lines, shellState.status && shellState.status.offline ? 'warning' : 'info');"));
+  assert.ok(/if \(result\.failed\.length === 0\) shellState\.calendarsReadAt = now;/.test(shell), 'readEvents should record when the calendars were read');
+  assert.ok(/shellState\.calendarsReadAt = null;/.test(shell), 'a change of source should forget the time');
   assert.ok(!shell.includes('OFFLINE'), 'the banner no longer says OFFLINE');
 });
 
 test('index.html has the empty hidden connection box after the stage and before the overlay, and the banner no longer has a status', () => {
-  const page = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const page = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   assert.ok(/<div id="connection-status" hidden><\/div>/.test(page), 'index.html should have the empty hidden box');
   assert.ok(page.indexOf('id="connection-status"') > page.indexOf('id="stage"'), 'the box comes after the stage');
   assert.ok(page.indexOf('id="connection-status"') < page.indexOf('id="overlay"'), 'the box comes before the overlay');
   assert.ok(!page.includes('device-info'), 'the old strip is gone');
 
-  const banner = fs.readFileSync(path.join(dashboardFolder, 'panels/banner/panel.js'), 'utf8');
+  const banner = readModule(path.join(dashboardFolder, 'panels/banner/panel.js'), 'utf8');
   assert.ok(!banner.includes('OFFLINE') && !banner.includes('data-part="status"'), 'the banner has no OFFLINE text');
-  const frameScript = fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8');
+  const frameScript = readModule(path.join(dashboardFolder, 'frame.js'), 'utf8');
   assert.ok(!/'status':/.test(frameScript), 'frame.js has no line for the banner status');
 });
 
 test('the connection text is at least 44px, sits bottom right, has no animation, and is only shown by the hidden switch', () => {
-  const css = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
+  const css = readModule(path.join(dashboardFolder, 'base.css'), 'utf8');
   const rule = css.match(/#connection-status \{([^}]*)\}/);
   assert.ok(rule, 'base.css should have the #connection-status rule');
   assert.ok(rule[1].includes('font: 600 var(--size-label)/44px'), 'the text is the 44px label size');
@@ -5343,7 +5348,7 @@ test('every script in dashboard/ uses nothing newer than ES2017', () => {
 
   const problems = [];
   files.forEach(file => {
-    fs.readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
+    readModule(file, 'utf8').split('\n').forEach((line, index) => {
       newerThanEs2017.forEach(([pattern, name]) => {
         if (pattern.test(line)) problems.push(path.relative(dashboardFolder, file) + ' line ' + (index + 1) + ': ' + name);
       });
@@ -5395,7 +5400,7 @@ test('a hidden, deleted or nameless place gives no location, and the task stays'
 });
 
 test('the sample content is cleaned the same way, and has a contact and a place', () => {
-  const sample = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  const sample = normalizeSample(JSON.parse(readModule(sampleFile, 'utf8')));
   assert.ok(sample.tasks.some(task => task.contact && task.location));
   assert.ok(sample.tasks.some(task => task.contact && !task.location));
   assert.ok(sample.tasks.some(task => !task.contact && task.location));
@@ -5409,7 +5414,7 @@ let tasksPanelCopies = 0;
 async function freshTasksPanel() {
   const folder = path.join(workFolder, 'live', 'dashboard', 'panels', 'tasks');
   fs.mkdirSync(folder, { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'panel.js'), path.join(folder, 'panel.js'));
+  copyModule(path.join(dashboardFolder, 'panels', 'tasks', 'panel.js'), path.join(folder, 'panel.js'));
   tasksPanelCopies += 1;
   return import(pathToFileURL(path.join(folder, 'panel.js')).href + '?copy=' + tasksPanelCopies);
 }
@@ -5559,8 +5564,8 @@ test('the Roster panel draws its portrait at the Portrait size, and at 100 witho
   });
 
   // the style of the slot does not name a size of its own for the text or the slot
-  const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/roster/panel.css'), 'utf8')), 'the slot is still 352 wide');
+  const base = readModule(path.join(dashboardFolder, 'base.css'), 'utf8');
+  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(readModule(path.join(dashboardFolder, 'panels/roster/panel.css'), 'utf8')), 'the slot is still 352 wide');
   assert.ok(/\.portrait\s*\{[^}]*margin: 0 auto 8px;/.test(base), 'a smaller portrait is centred in its slot');
 }));
 
@@ -5568,7 +5573,7 @@ test('the Roster panel draws its portrait at the Portrait size, and at 100 witho
 // one function that leaves out what is for the other team (core/teams.js, sanity.js, content.js).
 // The tests that put the team on a page are in tests/themes.test.mjs.
 
-const seededTeams = fs.readFileSync(path.join(dashboardFolder, '../docs/seed/teams.ndjson'), 'utf8')
+const seededTeams = readModule(path.join(dashboardFolder, '../docs/seed/teams.ndjson'), 'utf8')
   .split('\n')
   .filter(line => line.trim() !== '')
   .map(line => JSON.parse(line));
@@ -5950,7 +5955,7 @@ test('no panel judges the team itself: only the content code and the team module
     .map(file => path.relative(dashboardFolder, file).split(path.sep).join('/'))
     .sort();
 
-  assert.deepEqual(users, ['core/content.js', 'core/teams.js']);
+  assert.deepEqual(users, ['core/content-tidy.js', 'core/teams.js']);
 });
 
 test('with no team documents the screen is the starting Prime: its colors, its name and number from the Team box, and everything with no team showing', () => {
@@ -5993,7 +5998,7 @@ test('with no team documents the screen is the starting Prime: its colors, its n
 });
 
 test('the sample content has the two starting teams, and every style with every team and every seasonal pack can be chosen from it', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const sample = normalizeSample(raw);
 
   // the same two teams as docs/seed/teams.ndjson, cleaned the same way as the editors' teams
@@ -6140,8 +6145,8 @@ test('the ticker panel adds the prefix when it draws a line, and the list of lin
     globalThis.document.documentElement = { className: 'overlay-christmas' };
     assert.deepEqual(live.tickerPanel.items(content).map(item => item.text), ['[Tip]', '[News]', '[Thanks]'], 'the lines are as they were');
   });
-  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/ticker/panel.js'), 'utf8');
-  assert.ok(code.includes("import { prefixFor } from '../../core/pack-extras.js';") && code.includes("import { packExtras } from '../../core/theme.js';"));
+  const code = readModule(path.join(dashboardFolder, 'panels/ticker/panel.js'), 'utf8');
+  assert.ok(hasImports(code, ['prefixFor'], '../../core/pack-extras.js') && hasImports(code, ['packExtras'], '../../core/theme.js'));
   assert.ok(code.includes('prefixFor(packExtras(content).tickerPrefix, line.text)'));
 });
 

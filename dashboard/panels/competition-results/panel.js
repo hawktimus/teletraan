@@ -12,7 +12,7 @@ const PER_ROW = 4;
 const MOST = 8;
 
 // The two scores of a chip, ours big and the other one under it. A score the Mini did not find is a dash.
-export function scoresText(result) {
+function scoresText(result) {
   return {
     ours: result.scoreFor === null ? '-' : String(result.scoreFor),
     against: result.scoreAgainst === null ? 'vs -' : 'vs ' + result.scoreAgainst,

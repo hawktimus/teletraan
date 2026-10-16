@@ -9,6 +9,7 @@
 // Everything here is plain functions with no page in sight, so the tests can run them.
 
 import { cornerArtChoices, cornerArtNone } from './corner-art.js';
+import { isRecord } from './text.js';
 
 // How many characters Studio allows in these two fields (studio/schemas/theme.js)
 export const tickerPrefixLimit = 12;
@@ -19,10 +20,6 @@ export const bannerLineLimit = 40;
 export const tickerLineLimit = 52;
 
 const defaultKeys = ['tickerPrefix', 'bannerLine', 'cornerArt'];
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // Text on one line: spaces at the ends and doubled spaces go, and what is past the
 // limit is cut off. Anything that is not text is empty.

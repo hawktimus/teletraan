@@ -11,9 +11,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
+import { importFresh } from './helpers/fresh-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => readModule(path.join(root, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -25,7 +28,7 @@ function makeTree(name, files) {
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
   files.forEach(file => {
     fs.mkdirSync(path.dirname(path.join(folder, file)), { recursive: true });
-    fs.copyFileSync(path.join(root, file), path.join(folder, file));
+    copyModule(path.join(root, file), path.join(folder, file));
   });
   return folder;
 }
@@ -198,8 +201,7 @@ async function inRotation(layoutName, run) {
   const world = { log: [], waits: [], canShow: () => true, fail: [] };
 
   await withGlobals({ panelBWorld: world, document: pageWith(layoutName) }, async () => {
-    schedulerRuns += 1;
-    world.module = await import(urlOf(schedulerTree, 'dashboard/core/schedule.js') + '?run=' + schedulerRuns);
+    world.module = await importFresh(path.join(schedulerTree, 'dashboard/core/schedule.js'));
     world.content = { settings: { pageSeconds: 20, rotation: {} } };
     world.settle = async () => {
       for (let turn = 0; turn < 8; turn++) await new Promise(resolve => setImmediate(resolve));
@@ -517,7 +519,7 @@ test('the sidebar and the bar layouts still give the large frame its pages, and 
 
 test('shell.js gives the small frame the list with its spares and its last resort', () => {
   const shell = read('dashboard/shell.js');
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent);"));
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(shellState.content))), getContent);"));
   assert.ok(shell.includes("withStandIns } from './core/panel-order.js';"));
 });
 

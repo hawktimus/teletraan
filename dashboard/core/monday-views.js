@@ -18,13 +18,13 @@ import { wantedTeam } from './teams.js';
 import { hasText } from './text.js';
 import { firstNameOf } from './sanity.js';
 
-export const mostTaskRows = 10;
+const mostTaskRows = 10;
 export const rowsPerPage = 5;
-export const doneRows = 6;
-export const statusRowsMost = 8;
-export const timelineRowsMost = 6;
-export const timelineWeeks = 8;
-export const boardCardsPerColumn = 2;
+const doneRows = 6;
+const statusRowsMost = 8;
+const timelineRowsMost = 6;
+const timelineWeeks = 8;
+const boardCardsPerColumn = 2;
 
 const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
@@ -34,7 +34,7 @@ export function dateWords(date) {
   return months[Number(date.slice(5, 7)) - 1] + ' ' + Number(date.slice(8, 10));
 }
 
-export function pageOptions(page) {
+function pageOptions(page) {
   if (typeof page === 'number') return { team: '', department: '', number: page, turn: 1 };
 
   const source = page && typeof page === 'object' ? page : {};
@@ -47,7 +47,7 @@ export function pageOptions(page) {
 }
 
 // The team of a page: its code, its short name in capitals (the chip) and its Team document
-export function teamOfPage(content, options) {
+function teamOfPage(content, options) {
   const code = options.team !== '' && options.team !== 'both' ? options.team : wantedTeam().code;
   const found = (Array.isArray(content && content.teams) ? content.teams : []).find(team => team.code === code);
   const team = found || (code === wantedTeam().code ? wantedTeam() : null);
@@ -73,7 +73,7 @@ function teamTasks(content, now, code) {
 }
 
 // The person to ask about a task: a first name, and never anything else. The board may hold a whole name.
-export function pocOf(task) {
+function pocOf(task) {
   return firstNameOf(task.contact);
 }
 
@@ -245,7 +245,7 @@ export function timelineView(content, now, page) {
 
 // Where each bar of a department goes, as fractions of the eight weeks, and in which of two lanes. A task that
 // would lie over both lanes is left out.
-export function laneBars(tasks, first, days) {
+function laneBars(tasks, first, days) {
   const lanes = [-Infinity, -Infinity];
   const bars = [];
 

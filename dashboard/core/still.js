@@ -9,30 +9,28 @@
 //   still   1 stops the clock and every movement, so the picture holds still
 //   photos, each   for the Photos row: how many photos and the seconds of each (the row's starting values without them)
 
-export const stillScreens = ['original', 'cybertron', 'minimal'];
+import { trimText } from './text.js';
 
-function clean(value) {
-  return typeof value === 'string' ? value.trim() : '';
-}
+const stillScreens = ['original', 'cybertron', 'minimal'];
 
 // What the address asks for, or null when it has no panel. search is the part after the ?
 // and may be a URLSearchParams.
 export function readStill(search) {
   const params = search instanceof URLSearchParams ? search : new URLSearchParams(search || '');
-  const panel = clean(params.get('panel'));
+  const panel = trimText(params.get('panel'));
   if (panel === '') return null;
 
-  const screen = clean(params.get('screen'));
+  const screen = trimText(params.get('screen'));
   const ask = {
     panel: panel,
-    team: clean(params.get('team')),
-    department: clean(params.get('dept')),
+    team: trimText(params.get('team')),
+    department: trimText(params.get('dept')),
     screen: stillScreens.includes(screen) ? screen : '',
     still: params.get('still') === '1',
   };
   if (panel === 'photo') {
-    ask.photoCount = Number(clean(params.get('photos'))) || 0;
-    ask.secondsPerPhoto = Number(clean(params.get('each'))) || 0;
+    ask.photoCount = Number(trimText(params.get('photos'))) || 0;
+    ask.secondsPerPhoto = Number(trimText(params.get('each'))) || 0;
   }
   return ask;
 }

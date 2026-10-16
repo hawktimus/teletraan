@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -27,7 +28,7 @@ function makeTree(name, files) {
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
   files.forEach(file => {
     fs.mkdirSync(path.dirname(path.join(folder, file)), { recursive: true });
-    fs.copyFileSync(path.join(root, file), path.join(folder, file));
+    copyModule(path.join(root, file), path.join(folder, file));
   });
   return folder;
 }

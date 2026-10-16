@@ -24,13 +24,10 @@
 import { defaultSettings, hiddenGapHours, limits, speeds } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
 import { hiddenTransitions } from './hidden-transitions.js';
+import { isRecord } from './text.js';
 
 export const handledKey = 'teletraan-hidden-handled';
-export const lastFiredKey = 'teletraan-hidden-last-fired';
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
+const lastFiredKey = 'teletraan-hidden-last-fired';
 
 export function isKind(id) {
   return typeof id === 'string' && Object.prototype.hasOwnProperty.call(hiddenTransitions, id);

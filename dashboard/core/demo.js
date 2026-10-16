@@ -15,12 +15,9 @@
 
 import { defaultDemo, demoDefaultSeconds, demoMaxSteps, demoSkewSeconds, demoWindowSeconds, limits } from '../config.js';
 import { demoScreens } from './demo-screens.js';
+import { isRecord } from './text.js';
 
 export const handledKey = 'teletraan-demo-handled';
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 function isScreen(id) {
   return typeof id === 'string' && Object.prototype.hasOwnProperty.call(demoScreens, id);

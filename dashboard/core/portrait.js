@@ -131,7 +131,7 @@ export function personNamed(people, name) {
 // when the Team lead entry has them. The lead's own photo comes first. With the
 // switch off the lead has the silhouette, even when a person of the same name is
 // in Leadership. With no photo of its own, the lead is shown with the photo of
-// that person, as before there was a field for it.
+// that person.
 export function leadAddress(entry, people) {
   if (!entry || entry.showPhoto === false) return '';
   if (entry.photo) return photoAddress(entry);

@@ -186,16 +186,9 @@ test('the figure has a face and two hands: two eyes with a highlight each, a smi
   assert.equal(figure.join('\n').split('(_)(_)(_)').length - 1, 2, 'the curled fingers show on both hands');
 });
 
-test('the sample content carries both drawings, written as JSON text, equal to the files', () => {
+test('the sample content does not carry the drawings: only the Mini reads them', () => {
   const sample = JSON.parse(read(sampleFile));
-  assert.deepEqual(Object.keys(sample.console), ['startup', 'shutdown']);
-  assert.equal(sample.console.startup, read(path.join(consoleFolder, 'startup.txt')));
-  assert.equal(sample.console.shutdown, read(path.join(consoleFolder, 'shutdown.txt')));
-
-  // Each is one line of the file with the new lines written as \n
-  const file = read(sampleFile);
-  assert.equal(file.split('\n').filter(line => line.startsWith('    "startup": "')).length, 1);
-  assert.equal(file.split('\n').filter(line => line.startsWith('    "shutdown": "')).length, 1);
+  assert.equal(sample.console, undefined);
 });
 
 test('the drawings are not served: the web server shows the dashboard folder and no copy of them is in it', () => {

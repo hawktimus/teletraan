@@ -30,6 +30,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { importFresh } from './helpers/fresh-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 
@@ -41,9 +44,8 @@ fs.mkdirSync(path.join(workFolder, 'dashboard', 'themes', 'overlays'), { recursi
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'frame.js', 'core/busy.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js',
   'core/preview.js', 'core/style.js', 'core/teams.js', 'core/theme.js', 'core/pack-extras.js', 'core/corner-art.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-const frameUrl = pathToFileURL(path.join(workFolder, 'dashboard/frame.js')).href;
 const config = await import(pathToFileURL(path.join(workFolder, 'dashboard/config.js')).href);
 const { chooseStyle, chooseFinish, pileTimes } = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/transitions.js')).href);
 const demo = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/demo.js')).href);
@@ -165,7 +167,7 @@ async function inPage(run) {
 
   try {
     instance += 1;
-    world.frame = await import(frameUrl + '?test=' + instance);
+    world.frame = await importFresh(path.join(workFolder, 'dashboard/frame.js'));
     world.timersAtImport = world.timers.length;
     world.frame.start({ motion: 'full', speed: 'normal' }); // starts the clock and the look every 250 ms
     world.advance = ms => advance(world, ms);
@@ -874,8 +876,8 @@ test('stopLogo leaves a still emblem and frees the line, and startLogo takes a l
 
 // The stylesheets
 
-const frameCss = fs.readFileSync(path.join(dashboardFolder, 'frame.css'), 'utf8');
-const tokensCss = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
+const frameCss = readModule(path.join(dashboardFolder, 'frame.css'), 'utf8');
+const tokensCss = readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8');
 
 // The names of the properties a @keyframes rule changes
 function keyframeProperties(name) {
@@ -1214,9 +1216,9 @@ test('calm motion takes the slat change time for every style and has nothing to 
 
 // What frame.css and plate.js say, read as text
 
-const plateJs = fs.readFileSync(path.join(dashboardFolder, 'core', 'plate.js'), 'utf8');
-const baseCss = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-const indexHtml = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+const plateJs = readModule(path.join(dashboardFolder, 'core', 'plate.js'), 'utf8');
+const baseCss = readModule(path.join(dashboardFolder, 'base.css'), 'utf8');
+const indexHtml = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
 
 // The pieces of each frame in plate.js: { grid1: [name, ...], grid2: [...] }
 function piecesInPlateJs() {
@@ -1429,7 +1431,7 @@ test('makeSilverGradients copies each gold gradient once, with silver names and 
   try {
     // plate.js needs nothing else of the page to be imported
     fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
-    fs.copyFileSync(path.join(dashboardFolder, 'core', 'plate.js'), path.join(workFolder, 'dashboard', 'core', 'plate.js'));
+    copyModule(path.join(dashboardFolder, 'core', 'plate.js'), path.join(workFolder, 'dashboard', 'core', 'plate.js'));
     const plate = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/plate.js')).href);
 
     plate.makeSilverGradients();
@@ -1628,11 +1630,11 @@ test('no frame has a stamped id: nothing in the markup, in the shapes, in frame.
     });
   });
 
-  const plateCode = fs.readFileSync(path.join(dashboardFolder, 'core/plate.js'), 'utf8').replace(/\/\/[^\n]*/g, '');
+  const plateCode = readModule(path.join(dashboardFolder, 'core/plate.js'), 'utf8').replace(/\/\/[^\n]*/g, '');
   assert.equal(/idMarkup|idWidth|idHeight|idFoot|number: '0\d'/.test(plateCode), false, 'plate.js draws no id and has no number for one');
-  assert.equal(/plate-id/.test(fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8')), false, 'frame.js has no line for one');
+  assert.equal(/plate-id/.test(readModule(path.join(dashboardFolder, 'frame.js'), 'utf8')), false, 'frame.js has no line for one');
   assert.equal(/plate-id|team-initials/.test(baseCss), false, 'and base.css has no rule for one');
-  assert.equal(/initialsProperty|teamInitials|team-initials/.test(fs.readFileSync(path.join(dashboardFolder, 'core/teams.js'), 'utf8')), false, 'and core/teams.js writes no initials');
+  assert.equal(/initialsProperty|teamInitials|team-initials/.test(readModule(path.join(dashboardFolder, 'core/teams.js'), 'utf8')), false, 'and core/teams.js writes no initials');
 });
 
 test('base.css draws the rivets only while the style is Original, and no other stylesheet draws them, apart from the one that shows the rivets on Minimal\'s own frames', () => {
@@ -1656,11 +1658,11 @@ test('base.css draws the rivets only while the style is Original, and no other s
   const walk = folder => fs.readdirSync(folder, { withFileTypes: true }).forEach(entry => {
     const full = path.join(folder, entry.name);
     if (entry.isDirectory()) { if (!['fonts', 'data', 'assets'].includes(entry.name)) walk(full); }
-    else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets/.test(fs.readFileSync(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
+    else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets/.test(readModule(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
   });
   walk(dashboardFolder);
   assert.deepEqual(others, ['layouts/bar-minimal.css', 'styles/retro/theme.css'], 'a style or theme that draws or hides them: the bar drawing, and the Retro copy of Original');
-  const minimalCss = fs.readFileSync(path.join(dashboardFolder, 'layouts/bar-minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const minimalCss = readModule(path.join(dashboardFolder, 'layouts/bar-minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets)[^\n]*/g), ['html[data-layout="bar"] .rivets { display: inline; }'], 'Minimal shows the rivets');
 });
 
@@ -1671,7 +1673,7 @@ test('the rivets come in after the lines are drawn, and go with the frame in a p
   assert.ok(arrival.test(css), 'a fade, timed after the line drawing');
 
   // the countdown brings them in with its other parts, after its outline is drawn
-  const sequence = /\n  countdown: \{([^}]*)\},/.exec(fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8'))[1];
+  const sequence = /\n  countdown: \{([^}]*)\},/.exec(readModule(path.join(dashboardFolder, 'frame.js'), 'utf8'))[1];
   const line = part => new RegExp("'" + part + "':\\s*\\['fade', (\\d+)\\]").exec(sequence);
   const drawn = /'outline':\s*\['draw', (\d+)\]/.exec(sequence);
   assert.ok(line('rivets') && drawn);
@@ -2142,18 +2144,18 @@ test('every screen in the registry is accepted as a step, and the default steps 
 });
 
 test('the demo registry and the plain functions import nothing from the page, so they can be read here and by tests/schemas.test.mjs', () => {
-  const registry = fs.readFileSync(path.join(dashboardFolder, 'core/demo-screens.js'), 'utf8');
+  const registry = readModule(path.join(dashboardFolder, 'core/demo-screens.js'), 'utf8');
   const imports = registry.split('\n').filter(line => /^import /.test(line));
   assert.deepEqual(imports, ["import { demoPlaceholderText } from '../config.js';"]);
   assert.ok(registry.includes("await import('./takeover.js')") && registry.includes("await import('./night-screen.js')"), 'the page code is loaded when a screen runs');
 
-  const plain = fs.readFileSync(path.join(dashboardFolder, 'core/demo.js'), 'utf8');
-  assert.equal(plain.split('\n').filter(line => /^import /.test(line)).length, 2);
+  const plain = readModule(path.join(dashboardFolder, 'core/demo.js'), 'utf8');
+  assert.equal(plain.split('\n').filter(line => /^import /.test(line)).length, 3);
   assert.ok(!/\bdocument\b|\bwindow\b/.test(plain.split('\n').filter(line => !line.trim().startsWith('//')).join('\n')), 'no page in demo.js');
 });
 
 test('the shell starts the demo runner after the takeovers, and only when the whole screen runs', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   const takeovers = shell.indexOf('startTakeovers(getContent);');
   const runner = shell.indexOf("startOptional('./core/demo-runner.js', module => module.startDemoRunner(getContent))");
   assert.ok(takeovers !== -1 && runner > takeovers, 'after startTakeovers');
@@ -2447,7 +2449,7 @@ test('every transition collapses the frames before the effect and ends with rebu
 });
 
 test('the registry and the plain functions import nothing from the page, so they can be read here and by tests/schemas.test.mjs', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const importsOf = text => text.split('\n').filter(line => /^import /.test(line));
   const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
@@ -2456,6 +2458,7 @@ test('the registry and the plain functions import nothing from the page, so they
     "import { defaultSettings, hiddenGapHours, limits, speeds } from '../config.js';",
     "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
     "import { hiddenTransitions } from './hidden-transitions.js';",
+    "import { isRecord } from './text.js';",
   ]);
   assert.deepEqual(importsOf(read('core/hidden-pictures.js')), []);
   ['core/hidden-transitions.js', 'core/hidden.js', 'core/hidden-pictures.js'].forEach(file => {
@@ -2501,7 +2504,7 @@ test('there are two sets of two pictures, and each file is in the assets folder 
   allPictures().forEach(picture => {
     const file = path.join(dashboardFolder, pictureAddress(picture));
     assert.ok(fs.existsSync(file), picture.file + ' is not in dashboard/assets/hidden');
-    assert.deepEqual(pictureSize(fs.readFileSync(file)), { width: picture.width, height: picture.height }, picture.file + ' is not the size the list says');
+    assert.deepEqual(pictureSize(readModule(file)), { width: picture.width, height: picture.height }, picture.file + ' is not the size the list says');
     assert.ok(/^#[0-9a-f]{6}$/.test(picture.fill), picture.file + ' needs its own background colour');
     assert.ok(picture.fit === 'cover' || picture.fit === 'contain', picture.file);
   });
@@ -2552,7 +2555,7 @@ test('every set the transitions name is one that has pictures, and the pictures 
     'assets/hidden/blue-screen-1.png',
     'assets/hidden/blue-screen-2.png',
   ]);
-  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  const run = readModule(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
   assert.ok(run.includes('preloadImages(pictures.map(pictureAddress))'), 'all four are preloaded');
   assert.ok(run.indexOf('loadPictures();') !== -1 && run.indexOf('loadPictures();') < run.indexOf('setHiddenOffer(offer);'), 'when the hidden transitions start, before any can play');
 });
@@ -2659,7 +2662,7 @@ test('preloadImages answers when every picture has loaded or failed, in order, a
 });
 
 test('the runner skips a picture that is not loaded, still waits the step, and puts every picture and layer back when it is done', () => {
-  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  const run = readModule(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
   const code = run.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
   // only a picture that loaded has an element, and only those can be chosen
@@ -2670,9 +2673,9 @@ test('the runner skips a picture that is not loaded, still waits the step, and p
   assert.ok(/const pictureElements = \{\};/.test(code));
 
   // the steps wait their seconds whatever was shown, so the transition keeps its time and rebuild comes
-  assert.ok(/async pictureIn\(set, seconds\) \{[^}]*showPicture\(set, 'in'\);\s*await sleep\(seconds\);\s*if \(showing\) showing\.dataset\.state = 'on';/.test(code));
+  assert.ok(/async pictureIn\(set, seconds\) \{[^}]*showPicture\(set, 'in'\);\s*await sleep\(seconds\);\s*if \(hiddenState\.showing\) hiddenState\.showing\.dataset\.state = 'on';/.test(code));
   assert.ok(/async pictureCut\(set, seconds\) \{\s*showPicture\(set, 'on'\);\s*await sleep\(seconds\);\s*\}/.test(code), 'the cut shows the picture in its final state in one go, then holds');
-  assert.ok(/async pictureOut\(seconds\) \{[^}]*if \(showing\) showing\.dataset\.state = 'out';\s*await sleep\(seconds\);/.test(code));
+  assert.ok(/async pictureOut\(seconds\) \{[^}]*if \(hiddenState\.showing\) hiddenState\.showing\.dataset\.state = 'out';\s*await sleep\(seconds\);/.test(code));
 
   // the backdrop is given the picture's own colour in the same step, so the cut is one frame with no black bars
   const show = code.slice(code.indexOf('function showPicture('), code.indexOf('function makeScene('));
@@ -2688,7 +2691,7 @@ test('the runner skips a picture that is not loaded, still waits the step, and p
 });
 
 test('scene.glitch takes a tint: red is the default and plays the old television glitch with the red layer, blue shows the blue layers and does not', () => {
-  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  const run = readModule(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
   const start = run.indexOf("async glitch(seconds, tint = 'red') {");
   assert.ok(start !== -1, "glitch(seconds, tint = 'red')");
   const glitch = run.slice(start, run.indexOf('// The blocks fly apart', start));
@@ -2721,7 +2724,7 @@ test('the desktop reveal collapses over a deep blue and red eyes over black, and
   assert.equal(await lookOf('desktop'), 'blue');
   assert.equal(await lookOf('redEyes'), 'black');
 
-  const everything = ['dashboard/base.css', 'dashboard/frame.css', 'dashboard/tokens.css', 'dashboard/index.html', 'dashboard/core/hidden-run.js', 'dashboard/core/hidden-transitions.js', 'dashboard/core/hidden-pictures.js'].map(file => fs.readFileSync(fileURLToPath(new URL('../' + file, import.meta.url)), 'utf8')).join('\n');
+  const everything = ['dashboard/base.css', 'dashboard/frame.css', 'dashboard/tokens.css', 'dashboard/index.html', 'dashboard/core/hidden-run.js', 'dashboard/core/hidden-transitions.js', 'dashboard/core/hidden-pictures.js'].map(file => readModule(fileURLToPath(new URL('../' + file, import.meta.url)), 'utf8')).join('\n');
   ['wallpaper', 'redEyesMarkup', 'wallpaperMarkup', 'backdropMarkup', 'face-plates', 'face-eyes', '--face-', '--eye-', 'eyes-on', 'hidden-art'].forEach(word => {
     assert.ok(!everything.includes(word), 'what is left of ' + word);
   });
@@ -2741,7 +2744,7 @@ test('the repository never names the character the red eyes look like', () => {
       const full = path.join(folder, entry.name);
       if (entry.isDirectory()) return walk(full);
       if (!/\.(js|mjs|css|html|md|json|svg|csv|ndjson|sh)$/.test(entry.name)) return;
-      if (banned.test(entry.name) || banned.test(fs.readFileSync(full, 'utf8'))) found.push(full);
+      if (banned.test(entry.name) || banned.test(readModule(full, 'utf8'))) found.push(full);
     });
   }
 
@@ -2902,7 +2905,7 @@ test('a hidden transition ends a logo effect that is playing, and frame.js says 
 // The stylesheet
 
 test('the blocks of the hidden transitions: five regions are marked, each has a pose with all seven numbers, and no turn is past 90 degrees', () => {
-  const indexHtml = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const indexHtml = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   const marked = (indexHtml.match(/<div id="(region-[a-z0-9]+)" data-block><\/div>/g) || []).map(text => text.match(/id="([^"]+)"/)[1]);
   assert.deepEqual(marked, ['region-banner', 'region-grid1', 'region-countdown', 'region-grid2', 'region-ticker']);
 
@@ -2917,7 +2920,7 @@ test('the blocks of the hidden transitions: five regions are marked, each has a 
 });
 
 test('the hidden transition times: the collapse takes the time the frames fall in, the backdrop is gone inside the build, as hidden-run.js waits, and the number is one number', () => {
-  const run = fs.readFileSync(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
+  const run = readModule(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
   const fly = Number(run.match(/const flySeconds = ([0-9.]+);/)[1]);
   assert.equal(fly, 1.7);
   assert.equal(fly * 1000, pileTimes.fallMs, 'the collapse takes as long as the plan says');
@@ -3014,7 +3017,7 @@ test('the red wash never flashes more than twice in any second, never brighter t
 
   // a flash is a jump up of .2 or more. Count the most in any one second of the 1.5 s the red eyes use.
   const glitchSeconds = 1.5;
-  assert.ok(fs.readFileSync(path.join(dashboardFolder, 'core/hidden-transitions.js'), 'utf8').includes('scene.glitch(1.5)'));
+  assert.ok(readModule(path.join(dashboardFolder, 'core/hidden-transitions.js'), 'utf8').includes('scene.glitch(1.5)'));
   const flashTimes = [];
   steps.forEach((step, index) => { if (index > 0 && step.opacity - steps[index - 1].opacity >= 0.2) flashTimes.push(step.at * glitchSeconds); });
   assert.ok(flashTimes.length >= 2);
@@ -3127,7 +3130,7 @@ test('the pictures show with data-state: in fades, on is there at once with no a
 });
 
 test('the backdrop and the wash are in index.html in the right order, hidden, and the stage is positioned so they stack by that order', () => {
-  const indexHtml = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const indexHtml = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   const at = text => indexHtml.indexOf(text);
   assert.ok(at('<div id="world">') !== -1);
   assert.ok(at('<div id="backdrop" hidden></div>') > at('<div id="world">'));
@@ -3154,7 +3157,7 @@ test('the backdrop and the wash are in index.html in the right order, hidden, an
 });
 
 test('the shell starts the hidden transitions after the demo runner, with the address switch, and only when the whole screen runs', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   const demoRunner = shell.indexOf("startOptional('./core/demo-runner.js'");
   const hiddenRunner = shell.indexOf("startOptional('./core/hidden-run.js', module => module.startHidden(getContent, params.get('hidden')))");
   assert.ok(demoRunner !== -1 && hiddenRunner > demoRunner);
@@ -3164,7 +3167,7 @@ test('the shell starts the hidden transitions after the demo runner, with the ad
 });
 
 test('the large panel asks for a hidden transition before its page change, and the other areas wait at a gate while one plays', () => {
-  const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
+  const areas = readModule(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
   assert.ok(areas.includes("const hiddenRegion = 'grid1';"));
   const offer = areas.indexOf('const offered = hiddenOffer();');
   const normal = areas.indexOf('await frame.leave(area, change);');
@@ -3173,7 +3176,7 @@ test('the large panel asks for a hidden transition before its page change, and t
   assert.ok(areas.includes("made.dataset.state = 'shown';"), 'a page swapped while apart is at rest and starts no first assembly');
   assert.ok(/swapUnseen\(region, next\);\s*\n\s*\}\);/.test(areas), 'the large panel swaps its own page when the transition says it is apart');
 
-  const schedule = fs.readFileSync(path.join(dashboardFolder, 'core/schedule.js'), 'utf8');
+  const schedule = readModule(path.join(dashboardFolder, 'core/schedule.js'), 'utf8');
   assert.ok(/export function moveOn\(regions\)/.test(schedule) && /export function secondsUntilChange\(region\)/.test(schedule));
   ['const since = changeCount(region);', "const since = changeCount('ticker');", 'const since = changeCount(null);'].forEach(call => assert.ok(schedule.includes(call), call));
   assert.ok(!/\bpagesRefreshed === since\b/.test(schedule), 'the hold compares both counts');
@@ -3640,12 +3643,13 @@ test('the Demo step plays each enabled announcement in order at its own length t
 });
 
 test('the announcement functions import only the config and the demo functions and use no page, and the screen code that runs them is started last', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
   assert.deepEqual(read('core/announce.js').split('\n').filter(line => /^import /.test(line)), [
     "import { defaultSettings } from '../config.js';",
     "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
+    "import { isRecord } from './text.js';",
   ]);
   assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/announce.js'))), 'no page in announce.js');
 
@@ -3653,7 +3657,7 @@ test('the announcement functions import only the config and the demo functions a
   const run = read('core/announce-run.js');
   ['demoRunning', 'nightIsUp', 'hiddenPlaying'].forEach(name => assert.ok(run.includes("'" + name + "'"), name));
   assert.ok(run.includes('takeoverRunning: takeoverRunning,') && run.includes('alertsStarted: alertsStarted,'));
-  assert.ok(/export function hiddenPlaying\(\) \{\s*return playing;\s*\}/.test(read('core/hidden-run.js')));
+  assert.ok(/export function hiddenPlaying\(\) \{\s*return hiddenState\.playing;\s*\}/.test(read('core/hidden-run.js')));
 
   const shell = read('shell.js');
   const announcing = shell.indexOf("startOptional('./core/announce-run.js', module => module.startAnnounceRunner(getContent))");
@@ -3890,11 +3894,12 @@ test('tidyTestRequest always gives a time, empty when it is not usable', () => {
 });
 
 test('the presentation test functions import only the demo functions and use no page, and the screen code that runs them is started after the talk screen', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
   assert.deepEqual(read('core/presentation-test.js').split('\n').filter(line => /^import /.test(line)), [
     "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
+    "import { isRecord } from './text.js';",
   ]);
   assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/presentation-test.js'))), 'no page in presentation-test.js');
 
@@ -4410,7 +4415,7 @@ test('?team= holds a mode for the page like ?style=, a preview wins over it, and
 });
 
 test('the preview functions import only the config, the registry of overlays, the demo functions and the three modules they hold, and use no page, and the screen code that runs them is started after the others', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
   assert.deepEqual(read('core/preview.js').split('\n').filter(line => /^import /.test(line)), [
@@ -4420,6 +4425,7 @@ test('the preview functions import only the config, the registry of overlays, th
     "import { previewStyle } from './style.js';",
     "import { previewTeam } from './teams.js';",
     "import { isKnownOverlay, previewPack } from './theme.js';",
+    "import { isRecord } from './text.js';",
   ]);
   assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/preview.js'))), 'no page in preview.js');
   ['animate(', 'transition', 'requestAnimationFrame', 'keyframes', 'setTimeout', 'setInterval'].forEach(word => assert.ok(!code(read('core/preview.js')).includes(word), 'preview.js does not animate or keep time: ' + word));
@@ -4783,17 +4789,17 @@ test('a page change goes on arriving when the kit has nothing to find in the pag
 });
 
 test('the kit is on in frame.js only when told, never from an import, and shell.js tells it for Neon Prime in the sidebar layout', () => {
-  const frame = fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8');
-  const kit = frame.slice(frame.indexOf('// The Neon Prime kit\n'));
+  const frame = readModule(path.join(dashboardFolder, 'frame.js'), 'utf8');
+  const kit = readModule(path.join(dashboardFolder, 'frame-kit.js'), 'utf8');
   assert.ok(kit.length > 1000, 'the kit section is in frame.js');
   assert.ok(!/setInterval/.test(kit), 'one timer at a time, no repeating timer');
   assert.ok(!/requestAnimationFrame|\.animate\(|style\.setProperty|\.style\./.test(kit), 'the kit adds no animation code of its own: a class, and the stylesheet does the rest');
   assert.equal((kit.match(/setTimeout\(/g) || []).length, 3, 'a glitch timer, and the end of a glitch and of a burst');
   assert.equal((kit.match(/clearTimeout\(/g) || []).length, 3, 'each is cleared');
 
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   assert.ok(/frame\.setKit\(hasKit\(look\.theme, layoutNow\(\)\) && params\.get\('kit'\) !== 'off'\)/.test(shell), 'shell.js switches the kit with each look, and ?kit=off switches it off');
-  const takeover = fs.readFileSync(path.join(dashboardFolder, 'core/takeover.js'), 'utf8');
+  const takeover = readModule(path.join(dashboardFolder, 'core/takeover.js'), 'utf8');
   assert.ok(/frame\.setTakeoverCovers\(true\)/.test(takeover) && /frame\.setTakeoverCovers\(false\)/.test(takeover), 'an alert and an announcement tell the kit when they start and end');
 });
 
@@ -4897,14 +4903,14 @@ test('the screen stays paused through a change of motion, and the effects do not
 });
 
 test('the glint and the seasonal pieces stop while the screen is paused, in the stylesheets', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
   assert.ok(/\[data-glint="off"\] \.glint-layer,\s*\[data-paused\] \.glint-layer,[^{]*\{ display: none; \}/.test(read('frame.css')), 'the glint is not drawn');
   assert.ok(read('seasons/motion.css').includes('html[data-paused] .season-piece { animation-play-state: paused; }'), 'the pieces stand still');
 });
 
 test('only frame.js, schedule.js and takeover.js ask whether the screen is paused, and everything that waits for a cover asks takeoverRunning', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
   // the rotation and the ticker wait, and a page does not use up its stay
@@ -4926,7 +4932,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
 
   const frame = code(read('frame.js'));
   assert.ok(frame.includes('export function pause(reason)') && frame.includes('export function resume(reason)') && frame.includes('export function isPaused()'));
-  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || screenHeld()) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
+  assert.ok(frame.includes("if (frameState.motion !== 'full' || frameState.nightCovers || screenHeld()) return;\n  if (isPaused()) return;"), 'no effect comes due while it is paused');
 });
 
 // takeover.js on a fake page. The real file runs with stand-ins for frame.js, the panels and the
@@ -4935,7 +4941,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
 const takeoverTree = path.join(workFolder, 'takeover-tree');
 ['core/takeover.js', 'core/text.js', 'core/time.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(takeoverTree, 'dashboard', file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(takeoverTree, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(takeoverTree, 'dashboard', file));
 });
 fs.writeFileSync(path.join(takeoverTree, 'package.json'), '{ "type": "module" }\n');
 fs.writeFileSync(path.join(takeoverTree, 'dashboard/frame.js'), [
@@ -5080,7 +5086,7 @@ test('an alert still takes the screen while it is paused, and an announcement du
 const talkTree = path.join(workFolder, 'talk-tree');
 ['config.js', 'core/constants.js', 'core/presentation-run.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(talkTree, 'dashboard', file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(talkTree, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(talkTree, 'dashboard', file));
 });
 fs.writeFileSync(path.join(talkTree, 'package.json'), '{ "type": "module" }\n');
 fs.writeFileSync(path.join(talkTree, 'dashboard/frame.js'), [
@@ -5847,7 +5853,7 @@ test('the first Esc on a slide shows the chip too, since it is a key press', asy
 // The files around it
 
 test('the talk panel is in the registry, its cards have the parts frame.js moves, and its layer is in index.html under the overlay and over the night screen', async () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
   assert.ok(read('registry.js').includes("{ id: 'talk', region: 'overlay' },"));
   assert.equal(fs.existsSync(path.join(dashboardFolder, 'panels/talk/panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels/talk/panel.css')), true);
@@ -5869,7 +5875,7 @@ test('the talk panel is in the registry, its cards have the parts frame.js moves
 });
 
 test('the stylesheet of a talk keeps the rules of the screen: text of 44px or more, lines of 3px or more, nothing that moves but the chip', () => {
-  const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
   const css = read('panels/talk/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
   // every size in a font shorthand is one of the tokens at 44px or more
@@ -5900,7 +5906,7 @@ test('the stylesheet of a talk keeps the rules of the screen: text of 44px or mo
 });
 
 test('shell.js starts the screen of a talk behind startOptional, in the views that have alerts', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   const announce = shell.indexOf("startOptional('./core/announce-run.js'");
   const talk = shell.indexOf("startOptional('./core/presentation-run.js', module => module.startPresentations(getContent));");
 

@@ -13,10 +13,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
 // The dashboard files are browser modules named .js. Copying them next to a
@@ -29,7 +31,7 @@ function makeTree(name, files) {
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
   files.forEach(file => {
     fs.mkdirSync(path.dirname(path.join(folder, 'dashboard', file)), { recursive: true });
-    fs.copyFileSync(path.join(dashboardFolder, file), path.join(folder, 'dashboard', file));
+    copyModule(path.join(dashboardFolder, file), path.join(folder, 'dashboard', file));
   });
   return folder;
 }
@@ -65,7 +67,7 @@ const { bezierAt, contentFade, destinationsOf, matchPieces, planPull, planReform
 // The pieces of each look
 
 // Each look is { layout, pieces, logos }: the plates, the boxes and the bolts as core/swap-run.js measures them, and where the logos are
-const looks = JSON.parse(fs.readFileSync(path.join(root, 'tests/data/swap-pieces.json'), 'utf8'));
+const looks = JSON.parse(readModule(path.join(root, 'tests/data/swap-pieces.json'), 'utf8'));
 const middleOf = piece => ({ x: piece.left + piece.width / 2, y: piece.top + piece.height / 2 });
 const seeds = [3, 17, 4242];
 
@@ -1039,7 +1041,7 @@ test('a hidden transition has the same gate: the regions swap when it says it is
 const scheduleTree = path.join(workFolder, 'schedule-tree');
 ['config.js', 'core/schedule.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(scheduleTree, 'dashboard', file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
 });
 fs.writeFileSync(path.join(scheduleTree, 'package.json'), '{ "type": "module" }\n');
 fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [
@@ -1230,9 +1232,9 @@ test('shell.js puts the layout on in the step that puts the look on, before the 
   const body = /function useLayout\(look\) \{([\s\S]*?)\n\}/.exec(shell)[1];
   assert.ok(body.indexOf('changeLayout(look)') !== -1 && body.indexOf('changeLayout(look)') < body.indexOf('redrawFrames();') && body.indexOf('redrawFrames();') < body.indexOf('drawWhatStays();'), 'the layout, the frames, then the panels that stay');
   assert.ok(body.includes('catch'), 'a problem never stops the colors');
-  assert.ok(/holdLooksFor\(\(look, waitedMs\) => holdForLayout\(look, takeoverRunning, waitedMs, \(\) => !stayStarted \|\| swapIsPlaying\(\)\)\);/.test(shell), 'a look with another layout goes on when a swap has the screen, or before anything is drawn');
-  assert.ok(shell.includes("startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });"));
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
+  assert.ok(/holdLooksFor\(\(look, waitedMs\) => holdForLayout\(look, takeoverRunning, waitedMs, \(\) => !shellState\.stayStarted \|\| shellState\.swapIsPlaying\(\)\)\);/.test(shell), 'a look with another layout goes on when a swap has the screen, or before anything is drawn');
+  assert.ok(shell.includes("startOptional('./core/swap-run.js', module => { shellState.swapIsPlaying = module.swapRunning; });"));
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(shellState.content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
   assert.ok(shell.includes("['banner', 'countdown', 'column'].forEach(region => { document.getElementById('region-' + region).innerHTML = ''; });"), 'the panels of the old layout are taken away');
   assert.ok(/fixedPanels\(layoutNow\(\)\)\.forEach\(id => showFixedPanel\(id, false\)\);\n\}/.test(shell), 'and the panels of the new one are drawn');
 });
@@ -1253,7 +1255,7 @@ test('the swap keeps to transform and opacity, and the plan has no page in it', 
 });
 
 test('the docs say how the swap goes now: one gesture, no reload, the layout changed in the page, calm and no motion', () => {
-  const layouts = fs.readFileSync(path.join(root, 'docs/layouts.md'), 'utf8').replace(/\s+/g, ' ');
+  const layouts = readModule(path.join(root, 'docs/layouts.md'), 'utf8').replace(/\s+/g, ' ');
   ['one gesture', 'the page does not reload', 'changeLayout', 'In **calm** motion', 'With motion **off**', 'up to 8 seconds', 'startRotationForLayouts', 'destinationsOf', 'swap-smooth.test.mjs'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   assert.ok(!/A change of layout[^.]* reloads/.test(layouts), 'and no longer says that a change of layout reloads the page');
   assert.ok(!/cannot be drawn in the page that is on screen/.test(layouts));

@@ -12,9 +12,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
 // The dashboard files are browser modules named .js. Copying them next to a
@@ -25,7 +27,7 @@ const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'core/transitions.js', 'core/hidden-pile.js', 'core/plate.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.writeFileSync(path.join(root, 'frame.js'), [
   'export const entered = [];',
@@ -493,7 +495,7 @@ test('hidden-run.js collapses the frames before the effect, holds the rotation c
     "world.dataset.hidden = 'break';",
     "world.dataset.pieces = '';",
     'pile = makePile();',
-    'plan = pile.release(',
+    'hiddenState.plan = hiddenState.pile.release(',
     'await sleep(contentGoneAfter);',
     'swapPage();',
     'screen.apart();',
@@ -509,14 +511,14 @@ test('hidden-run.js collapses the frames before the effect, holds the rotation c
     'pile.showCube();',
     'await sleep(pileTimes.cubeMs / 1000);',
     "world.dataset.lift = '';",
-    'await sleep(plan.riseMs / 1000);',
+    'await sleep(hiddenState.plan.riseMs / 1000);',
     'pile.finish();',
     'delete world.dataset.pieces;',
     "world.dataset.hidden = 'build';",
     'pile.contentIn();',
     'await sleep(pileTimes.contentMs / 1000);',
   ], 'rebuild');
-  assert.ok(rebuild.includes('if (pile === null) return;'), 'a show that did not collapse the frames has nothing to put back');
+  assert.ok(rebuild.includes('if (hiddenState.pile === null) return;'), 'a show that did not collapse the frames has nothing to put back');
 
   // the effect plays between the two, over the pile
   const registry = read('core/hidden-transitions.js');
@@ -529,7 +531,7 @@ test('hidden-run.js collapses the frames before the effect, holds the rotation c
   assert.ok(!registry.includes('piece-build') && !registry.includes('breakApart'));
 
   // the rotation is held with the pause that is there for it, and let go once, in putBack
-  assert.ok(code.includes("import { moveOn, pauseRotation, resumeRotation, secondsUntilChange } from './schedule.js';"));
+  assert.ok(hasImports(code, ['moveOn', 'pauseRotation', 'resumeRotation', 'secondsUntilChange'], './schedule.js'));
   assert.equal((code.match(/pauseRotation\(\)/g) || []).length, 1);
   assert.equal((code.match(/resumeRotation\(\)/g) || []).length, 1);
   assert.ok(!/isPaused|frame\.pause|frame\.resume/.test(code), 'the whole-screen hold of a talk is not used');
@@ -540,11 +542,11 @@ test('hidden-run.js collapses the frames before the effect, holds the rotation c
   assert.equal((code.match(/setBusy\(false, 'hidden'\)/g) || []).length, 1);
 
   const putBack = code.slice(code.indexOf('function putBack('));
-  ['delete world.dataset.hidden;', 'delete world.dataset.lift;', 'delete world.dataset.pieces;', 'if (rotationHeld) resumeRotation();', 'rotationHeld = false;', 'if (pile) pile.clear();', 'pile = null;', 'plan = null;'].forEach(text => {
+  ['delete world.dataset.hidden;', 'delete world.dataset.lift;', 'delete world.dataset.pieces;', 'if (hiddenState.rotationHeld) resumeRotation();', 'hiddenState.rotationHeld = false;', 'if (hiddenState.pile) hiddenState.pile.clear();', 'hiddenState.pile = null;', 'hiddenState.plan = null;'].forEach(text => {
     assert.ok(putBack.includes(text), 'putBack lacks ' + text);
   });
-  assert.ok(putBack.indexOf('if (rotationHeld) resumeRotation();') < putBack.indexOf('if (pile) pile.clear();'), 'the clock is let go before anything that could fail');
-  assert.ok(putBack.indexOf('screen.end();') > putBack.indexOf('pile = null;') && putBack.indexOf('playing = false;') > putBack.indexOf('screen.end();'));
+  assert.ok(putBack.indexOf('if (hiddenState.rotationHeld) resumeRotation();') < putBack.indexOf('if (hiddenState.pile) hiddenState.pile.clear();'), 'the clock is let go before anything that could fail');
+  assert.ok(putBack.indexOf('screen.end();') > putBack.indexOf('hiddenState.pile = null;') && putBack.indexOf('hiddenState.playing = false;') > putBack.indexOf('screen.end();'));
 });
 
 test('the frames no longer fly back as blocks, and the seasonal decorations stay out of sight while they fall', () => {
@@ -1047,7 +1049,7 @@ test('hidden-pile.js uses nothing newer than the rest of the dashboard and holds
   const code = read('core/hidden-pile.js').split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
   assert.ok(!/setTimeout|setInterval|requestAnimationFrame|\.animate\(|frame\.wait/.test(code), 'frame.css moves, hidden-run.js times');
   assert.ok(!/\?\.|\?\?|\.\.\.[a-z]/.test(code));
-  assert.equal(code.split('\n').filter(line => /^import /.test(line)).join('\n'), "import { enter, pace } from '../frame.js';\nimport { pileShape, pileTimes, planPile } from './transitions.js';");
+  assert.equal(code.split('\n').filter(line => /^import /.test(line)).join('\n'), "import { enter, pace } from '../frame.js';\nimport { pileShape, planPile } from './transitions.js';");
   assert.ok(!/\bdocument\b|\bwindow\b/.test(read('core/transitions.js').split('\n').filter(line => !line.trim().startsWith('//')).join('\n')), 'the plan has no page in it');
 });
 

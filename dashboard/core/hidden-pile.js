@@ -19,7 +19,7 @@
 // that paints a box of its own (the strip and the sidebar of the sidebar layout).
 
 import { enter, pace } from '../frame.js';
-import { pileShape, pileTimes, planPile } from './transitions.js';
+import { pileShape, planPile } from './transitions.js';
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 export const boltBox = 48; // a copy of a bolt is a square this wide, with the bolt in the middle, before the zoom of its frame

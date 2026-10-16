@@ -3,16 +3,14 @@
 // Settings with an until time, so a request that is forgotten ends on its own. The runtime asks
 // activeRequests once a second or so and acts on what it gives back.
 
+import { isRecord } from './text.js';
+
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
 export const themeIds = ['original', 'cybertron', 'retro'];
 
 // The longest a request may run. The control page asks for 10 to 120 minutes, and a time further off
 // than this is a mistake, so it is not obeyed.
 export const longestMinutes = 120;
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 function timeOrEmpty(value) {
   return typeof value === 'string' && !isNaN(Date.parse(value)) ? value : '';
@@ -33,19 +31,19 @@ function pieces(raw, name, clean) {
   return result;
 }
 
-export function tidyHoldPanel(raw) {
+function tidyHoldPanel(raw) {
   return pieces(raw, 'panel', panelOrEmpty);
 }
 
-export function tidyShowView(raw) {
+function tidyShowView(raw) {
   return pieces(raw, 'key', value => wordOrEmpty(value, viewKeys));
 }
 
-export function tidyPreviewTheme(raw) {
+function tidyPreviewTheme(raw) {
   return pieces(raw, 'theme', value => wordOrEmpty(value, themeIds));
 }
 
-export function tidyPauseRotation(raw) {
+function tidyPauseRotation(raw) {
   return pieces(raw, '', null);
 }
 

@@ -43,7 +43,7 @@ function columnParts(color, people, left, entry, ours) {
 
 // The bar: red from the left as far as the chance of red, blue the rest. The numbers are whole percents
 // that add up to 100.
-export function oddsParts(redWinProbability) {
+function oddsParts(redWinProbability) {
   if (redWinProbability === null) return [textAt(0, 490, 'No win chance for this match yet.', 'note')];
 
   const red = Math.round(redWinProbability * 100);

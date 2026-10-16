@@ -12,11 +12,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -24,16 +26,16 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-event-pages-
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'registry.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+['config.js', 'registry.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/events'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/events/panel.js'), path.join(root, 'panels/events/panel.js'));
+copyModule(path.join(dashboardFolder, 'panels/events/panel.js'), path.join(root, 'panels/events/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -459,12 +461,12 @@ test('each calendar keeps its kind through the reader, Group events by kind star
 });
 
 test('the sample content has a kind on its calendar and enough events for both pages, in date order', () => {
-  const content = normalizeSample(JSON.parse(fs.readFileSync(sampleFile, 'utf8')));
+  const content = normalizeSample(JSON.parse(readModule(sampleFile, 'utf8')));
   const row = content.settings.calendars[0];
   assert.ok(config.calendarKinds.includes(row.kind), 'the sample calendar has a kind from the list');
   assert.equal(content.settings.groupEventsByKind, false);
 
-  const text = fs.readFileSync(path.join(dashboardFolder, 'data/sample/calendars/team.ics'), 'utf8');
+  const text = readModule(path.join(dashboardFolder, 'data/sample/calendars/team.ics'), 'utf8');
   const events = calendar.expandEvents(calendar.parseIcs(text), new Date(now.getTime() - day), new Date(now.getTime() + 60 * day));
   events.forEach(event => {
     event.calendarId = row.id;
@@ -513,9 +515,9 @@ test('the default order has the Events panel once, and withPages leaves every ro
 
 test('shell.js gives the rotation of the large and the small panels through withPages', () => {
   const shell = read('shell.js');
-  assert.ok(shell.includes("import { withPages, withStandIns } from './core/panel-order.js';"));
-  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel that says it has pages becomes a step for each');
-  assert.ok(shell.includes("withPages(viewSidePlaylist(content))"));
+  assert.ok(hasImports(shell, ['withPages', 'withStandIns'], './core/panel-order.js'));
+  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()))"), 'the competition cards are mixed in first and then every panel that says it has pages becomes a step for each');
+  assert.ok(shell.includes("withPages(viewSidePlaylist(shellState.content))"));
   assert.ok(read('core/schedule.js').includes('buildPage(step.panel, getContent(), step.page, step)'));
   assert.ok(read('core/schedule.js').includes('canShow(step.panel, content, step.page)'));
 });
@@ -526,7 +528,7 @@ test('shell.js gives the rotation of the large and the small panels through with
 const scheduleTree = path.join(workFolder, 'schedule-tree');
 ['config.js', 'core/schedule.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(scheduleTree, 'dashboard', file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
 });
 fs.writeFileSync(path.join(scheduleTree, 'package.json'), '{ "type": "module" }\n');
 fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [
@@ -699,7 +701,7 @@ test('nothing in the dashboard reads the Events Calendar entries any more', () =
     fs.readdirSync(folder, { withFileTypes: true }).forEach(entry => {
       const file = path.join(folder, entry.name);
       if (entry.isDirectory()) walk(file);
-      else if (/\.(js|json|html)$/.test(entry.name) && /extraEvent/.test(fs.readFileSync(file, 'utf8'))) found.push(path.relative(dashboardFolder, file));
+      else if (/\.(js|json|html)$/.test(entry.name) && /extraEvent/.test(readModule(file, 'utf8'))) found.push(path.relative(dashboardFolder, file));
     });
   };
   walk(dashboardFolder);
@@ -711,8 +713,8 @@ test('nothing in the dashboard reads the Events Calendar entries any more', () =
 // The docs
 
 test('the docs say what the two pages are, the kinds, the grouping and the pin', () => {
-  const filters = fs.readFileSync(path.join(docsFolder, 'calendar-filters.md'), 'utf8').replace(/\s+/g, ' ');
-  const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
+  const filters = readModule(path.join(docsFolder, 'calendar-filters.md'), 'utf8').replace(/\s+/g, ' ');
+  const editing = readModule(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
 
   ['Pin to page one', 'page one', 'At most three', 'Always show', 'check-calendars.sh', 'later', 'pinned'].forEach(word => assert.ok(filters.includes(word), 'calendar-filters.md names ' + word));
   ['two pages', 'Kind', 'Meetings', 'Competitions', 'Outreach', 'Deadlines', 'Other', 'Group events by kind', 'Pin to page one', 'COMP'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));

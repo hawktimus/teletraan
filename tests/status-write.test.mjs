@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { readModule } from './helpers/read-module.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const scriptFile = path.join(repo, 'mini/scripts/status-write.sh');
@@ -94,7 +95,7 @@ function setup(name, options) {
     run(args) {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub };
       const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/status-write.sh')].concat(args), { env: env, encoding: 'utf8', input: '' });
-      return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
+      return { text: result.stdout, errors: result.stderr, status: result.status, calls: readModule(log, 'utf8') };
     },
     answer(body) {
       fs.writeFileSync(path.join(stub, 'query.json'), typeof body === 'string' ? body : JSON.stringify(body));
@@ -106,17 +107,17 @@ function setup(name, options) {
       fs.writeFileSync(path.join(stub, 'mutate.exit'), String(code));
     },
     body() {
-      return JSON.parse(fs.readFileSync(path.join(stub, 'last-body.json'), 'utf8'));
+      return JSON.parse(readModule(path.join(stub, 'last-body.json'), 'utf8'));
     },
     config() {
-      return fs.readFileSync(path.join(stub, 'last-config.txt'), 'utf8');
+      return readModule(path.join(stub, 'last-config.txt'), 'utf8');
     },
     hasBody() {
       return fs.existsSync(path.join(stub, 'last-body.json'));
     },
     addresses() {
       const file = path.join(stub, 'mutate-addresses.txt');
-      return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().split('\n').map(line => line.replace('address ', '')) : [];
+      return fs.existsSync(file) ? readModule(file, 'utf8').trim().split('\n').map(line => line.replace('address ', '')) : [];
     },
   };
 }
@@ -127,7 +128,7 @@ function test(name, run) {
 }
 
 // The project, the dataset and the version, as dashboard/config.js has them
-const config = fs.readFileSync(path.join(repo, 'dashboard/config.js'), 'utf8');
+const config = readModule(path.join(repo, 'dashboard/config.js'), 'utf8');
 const project = config.match(/projectId: '([^']*)'/)[1];
 const dataset = config.match(/dataset: '([^']*)'/)[1];
 const version = config.match(/apiVersion: '([^']*)'/)[1];
@@ -149,7 +150,7 @@ function assertNoToken(result, label) {
 }
 
 test('with no token the script exits quietly and curl is never called', () => {
-  const example = fs.readFileSync(path.join(repo, 'mini/local.example.env'), 'utf8').match(/^SANITY_WRITE_TOKEN=.*$/m)[0];
+  const example = readModule(path.join(repo, 'mini/local.example.env'), 'utf8').match(/^SANITY_WRITE_TOKEN=.*$/m)[0];
   const cases = {
     'no local.env': undefined,
     'no token line': "TELETRAAN_PORT='8080'\n",
@@ -480,7 +481,7 @@ test('the script has valid sh syntax, is executable, and local.env is never prin
   const syntax = spawnSync('/bin/sh', ['-n', scriptFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
 
-  const text = fs.readFileSync(scriptFile, 'utf8');
+  const text = readModule(scriptFile, 'utf8');
   assert.ok(text.startsWith('#!/bin/sh\n'));
   assert.ok((fs.statSync(scriptFile).mode & 0o111) !== 0, 'the script should be executable');
   assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
@@ -489,13 +490,13 @@ test('the script has valid sh syntax, is executable, and local.env is never prin
 });
 
 test('the status document and the fields in the script are the ones the Studio has', () => {
-  const schema = fs.readFileSync(path.join(repo, 'studio/schemas/status.js'), 'utf8');
+  const schema = readModule(path.join(repo, 'studio/schemas/status.js'), 'utf8');
   const studioFields = Array.from(schema.matchAll(/timeField\('(\w+)'/g)).map(match => match[1]);
   assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).sort());
 
-  const input = fs.readFileSync(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
+  const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));
-  assert.ok(fs.readFileSync(scriptFile, 'utf8').includes('document=status-mini'));
+  assert.ok(readModule(scriptFile, 'utf8').includes('document=status-mini'));
   assert.ok(schema.includes("name: 'status'"));
 });
 
@@ -506,7 +507,7 @@ test('the calendar and slides services run it after their job, and a failure of 
   };
 
   Object.keys(jobs).forEach(unit => {
-    const text = fs.readFileSync(path.join(repo, 'mini/systemd', unit), 'utf8');
+    const text = readModule(path.join(repo, 'mini/systemd', unit), 'utf8');
     const lines = text.split('\n');
     const start = lines.indexOf('ExecStart=/opt/teletraan/mini/scripts/' + jobs[unit][0]);
     const posts = lines.filter(line => line.startsWith('ExecStartPost='));
@@ -520,7 +521,7 @@ test('the calendar and slides services run it after their job, and a failure of 
 });
 
 test('kiosk.sh starts it at the beginning, in the background with its output thrown away, so it never holds the screen back', () => {
-  const text = fs.readFileSync(kioskFile, 'utf8');
+  const text = readModule(kioskFile, 'utf8');
   const call = '"$mini/scripts/status-write.sh" kiosk > /dev/null 2>&1 &';
 
   assert.equal(text.split(call).length, 2, 'kiosk.sh has the call once');
@@ -532,7 +533,7 @@ test('kiosk.sh starts it at the beginning, in the background with its output thr
 });
 
 test('docs/rebuilding-the-mini.md says how to make the token, where it goes, and which scripts need it', () => {
-  const doc = fs.readFileSync(path.join(repo, 'docs/rebuilding-the-mini.md'), 'utf8');
+  const doc = readModule(path.join(repo, 'docs/rebuilding-the-mini.md'), 'utf8');
   ['SANITY_WRITE_TOKEN', 'sanity.io/manage', 'Editor', 'status-write.sh', 'install-calendars.sh', 'install-slides.sh', 'No status yet'].forEach(word => {
     assert.ok(doc.includes(word), 'docs/rebuilding-the-mini.md should mention ' + word);
   });
@@ -552,9 +553,9 @@ test('the dashboard never reads the status document: its id, its fields and its 
 
   const words = ['status-mini'].concat(Object.values(fieldOf), ['_type == "status"', "_type == 'status'", '_type=="status"']);
   // The status dots read the time of the last calendar download from status-mini, and only that field.
-  const dotFiles = ['core/content.js', 'core/dots.js', 'core/dots-run.js', 'core/now-report.js', 'core/sanity.js'].map(name => path.join(repo, 'dashboard', name));
+  const dotFiles = ['core/content.js', 'core/content-tidy.js', 'core/dots.js', 'core/dots-run.js', 'core/now-report.js', 'core/sanity.js', 'core/sanity-query.js', 'core/sanity-content.js', 'core/sanity-settings.js'].map(name => path.join(repo, 'dashboard', name));
   files.forEach(file => {
-    const text = fs.readFileSync(file, 'utf8');
+    const text = readModule(file, 'utf8');
     const allowed = dotFiles.includes(file) ? ['status-mini', 'lastCalendarSyncAt'] : [];
     words.filter(word => !allowed.includes(word)).forEach(word => assert.ok(!text.includes(word), path.relative(repo, file) + ' mentions ' + word));
   });

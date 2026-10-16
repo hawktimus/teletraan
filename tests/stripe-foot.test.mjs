@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
@@ -22,7 +23,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-stripe-foot-
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 ['config.js', 'core/plate.js', 'core/teams.js', 'core/style.js'].forEach(file => {
-  fs.copyFileSync(path.join(root, 'dashboard', file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(root, 'dashboard', file), path.join(workFolder, 'dashboard', file));
 });
 
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';

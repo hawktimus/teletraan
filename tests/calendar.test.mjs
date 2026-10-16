@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 // The dashboard files are browser modules with a .js name, and Node does not
 // treat a .js file as a module unless it is told to. So the two files are
@@ -14,12 +15,12 @@ import { pathToFileURL } from 'node:url';
 async function loadCalendarModule() {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendar-'));
   const core = new URL('../dashboard/core/', import.meta.url);
-  const importLine = "from './time.js'";
 
-  const source = fs.readFileSync(new URL('calendar.js', core), 'utf8');
-  assert.ok(source.includes(importLine), 'calendar.js no longer imports ./time.js, so this loader needs updating');
-  fs.writeFileSync(path.join(folder, 'calendar.mjs'), source.replace(importLine, "from './time.mjs'"));
-  fs.copyFileSync(new URL('time.js', core), path.join(folder, 'time.mjs'));
+  // calendar.js re-exports from its parts, and the parts import time.js
+  for (const name of ['calendar', 'calendar-parse', 'calendar-expand', 'time']) {
+    const source = fs.readFileSync(new URL(name + '.js', core), 'utf8');
+    fs.writeFileSync(path.join(folder, name + '.mjs'), source.replace(/from '(\.\/[a-z-]+)\.js'/g, "from '$1.mjs'"));
+  }
 
   try {
     return await import(pathToFileURL(path.join(folder, 'calendar.mjs')).href);
@@ -37,11 +38,11 @@ async function loadFilterModules() {
   fs.mkdirSync(path.join(folder, 'dashboard/core'), { recursive: true });
   fs.mkdirSync(path.join(folder, 'dashboard/themes/overlays'), { recursive: true });
 
-  fs.copyFileSync(new URL('config.js', dashboard), path.join(folder, 'dashboard/config.js'));
+  copyModule(new URL('config.js', dashboard), path.join(folder, 'dashboard/config.js'));
   fs.copyFileSync(new URL('registry.js', dashboard), path.join(folder, 'dashboard/registry.js'));
   fs.readdirSync(new URL('core/', dashboard))
     .filter(file => file.endsWith('.js'))
-    .forEach(file => fs.copyFileSync(new URL('core/' + file, dashboard), path.join(folder, 'dashboard/core', file)));
+    .forEach(file => copyModule(new URL('core/' + file, dashboard), path.join(folder, 'dashboard/core', file)));
   ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
     fs.copyFileSync(new URL(file, dashboard), path.join(folder, 'dashboard', file));
   });

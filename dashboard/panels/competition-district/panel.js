@@ -11,13 +11,13 @@ const LANE = { left: 0, top: 290, width: 1096, height: 64 };
 const FILL = { left: 6, top: 296, width: 1084, height: 52 };
 
 // How full the bar is, from 0 to 1. A cutoff of 0 or less leaves it full.
-export function fillOf(total, cutoff) {
+function fillOf(total, cutoff) {
   if (cutoff <= 0) return 1;
   return Math.min(1, Math.max(0, total / cutoff));
 }
 
 // What is under the middle of the bar: the points still to find, or that the team is there
-export function standingText(total, cutoff) {
+function standingText(total, cutoff) {
   if (total > cutoff) return 'ABOVE THE CUTOFF';
   if (total === cutoff) return 'AT THE CUTOFF';
   return Math.round((cutoff - total) * 10) / 10 + ' TO GO';

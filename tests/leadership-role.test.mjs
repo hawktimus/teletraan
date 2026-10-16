@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
@@ -22,16 +23,16 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-role-'));
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-fs.copyFileSync(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
+copyModule(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/leadership'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/leadership/panel.js'), path.join(root, 'panels/leadership/panel.js'));
+copyModule(path.join(dashboardFolder, 'panels/leadership/panel.js'), path.join(root, 'panels/leadership/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const leadership = await import(base + 'core/leadership.js');

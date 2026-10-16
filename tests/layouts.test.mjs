@@ -21,6 +21,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
+import { importFresh } from './helpers/fresh-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -31,7 +34,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-layouts-'));
 
 function copyInto(folder, from, to) {
   fs.mkdirSync(path.dirname(path.join(folder, to)), { recursive: true });
-  fs.copyFileSync(path.join(root, from), path.join(folder, to));
+  copyModule(path.join(root, from), path.join(folder, to));
 }
 
 function makeTree(name, files) {
@@ -43,7 +46,7 @@ function makeTree(name, files) {
 }
 
 const urlOf = (folder, file) => pathToFileURL(path.join(folder, file)).href;
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => readModule(path.join(root, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
 // The real layout code, with the files it reads
@@ -737,13 +740,12 @@ Object.keys(standIns).forEach(file => {
   fs.mkdirSync(path.dirname(path.join(schedulerTree, file)), { recursive: true });
   fs.writeFileSync(path.join(schedulerTree, file), standIns[file]);
 });
-let schedulers = 0;
 
 // Runs a scheduler call on a page in this layout and says what it asked the areas to do. Each run
 // has a copy of schedule.js of its own, because the file remembers which topic each region shows.
 async function schedulerCalls(name, run) {
   const calls = [];
-  const scheduler = await import(urlOf(schedulerTree, 'dashboard/core/schedule.js') + '?run=' + (schedulers += 1));
+  const scheduler = await importFresh(path.join(schedulerTree, 'dashboard/core/schedule.js'));
   await withGlobals({ document: pageWith(name), schedulerCalls: calls }, async () => {
     run(scheduler);
     await new Promise(resolve => setImmediate(resolve)); // lets the loops run up to their first wait, which never ends
@@ -918,7 +920,7 @@ test('shell.js sets the layout before anything else is drawn, and keeps a look w
   assert.ok(first < code.indexOf('frame.start('), 'before the frame starts');
   assert.ok(first < code.indexOf('await Promise.race([waitForFonts()'), 'before the fonts, the panels and the content');
   assert.ok(first < code.indexOf('startWhatStays();'), 'before anything is drawn');
-  assert.ok(code.indexOf('holdLooksFor((look, waitedMs) => holdForLayout(look, takeoverRunning, waitedMs, () => !stayStarted || swapIsPlaying()));') > code.indexOf('async function run()'));
+  assert.ok(code.indexOf('holdLooksFor((look, waitedMs) => holdForLayout(look, takeoverRunning, waitedMs, () => !shellState.stayStarted || shellState.swapIsPlaying()));') > code.indexOf('async function run()'));
   assert.ok(code.indexOf('holdLooksFor(') < code.indexOf('await startThemes('), 'the hold is in place before the first theme goes on');
 });
 
@@ -1196,10 +1198,10 @@ test('the sidebar layout draws the side panel in place of the banner and the cou
 
 test('shell.js draws the panels the layout names, starts the logo of the one that has it, and tells the side panel about new content', () => {
   const shell = read('dashboard/shell.js');
-  assert.ok(shell.includes("import { fixedPanels, panels } from './registry.js';"));
+  assert.ok(hasImports(shell, ['fixedPanels', 'panels'], './registry.js'));
   assert.ok(shell.includes('fixedPanels(layoutNow()).forEach(id => showFixedPanel(id, true));'));
   assert.ok(shell.includes("if (logo) frame.startLogo(logo);"));
-  assert.ok(shell.includes("updatePanel('side', content);"));
+  assert.ok(shell.includes("updatePanel('side', shellState.content);"));
   assert.equal(countOf(shell, "mountPanel\\('banner'"), 0, 'the banner is no longer named by hand');
 });
 
@@ -2144,7 +2146,7 @@ test('when the layout cannot be changed in the page and the page cannot reload f
 
 test('theme-apply.js carries the style in the look and waits for the page change with it, and index.html starts in Original', () => {
   const code = read('dashboard/core/theme-apply.js');
-  assert.ok(code.includes("import { chooseStyle } from './style.js';"));
+  assert.ok(hasImports(code, ['chooseStyle'], './style.js'));
   assert.ok(code.includes('look.style = chooseStyle(content.settings ? content.settings.style : null, asked.style);'), 'the setting, and ?style= over it');
   assert.ok(code.includes('a.theme === b.theme && a.overlay === b.overlay && a.style === b.style'), 'a new style is a new look, so it waits for the same moment as a new theme');
   assert.ok(!/dataset/.test(code), 'the page side is core/style.js, which shell.js asks in the same step (showDecorations)');
@@ -2152,7 +2154,7 @@ test('theme-apply.js carries the style in the look and waits for the page change
   const shell = read('dashboard/shell.js');
   assert.ok(shell.includes("style: params.get('style') }, showDecorations);"), 'the address goes to theme-apply');
   assert.ok(shell.includes('applyStyle(look.style);'), 'the style goes on in the same step as the classes');
-  assert.ok(shell.includes("updatePanel('bar-banner', content);") && shell.includes("updatePanel('bar-column', content);"), 'the bar panels follow new content');
+  assert.ok(shell.includes("updatePanel('bar-banner', shellState.content);") && shell.includes("updatePanel('bar-column', shellState.content);"), 'the bar panels follow new content');
 
   assert.ok(/<html [^>]*data-style="original"/.test(read('dashboard/index.html')), 'the page starts in Original, as it was');
 });

@@ -12,10 +12,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -24,10 +26,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
@@ -212,7 +214,7 @@ test('the hours are cleaned to 1 to 1000, and anything else is 0, which is not s
 });
 
 test('every transition in the registry has hours with limits, a starting value of 0 and a place in the sample content', () => {
-  const sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
+  const sample = JSON.parse(readModule(path.join(dashboardFolder, 'data/sample/content.json'), 'utf8'));
 
   Object.keys(registry.hiddenTransitions).forEach(id => {
     const name = registry.hiddenTransitions[id].hoursField;
@@ -307,18 +309,18 @@ test('the time is read from localStorage, kept there, and lost without a fuss wh
 
 test('the runner passes the time of the last transition in, and keeps it when one starts', () => {
   const run = read('core/hidden-run.js');
-  assert.ok(run.includes('lastFired = readLastFired(storage);'), 'read at the start');
-  assert.ok(run.includes('lastFired: lastFired,'), 'given to chooseHidden');
-  assert.ok(run.includes('lastFired = Date.now();') && run.includes('rememberLastFired(storage, lastFired);'), 'kept when one starts');
+  assert.ok(run.includes('hiddenState.lastFired = readLastFired(hiddenState.storage);'), 'read at the start');
+  assert.ok(run.includes('lastFired: hiddenState.lastFired,'), 'given to chooseHidden');
+  assert.ok(run.includes('hiddenState.lastFired = Date.now();') && run.includes('rememberLastFired(hiddenState.storage, hiddenState.lastFired);'), 'kept when one starts');
 
   // kept whatever started it, so after the check for how
-  const started = run.indexOf('lastFired = Date.now();');
-  const check = run.indexOf("if (choice.how === 'address') addressKind = '';");
+  const started = run.indexOf('hiddenState.lastFired = Date.now();');
+  const check = run.indexOf("if (choice.how === 'address') hiddenState.addressKind = '';");
   assert.ok(check !== -1 && started > check, 'after the push and the address are marked as played');
 });
 
 test('the docs give the same hours and gap as the code', () => {
-  const doc = fs.readFileSync(path.join(docsFolder, 'hidden-transitions.md'), 'utf8').replace(/\s+/g, ' ');
+  const doc = readModule(path.join(docsFolder, 'hidden-transitions.md'), 'utf8').replace(/\s+/g, ' ');
   assert.ok(doc.includes('hiddenGapHours'), 'names the gap constant');
   assert.ok(new RegExp(config.hiddenGapHours + ' hours').test(doc), 'gives the gap');
   assert.ok(doc.includes('1 in 10800'), 'gives the example');

@@ -11,10 +11,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
 // The dashboard files are browser modules named .js. Copying them next to a
@@ -24,10 +26,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
@@ -299,8 +301,8 @@ test('there is one swap: lookSwap stays in config.js and the Studio, and nothing
   assert.equal(config.lookCutMilliseconds, undefined, 'the length of the cut is gone with the cut');
 
   const files = fs.readdirSync(path.join(dashboardFolder, 'core')).map(file => 'core/' + file).concat(['shell.js', 'frame.js']).filter(file => file.endsWith('.js'));
-  const readers = files.filter(file => /lookSwap|useSlatsOnce|cutScreen|retireAreas|lookCutMilliseconds/.test(read(file).replace(/\/\/.*$/gm, '')));
-  assert.deepEqual(readers, ['core/content.js'], 'only the tidying of the saved settings names the field');
+  const readers = files.filter(file => /lookSwap|useSlatsOnce|cutScreen|retireAreas|lookCutMilliseconds/.test(fs.readFileSync(path.join(dashboardFolder, file), 'utf8').replace(/\/\/.*$/gm, '')));
+  assert.deepEqual(readers, ['core/content-tidy.js'], 'only the tidying of the saved settings names the field');
 });
 
 test('the swap is the page change of the large panel: areas.js asks for it first, then for a hidden transition, and a look goes on at the moment the screen is apart', () => {
@@ -337,12 +339,12 @@ test('the page holds the Screen of the day before it draws, starts the Screens a
 test('the lists come from the Screen on the screen, and the name effect and the hawk follow its minutes', () => {
   const shell = read('shell.js');
 
-  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
-  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
+  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
+  assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(shellState.content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
   assert.ok(shell.includes('frame.setHawk(settings.logoHawk, cadence.hawkEverySeconds, settings.logoHawkDuration);'));
   assert.ok(shell.includes('frame.setNameEffect(settings.nameTransform, cadence.nameEverySeconds, settings.nameDuration);'));
-  assert.ok(shell.includes('useLogoSettings(content.settings, currentScreen(content));'));
-  assert.ok(/onScreenChange\(\(\) => \{\s*if \(content\) useLogoSettings\(content\.settings, currentScreen\(content\)\);\s*\}\);/.test(shell), 'and they follow it when it changes');
+  assert.ok(shell.includes('useLogoSettings(shellState.content.settings, currentScreen(shellState.content));'));
+  assert.ok(/onScreenChange\(\(\) => \{\s*if \(shellState\.content\) useLogoSettings\(shellState\.content\.settings, currentScreen\(shellState\.content\)\);\s*\}\);/.test(shell), 'and they follow it when it changes');
 });
 
 test('nothing in the page reads Styles by day, Team order or the seconds between the name effect and the hawk any more', () => {
@@ -357,9 +359,9 @@ test('nothing in the page reads Styles by day, Team order or the seconds between
   });
   walk('.');
 
-  const readers = pattern => files.filter(file => pattern.test(withoutComments(read(file))));
-  assert.deepEqual(readers(/dailyStyles|teamOrder|teamsInOrder|styleForDay|planCycle/), ['config.js'], 'only the starting values the Studio copies');
-  assert.deepEqual(readers(/\bnameEvery\b|\blogoHawkEvery\b/), ['config.js', path.join('core', 'content.js')], 'the setting is kept tidy and no more');
+  const readers = pattern => files.filter(file => pattern.test(withoutComments(fs.readFileSync(path.join(dashboardFolder, file), 'utf8'))));
+  assert.deepEqual(readers(/dailyStyles|teamOrder|teamsInOrder|styleForDay|planCycle/), ['config-settings.js'], 'only the starting values the Studio copies');
+  assert.deepEqual(readers(/\bnameEvery\b|\blogoHawkEvery\b/), ['config-lists.js', 'config-settings.js', path.join('core', 'content-tidy.js')], 'the setting is kept tidy and no more');
   assert.deepEqual(readers(/look-rotation|rewindRotation|lookShortestSeconds|lookResumeSeconds/), []);
   assert.equal(fs.existsSync(path.join(dashboardFolder, 'core/look-rotation.js')), false);
   assert.equal(fs.existsSync(path.join(dashboardFolder, 'core/look-rotation-run.js')), false);
@@ -370,7 +372,7 @@ test('nothing in the page reads Styles by day, Team order or the seconds between
 const scheduleTree = path.join(workFolder, 'schedule-tree');
 ['config.js', 'core/schedule.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(scheduleTree, 'dashboard', file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
 });
 fs.writeFileSync(path.join(scheduleTree, 'package.json'), '{ "type": "module" }\n');
 fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [
@@ -617,15 +619,15 @@ test('Next look now moves nothing but the large panel', async () => {
 // The docs
 
 test('the docs name the Screens, the weekday schedule, the hidden fields and the one swap', () => {
-  const layouts = fs.readFileSync(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
-  const editing = fs.readFileSync(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
+  const layouts = readModule(path.join(docsFolder, 'layouts.md'), 'utf8').replace(/\s+/g, ' ');
+  const editing = readModule(path.join(docsFolder, 'editing-content.md'), 'utf8').replace(/\s+/g, ' ');
 
   assert.ok(layouts.includes('## The Screens'), 'layouts.md has the section');
   assert.ok(layouts.includes('## The swap'), 'and the swap');
   ['screenSchedule', 'mainRows', 'sideRows', 'swapSeconds', 'nameEffectEveryMinutes', 'hawkEveryMinutes', 'mondayStyle', 'dailyStyles', 'teamOrder', 'lookSwap', 'rotation.order', 'hidden'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
   ['Weekday schedule', 'Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Next look now', 'second line of the sidebar', 'hidden and keep what was saved'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   ['coaches-guide.md', 'switch-the-look.md', 'add-the-nova-team.md'].forEach(file => {
-    assert.ok(!/Assemble, Slats or Cut/.test(fs.readFileSync(path.join(docsFolder, file), 'utf8')), file + ' no longer offers the three swaps');
+    assert.ok(!/Assemble, Slats or Cut/.test(readModule(path.join(docsFolder, file), 'utf8')), file + ' no longer offers the three swaps');
   });
 });
 

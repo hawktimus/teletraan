@@ -11,13 +11,11 @@
 // The fixture is made by tools/frc-fixture.mjs from mini/scripts/frc-sync.sh --event <key> --to <file>.
 // Until the owner makes one, the file holds a placeholder that says so.
 
+import { isRecord } from './text.js';
+
 export const fixtureFile = 'frc-event.json';
 
 const eventKey = /^[0-9]{4}[a-z0-9]{1,20}$/;
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // What the address asks for: { event } with event a key or '', or null when competition=1 is not there.
 // search is the part after the ? and may be a URLSearchParams.

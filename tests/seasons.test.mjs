@@ -14,6 +14,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
+import { importFresh } from './helpers/fresh-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -24,7 +27,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-seasons-'));
 
 function copyInto(folder, from, to) {
   fs.mkdirSync(path.dirname(path.join(folder, to)), { recursive: true });
-  fs.copyFileSync(path.join(root, from), path.join(folder, to));
+  copyModule(path.join(root, from), path.join(folder, to));
 }
 
 // A tree with just the files the layer and the check read
@@ -32,7 +35,10 @@ function makeTree(folder) {
   fs.mkdirSync(folder, { recursive: true });
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
   ['dashboard/core/season.js', 'dashboard/core/marks.js', 'dashboard/core/header-room.js', 'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js', 'dashboard/base.css', 'dashboard/themes/overlays/registry.js', 'dashboard/index.html', 'tests/check-seasons.test.mjs', 'docs/seasonal-packs.md'].forEach(file => copyInto(folder, file, file));
-  fs.readdirSync(path.join(dashboardFolder, 'seasons')).forEach(name => copyInto(folder, 'dashboard/seasons/' + name, 'dashboard/seasons/' + name));
+  fs.readdirSync(path.join(dashboardFolder, 'seasons'), { withFileTypes: true }).forEach(entry => {
+    if (entry.isDirectory()) fs.cpSync(path.join(dashboardFolder, 'seasons', entry.name), path.join(folder, 'dashboard/seasons', entry.name), { recursive: true });
+    else copyInto(folder, 'dashboard/seasons/' + entry.name, 'dashboard/seasons/' + entry.name);
+  });
 }
 
 const mainTree = path.join(workFolder, 'main');
@@ -287,7 +293,7 @@ async function onPage(run, parts) {
 
   // A new copy of the module for each test, because it remembers the packs it has loaded and what is on the page
   instance += 1;
-  const fresh = await import(base + 'core/season.js?test=' + instance);
+  const fresh = await importFresh(path.join(mainTree, 'dashboard/core/season.js'));
 
   globalThis.document = page;
   console.error = (...items) => logged.push(items.map(String).join(' '));
@@ -482,11 +488,11 @@ test('the box for a mark is 60 x 76, and every panel with a header mark draws it
 
   // a panel that drew its own picture would keep the slashes while a pack is on
   ['tasks', 'events', 'leadership', 'roster', 'tonight', 'spotlight', 'team-leads', 'sponsor-feature', 'custom'].forEach(name => {
-    const code = fs.readFileSync(path.join(dashboardFolder, 'panels', name, 'panel.js'), 'utf8');
+    const code = readModule(path.join(dashboardFolder, 'panels', name, 'panel.js'), 'utf8');
     assert.ok(/import \{[^}]*\b(doubleSlash|markBeside)\b/.test(code) && (code.includes('${doubleSlash()}') || code.includes('${markBeside(')), name + ' should draw its mark with doubleSlash() or markBeside()');
     assert.ok(!code.includes('class="double-slash"'), name + ' should not draw the slashes itself');
   });
-  assert.equal(fs.readFileSync(path.join(dashboardFolder, 'panels', 'photo', 'panel.js'), 'utf8').includes('doubleSlash'), false, 'the Photo panel has no header, so it has no mark');
+  assert.equal(readModule(path.join(dashboardFolder, 'panels', 'photo', 'panel.js'), 'utf8').includes('doubleSlash'), false, 'the Photo panel has no header, so it has no mark');
 });
 
 test('every kind of mistake in a mark is named in plain words', () => {
@@ -629,7 +635,7 @@ test('an over piece with a mistake is left out and logged, and the rest are draw
 });
 
 test('every layer that takes over the screen is after the stage in index.html, so the seasonal layers are under all of them', () => {
-  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  const index = readModule(path.join(dashboardFolder, 'index.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
   const world = index.slice(index.indexOf('<div id="world">'), index.indexOf('<div id="crt">'));
   const ids = (world.match(/<div id="[a-z-]+"/g) || []).map(text => text.slice(9, -1)).filter(id => ['backdrop', 'stage', 'red-wash', 'blue-glitch', 'connection-status', 'night', 'overlay'].indexOf(id) !== -1);
 
@@ -711,7 +717,7 @@ test('the switch counts when it is set before the pack comes, and with no pack i
 });
 
 test('the over layer is drawn in full motion only, and follows the front layer through a hidden transition', () => {
-  const read = file => fs.readFileSync(path.join(mainTree, 'dashboard/seasons', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const read = file => readModule(path.join(mainTree, 'dashboard/seasons', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const rulesOf = css => css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '').split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2)
     .map(parts => ({ selector: parts[0].trim(), body: parts[1] }));
 
@@ -732,7 +738,7 @@ test('the over layer is drawn in full motion only, and follows the front layer t
 });
 
 test('the Look switch reaches the screen through config.js, theme.js, shell.js, the sample content and the Studio schema', () => {
-  const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+  const read = file => readModule(path.join(root, file), 'utf8');
 
   assert.match(read('dashboard/config.js'), /export const defaultThemeSettings = \{[\s\S]*?seasonOverPanels: true,[\s\S]*?\};/);
   assert.ok(read('dashboard/core/theme.js').includes("seasonOverPanels: typeof source.seasonOverPanels === 'boolean' ? source.seasonOverPanels : defaults.seasonOverPanels"), 'a missing or odd value is the default');
@@ -946,7 +952,7 @@ test('loading a pack remembers its defaults, and a pack whose defaults are wrong
 });
 
 test('corner art draws in once and holds: one rule, in full motion only, that plays the first 35 percent of the draw keyframes and stays there', () => {
-  const css = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = readModule(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const withoutKeyframes = css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
   const rules = withoutKeyframes.split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2).map(parts => ({ selector: parts[0].trim(), body: parts[1] }));
   const art = rules.filter(rule => rule.selector.indexOf('.season-corner-art') !== -1);
@@ -963,14 +969,14 @@ test('corner art draws in once and holds: one rule, in full motion only, that pl
   assert.ok(draw && /35%\s*\{\s*stroke-dashoffset:\s*0;\s*\}/.test(draw[1]), 'at 35 percent the dash offset is 0');
   assert.deepEqual((css.match(/@keyframes\s+[\w-]+/g) || []).map(text => text.replace('@keyframes ', '')).filter(name => /corner|art/.test(name)), []);
 
-  const layer = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/season.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const layer = readModule(path.join(mainTree, 'dashboard/seasons/season.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.match(layer, /\.season-corner-art \{ color: var\(--yellow\); \}/, 'in the accent colour of the pack');
 });
 
 // Calm and none motion
 
 test('only full motion plays any motion, and the layers let every click through', () => {
-  const css = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = readModule(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const withoutKeyframes = css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
   const rules = withoutKeyframes.split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2);
 
@@ -978,13 +984,13 @@ test('only full motion plays any motion, and the layers let every click through'
   assert.ok(playing.length >= motions.length, 'a rule for each motion');
   playing.forEach(parts => assert.ok(parts[0].trim().indexOf('html[data-motion="full"]') === 0, 'not under full motion: ' + parts[0].trim()));
 
-  const layer = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/season.css'), 'utf8');
+  const layer = readModule(path.join(mainTree, 'dashboard/seasons/season.css'), 'utf8');
   assert.ok(/\.season-layer\s*\{[^}]*pointer-events: none/.test(layer));
   assert.ok(!/animation|@keyframes|transition/.test(layer.replace(/\/\*[\s\S]*?\*\//g, '')), 'season.css holds no animation');
 });
 
 test('a hidden transition fades the front layer out and in, and hides it in every other step, in full motion only', () => {
-  const css = fs.readFileSync(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = readModule(path.join(mainTree, 'dashboard/seasons/motion.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const rules = css.replace(/@keyframes\s+[\w-]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '').split('}').map(chunk => chunk.split('{')).filter(parts => parts.length === 2)
     .map(parts => ({ selector: parts[0].trim(), body: parts[1] }));
   const forFront = rules.filter(rule => rule.selector.indexOf('.season-front') !== -1);
@@ -1009,12 +1015,12 @@ test('a hidden transition fades the front layer out and in, and hides it in ever
 });
 
 test('shell.js gives theme-apply the decorations callback, and index.html links the two stylesheets', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   assert.ok(/await startThemes\([^\n]*showDecorations\);/.test(shell), 'startThemes should be given showDecorations');
   assert.ok(shell.includes("module.showSeason(look.overlay)"), 'showDecorations should ask core/season.js for the overlay');
   assert.ok(shell.includes("startOptional('./core/season.js'"), 'the module is optional, so a problem in it cannot stop the screen');
 
-  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const index = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   assert.ok(index.includes('href="seasons/season.css?v=0"') && index.includes('href="seasons/motion.css?v=0"'));
 });
 
@@ -1091,7 +1097,7 @@ const mistakes = [
   ['a motion that is not described at the top', { [motionFile]: before => before.replace('     pulse    swells', '     pulses   swells') }, /"pulse" is not described/],
   ['a transition in motion.css', { [motionFile]: before => before + '\n.season-piece { transition: opacity 1s; }\n' }, /has a transition/],
   ['a decorations flag with no file', { 'dashboard/themes/overlays/registry.js': before => before.replace("id: 'example',\n    name: 'Example overlay (placeholder)',\n    description: 'Placeholder. A paler yellow and quiet text, to show how an overlay is written.',\n    decorations: false,", "id: 'example',\n    name: 'Example overlay (placeholder)',\n    description: 'Placeholder. A paler yellow and quiet text, to show how an overlay is written.',\n    decorations: true,") }, /example.*does not exist/],
-  ['zones that overlap', { 'dashboard/core/season.js': before => before.replace("'corner-b': { x: 1198, y: 238,", "'corner-b': { x: 1198, y: 270,") }, /overlap/],
+  ['zones that overlap', { 'dashboard/core/season-check.js': before => before.replace("'corner-b': { x: 1198, y: 238,", "'corner-b': { x: 1198, y: 270,") }, /overlap/],
   ['the stylesheets not linked', { 'dashboard/index.html': before => before.replace('<link rel="stylesheet" href="seasons/motion.css?v=0">', '') }, /should link seasons\/motion.css/],
 ];
 
@@ -1116,7 +1122,7 @@ test('the packs in stillToDo are excused from the mark and the over pieces, and 
   assert.match(notExcused.text, /christmas: the pack has no mark/);
   assert.match(notExcused.text, /christmas: the pack has 0 over pieces/);
 
-  const code = fs.readFileSync(path.join(root, 'tests/check-seasons.test.mjs'), 'utf8');
+  const code = readModule(path.join(root, 'tests/check-seasons.test.mjs'), 'utf8');
   const listed = (/const stillToDo = \[([^\]]*)\];/.exec(code) || [0, ''])[1];
   assert.ok(listed.indexOf("'christmas'") === -1 && listed.indexOf("'example'") === -1, 'Christmas is finished, and the example overlay has no pack');
 });

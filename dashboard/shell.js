@@ -35,72 +35,34 @@
 //   kit=off                           switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
 
 import * as frame from './frame.js';
-import { fixedPanels, panels } from './registry.js';
-import { sampleFolder, liveFolder, defaultSettings, frameFinishes, metals, pageChangeStyles, location as place } from './config.js';
-import { savedContent, savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
+import { panels } from './registry.js';
+import { defaultSettings, metals } from './config.js';
+import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { askForSample } from './core/source.js';
-import { mergeEvents } from './core/events.js';
-import { connectionLines, drawConnection } from './core/connection.js';
-import { pageSwitchesFor } from './core/look.js';
 import { makeSilverGradients } from './core/plate.js';
-import { showDeviceInfo } from './core/device.js';
-import { showStamp } from './core/build-stamp.js';
-import { versionLabel } from './core/version-label.js';
-import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
-import { overlayShown, ruleExtras } from './core/theme.js';
-import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js';
-import { decorationLayers, hasKit, layoutNow } from './core/layout.js';
-import { redrawFrames } from './core/areas.js';
+import { holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
+import { holdForLayout, startLayout } from './core/layout-apply.js';
+import { layoutNow } from './core/layout.js';
 import { ensureThemeSheets } from './core/style-loader.js';
-import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';
-import { cadenceOf, currentScreen, onScreenChange } from './core/screens.js';
-import { applyTheme, applyView, applyViewLabels, viewNow } from './core/view-apply.js';
-import { holdBootView, viewNameOf, viewPlaylist, viewShowsTag, viewSidePlaylist, viewTitleOf } from './core/views.js';
-import { resumePreview } from './core/preview.js';
-import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
-import { withPages, withStandIns } from './core/panel-order.js';
-import { withCompetition } from './core/competition.js';
-import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';
-import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
-import { readStill, useStillSwitches } from './core/still.js';
-import { readCompetitionAsk } from './core/competition-address.js';
-import { startTakeovers, runAnnouncement, takeoverRunning } from './core/takeover.js';
-import { startHeartbeat } from './core/heartbeat.js';
-
-const params = new URLSearchParams(window.location.search);
-const stillAsk = readStill(params); // ?panel= draws that one panel and holds it (core/still.js)
-if (stillAsk) useStillSwitches(params, stillAsk);
-const competitionAsk = readCompetitionAsk(params); // ?competition=1&event= puts the competition cards on (core/competition-address.js)
-const stress = params.has('stress');
-const onlyTasks = params.get('only') === 'tasks';
-
-const screen = document.getElementById('screen');
-
-let base = null; // the content from the editors, or the sample
-let status = null;
-const extras = {}; // events and weather: things that do not come from the editors. Each may be missing. extras.events are the BAND events only.
-let content = null; // base and extras together, always the newest
-let rereadEvents = null; // set once the calendar reader is running
-let calendarsKey = null; // the calendar list the events were last read for
-let showingSample = false; // true while the page shows the sample content (?sample=1)
-let extrasStarted = false; // the events are being read, so a change of source has to redo them
-let calendarsReadAt = null; // when every calendar file was last read well, for the connection status text
-let deviceText = []; // the Mini's name and ssh line, read only while Sanity cannot be reached
-let decorationsUsed = false; // core/season.js has been asked for a pack, so it has to be asked again when the pack goes
-let choosingTeam = false; // rebuild() is choosing the team, so a change of team that it finds does not start another rebuild
-let stayStarted = false; // startWhatStays() has drawn the panels that stay, so a style with other frames has to draw them again
-let swapIsPlaying = () => false; // core/swap-run.js gives the real one when it has loaded
+import { recordShapes, startStyle, themeOf } from './core/style.js';
+import { currentScreen, onScreenChange } from './core/screens.js';
+import { loadPanel } from './core/panels.js';
+import { askForTeam, changeTeamNow, currentTeam, onTeamChange } from './core/teams.js';
+import { startTakeovers, takeoverRunning } from './core/takeover.js';
+import { getContent, holdSavedScreen, rebuild, resumeSavedPreview, setBase, startWhatComesAndGoes, startWhatStays, useLogoSettings, useLookSetting, useTrim } from './shell-content.js';
+import { fitToScreen, showDecorations, showFatal, startDemo, startExtras, startOptional, startPerf, waitForFonts } from './shell-extras.js';
+import { params, stillAsk, competitionAsk, stress, onlyTasks, shellState } from './shell-state.js';
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
 
 // The frames follow the trim of the team on the page, and then the banner, the sidebar and the events follow its name
 onTeamChange(useTrim);
 onTeamChange(() => {
-  if (content && !choosingTeam) rebuild();
+  if (shellState.content && !shellState.choosingTeam) rebuild();
 });
 // The Screen on the screen says how often the name effect and the hawk play, so they follow it when it changes
 onScreenChange(() => {
-  if (content) useLogoSettings(content.settings, currentScreen(content));
+  if (shellState.content) useLogoSettings(shellState.content.settings, currentScreen(shellState.content));
 });
 run();
 
@@ -158,7 +120,7 @@ async function run() {
     // A look with another layout than the page has waits for a swap to have the screen, which changes the layout in the page.
     // Before anything is drawn there is nothing to wait for.
     try {
-      holdLooksFor((look, waitedMs) => holdForLayout(look, takeoverRunning, waitedMs, () => !stayStarted || swapIsPlaying()));
+      holdLooksFor((look, waitedMs) => holdForLayout(look, takeoverRunning, waitedMs, () => !shellState.stayStarted || shellState.swapIsPlaying()));
       await startThemes(getContent, { theme: params.get('theme'), overlay: params.get('overlay'), style: params.get('style') }, showDecorations);
     } catch (error) {
       console.error('The theme could not be started. The screen keeps the default look.', error);
@@ -171,7 +133,7 @@ async function run() {
       await startOptional('./core/night-screen.js', module => module.startNight(getContent, params.get('night')));
     }
 
-    if (competitionAsk) await startOptional('./core/competition-address-run.js', module => module.startCompetitionAddress(competitionAsk, getContent, showingSample));
+    if (competitionAsk) await startOptional('./core/competition-address-run.js', module => module.startCompetitionAddress(competitionAsk, getContent, shellState.showingSample));
     startWhatStays();
 
     // Alerts and announcements do not need the weather or events, so they
@@ -212,13 +174,13 @@ async function run() {
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
 
       // The three dots and the report to the control page. The report asks the team of the page
-      startOptional('./core/dots-run.js', module => module.startDots(getContent, showingSample));
+      startOptional('./core/dots-run.js', module => module.startDots(getContent, shellState.showingSample));
       startOptional('./core/now-report.js', module => module.startNowReport(getContent, currentTeam));
 
       // The views: the look of each step of the large panel, the swaps, and the Next look now button in the Studio.
       // After the ones they ask about. ?style= and ?team= in the address win over them, so then they do nothing
       if (!onlyTasks) {
-        startOptional('./core/swap-run.js', module => { swapIsPlaying = module.swapRunning; });
+        startOptional('./core/swap-run.js', module => { shellState.swapIsPlaying = module.swapRunning; });
         startOptional('./core/views-run.js', module => module.startViews(getContent, params.has('style') || params.has('team')));
       }
     }
@@ -237,559 +199,4 @@ async function run() {
   } catch (error) {
     showFatal(error);
   }
-}
-
-// The views (core/views.js) hold the view, the style and the team of the first step of the first view, from the
-// saved copy of the content, so that the screen starts in them. The test views leave the Screens out.
-function holdSavedScreen() {
-  if (params.get('show') || stress || onlyTasks) return;
-
-  try {
-    holdBootView(savedContent(), new Date());
-  } catch (error) {
-    console.error('Could not work out the look to start with', error);
-  }
-}
-
-// A preview is kept in localStorage while it is on (core/preview.js). Asking for the storage can throw.
-function resumeSavedPreview() {
-  try {
-    resumePreview(window.localStorage);
-  } catch (error) {
-    console.error('Could not look for a preview that was on', error);
-  }
-}
-
-// Joins the editors' content with the weather and events. The screen can
-// start on the defaults and get the sample content a moment later (?sample=1,
-// see core/source.js). When the content switches between the sample and the
-// editors' own, the events that were read for the old one are thrown away and
-// read again from the right folder, and the pages on screen are replaced now
-// instead of at their next turn. The photos are part of the content itself,
-// so they switch with it.
-function setBase(newBase, newStatus) {
-  const sample = newStatus.source === 'sample';
-  const switched = extrasStarted && sample !== showingSample;
-
-  showingSample = sample;
-  base = newBase;
-  status = newStatus;
-
-  if (switched) {
-    delete extras.events;
-    calendarsKey = null; // makes rebuild() read the calendars again
-    calendarsReadAt = null;
-  }
-  rebuild();
-  checkTheme(); // a changed theme waits for the next page change
-
-  if (switched) showPagesNow();
-}
-
-// The BAND events with the Calendar filters applied and the finished ones left
-// out. If that fails the BAND events are shown as they are, so a bad rule never
-// takes the Events panel away.
-function mergedEvents() {
-  try {
-    return mergeEvents(extras.events, base.theme.timeZone, new Date(), base.calendarFilters);
-  } catch (error) {
-    console.error('Could not apply the Calendar filters to the calendar events', error);
-    return extras.events || [];
-  }
-}
-
-// The team that the Teams settings and the clock ask for. A problem here leaves the team that is on the screen.
-function chooseTeam() {
-  choosingTeam = true;
-  try {
-    useTeams(content, new Date());
-  } catch (error) {
-    console.error('Could not choose the team', error);
-  } finally {
-    choosingTeam = false;
-  }
-}
-
-function rebuild() {
-  content = Object.assign({}, base, extras, { status: status });
-  chooseTeam(); // before the events, so everything below is built for the team on the screen
-  content.events = mergedEvents();
-  if (!params.has('motion')) frame.setMotion(content.settings.motion); // so a change in Dashboard Settings shows at once
-  if (!params.has('speed')) frame.setSpeed(content.settings.speed);
-  const glitch = content.settings.crt;
-  frame.setCrt(glitch.on, glitch.everySeconds, glitch.durationSeconds);
-  useLogoSettings(content.settings, currentScreen(content));
-  usePageChangeSettings(content.settings);
-  useSeasonSwitch();
-  usePackExtras();
-  writeViewLabels();
-  if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
-  useLookSetting(content.settings);
-  updatePanel('banner', content);
-  updatePanel('countdown', content);
-  updatePanel('side', content); // does nothing in a layout that does not draw it
-  updatePanel('bar-banner', content); // nor do these two
-  updatePanel('bar-column', content);
-
-  // The connection status text, and the Mini's address inside it while Sanity cannot be reached
-  try {
-    showDeviceInfo(Boolean(status && status.offline), useDeviceLines);
-    drawConnectionText();
-  } catch (error) {
-    console.error('Could not update the connection status text', error);
-  }
-
-  // hiding, renaming or adding a calendar shows at once, not at the next 10 minute read
-  const key = JSON.stringify(content.settings.calendars);
-  if (rereadEvents && key !== calendarsKey) rereadEvents();
-}
-
-// The logo settings of Dashboard Settings (Look tab): the master switch, the entrance, and the
-// switch, seconds between plays and seconds one play lasts of the spin, the
-// flying hawk and the name effect (see "Effects that play now and then" in frame.js). How often the hawk and the name
-// effect play is the minutes of the Screen on the screen, not a setting of Dashboard Settings
-function useLogoSettings(settings, screen) {
-  const cadence = cadenceOf(screen);
-
-  frame.setLogoAnimations(settings.logoAnimations, settings.logoEntrance);
-  frame.setSpin(settings.logoSpin, settings.logoSpinEvery, settings.logoSpinDuration);
-  frame.setHawk(settings.logoHawk, cadence.hawkEverySeconds, settings.logoHawkDuration);
-  frame.setNameEffect(settings.nameTransform, cadence.nameEverySeconds, settings.nameDuration);
-}
-
-// The page change settings of Dashboard Settings (Look tab): how a page change looks and what
-// metal the page frames have. The address wins, like the other switches above.
-function usePageChangeSettings(settings) {
-  const style = pageChangeStyles.includes(params.get('change')) ? params.get('change') : settings.pageChangeStyle;
-  const finish = frameFinishes.includes(params.get('frames')) ? params.get('frames') : settings.frameFinish;
-  frame.setPageChange(style, finish, settings.silverChance, settings.breakSeconds);
-}
-
-// The device lines arrive a moment after the text first shows, and every
-// minute after that
-function useDeviceLines(lines) {
-  deviceText = lines;
-  drawConnectionText();
-}
-
-// The text at the bottom right (core/connection.js). It shows by itself while
-// status.offline is true, and all the time when Show connection status is on.
-function drawConnectionText() {
-  const lines = connectionLines({
-    status: status,
-    always: content.settings.showConnectionStatus,
-    content: content,
-    calendarsReadAt: calendarsReadAt,
-    deviceLines: deviceText,
-  });
-  drawConnection(lines, status && status.offline ? 'warning' : 'info');
-}
-
-// An attribute on the html element that the stylesheets read. It is only
-// written when the value changes, so a rebuild does not make the browser
-// restyle the whole screen.
-function setPageSwitch(name, value) {
-  if (document.documentElement.dataset[name] !== value) document.documentElement.dataset[name] = value;
-}
-
-// The Look setting (core/look.js) sets three of those switches: look, finish and
-// glint. The address wins, for this page only. rebuild() calls it at every
-// content change, so a new Look in Dashboard Settings shows at once. (The look
-// that showDecorations() and useKit() take is a theme and overlay, which is
-// another thing.)
-function useLookSetting(settings) {
-  const switches = pageSwitchesFor(settings, { look: params.get('look'), finish: params.get('finish'), glint: params.get('glint') });
-  Object.keys(switches).forEach(name => setPageSwitch(name, switches[name]));
-}
-
-function getContent() {
-  return content;
-}
-
-// The banner and countdown stay on screen the whole time. The sidebar layout
-// has the one panel, side, in their place (registry.js, fixedPanels)
-function startWhatStays() {
-  if (onlyTasks) return;
-
-  stayStarted = true;
-  fixedPanels(layoutNow()).forEach(id => showFixedPanel(id, true));
-}
-
-// Each is started on its own, so one that fails to draw leaves the other
-// and the rest of the screen working. animate is false for a panel that takes the place of one
-// that is on screen, which is there at once
-function showFixedPanel(id, animate) {
-  try {
-    const element = mountPanel(id, content);
-    const logo = element.querySelector('.logo'); // only the panel that has the logo gives the effects something to move
-    if (logo) frame.startLogo(logo);
-    if (animate) frame.enter(element);
-    else element.dataset.state = 'shown';
-  } catch (error) {
-    console.error('The ' + id + ' panel could not be drawn', error);
-  }
-}
-
-// A look with another layout than the page has: the layout is changed in the page, in the step that puts the look on
-// (core/layout-apply.js, changeLayout), and a swap has the screen apart for it (core/swap-run.js). The areas draw their
-// frames again for the layout, and the panels that stay on screen are the layout's own. A problem here never stops the colors.
-function useLayout(look) {
-  try {
-    if (!changeLayout(look)) return;
-
-    redrawFrames();
-    drawWhatStays();
-  } catch (error) {
-    console.error('Could not put the layout on the page', error);
-  }
-}
-
-// The banner, the countdown and the side column are not the same panels in every layout, so their regions are emptied
-// and the panels of the layout are drawn
-function drawWhatStays() {
-  if (!stayStarted || onlyTasks) return;
-
-  ['banner', 'countdown', 'column'].forEach(region => { document.getElementById('region-' + region).innerHTML = ''; });
-  fixedPanels(layoutNow()).forEach(id => showFixedPanel(id, false));
-}
-
-// The banner and the countdown of the standard layout draw their own frame, and Cybertron
-// gives them another (a plate behind the banner, and the war clock in place of the red
-// countdown). They are drawn again when that style goes on. The other layouts draw the same
-// panel in every style
-function redrawWhatStays() {
-  if (!stayStarted || onlyTasks || layoutNow() !== 'standard') return;
-
-  fixedPanels('standard').forEach(id => showFixedPanel(id, false));
-}
-
-// The corners a team cuts and the end of its header tab change the shape of every frame (core/plate.js,
-// frameKind). They are written on the page when the team goes on, like the corners of a style, and the areas and
-// the panels that draw their own plate draw their frames again in the same step. The sidebar layout has no
-// plate of its own. The banner has one only in Cybertron. A problem here never stops the team going on.
-function useTrim() {
-  try {
-    const wanted = frameTrim(currentTeam());
-    const drawn = trimNow();
-    if (wanted.corner === drawn.corner && wanted.notch === drawn.notch) return;
-
-    recordTrim(wanted);
-    redrawFrames();
-    redrawPlates();
-  } catch (error) {
-    console.error('Could not draw the frames for the team', error);
-  }
-}
-
-function redrawPlates() {
-  if (!stayStarted || onlyTasks) return;
-
-  const drawsPlate = id => id === 'countdown' || id === 'bar-banner' || (id === 'banner' && shapesNow() === 'cybertron');
-  fixedPanels(layoutNow()).filter(drawsPlate).forEach(id => showFixedPanel(id, false));
-}
-
-// The panels that come and go
-function startWhatComesAndGoes() {
-  if (stillAsk) {
-    startOptional('./core/still-run.js', module => module.holdPanel(stillAsk, getContent));
-    return;
-  }
-
-  if (params.get('show')) {
-    startTogether([params.get('show')], getContent, 30);
-    return;
-  }
-
-  if (stress) {
-    startTogether(['tasks', 'stand-in-tile', 'stand-in-ticker'], getContent, 3);
-    return;
-  }
-
-  // The large panel plays the rows of the view that is on the screen, and the small panel its side rows
-  // (core/views.js). A panel that says it has pages in registry.js is a step for each page (withPages). None does now: the
-  // Events panel draws both of its pages and scrolls from the first to the next (core/schedule.js, scrollPages).
-  // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(viewPlaylist(content, new Date()), content, new Date()))), getContent);
-  if (!onlyTasks) {
-    startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(content))), getContent); // waits while the layout has no small frame
-
-    startTicker(getContent);
-  }
-}
-
-// Weather and calendar events. Each is loaded on its own, so one failing
-// leaves the other working. The first events are worth a short wait, so the
-// first panels have something to show, but never more than a few seconds.
-async function startExtras() {
-  const ready = [];
-  extrasStarted = true;
-
-  ready.push(startOptional('./core/weather.js', module => new Promise(resolve => {
-    module.startWeather(place, weather => {
-      extras.weather = weather;
-      rebuild();
-      resolve();
-    });
-  })));
-
-  ready.push(startOptional('./core/calendar.js', async module => {
-    rereadEvents = () => readEvents(module);
-    await readEvents(module);
-    setInterval(rereadEvents, 10 * 60 * 1000);
-  }));
-
-  // An event that has finished must leave the list even when nothing else
-  // changes, and a new day starts at midnight in the Look time zone
-  setInterval(() => {
-    if (content) content.events = mergedEvents();
-  }, 60 * 1000);
-
-  watchVersion();
-  startHeartbeat();
-  await Promise.race([Promise.all(ready), frame.wait(3000)]);
-}
-
-// The sample content has its own calendar file in data/sample. The editors'
-// content uses the files the Mini downloads into data/live. Each reads only
-// its own folder, so the two never mix. A read that finishes after the source
-// has switched belongs to the old source, and is dropped.
-async function readEvents(module) {
-  try {
-    const reading = showingSample;
-    const now = new Date();
-    const calendars = content.settings.calendars;
-    calendarsKey = JSON.stringify(calendars);
-
-    const folder = (reading ? sampleFolder : liveFolder) + 'calendars/';
-    const result = await module.loadEvents({ folder: folder, calendars: calendars, now: now, daysAhead: 60 });
-    if (reading !== showingSample) return;
-
-    // A calendar that could not be read keeps what it had last time, so one
-    // failed download does not empty the screen
-    const kept = (extras.events || []).filter(event => result.failed.includes(event.calendarId) && event.end > now);
-    extras.events = kept.concat(result.events).sort((first, second) => first.start - second.start);
-    if (result.failed.length === 0) calendarsReadAt = now; // one calendar that fails keeps the time of the last time all of them worked
-    rebuild();
-  } catch (error) {
-    console.error('Could not read the calendars', error);
-  }
-}
-
-// The neon kit (docs/layouts.md, "The kit") is on for Neon Prime in the sidebar
-// layout, and off for every other look, and for ?kit=off. A problem here never
-// stops the colours.
-function useKit(look) {
-  try {
-    frame.setKit(hasKit(look.theme, layoutNow()) && params.get('kit') !== 'off');
-  } catch (error) {
-    console.error('Could not switch the neon kit', error);
-  }
-}
-
-// The style of the look (core/style.js). It goes on in the same step as the theme's
-// classes, so the screen is never drawn with half of each. A style with other frames than
-// the page has drawn also gets them in this step: the areas have their frame drawn again
-// and so do the banner and the countdown. A problem here never stops the colours.
-function useStyle(look) {
-  try {
-    applyStyle(look.style);
-    if (shapesFor(look.style, layoutNow()) === shapesNow()) return;
-
-    recordShapes(look.style, document.documentElement, layoutNow());
-    redrawFrames();
-    redrawWhatStays();
-  } catch (error) {
-    console.error('Could not put the style on the page', error);
-  }
-}
-
-// The view of the look (core/view-apply.js). It goes on in the same step as the layout and the style, and the two banners,
-// which carry the name of the view, are drawn again when it changes. A problem here never stops the colors.
-function useView(look) {
-  try {
-    applyTheme(themeOf(look.style));
-    const changed = applyView(look.view);
-    if (!content) return;
-
-    writeViewLabels();
-    if (!changed) return;
-
-    updatePanel('banner', content);
-    updatePanel('bar-banner', content);
-  } catch (error) {
-    console.error('Could not put the view on the page', error);
-  }
-}
-
-// The words of the view for the banners (core/view-apply.js, viewLabelsNow). They follow the content, so a new name in
-// Dashboard Settings shows at once.
-function writeViewLabels() {
-  const key = viewNow();
-  if (key === '' || !content) return;
-
-  applyViewLabels({ name: viewNameOf(content, key), title: viewTitleOf(content, key), tag: viewShowsTag(content, key) });
-}
-
-// What goes with each look that goes on the page: the style, the neon kit, and the
-// decorations of the overlay's seasonal pack (core/season.js,
-// docs/seasonal-packs.md). theme-apply.js calls this each time a look goes on
-// the page. The module is read only when a pack is wanted, or when one has to be
-// taken away, and a problem in it is logged and never stops the colours.
-function showDecorations(look) {
-  useLayout(look);
-  useStyle(look);
-  useView(look);
-  useKit(look);
-  if (!look.overlay && !decorationsUsed) return;
-
-  decorationsUsed = true;
-  startOptional('./core/season.js', module => {
-    module.setLayers(decorationLayers(layoutNow())); // the zones and the back layer are for the standard layout only
-    module.setOverPanels(wantOverPanels());
-    module.setCornerArt(typedCornerArt(look.overlay));
-    return module.showSeason(look.overlay);
-  }).then(refreshBannerLines); // the pack's own banner line is known once its file is read
-}
-
-// The corner art typed on the rule of this pack on the Look page, or '' (core/theme.js, ruleExtras)
-function typedCornerArt(overlayId) {
-  if (!base || !overlayId) return '';
-  return ruleExtras(base.theme, overlayId, new Date()).cornerArt;
-}
-
-// The panels that show the banner line (core/theme.js, packExtras) are told again when a
-// pack comes or goes, because that does not change the content
-function refreshBannerLines() {
-  if (!content) return;
-
-  updatePanel('banner', content);
-  updatePanel('bar-column', content);
-}
-
-// The pieces over the panels: the Look page's switch, and the address wins
-// like the other switches. A change in Studio shows at once because rebuild()
-// calls useSeasonSwitch() each time the content changes.
-function wantOverPanels() {
-  const asked = params.get('seasonover');
-  if (asked === 'on' || asked === 'off') return asked === 'on';
-
-  return !base || !base.theme || base.theme.seasonOverPanels !== false;
-}
-
-function useSeasonSwitch() {
-  if (!decorationsUsed) return; // core/season.js is not loaded, and reads the switch when it is
-  startOptional('./core/season.js', module => module.setOverPanels(wantOverPanels()));
-}
-
-// The corner art typed on the rule of the pack on the page follows the Look page while
-// the screen runs, like the switch above
-function usePackExtras() {
-  if (!decorationsUsed) return;
-  startOptional('./core/season.js', module => module.setCornerArt(typedCornerArt(overlayShown())));
-}
-
-// A module that is allowed to be missing or to fail without stopping the screen
-async function startOptional(path, use) {
-  try {
-    await use(await import(path));
-  } catch (error) {
-    console.error('Could not start ' + path, error);
-  }
-}
-
-// When the Mini downloads a new version of the dashboard it also writes a
-// new number into version.txt. Seeing the number change, reload the page.
-function watchVersion() {
-  let known = null;
-
-  showStamp(versionLabel(window.teletraanVersion, window.teletraanCommit) || window.teletraanBuild, params, screen);
-
-  async function check() {
-    try {
-      const response = await fetch(liveFolder + 'version.txt', { cache: 'no-store' });
-      if (!response.ok) return;
-
-      const version = (await response.text()).trim();
-      if (known === null) {
-        known = version;
-      } else if (version !== known && !takeoverRunning()) {
-        // Not in the middle of an announcement or alert, because the new page
-        // would not bring it back. The next check in a minute tries again.
-        window.location.reload();
-      }
-    } catch (error) {
-      // offline for the moment, try again next time
-    }
-  }
-
-  check(); // read it once now, so an update in the first minute is not missed
-  setInterval(check, 60 * 1000);
-}
-
-async function startPerf() {
-  if (!params.has('perf')) return;
-
-  try {
-    const perf = await import('./perf.js'); // only loaded when asked for
-    perf.start();
-  } catch (error) {
-    console.error('Could not start the readout', error);
-  }
-}
-
-function startDemo() {
-  const demo = params.get('demo');
-  if (demo === 'announcement') {
-    // the first announcement, or the starting one if the editors have removed them all
-    const announcement = content.settings.announcements[0] || defaultSettings.announcements[0];
-    setTimeout(() => runAnnouncement(announcement, getContent), 4000);
-  }
-  if (demo === 'crt') {
-    setInterval(frame.playCrt, 8000);
-    setTimeout(frame.playCrt, 2500);
-  }
-  if (demo === 'alert') {
-    base.settings.alert = { on: true, headline: '[ALERT HEADLINE]', message: '[The message for the alert goes here.]', until: '' };
-    rebuild();
-  }
-}
-
-// The weight and family must match fonts.css. Add a line when you add a weight.
-function waitForFonts() {
-  return Promise.all([
-    document.fonts.load('700 96px Tomorrow'),
-    document.fonts.load('600 44px Tomorrow'),
-    document.fonts.load('500 56px "Atkinson Hyperlegible Next"'),
-  ]).catch(() => {});
-}
-
-// On the TV the window is exactly 1920x1080 and nothing is scaled. On a
-// smaller screen the whole picture shrinks to fit, and stays centred.
-function fitToScreen() {
-  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-
-  if (Math.abs(scale - 1) < 0.01) {
-    screen.style.transform = '';
-    screen.style.marginLeft = '';
-    screen.style.marginTop = '';
-    return;
-  }
-
-  screen.style.transform = 'scale(' + scale + ')';
-  screen.style.marginLeft = Math.max(0, (window.innerWidth - 1920 * scale) / 2) + 'px';
-  screen.style.marginTop = Math.max(0, (window.innerHeight - 1080 * scale) / 2) + 'px';
-}
-
-// A wall display must never sit blank without saying why
-function showFatal(error) {
-  console.error(error);
-
-  const message = document.createElement('div');
-  message.style.cssText = 'position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 100;' +
-    'display: flex; flex-direction: column; justify-content: center; align-items: center;' +
-    'background: var(--ground); color: var(--yellow); font: 700 96px/120px sans-serif; text-align: center;';
-  message.textContent = 'Teletraan I could not start. Trying again in 30 seconds.';
-  screen.appendChild(message);
-
-  setTimeout(() => window.location.reload(), 30000);
 }

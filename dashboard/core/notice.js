@@ -9,24 +9,21 @@
 // when the editor picks them.
 
 import { textWidth } from './text-width.js';
+import { isRecord } from './text.js';
 
 // How long each of two live announcements stays up before the other takes its place, how tall the bar is, the
 // gap it keeps from the banner and the panels, and how long the panels take to make room for it.
-export const noticeSeconds = 12;
+const noticeSeconds = 12;
 export const noticeHeight = 80;
 export const noticeGap = 12;
 export const noticeShrinkMs = 300;
 
-export const noticeLevels = ['notice', 'important'];
+const noticeLevels = ['notice', 'important'];
 export const noticeLongest = 90;
 
 // A time as milliseconds: text from Sanity, or the milliseconds an earlier tidy left
 function momentOf(value) {
   return typeof value === 'number' ? value : Date.parse(value);
-}
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 // The announcements from the query, always complete: { id, text, start, end, team, level, sample }.

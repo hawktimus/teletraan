@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 
@@ -21,7 +22,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-presentation
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'core/constants.js', 'core/presentation.js', 'core/time.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const presentation = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation.js')).href);
 
@@ -391,7 +392,7 @@ test('the mouse cursor is hidden in every state: each stylesheet that names a cu
 const scheduleTree = path.join(workFolder, 'schedule-tree');
 ['config.js', 'core/schedule.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(scheduleTree, 'dashboard', file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(scheduleTree, 'dashboard', file));
 });
 fs.writeFileSync(path.join(scheduleTree, 'package.json'), '{ "type": "module" }\n');
 fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [

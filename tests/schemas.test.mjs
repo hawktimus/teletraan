@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readModule } from './helpers/read-module.mjs';
 
 const here = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'studio');
 const dashboardFolder = path.join(here, '..', 'dashboard');
@@ -610,7 +611,7 @@ function makeSandbox() {
   });
 
   // An icon stand-in for each file of @sanity/icons that structure.js imports
-  const icons = iconImportsOf(fs.readFileSync(path.join(folder, 'structure.js'), 'utf8'));
+  const icons = iconImportsOf(readModule(path.join(folder, 'structure.js'), 'utf8'));
   const iconFolder = path.join(folder, 'node_modules', '@sanity', 'icons');
   const iconExports = {};
   fs.mkdirSync(iconFolder, { recursive: true });
@@ -2503,8 +2504,8 @@ function checkIconFiles(problems) {
   const manifest = path.join(here, 'node_modules', '@sanity', 'icons', 'package.json');
   if (!fs.existsSync(manifest)) return;
 
-  const files = JSON.parse(fs.readFileSync(manifest, 'utf8')).exports || {};
-  iconImportsOf(fs.readFileSync(path.join(here, 'structure.js'), 'utf8')).forEach(icon => {
+  const files = JSON.parse(readModule(manifest, 'utf8')).exports || {};
+  iconImportsOf(readModule(path.join(here, 'structure.js'), 'utf8')).forEach(icon => {
     need(problems, files['./' + icon[0]] !== undefined, 'structure.js imports @sanity/icons/' + icon[0] + ', and the installed @sanity/icons has no such file');
     need(problems, icon[1] === icon[0] + 'Icon', 'structure.js imports ' + icon[1] + ' from @sanity/icons/' + icon[0] + ', and that file holds ' + icon[0] + 'Icon');
   });
@@ -4299,7 +4300,7 @@ function checkSettingsTabs() {
   need(problems, status && status.type === 'string' && status.readOnly === true, 'miniStatus should be a read only string');
   need(problems, status && status.initialValue === undefined && !status.validation, 'miniStatus should store nothing: no starting value and no rules');
   need(problems, status && status.components && typeof status.components.input === 'function', 'miniStatus should have an input component (status-input.js)');
-  const source = fs.readFileSync(path.join(here, 'inputs', 'status-input.js'), 'utf8');
+  const source = readModule(path.join(here, 'inputs', 'status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'status-input.js should never change the value: no onChange, set, unset or patch');
   return problems;
 }
@@ -4457,7 +4458,7 @@ function checkCompetitionTab() {
   need(problems, block && block.type === 'string' && block.readOnly === true, 'frcConnection should be a read only string');
   need(problems, block && block.initialValue === undefined && !block.validation, 'frcConnection should store nothing: no starting value and no rules');
   need(problems, block && block.components && block.components.input === world.frcStatusInput.FrcStatusInput, 'frcConnection should draw itself with FrcStatusInput (frc-status-input.js)');
-  const source = fs.readFileSync(path.join(here, 'inputs', 'frc-status-input.js'), 'utf8');
+  const source = readModule(path.join(here, 'inputs', 'frc-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'frc-status-input.js should never change the value: no onChange, set, unset or patch');
   return problems;
 }
@@ -5686,7 +5687,7 @@ function checkMondayTab() {
   need(problems, block && block.type === 'string' && block.readOnly === true, 'mondayConnection should be a read only string');
   need(problems, block && block.initialValue === undefined && !block.validation, 'mondayConnection should store nothing: no starting value and no rules');
   need(problems, block && block.components && block.components.input === world.mondayStatusInput.MondayStatusInput, 'mondayConnection should draw itself with MondayStatusInput (monday-status-input.js)');
-  const source = fs.readFileSync(path.join(here, 'inputs', 'monday-status-input.js'), 'utf8');
+  const source = readModule(path.join(here, 'inputs', 'monday-status-input.js'), 'utf8');
   need(problems, !/onChange|\bset\(|unset\(|patch/.test(source), 'monday-status-input.js should never change the value: no onChange, set, unset or patch');
 
   // How often: 5 to 120 whole minutes, starting at 30, in the words of the order
@@ -6073,7 +6074,7 @@ function checkMondayPickers() {
   });
 
   // Read only: the pickers write only what the person picks, and only through onChange
-  const text = fs.readFileSync(path.join(here, 'inputs', 'monday-pickers.js'), 'utf8');
+  const text = readModule(path.join(here, 'inputs', 'monday-pickers.js'), 'utf8');
   need(problems, !/\.patch\(|\.create\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(text), 'monday-pickers.js should never change a document itself: no patch, create, delete or mutate');
   return problems;
 }
@@ -7051,7 +7052,7 @@ async function checkMondayToken() {
   need(problems, button && wordsIn(button) === 'Test the token' && button.props.type === 'button' && typeof button.props.onClick === 'function' && button.props.style.minHeight >= 44, 'the field should draw a Test the token button');
   await button.props.onClick();
   need(problems, sent.length === 3, 'a click should ask the control page once');
-  need(problems, !/MONDAY_API_TOKEN|local\.env|Authorization/.test(world.mondayTokenInputSource + fs.readFileSync(path.join(here, 'tools', 'monday-check.js'), 'utf8')), 'the Studio should not name the key or its file, or send an authorization header');
+  need(problems, !/MONDAY_API_TOKEN|local\.env|Authorization/.test(world.mondayTokenInputSource + readModule(path.join(here, 'tools', 'monday-check.js'), 'utf8')), 'the Studio should not name the key or its file, or send an authorization header');
   return problems;
 }
 
@@ -7092,12 +7093,12 @@ async function main() {
     world.themesView = await load(path.join(folder, 'inputs', 'themes-view.js'));
     world.mondayCheck = await load(path.join(folder, 'tools', 'monday-check.js'));
     world.mondayTokenInput = await load(path.join(folder, 'inputs', 'monday-token-input.js'));
-    world.mondayTokenInputSource = fs.readFileSync(path.join(here, 'inputs', 'monday-token-input.js'), 'utf8');
+    world.mondayTokenInputSource = readModule(path.join(here, 'inputs', 'monday-token-input.js'), 'utf8');
     world.dashboardContent = await load(path.join(dashboardFolder, 'core', 'content.js'));
-    world.startHereSource = fs.readFileSync(path.join(here, 'inputs', 'start-here.js'), 'utf8');
-    world.startHerePartsSource = fs.readFileSync(path.join(here, 'inputs', 'start-here-parts.js'), 'utf8');
-    world.actionsSource = fs.readFileSync(path.join(here, 'tools', 'actions.js'), 'utf8');
-    world.baseCss = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
+    world.startHereSource = readModule(path.join(here, 'inputs', 'start-here.js'), 'utf8');
+    world.startHerePartsSource = readModule(path.join(here, 'inputs', 'start-here-parts.js'), 'utf8');
+    world.actionsSource = readModule(path.join(here, 'tools', 'actions.js'), 'utf8');
+    world.baseCss = readModule(path.join(dashboardFolder, 'base.css'), 'utf8');
     world.noteField = await load(path.join(folder, 'inputs', 'note-field.js'));
     world.showOnTvInput = await load(path.join(folder, 'inputs', 'show-on-tv-input.js'));
     world.statusInput = await load(path.join(folder, 'inputs', 'status-input.js'));
@@ -7105,9 +7106,9 @@ async function main() {
     world.mondayStatusInput = await load(path.join(folder, 'inputs', 'monday-status-input.js'));
     world.mondayPickers = await load(path.join(folder, 'inputs', 'monday-pickers.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
-    world.sanitySource = fs.readFileSync(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
-    world.frcScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'), 'utf8');
-    world.mondayScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'), 'utf8');
+    world.sanitySource = readModule(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
+    world.frcScript = readModule(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'), 'utf8');
+    world.mondayScript = readModule(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'), 'utf8');
     world.panelOrderInput = await load(path.join(folder, 'inputs', 'panel-order-input.js'));
     world.screenIds = await load(path.join(folder, 'inputs', 'screen-ids.js'));
     world.screenMap = await load(path.join(folder, 'tools', 'screen-map.js'));
@@ -7118,25 +7119,25 @@ async function main() {
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
     world.leadershipModule = await load(path.join(dashboardFolder, 'core', 'leadership.js'));
-    world.statusScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'status-write.sh'), 'utf8');
-    world.sample = JSON.parse(fs.readFileSync(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
-    world.seed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
-    world.placeSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
-    world.teamSeed = fs.readFileSync(path.join(here, '..', 'docs', 'seed', 'teams.ndjson'), 'utf8');
-    world.hawktimusCss = fs.readFileSync(path.join(dashboardFolder, 'themes', 'hawktimus.css'), 'utf8');
+    world.statusScript = readModule(path.join(here, '..', 'mini', 'scripts', 'status-write.sh'), 'utf8');
+    world.sample = JSON.parse(readModule(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
+    world.seed = readModule(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
+    world.placeSeed = readModule(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
+    world.teamSeed = readModule(path.join(here, '..', 'docs', 'seed', 'teams.ndjson'), 'utf8');
+    world.hawktimusCss = readModule(path.join(dashboardFolder, 'themes', 'hawktimus.css'), 'utf8');
     world.addTemplates = (await load(path.join(folder, 'tools', 'add-templates.js'))).addTemplates;
     world.timeText = await load(path.join(folder, 'inputs', 'time-text.js'));
     world.calendarsParts = await load(path.join(folder, 'inputs', 'calendars-view-parts.js'));
     world.calendarsView = await load(path.join(folder, 'inputs', 'calendars-view.js'));
-    world.calendarsViewSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view.js'), 'utf8');
-    world.calendarsPartsSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view-parts.js'), 'utf8');
+    world.calendarsViewSource = readModule(path.join(here, 'inputs', 'calendars-view.js'), 'utf8');
+    world.calendarsPartsSource = readModule(path.join(here, 'inputs', 'calendars-view-parts.js'), 'utf8');
     world.mondayBoardsParts = await load(path.join(folder, 'inputs', 'monday-boards-parts.js'));
     world.mondayBoardsView = await load(path.join(folder, 'inputs', 'monday-boards-view.js'));
     world.previewPanelsView = await load(path.join(folder, 'inputs', 'preview-panels-view.js'));
-    world.mondayBoardsViewSource = fs.readFileSync(path.join(here, 'inputs', 'monday-boards-view.js'), 'utf8');
-    world.mondayBoardsPartsSource = fs.readFileSync(path.join(here, 'inputs', 'monday-boards-parts.js'), 'utf8');
-    world.calendarStatusScript = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'calendar-status.sh'), 'utf8');
-    world.calendarStatusHelper = fs.readFileSync(path.join(here, '..', 'mini', 'scripts', 'calendar-status.mjs'), 'utf8');
+    world.mondayBoardsViewSource = readModule(path.join(here, 'inputs', 'monday-boards-view.js'), 'utf8');
+    world.mondayBoardsPartsSource = readModule(path.join(here, 'inputs', 'monday-boards-parts.js'), 'utf8');
+    world.calendarStatusScript = readModule(path.join(here, '..', 'mini', 'scripts', 'calendar-status.sh'), 'utf8');
+    world.calendarStatusHelper = readModule(path.join(here, '..', 'mini', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }

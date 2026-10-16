@@ -12,9 +12,9 @@ import { escapeHtml } from './text.js';
 import { textWidth } from './text-width.js';
 import { minutesIn } from './night.js';
 import { pad } from './time.js';
-import { frcOf, todayOf, zoneOf } from './competition.js';
+import { frcOf, todayOf } from './competition.js';
 import { teamEntry, weekdayName } from './frc.js';
-import { dateIn } from './theme.js';
+import { dateIn, timeZoneOf } from './theme.js';
 
 export const bodySize = { width: 1096, height: 512 };
 
@@ -50,7 +50,7 @@ export function daysText(days) {
 // the time zone of the Look page
 export function cardState(content, now = new Date()) {
   const frc = frcOf(content, now);
-  return { frc: frc, entry: teamEntry(frc), now: now, zone: zoneOf(content), today: todayOf(content, now) };
+  return { frc: frc, entry: teamEntry(frc), now: now, zone: timeZoneOf(content), today: todayOf(content, now) };
 }
 
 // The words at the right end of the header, before the slashes: SAMPLE for sample data, and how old the

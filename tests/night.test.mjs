@@ -14,9 +14,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -24,7 +26,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-night-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'core/constants.js', 'core/night.js', 'core/logo.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 const nightUrl = pathToFileURL(path.join(workFolder, 'dashboard/core/night.js')).href;
 const night = await import(nightUrl);
@@ -479,7 +481,7 @@ test('the alerts and announcements are wired in, and the night screen sits betwe
 
   const frame = read('frame.js');
   assert.ok(frame.includes('export function setNightCovers(covers)'));
-  assert.ok(frame.includes("if (motion !== 'full' || nightCovers || screenHeld()) return;"), 'no effect comes due while it covers');
+  assert.ok(frame.includes("if (frameState.motion !== 'full' || frameState.nightCovers || screenHeld()) return;"), 'no effect comes due while it covers');
 });
 
 test('the number is 64px in the display face under the logo, the sizes come from CSS, and the stage is hidden under the screen', () => {

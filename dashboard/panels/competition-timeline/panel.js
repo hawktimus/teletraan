@@ -40,7 +40,7 @@ export function dotPositions(days) {
 }
 
 // What the legend says at the right of a row: NOW while the event is on, TODAY on the day, otherwise the days left
-export function daysLabel(marker) {
+function daysLabel(marker) {
   if (marker.now) return 'NOW';
   return marker.days === 0 ? 'TODAY' : daysText(marker.days);
 }

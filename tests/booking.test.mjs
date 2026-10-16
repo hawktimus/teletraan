@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const testsFolder = fileURLToPath(new URL('.', import.meta.url));
 const dashboardFolder = path.join(testsFolder, '../dashboard');
@@ -30,11 +31,11 @@ function copyAll(from, to) {
   fs.mkdirSync(to, { recursive: true });
   fs.readdirSync(from, { withFileTypes: true }).forEach(entry => {
     if (entry.isDirectory()) copyAll(path.join(from, entry.name), path.join(to, entry.name));
-    else if (/\.(js|json)$/.test(entry.name) && !to.includes('data')) fs.copyFileSync(path.join(from, entry.name), path.join(to, entry.name));
+    else if (/\.(js|json)$/.test(entry.name) && !to.includes('data')) copyModule(path.join(from, entry.name), path.join(to, entry.name));
   });
 }
 ['core', 'themes', 'panels/tonight'].forEach(folder => copyAll(path.join(dashboardFolder, folder), path.join(root, folder)));
-['config.js', 'registry.js'].forEach(file => fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file)));
+['config.js', 'registry.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
 
 const base = pathToFileURL(root).href + '/';
 const { normalizeContent } = await import(base + 'core/sanity.js');

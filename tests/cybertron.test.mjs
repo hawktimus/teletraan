@@ -14,6 +14,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -24,7 +26,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-cybertron-')
 
 function copyInto(folder, from, to) {
   fs.mkdirSync(path.dirname(path.join(folder, to)), { recursive: true });
-  fs.copyFileSync(path.join(root, from), path.join(folder, to));
+  copyModule(path.join(root, from), path.join(folder, to));
 }
 
 function makeTree(name, files) {
@@ -36,7 +38,7 @@ function makeTree(name, files) {
 }
 
 const urlOf = (folder, file) => pathToFileURL(path.join(folder, file)).href;
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => readModule(path.join(root, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
 // The files every tree has: the configuration, the registries and everything in core/
@@ -1071,8 +1073,8 @@ test('redrawFrames puts the frame of the style on the page round each area that 
 
 test('the frames are drawn again in the same step that puts the style on the page, and the banner and the countdown of the standard layout with them', () => {
   const shell = read('dashboard/shell.js');
-  assert.ok(shell.includes("import { redrawFrames } from './core/areas.js';"));
-  assert.ok(shell.includes("import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';"));
+  assert.ok(hasImports(shell, ['redrawFrames'], './core/areas.js'));
+  assert.ok(hasImports(shell, ['applyStyle', 'recordShapes', 'shapesFor', 'shapesNow', 'startStyle', 'themeOf'], './core/style.js'));
   const body = /function useStyle\(look\) \{([\s\S]*?)\n\}/.exec(shell)[1];
   assert.ok(body.indexOf('applyStyle(look.style);') < body.indexOf('recordShapes(look.style, document.documentElement, layoutNow());') && body.indexOf('recordShapes(look.style, document.documentElement, layoutNow());') < body.indexOf('redrawFrames();') && body.indexOf('redrawFrames();') < body.indexOf('redrawWhatStays();'), 'the style, then the corners, then the areas, then the panels that stay');
   assert.ok(body.includes('if (shapesFor(look.style, layoutNow()) === shapesNow()) return;'), 'a style with the frames the page has changes nothing');
@@ -1080,7 +1082,7 @@ test('the frames are drawn again in the same step that puts the style on the pag
 
   const redraw = /function redrawWhatStays\(\) \{([\s\S]*?)\n\}/.exec(shell)[1];
   assert.ok(redraw.includes("layoutNow() !== 'standard'"), 'only the standard layout draws the banner and the countdown that differ');
-  assert.ok(redraw.includes('!stayStarted'), 'and only when they are on screen');
+  assert.ok(redraw.includes('!shellState.stayStarted'), 'and only when they are on screen');
   assert.ok(redraw.includes("showFixedPanel(id, false)"), 'they are there at once');
   assert.ok(/stayStarted = true;/.test(shell));
   assert.ok(shell.includes("else element.dataset.state = 'shown';"), 'a panel that takes the place of one on screen has its parts shown');

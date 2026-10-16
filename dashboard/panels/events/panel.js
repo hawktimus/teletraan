@@ -9,6 +9,7 @@ import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { eventDate, timeText } from '../../core/events.js';
 import { chipWord, eventsPerPage, shownPages } from '../../core/event-pages.js';
+import { timeZoneOf } from '../../core/theme.js';
 
 // The pin of a pinned event, 44px square. Its colour is in panels/events/panel.css.
 const pinMark = `
@@ -30,7 +31,7 @@ export function scrollPages(content) {
 
 export function mount(host, content) {
   const pages = shownPages(content);
-  const zone = (content.theme || {}).timeZone;
+  const zone = timeZoneOf(content);
   const lines = pages.map((rows, index) => pageMarkup(rows, index === pages.length - 1, zone)).join('');
 
   host.innerHTML = `

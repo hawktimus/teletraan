@@ -13,6 +13,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const docsFolder = fileURLToPath(new URL('../docs/', import.meta.url));
@@ -24,10 +26,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
@@ -186,10 +188,10 @@ test('nothing in the dashboard reads the four from the settings: they appear onl
     if (entry.isDirectory()) return entry.name === 'data' || entry.name === 'fonts' ? undefined : walk(where);
     if (!entry.name.endsWith('.js')) return;
 
-    const code = fs.readFileSync(path.join(dashboardFolder, where), 'utf8').split('\n').map(line => line.replace(/\/\/.*$/, '')).join('\n');
+    const code = readModule(path.join(dashboardFolder, where), 'utf8').split('\n').map(line => line.replace(/\/\/.*$/, '')).join('\n');
     if (/\.(nightStart|nightEnd|noShowMinutes|graceMinutes)\b/.test(code)) found.push(where + ' reads one of them as a property');
     if (/\[\s*['"](nightStart|nightEnd|noShowMinutes|graceMinutes)['"]\s*\]/.test(code)) found.push(where + ' reads one of them by name');
-    if (/['"](nightStart|nightEnd|noShowMinutes|graceMinutes)['"]/.test(code) && where !== path.join('core', 'sanity.js')) found.push(where + ' names one of them in quotes');
+    if (/['"](nightStart|nightEnd|noShowMinutes|graceMinutes)['"]/.test(code) && !/^core.sanity(-[a-z]+)?\.js$/.test(where)) found.push(where + ' names one of them in quotes');
   });
   walk('.');
 
@@ -197,8 +199,8 @@ test('nothing in the dashboard reads the four from the settings: they appear onl
 });
 
 test('the docs give the same fixed values as constants.js', () => {
-  const nightDoc = fs.readFileSync(path.join(docsFolder, 'night-mode.md'), 'utf8');
-  const talkDoc = fs.readFileSync(path.join(docsFolder, 'presentations.md'), 'utf8');
+  const nightDoc = readModule(path.join(docsFolder, 'night-mode.md'), 'utf8');
+  const talkDoc = readModule(path.join(docsFolder, 'presentations.md'), 'utf8');
 
   assert.ok(nightDoc.includes(constants.nightStart) && nightDoc.includes(constants.nightEnd), 'docs/night-mode.md names ' + constants.nightStart + ' and ' + constants.nightEnd);
   assert.ok(nightDoc.includes('dashboard/core/constants.js'), 'docs/night-mode.md says where they are');

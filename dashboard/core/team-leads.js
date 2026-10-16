@@ -6,15 +6,11 @@
 // panel shows as many rows as the Roster size leaves room for, four at 100, each
 // time it comes round.
 
-import { hasText } from './text.js';
+import { hasText, trimText } from './text.js';
 import { visibleItems } from './content.js';
 
 const noLeadRole = '[lead]';
 const leadRole = 'TEAM LEAD';
-
-function trimmed(text) {
-  return hasText(text) ? String(text).trim() : '';
-}
 
 // The lead's own photo and its switch go with the row, so the panel can ask
 // core/portrait.js for the address (leadAddress). A department without them has
@@ -37,9 +33,9 @@ export function departmentRows(subteams) {
   return visibleItems(subteams)
     .filter(subteam => hasText(subteam.name) || hasText(subteam.lead))
     .map(subteam => {
-      const department = trimmed(subteam.name);
-      const lead = trimmed(subteam.lead);
-      const typedLine = trimmed(subteam.line);
+      const department = trimText(subteam.name);
+      const lead = trimText(subteam.lead);
+      const typedLine = trimText(subteam.line);
 
       // a department with no lead is a gap on purpose, so it never takes a photo, and its name is
       // already the first line, so it has no chip
@@ -50,7 +46,7 @@ export function departmentRows(subteams) {
 
 export function showcaseOf(subteam) {
   return {
-    lead: trimmed(subteam.lead),
+    lead: trimText(subteam.lead),
     members: Array.isArray(subteam.members) ? subteam.members.filter(hasText) : [],
   };
 }

@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readModule } from './helpers/read-module.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-watchdog-'));
@@ -120,12 +121,12 @@ function setup(options = {}) {
       fs.writeFileSync(place.state, lines.join('\n') + '\n');
     },
     stateText() {
-      return fs.existsSync(place.state) ? fs.readFileSync(place.state, 'utf8') : '';
+      return fs.existsSync(place.state) ? readModule(place.state, 'utf8') : '';
     },
     run() {
       const env = { PATH: bin, TZ: 'UTC', STUB_LOG: log, STUB_DIR: stub, WATCHDOG_BOOT_FILE: path.join(root, 'boot-id') };
       const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/watchdog.sh')], { env: env, encoding: 'utf8', input: '' });
-      const calls = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
+      const calls = readModule(log, 'utf8').split('\n').filter(Boolean);
       return {
         status: result.status,
         text: result.stdout,
@@ -287,28 +288,28 @@ test('a state file that cannot be written means no restart, so the limits can ne
 test('the script has valid sh syntax, is executable, and reads no key from local.env', () => {
   assert.equal(spawnSync('/bin/sh', ['-n', watchdogFile], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(watchdogFile).mode & 0o100, 'watchdog.sh should be executable');
-  const text = fs.readFileSync(watchdogFile, 'utf8');
+  const text = readModule(watchdogFile, 'utf8');
   ['SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'CALENDAR_'].forEach(name => assert.ok(!text.includes(name), 'watchdog.sh should not name ' + name));
   assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'it never prints local.env');
 });
 
 test('kiosk.sh opens the debugging port on this machine only', () => {
-  const text = fs.readFileSync(path.join(repo, 'mini/scripts/kiosk.sh'), 'utf8');
+  const text = readModule(path.join(repo, 'mini/scripts/kiosk.sh'), 'utf8');
   assert.ok(text.includes('--remote-debugging-port=9222'));
   assert.ok(text.includes('--remote-debugging-address=127.0.0.1'));
   assert.ok(!/0\.0\.0\.0/.test(text));
 });
 
 test('the watchdog units run the script every 2 minutes, the installer checks them, and none is empty', () => {
-  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-watchdog.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-watchdog.timer'), 'utf8');
+  const service = readModule(path.join(repo, 'mini/systemd/teletraan-watchdog.service'), 'utf8');
+  const timer = readModule(path.join(repo, 'mini/systemd/teletraan-watchdog.timer'), 'utf8');
   assert.ok(service.includes('ExecStart=/opt/teletraan/mini/scripts/watchdog.sh'));
   assert.ok(!/^User=/m.test(service), 'it runs as root and names no account');
   assert.ok(/^OnUnitActiveSec=2min$/m.test(timer));
   assert.ok(/^WantedBy=timers.target$/m.test(timer));
 
   const installer = path.join(repo, 'mini/scripts/install-watchdog.sh');
-  const text = fs.readFileSync(installer, 'utf8');
+  const text = readModule(installer, 'utf8');
   assert.equal(spawnSync('/bin/sh', ['-n', installer], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(installer).mode & 0o100);
   assert.ok(text.includes('[ ! -s "$units/$unit" ]'), 'a missing or empty unit stops it');
@@ -337,7 +338,7 @@ test('the heartbeat puts Teletraan I, a middle dot and HH:MM in the title, and k
   heartbeat.beat(new Date(2026, 9, 15, 14, 9));
   assert.equal(document.title, 'Teletraan I · 14:09');
 
-  const shell = fs.readFileSync(path.join(repo, 'dashboard/shell.js'), 'utf8');
+  const shell = readModule(path.join(repo, 'dashboard/shell.js'), 'utf8');
   assert.ok(shell.includes("from './core/heartbeat.js'") && shell.includes('startHeartbeat();'), 'shell.js starts the heartbeat');
 });
 

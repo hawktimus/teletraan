@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
@@ -24,7 +25,7 @@ const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'core/transitions.js', 'core/swap-plan.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -415,7 +416,7 @@ const runRoot = path.join(runTree, 'dashboard');
 fs.mkdirSync(path.join(runRoot, 'core'), { recursive: true });
 fs.writeFileSync(path.join(runTree, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'core/transitions.js', 'core/swap-plan.js', 'core/swap-run.js', 'core/busy.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(runRoot, file));
+  copyModule(path.join(dashboardFolder, file), path.join(runRoot, file));
 });
 const standIns = {
   'frame.js': [

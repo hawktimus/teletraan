@@ -18,12 +18,9 @@
 //      from Sanity or from Google.
 
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
+import { isRecord } from './text.js';
 
 export const handledKey = 'teletraan-presentation-test-handled';
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // The presentationTestRequest of Dashboard Settings, always complete: { requestedAt }.
 // A time that is not a time is empty, which is no request.

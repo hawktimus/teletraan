@@ -26,12 +26,9 @@ import { defaultThemeSettings } from '../config.js';
 import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
 import { bannerLineLimit, defaultsOf, mergeExtras, tickerPrefixLimit, tidyArt, tidyText } from './pack-extras.js';
+import { isRecord } from './text.js';
 
 const kinds = ['theme', 'overlay'];
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 function idsOf(list) {
   return list.map(item => item.id);
@@ -72,6 +69,16 @@ export function isTimeZone(name) {
   } catch (error) {
     return false;
   }
+}
+
+// The name when Intl knows it, otherwise the default time zone. Every reader of a time zone goes through this.
+export function zoneNamed(name) {
+  return isTimeZone(name) ? name : defaultThemeSettings.timeZone;
+}
+
+// The time zone of the Look page of a content object, or the default when it has none
+export function timeZoneOf(content) {
+  return zoneNamed(content && content.theme && content.theme.timeZone);
 }
 
 const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // February has room for the 29th

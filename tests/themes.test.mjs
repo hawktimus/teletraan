@@ -12,6 +12,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 
@@ -22,10 +24,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 ['theme.js', 'theme-apply.js', 'view-apply.js', 'teams.js', 'style.js', 'busy.js', 'transitions.js', 'tick.js', 'corner-art.js', 'pack-extras.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
@@ -633,30 +635,30 @@ test('a hold that fails is logged and the colours go on anyway', async () => {
 // The wiring
 
 test('the large panel tells theme-apply when its frame is apart, and nothing else moves', () => {
-  const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
+  const areas = readModule(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
   // the new metal goes on in the same moment (core/areas.js), so a line or two of comment and that line sit between
   assert.ok(/await frame\.leave\(area, change\);\s*\n(?:[^\n]*\n){0,4}\s*if \(region === themeRegion\) changeThemeNow\(\);/.test(areas), 'areas.js should call changeThemeNow() right after the old page has left');
   assert.ok(areas.includes("const themeRegion = 'grid1';"));
 
-  const apply = fs.readFileSync(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8');
+  const apply = readModule(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8');
   ['animate(', 'transition', 'requestAnimationFrame', 'keyframes'].forEach(word => assert.ok(!apply.includes(word), 'theme-apply.js should not animate: ' + word));
 });
 
 test('shell.js starts the themes before the first panel and checks them when the content changes', () => {
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
   assert.ok(shell.indexOf('await startThemes(') !== -1 && shell.indexOf('await startThemes(') < shell.indexOf('startWhatStays();\n\n    // Alerts'), 'startThemes should come before startWhatStays');
   assert.ok(/rebuild\(\);\s*\n\s*checkTheme\(\);/.test(shell), 'setBase should call checkTheme() after rebuild()');
   assert.ok(shell.includes('showThemeNow();'), 'the first real content should show its theme at once');
 });
 
 test('index.html links the default theme and the theme files hold variables only', () => {
-  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const index = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   assert.ok(index.indexOf('themes/hawktimus.css') < index.indexOf('tokens.css'), 'the theme comes before tokens.css');
 
   const names = fs.readdirSync(path.join(dashboardFolder, 'themes')).filter(name => name.endsWith('.css'));
   assert.ok(names.includes('hawktimus.css') && names.length === themes.length);
   names.forEach(name => {
-    const text = fs.readFileSync(path.join(dashboardFolder, 'themes', name), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const text = readModule(path.join(dashboardFolder, 'themes', name), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     const declarations = text.replace(/[^{}]*\{|\}/g, '\n').split(';').map(item => item.trim()).filter(Boolean);
     assert.ok(declarations.length > 10, name + ' has no variables');
     declarations.forEach(item => assert.ok(item.startsWith('--'), name + ' has something that is not a variable: ' + item));
@@ -666,7 +668,7 @@ test('index.html links the default theme and the theme files hold variables only
 // The look of Neon Prime that is not a colour list (dashboard/themes/decor/neon-prime-decor.css)
 
 const decorPath = path.join(dashboardFolder, 'themes/decor/neon-prime-decor.css');
-const decorText = fs.existsSync(decorPath) ? fs.readFileSync(decorPath, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '') : '';
+const decorText = fs.existsSync(decorPath) ? readModule(decorPath, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '') : '';
 
 // The arguments of every gradient in the text, each as a list of its top level parts
 function gradientsIn(text) {
@@ -695,7 +697,7 @@ function gradientsIn(text) {
 
 test('the Neon Prime decor file is linked once, after the sidebar layout, and only touches Neon Prime', () => {
   assert.ok(decorText.length > 0, 'dashboard/themes/decor/neon-prime-decor.css is missing');
-  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const index = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   assert.equal(index.split('href="themes/decor/neon-prime-decor.css?v=0"').length - 1, 1, 'index.html links it once');
   assert.ok(index.indexOf('themes/decor/neon-prime-decor.css') > index.indexOf('layouts/sidebar.css'));
 
@@ -744,7 +746,7 @@ test('the Neon Prime decor file has no glow, blur, shadow, filter, text or movem
 });
 
 test('the gunmetal sets every variable that the silver metal sets, and the screen picks it whatever Frame metal says', () => {
-  const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const tokens = readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const silver = /\[data-metal="silver"\]\s*\{([^}]*)\}/.exec(tokens)[1];
   const names = silver.split(';').map(item => item.split(':')[0].trim()).filter(Boolean);
   assert.ok(names.length >= 14, 'the silver metal has its tones');
@@ -763,7 +765,7 @@ function copyStylesheets(from, to) {
       if (entry.name !== 'fonts') copyStylesheets(path.join(from, entry.name), path.join(to, entry.name));
     } else if (entry.name.endsWith('.css')) {
       fs.mkdirSync(to, { recursive: true });
-      fs.copyFileSync(path.join(from, entry.name), path.join(to, entry.name));
+      copyModule(path.join(from, entry.name), path.join(to, entry.name));
     }
   });
 }
@@ -773,14 +775,14 @@ function copyStylesheets(from, to) {
 function greenCheckAfter(name, file, change) {
   const folder = path.join(workFolder, 'green-' + name);
   fs.mkdirSync(path.join(folder, 'tests'), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, '../tests/check-themes.test.mjs'), path.join(folder, 'tests/check-themes.test.mjs'));
+  copyModule(path.join(dashboardFolder, '../tests/check-themes.test.mjs'), path.join(folder, 'tests/check-themes.test.mjs'));
   fs.cpSync(path.join(dashboardFolder, 'themes'), path.join(folder, 'dashboard/themes'), { recursive: true });
-  ['config.js', 'index.html', 'tokens.css'].forEach(item => fs.copyFileSync(path.join(dashboardFolder, item), path.join(folder, 'dashboard', item)));
+  ['config.js', 'index.html', 'tokens.css'].forEach(item => copyModule(path.join(dashboardFolder, item), path.join(folder, 'dashboard', item)));
   copyStylesheets(dashboardFolder, path.join(folder, 'dashboard')); // the check for keyframes reads every stylesheet
 
   if (file) {
     const target = path.join(folder, 'dashboard', file);
-    const before = fs.readFileSync(target, 'utf8');
+    const before = readModule(target, 'utf8');
     const after = change(before);
     assert.notEqual(after, before, 'the test change to ' + file + ' did nothing, so its anchor text is gone');
     fs.writeFileSync(target, after);
@@ -798,7 +800,7 @@ test('the check for greens passes on the real Neon Prime files, and the seasonal
   assert.ok(!run.failed, run.text);
   assert.ok(/PASS  the Neon Prime files have no green/.test(run.text));
 
-  const christmas = fs.readFileSync(path.join(dashboardFolder, 'themes/overlays/christmas.css'), 'utf8');
+  const christmas = readModule(path.join(dashboardFolder, 'themes/overlays/christmas.css'), 'utf8');
   assert.ok(/--yellow:\s*#[0-9a-f]{6}/i.test(christmas), 'the Christmas pack sets the accent, and the check does not look at it');
 });
 
@@ -864,7 +866,7 @@ test('the kit check passes on the real files, and the kit file is linked once, a
   assert.ok(!run.failed, run.text);
   assert.ok(/PASS  keyframes are only in the shared motion files/.test(run.text));
 
-  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const index = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   assert.equal(index.split('href="neon-kit.css?v=0"').length - 1, 1, 'index.html links it once');
   assert.ok(index.indexOf('href="neon-kit.css?v=0"') > index.indexOf('themes/decor/neon-prime-decor.css'));
 });
@@ -906,7 +908,7 @@ test('a comment may say filter, shadow or keyframes, and the kit check does not 
 // The team on the page (dashboard/core/teams.js, with a fake page): the seven colors and the mirror
 // class, and when a different team goes on. The mode logic and the filter are in tests/content.test.mjs.
 
-const seededTeams = fs.readFileSync(path.join(dashboardFolder, '../docs/seed/teams.ndjson'), 'utf8')
+const seededTeams = readModule(path.join(dashboardFolder, '../docs/seed/teams.ndjson'), 'utf8')
   .split('\n')
   .filter(line => line.trim() !== '')
   .map(line => JSON.parse(line));
@@ -1165,30 +1167,30 @@ test('a problem putting the team on the page never stops the page change that as
 });
 
 test('the page calls changeTeamNow in the same two moments as it calls changeThemeNow, and the screen runs the team once a second', () => {
-  const areas = fs.readFileSync(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
+  const areas = readModule(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
   assert.ok(areas.includes("import { changeTeamNow, trimNow } from './teams.js';"));
   assert.ok(/await frame\.leave\(area, change\);(?:\n[^\n]*){0,5}\n\s*if \(region === themeRegion\) changeThemeNow\(\);\n\s*if \(region === themeRegion\) changeTeamNow\(\);/.test(areas), 'after the old page has left, beside the theme');
   assert.ok(/host\.appendChild\(next\.element\);\n\s*if \(region === themeRegion && !\(gate && gate\.keepLook\)\) \{\n\s*changeThemeNow\(\);\n\s*changeTeamNow\(\);\n\s*\}/.test(areas), 'in the moment a swap has the screen apart, beside the theme (a hidden transition keeps the look it has)');
   assert.equal(areas.split('changeTeamNow()').length - 1, 2);
 
-  const shell = fs.readFileSync(path.join(dashboardFolder, 'shell.js'), 'utf8');
-  assert.ok(shell.includes("import { askForTeam, changeTeamNow, currentTeam, frameTrim, onTeamChange, recordTrim, trimNow, useTeams } from './core/teams.js';"));
+  const shell = readModule(path.join(dashboardFolder, 'shell.js'), 'utf8');
+  assert.ok(hasImports(shell, ['askForTeam', 'changeTeamNow', 'currentTeam', 'frameTrim', 'onTeamChange', 'recordTrim', 'trimNow', 'useTeams'], './core/teams.js'));
   assert.ok(/showThemeNow\(\);[^\n]*\n\s*changeTeamNow\(\);/.test(shell), 'the first real content has its team on at once, as it has its theme');
   assert.ok(shell.indexOf('chooseTeam(); //') !== -1 && shell.indexOf('chooseTeam(); //') < shell.indexOf('content.events = mergedEvents();'), 'the team is chosen before the events are merged');
-  assert.ok(/onTeamChange\(\(\) => \{\s*if \(content && !choosingTeam\) rebuild\(\);\s*\}\);/.test(shell), 'a change of team redraws the banner, and does not start a second redraw from inside one');
+  assert.ok(/onTeamChange\(\(\) => \{\s*if \(shellState\.content && !shellState\.choosingTeam\) rebuild\(\);\s*\}\);/.test(shell), 'a change of team redraws the banner, and does not start a second redraw from inside one');
   assert.ok(shell.includes("startOptional('./core/team-run.js', module => module.startTeams(getContent));"));
 
-  const run = fs.readFileSync(path.join(dashboardFolder, 'core/team-run.js'), 'utf8');
+  const run = readModule(path.join(dashboardFolder, 'core/team-run.js'), 'utf8');
   assert.ok(run.includes('frame.onSecond(look);'));
   assert.ok(run.includes("moveOn(['grid1', 'grid2', 'ticker']);"), 'when the wanted team changes the three areas move on, so their next pages are built for it');
 
-  const teams = fs.readFileSync(path.join(dashboardFolder, 'core/teams.js'), 'utf8');
+  const teams = readModule(path.join(dashboardFolder, 'core/teams.js'), 'utf8');
   ['animate(', 'transition', 'requestAnimationFrame', 'keyframes', 'setTimeout', 'setInterval'].forEach(word => assert.ok(!teams.includes(word), 'teams.js should not animate or keep time: ' + word));
 });
 
 // The colors (dashboard/teams.css)
 
-const teamsCss = fs.readFileSync(path.join(dashboardFolder, 'teams.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const teamsCss = readModule(path.join(dashboardFolder, 'teams.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
 function blocksOf(text) {
   const blocks = [];
@@ -1225,7 +1227,7 @@ test('teams.css starts the nine team colors at the Prime ones, and has no other 
 });
 
 test('the four colors the default theme takes from the team are the same colors the theme has today, so Prime looks as it did', () => {
-  const theme = fs.readFileSync(path.join(dashboardFolder, 'themes/hawktimus.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const theme = readModule(path.join(dashboardFolder, 'themes/hawktimus.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const set = {};
   blocksOf(theme).forEach(block => Object.assign(set, block.declarations));
   const colors = config.primeTeam.colors;
@@ -1242,16 +1244,16 @@ test('the four colors the default theme takes from the team are the same colors 
 
 test('the Alternate and Neon Prime themes and every overlay set their colors without the team, and the team colors are linked after the default theme and before the page styles', () => {
   ['themes/alternate.css', 'themes/neon-prime.css', 'themes/decor/neon-prime-decor.css', 'layouts/sidebar.css', 'neon-kit.css'].concat(fs.readdirSync(path.join(dashboardFolder, 'themes/overlays')).filter(name => name.endsWith('.css')).map(name => 'themes/overlays/' + name)).forEach(file => {
-    assert.equal(/--team-/.test(fs.readFileSync(path.join(dashboardFolder, file), 'utf8')), false, file);
+    assert.equal(/--team-/.test(readModule(path.join(dashboardFolder, file), 'utf8')), false, file);
   });
 
-  const index = fs.readFileSync(path.join(dashboardFolder, 'index.html'), 'utf8');
+  const index = readModule(path.join(dashboardFolder, 'index.html'), 'utf8');
   assert.equal(index.split('href="teams.css?v=0"').length - 1, 1);
   assert.ok(index.indexOf('themes/hawktimus.css') < index.indexOf('href="teams.css?v=0"'), 'after the default theme, so its rule wins');
   assert.ok(index.indexOf('href="teams.css?v=0"') < index.indexOf('href="base.css?v=0"'));
   assert.ok(index.indexOf('href="tokens.css?v=0"') < index.indexOf('href="teams.css?v=0"'));
   // an overlay is linked from theme-apply.js, later than anything in index.html, so it wins over the team
-  assert.ok(fs.readFileSync(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8').includes('document.head.appendChild(link);'));
+  assert.ok(readModule(path.join(dashboardFolder, 'core/theme-apply.js'), 'utf8').includes('document.head.appendChild(link);'));
 });
 
 // The extras of a seasonal pack: a ticker prefix, a banner line and a corner art on a rule

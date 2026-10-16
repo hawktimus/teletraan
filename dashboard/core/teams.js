@@ -85,15 +85,15 @@ export function recordTrim(trim, page = typeof document === 'undefined' ? null :
 // The class for the metal of a team, which has none for gold, and every class there is, for taking the last team's off
 export const metalClasses = Object.values(teamMetals).filter(Boolean);
 
-export function metalClassOf(team) {
+function metalClassOf(team) {
   const metal = team ? team.metal : undefined;
   return Object.prototype.hasOwnProperty.call(teamMetals, metal) ? teamMetals[metal] : '';
 }
 
 // The class for the palette of a team, which has none for the standard one
-export const paletteClasses = Object.values(teamPalettes).filter(Boolean);
+const paletteClasses = Object.values(teamPalettes).filter(Boolean);
 
-export function paletteClassOf(team) {
+function paletteClassOf(team) {
   const palette = team ? team.palette : undefined;
   return Object.prototype.hasOwnProperty.call(teamPalettes, palette) ? teamPalettes[palette] : '';
 }

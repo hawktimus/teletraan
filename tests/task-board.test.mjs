@@ -11,10 +11,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
 const sampleFile = path.join(dashboardFolder, 'data/sample/content.json');
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -22,18 +24,18 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-task-board-'
 const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-fs.copyFileSync(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
-fs.copyFileSync(path.join(dashboardFolder, 'registry.js'), path.join(root, 'registry.js'));
+copyModule(path.join(dashboardFolder, 'config.js'), path.join(root, 'config.js'));
+copyModule(path.join(dashboardFolder, 'registry.js'), path.join(root, 'registry.js'));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
 ['themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
+  copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 ['tasks/panel.js', 'task-counts/panel.js'].forEach(file => {
   fs.mkdirSync(path.join(root, 'panels', path.dirname(file)), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'panels', file));
+  copyModule(path.join(dashboardFolder, 'panels', file), path.join(root, 'panels', file));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -300,7 +302,7 @@ test('a task with none of the new fields, or typed by hand, reaches no panel, wh
 });
 
 test('every sample task is from the board, and the screen keeps them all in the order they are written in', () => {
-  const raw = JSON.parse(fs.readFileSync(sampleFile, 'utf8'));
+  const raw = JSON.parse(readModule(sampleFile, 'utf8'));
   const tasks = normalizeSample(raw).tasks;
 
   assert.ok(raw.tasks.length >= 12, 'the sample has tasks');

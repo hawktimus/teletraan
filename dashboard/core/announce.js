@@ -18,12 +18,9 @@
 
 import { defaultSettings } from '../config.js';
 import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
+import { isRecord } from './text.js';
 
 export const handledKey = 'teletraan-announce-handled';
-
-function isRecord(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
 
 // The announceRequest of Dashboard Settings, always complete: { requestedAt }.
 // A time that is not a time is empty, which is no request.

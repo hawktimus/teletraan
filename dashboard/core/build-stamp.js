@@ -4,7 +4,7 @@
 // is 20px, the one text on the screen below the usual smallest size, and it is never drawn without
 // ?debug=1.
 
-export const stampLength = 7;
+const stampLength = 7;
 
 // The text of the stamp for a build, or '' when it is nothing a build could be
 export function stampText(version) {

@@ -6,10 +6,9 @@ import { markBeside } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { textWidth } from '../../core/text-width.js';
 import { visibleItems } from '../../core/content.js';
-import { defaultThemeSettings } from '../../config.js';
 import { minutesIn } from '../../core/night.js';
 import { canRun, talkEnd } from '../../core/presentation.js';
-import { dateIn, isTimeZone } from '../../core/theme.js';
+import { dateIn, timeZoneOf } from '../../core/theme.js';
 import { asDate, formatDate, pad, parseLocalDateTime, sameDay } from '../../core/time.js';
 
 const MAX_ROWS = 5;
@@ -37,11 +36,6 @@ function rowsOf(plan) {
     .slice(0, MAX_ROWS);
 }
 
-function zoneOf(content) {
-  const zone = content.theme && content.theme.timeZone;
-  return isTimeZone(zone) ? zone : defaultThemeSettings.timeZone;
-}
-
 // The talks booked for today that are not over, soonest first. Today is the day on
 // the wall clock in the Look time zone, as it is for events. A talk counts when it
 // would run on the screen (canRun), and none count while Run presentations is off.
@@ -50,7 +44,7 @@ function talksToday(content, now) {
   const settings = content.settings || {};
   if (settings.presentationsEnabled === false) return [];
 
-  const zone = zoneOf(content);
+  const zone = timeZoneOf(content);
   const today = dateIn(zone, now);
   const booked = (Array.isArray(content.presentations) ? content.presentations : []).filter(canRun);
   return visibleItems(booked, now)
@@ -95,7 +89,7 @@ export function rowsFor(content, now = new Date()) {
   const free = MAX_ROWS - rows.length;
   if (free === 0) return rows;
 
-  const zone = zoneOf(content);
+  const zone = timeZoneOf(content);
   const talks = talksToday(content, now);
   const shown = talks.length <= free ? talks : talks.slice(0, free - 1);
   const lines = rows.concat(shown.map(talk => talkRow(talk, zone, now)));

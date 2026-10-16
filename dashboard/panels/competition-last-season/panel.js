@@ -28,7 +28,7 @@ export function seasonRecord(events) {
 }
 
 // The EPA after each event, in the order of the events, for the events that have one
-export function epaSeries(events) {
+function epaSeries(events) {
   return events.map(event => event.epa).filter(epa => epa !== null);
 }
 

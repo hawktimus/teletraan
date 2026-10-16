@@ -18,7 +18,7 @@ function readTeam(getTeam) {
 }
 
 // What the page shows now, read from the page and the content
-export function readParts(doc, getContent, getTeam, now = new Date()) {
+function readParts(doc, getContent, getTeam, now = new Date()) {
   const root = doc.documentElement;
   const large = doc.querySelector('#region-grid1 .area');
   const content = (typeof getContent === 'function' ? getContent() : null) || {};

@@ -9,6 +9,7 @@ import { anchorBox, anchorNames, anchorsByTheme, fitInBox, layoutsWithAnchors, s
 import { isLive, liveSubtheme, matchingRules, spritesFor, subthemeMotions, tidySubthemes } from '../dashboard/core/subthemes.js';
 import { layerMarkup } from '../dashboard/core/subthemes-layer.js';
 import { normalizeSample } from '../dashboard/core/sanity.js';
+import { readModule } from './helpers/read-module.mjs';
 
 let passed = 0;
 function check(name, test) {
@@ -17,7 +18,7 @@ function check(name, test) {
   console.log('PASS  ' + name);
 }
 
-const read = file => fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8');
+const read = file => readModule(new URL('../' + file, import.meta.url), 'utf8');
 const rule = (anchor, extra) => Object.assign({ theme: '', view: '', slot: 'star', anchor: anchor, size: 80, motion: 'none' }, extra);
 const make = (name, extra) => tidySubthemes([Object.assign({ name: name, enabled: true, assets: [{ slot: 'star', builtin: 'star' }], rules: [rule('banner-left')] }, extra)])[0];
 

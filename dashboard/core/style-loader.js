@@ -13,7 +13,7 @@
 import { defaultSettings } from '../config.js';
 import { themeOf } from './style.js';
 
-export const themeSheetNames = ['tokens.css', 'theme.css', 'frame.css'];
+const themeSheetNames = ['tokens.css', 'theme.css', 'frame.css'];
 
 export function themeFolder(id) {
   return 'styles/' + themeOf(id) + '/';

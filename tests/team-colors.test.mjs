@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
@@ -25,7 +26,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-colors-'));
 
 function copyInto(folder, from, to) {
   fs.mkdirSync(path.dirname(path.join(folder, to)), { recursive: true });
-  fs.copyFileSync(path.join(root, from), path.join(folder, to));
+  copyModule(path.join(root, from), path.join(folder, to));
 }
 
 function makeTree(name, files) {

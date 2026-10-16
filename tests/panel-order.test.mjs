@@ -10,9 +10,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { hasImports, readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
-const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
+const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
@@ -21,10 +23,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard/core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard/themes/overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
@@ -214,8 +216,8 @@ test('the screen plays the rows of a Screen, and only the Screens read the Panel
   const shell = read('shell.js');
   const seed = read('core/screen-seed.js');
 
-  assert.ok(shell.includes("import { withPages, withStandIns } from './core/panel-order.js';"));
-  assert.ok(shell.includes('viewPlaylist(content, new Date())') && shell.includes('viewSidePlaylist(content)'));
+  assert.ok(hasImports(shell, ['withPages', 'withStandIns'], './core/panel-order.js'));
+  assert.ok(shell.includes('viewPlaylist(shellState.content, new Date())') && shell.includes('viewSidePlaylist(shellState.content)'));
   assert.ok(!/playlistOf|rotation\(\)/.test(shell), 'shell.js should not read the Panel order');
   assert.ok(seed.includes("playlistOf(rotation, 'grid1')") && seed.includes("playlistOf(rotation, 'grid2')"));
   assert.ok(!/rotation\.grid[12]|\.grid[12]\b/.test(seed + read('core/screens.js')), 'the Screens should not read the older lists themselves');

@@ -5,7 +5,7 @@
 // which a person can look at in the browser tools.
 
 export const heartbeatSeconds = 30;
-export const heartbeatKey = 'teletraan-heartbeat';
+const heartbeatKey = 'teletraan-heartbeat';
 
 const twoDigits = number => String(number).padStart(2, '0');
 

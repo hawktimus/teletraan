@@ -13,10 +13,11 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { readModule } from './helpers/read-module.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-old-code-'));
-const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
+const read = file => readModule(path.join(repo, file), 'utf8');
 
 const tests = [];
 function test(name, body) {
@@ -162,8 +163,8 @@ echo "status-write $* build=$(cat "$(dirname "$0")/../../dashboard/build.js" 2> 
   return {
     root: root,
     profile: profile,
-    log: fs.readFileSync(log, 'utf8'),
-    buildFile: () => fs.existsSync(path.join(root, 'dashboard/build.js')) ? fs.readFileSync(path.join(root, 'dashboard/build.js'), 'utf8') : null,
+    log: readModule(log, 'utf8'),
+    buildFile: () => fs.existsSync(path.join(root, 'dashboard/build.js')) ? readModule(path.join(root, 'dashboard/build.js'), 'utf8') : null,
     leftovers: () => fs.readdirSync(path.join(root, 'dashboard')),
   };
 }
@@ -197,8 +198,8 @@ test('kiosk.sh clears the browser cache folders and leaves cookies and Local Sto
   assert.ok(!fs.existsSync(path.join(run.profile, 'Default/Cache')));
   assert.ok(!fs.existsSync(path.join(run.profile, 'Default/Code Cache')));
   assert.ok(!fs.existsSync(path.join(run.profile, 'Default/Service Worker/CacheStorage')));
-  assert.equal(fs.readFileSync(path.join(run.profile, 'Default/Local Storage/leveldb/000003.log'), 'utf8'), 'last content');
-  assert.equal(fs.readFileSync(path.join(run.profile, 'Default/Cookies'), 'utf8'), 'cookies');
+  assert.equal(readModule(path.join(run.profile, 'Default/Local Storage/leveldb/000003.log'), 'utf8'), 'last content');
+  assert.equal(readModule(path.join(run.profile, 'Default/Cookies'), 'utf8'), 'cookies');
 });
 
 test('kiosk.sh and the Mac tool pass the syntax check', () => {

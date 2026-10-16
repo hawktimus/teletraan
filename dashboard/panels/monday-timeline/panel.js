@@ -5,7 +5,8 @@
 // 1379 wide for the bar layout (Minimal), where the main panel is wider (monday.css, layouts/bar.css), and the style
 // sheet shows the one the layout needs. The text sizes are the ones of the order: week labels 28px, bar labels 32px.
 
-import { countdownMarker, todayOf, zoneOf } from '../../core/competition.js';
+import { countdownMarker, todayOf } from '../../core/competition.js';
+import { timeZoneOf } from '../../core/theme.js';
 import { boardEmptyMarkup, boardHeader, legendMarkup, pageMarkup } from '../../core/monday-draw.js';
 import { timelineView } from '../../core/monday-views.js';
 import { escapeHtml } from '../../core/text.js';
@@ -34,7 +35,7 @@ function round(number) {
 }
 
 // The picture at one width. marker is the countdown date as { label, at } where at is its place in the eight weeks, or null.
-export function svgMarkup(view, width, marker, className) {
+function svgMarkup(view, width, marker, className) {
   const grid = width - LEFT - RIGHT;
   const week = grid / view.weeks.length;
   const bottom = TOP + view.rows.length * ROW;
@@ -52,7 +53,7 @@ export function svgMarkup(view, width, marker, className) {
 
 // The countdown date as a place in the eight weeks, or null when it is outside them
 function markerOf(content, now, view) {
-  const found = countdownMarker(content.settings && content.settings.countdown ? content.settings.countdown : {}, zoneOf(content), todayOf(content, now));
+  const found = countdownMarker(content.settings && content.settings.countdown ? content.settings.countdown : {}, timeZoneOf(content), todayOf(content, now));
   if (!found) return null;
 
   const day = Math.round(Date.parse(found.date + 'T00:00:00Z') / 86400000) - view.first;

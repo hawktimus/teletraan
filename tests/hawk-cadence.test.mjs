@@ -12,10 +12,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { copyModule } from './helpers/copy-module.mjs';
+import { importFresh } from './helpers/fresh-module.mjs';
+import { readModule } from './helpers/read-module.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dashboardFolder = path.join(root, 'dashboard');
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => readModule(path.join(root, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
 
 // The dashboard files are browser modules named .js. Copying them next to a
@@ -25,10 +28,10 @@ fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'themes', 'overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'frame.js', 'registry.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
+  copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
-  fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
+  copyModule(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 const base = pathToFileURL(path.join(workFolder, 'dashboard')).href + '/';
 const config = await import(base + 'config.js');
@@ -115,7 +118,7 @@ async function inPage(run) {
 
   try {
     instance += 1;
-    world.frame = await import(base + 'frame.js?test=' + instance);
+    world.frame = await importFresh(path.join(workFolder, 'dashboard/frame.js'));
     world.frame.start({ motion: 'full', speed: 'normal' });
     world.advance = ms => advance(world, ms);
     world.hawkStarts = () => world.acts.filter(item => item.act === 'robot').map(item => item.at);
@@ -191,7 +194,7 @@ test('a swap does not start the count again: the banner is drawn for the new sty
 
   // The way it was: every new logo counted 13 seconds to its first play, so the hawk came after nearly every swap
   const frame = read('dashboard/frame.js');
-  assert.ok(/const replaced = showLogo !== null;/.test(frame) && /if \(!replaced\) \{/.test(frame), 'startLogo keeps the counts of a logo that is replaced');
+  assert.ok(/const replaced = frameState\.showLogo !== null;/.test(frame) && /if \(!replaced\) \{/.test(frame), 'startLogo keeps the counts of a logo that is replaced');
 });
 
 test('a logo that was stopped and is started again counts from the start, and one that is replaced does not', async () => {
