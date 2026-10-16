@@ -176,7 +176,8 @@ test('panel titles, the team plate and the ticker label read the header ink wher
 
   // the plates are the main color in Original and Retro, and the team plate color and armor in Cybertron and the bar layout
   assert.ok(/\.plate \.header-left \{ fill: var\(--purple\); \}/.test(css));
-  assert.ok(/data-style="cybertron"\] \.area \.plate \.header-left \{ fill: url\(#armor-face\); \}/.test(withoutComments(read('dashboard/styles/cybertron/theme.css'))));
+  assert.ok(/--style-header-ink: var\(--team-text\)/.test(withoutComments(read('dashboard/styles/cybertron/tokens.css'))), 'Cybertron keeps the text color on its accent wedge');
+  assert.ok(/--style-header-ink: var\(--team-header-ink, #ffffff\)/.test(withoutComments(read('dashboard/styles/retro/tokens.css'))), 'the Retro theme takes the header ink of the team');
   assert.ok(/data-layout="bar"\] \.area \.plate \.header-left \{ fill: url\(#armor-face\); \}/.test(withoutComments(read('dashboard/layouts/bar-minimal.css'))));
 });
 
