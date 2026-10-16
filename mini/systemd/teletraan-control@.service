@@ -1,0 +1,11 @@
+[Unit]
+Description=Teletraan I control helper (one request)
+
+[Service]
+# One copy runs for each connection. The connection is its input and output.
+User=ACCOUNT
+ExecStart=/opt/teletraan/mini/scripts/control-helper.sh
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+TimeoutStartSec=2min
