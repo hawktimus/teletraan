@@ -74,7 +74,8 @@ Then open http://localhost:8080/dashboard/ in a browser. Edit a file, refresh th
 |--------|---------------|
 | `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/`, `themes/` and `data/` |
 | `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the Screens map and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
-| `mini/` | Everything that runs on the Mini: `scripts/`, `systemd/`, `nginx/`, `console/`, `docker-compose.yml` and `local.example.env` |
+| `control/` | The control page service (Node, standard library only) and its pages: updates, rollback, restarts (docs/control-page.md) |
+| `mini/` | Everything that runs on the Mini: `install.sh`, `scripts/`, `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
 | `tools/` | Things a coach runs on a Mac: `mini/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh`, `serve.py` and the fixtures |
 | `tests/` | Every test, one file for each module or script, and `run.mjs` to run them all |
 | `docs/` | The guides. `docs/paths.md` lists where every file moved to, and `docs/where-things-are.md` is the long map |

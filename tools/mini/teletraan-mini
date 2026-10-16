@@ -26,6 +26,8 @@ set -u
 # not secrets; change them here if the Mini changes.
 MINI_REPO=${MINI_REPO:-/opt/teletraan}
 MINI_KIOSK=${MINI_KIOSK:-teletraan-kiosk.service}
+# The folder in the login user's home on the Mini where the files are put before the installer runs
+MINI_STAGING=${MINI_STAGING:-teletraan-staging}
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../.." && pwd)
@@ -54,11 +56,13 @@ address=''
 # The keys and calendars saved on this Mac. A key is 0 when it is not set, 1 when
 # it has a value and 2 when it was cleared and the Mini has not been told yet. A
 # calendar with an empty value was removed and the Mini has not been told yet.
-key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY)
-key_labels=('Sanity write token' 'Monday token' 'The Blue Alliance key')
-key_uses=('lets the Mini write its status and the Monday tasks into Sanity' 'lets the Mini read the Monday boards' 'lets the Mini read the competition data')
-key_values=('' '' '')
-key_states=(0 0 0)
+key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY CONTROL_PIN)
+key_labels=('Sanity write token' 'Monday token' 'The Blue Alliance key' 'Control page PIN')
+key_uses=('lets the Mini write its status and the Monday tasks into Sanity' 'lets the Mini read the Monday boards' 'lets the Mini read the competition data' 'lets coaches sign in to the control page, 6 to 12 digits')
+key_values=('' '' '' '')
+key_states=(0 0 0 0)
+# The form of choice 2 asks for the first three. The PIN of the control page has choice 8.
+form_key_count=3
 cal_names=()
 cal_values=()
 cal_count=0
@@ -240,7 +244,7 @@ take_line() {
   local name=${1%%=*} value
   value=$(unquote "${1#*=}")
   case $name in
-    SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY)
+    SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN)
       case $value in
         '') set_key "$name" '' ;;
         '['*) ;;
@@ -266,8 +270,8 @@ take_line() {
 }
 
 reset_secrets() {
-  key_values=('' '' '')
-  key_states=(0 0 0)
+  key_values=('' '' '' '')
+  key_states=(0 0 0 0)
   cal_names=()
   cal_values=()
   cal_count=0
@@ -512,70 +516,37 @@ choose_mini() {
   esac
 }
 
-# Writes dashboard/build.js on the Mini with the build $1 (a hash or a time), in one step
-write_build_js() {
-  mini_run "printf 'export const build = \"%s\";\\n' '$1' > $MINI_REPO/dashboard/.build.js.new && mv -f $MINI_REPO/dashboard/.build.js.new $MINI_REPO/dashboard/build.js"
-}
-
-# Tells the Mini which build it was given. rsync leaves the .git folder of the Mini alone, so the
-# hash, the date and the branch are read here, from this repository, and left in mini/build.txt for
-# status-write.sh version. It also leaves dashboard/build.js, the build the page asks its files for
-# (index.html): the hash when there is one, else the time. A failure here is only said: the screen
-# still updates.
-stamp_build() {
-  local commit built branch
-  commit=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null)
-  built=$(git -C "$repo" log -1 --format=%cs 2> /dev/null)
-  branch=$(git -C "$repo" rev-parse --abbrev-ref HEAD 2> /dev/null)
-  if ! printf '%s' "$commit" | grep -Eq '^[0-9a-f]{4,40}$' ||
-    ! printf '%s' "$built" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' ||
-    ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; then
-    say "This folder has no git history, so the build shown on the wall is not updated."
-    write_build_js "t$(date -u +%Y%m%d%H%M%S)" || say "The file the page reads its build from could not be written."
-    return 0
-  fi
-  write_build_js "$commit" || say "The file the page reads its build from could not be written."
-  if mini_run "printf 'commit=%s\\ndate=%s\\nbranch=%s\\n' '$commit' '$built' '$branch' > $MINI_REPO/mini/build.txt" &&
-    mini_run "$MINI_REPO/mini/scripts/status-write.sh version"; then
-    say "The build on the wall is $commit, $built."
-  else
-    say "The build on the wall could not be written. The update itself is done."
-  fi
-}
-
-# 1. Copy the repository to the Mini and restart the screen
+# 1. Copy the repository to a staging folder on the Mini and let the installer there make it the next release.
+# The installer (mini/install.sh) also does the one-time move to the releases layout, so this is the way in
+# for a Mini that has no control page yet, and for one whose page cannot be reached. The live tree is never
+# written to: the releases keep the last five versions.
 update_mini() {
-  local timer status
+  local status commit
   step "Update the Mini ($mini_name)"
 
-  # An old tree would carry the old folders to the Mini and delete the new ones there
+  # An old tree would carry the old folders to the Mini
   if [ -d "$repo/deploy/scripts" ]; then
     problem "This copy is older than round 6; update it."
     return 1
   fi
 
-  # --delete removes files on the Mini that are not here, so this must be the
-  # real repository
-  if [ ! -f "$repo/dashboard/index.html" ] || [ ! -f "$repo/mini/scripts/pull.sh" ]; then
+  if [ ! -f "$repo/dashboard/index.html" ] || [ ! -f "$repo/mini/install.sh" ] || [ ! -f "$repo/control/server.js" ]; then
     problem "$repo does not look like the Teletraan repository, so nothing was copied."
     return 1
   fi
 
-  say "This copies the files in this repository to $address:$MINI_REPO and removes files there that are not here."
-  say "The Mini keeps its local.env, its .git folder and its node_modules. The screen restarts at the end and is black for about ten seconds."
+  say "This copies the files in this repository to $address:$MINI_STAGING and runs the installer there with sudo."
+  say "The installer makes them the next release, builds the Studio and restarts the screen, which is black for about ten seconds."
+  say "The Mini keeps its local.env, and the last five releases stay on it for a rollback (docs/control-page.md)."
 
-  timer=$(mini_run "systemctl is-active teletraan-pull.timer")
+  mini_run "true"
   status=$?
   if [ "$status" = 255 ]; then
     explain_failure "$status"
     return 1
   fi
-  if [ "$timer" = active ]; then
-    say ""
-    say "This Mini also pulls from GitHub by itself (the pull timer is on). A pull stops with an error once a file changed here is also changed by a new commit."
-    say "Use this copy or the pull, not both. docs/updating-the-mini.md says how to turn the pull timer off."
-    ask_yes "Copy anyway?" no || { say "Nothing was copied."; return "$declined_status"; }
-  elif [ "$assume_yes" = yes ]; then
+
+  if [ "$assume_yes" = yes ]; then
     say "Going ahead (--yes)."
   else
     ask_yes "Go ahead?" yes || { say "Nothing was copied."; return "$declined_status"; }
@@ -583,30 +554,35 @@ update_mini() {
 
   rsync -a --delete \
     --exclude .git --exclude local.env --exclude .env --exclude node_modules \
-    --exclude .DS_Store --exclude studio/dist --exclude studio/.sanity \
-    -e "ssh -o ConnectTimeout=10" "$repo/" "$address:$MINI_REPO/"
+    --exclude .DS_Store --exclude studio/dist --exclude studio/.sanity --exclude _inputs --exclude _outputs \
+    -e "ssh -o ConnectTimeout=10" "$repo/" "$address:$MINI_STAGING/"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
-    say "The Mini may have some of the new files and not others. Run this again."
+    say "The staging folder may have some of the new files and not others. Run this again."
     return 1
   fi
   say "The files are copied."
-  stamp_build
 
-  mini_run -t "sudo systemctl restart $MINI_KIOSK"
+  commit=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null)
+  printf '%s' "$commit" | grep -Eq '^[0-9a-f]{4,40}$' || commit=''
+  if [ -z "$commit" ]; then
+    say "This folder has no git history, so the release has no hash."
+  fi
+
+  mini_run -t "sudo bash ~/$MINI_STAGING/mini/install.sh --from ~/$MINI_STAGING --yes --note 'From the Mac tool'${commit:+ --commit $commit}"
   status=$?
   if [ "$status" -ne 0 ]; then
     explain_failure "$status"
-    say "The files are on the Mini. $(words 'Choose 6 to restart the screen again.' 'Run teletraan-mini restart to restart the screen again.')"
+    say "The files are in the staging folder on the Mini. The lines above say which step stopped. $(words 'Choose 1' 'Run teletraan-mini update') to try again."
     return 1
   fi
-  say "Done. If this update changed anything in mini/systemd, $(words 'choose 4' 'run teletraan-mini with no word after it and choose 4') to install the services again."
+  say "Done. The control page is at http://${address#*@}:3229/control/."
 }
 
 show_keys() {
   local i=0
-  while [ "$i" -lt "${#key_names[@]}" ]; do
+  while [ "$i" -lt "$form_key_count" ]; do
     case ${key_states[$i]} in
       1) printf '  %-24s %s\n' "${key_labels[$i]}" "$(mask "${key_values[$i]}")" ;;
       2) printf '  %-24s %s\n' "${key_labels[$i]}" "cleared, not sent yet" ;;
@@ -643,6 +619,8 @@ edit_key() {
       prompt_hidden "  New value (the typing is hidden): "
       if [ -z "$answer" ]; then
         say "  Nothing typed, so it is kept."
+      elif [ "${key_names[$i]}" = CONTROL_PIN ] && ! printf '%s' "$answer" | grep -Eq '^[0-9]{6,12}$'; then
+        say "  Not saved. A PIN is 6 to 12 digits. It is kept as it was."
       elif check_key "$answer"; then
         set_key "${key_names[$i]}" "$clean_value"
         say "  Now: $(mask "$clean_value")"
@@ -816,7 +794,7 @@ keys_and_calendars() {
   say "Each value is shown as its first 4 characters and dots. For a key, press e to edit it, k to keep it or c to clear it."
   say "A Mac that has no saved values yet should use choice 3 first, so the Mini's values are shown here."
 
-  while [ "$i" -lt "${#key_names[@]}" ]; do
+  while [ "$i" -lt "$form_key_count" ]; do
     edit_key "$i"
     i=$((i + 1))
   done
@@ -847,6 +825,28 @@ keys_and_calendars() {
   say "Done. The Mini has the new values."
 }
 
+# 8. The PIN of the control page. It travels like a key and is shown as dots.
+set_pin() {
+  local last=$((${#key_names[@]} - 1))
+  step "PIN of the control page on the Mini $mini_name"
+  load_secrets
+  change_notes=()
+  change_count=0
+  edit_key "$last"
+  if [ "$change_count" = 0 ]; then
+    say "Nothing changed."
+    return 0
+  fi
+  if ! write_secrets; then
+    problem "could not save $secrets_file."
+    return 1
+  fi
+  send_to_mini || return 1
+  forget_cleared
+  write_secrets || problem "could not tidy $secrets_file."
+  say "Done. Open the control page and sign in with the PIN."
+}
+
 # 3. Copy what the Mini holds to this Mac, for a second computer
 pull_from_mini() {
   local raw=$state_dir/pulled.tmp status names
@@ -854,7 +854,7 @@ pull_from_mini() {
   say "This replaces the values saved on this Mac with the ones in mini/local.env on the Mini. Nothing is printed."
   ask_yes "Go ahead?" no || { say "Nothing changed."; return 0; }
 
-  names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL'
+  names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]+_URL'
   (umask 077; mini_run "grep -E '^($names)=' '$MINI_REPO/mini/local.env'" > "$raw")
   status=$?
   if [ "$status" = 255 ]; then
@@ -959,13 +959,14 @@ show_menu() {
   say ""
   say "Mini in use: $mini_name ($address)"
   say ""
-  say "  1  Update the Mini with the files on this Mac, then restart the screen"
+  say "  1  Install the files on this Mac as the next release on the Mini, then restart the screen"
   say "  2  Keys and calendars"
   say "  3  Copy the Mini's keys and calendars to this Mac"
   say "  4  Install the services on the Mini"
   say "  5  Status of the Mini"
   say "  6  Restart the screen"
   say "  7  Choose another Mini, or add one"
+  say "  8  Set the PIN of the control page"
   say "  q  Quit"
   say ""
 }
@@ -974,7 +975,7 @@ usage() {
   say "Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]"
   say ""
   say "  (no word)  show the menu"
-  say "  update     copy the files to the Mini, then restart the screen"
+  say "  update     copy the files to the Mini and install them as the next release (the first time it also sets up the control page)"
   say "  status     show what the Mini last did"
   say "  restart    restart the screen"
   say "  --yes      with update, do not ask Go ahead?"
@@ -1032,6 +1033,10 @@ main() {
     problem "MINI_REPO must be a plain folder path such as /opt/teletraan."
     exit 1
   fi
+  if ! printf '%s' "$MINI_STAGING" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+    problem "MINI_STAGING must be a plain folder name such as teletraan-staging."
+    exit 1
+  fi
   if ! printf '%s' "$MINI_KIOSK" | grep -Eq "$key_pattern"; then
     problem "MINI_KIOSK must be the name of a service such as teletraan-kiosk.service."
     exit 1
@@ -1085,6 +1090,7 @@ main() {
       5) mini_status ;;
       6) restart_screen ;;
       7) choose_mini ;;
+      8) set_pin ;;
       q|Q) say "Done."; exit 0 ;;
       '') ;;
       *) say "That is not one of the choices." ;;

@@ -94,6 +94,8 @@ exit 0
 
 const fakeSudo = `#!/bin/sh
 echo "sudo $*" >> "$STUB_LOG"
+# The installer on the Mini is not run here; its exit code can be set
+case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
 exec "$@"
 `;
 
@@ -318,7 +320,7 @@ test('the menu lists the six choices and the extras, names the Mini in use, and 
   const result = place.run(['x', '', 'q']);
 
   assert.equal(result.status, 0, result.errors);
-  ['1  Update the Mini', '2  Keys and calendars', '3  Copy the Mini', '4  Install the services', '5  Status of the Mini', '6  Restart the screen', '7  Choose another Mini', 'q  Quit'].forEach(entry => {
+  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Mini', '4  Install the services', '5  Status of the Mini', '6  Restart the screen', '7  Choose another Mini', 'q  Quit'].forEach(entry => {
     assert.ok(result.text.includes(entry), 'the menu has: ' + entry);
   });
   assert.ok(result.text.includes('Mini in use: main (' + miniAddress + ')'));
@@ -330,31 +332,29 @@ test('the menu lists the six choices and the extras, names the Mini in use, and 
   assert.equal(endedResult.status, 0, 'the end of the input ends the tool');
 });
 
-test('update copies the repository with the same excludes as before, then restarts the screen, in that order', () => {
+test('update copies the repository with the same excludes as before to the staging folder, then runs the installer, in that order', () => {
   const place = makePlace('update');
   const result = place.run(['1', '', 'q']);
   assert.equal(result.status, 0, result.errors);
 
   const calls = lines(result.calls.trim());
-  const timer = calls.findIndex(line => line.includes('systemctl is-active teletraan-pull.timer'));
   const copy = calls.findIndex(line => line.startsWith('rsync '));
-  const restart = calls.findIndex(line => line.includes('sudo systemctl restart teletraan-kiosk.service'));
-  assert.ok(timer !== -1 && copy > timer && restart > copy, 'the pull timer is looked at, then the files copied, then the screen restarted: ' + calls.join(' / '));
+  const install = calls.findIndex(line => line.includes('install.sh'));
+  assert.ok(copy !== -1 && install > copy, 'the files are copied, then the installer runs: ' + calls.join(' / '));
 
   const line = calls[copy];
   assert.ok(line.includes(' -a --delete '), line);
-  ['.git', 'local.env', '.env', 'node_modules', '.DS_Store', 'studio/dist', 'studio/.sanity'].forEach(name => {
+  ['.git', 'local.env', '.env', 'node_modules', '.DS_Store', 'studio/dist', 'studio/.sanity', '_inputs', '_outputs'].forEach(name => {
     assert.ok(line.includes('--exclude ' + name + ' ') || line.includes('--exclude ' + name + ' -e'), 'excludes ' + name + ': ' + line);
   });
-  assert.equal((line.match(/--exclude/g) || []).length, 7, 'no other excludes: ' + line);
+  assert.equal((line.match(/--exclude/g) || []).length, 9, 'no other excludes: ' + line);
   assert.ok(line.includes('-e ssh -o ConnectTimeout=10 '), line);
-  assert.ok(line.endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + miniAddress + ':' + place.miniRepo + '/'), line);
-  assert.ok(calls[restart].startsWith('ssh -t -o ConnectTimeout=10 ' + miniAddress), calls[restart]);
-  assert.ok(calls.some(entry => entry === 'systemctl restart teletraan-kiosk.service'), 'the restart reached systemctl');
+  assert.ok(line.endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + miniAddress + ':teletraan-staging/'), line);
+  assert.ok(calls[install].startsWith('ssh -t -o ConnectTimeout=10 ' + miniAddress), calls[install]);
   assertNoLeak(result, 'update');
 });
 
-test('update stops before it copies when the Mini cannot be reached, and when a copy fails it does not restart the screen', () => {
+test('update stops before it copies when the Mini cannot be reached, and when a copy fails it does not run the installer', () => {
   const down = makePlace('update-down');
   down.stubFile('ssh.exit', '255');
   const downResult = down.run(['1', 'q']);
@@ -366,27 +366,13 @@ test('update stops before it copies when the Mini cannot be reached, and when a 
   const brokenResult = broken.run(['1', '', 'q']);
   assert.ok(brokenResult.errors.includes('exit 23'), brokenResult.errors);
   assert.ok(brokenResult.text.includes('Run this again'), brokenResult.text);
-  assert.ok(!brokenResult.calls.includes('restart'), 'the screen was not restarted');
+  assert.ok(!brokenResult.calls.includes('install.sh'), 'the installer did not run');
 
-  const quiet = makePlace('update-restart-fails');
-  quiet.stubFile('systemctl.exit', '5');
+  const quiet = makePlace('update-install-fails');
+  quiet.stubFile('install.exit', '5');
   const quietResult = quiet.run(['1', '', 'q']);
   assert.ok(quietResult.text.includes('The files are copied.'));
   assert.ok(quietResult.errors.includes('exit 5'), quietResult.errors);
-});
-
-test('update asks first when the Mini also pulls by itself, answers no by default, and copies on a yes', () => {
-  const place = makePlace('update-pulls');
-  place.stubFile('pull-timer.txt', 'active\n');
-  const declined = place.run(['1', '', 'q']);
-  assert.ok(declined.text.includes('also pulls from GitHub by itself'), declined.text);
-  assert.ok(declined.text.includes('Nothing was copied.'));
-  assert.ok(!declined.calls.includes('rsync'), 'Return means no');
-
-  const agreed = makePlace('update-pulls-yes');
-  agreed.stubFile('pull-timer.txt', 'active\n');
-  const agreedResult = agreed.run(['1', 'y', 'q']);
-  assert.ok(agreedResult.calls.includes('rsync '), 'a yes copies');
 });
 
 test('update refuses to copy from a folder that is not the repository, because --delete would empty the Mini', () => {
@@ -620,7 +606,7 @@ test('copying from the Mini asks first, replaces the saved values with the ones 
   assert.equal(modeOf(place.secretsFile()), 0o600);
   assert.ok(result.text.includes('These lines on the Mini did not look like a key or a link and were left out: CALENDAR_BAD_URL'), result.text);
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/pulled.tmp')), 'the temporary copy is removed');
-  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.miniRepo + "/mini/local.env'"), 'only the names it needs are asked for: ' + result.calls);
+  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.miniRepo + "/mini/local.env'"), 'only the names it needs are asked for: ' + result.calls);
   assertNoLeak(result, 'pull');
   assert.ok(!result.text.includes('NOTSECURE0123'));
 });

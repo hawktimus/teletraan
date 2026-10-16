@@ -1,5 +1,7 @@
 # Updating the Mini from a Mac
 
+Since round 6 the control page does the everyday update (docs/control-page.md). This tool is the first install and the way in when the page cannot be reached. Its update now copies the repository to `~/teletraan-staging` on the Mini and runs `mini/install.sh` there, which makes it the next release. Menu 8 sets the PIN of the control page.
+
 `tools/mini/teletraan-mini` is a menu that runs in Terminal on a Mac. It copies
 the dashboard files to the Mini, keeps the keys and the calendar links, shows what
 the Mini last did and restarts the screen. It works from any Mac that has the
