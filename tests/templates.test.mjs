@@ -74,7 +74,7 @@ test('the files in docs/content-templates are what the schemas give', () => {
 });
 
 test('there is a template for every kind of content, and none for photos, meeting days, presentations, announcements, calendar filters, teams, the status documents or the settings pages', () => {
-  const noTemplate = ['photo', 'presentationDay', 'presentation', 'announcement', 'calendarFilter', 'team', 'screen', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone'];
+  const noTemplate = ['photo', 'presentationDay', 'presentation', 'announcement', 'calendarFilter', 'team', 'screen', 'view', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone'];
   const documents = types.filter(type => type.type === 'document' && singletons.indexOf(type.name) === -1 && noTemplate.indexOf(type.name) === -1);
   assert.deepEqual(Object.keys(templates).sort(), documents.map(type => type.name).sort());
   knownTypes.forEach(type => assert.ok(templates[type], 'no template for ' + type));
@@ -183,7 +183,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
   assert.equal(first.status, 0, first.message);
   assert.equal(first.text, second.text);
   assert.deepEqual(first.docs.map(doc => doc._id), ['subteam-alpha', 'subteam-beta-crew', 'task-wire-the-robot', 'task-done-wheels']);
-  assert.deepEqual(first.docs[0], { _id: 'subteam-alpha', _type: 'subteam', name: 'Alpha', lead: 'Lead', spotlight: false, show: true, showPhoto: true });
+  assert.deepEqual(first.docs[0], { _id: 'subteam-alpha', _type: 'subteam', name: 'Alpha', lead: 'Lead', spotlight: false, show: true, showPhoto: true, monday: true });
   assert.equal(first.docs[1].show, false);
   assert.deepEqual(first.docs[2], {
     _id: 'task-wire-the-robot', _type: 'task', title: 'Wire the robot',
