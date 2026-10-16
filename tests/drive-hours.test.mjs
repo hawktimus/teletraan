@@ -45,6 +45,14 @@ test('six rows make a page, and the panel is held once for each page', () => {
   assert.equal(panel.scrollPages(contentOf([person('[Ann]', 3)])), 1);
 });
 
+test('the list stops at three windows of six, 18 people', () => {
+  const many = contentOf(Array.from({ length: 30 }, (item, at) => person('[P' + String(at).padStart(2, '0') + ']', 40 - at)));
+  const found = roster.driveHoursPages(many, now, '');
+  assert.equal(found.rows.length, 18);
+  assert.equal(found.pages, 3);
+  assert.equal(found.rows[0].hours, 40);
+});
+
 test('a board with no hours has nothing to show', () => {
   assert.equal(roster.driveHoursPages(contentOf([]), now, '').rows.length, 0);
   assert.equal(panel.hasContent(contentOf([person('[Ann]', 0)])), false);

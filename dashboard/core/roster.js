@@ -142,8 +142,9 @@ export function rosterRowView(content, now, team, department, part) {
 }
 
 // DRIVE HOURS (panels/driveHours): every person who owns a task of the team (both teams for ''), with the hours of those tasks
-// added up, the most hours first. A person with no hours is left out. { rows, pages } where pages is the windows of six rows.
+// added up, the most hours first. A person with no hours is left out, and the list stops at three windows of six (18 people).
+// { rows, pages } where pages is the windows of six rows.
 export function driveHoursPages(content, now = new Date(), team = '') {
-  const rows = peopleOf(forTeam(visibleTasks(content, now), team)).filter(person => person.hours > 0);
+  const rows = peopleOf(forTeam(visibleTasks(content, now), team)).filter(person => person.hours > 0).slice(0, rosterPageRows * 3);
   return { rows: rows, pages: Math.max(1, Math.ceil(rows.length / rosterPageRows)) };
 }
