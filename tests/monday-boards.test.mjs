@@ -39,7 +39,7 @@ function rowFor(rows, id) {
   return rows.filter(row => row.id === id)[0];
 }
 
-test('the chosen boards come first, then the others, each in the order the Mini wrote them', () => {
+test('the chosen boards come first, then the others, each in the order the Teletraan computer wrote them', () => {
   const rows = parts.rowsOf(status, [{ boardId: '333', team: 'NOVA' }, { boardId: '111', team: 'PRIME' }], now);
   assert.deepEqual(rows.map(row => row.id), ['111', '333', '222']);
 });
@@ -61,7 +61,7 @@ test('a chosen board says when it was last read, and a board that is not chosen 
   const rows = parts.rowsOf(status, [{ boardId: '111', team: 'PRIME' }, { boardId: '333', team: 'PRIME' }], now);
 
   assert.equal(rowFor(rows, '111').read, 'Read 5 minutes ago');
-  assert.equal(rowFor(rows, '333').read, 'Not read yet', 'chosen, and the Mini has no reading of it yet');
+  assert.equal(rowFor(rows, '333').read, 'Not read yet', 'chosen, and the Teletraan computer has no reading of it yet');
   assert.equal(rowFor(rows, '222').read, 'Not read');
 });
 
@@ -101,8 +101,8 @@ test('a board with no name is named by its number, and a document of an odd shap
   assert.deepEqual(parts.rowsOf('text', 'text', now), []);
 });
 
-test('the page says when the Mini last read Monday and what went wrong last, and nothing when it has no time or no error', () => {
-  assert.equal(parts.updatedText(status, now), 'The Mini last read Monday 2 minutes ago.');
+test('the page says when the Teletraan computer last read Monday and what went wrong last, and nothing when it has no time or no error', () => {
+  assert.equal(parts.updatedText(status, now), 'The Teletraan computer last read Monday 2 minutes ago.');
   assert.equal(parts.updatedText({}, now), '');
   assert.equal(parts.updatedText(null, now), '');
 

@@ -1,10 +1,10 @@
-// Tests for the words of tools/mini/teletraan-mini: update, status and restart,
-// with --yes and --mini NAME, the way tools/mac/ship.sh runs them. ssh, scp,
+// Tests for the words of tools/teletraan/teletraan-tool: update, status and restart,
+// with --yes and --computer NAME, the way tools/mac/ship.sh runs them. ssh, scp,
 // rsync, sudo and systemctl are small fake ones in a temporary folder, so nothing
 // touches the network or a real Mini. The keys and links in the test are made up.
-// The menu itself is tested in tests/teletraan-mini.test.mjs.
+// The menu itself is tested in tests/teletraan-tool.test.mjs.
 //
-//   node tests/teletraan-mini-commands.test.mjs
+//   node tests/teletraan-tool-commands.test.mjs
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,10 +15,10 @@ import { fileURLToPath } from 'node:url';
 import { copyParts } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const toolFile = path.join(repo, 'tools/mini/teletraan-mini');
-const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-mini-words-'));
+const toolFile = path.join(repo, 'tools/teletraan/teletraan-tool');
+const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-tool-words-'));
 
-const miniAddress = 'hawktimus@teletraan.test';
+const computerAddress = 'hawktimus@teletraan.test';
 const spareAddress = 'hawktimus@teletraan-2.test';
 const systemPath = '/usr/bin:/bin:/usr/sbin:/sbin';
 
@@ -56,7 +56,7 @@ case $command in
     exit 0
     ;;
   *check-calendars.sh*) cat "$STUB_DIR/check-output.txt"; exit 0 ;;
-  *) cd "$MINI_HOME" && PATH="$STUB_FAKES:$PATH" HOME="$MINI_HOME" sh -c "$command" ;;
+  *) cd "$COMPUTER_HOME" && PATH="$STUB_FAKES:$PATH" HOME="$COMPUTER_HOME" sh -c "$command" ;;
 esac
 `;
 
@@ -73,7 +73,7 @@ exit 0
 
 const fakeSudo = `#!/bin/sh
 echo "sudo $*" >> "$STUB_LOG"
-# The installer on the Mini is not run here; its exit code can be set
+# The installer on the Teletraan computer is not run here; its exit code can be set
 case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
 exec "$@"
 `;
@@ -88,7 +88,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-// The Mac's home, the fake tools and the folder that stands for the Mini
+// The Mac's home, the fake tools and the folder that stands for the Teletraan computer
 function makePlace(name, options = {}) {
   const root = path.join(work, name);
   const place = {
@@ -96,7 +96,7 @@ function makePlace(name, options = {}) {
     home: path.join(root, 'home'),
     stub: path.join(root, 'stub'),
     fakes: path.join(root, 'fakes'),
-    miniHome: path.join(root, 'mini-home'),
+    computerHome: path.join(root, 'computer-home'),
     log: path.join(root, 'calls.log'),
     configFile: () => path.join(place.home, '.teletraan/config'),
     calls: () => fs.readFileSync(place.log, 'utf8'),
@@ -110,8 +110,8 @@ function makePlace(name, options = {}) {
         STUB_LOG: place.log,
         STUB_DIR: place.stub,
         STUB_FAKES: place.fakes,
-        MINI_HOME: place.miniHome,
-        MINI_REPO: '/opt/teletraan-test',
+        COMPUTER_HOME: place.miniHome,
+        COMPUTER_REPO: '/opt/teletraan-test',
       };
       const text = input.length ? input.join('\n') + '\n' : '';
       const result = spawnSync('/bin/bash', [tool].concat(words), { env: env, input: text, encoding: 'utf8' });
@@ -132,7 +132,7 @@ function makePlace(name, options = {}) {
   const stateFolder = path.join(place.home, '.teletraan');
   if (!options.noConfig) {
     fs.mkdirSync(stateFolder, { recursive: true, mode: 0o700 });
-    fs.writeFileSync(place.configFile(), options.config || 'current=main\nmini.main=' + miniAddress + '\n');
+    fs.writeFileSync(place.configFile(), options.config || 'current=main\nmini.main=' + computerAddress + '\n');
   }
   // Saved values on the Mac, so the filter has something to hide
   fs.mkdirSync(stateFolder, { recursive: true, mode: 0o700 });
@@ -140,7 +140,7 @@ function makePlace(name, options = {}) {
   return place;
 }
 
-const twoMinis = 'current=main\nmini.main=' + miniAddress + '\nmini.spare=' + spareAddress + '\n';
+const twoComputers = 'current=main\nmini.main=' + computerAddress + '\nmini.spare=' + spareAddress + '\n';
 
 const tests = [];
 function test(name, run) {
@@ -172,8 +172,8 @@ test('update --yes copies the files to the staging folder, then runs the install
   assert.ok(copy !== -1 && install > copy, calls.join(' / '));
   assert.ok(calls[copy].includes(' -a --delete '), calls[copy]);
   ['.git', 'local.env', '.env', 'node_modules'].forEach(name => assert.ok(calls[copy].includes('--exclude ' + name + ' '), 'excludes ' + name));
-  assert.ok(calls[copy].endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + miniAddress + ':teletraan-staging/'), calls[copy]);
-  assert.ok(calls[install].startsWith('ssh -t -o ConnectTimeout=10 ' + miniAddress), 'the installer gets a terminal for the password: ' + calls[install]);
+  assert.ok(calls[copy].endsWith(' ' + repo.replace(/\/$/, '') + '/ ' + computerAddress + ':teletraan-staging/'), calls[copy]);
+  assert.ok(calls[install].startsWith('ssh -t -o ConnectTimeout=10 ' + computerAddress), 'the installer gets a terminal for the password: ' + calls[install]);
   assert.ok(calls[install].includes('sudo bash') && calls[install].includes('--yes'), calls[install]);
   assert.ok(!calls.some(line => line.includes('systemctl restart')), 'the installer restarts the screen, not the tool');
 
@@ -200,7 +200,7 @@ test('update without --yes asks Go ahead, Return means yes, n means nothing was 
 
   const declined = makePlace('update-ask-no');
   const declinedResult = declined.run(['update'], ['n']);
-  assert.equal(declinedResult.status, 1, 'a script must not think the Mini was updated');
+  assert.equal(declinedResult.status, 1, 'a script must not think the Teletraan computer was updated');
   assert.ok(declinedResult.text.includes('Nothing was copied.'), declinedResult.text);
   assert.equal(indexOfCall(declinedResult.calls, 'rsync '), -1);
   assert.equal(indexOfCall(declinedResult.calls, 'ssh -t'), -1, 'the installer was not run');
@@ -214,7 +214,7 @@ test('update with nobody to answer counts as no: nothing is copied and the exit 
   assert.equal(indexOfCall(result.calls, 'rsync '), -1);
 });
 
-test('update asks nothing about the pull timer: the installer turns it off when it moves the Mini to releases', () => {
+test('update asks nothing about the pull timer: the installer turns it off when it moves the Teletraan computer to releases', () => {
   const place = makePlace('update-timer');
   place.stubFile('pull-timer.txt', 'active\n');
   const result = place.run(['update', '--yes']);
@@ -241,25 +241,25 @@ test('a failing installer gives an exit code that is not zero, after the files w
   assert.notEqual(result.status, 0);
   assert.ok(result.text.includes('The files are copied.'));
   assert.ok(result.errors.includes('exit 5'), result.errors);
-  assert.ok(result.text.includes('Run teletraan-mini update to try again.'), result.text);
+  assert.ok(result.text.includes('Run teletraan-tool update to try again.'), result.text);
   assert.ok(!result.text.includes('Choose 1'), 'the hint names a word, not a menu choice');
 });
 
-test('update stops before it copies when the Mini cannot be reached, and when the folder is not the repository', () => {
+test('update stops before it copies when the Teletraan computer cannot be reached, and when the folder is not the repository', () => {
   const down = makePlace('update-down');
   down.stubFile('ssh.exit', '255');
   const downResult = down.run(['update', '--yes']);
   assert.notEqual(downResult.status, 0);
-  assert.ok(downResult.errors.includes('could not reach ' + miniAddress), downResult.errors);
+  assert.ok(downResult.errors.includes('could not reach ' + computerAddress), downResult.errors);
   assert.equal(indexOfCall(downResult.calls, 'rsync '), -1);
 
   const place = makePlace('update-wrong-folder');
-  const copy = path.join(place.root, 'elsewhere/tools/mini');
+  const copy = path.join(place.root, 'elsewhere/tools/teletraan');
   fs.mkdirSync(copy, { recursive: true });
-  fs.copyFileSync(toolFile, path.join(copy, 'teletraan-mini'));
+  fs.copyFileSync(toolFile, path.join(copy, 'teletraan-tool'));
   copyParts(toolFile, copy);
-  fs.chmodSync(path.join(copy, 'teletraan-mini'), 0o755);
-  const result = place.run(['update', '--yes'], [], path.join(copy, 'teletraan-mini'));
+  fs.chmodSync(path.join(copy, 'teletraan-tool'), 0o755);
+  const result = place.run(['update', '--yes'], [], path.join(copy, 'teletraan-tool'));
   assert.notEqual(result.status, 0);
   assert.ok(result.errors.includes('does not look like the Teletraan repository'), result.errors);
   assert.equal(indexOfCall(result.calls, 'rsync '), -1, '--yes cannot copy from the wrong folder');
@@ -268,15 +268,15 @@ test('update stops before it copies when the Mini cannot be reached, and when th
 test('update refuses a tree that still has deploy/, copies nothing and says to update this copy', () => {
   const place = makePlace('update-old-tree');
   const tree = path.join(place.root, 'old');
-  fs.mkdirSync(path.join(tree, 'tools/mini'), { recursive: true });
+  fs.mkdirSync(path.join(tree, 'tools/teletraan'), { recursive: true });
   fs.mkdirSync(path.join(tree, 'deploy/scripts'), { recursive: true });
   fs.mkdirSync(path.join(tree, 'dashboard'), { recursive: true });
   fs.writeFileSync(path.join(tree, 'dashboard/index.html'), '');
   fs.writeFileSync(path.join(tree, 'deploy/scripts/pull.sh'), '');
-  fs.copyFileSync(toolFile, path.join(tree, 'tools/mini/teletraan-mini'));
-  copyParts(toolFile, path.join(tree, 'tools/mini'));
-  fs.chmodSync(path.join(tree, 'tools/mini/teletraan-mini'), 0o755);
-  const result = place.run(['update', '--yes'], [], path.join(tree, 'tools/mini/teletraan-mini'));
+  fs.copyFileSync(toolFile, path.join(tree, 'tools/teletraan/teletraan-tool'));
+  copyParts(toolFile, path.join(tree, 'tools/teletraan'));
+  fs.chmodSync(path.join(tree, 'tools/teletraan/teletraan-tool'), 0o755);
+  const result = place.run(['update', '--yes'], [], path.join(tree, 'tools/teletraan/teletraan-tool'));
   assert.notEqual(result.status, 0);
   assert.ok(result.errors.includes('This copy is older than round 6; update it.'), result.errors);
   assert.equal(indexOfCall(result.calls, 'rsync '), -1, 'nothing is copied from an old tree');
@@ -290,16 +290,16 @@ test('status runs status-write.sh --print and check-calendars.sh, hides any key 
   assert.equal(result.status, 0, result.errors);
 
   const calls = lines(result.calls);
-  const print = calls.findIndex(line => line.includes('/opt/teletraan-test/mini/scripts/status-write.sh --print'));
-  const check = calls.findIndex(line => line.includes('/opt/teletraan-test/mini/scripts/check-calendars.sh'));
+  const print = calls.findIndex(line => line.includes('/opt/teletraan-test/computer/scripts/status-write.sh --print'));
+  const check = calls.findIndex(line => line.includes('/opt/teletraan-test/computer/scripts/check-calendars.sh'));
   assert.ok(print !== -1 && check > print, calls.join(' / '));
   assert.ok(result.text.includes('Last calendar sync        3 minutes ago'));
   assert.ok(result.text.includes('printed (hidden)') && result.text.includes('failed from (hidden) today'), result.text);
-  assert.ok(!result.calls.includes('rsync') && !result.calls.includes('restart'), 'status changes nothing on the Mini');
+  assert.ok(!result.calls.includes('rsync') && !result.calls.includes('restart'), 'status changes nothing on the Teletraan computer');
   assertNoLeak(result, 'status');
 });
 
-test('status gives an exit code that is not zero when the Mini cannot be reached, has an older status-write.sh or reports a problem', () => {
+test('status gives an exit code that is not zero when the Teletraan computer cannot be reached, has an older status-write.sh or reports a problem', () => {
   const down = makePlace('status-down');
   down.stubFile('ssh.exit', '255');
   const downResult = down.run(['status']);
@@ -311,7 +311,7 @@ test('status gives an exit code that is not zero when the Mini cannot be reached
   old.stubFile('status.exit', '2');
   const oldResult = old.run(['status']);
   assert.notEqual(oldResult.status, 0);
-  assert.ok(oldResult.text.includes('The Mini has an older status-write.sh. Run teletraan-mini update.'), oldResult.text);
+  assert.ok(oldResult.text.includes('The Teletraan computer has an older status-write.sh. Run teletraan-tool update.'), oldResult.text);
   assert.ok(oldResult.text.includes('SHOWN   team'), 'the calendars are still shown');
 
   const broken = makePlace('status-broken');
@@ -326,7 +326,7 @@ test('restart restarts the kiosk service with a terminal for the password, and n
   const place = makePlace('restart');
   const result = place.run(['restart']);
   assert.equal(result.status, 0, result.errors);
-  assert.ok(result.calls.includes('ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo systemctl restart teletraan-kiosk.service'), result.calls);
+  assert.ok(result.calls.includes('ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo systemctl restart teletraan-kiosk.service'), result.calls);
   assert.ok(result.text.includes('The screen restarted.'));
   assert.ok(!result.calls.includes('rsync') && !result.calls.includes('is-active'), 'nothing was copied');
   assertNoLeak(result, 'restart');
@@ -342,37 +342,37 @@ test('restart restarts the kiosk service with a terminal for the password, and n
   assert.notEqual(down.run(['restart']).status, 0);
 });
 
-test('--mini NAME picks a saved Mini for one run and does not change the one in use', () => {
-  const place = makePlace('mini-name', { config: twoMinis });
+test('--computer NAME picks a saved computer for one run and does not change the one in use', () => {
+  const place = makePlace('computer-name', { config: twoComputers });
   const before = fs.readFileSync(place.configFile(), 'utf8');
 
-  const spare = place.run(['--mini', 'spare', 'restart']);
+  const spare = place.run(['--computer', 'spare', 'restart']);
   assert.equal(spare.status, 0, spare.errors);
   assert.ok(spare.calls.includes('ssh -t -o ConnectTimeout=10 ' + spareAddress + ' sudo systemctl restart'), spare.calls);
 
-  const joined = place.run(['restart', '--mini=spare']);
+  const joined = place.run(['restart', '--computer=spare']);
   assert.ok(joined.calls.includes(spareAddress), joined.calls);
 
   const normal = place.run(['restart']);
-  assert.ok(normal.calls.includes(miniAddress), 'the Mini in use is still main: ' + normal.calls);
+  assert.ok(normal.calls.includes(computerAddress), 'the Teletraan computer in use is still main: ' + normal.calls);
   assert.equal(fs.readFileSync(place.configFile(), 'utf8'), before, 'the saved file was not rewritten');
 });
 
 test('a name that is not saved stops the run with the names that are, and calls nothing', () => {
-  const place = makePlace('mini-unknown', { config: twoMinis });
-  const result = place.run(['--mini', 'nobody', 'update', '--yes']);
+  const place = makePlace('computer-unknown', { config: twoComputers });
+  const result = place.run(['--computer', 'nobody', 'update', '--yes']);
   assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('no saved Mini has that name. The saved names are: main, spare.'), result.errors);
+  assert.ok(result.errors.includes('no saved computer has that name. The saved names are: main, spare.'), result.errors);
   assert.ok(!result.errors.includes('nobody'), 'the name typed is not repeated');
   assert.equal(result.calls, '');
 });
 
-test('with no Mini saved, a word stops the run and says to run the tool once without a word, and saves and calls nothing', () => {
-  const place = makePlace('no-mini', { noConfig: true });
+test('with no computer saved, a word stops the run and says to run the tool once without a word, and saves and calls nothing', () => {
+  const place = makePlace('no-computer', { noConfig: true });
   ['update', 'status', 'restart'].forEach(word => {
     const result = place.run([word, '--yes']);
     assert.equal(result.status, 1, word);
-    assert.ok(result.errors.includes('no Mini is saved on this Mac yet') && result.errors.includes('with no word after it'), result.errors);
+    assert.ok(result.errors.includes('no computer is saved on this Mac yet') && result.errors.includes('with no word after it'), result.errors);
     assert.equal(result.calls, '', word + ' called nothing');
     assert.ok(!fs.existsSync(place.configFile()), word + ' saved nothing');
   });
@@ -386,11 +386,11 @@ test('a word the tool does not know prints the usage and exits 2, without repeat
     ['--delete', 'update'],
     ['update', 'status'],
     ['--yes'],
-    ['--mini'],
+    ['--computer'],
   ].forEach(words => {
     const result = place.run(words);
     assert.equal(result.status, 2, words.join(' '));
-    assert.ok(result.errors.includes('Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]'), result.errors);
+    assert.ok(result.errors.includes('Usage: teletraan-tool [--computer NAME] [--yes] [update | status | restart]'), result.errors);
     ['update     copy the files', 'status     show what', 'restart    restart the screen'].forEach(entry => assert.ok(result.errors.includes(entry), entry));
     assert.ok(!result.errors.includes(secrets.stray) && !result.text.includes(secrets.stray), 'the word typed is not repeated');
     assert.equal(result.calls, '', words.join(' ') + ' called nothing');
@@ -398,19 +398,19 @@ test('a word the tool does not know prints the usage and exits 2, without repeat
 
   const help = place.run(['--help']);
   assert.equal(help.status, 0);
-  assert.ok(help.text.includes('Usage: teletraan-mini'), help.text);
+  assert.ok(help.text.includes('Usage: teletraan-tool'), help.text);
   assert.equal(help.calls, '');
 });
 
-test('with no word the menu still comes up, and --mini picks the Mini it uses', () => {
-  const place = makePlace('menu', { config: twoMinis });
+test('with no word the menu still comes up, and --computer picks the Teletraan computer it uses', () => {
+  const place = makePlace('menu', { config: twoComputers });
   const result = place.run([], ['q']);
   assert.equal(result.status, 0, result.errors);
-  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Mini', '4  Install the services', '5  Status of the Mini', '6  Restart the screen', '7  Choose another Mini'].forEach(entry => assert.ok(result.text.includes(entry), entry));
-  assert.ok(result.text.includes('Mini in use: main (' + miniAddress + ')'));
+  ['1  Install the files on this Mac', '2  Keys and calendars', '3  Copy the Teletraan computer', '4  Install the services', '5  Status of the computer', '6  Restart the screen', '7  Choose another computer'].forEach(entry => assert.ok(result.text.includes(entry), entry));
+  assert.ok(result.text.includes('Teletraan computer in use: main (' + computerAddress + ')'));
 
-  const spare = place.run(['--mini', 'spare'], ['q']);
-  assert.ok(spare.text.includes('Mini in use: spare (' + spareAddress + ')'), spare.text);
+  const spare = place.run(['--computer', 'spare'], ['q']);
+  assert.ok(spare.text.includes('Teletraan computer in use: spare (' + spareAddress + ')'), spare.text);
   assert.equal(spare.calls, '', 'looking at the menu runs nothing');
 });
 
@@ -419,13 +419,13 @@ test('the menu keeps its own wording for the hints, and the end of the input sti
   place.stubFile('status-output.txt', 'Usage: status-write.sh\n');
   place.stubFile('status.exit', '2');
   const result = place.run([], ['5', 'q']);
-  assert.ok(result.text.includes('The Mini has an older status-write.sh. Choose 1 to update it.'), result.text);
+  assert.ok(result.text.includes('The Teletraan computer has an older status-write.sh. Choose 1 to update it.'), result.text);
 
   const ended = place.run([]);
   assert.equal(ended.status, 0, 'the menu ends with the input');
 });
 
-test('no command prints a key or a calendar link, whatever the Mini says', () => {
+test('no command prints a key or a calendar link, whatever the Teletraan computer says', () => {
   const place = makePlace('no-leak');
   place.stubFile('status-output.txt', 'token ' + secrets.sanity + '\nlink ' + secrets.group + '\nany address https://example.org/a?b=c here\n');
   place.stubFile('check-output.txt', 'FAIL group ' + secrets.group + '\n');

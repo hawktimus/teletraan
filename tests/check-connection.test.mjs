@@ -1,4 +1,4 @@
-// Tests for mini/scripts/check-connection.sh. The tools it uses on the Mini
+// Tests for computer/scripts/check-connection.sh. The tools it uses on the Teletraan computer
 // (curl, getent, systemctl, timedatectl, docker) are replaced with small fake
 // ones in a temporary folder, so nothing touches the network or the machine.
 //
@@ -12,7 +12,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const scriptFile = path.join(repo, 'mini/scripts/check-connection.sh');
+const scriptFile = path.join(repo, 'computer/scripts/check-connection.sh');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-connection-'));
 
 // The tools the script needs that are not the ones being faked
@@ -68,15 +68,15 @@ function writeTool(folder, name, text) {
 function setup(name, options) {
   const root = path.join(work, name);
   const bin = path.join(root, 'bin');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
 
-  fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/check-connection.sh'));
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
-  fs.copyFileSync(path.join(repo, 'mini/docker-compose.yml'), path.join(root, 'mini/docker-compose.yml'));
+  fs.copyFileSync(scriptFile, path.join(root, 'computer/scripts/check-connection.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/docker-compose.yml'), path.join(root, 'computer/docker-compose.yml'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
-  if (options.localEnv) fs.writeFileSync(path.join(root, 'mini/local.env'), options.localEnv);
+  if (options.localEnv) fs.writeFileSync(path.join(root, 'computer/local.env'), options.localEnv);
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
 
@@ -95,7 +95,7 @@ function setup(name, options) {
     log: log,
     run(extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_CORS: 'ok', STUB_DOCKER: 'running' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/check-connection.sh')], { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/check-connection.sh')], { env: env, encoding: 'utf8', input: '' });
       const lines = result.stdout.split('\n').filter(line => line !== '');
       return { lines: lines, text: result.stdout, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
@@ -156,7 +156,7 @@ test('the project, dataset, version and port come from the config files, and no 
 });
 
 test('with no local.env the port is the default in docker-compose.yml', () => {
-  const compose = fs.readFileSync(path.join(repo, 'mini/docker-compose.yml'), 'utf8');
+  const compose = fs.readFileSync(path.join(repo, 'computer/docker-compose.yml'), 'utf8');
   const port = compose.match(/TELETRAAN_PORT:-(\d+)/)[1];
 
   const place = setup('no-env', { tools: true });

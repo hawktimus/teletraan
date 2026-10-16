@@ -1,8 +1,8 @@
 // Tests for tools/mac/ship.sh, the window that checks the code, commits, pushes,
-// deploys the Studio and updates the Mini. git, node, npm, ssh, scp, rsync, sudo
+// deploys the Studio and updates the Teletraan computer. git, node, npm, ssh, scp, rsync, sudo
 // and systemctl are small fake ones in a temporary folder, and the PATH holds
 // nothing else that could reach a real one, so no test can touch GitHub, Sanity
-// or a Mini. The repository is a temporary copy, and the keys are made up.
+// or a computer. The repository is a temporary copy, and the keys are made up.
 //
 //   node tests/ship.test.mjs
 
@@ -18,11 +18,11 @@ const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const shipSource = path.join(repoRoot, 'tools/mac/ship.sh');
 const commandSource = path.join(repoRoot, 'tools/mac/Ship Teletraan.command');
 const makeAppSource = path.join(repoRoot, 'tools/mac/make-app.sh');
-const toolSource = path.join(repoRoot, 'tools/mini/teletraan-mini');
+const toolSource = path.join(repoRoot, 'tools/teletraan/teletraan-tool');
 const cliSource = path.join(repoRoot, 'studio/sanity.cli.js');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-ship-'));
 
-const miniAddress = 'hawktimus@teletraan.test';
+const computerAddress = 'hawktimus@teletraan.test';
 const appId = 'aaojtrzg572ce88nb5jgpbmp';
 
 // Made-up secrets. None may appear in anything the script prints or runs.
@@ -127,7 +127,7 @@ exit 0
 `,
   sudo: `#!/bin/sh
 echo "sudo $*" >> "$STUB_LOG"
-# The installer on the Mini is not run here
+# The installer on the Teletraan computer is not run here
 case "$*" in *install.sh*) [ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"; exit 0 ;; esac
 exec "$@"
 `,
@@ -144,8 +144,8 @@ function writeExecutable(file, text) {
 }
 
 // A repository, a home, the fake programs and the stub folder for one run.
-// options.without lists fake programs to leave out, options.noMini leaves the
-// saved Mini out, options.noModules leaves studio/node_modules out, and
+// options.without lists fake programs to leave out, options.noComputer leaves the
+// saved computer out, options.noModules leaves studio/node_modules out, and
 // options.cli replaces studio/sanity.cli.js.
 function makePlace(name, options = {}) {
   const root = path.join(work, name);
@@ -166,7 +166,7 @@ function makePlace(name, options = {}) {
         STUB_LOG: place.log,
         STUB_DIR: place.stub,
         STUB_FAKES: place.bin,
-        MINI_REPO: '/opt/teletraan-test',
+        COMPUTER_REPO: '/opt/teletraan-test',
       };
       if (run.message) env.SHIP_MESSAGE = run.message;
       const input = run.input && run.input.length ? run.input.join('\n') + '\n' : '';
@@ -180,13 +180,13 @@ function makePlace(name, options = {}) {
   fs.writeFileSync(place.log, '');
 
   writeExecutable(path.join(place.repo, 'tools/mac/ship.sh'), fs.readFileSync(shipSource, 'utf8'));
-  writeExecutable(path.join(place.repo, 'tools/mini/teletraan-mini'), fs.readFileSync(toolSource, 'utf8'));
-  copyParts(toolSource, path.join(place.repo, 'tools/mini'));
-  fs.mkdirSync(path.join(place.repo, 'mini/scripts'), { recursive: true });
+  writeExecutable(path.join(place.repo, 'tools/teletraan/teletraan-tool'), fs.readFileSync(toolSource, 'utf8'));
+  copyParts(toolSource, path.join(place.repo, 'tools/teletraan'));
+  fs.mkdirSync(path.join(place.repo, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(place.repo, 'dashboard'), { recursive: true });
   fs.writeFileSync(path.join(place.repo, 'dashboard/index.html'), '');
-  fs.writeFileSync(path.join(place.repo, 'mini/scripts/pull.sh'), '');
-  fs.writeFileSync(path.join(place.repo, 'mini/install.sh'), '');
+  fs.writeFileSync(path.join(place.repo, 'computer/scripts/pull.sh'), '');
+  fs.writeFileSync(path.join(place.repo, 'computer/install.sh'), '');
   fs.mkdirSync(path.join(place.repo, 'control'), { recursive: true });
   fs.writeFileSync(path.join(place.repo, 'control/server.js'), '');
   ['tests/run.mjs'].forEach(file => {
@@ -196,11 +196,11 @@ function makePlace(name, options = {}) {
   fs.mkdirSync(path.join(place.repo, 'studio'), { recursive: true });
   fs.writeFileSync(path.join(place.repo, 'studio/sanity.cli.js'), options.cli || fs.readFileSync(cliSource, 'utf8'));
   if (!options.noModules) fs.mkdirSync(path.join(place.repo, 'studio/node_modules'));
-  fs.writeFileSync(path.join(place.repo, 'mini/local.env'), "SANITY_WRITE_TOKEN='" + secrets.sanity + "'\nCALENDAR_TEAM_URL='" + secrets.calendar + "'\n", { mode: 0o600 });
+  fs.writeFileSync(path.join(place.repo, 'computer/local.env'), "SANITY_WRITE_TOKEN='" + secrets.sanity + "'\nCALENDAR_TEAM_URL='" + secrets.calendar + "'\n", { mode: 0o600 });
 
   const stateFolder = path.join(place.home, '.teletraan');
   fs.mkdirSync(stateFolder, { recursive: true, mode: 0o700 });
-  if (!options.noMini) fs.writeFileSync(path.join(stateFolder, 'config'), 'current=main\nmini.main=' + miniAddress + '\n');
+  if (!options.noComputer) fs.writeFileSync(path.join(stateFolder, 'config'), 'current=main\nmini.main=' + computerAddress + '\n');
   fs.writeFileSync(path.join(stateFolder, 'secrets.env'), "SANITY_WRITE_TOKEN='" + secrets.sanity + "'\nCALENDAR_TEAM_URL='" + secrets.calendar + "'\n", { mode: 0o600 });
 
   place.stubFile('status-output.txt', 'Last calendar sync        3 minutes ago (2026-10-10 13:50 UTC)\n');
@@ -238,7 +238,7 @@ function assertNoLeak(result, label) {
 
 const changed = ' M dashboard/config.js\n?? docs/new-page.md\n';
 
-test('all checks, commits, pushes, deploys the Studio, then updates the Mini and restarts the screen, in that order', () => {
+test('all checks, commits, pushes, deploys the Studio, then updates the Teletraan computer and restarts the screen, in that order', () => {
   const place = makePlace('all');
   place.stubFile('changes.txt', changed);
   const result = place.run(['all'], { message: 'Change the agenda header' });
@@ -253,17 +253,17 @@ test('all checks, commits, pushes, deploys the Studio, then updates the Mini and
   const push = find('git push');
   const deploy = find('npm run deploy (in studio)');
   const copy = find('rsync ');
-  const restart = find('ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo bash');
+  const restart = find('ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo bash');
   [fetched, lastCheck, add, commit, push, deploy, copy, restart].forEach((index, position) => assert.ok(index !== -1, 'step ' + position + ' ran: ' + calls.join(' / ')));
   assert.ok(fetched < Math.min(find('node ' + path.join(place.repo, 'tests/run.mjs')), add), 'GitHub is looked at before anything else');
   assert.ok(lastCheck < add && add < commit && commit < push && push < deploy && deploy < copy && copy < restart, 'the order is check, commit, push, Studio, Mini: ' + calls.join(' / '));
   assert.equal(calls.filter(line => line.startsWith('node ' + path.join(place.repo, 'tests'))).length, 1, 'the tests ran once');
 
-  assert.ok(result.text.includes('Done: checks, commit and push, Studio, Mini update and restart'), result.text);
+  assert.ok(result.text.includes('Done: checks, commit and push, Studio, Teletraan computer update and restart'), result.text);
   assert.ok(result.text.includes('The screen was restarted'), result.text);
-  assert.ok(calls[copy].endsWith(' ' + place.repo + '/ ' + miniAddress + ':teletraan-staging/'), 'the Mac tool copies this repository: ' + calls[copy]);
-  assert.ok(!result.calls.includes('pull.sh') && !result.calls.includes('ls-remote'), 'the Mini is no longer asked to pull');
-  assert.ok(!result.text.includes('Go ahead?'), 'the Mini step asks no question');
+  assert.ok(calls[copy].endsWith(' ' + place.repo + '/ ' + computerAddress + ':teletraan-staging/'), 'the Mac tool copies this repository: ' + calls[copy]);
+  assert.ok(!result.calls.includes('pull.sh') && !result.calls.includes('ls-remote'), 'the Teletraan computer is no longer asked to pull');
+  assert.ok(!result.text.includes('Go ahead?'), 'the Teletraan computer step asks no question');
   assertNoLeak(result, 'all');
 });
 
@@ -301,18 +301,18 @@ test('the commit has the description and nothing else on its line, and nothing i
 
 test('a changed local.env or key file stops the run before anything is committed, without printing a value', () => {
   const place = makePlace('secret-file');
-  place.stubFile('changes.txt', ' M mini/local.env\n');
-  place.stubFile('diff-names.txt', 'mini/local.env\n');
+  place.stubFile('changes.txt', ' M computer/local.env\n');
+  place.stubFile('diff-names.txt', 'computer/local.env\n');
   const result = place.run(['all'], { message: 'Oops' });
   assert.notEqual(result.status, 0);
-  assert.ok(result.text.includes('These look like secrets and will not be committed:') && result.text.includes('mini/local.env'), result.text);
+  assert.ok(result.text.includes('These look like secrets and will not be committed:') && result.text.includes('computer/local.env'), result.text);
   assert.ok(!hasCall(result.calls, 'git add') && !hasCall(result.calls, 'git commit') && !hasCall(result.calls, 'git push'));
   assert.ok(!hasCall(result.calls, 'npm') && !hasCall(result.calls, 'rsync'));
   assertNoLeak(result, 'secret file');
 
   const example = makePlace('example-env');
-  example.stubFile('changes.txt', ' M mini/local.example.env\n');
-  example.stubFile('diff-names.txt', 'mini/local.example.env\n');
+  example.stubFile('changes.txt', ' M computer/local.example.env\n');
+  example.stubFile('diff-names.txt', 'computer/local.example.env\n');
   assert.equal(example.run(['push'], { message: 'Change the example' }).status, 0, 'the example file is allowed');
 });
 
@@ -351,20 +351,20 @@ const stops = [
     notSummary: 'Studio',
   },
   {
-    name: 'the copy to the Mini',
+    name: 'the copy to the Teletraan computer',
     stub: { 'rsync.exit': '23' },
     ran: ['npm run deploy', 'rsync '],
     absent: ['ssh -t'],
     summary: 'Done before it stopped: checks, commit and push, Studio',
-    notSummary: 'Mini update',
+    notSummary: 'Teletraan computer update',
   },
   {
-    name: 'the install on the Mini',
+    name: 'the install on the Teletraan computer',
     stub: { 'install.exit': '5' },
     ran: ['rsync ', 'ssh -t'],
     absent: [],
     summary: 'Done before it stopped: checks, commit and push, Studio',
-    notSummary: 'Mini update',
+    notSummary: 'Teletraan computer update',
   },
 ];
 
@@ -396,19 +396,19 @@ test('a check that fails can be overruled with a yes, and the run goes on', () =
   assert.ok(hasCall(result.calls, 'rsync '));
 });
 
-test('an unreachable Mini stops the run after the Studio, and nothing is copied', () => {
-  const down = makePlace('mini-down');
+test('an unreachable Teletraan computer stops the run after the Studio, and nothing is copied', () => {
+  const down = makePlace('computer-down');
   down.stubFile('changes.txt', changed);
   down.stubFile('ssh.exit', '255');
   const downResult = down.run(['all'], { message: 'A change' });
   assert.notEqual(downResult.status, 0);
-  assert.ok(downResult.errors.includes('could not reach ' + miniAddress), downResult.errors);
+  assert.ok(downResult.errors.includes('could not reach ' + computerAddress), downResult.errors);
   assert.ok(downResult.errors.includes('Done before it stopped: checks, commit and push, Studio'), downResult.errors);
   assert.ok(!hasCall(downResult.calls, 'rsync '));
 });
 
-test('a folder that is behind GitHub stops all and mini before anything is sent, and push does not mind', () => {
-  ['all', 'mini'].forEach(action => {
+test('a folder that is behind GitHub stops all and computer before anything is sent, and push does not mind', () => {
+  ['all', 'computer'].forEach(action => {
     const place = makePlace('behind-' + action);
     place.stubFile('changes.txt', changed);
     place.stubFile('behind.txt', '2\n');
@@ -427,17 +427,17 @@ test('a folder that is behind GitHub stops all and mini before anything is sent,
   const offline = makePlace('behind-offline');
   offline.stubFile('git-fetch.exit', '128');
   offline.stubFile('behind.txt', '2\n');
-  const offlineResult = offline.run(['mini']);
+  const offlineResult = offline.run(['computer']);
   assert.equal(offlineResult.status, 0, offlineResult.errors);
   assert.ok(offlineResult.text.includes('GitHub could not be reached, so this folder was not compared with it.'), offlineResult.text);
 
   const fine = makePlace('behind-none');
-  const fineResult = fine.run(['mini']);
+  const fineResult = fine.run(['computer']);
   assert.ok(fineResult.text.includes('up to date'), fineResult.text);
 });
 
 test('--dry-run runs nothing for any action: no commit, push, deploy, copy, restart or check, and no question', () => {
-  ['all', 'all-restart', 'push', 'studio', 'mini', 'status', 'restart'].forEach(action => {
+  ['all', 'all-restart', 'push', 'studio', 'computer', 'status', 'restart'].forEach(action => {
     const place = makePlace('dry-' + action);
     place.stubFile('changes.txt', changed);
     const result = place.run([action, '--dry-run']);
@@ -460,10 +460,10 @@ test('--dry-run runs nothing for any action: no commit, push, deploy, copy, rest
   first.stubFile('changes.txt', changed);
   const result = first.run(['--dry-run', 'all']);
   assert.equal(result.status, 0, result.errors);
-  ['would run the tests with node', 'git add -A', 'git commit', 'git push', 'npm run deploy', 'teletraan-mini update --yes'].forEach(text => assert.ok(result.text.includes(text), 'shows ' + text + ': ' + result.text));
+  ['would run the tests with node', 'git add -A', 'git commit', 'git push', 'npm run deploy', 'teletraan-tool update --yes'].forEach(text => assert.ok(result.text.includes(text), 'shows ' + text + ': ' + result.text));
 });
 
-test('push only checks, commits and pushes: no Studio, no Mini, no ssh', () => {
+test('push only checks, commits and pushes: no Studio, no computer, no ssh', () => {
   const place = makePlace('push-only');
   place.stubFile('changes.txt', changed);
   const result = place.run(['push'], { message: 'Only the code' });
@@ -474,7 +474,7 @@ test('push only checks, commits and pushes: no Studio, no Mini, no ssh', () => {
   assert.ok(!result.text.includes('The screen was restarted'));
 });
 
-test('studio only deploys the Studio: no git, no checks, no Mini', () => {
+test('studio only deploys the Studio: no git, no checks, no computer', () => {
   const place = makePlace('studio-only');
   const result = place.run(['studio']);
   assert.equal(result.status, 0, result.errors);
@@ -484,7 +484,7 @@ test('studio only deploys the Studio: no git, no checks, no Mini', () => {
 });
 
 test('a tree that still has deploy/ is refused for every word, before anything is committed or sent', () => {
-  ['all', 'push', 'studio', 'mini', 'status', 'restart'].forEach(action => {
+  ['all', 'push', 'studio', 'computer', 'status', 'restart'].forEach(action => {
     const place = makePlace('old-tree-' + action);
     fs.mkdirSync(path.join(place.repo, 'deploy/scripts'), { recursive: true });
     const result = place.run([action]);
@@ -494,16 +494,16 @@ test('a tree that still has deploy/ is refused for every word, before anything i
   });
 });
 
-test('mini only runs the Mac tool to update the Mini and restart the screen, and nothing else', () => {
-  const place = makePlace('mini-only');
-  const result = place.run(['mini']);
+test('computer only runs the Mac tool to update the Teletraan computer and restart the screen, and nothing else', () => {
+  const place = makePlace('computer-only');
+  const result = place.run(['computer']);
   assert.equal(result.status, 0, result.errors);
-  assert.ok(hasCall(result.calls, 'rsync ') && hasCall(result.calls, 'ssh -t -o ConnectTimeout=10 ' + miniAddress + ' sudo bash'), result.calls);
+  assert.ok(hasCall(result.calls, 'rsync ') && hasCall(result.calls, 'ssh -t -o ConnectTimeout=10 ' + computerAddress + ' sudo bash'), result.calls);
   assert.ok(!hasCall(result.calls, 'git add') && !hasCall(result.calls, 'git push') && !hasCall(result.calls, 'npm'));
-  assert.ok(result.text.includes('Done: Mini update and restart'), result.text);
+  assert.ok(result.text.includes('Done: Teletraan computer update and restart'), result.text);
 });
 
-test('status asks the Mac tool for the status of the Mini, hides any key in it, and changes nothing', () => {
+test('status asks the Mac tool for the status of the Teletraan computer, hides any key in it, and changes nothing', () => {
   const place = makePlace('status');
   place.stubFile('status-output.txt', 'Last calendar sync        3 minutes ago\na script that went wrong printed ' + secrets.sanity + '\n');
   place.stubFile('check-output.txt', 'FAIL    team  failed from ' + secrets.calendar + ' today\n');
@@ -511,7 +511,7 @@ test('status asks the Mac tool for the status of the Mini, hides any key in it, 
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.text.includes('Last calendar sync        3 minutes ago') && result.text.includes('printed (hidden)'), result.text);
   assert.ok(hasCall(result.calls, 'ssh -n') && !hasCall(result.calls, 'rsync') && !hasCall(result.calls, 'git add'));
-  assert.ok(result.text.includes('Done: Mini status'), result.text);
+  assert.ok(result.text.includes('Done: Teletraan computer status'), result.text);
   assertNoLeak(result, 'status');
 
   const down = makePlace('status-down');
@@ -604,17 +604,17 @@ test('git must know a name and an email before anything is committed, and the li
   assert.equal(place.run(['studio']).status, 0, 'the Studio does not need a git name');
 });
 
-test('the Mac tool must have a saved Mini before the Mini actions start, and the line says to run it once', () => {
-  const place = makePlace('no-mini', { noMini: true });
+test('the Mac tool must have a saved computer before the Teletraan computer actions start, and the line says to run it once', () => {
+  const place = makePlace('no-computer', { noComputer: true });
   place.stubFile('changes.txt', changed);
-  ['all', 'mini', 'status', 'restart'].forEach(action => {
+  ['all', 'computer', 'status', 'restart'].forEach(action => {
     const result = place.run([action], { message: 'A change' });
     assert.notEqual(result.status, 0, action);
-    assert.ok(result.text.includes('this Mac has no saved Mini yet. Run once, and give it the Mini\'s address: "' + path.join(place.repo, 'tools/mini/teletraan-mini') + '"'), result.text);
+    assert.ok(result.text.includes('this Mac has no saved computer yet. Run once, and give it the Teletraan computer\'s address: "' + path.join(place.repo, 'tools/teletraan/teletraan-tool') + '"'), result.text);
     assert.deepEqual(changes(result.calls), [], action + ' ran nothing: ' + result.calls);
   });
-  assert.equal(place.run(['push'], { message: 'x' }).status, 0, 'push does not need a Mini');
-  assert.equal(place.run(['studio']).status, 0, 'the Studio does not need a Mini');
+  assert.equal(place.run(['push'], { message: 'x' }).status, 0, 'push does not need a computer');
+  assert.equal(place.run(['studio']).status, 0, 'the Studio does not need a computer');
 });
 
 test('the Studio actions need Node 22.12 or newer, and say which version this Mac has', () => {
@@ -639,7 +639,7 @@ test('a word the script does not know stops it before anything runs, without rep
   const place = makePlace('unknown');
   const result = place.run(['frobnicate-' + secrets.sanity]);
   assert.notEqual(result.status, 0);
-  assert.ok(result.errors.includes('I do not know that word. Use all, push, studio, mini or status.'), result.errors);
+  assert.ok(result.errors.includes('I do not know that word. Use all, push, studio, computer or status.'), result.errors);
   assert.ok(!result.errors.includes('frobnicate') && !result.errors.includes(secrets.sanity));
   assert.equal(result.calls, '');
 });
@@ -648,7 +648,7 @@ test('the menu has the five choices, each runs its action, and anything else doe
   const place = makePlace('menu');
   const quit = place.run([], { input: ['q'] });
   assert.equal(quit.status, 0, quit.errors);
-  ['1  Ship everything: check the code, commit, push, deploy the Studio,', 'update the Mini and restart the screen', '2  Push only', '3  Studio only', '4  Update the Mini only, and restart the screen', '5  Status of the Mini', 'q  Quit'].forEach(entry => assert.ok(quit.text.includes(entry), 'the menu has: ' + entry));
+  ['1  Ship everything: check the code, commit, push, deploy the Studio,', 'update the Teletraan computer and restart the screen', '2  Push only', '3  Studio only', '4  Update the computer only, and restart the screen', '5  Status of the computer', 'q  Quit'].forEach(entry => assert.ok(quit.text.includes(entry), 'the menu has: ' + entry));
   assert.ok(quit.text.includes('Nothing done.'));
   assert.equal(quit.calls, '', 'looking at the menu runs nothing');
 
@@ -665,7 +665,7 @@ test('the menu has the five choices, each runs its action, and anything else doe
   });
   const four = makePlace('menu-4-only');
   const fourResult = four.run([], { input: ['4'] });
-  assert.ok(!hasCall(fourResult.calls, 'git add') && !hasCall(fourResult.calls, 'npm'), 'choice 4 is the Mini only');
+  assert.ok(!hasCall(fourResult.calls, 'git add') && !hasCall(fourResult.calls, 'npm'), 'choice 4 is the Teletraan computer only');
 });
 
 test('a branch other than main asks first, and the answer is no by default', () => {
@@ -684,8 +684,8 @@ test('the script keeps no password and never runs ssh, sudo, rsync or scp itself
   const code = fs.readFileSync(shipSource, 'utf8').split('\n').filter(line => !/^\s*#/.test(line)).join('\n');
   assert.ok(!/sshpass|read -r?s\b|security add|keychain|PASSWORD|password=/i.test(code), 'no password is read or kept');
   assert.ok(!/^\s*(ssh|scp|rsync|sudo)\b/m.test(code) && !/\|\|?\s*(ssh|sudo)\b/.test(code), 'no direct call to ssh, scp, rsync or sudo');
-  assert.ok(!/MINI_ADDRESS|MINI_REPO|MINI_KIOSK|pull\.sh|ls-remote/.test(code), 'the Mini\'s address and the pull step are gone from this script');
-  assert.ok(code.includes('"$mini_tool" update --yes') && code.includes('"$mini_tool" status') && code.includes('"$mini_tool" restart'), 'the Mini steps are the Mac tool');
+  assert.ok(!/COMPUTER_ADDRESS|COMPUTER_REPO|COMPUTER_KIOSK|pull\.sh|ls-remote/.test(code), 'the Teletraan computer\'s address and the pull step are gone from this script');
+  assert.ok(code.includes('"$computer_tool" update --yes') && code.includes('"$computer_tool" status') && code.includes('"$computer_tool" restart'), 'the Teletraan computer steps are the Mac tool');
   assert.ok(!/\bgit (push|commit|add)\b.*--force|push -f\b/.test(code), 'a push is never forced');
 });
 

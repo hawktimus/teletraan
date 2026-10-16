@@ -1,4 +1,4 @@
-// The host helper (mini/scripts/control-helper.sh): it accepts exactly its words, logs each one, refuses and logs
+// The host helper (computer/scripts/control-helper.sh): it accepts exactly its words, logs each one, refuses and logs
 // anything else, and writes local.env only from text that looks like an env file. sudo, systemctl and docker are
 // small fakes in a temporary folder that write down what they were asked.
 //
@@ -14,7 +14,7 @@ import { test, finish } from './helpers/runner.mjs';
 import { words } from '../control/lib/helper-client.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const script = path.join(repo, 'mini/scripts/control-helper.sh');
+const script = path.join(repo, 'computer/scripts/control-helper.sh');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-helper-'));
 let count = 0;
 
@@ -23,12 +23,12 @@ function setup() {
   const bin = path.join(root, 'bin');
   fs.mkdirSync(bin, { recursive: true });
   fs.mkdirSync(path.join(root, 'logs'));
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   const log = path.join(root, 'calls.log');
   const fake = `#!/bin/sh\necho "$(basename "$0") $*" >> "${log}"\n[ "$(basename "$0")" = sudo ] && { "$@" 2>/dev/null; exit 0; }\nexit 0\n`;
   for (const name of ['sudo', 'systemctl', 'docker']) fs.writeFileSync(path.join(bin, name), fake, { mode: 0o755 });
-  fs.writeFileSync(path.join(root, 'mini/scripts/monday-sync.sh'), '#!/bin/sh\necho "monday $*" >> "' + log + '"\nexit 0\n', { mode: 0o755 });
+  fs.writeFileSync(path.join(root, 'computer/scripts/monday-sync.sh'), '#!/bin/sh\necho "monday $*" >> "' + log + '"\nexit 0\n', { mode: 0o755 });
   fs.writeFileSync(path.join(root, 'local.env'), "CONTROL_PIN='123456'\n", { mode: 0o600 });
   return {
     root: root,

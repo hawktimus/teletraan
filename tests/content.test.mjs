@@ -3576,7 +3576,7 @@ test('the sample content carries one Meeting day, one talk with its text in squa
   assert.equal((talk.start.getTime() - first) % (day.slotMinutes * 60000), 0, 'on a slot');
   assert.equal(day.open, true);
 
-  // the folder is where the screen looks for the slides of a sample talk, and the manifest has the shape the Mini writes
+  // the folder is where the screen looks for the slides of a sample talk, and the manifest has the shape the Teletraan computer writes
   const folder = path.join(dashboardFolder, live.presentation.slidesFolder(true, talk));
   const manifest = JSON.parse(readModule(path.join(folder, 'manifest.json'), 'utf8'));
   assert.deepEqual(Object.keys(manifest), ['ok', 'pages', 'fetchedAt', 'refreshed']);
@@ -4508,7 +4508,7 @@ test('timeText is empty for an all-day event, so only its date shows', () => {
 
 // The two panels write times on the computer's own clock, so these tests use the
 // computer's own time zone for the events.
-// (On the Mini the two are the same: rebuilding-the-mini.md sets the zone.)
+// (On the Teletraan computer the two are the same: rebuilding-the-computer.md sets the zone.)
 const computerZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 // FRI for 2027-04-02, from the calendar alone and in UTC
@@ -4874,7 +4874,7 @@ test('shell.js merges the events when content changes and once a minute', () => 
   assert.ok(shell.includes('shellState.base.theme.timeZone'), 'the Look time zone should be used');
 });
 
-// The Mini's name and addresses, shown inside the connection status text while Sanity cannot be reached
+// The Teletraan computer's name and addresses, shown inside the connection status text while Sanity cannot be reached
 // (core/device.js). The first tests are the pure part: device.json in, up to
 // two lines of text out.
 
@@ -5124,7 +5124,7 @@ test('connectionLines shows nothing while Sanity is reachable and the switch is 
   assert.deepEqual(connectionLines({ always: true }), []);
 });
 
-test('connectionLines gives the reason and the last good read while Sanity is unreachable, then the Mini lines', () => {
+test('connectionLines gives the reason and the last good read while Sanity is unreachable, then the Teletraan computer lines', () => {
   const status = { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'cors' };
   assert.deepEqual(connectionLines({ status: status, always: false, deviceLines: fullDeviceLines }), [
     'SANITY UNREACHABLE: CORS BLOCKED',
@@ -5138,7 +5138,7 @@ test('connectionLines gives the reason and the last good read while Sanity is un
 test('connectionLines names each of the four reasons, and says so when there has been no good read', () => {
   const words = { network: 'NETWORK DOWN', cors: 'CORS BLOCKED', denied: 'ACCESS DENIED', other: 'OTHER ERROR' };
   // and a sentence for the coach about what to do
-  const fixes = { network: 'Check the cable and the router of the Mini', cors: 'Add this address under API, CORS origins in Sanity', denied: 'Check that the dataset in Sanity is public', other: 'Sanity may be down. The last content stays on screen' };
+  const fixes = { network: 'Check the cable and the router of the Teletraan computer', cors: 'Add this address under API, CORS origins in Sanity', denied: 'Check that the dataset in Sanity is public', other: 'Sanity may be down. The last content stays on screen' };
   Object.keys(words).forEach(reason => {
     const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: reason }, always: false });
     assert.deepEqual(lines, ['SANITY UNREACHABLE: ' + words[reason], fixes[reason], 'No good read yet']);
@@ -5183,7 +5183,7 @@ test('connectionLines puts the reason first and the counts after it when the swi
   const lines = connectionLines({ status: status, always: true, content: someContent, calendarsReadAt: calendarsRead, deviceLines: ['ssh hawktimus@10.0.0.5'] });
   assert.deepEqual(lines, [
     'SANITY UNREACHABLE: NETWORK DOWN',
-    'Check the cable and the router of the Mini',
+    'Check the cable and the router of the Teletraan computer',
     'Last good read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Team leads 5',
     'People 8 · Agenda 1 · Extra panels 3',

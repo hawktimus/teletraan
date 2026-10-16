@@ -1,6 +1,6 @@
 // Tests for the rows and lines of the Calendars page in Studio (studio/inputs/calendars-view-parts.js):
 // what the left side says about each calendar of Dashboard Settings, what the right side says
-// about the one picked, and what each says before the Mini has written anything. The helpers
+// about the one picked, and what each says before the Teletraan computer has written anything. The helpers
 // are plain functions, so nothing is installed and nothing touches the network. The page that
 // draws them, and the reading of the two documents, are checked by tests/schemas.test.mjs.
 //
@@ -56,7 +56,7 @@ function rowFor(rows, code) {
   return rows.filter(row => row.code === code)[0];
 }
 
-test('the left side lists the calendars of Dashboard Settings in their order, then any calendar only the Mini knows', () => {
+test('the left side lists the calendars of Dashboard Settings in their order, then any calendar only the Teletraan computer knows', () => {
   const rows = parts.rowsOf(entries, status, now);
 
   assert.deepEqual(rows.map(row => row.code), ['team', 'outreach', 'gears', 'old']);
@@ -86,13 +86,13 @@ test('a calendar that failed to download shows why, as a sentence, and keeps the
   assert.equal(rowFor(rows, 'outreach').problem, 'Download failed, the server said no, so the address may be wrong or expired.');
   assert.equal(rowFor(rows, 'old').problem, 'No address set yet.');
   assert.equal(rowFor(rows, 'old').download, 'Not downloaded yet');
-  assert.equal(rowFor(rows, 'old').count, 'Events not listed', 'a calendar the Mini never read has no count');
+  assert.equal(rowFor(rows, 'old').count, 'Events not listed', 'a calendar the Teletraan computer never read has no count');
 
   const stopped = parts.rowsOf(entries, { calendars: [{ code: 'team', error: 'the address starts with http://, which is not secure. Use the https:// address' }] }, now);
   assert.equal(rowFor(stopped, 'team').problem, 'The address starts with http://, which is not secure. Use the https:// address.', 'one full stop, not two');
 });
 
-test('before the Mini has written anything every row says Nothing yet, and the calendars of Dashboard Settings are still listed', () => {
+test('before the Teletraan computer has written anything every row says Nothing yet, and the calendars of Dashboard Settings are still listed', () => {
   [null, undefined, {}, { calendars: [] }, 'text', 5].forEach(missing => {
     const rows = parts.rowsOf(entries, missing, now);
 
@@ -158,15 +158,15 @@ test('the right side has the facts, and each event with its date, time, title, S
   assert.deepEqual(detail.events.map(event => event.hidden), [false, true, true]);
 });
 
-test('the right side says why there is nothing to list: nothing yet, no events, or events the Mini did not list', () => {
+test('the right side says why there is nothing to list: nothing yet, no events, or events the Teletraan computer did not list', () => {
   const rows = parts.rowsOf(entries, status, now);
 
   assert.equal(parts.detailOf(rowFor(rows, 'gears'), status, now).empty, 'No events in the next 30 days.');
-  assert.equal(parts.detailOf(rowFor(rows, 'old'), status, now).empty, 'The Mini has not listed the events of this calendar yet.');
+  assert.equal(parts.detailOf(rowFor(rows, 'old'), status, now).empty, 'The Teletraan computer has not listed the events of this calendar yet.');
 
-  const noted = { calendars: [{ code: 'team', fetchedAt: ago(5) }], eventsNote: 'Node is not installed on the Mini, so it does not list the coming events' };
+  const noted = { calendars: [{ code: 'team', fetchedAt: ago(5) }], eventsNote: 'Node is not installed on the Teletraan computer, so it does not list the coming events' };
   const detail = parts.detailOf(rowFor(parts.rowsOf(entries, noted, now), 'team'), noted, now);
-  assert.equal(detail.empty, 'Node is not installed on the Mini, so it does not list the coming events.', 'the note of the Mini, as a sentence');
+  assert.equal(detail.empty, 'Node is not installed on the Teletraan computer, so it does not list the coming events.', 'the note of the computer, as a sentence');
   assert.equal(detail.facts[2].text, 'Not listed');
 
   const nothing = parts.detailOf(rowFor(parts.rowsOf(entries, null, now), 'team'), null, now);
@@ -175,10 +175,10 @@ test('the right side says why there is nothing to list: nothing yet, no events, 
   assert.deepEqual(nothing.events, []);
 });
 
-test('the page says when the Mini wrote the document, and nothing when it has no time', () => {
-  assert.equal(parts.updatedText({ updatedAt: ago(0) }, now), 'The Mini wrote this just now.');
-  assert.equal(parts.updatedText({ updatedAt: ago(3) }, now), 'The Mini wrote this 3 minutes ago.');
-  assert.equal(parts.updatedText({ updatedAt: ago(180) }, now), 'The Mini wrote this 3 hours ago.');
+test('the page says when the Teletraan computer wrote the document, and nothing when it has no time', () => {
+  assert.equal(parts.updatedText({ updatedAt: ago(0) }, now), 'The Teletraan computer wrote this just now.');
+  assert.equal(parts.updatedText({ updatedAt: ago(3) }, now), 'The Teletraan computer wrote this 3 minutes ago.');
+  assert.equal(parts.updatedText({ updatedAt: ago(180) }, now), 'The Teletraan computer wrote this 3 hours ago.');
   [null, undefined, {}, 'text', 5, { updatedAt: 'soon' }, { updatedAt: 5 }].forEach(missing => assert.equal(parts.updatedText(missing, now), '', JSON.stringify(missing)));
 });
 
@@ -191,7 +191,7 @@ test('the page notes say which document could not be read, and say nothing while
 });
 
 test('the words are short plain sentences: the help line, no dash, no exclamation mark and no emoji', () => {
-  assert.equal(parts.helpLine, 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.');
+  assert.equal(parts.helpLine, 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Teletraan computer.');
   assert.equal(parts.calendarStatusId, 'calendar-status');
 
   const texts = [parts.helpLine, parts.nothingYet, parts.settingsLine, parts.publicLine, parts.noCalendarsLine].concat(parts.notesFor({ entriesUnreadable: true, statusUnreadable: true }));

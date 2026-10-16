@@ -55,7 +55,7 @@ export function sampleTree(extra = {}) {
   return Object.assign({
     'dashboard/index.html': '<html></html>',
     'dashboard/config.js': "export default { projectId: 'abc12345', dataset: 'production', apiVersion: '2025-02-19' };\n",
-    'mini/scripts/kiosk.sh': '#!/bin/sh\necho kiosk\n',
+    'computer/scripts/kiosk.sh': '#!/bin/sh\necho kiosk\n',
     'control/server.js': '// server\n',
     'studio/schemas/a.js': 'export default {};\n',
   }, extra);

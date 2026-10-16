@@ -70,10 +70,10 @@ function runShell(command, args) {
   });
 }
 
-// Every shell file under mini/ and tools/, found by name or by the first line
+// Every shell file under computer/ and tools/, found by name or by the first line
 function shellFiles() {
   const found = [];
-  for (const top of ['mini', 'tools']) {
+  for (const top of ['computer', 'tools']) {
     const folder = path.join(root, top);
     if (!fs.existsSync(folder)) continue;
     for (const file of walk(folder, [], ['node_modules'])) {
@@ -99,7 +99,7 @@ async function checkShell() {
   return { name: 'shell syntax (sh -n and bash -n)', count: files.length, problems: problems, seconds: (Date.now() - started) / 1000 };
 }
 
-// True when Playwright can be loaded here, in tools/node_modules or in a folder that NODE_PATH names. The Mini and a
+// True when Playwright can be loaded here, in tools/node_modules or in a folder that NODE_PATH names. The Teletraan computer and a
 // computer that never installed it skip the motion tests and stay green.
 function playwrightIsHere() {
   try {

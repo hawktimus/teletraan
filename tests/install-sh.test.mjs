@@ -1,4 +1,4 @@
-// mini/install.sh: it refuses a tree that still has deploy/, moves an old /opt/teletraan into releases/1 with its
+// computer/install.sh: it refuses a tree that still has deploy/, moves an old /opt/teletraan into releases/1 with its
 // local.env at the root, installs the helper socket, the service and the sudoers file with the login user filled
 // in, runs the release install in the Node image, and starts the containers. docker, systemctl, visudo, chown and
 // sudo are fakes in a temporary folder; the root, the unit folder, the sudoers folder and the git folder are
@@ -27,11 +27,11 @@ function put(file, text, mode) {
 // A staging tree: the files of this repository the installer reads
 function staging(base, options = {}) {
   const tree = path.join(base, 'staging');
-  for (const name of ['mini/install.sh', 'mini/local.example.env', 'mini/systemd/teletraan-control.socket', 'mini/systemd/teletraan-control@.service', 'mini/sudoers/teletraan-control', 'mini/git/post-receive']) {
+  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive']) {
     put(path.join(tree, name), fs.readFileSync(path.join(repo, name)));
   }
   put(path.join(tree, 'dashboard/index.html'), '<html></html>');
-  put(path.join(tree, 'mini/scripts/kiosk.sh'), '#!/bin/sh\n');
+  put(path.join(tree, 'computer/scripts/kiosk.sh'), '#!/bin/sh\n');
   put(path.join(tree, 'control/server.js'), '//\n');
   if (options.old) put(path.join(tree, 'deploy/scripts/pull.sh'), '#!/bin/sh\n');
   return tree;
@@ -43,7 +43,7 @@ function setup(options = {}) {
   const log = path.join(base, 'calls.log');
   fs.mkdirSync(bin, { recursive: true });
   const logger = name => `#!/bin/sh\necho "${name} $*" >> "${log}"\n`;
-  put(path.join(bin, 'docker'), logger('docker') + (options.noImage ? '[ "$1 $2" = "image inspect" ] && exit 1\n' : '') + '# the release install, as far as the script can tell: a new release that current points at\n[ "$1" = run ] && { mkdir -p "$TELETRAAN_ROOT/releases/9/mini" && ln -sfn releases/9 "$TELETRAAN_ROOT/current"; }\nexit 0\n', 0o755);
+  put(path.join(bin, 'docker'), logger('docker') + (options.noImage ? '[ "$1 $2" = "image inspect" ] && exit 1\n' : '') + '# the release install, as far as the script can tell: a new release that current points at\n[ "$1" = run ] && { mkdir -p "$TELETRAAN_ROOT/releases/9/computer" && ln -sfn releases/9 "$TELETRAAN_ROOT/current"; }\nexit 0\n', 0o755);
   put(path.join(bin, 'systemctl'), logger('systemctl') + 'exit 0\n', 0o755);
   put(path.join(bin, 'visudo'), logger('visudo') + (options.badSudoers ? 'exit 1\n' : 'exit 0\n'), 0o755);
   put(path.join(bin, 'chown'), logger('chown') + 'exit 0\n', 0o755);
@@ -55,7 +55,7 @@ function setup(options = {}) {
   return {
     base: base, root: root, tree: tree, places: places,
     run(args = ['--yes'], input = '') {
-      const result = spawnSync('bash', [path.join(tree, 'mini/install.sh'), ...args], {
+      const result = spawnSync('bash', [path.join(tree, 'computer/install.sh'), ...args], {
         input: input, encoding: 'utf8',
         env: { PATH: bin + ':/usr/bin:/bin:/usr/local/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMD: places.systemd, TELETRAAN_SUDOERS: places.sudoers, TELETRAAN_GIT: places.git, TELETRAAN_ACCOUNT: account, HOME: base },
       });
@@ -64,7 +64,7 @@ function setup(options = {}) {
   };
 }
 
-// An /opt/teletraan from before: a tree with deploy/ or mini/, and its local.env
+// An /opt/teletraan from before: a tree with deploy/ or computer/, and its local.env
 function oldTree(root, folder) {
   put(path.join(root, 'dashboard/index.html'), '<html>old</html>');
   put(path.join(root, folder + '/scripts/kiosk.sh'), '#!/bin/sh\n');
@@ -91,7 +91,7 @@ test('without sudo, without the Node image, or inside the root, it stops and say
   const moved = path.join(inside.root, 'staging');
   fs.mkdirSync(path.dirname(moved), { recursive: true });
   fs.cpSync(inside.tree, moved, { recursive: true });
-  const bad = spawnSync('bash', [path.join(moved, 'mini/install.sh'), '--yes'], { encoding: 'utf8', env: { PATH: path.join(inside.base, 'bin') + ':/usr/bin:/bin', TELETRAAN_ROOT: inside.root, TELETRAAN_ACCOUNT: account } });
+  const bad = spawnSync('bash', [path.join(moved, 'computer/install.sh'), '--yes'], { encoding: 'utf8', env: { PATH: path.join(inside.base, 'bin') + ':/usr/bin:/bin', TELETRAAN_ROOT: inside.root, TELETRAAN_ACCOUNT: account } });
   assert.ok(bad.stderr.includes('cannot be inside'), bad.stderr);
 });
 
@@ -114,7 +114,7 @@ test('an old /opt/teletraan becomes releases/1, local.env moves to the root and 
   assert.ok(result.calls.includes('systemctl disable --now teletraan-pull.timer'), result.calls);
 });
 
-test('a Mini that already has releases is not moved again', () => {
+test('a computer that already has releases is not moved again', () => {
   const s = setup();
   put(path.join(s.root, 'releases/COUNTER'), '4\n');
   put(path.join(s.root, 'releases/4/dashboard/index.html'), 'x');

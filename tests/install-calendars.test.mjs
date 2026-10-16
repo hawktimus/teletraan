@@ -1,4 +1,4 @@
-// Tests for mini/scripts/install-calendars.sh. The tools it uses on the Mini
+// Tests for computer/scripts/install-calendars.sh. The tools it uses on the Teletraan computer
 // (id, systemctl) are replaced with small fake ones in a temporary folder, so
 // nothing touches the machine. The script cannot get as far as copying files
 // here, because it only does that with sudo and with the repository at
@@ -15,8 +15,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const installFile = path.join(repo, 'mini/scripts/install-calendars.sh');
-const timersFile = path.join(repo, 'mini/scripts/install-timers.sh');
+const installFile = path.join(repo, 'computer/scripts/install-calendars.sh');
+const timersFile = path.join(repo, 'computer/scripts/install-timers.sh');
 const unitFiles = ['teletraan-calendars.service', 'teletraan-calendars.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-install-calendars-'));
 
@@ -38,16 +38,16 @@ function writeTool(folder, name, text) {
 function setup(name) {
   const root = path.join(work, name);
   const bin = path.join(root, 'bin');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'mini/systemd'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/systemd'), { recursive: true });
   fs.mkdirSync(bin);
 
-  fs.copyFileSync(installFile, path.join(root, 'mini/scripts/install-calendars.sh'));
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
-  fs.chmodSync(path.join(root, 'mini/scripts/install-calendars.sh'), fs.statSync(installFile).mode);
-  fs.copyFileSync(path.join(repo, 'mini/scripts/fetch-calendars.sh'), path.join(root, 'mini/scripts/fetch-calendars.sh'));
-  fs.chmodSync(path.join(root, 'mini/scripts/fetch-calendars.sh'), 0o755);
-  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
+  fs.copyFileSync(installFile, path.join(root, 'computer/scripts/install-calendars.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
+  fs.chmodSync(path.join(root, 'computer/scripts/install-calendars.sh'), fs.statSync(installFile).mode);
+  fs.copyFileSync(path.join(repo, 'computer/scripts/fetch-calendars.sh'), path.join(root, 'computer/scripts/fetch-calendars.sh'));
+  fs.chmodSync(path.join(root, 'computer/scripts/fetch-calendars.sh'), 0o755);
+  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'computer/systemd', unit), path.join(root, 'computer/systemd', unit)));
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'id', '#!/bin/sh\n[ "$1" = -u ] && echo "$STUB_UID"\nexit 0\n');
@@ -60,7 +60,7 @@ function setup(name) {
     root: root,
     install(extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/install-calendars.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/install-calendars.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
   };
@@ -73,13 +73,13 @@ function test(name, run) {
 
 test('it stops, naming the file, when a unit file is missing or empty', () => {
   const missing = setup('missing');
-  fs.rmSync(path.join(missing.root, 'mini/systemd/teletraan-calendars.service'));
+  fs.rmSync(path.join(missing.root, 'computer/systemd/teletraan-calendars.service'));
   const first = missing.install();
   assert.equal(first.status, 1);
   assert.ok(first.errors.includes('teletraan-calendars.service is missing or empty'), first.errors);
 
   const empty = setup('empty');
-  fs.writeFileSync(path.join(empty.root, 'mini/systemd/teletraan-calendars.timer'), '');
+  fs.writeFileSync(path.join(empty.root, 'computer/systemd/teletraan-calendars.timer'), '');
   const second = empty.install();
   assert.equal(second.status, 1);
   assert.ok(second.errors.includes('teletraan-calendars.timer is missing or empty'), second.errors);
@@ -89,13 +89,13 @@ test('it stops, naming the file, when a unit file is missing or empty', () => {
 
 test('it stops when fetch-calendars.sh is missing or cannot be run', () => {
   const missing = setup('no-fetch');
-  fs.rmSync(path.join(missing.root, 'mini/scripts/fetch-calendars.sh'));
+  fs.rmSync(path.join(missing.root, 'computer/scripts/fetch-calendars.sh'));
   const first = missing.install();
   assert.equal(first.status, 1);
   assert.ok(first.errors.includes('fetch-calendars.sh is missing or cannot be run'), first.errors);
 
   const plain = setup('plain-fetch');
-  fs.chmodSync(path.join(plain.root, 'mini/scripts/fetch-calendars.sh'), 0o644);
+  fs.chmodSync(path.join(plain.root, 'computer/scripts/fetch-calendars.sh'), 0o644);
   const second = plain.install();
   assert.equal(second.status, 1);
   assert.ok(second.errors.includes('fetch-calendars.sh is missing or cannot be run'), second.errors);
@@ -134,10 +134,10 @@ test('it fills in the account the way install-timers.sh does, and the units it c
   assert.ok(own && timers, 'both scripts have the line');
   assert.equal(own[0].replace(/ "\$units\/\$unit"/, ' "$unit"'), timers[0]);
 
-  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-calendars.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-calendars.timer'), 'utf8');
+  const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-calendars.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-calendars.timer'), 'utf8');
   assert.deepEqual(service.match(/^User=.*$/gm), ['User=ACCOUNT']);
-  assert.ok(/^ExecStart=\/opt\/teletraan\/mini\/scripts\/fetch-calendars\.sh$/m.test(service));
+  assert.ok(/^ExecStart=\/opt\/teletraan\/computer\/scripts\/fetch-calendars\.sh$/m.test(service));
   assert.ok(/^OnUnitActiveSec=15min$/m.test(timer));
   assert.ok(!/hawktimus/i.test(service + timer), 'no account name is written in the unit files');
 });

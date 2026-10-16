@@ -54,7 +54,7 @@ test('the page says the index tables and the numbers that the settings start wit
 });
 
 test('the numbers of the read interval and the daily budget are the ones in the script and the settings', () => {
-  const script = textOf(path.join(repo, 'mini/scripts/monday-sync.sh'));
+  const script = textOf(path.join(repo, 'computer/scripts/monday-sync.sh'));
   const how = section('How often it reads');
   const budget = section('The daily read budget');
   assert.ok(how.includes('mondayEveryMinutes') && /5 to 120/.test(how) && /every 5 minutes/.test(how) && how.includes('starting at 30'));
@@ -102,8 +102,8 @@ test('the fields that the page says a task and a milestone have are the fields o
   assert.ok(/N tasks, M hidden \(no department\)/.test(written) && /Reads every N minutes/.test(written));
 });
 
-test('no other document still says the Mini reads every 10 minutes from board rows', () => {
-  ['docs/coaches-guide.md', 'docs/editing-content.md', 'README.md', 'mini/README.md'].forEach(file => {
+test('no other document still says the Teletraan computer reads every 10 minutes from board rows', () => {
+  ['docs/coaches-guide.md', 'docs/editing-content.md', 'README.md', 'computer/README.md'].forEach(file => {
     const text = read(file);
     text.split('\n').forEach(line => {
       if (/monday/i.test(line)) assert.ok(!/every 10 minutes/i.test(line), file + ' still says every 10 minutes: ' + line);
@@ -111,7 +111,7 @@ test('no other document still says the Mini reads every 10 minutes from board ro
     assert.ok(!/Under Boards click Add item/.test(text), file + ' still tells people to add a board row');
   });
   assert.ok(read('docs/coaches-guide.md').includes('docs/monday.md'));
-  assert.ok(!read('mini/systemd/teletraan-monday.timer').includes('10min'));
+  assert.ok(!read('computer/systemd/teletraan-monday.timer').includes('10min'));
 });
 
 let failures = 0;

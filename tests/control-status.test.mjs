@@ -33,7 +33,7 @@ function datasetAnswer(at = new Date(), extra = {}) {
   };
 }
 
-await check('GET status gives versions, kiosk and display lines, the Mini times, backups, restarts, disk, the address and three dots with reasons', async () => {
+await check('GET status gives versions, kiosk and display lines, the Teletraan computer times, backups, restarts, disk, the address and three dots with reasons', async () => {
   const world = await makeWorld([status], { answers: { 'status-mini': datasetAnswer() } });
   fs.mkdirSync(path.join(world.releasesDir, '14'));
   fs.mkdirSync(path.join(world.releasesDir, '13'));
@@ -124,7 +124,7 @@ await check('a helper that fails gives a plain error and logs the reason without
   assert.ok(world.logged.some(line => line.includes('the helper refused reboot')));
 });
 
-await check('POST now takes a report only from the Mini itself, keeps it, and GET now says how old it is', async () => {
+await check('POST now takes a report only from the Teletraan computer itself, keeps it, and GET now says how old it is', async () => {
   const world = await makeWorld([now], { pin: false });
   const report = { at: 'ignored', view: 'prime', theme: 'cybertron', team: 'prime', panel: 'tasks', build: 'v14 a1b2c3d', page: '2', hold: 'tasks', pause: false, dots: { monday: { color: 'green', reason: 'ok' } }, extra: 'dropped' };
 

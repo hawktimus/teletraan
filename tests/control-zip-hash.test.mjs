@@ -1,5 +1,5 @@
 // The zip check and the tree hash of the control service: names that climb out, links, a zip that unpacks to
-// too much, a damaged file, the exclusion list, and the answer of the page's hash equal to the Mini's.
+// too much, a damaged file, the exclusion list, and the answer of the page's hash equal to the Teletraan computer's.
 //
 //   node tests/control-zip-hash.test.mjs
 
@@ -32,7 +32,7 @@ test('a zip of stored and deflated files unpacks with the same bytes, and a scri
     const count = extractZip(makeZip(sampleTree(), { stored: stored }), out);
     assert.equal(count, 5);
     assert.equal(fs.readFileSync(path.join(out, 'dashboard/index.html'), 'utf8'), '<html></html>');
-    assert.ok(fs.statSync(path.join(out, 'mini/scripts/kiosk.sh')).mode & 0o100, 'a file that starts with #! is run');
+    assert.ok(fs.statSync(path.join(out, 'computer/scripts/kiosk.sh')).mode & 0o100, 'a file that starts with #! is run');
     assert.ok(!(fs.statSync(path.join(out, 'dashboard/index.html')).mode & 0o111));
   });
 });
@@ -64,11 +64,11 @@ test('a symbolic link, a damaged file, a bad zip and a zip that unpacks to too m
 });
 
 test('the exclusion list leaves out the repository history, packages, keys and generated files', () => {
-  ['.git/HEAD', 'studio/node_modules/x/y.js', '.DS_Store', 'dashboard/.DS_Store', 'mini/local.env', 'mini/local.env.bak', '.env', '_inputs/a.png', '_outputs/b.png',
-    'dashboard/build.js', 'mini/build.txt', 'studio-dist/index.html', 'studio/static/dashboard/index.html', 'dashboard/data/live/x.json', 'RELEASE.json'].forEach(name => {
+  ['.git/HEAD', 'studio/node_modules/x/y.js', '.DS_Store', 'dashboard/.DS_Store', 'computer/local.env', 'computer/local.env.bak', '.env', '_inputs/a.png', '_outputs/b.png',
+    'dashboard/build.js', 'computer/build.txt', 'studio-dist/index.html', 'studio/static/dashboard/index.html', 'dashboard/data/live/x.json', 'RELEASE.json'].forEach(name => {
     assert.equal(isExcluded(name), true, name);
   });
-  ['dashboard/index.html', 'mini/local.example.env', 'dashboard/build.example.js', 'studio/package.json', 'control/static/vendor/README-fflate.txt'].forEach(name => {
+  ['dashboard/index.html', 'computer/local.example.env', 'dashboard/build.example.js', 'studio/package.json', 'control/static/vendor/README-fflate.txt'].forEach(name => {
     assert.equal(isExcluded(name), false, name);
   });
 });
@@ -79,7 +79,7 @@ test('the hash ignores excluded files and files outside the four folders, and ch
   const base = treeHash(a);
   assert.match(base, /^[0-9a-f]{64}$/);
 
-  writeTree(a, { 'dashboard/build.js': 'x', 'mini/local.env': 'SECRET', 'docs/readme.md': 'text', '.git/HEAD': 'ref', 'tests/x.test.mjs': '1' });
+  writeTree(a, { 'dashboard/build.js': 'x', 'computer/local.env': 'SECRET', 'docs/readme.md': 'text', '.git/HEAD': 'ref', 'tests/x.test.mjs': '1' });
   assert.equal(treeHash(a), base);
 
   writeTree(a, { 'dashboard/index.html': '<html> </html>' });
@@ -91,7 +91,7 @@ test('the hash ignores excluded files and files outside the four folders, and ch
   assert.notEqual(treeHash(a), base);
 });
 
-test('the page computes the same hash as the Mini for the same folder, for a fixture and for this repository', async () => {
+test('the page computes the same hash as the Teletraan computer for the same folder, for a fixture and for this repository', async () => {
   const a = path.join(work, 'hash-b');
   writeTree(a, sampleTree({ 'dashboard/big.bin': Buffer.alloc(70000, 7), 'control/static/x.js': 'é ü' }));
   const files = listFiles(a).map(name => ({ path: name, read: async () => fs.readFileSync(path.join(a, name)) }));

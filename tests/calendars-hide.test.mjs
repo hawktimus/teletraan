@@ -1,7 +1,7 @@
 // Tests for the Hide buttons of the Calendars page in Studio. The rules they make and read are
 // plain functions in studio/inputs/calendars-view-parts.js, so nothing is installed and nothing touches the
-// network: the Studio's client is a small fake one. The same file checks the Node file that the Mini
-// runs for the page (mini/scripts/calendar-status.mjs): it lists 40 events with their days, and the
+// network: the Studio's client is a small fake one. The same file checks the Node file that the Teletraan computer
+// runs for the page (computer/scripts/calendar-status.mjs): it lists 40 events with their days, and the
 // document stays small enough to send. The page that draws the buttons is checked by
 // tests/schemas.test.mjs, which also runs every rule through the Calendar filters schema.
 //
@@ -32,7 +32,7 @@ function ruleOf(code, title, day, all) {
   return parts.hideRuleFor(code, { title: title, day: day }, all);
 }
 
-test('the word of a rule is the title without the three dots the Mini adds, cut to 30 characters, and an untitled event has none', () => {
+test('the word of a rule is the title without the three dots the Teletraan computer adds, cut to 30 characters, and an untitled event has none', () => {
   assert.deepEqual(parts.titleWords('Team meeting'), ['Team meeting']);
   assert.deepEqual(parts.titleWords('Pre-Season Meeting...'), ['Pre-Season Meeting']);
   assert.deepEqual(parts.titleWords('A'.repeat(60) + '...'), ['A'.repeat(30)]);
@@ -59,7 +59,7 @@ test('a rule has a stable id, and the same rule for the same title, calendar and
   assert.equal(rule._id, 'calendarFilter-hide-2eb3e2fca562025c', 'a rule made last week must be found by the same id this week');
   assert.equal(ruleOf('team', 'Team meeting', '2026-10-12', true)._id, 'calendarFilter-hide-b0c40c43775f9d6d');
   assert.equal(ruleOf('team', 'TEAM MEETING', '2026-10-12', false)._id, rule._id, 'capitals do not matter to a rule');
-  assert.equal(ruleOf('team', 'Team meeting...', '2026-10-12', false)._id, rule._id, 'the three dots of the Mini are not part of the title');
+  assert.equal(ruleOf('team', 'Team meeting...', '2026-10-12', false)._id, rule._id, 'the three dots of the Teletraan computer are not part of the title');
   assert.equal(ruleOf('team', 'Team meeting', '2026-10-12', true)._id, ruleOf('team', 'Team meeting', '2030-01-01', true)._id, 'a rule for every day has no day in it');
 
   const ids = [
@@ -157,7 +157,7 @@ test('the page judges an event by a rule exactly as the screen does, for every r
   assert.ok(judged === gridRules.length * titles.length * calendars.length * days.length && hidden > 100 && hidden < judged / 2, 'the grid has rules that hide and rules that do not: ' + hidden + ' of ' + judged);
 });
 
-test('a title with doubled spaces or a line break, which the Mini lists with single spaces, is found by the rule the page makes from the list', () => {
+test('a title with doubled spaces or a line break, which the Teletraan computer lists with single spaces, is found by the rule the page makes from the list', () => {
   const rule = ruleOf('team', 'Team meeting room', '2026-10-12', false);
   const kept = dashboardSanity.normalizeContent({ calendarFilters: [rule] }).calendarFilters;
   const seenOnScreen = title => dashboardEvents.hidingRule({ title: title, calendarId: 'team', firstDay: '2026-10-12', lastDay: '2026-10-12' }, kept, zone, now) !== null;
@@ -243,7 +243,7 @@ test('an event that the list says a rule hides is that rule if the page made it,
   assert.equal(parts.controlFor('team', listed, marksOf([])).state, 'other', 'a rule that is not there, and was not deleted here, is changed under Calendar filters');
 });
 
-test('after Show again the list may still name the deleted rule, and the event reads as shown until the Mini lists it again', () => {
+test('after Show again the list may still name the deleted rule, and the event reads as shown until the Teletraan computer lists it again', () => {
   const one = ruleOf('team', 'Team meeting', '2026-10-12', false);
   const listed = Object.assign({}, eventShown, { shown: false, rule: one.name });
 
@@ -255,7 +255,7 @@ test('after Show again the list may still name the deleted rule, and the event r
   assert.deepEqual(parts.controlFor('team', listed, marksOf([other], [one.name])), { state: 'made', rule: other }, 'another rule made here still hides it');
 });
 
-test('the lines of an event get the rules made here: hidden at once, shown again, and the Mini list is left alone without them', () => {
+test('the lines of an event get the rules made here: hidden at once, shown again, and the Teletraan computer list is left alone without them', () => {
   const entries = [{ id: 'team', name: 'Team calendar', show: true, kind: 'meetings' }];
   const status = {
     calendars: [{
@@ -312,7 +312,7 @@ test('the kind of each calendar is a line in its row and a fact, and a calendar 
   const rows = parts.rowsOf(entries, { calendars: [{ code: 'only', error: 'no address set yet' }] }, now);
 
   assert.deepEqual(rows.map(row => row.kind), ['Kind: Meetings', 'Kind: Competitions', 'Kind: Outreach', 'Kind: Deadlines', 'Kind: no chip', 'Kind: no chip', 'Kind: no chip', 'Kind: no chip', 'Kind: no chip', 'Kind: Not set']);
-  assert.deepEqual(rows.map(row => row.kindMissing), [false, false, false, false, true, true, true, true, true, false], 'a calendar the Mini only knows about is not on the screen, so it has no kind to miss');
+  assert.deepEqual(rows.map(row => row.kindMissing), [false, false, false, false, true, true, true, true, true, false], 'a calendar the Teletraan computer only knows about is not on the screen, so it has no kind to miss');
   assert.equal(parts.detailOf(rows[3], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'Deadlines');
   assert.equal(parts.detailOf(rows[4], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'no chip', 'other is the old starting value and counts as no kind');
   assert.equal(parts.detailOf(rows[5], null, now).facts.filter(fact => fact.label === 'Kind')[0].text, 'no chip');
@@ -336,7 +336,7 @@ test('the words of the buttons are short plain sentences with no dash, exclamati
 
   assert.equal(parts.askText('Team calendar', 'Team meeting'), 'This hides every event in Team calendar with Team meeting in its title, on every day.');
   assert.equal(parts.hideOneLabel + '|' + parts.hideAllLabel + '|' + parts.showAgainLabel + '|' + parts.confirmLabel + '|' + parts.cancelLabel, 'Hide this one|Hide all like this|Show again|Hide|Cancel');
-  assert.equal(parts.helpLine, 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Mini.');
+  assert.equal(parts.helpLine, 'Hide this one, beside an event, takes that one event off the screen. Hide all like this hides every event with the same title in the same calendar. Both make a rule, and the rules are listed under Calendar filters. To add a calendar, ask a coach to add its address on the Teletraan computer.');
   assert.ok(parts.helpLine.includes(parts.hideOneLabel) && parts.helpLine.includes(parts.hideAllLabel), 'the help line names the two buttons as they are written on them');
   assert.ok(!/repeating meeting/.test(parts.helpLine), 'the help line no longer sends people to a rule for a repeating meeting');
   assert.equal(parts.changeLine, 'Change it under Calendar filters.');
@@ -441,9 +441,9 @@ test('the list of rules the page keeps is a new list each time', () => {
   assert.deepEqual(list, [{ _id: 'a' }, { _id: 'b' }]);
 });
 
-// The Node file the Mini runs
+// The Node file the Teletraan computer runs
 
-const helper = path.join(root, 'mini/scripts/calendar-status.mjs');
+const helper = path.join(root, 'computer/scripts/calendar-status.mjs');
 
 function noon(daysFromToday) {
   const today = new Date();
@@ -464,7 +464,7 @@ function busyCalendar(title) {
   return parts.join('\r\n') + '\r\n';
 }
 
-// Makes the document the Mini sends, for seven calendars with the same title and a rule that hides them all
+// Makes the document the Teletraan computer sends, for seven calendars with the same title and a rule that hides them all
 function documentFor(name, title, ruleName) {
   const folder = path.join(work, name);
   fs.mkdirSync(path.join(folder, 'calendars'), { recursive: true });
@@ -586,7 +586,7 @@ test('a long title is never cut through the middle of an emoji, so the document 
 
 // The docs
 
-const docs =['docs/calendars-page.md', 'docs/hide-a-repeating-meeting.md', 'docs/calendar-filters.md', 'docs/rebuilding-the-mini.md'];
+const docs =['docs/calendars-page.md', 'docs/hide-a-repeating-meeting.md', 'docs/calendar-filters.md', 'docs/rebuilding-the-computer.md'];
 
 test('the docs start with the button and give the rule form second, and name the rules the page makes', () => {
   const hide = fs.readFileSync(path.join(root, 'docs/hide-a-repeating-meeting.md'), 'utf8');
@@ -603,15 +603,15 @@ test('the docs start with the button and give the rule form second, and name the
 });
 
 test('the docs are plain: no dash, no exclamation mark, no emoji and no filler word', () => {
-  docs.concat(['docs/coaches-guide.md', 'docs/editing-content.md', 'docs/using-the-studio.md', 'mini/README.md', 'dashboard/package.json']).forEach(file => {
+  docs.concat(['docs/coaches-guide.md', 'docs/editing-content.md', 'docs/using-the-studio.md', 'computer/README.md', 'dashboard/package.json']).forEach(file => {
     const text = fs.readFileSync(path.join(root, file), 'utf8');
     assert.ok(!/[\u2014\u2013]/.test(text), file + ' has a dash');
     assert.ok(!/\p{Extended_Pictographic}/u.test(text), file + ' has an emoji');
   });
 
-  // docs/rebuilding-the-mini.md quotes words of the Studio and of the TV menu in older steps, so only its step 19 is
+  // docs/rebuilding-the-computer.md quotes words of the Studio and of the TV menu in older steps, so only its step 19 is
   // read for filler words, in tests/calendar-node.test.mjs
-  docs.filter(file => file !== 'docs/rebuilding-the-mini.md').forEach(file => {
+  docs.filter(file => file !== 'docs/rebuilding-the-computer.md').forEach(file => {
     const text = fs.readFileSync(path.join(root, file), 'utf8').replace(/`[^`]*`/g, '').replace(/^ {4}.*$/gm, '');
     assert.ok(!/\b(simply|just|basically|really|very|actually|easily)\b/i.test(text), file + ' has a filler word');
     assert.ok(!/[a-z)]!(\s|$)/.test(text), file + ' has an exclamation mark');

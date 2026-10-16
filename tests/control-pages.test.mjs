@@ -20,7 +20,7 @@ function check(name, test) {
 const folder = new URL('../control/static/tabs/', import.meta.url).pathname;
 const now = new Date('2026-10-15T12:00:00Z');
 
-check('every value from the Mini is escaped', () => {
+check('every value from the Teletraan computer is escaped', () => {
   assert.equal(esc('<b>"x"&\'</b>'), '&lt;b&gt;&quot;x&quot;&amp;&#39;&lt;/b&gt;');
   assert.ok(!logHtml(['<script>alert(1)</script>']).includes('<script>'));
   assert.ok(!nowCardHtml({ report: { panel: '<img onerror=x>' }, quiet: false, rows: ['<i>'], receivedAt: now.toISOString() }, now).includes('<img'));

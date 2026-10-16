@@ -1,4 +1,4 @@
-// Tests for mini/scripts/status-write.sh, the way the services and kiosk.sh run
+// Tests for computer/scripts/status-write.sh, the way the services and kiosk.sh run
 // it, and that the dashboard never reads the status document. curl is replaced
 // with a small fake one in a temporary folder, so nothing touches the network.
 // The token and the project in the test are made up.
@@ -14,8 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { readModule } from './helpers/read-module.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const scriptFile = path.join(repo, 'mini/scripts/status-write.sh');
-const kioskFile = path.join(repo, 'mini/scripts/kiosk.sh');
+const scriptFile = path.join(repo, 'computer/scripts/status-write.sh');
+const kioskFile = path.join(repo, 'computer/scripts/kiosk.sh');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-status-'));
 
 // The tools the script needs that are not the ones being faked
@@ -72,16 +72,16 @@ function setup(name, options) {
   const root = path.join(work, name);
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
 
-  fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/status-write.sh'));
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
+  fs.copyFileSync(scriptFile, path.join(root, 'computer/scripts/status-write.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   if (!options.noConfig) fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   if (options.config) fs.writeFileSync(path.join(root, 'dashboard/config.js'), options.config);
-  if (options.localEnv !== undefined) fs.writeFileSync(path.join(root, 'mini/local.env'), options.localEnv);
+  if (options.localEnv !== undefined) fs.writeFileSync(path.join(root, 'computer/local.env'), options.localEnv);
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', fakeCurl);
@@ -95,7 +95,7 @@ function setup(name, options) {
     stub: stub,
     run(args) {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub };
-      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/status-write.sh')].concat(args), { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/status-write.sh')].concat(args), { env: env, encoding: 'utf8', input: '' });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: readModule(log, 'utf8') };
     },
     answer(body) {
@@ -151,7 +151,7 @@ function assertNoToken(result, label) {
 }
 
 test('with no token the script exits quietly and curl is never called', () => {
-  const example = readModule(path.join(repo, 'mini/local.example.env'), 'utf8').match(/^SANITY_WRITE_TOKEN=.*$/m)[0];
+  const example = readModule(path.join(repo, 'computer/local.example.env'), 'utf8').match(/^SANITY_WRITE_TOKEN=.*$/m)[0];
   const cases = {
     'no local.env': undefined,
     'no token line': "TELETRAAN_PORT='8080'\n",
@@ -217,7 +217,7 @@ test('the write is a POST with the token as a bearer header and a short time lim
   assert.equal(place.config().trim(), 'header = "Authorization: Bearer ' + token + '"');
 });
 
-test('content asks the dataset for the newest change to a published document, leaves out what the Mini writes, and writes that time', () => {
+test('content asks the dataset for the newest change to a published document, leaves out what the Teletraan computer writes, and writes that time', () => {
   const place = setup('content', { localEnv: goodEnv });
   const result = place.run(['content']);
   assert.equal(result.status, 0, result.errors);
@@ -355,7 +355,7 @@ test('the project, the dataset and the API version come from dashboard/config.js
   });
 });
 
-// A time this long before now, in the form the Mini writes
+// A time this long before now, in the form the Teletraan computer writes
 function timeAgo(milliseconds) {
   return new Date(Date.now() - milliseconds).toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
@@ -508,13 +508,13 @@ test('the calendar and slides services run it after their job, and a failure of 
   };
 
   Object.keys(jobs).forEach(unit => {
-    const text = readModule(path.join(repo, 'mini/systemd', unit), 'utf8');
+    const text = readModule(path.join(repo, 'computer/systemd', unit), 'utf8');
     const lines = text.split('\n');
-    const start = lines.indexOf('ExecStart=/opt/teletraan/mini/scripts/' + jobs[unit][0]);
+    const start = lines.indexOf('ExecStart=/opt/teletraan/computer/scripts/' + jobs[unit][0]);
     const posts = lines.filter(line => line.startsWith('ExecStartPost='));
 
     assert.ok(start !== -1, unit + ' still runs its job');
-    assert.deepEqual(posts, jobs[unit][1].map(job => 'ExecStartPost=-/opt/teletraan/mini/scripts/status-write.sh ' + job), unit + ' runs status-write.sh with a minus in front, so that a failure is ignored');
+    assert.deepEqual(posts, jobs[unit][1].map(job => 'ExecStartPost=-/opt/teletraan/computer/scripts/status-write.sh ' + job), unit + ' runs status-write.sh with a minus in front, so that a failure is ignored');
     assert.ok(lines.indexOf(posts[0]) > start, unit + ' runs it after the job');
     assert.equal(lines.filter(line => line.startsWith('ExecStart=')).length, 1, unit);
     assert.deepEqual(text.match(/^User=.*$/gm), ['User=ACCOUNT']);
@@ -523,7 +523,7 @@ test('the calendar and slides services run it after their job, and a failure of 
 
 test('kiosk.sh starts it at the beginning, in the background with its output thrown away, so it never holds the screen back', () => {
   const text = readModule(kioskFile, 'utf8');
-  const call = '"$mini/scripts/status-write.sh" kiosk > /dev/null 2>&1 &';
+  const call = '"$computer/scripts/status-write.sh" kiosk > /dev/null 2>&1 &';
 
   assert.equal(text.split(call).length, 2, 'kiosk.sh has the call once');
   assert.ok(text.indexOf(call) < text.indexOf('curl --fail --silent --output /dev/null --retry'), 'before the wait for the dashboard');
@@ -533,10 +533,10 @@ test('kiosk.sh starts it at the beginning, in the background with its output thr
   assert.equal(syntax.status, 0, syntax.stderr);
 });
 
-test('docs/rebuilding-the-mini.md says how to make the token, where it goes, and which scripts need it', () => {
-  const doc = readModule(path.join(repo, 'docs/rebuilding-the-mini.md'), 'utf8');
+test('docs/rebuilding-the-computer.md says how to make the token, where it goes, and which scripts need it', () => {
+  const doc = readModule(path.join(repo, 'docs/rebuilding-the-computer.md'), 'utf8');
   ['SANITY_WRITE_TOKEN', 'sanity.io/manage', 'Editor', 'status-write.sh', 'install-calendars.sh', 'install-slides.sh', 'No status yet'].forEach(word => {
-    assert.ok(doc.includes(word), 'docs/rebuilding-the-mini.md should mention ' + word);
+    assert.ok(doc.includes(word), 'docs/rebuilding-the-computer.md should mention ' + word);
   });
 });
 

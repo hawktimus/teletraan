@@ -1,5 +1,5 @@
 // Tests for the Keys tab (control/routes/env.js, control/support/keys.js): masking, checks, and a merge that
-// gives the same file as tools/mini/merge-env.sh. Fake values only.
+// gives the same file as tools/teletraan/merge-env.sh. Fake values only.
 //
 //   node tests/control-keys.test.mjs
 
@@ -35,7 +35,7 @@ await check('the merge gives the same file as merge-env.sh: replace in place, dr
   fs.writeFileSync(path.join(folder, 'new'), lines.join('\n') + '\n');
   // merge-env.sh handles only the three keys and calendars, so the PIN line is left out of its run
   fs.writeFileSync(path.join(folder, 'new'), lines.filter(line => !line.startsWith('CONTROL_PIN')).join('\n') + '\n');
-  const run = spawnSync('sh', [path.join(repo, 'tools/mini/merge-env.sh'), path.join(folder, 'local.env'), path.join(folder, 'new')], { encoding: 'utf8' });
+  const run = spawnSync('sh', [path.join(repo, 'tools/teletraan/merge-env.sh'), path.join(folder, 'local.env'), path.join(folder, 'new')], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const expected = fs.readFileSync(path.join(folder, 'local.env'), 'utf8');
   assert.equal(mergeEnv(existing, lines.filter(line => !line.startsWith('CONTROL_PIN'))), expected);

@@ -1,4 +1,4 @@
-// Tests for mini/scripts/nightly.sh and its unit files: the 04:00 restart, the Sunday 04:10
+// Tests for computer/scripts/nightly.sh and its unit files: the 04:00 restart, the Sunday 04:10
 // reboot and the skip when a presentation is booked within the hour. curl and systemctl are
 // fakes in a temporary folder, so nothing touches a real service.
 //
@@ -41,12 +41,12 @@ function run(when, booked) {
   const root = path.join(work, 'place' + counter);
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
-  fs.copyFileSync(path.join(repo, 'mini/scripts/nightly.sh'), path.join(root, 'mini/scripts/nightly.sh'));
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/nightly.sh'), path.join(root, 'computer/scripts/nightly.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   fs.writeFileSync(path.join(root, 'dashboard/config.js'), "export const sanity = {\n  projectId: 'abc123',\n  dataset: 'production',\n  apiVersion: '2024-01-01',\n};\n");
   ['sed', 'head', 'grep', 'date', 'dirname', 'cat'].forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', fakeCurl);
@@ -56,7 +56,7 @@ function run(when, booked) {
   if (booked === null) fs.writeFileSync(path.join(stub, 'curl.exit'), '7');
   else fs.writeFileSync(path.join(stub, 'answer.txt'), '{"ms":3,"query":"x","result":' + booked + '}');
 
-  const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/nightly.sh')], {
+  const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/nightly.sh')], {
     env: { PATH: bin, TZ: 'UTC', NIGHTLY_NOW: when, STUB_LOG: log, STUB_DIR: stub },
     encoding: 'utf8',
   });
@@ -81,7 +81,7 @@ check('a late start of a minute or two still counts as the 04:00 run', () => {
   assert.deepEqual(run('3 0357', 0).did, ['systemctl restart teletraan-kiosk']);
 });
 
-check('at 04:10 on a Sunday with nothing booked the Mini is rebooted', () => {
+check('at 04:10 on a Sunday with nothing booked the Teletraan computer is rebooted', () => {
   assert.deepEqual(run('7 0410', 0).did, ['systemctl reboot']);
 });
 
@@ -121,18 +121,18 @@ check('any other time of day does nothing and does not ask Sanity', () => {
 });
 
 check('the timer fires at 04:00 daily and 04:10 on Sundays, is not persistent, and starts the service', () => {
-  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-nightly.timer'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-nightly.timer'), 'utf8');
   assert.match(timer, /^OnCalendar=\*-\*-\* 04:00:00$/m);
   assert.match(timer, /^OnCalendar=Sun \*-\*-\* 04:10:00$/m);
   assert.match(timer, /^Persistent=false$/m);
-  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-nightly.service'), 'utf8');
-  assert.match(service, /^ExecStart=\/opt\/teletraan\/mini\/scripts\/nightly\.sh$/m);
+  const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-nightly.service'), 'utf8');
+  assert.match(service, /^ExecStart=\/opt\/teletraan\/computer\/scripts\/nightly\.sh$/m);
 });
 
 check('the backup timer is at 03:15 and the script keeps 14', () => {
-  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-backup.timer'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-backup.timer'), 'utf8');
   assert.match(timer, /^OnCalendar=\*-\*-\* 03:15:00$/m);
-  assert.match(fs.readFileSync(path.join(repo, 'mini/scripts/backup-dataset.sh'), 'utf8'), /^keep=14$/m);
+  assert.match(fs.readFileSync(path.join(repo, 'computer/scripts/backup-dataset.sh'), 'utf8'), /^keep=14$/m);
 });
 
 console.log(passed + ' of ' + passed + ' checks passed.');

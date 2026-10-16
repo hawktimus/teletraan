@@ -1,4 +1,4 @@
-// Tests for the build on the wall: the job "version" of mini/scripts/status-write.sh (the hash, the date and the
+// Tests for the build on the wall: the job "version" of computer/scripts/status-write.sh (the hash, the date and the
 // branch written to status-mini), kiosk.sh calling it at start, the Mac tool calling it after the copy, and the
 // places that show it. curl, ssh, rsync, sudo and systemctl are small fake ones in a temporary folder, so nothing
 // touches the network or a real Mini. The token and the project are made up.
@@ -48,19 +48,19 @@ printf '%s' "$body" > "$STUB_DIR/last-body.json"
 exit 0
 `;
 
-// A copy of the Mini's repository: the script, config.js and, when asked, a git history
-function miniPlace(name, options = {}) {
+// A copy of the Teletraan computer's repository: the script, config.js and, when asked, a git history
+function computerPlace(name, options = {}) {
   const root = path.join(work, name);
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
-  fs.copyFileSync(path.join(repo, 'mini/scripts/status-write.sh'), path.join(root, 'mini/scripts/status-write.sh'));
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/status-write.sh'), path.join(root, 'computer/scripts/status-write.sh'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
-  fs.writeFileSync(path.join(root, 'mini/local.env'), "SANITY_WRITE_TOKEN='" + (options.noToken ? '' : token) + "'\n");
+  fs.writeFileSync(path.join(root, 'computer/local.env'), "SANITY_WRITE_TOKEN='" + (options.noToken ? '' : token) + "'\n");
   ['sed', 'tail', 'head', 'grep', 'date', 'dirname', 'cat', 'awk'].concat(options.git ? ['git'] : []).forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', fakeCurl);
   const log = path.join(root, 'calls.log');
@@ -86,7 +86,7 @@ function miniPlace(name, options = {}) {
     root: root,
     commit: options.commit,
     run() {
-      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/status-write.sh'), 'version'], {
+      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/status-write.sh'), 'version'], {
         env: { PATH: bin, STUB_LOG: log, STUB_DIR: stub }, encoding: 'utf8', input: '',
       });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
@@ -101,7 +101,7 @@ function miniPlace(name, options = {}) {
 const setOf = body => body.mutations[1].patch.set;
 
 test('version writes the short hash, the date and the branch of the repository to status-mini', () => {
-  const place = miniPlace('git', { git: true });
+  const place = computerPlace('git', { git: true });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
   assert.deepEqual(setOf(place.body()), { buildCommit: place.commit, buildDate: '2026-10-14', buildBranch: 'work' });
@@ -109,17 +109,17 @@ test('version writes the short hash, the date and the branch of the repository t
   assert.ok(!result.text.includes(token) && !result.errors.includes(token) && !result.calls.includes(token), 'the token never shows');
 });
 
-test('version reads mini/build.txt when the Mac tool left one, because a copy has no git history of its own', () => {
-  const place = miniPlace('stamp', { git: true });
-  fs.writeFileSync(path.join(place.root, 'mini/build.txt'), 'commit=abc1234\ndate=2026-10-13\nbranch=main\n');
+test('version reads computer/build.txt when the Mac tool left one, because a copy has no git history of its own', () => {
+  const place = computerPlace('stamp', { git: true });
+  fs.writeFileSync(path.join(place.root, 'computer/build.txt'), 'commit=abc1234\ndate=2026-10-13\nbranch=main\n');
   assert.equal(place.run().status, 0);
   assert.deepEqual(setOf(place.body()), { buildCommit: 'abc1234', buildDate: '2026-10-13', buildBranch: 'main' });
 });
 
 test('version refuses a stamp that does not look like a hash, a date and a branch, and writes nothing', () => {
   ['commit=abc"1234\ndate=2026-10-13\nbranch=main\n', 'commit=abc1234\ndate=yesterday\nbranch=main\n', 'commit=abc1234\ndate=2026-10-13\nbranch=a b;c\n', ''].forEach((text, index) => {
-    const place = miniPlace('bad-' + index);
-    fs.writeFileSync(path.join(place.root, 'mini/build.txt'), text);
+    const place = computerPlace('bad-' + index);
+    fs.writeFileSync(path.join(place.root, 'computer/build.txt'), text);
     const result = place.run();
     assert.equal(result.status, 1, text);
     assert.equal(place.body(), null, 'nothing was sent for ' + JSON.stringify(text));
@@ -127,29 +127,29 @@ test('version refuses a stamp that does not look like a hash, a date and a branc
 });
 
 test('version does nothing without a token, and without git or a stamp', () => {
-  const quiet = miniPlace('no-token', { git: true, noToken: true });
+  const quiet = computerPlace('no-token', { git: true, noToken: true });
   assert.equal(quiet.run().status, 0);
   assert.equal(quiet.body(), null);
   assert.equal(quiet.run().calls, '');
 
-  const bare = miniPlace('no-git');
+  const bare = computerPlace('no-git');
   assert.equal(bare.run().status, 0);
   assert.equal(bare.body(), null);
 });
 
 test('kiosk.sh starts the version job at the beginning, in the background, with its output thrown away', () => {
-  const text = read('mini/scripts/kiosk.sh');
-  const call = '"$mini/scripts/status-write.sh" version > /dev/null 2>&1 &';
+  const text = read('computer/scripts/kiosk.sh');
+  const call = '"$computer/scripts/status-write.sh" version > /dev/null 2>&1 &';
   assert.equal(text.split(call).length, 2, 'kiosk.sh has the call once');
   assert.ok(text.indexOf(call) < text.indexOf('exec ') || !text.includes('exec '), 'before the browser starts');
 });
 
 test('a pull removes the stamp, so git is the truth again', () => {
-  assert.ok(read('mini/scripts/pull.sh').includes('rm -f "$mini/build.txt"'));
-  assert.ok(/^mini\/build\.txt$/m.test(read('.gitignore')));
+  assert.ok(read('computer/scripts/pull.sh').includes('rm -f "$computer/build.txt"'));
+  assert.ok(/^computer\/build\.txt$/m.test(read('.gitignore')));
 });
 
-// The Mac tool, with the Mini as a folder
+// The Mac tool, with the Teletraan computer as a folder
 
 const fakeSsh = `#!/bin/sh
 echo "ssh $*" >> "$STUB_LOG"
@@ -166,7 +166,7 @@ case $command in
   true) exit 0 ;;
   'systemctl is-active teletraan-pull.timer') echo inactive; exit 3 ;;
   *status-write.sh*) echo "ran status-write" >> "$STUB_LOG"; exit 0 ;;
-  *) cd "$MINI_HOME" && PATH="$STUB_FAKES:$PATH" HOME="$MINI_HOME" sh -c "$command" ;;
+  *) cd "$COMPUTER_HOME" && PATH="$STUB_FAKES:$PATH" HOME="$COMPUTER_HOME" sh -c "$command" ;;
 esac
 `;
 
@@ -175,24 +175,24 @@ function toolPlace(name, options = {}) {
   const place = {
     home: path.join(root, 'home'),
     fakes: path.join(root, 'fakes'),
-    miniHome: path.join(root, 'mini-home'),
-    miniRepo: path.join(root, 'mini-repo'),
+    computerHome: path.join(root, 'computer-home'),
+    computerRepo: path.join(root, 'computer-repo'),
     log: path.join(root, 'calls.log'),
   };
-  [place.home, place.fakes, place.miniHome, path.join(place.miniRepo, 'mini/scripts'), path.join(place.home, '.teletraan')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
+  [place.home, place.fakes, place.miniHome, path.join(place.miniRepo, 'computer/scripts'), path.join(place.home, '.teletraan')].forEach(folder => fs.mkdirSync(folder, { recursive: true }));
   writeTool(place.fakes, 'ssh', fakeSsh);
   writeTool(place.fakes, 'rsync', '#!/bin/sh\necho "rsync $*" >> "$STUB_LOG"\nexit 0\n');
   writeTool(place.fakes, 'sudo', '#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexit 0\n');
   fs.writeFileSync(place.log, '');
   fs.writeFileSync(path.join(place.home, '.teletraan/config'), 'current=main\nmini.main=who@teletraan.test\n');
 
-  const toolFolder = options.tool || path.join(repo, 'tools/mini');
+  const toolFolder = options.tool || path.join(repo, 'tools/teletraan');
   place.run = words => {
     const env = {
       HOME: place.home, PATH: place.fakes + ':/usr/bin:/bin:/usr/sbin:/sbin', TERM: 'dumb',
-      STUB_LOG: place.log, STUB_FAKES: place.fakes, MINI_HOME: place.miniHome, MINI_REPO: place.miniRepo,
+      STUB_LOG: place.log, STUB_FAKES: place.fakes, COMPUTER_HOME: place.miniHome, COMPUTER_REPO: place.miniRepo,
     };
-    const result = spawnSync('/bin/bash', [path.join(toolFolder, 'teletraan-mini')].concat(words), { env: env, encoding: 'utf8', input: '' });
+    const result = spawnSync('/bin/bash', [path.join(toolFolder, 'teletraan-tool')].concat(words), { env: env, encoding: 'utf8', input: '' });
     return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(place.log, 'utf8').split('\n').filter(Boolean) };
   };
   return place;
@@ -212,17 +212,17 @@ test('the Mac tool update hands the installer the commit of this repository, aft
 
 test('the Mac tool says so and goes on when the folder has no git history, and the installer still runs', () => {
   const bare = path.join(work, 'bare-repo');
-  fs.mkdirSync(path.join(bare, 'tools/mini'), { recursive: true });
+  fs.mkdirSync(path.join(bare, 'tools/teletraan'), { recursive: true });
   fs.mkdirSync(path.join(bare, 'dashboard'), { recursive: true });
-  fs.mkdirSync(path.join(bare, 'mini'), { recursive: true });
+  fs.mkdirSync(path.join(bare, 'computer'), { recursive: true });
   fs.mkdirSync(path.join(bare, 'control'), { recursive: true });
-  fs.copyFileSync(path.join(repo, 'tools/mini/teletraan-mini'), path.join(bare, 'tools/mini/teletraan-mini'));
-  copyParts(path.join(repo, 'tools/mini/teletraan-mini'), path.join(bare, 'tools/mini'));
+  fs.copyFileSync(path.join(repo, 'tools/teletraan/teletraan-tool'), path.join(bare, 'tools/teletraan/teletraan-tool'));
+  copyParts(path.join(repo, 'tools/teletraan/teletraan-tool'), path.join(bare, 'tools/teletraan'));
   fs.writeFileSync(path.join(bare, 'dashboard/index.html'), '');
-  fs.writeFileSync(path.join(bare, 'mini/install.sh'), '');
+  fs.writeFileSync(path.join(bare, 'computer/install.sh'), '');
   fs.writeFileSync(path.join(bare, 'control/server.js'), '');
 
-  const place = toolPlace('tool-bare', { tool: path.join(bare, 'tools/mini') });
+  const place = toolPlace('tool-bare', { tool: path.join(bare, 'tools/teletraan') });
   const result = place.run(['update', '--yes']);
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.text.includes('no git history'), result.text);

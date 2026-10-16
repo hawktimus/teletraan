@@ -118,22 +118,22 @@ function writeTool(folder, name, text) {
 
 let counter = 0;
 
-// A copy of mini/ and a dashboard folder to run kiosk.sh in, with fake curl, xset, xrandr, chromium, and git.
-// Options: stamp (the text of mini/build.txt), git (what git prints for the short hash, or nothing).
+// A copy of computer/ and a dashboard folder to run kiosk.sh in, with fake curl, xset, xrandr, chromium, and git.
+// Options: stamp (the text of computer/build.txt), git (what git prints for the short hash, or nothing).
 function setup(options) {
   counter += 1;
   const root = path.join(work, 'run' + counter);
   const bin = path.join(root, 'bin');
   const home = path.join(root, 'home');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'));
   fs.mkdirSync(bin);
   fs.mkdirSync(home);
-  ['kiosk.sh', 'display.sh', 'lib.sh'].forEach(file => fs.copyFileSync(path.join(repo, 'mini/scripts', file), path.join(root, 'mini/scripts', file)));
-  writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', `#!/bin/sh
+  ['kiosk.sh', 'display.sh', 'lib.sh'].forEach(file => fs.copyFileSync(path.join(repo, 'computer/scripts', file), path.join(root, 'computer/scripts', file)));
+  writeTool(path.join(root, 'computer/scripts'), 'status-write.sh', `#!/bin/sh
 echo "status-write $* build=$(cat "$(dirname "$0")/../../dashboard/build.js" 2> /dev/null)" >> "$STUB_LOG"
 `);
-  if (options.stamp) fs.writeFileSync(path.join(root, 'mini/build.txt'), options.stamp);
+  if (options.stamp) fs.writeFileSync(path.join(root, 'computer/build.txt'), options.stamp);
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', '#!/bin/sh\nexit 0\n');
@@ -155,7 +155,7 @@ echo "status-write $* build=$(cat "$(dirname "$0")/../../dashboard/build.js" 2> 
 
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
-  const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/kiosk.sh')], {
+  const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/kiosk.sh')], {
     env: { PATH: bin, HOME: home, STUB_LOG: log, DISPLAY_POLL_INTERVAL: '0', DISPLAY_POLL_LIMIT: '0' },
     encoding: 'utf8',
     input: '',
@@ -190,7 +190,7 @@ test('kiosk.sh calls the version job after build.js is written, and starts the b
   const run = setup({ stamp: 'commit=abc1234\ndate=2026-10-15\nbranch=main\n' });
   assert.ok(run.log.includes('status-write version build=export const build = "abc1234";'), run.log);
   assert.ok(run.log.includes('chromium '));
-  const text = read('mini/scripts/kiosk.sh');
+  const text = read('computer/scripts/kiosk.sh');
   assert.ok(text.indexOf('write_build || true') < text.indexOf('status-write.sh" version'));
 });
 
@@ -204,17 +204,17 @@ test('kiosk.sh clears the browser cache folders and leaves cookies and Local Sto
 });
 
 test('kiosk.sh and the Mac tool pass the syntax check', () => {
-  assert.equal(spawnSync('/bin/sh', ['-n', path.join(repo, 'mini/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
-  assert.equal(spawnSync('bash', ['-n', path.join(repo, 'tools/mini/teletraan-mini')], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/sh', ['-n', path.join(repo, 'computer/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('bash', ['-n', path.join(repo, 'tools/teletraan/teletraan-tool')], { encoding: 'utf8' }).status, 0);
   // The release the installer makes writes build.js from RELEASE.json; the Mac tool hands it the commit
-  assert.ok(/install\.sh[^\n]*--commit/.test(textOf(path.join(repo, 'tools/mini/teletraan-mini'))), 'the Mac tool gives the installer the commit');
+  assert.ok(/install\.sh[^\n]*--commit/.test(textOf(path.join(repo, 'tools/teletraan/teletraan-tool'))), 'the Mac tool gives the installer the commit');
 });
 
 // The web server settings
 
-// What nginx would send for an address, from the map in mini/nginx/nginx.conf
+// What nginx would send for an address, from the map in computer/nginx/nginx.conf
 function cacheControl(uri) {
-  const nginx = read('mini/nginx/nginx.conf');
+  const nginx = read('computer/nginx/nginx.conf');
   const body = /map \$uri \$cache_control \{([\s\S]*?)\n  \}/.exec(nginx);
   assert.ok(body, 'nginx.conf has the map');
   // The first pattern that matches wins, and default is the answer when none does
@@ -249,7 +249,7 @@ test('nginx keeps the live data out of every cache', () => {
 });
 
 test('nginx uses the map for every response, keeps its locations as they were, and explains the choice', () => {
-  const nginx = read('mini/nginx/nginx.conf');
+  const nginx = read('computer/nginx/nginx.conf');
   assert.ok(/add_header Cache-Control \$cache_control always;/.test(nginx));
   assert.ok(!/add_header Cache-Control "no-store"/.test(nginx));
   assert.ok(/not a week of max-age/.test(nginx), 'the comment says why .js is not given a long max-age');

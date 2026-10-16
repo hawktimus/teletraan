@@ -1,6 +1,6 @@
-// Tests for mini/scripts/monday-sync.sh (the task board and the milestones board of
-// the rebuilt Monday workspace) and mini/scripts/install-monday.sh. The tools they use
-// on the Mini (curl, date, flock, id, systemctl) are replaced with small fake ones in a
+// Tests for computer/scripts/monday-sync.sh (the task board and the milestones board of
+// the rebuilt Monday workspace) and computer/scripts/install-monday.sh. The tools they use
+// on the Teletraan computer (curl, date, flock, id, systemctl) are replaced with small fake ones in a
 // temporary folder, so nothing touches the network or the machine. jq is the real one,
 // because the scripts depend on what it does, so this test needs jq installed. The
 // answers of Monday and Sanity are made up here, in the shape of the typed fragments the
@@ -17,8 +17,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { textOf, copyWithEdits } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const syncFile = path.join(repo, 'mini/scripts/monday-sync.sh');
-const installFile = path.join(repo, 'mini/scripts/install-monday.sh');
+const syncFile = path.join(repo, 'computer/scripts/monday-sync.sh');
+const installFile = path.join(repo, 'computer/scripts/install-monday.sh');
 const unitFiles = ['teletraan-monday.service', 'teletraan-monday.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-monday-'));
 
@@ -142,25 +142,25 @@ function setup(name, options) {
   const stub = path.join(root, 'stub');
   const data = path.join(root, 'data');
   const temp = path.join(root, 'tmp');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'mini/systemd'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/systemd'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   [bin, stub, temp, path.join(stub, 'monday')].forEach(folder => fs.mkdirSync(folder));
   if (!options.noData) fs.mkdirSync(data);
 
-  const scriptCopy = path.join(root, 'mini/scripts/monday-sync.sh');
-  copyWithEdits(syncFile, path.join(root, 'mini/scripts'), options.edits);
-  const installCopy = path.join(root, 'mini/scripts/install-monday.sh');
+  const scriptCopy = path.join(root, 'computer/scripts/monday-sync.sh');
+  copyWithEdits(syncFile, path.join(root, 'computer/scripts'), options.edits);
+  const installCopy = path.join(root, 'computer/scripts/install-monday.sh');
   fs.copyFileSync(installFile, installCopy);
   fs.chmodSync(installCopy, fs.statSync(installFile).mode);
-  writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
-  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
+  writeTool(path.join(root, 'computer/scripts'), 'status-write.sh', fakeStatusWrite);
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
+  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'computer/systemd', unit), path.join(root, 'computer/systemd', unit)));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
 
   if (!options.noEnv) {
     const env = options.env !== undefined ? options.env : "TELETRAAN_DATA='" + data + "'\nMONDAY_API_TOKEN='" + mondayToken + "'\nSANITY_WRITE_TOKEN='" + writeToken + "'\nCALENDAR_TEAM_URL='" + secret + "'\n";
-    fs.writeFileSync(path.join(root, 'mini/local.env'), env.replace('<data>', data));
+    fs.writeFileSync(path.join(root, 'computer/local.env'), env.replace('<data>', data));
   }
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -522,7 +522,7 @@ test('the requests go to the address and version of the block at the top, https 
   assert.ok(!/subitems\s*\{/.test(script), 'subitems are never asked for');
 });
 
-test('Sanity is asked for the settings, the teams, the Team leads, what the Mini wrote earlier and its own last read, without a login, and the writes go to the project in config.js', () => {
+test('Sanity is asked for the settings, the teams, the Team leads, what the Teletraan computer wrote earlier and its own last read, without a login, and the writes go to the project in config.js', () => {
   const place = setup('sanity', { tools: true });
   world(place);
   const result = place.run();
@@ -1396,12 +1396,12 @@ test('the starting values of the script are the starting values of Dashboard Set
 });
 
 test('the unit files name the account ACCOUNT, run the script, and the timer wakes it 2 minutes after boot and every 5 minutes', () => {
-  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-monday.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-monday.timer'), 'utf8');
+  const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-monday.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-monday.timer'), 'utf8');
 
   assert.deepEqual(service.match(/^User=.*$/gm), ['User=ACCOUNT']);
   assert.ok(/^Type=oneshot$/m.test(service));
-  assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/mini/scripts/monday-sync.sh']);
+  assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/computer/scripts/monday-sync.sh']);
   assert.ok(!/^ExecStartPost=/m.test(service), 'the script tells status-mini itself, and only after a run that worked');
   assert.ok(fs.existsSync(syncFile), 'the script the unit runs exists');
   assert.ok(/^OnBootSec=2min$/m.test(timer));
@@ -1410,30 +1410,30 @@ test('the unit files name the account ACCOUNT, run the script, and the timer wak
   assert.ok(!/hawktimus/i.test(service + timer), 'no account name is written in the unit files');
   assert.ok(!/^OnCalendar=/m.test(timer), 'one timer, every 5 minutes after the last run');
   assert.ok(/every 5 minutes/.test(timer) && /Dashboard Settings/.test(timer), 'the timer says that the setting decides how often Monday is read');
-  unitFiles.forEach(unit => assert.ok(fs.statSync(path.join(repo, 'mini/systemd', unit)).size > 100, unit + ' is not empty'));
+  unitFiles.forEach(unit => assert.ok(fs.statSync(path.join(repo, 'computer/systemd', unit)).size > 100, unit + ' is not empty'));
 });
 
 test('the script tells status-mini through status-write.sh, which knows the job monday', () => {
-  const status = fs.readFileSync(path.join(repo, 'mini/scripts/status-write.sh'), 'utf8');
+  const status = fs.readFileSync(path.join(repo, 'computer/scripts/status-write.sh'), 'utf8');
   assert.ok(status.includes('monday) field=lastMondaySyncAt ;;'));
-  assert.ok(textOf(syncFile).includes('"$mini/scripts/status-write.sh" monday || true'));
+  assert.ok(textOf(syncFile).includes('"$computer/scripts/status-write.sh" monday || true'));
 });
 
 test('install-monday.sh stops, naming the file, when a unit file is missing or empty', () => {
   const missing = setup('install-missing', { tools: true, install: true });
-  fs.rmSync(path.join(missing.root, 'mini/systemd/teletraan-monday.service'));
+  fs.rmSync(path.join(missing.root, 'computer/systemd/teletraan-monday.service'));
   const first = missing.install();
   assert.equal(first.status, 1);
   assert.ok(first.errors.includes('teletraan-monday.service is missing or empty'), first.errors);
 
   const empty = setup('install-empty', { tools: true, install: true });
-  fs.writeFileSync(path.join(empty.root, 'mini/systemd/teletraan-monday.timer'), '');
+  fs.writeFileSync(path.join(empty.root, 'computer/systemd/teletraan-monday.timer'), '');
   const second = empty.install();
   assert.equal(second.status, 1);
   assert.ok(second.errors.includes('teletraan-monday.timer is missing or empty'), second.errors);
 
   const noScript = setup('install-no-script', { tools: true, install: true });
-  fs.chmodSync(path.join(noScript.root, 'mini/scripts/monday-sync.sh'), 0o644);
+  fs.chmodSync(path.join(noScript.root, 'computer/scripts/monday-sync.sh'), 0o644);
   const third = noScript.install();
   assert.equal(third.status, 1);
   assert.ok(third.errors.includes('monday-sync.sh is missing or cannot be run'), third.errors);
@@ -1474,7 +1474,7 @@ test('install-monday.sh copies the two monday units only, with ACCOUNT filled in
 });
 
 test('local.example.env has a MONDAY_API_TOKEN line with a placeholder', () => {
-  const example = fs.readFileSync(path.join(repo, 'mini/local.example.env'), 'utf8');
+  const example = fs.readFileSync(path.join(repo, 'computer/local.example.env'), 'utf8');
   assert.ok(/^MONDAY_API_TOKEN='\[[^\n]*\]'$/m.test(example), 'a placeholder that starts with [');
 });
 

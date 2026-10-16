@@ -1176,7 +1176,7 @@ test('docs/layouts.md describes the two styles and which layout each uses, and t
 
   // the mirror and the other docs
   assert.ok(section.includes('styles/original/theme.css'));
-  ['README.md', 'docs/switch-the-look.md', 'docs/editing-content.md', 'docs/where-things-are.md', 'docs/try-it-on-the-mini.md'].forEach(file => assert.ok(!/Cybertron and Minimal have the bar layout|Cybertron and Minimal have a banner|cybertron` and `minimal` have the bar layout/.test(read(file).replace(/\s+/g, ' ')), file + ' still says Cybertron has the bar layout'));
+  ['README.md', 'docs/switch-the-look.md', 'docs/editing-content.md', 'docs/where-things-are.md', 'docs/try-it-on-the-computer.md'].forEach(file => assert.ok(!/Cybertron and Minimal have the bar layout|Cybertron and Minimal have a banner|cybertron` and `minimal` have the bar layout/.test(read(file).replace(/\s+/g, ' ')), file + ' still says Cybertron has the bar layout'));
 });
 
 // A page that the banner and the countdown can be drawn on, as in layouts.test.mjs: a fake clock and a fake page, and the real panels

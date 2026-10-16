@@ -28,7 +28,7 @@ test('a Photos row address carries its photos and the seconds of each, and other
   assert.equal('photoCount' in stillRow(readStill('?panel=tasks&photos=3')), false);
 });
 
-test('the content query leaves out a milestone that the Mini switched off', () => {
+test('the content query leaves out a milestone that the Teletraan computer switched off', () => {
   assert.ok(contentQuery.includes('*[_type == "milestone" && show != false]'));
 });
 

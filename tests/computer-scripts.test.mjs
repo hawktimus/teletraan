@@ -1,7 +1,7 @@
-// Every script in mini/scripts starts the same way: bash, a one-line usage, set -euo pipefail and the shared
+// Every script in computer/scripts starts the same way: bash, a one-line usage, set -euo pipefail and the shared
 // lib.sh, which holds the one reader of local.env and the one reader of dashboard/config.js.
 //
-//   node tests/mini-scripts.test.mjs
+//   node tests/computer-scripts.test.mjs
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const folder = path.join(repo, 'mini/scripts');
+const folder = path.join(repo, 'computer/scripts');
 // Files that other scripts read: lib.sh, display.sh and the parts of monday-sync.sh and frc-sync.sh
 const library = fs.readdirSync(folder).filter(name => name === 'lib.sh' || name === 'display.sh' || /^(monday|frc)-(?!sync\.sh)/.test(name));
 const scripts = fs.readdirSync(folder).filter(name => name.endsWith('.sh') && !library.includes(name)).sort();

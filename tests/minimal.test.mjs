@@ -23,7 +23,7 @@ const dashboardFolder = path.join(root, 'dashboard');
 
 // The dashboard files are browser modules named .js. Copying them next to a
 // package.json that says "type": "module" lets any version of node read them.
-const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-minimal-'));
+const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-toolmal-'));
 
 function copyInto(folder, from, to) {
   fs.mkdirSync(path.dirname(path.join(folder, to)), { recursive: true });

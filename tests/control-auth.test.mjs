@@ -107,7 +107,7 @@ test('local.env is read and merged without losing comments, and a value with a q
 async function serve(files = {}) {
   const root = path.join(work, 'service' + Math.random().toString(16).slice(2));
   fs.mkdirSync(path.join(root, 'releases/1/dashboard'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'releases/1/mini'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'releases/1/computer'), { recursive: true });
   fs.writeFileSync(path.join(root, 'releases/1/RELEASE.json'), JSON.stringify({ version: 1, commit: 'abc1234', date: '2026-10-15T20:00:00Z', from: 'git', note: 'Before', treeHash: '' }));
   fs.symlinkSync('releases/1', path.join(root, 'current'));
   fs.writeFileSync(path.join(root, 'local.env'), "CONTROL_PIN='424242'\nSANITY_WRITE_TOKEN='tokenvalue123456'\n");
@@ -180,7 +180,7 @@ test('POST /now needs no PIN at the door but every other call does, and pinCheck
   try {
     assert.equal(s.ctx.pinCheck({ method: 'POST', url: '/control/api/now', headers: {} }), false);
     const post = await fetch(s.base + '/control/api/now', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
-    assert.equal(post.status, 403, 'the door is open, and the route itself refuses an address that is not the Mini');
+    assert.equal(post.status, 403, 'the door is open, and the route itself refuses an address that is not the Teletraan computer');
     const local = await fetch(s.base + '/control/api/now', { method: 'POST', headers: { 'content-type': 'application/json', 'x-real-ip': '127.0.0.1' }, body: '{}' });
     assert.notEqual(local.status, 401);
     assert.notEqual(local.status, 403);

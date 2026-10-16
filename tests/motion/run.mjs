@@ -4,7 +4,7 @@
 //   node tests/motion/run.mjs            every rule
 //   node tests/motion/run.mjs swap       only the rules whose name has "swap" in it
 //
-// Playwright is a development dependency of tools/ and is not on the Mini. Without it this file says so and
+// Playwright is a development dependency of tools/ and is not on the Teletraan computer. Without it this file says so and
 // exits 0. tests/run.mjs runs it as its last step.
 
 import path from 'node:path';

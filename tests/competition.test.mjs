@@ -369,7 +369,7 @@ test('a card with nothing to show is not due, in Auto and in Always', () => {
   assert.equal(competition.competitionPlan(bare, noon('2027-03-12')).priority, true);
 });
 
-test('no frc data, a team the Mini did not read, or a problem with the data gives no cards and never throws', () => {
+test('no frc data, a team the Teletraan computer did not read, or a problem with the data gives no cards and never throws', () => {
   const none = { cards: [], priority: false };
   assert.deepEqual(competition.competitionPlan(contentWith(raw => { delete raw.frc; }), noon('2027-03-12')), none);
   assert.deepEqual(competition.competitionPlan({}, noon('2027-03-12')), none);
@@ -399,12 +399,12 @@ test('the cards are for the team on the screen: Nova has its own entry, and a te
   assert.deepEqual(idsOf(competition.competitionPlan(content, day)), prime, 'and Prime again after');
   assert.equal(frcModule.teamEntry(content.frc).number, '3229');
 
-  // a team that the Mini did not read has no entry, and no cards
+  // a team that the Teletraan computer did not read has no entry, and no cards
   const novaOnly = contentWith(raw => { raw.frc.teams = raw.frc.teams.filter(team => team.team === 'nova'); });
   assert.deepEqual(competition.competitionPlan(novaOnly, day), { cards: [], priority: false });
   onTeamScreen('nova', () => assert.equal(competition.competitionPlan(novaOnly, day).cards.length, 5));
 
-  // an entry for both teams, with no team, would be judged like every other list; the Mini always writes a team
+  // an entry for both teams, with no team, would be judged like every other list; the Teletraan computer always writes a team
   assert.equal(frcModule.teamEntry(null), null);
   assert.equal(frcModule.teamEntry({}), null);
   assert.equal(frcModule.teamEntry({ teams: [] }), null);
@@ -575,7 +575,7 @@ test('the next match without a win chance says so in a sentence, without a time 
   assert.ok(html.includes('>[Nickname]</text>'));
 });
 
-test('the live rank: the rank as the big number, how many are ranked, the record and the ranking points, and a dash for what the Mini did not find', () => {
+test('the live rank: the rank as the big number, how many are ranked, the record and the ranking points, and a dash for what the Teletraan computer did not find', () => {
   const html = panels.rank.markupFor(contentWith(), eventDay);
   assert.ok(html.includes('<h2 class="title" data-slat="title">RANK</h2>'));
   assert.ok(html.includes('class="rank">4</text>') && html.includes('>OF 36</text>'));
@@ -607,7 +607,7 @@ test('the results strip: eight chips in the colour of the alliance, the score, a
   assert.deepEqual(places, ['0,0', '280,0', '560,0', '840,0', '0,224', '280,224', '560,224', '840,224']);
   assert.equal(3 * 24 + 4 * 256, 1096);
 
-  // fewer than eight, a team with no colour, and a score the Mini did not find
+  // fewer than eight, a team with no colour, and a score the Teletraan computer did not find
   const few = contentWith(raw => { primeOf(raw.frc).results = [{ label: 'Q1', alliance: '', scoreFor: 40 }, { label: 'Q2', alliance: 'blue', scoreFor: 30, scoreAgainst: 20, won: true }]; });
   const small = panels.results.markupFor(few, eventDay);
   assert.equal(countOf(small, '<rect class="chip '), 2);
@@ -623,7 +623,7 @@ test('the alliance board: the number, the teams on it with the team on the scree
   assert.equal(countOf(html, 'class="ours"'), 1);
   assert.ok(html.includes('class="epa" text-anchor="end">31.2</text>'));
   const own = panels.alliance.markupFor(contentWith(raw => { delete primeOf(raw.frc).alliance.picks[0].epa; }), eventDay);
-  assert.ok(own.includes('class="epa" text-anchor="end">31.2</text>'), 'the team on the screen has its own EPA from its entry when the Mini wrote none beside it');
+  assert.ok(own.includes('class="epa" text-anchor="end">31.2</text>'), 'the team on the screen has its own EPA from its entry when the Teletraan computer wrote none beside it');
   assert.equal(countOf(own, 'class="epa"'), 3);
 
   const four = contentWith(raw => { const picks = primeOf(raw.frc).alliance.picks; for (let n = 0; n < 4; n++) picks.push({ number: '[' + (2000 + n) + ']', nickname: '[Spare]' }); });
@@ -763,7 +763,7 @@ test('the header says SAMPLE for sample data and how old the data is when it is 
   assert.equal(tag({ lastSyncAt: hoursAgo(5) }, now), '5 HR OLD');
   assert.equal(tag({ lastSyncAt: hoursAgo(47) }, now), '47 HR OLD');
   assert.equal(tag({ lastSyncAt: hoursAgo(72) }, now), '3 DAYS OLD');
-  assert.equal(tag({ lastSyncAt: '' }, now), '', 'a Mini that never wrote a time is not called old');
+  assert.equal(tag({ lastSyncAt: '' }, now), '', 'a computer that never wrote a time is not called old');
 
   const old = contentWith(raw => { delete raw.frc.sample; raw.frc.lastSyncAt = hoursAgo(5); });
   cardNames.forEach(name => assert.ok(panels[name].markupFor(old, now).includes('<span class="tag-text">5 HR OLD</span>'), name));
@@ -931,7 +931,7 @@ function reachOf(text, font) {
   return { left: left, right: left + width, top: text.y - font.size * 0.72, bottom: text.y + font.size * 0.1 };
 }
 
-// The longest things the Mini could send: long nicknames, long event names, five digit team numbers, and big numbers
+// The longest things the Teletraan computer could send: long nicknames, long event names, five digit team numbers, and big numbers
 function crowdedContent() {
   return contentWith(raw => {
     const entry = primeOf(raw.frc);

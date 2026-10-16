@@ -1,4 +1,4 @@
-// Tests for mini/scripts/check-calendars.sh and the Node file beside it. curl
+// Tests for computer/scripts/check-calendars.sh and the Node file beside it. curl
 // is replaced with a small fake one in a temporary folder, so nothing touches
 // the network, and the calendar addresses in the test are made up. Node is the
 // real one, because the script depends on the dashboard's own calendar code.
@@ -13,8 +13,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const scriptFile = path.join(repo, 'mini/scripts/check-calendars.sh');
-const helperFile = path.join(repo, 'mini/scripts/check-calendars.mjs');
+const scriptFile = path.join(repo, 'computer/scripts/check-calendars.sh');
+const helperFile = path.join(repo, 'computer/scripts/check-calendars.mjs');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendars-'));
 
 // The tools the script needs that are not the ones being faked
@@ -66,15 +66,15 @@ function setup(name, options) {
   const root = path.join(work, name);
   const bin = path.join(root, 'bin');
   const stub = path.join(root, 'stub');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(bin);
   fs.mkdirSync(stub);
 
-  fs.copyFileSync(scriptFile, path.join(root, 'mini/scripts/check-calendars.sh'));
-  fs.copyFileSync(helperFile, path.join(root, 'mini/scripts/check-calendars.mjs'));
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
+  fs.copyFileSync(scriptFile, path.join(root, 'computer/scripts/check-calendars.sh'));
+  fs.copyFileSync(helperFile, path.join(root, 'computer/scripts/check-calendars.mjs'));
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   fs.symlinkSync(path.join(repo, 'dashboard'), path.join(root, 'dashboard'));
-  if (options.localEnv) fs.writeFileSync(path.join(root, 'mini/local.env'), options.localEnv);
+  if (options.localEnv) fs.writeFileSync(path.join(root, 'computer/local.env'), options.localEnv);
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   if (options.node !== false) fs.symlinkSync(process.execPath, path.join(bin, 'node'));
@@ -91,7 +91,7 @@ function setup(name, options) {
     log: log,
     run() {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub };
-      const result = spawnSync('/bin/sh', [path.join(root, 'mini/scripts/check-calendars.sh')], { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/check-calendars.sh')], { env: env, encoding: 'utf8', input: '' });
       const text = result.stdout + result.stderr;
       return {
         lines: result.stdout.split('\n').filter(line => line !== ''),

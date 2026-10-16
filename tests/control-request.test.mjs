@@ -159,7 +159,7 @@ await check('the fields are always complete after tidying, and the defaults in c
   ['holdPanel', 'showView', 'previewTheme', 'pauseRotation'].forEach(name => assert.deepEqual(defaultSettings[name], tidy[name]));
 });
 
-await check('the report of the wall is cut to size, keeps the hold and the pause, and only the Mini itself reports', () => {
+await check('the report of the wall is cut to size, keeps the hold and the pause, and only the Teletraan computer itself reports', () => {
   const report = makeReport({ view: 'v'.repeat(50), panel: 'tasks', requests: { holdPanel: 'tasks', pauseRotation: true }, dots: { monday: { color: 'green', reason: 'ok' } } }, at);
   assert.equal(report.view.length, 20);
   assert.equal(report.hold, 'tasks');

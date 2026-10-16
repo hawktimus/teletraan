@@ -1,6 +1,6 @@
 // Tests that the screen keeps the Monday tab of Dashboard Settings tidy: the boards are
-// a list that starts empty, and the owner names are a switch that starts off. The Mini
-// reads both (mini/scripts/monday-sync.sh), the screen has no use for them, and a page
+// a list that starts empty, and the owner names are a switch that starts off. The Teletraan computer
+// reads both (computer/scripts/monday-sync.sh), the screen has no use for them, and a page
 // saved before the fields existed must load. The fields themselves are checked in
 // tests/schemas.test.mjs, and the script in tests/monday-script.test.mjs. Nothing is
 // drawn and nothing touches the network.
@@ -109,10 +109,10 @@ test('a board entry keeps where its status comes from as it was saved, and nothi
     if (item.isDirectory()) return names.concat(read(full));
     return item.name.endsWith('.js') && fs.readFileSync(full, 'utf8').includes('statusFrom') ? names.concat(full) : names;
   }, []);
-  assert.deepEqual(read(dashboardFolder), [], 'no dashboard file names the choice: the Mini reads it');
+  assert.deepEqual(read(dashboardFolder), [], 'no dashboard file names the choice: the Teletraan computer reads it');
 });
 
-test('the two Monday blocks and the read interval: the Mini reads the blocks and the screen keeps only the minutes', () => {
+test('the two Monday blocks and the read interval: the Teletraan computer reads the blocks and the screen keeps only the minutes', () => {
   assert.equal(config.defaultSettings.mondayEveryMinutes, 30);
   assert.equal(withDefaults({}).settings.mondayEveryMinutes, 30);
   const saved = normalizeContent({ settings: { mondayEveryMinutes: 60, mondayTaskBoard: { boardId: '1', teamLabels: [{ index: 1, team: { _type: 'reference', _ref: 'team-prime' } }] }, mondayMilestoneBoard: { boardId: '2' } } }).settings;

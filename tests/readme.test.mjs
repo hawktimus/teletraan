@@ -22,7 +22,7 @@ function tableOf(text) {
 
 test('the README table has a line for each folder of the repository', () => {
   const table = tableOf(readme);
-  ['dashboard', 'studio', 'control', 'mini', 'tools', 'tests', 'docs'].forEach(folder => {
+  ['dashboard', 'studio', 'control', 'computer', 'tools', 'tests', 'docs'].forEach(folder => {
     assert.ok(table.includes('| `' + folder + '/` |'), folder + ' has a line');
     assert.ok(fs.statSync(path.join(repo, folder)).isDirectory(), folder + ' exists');
   });

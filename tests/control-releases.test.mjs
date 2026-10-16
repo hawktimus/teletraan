@@ -43,7 +43,7 @@ function fakeRelease(p, n, extra = {}) {
   const dir = path.join(p.releasesDir, String(n));
   fs.mkdirSync(path.join(dir, 'dashboard'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'RELEASE.json'), JSON.stringify(Object.assign({ version: n, commit: 'abc1234', date: '2026-10-15T20:00:00Z', from: 'upload', note: '', treeHash: 'h' + n }, extra)));
-  fs.mkdirSync(path.join(dir, 'mini'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'computer'), { recursive: true });
   return dir;
 }
 
@@ -68,7 +68,7 @@ test('flip points current at a release without a moment when there is no link, a
   p.ctx.releases.flip(1);
   assert.equal(p.ctx.releases.currentNumber(), 1);
   assert.equal(fs.readlinkSync(path.join(p.root, 'current')), path.join('releases', '1'));
-  assert.equal(fs.readlinkSync(path.join(p.root, 'mini')), path.join('current', 'mini'));
+  assert.equal(fs.readlinkSync(path.join(p.root, 'computer')), path.join('current', 'computer'));
   p.ctx.releases.flip(2);
   assert.equal(p.ctx.releases.currentNumber(), 2);
   assert.ok(fs.existsSync(path.join(p.root, 'dashboard')), 'the old name reaches the new release');
@@ -133,7 +133,7 @@ test('an install from a zip runs the steps in order, writes RELEASE.json and bui
   assert.equal(release.note, 'First push');
   assert.match(release.treeHash, /^[0-9a-f]{64}$/);
   assert.match(fs.readFileSync(path.join(p.releasesDir, '2', 'dashboard/build.js'), 'utf8'), /^export const build = "2-a1b2c3d";/);
-  assert.equal(fs.readlinkSync(path.join(p.releasesDir, '2', 'mini/local.env')), path.join(p.root, 'local.env'));
+  assert.equal(fs.readlinkSync(path.join(p.releasesDir, '2', 'computer/local.env')), path.join(p.root, 'local.env'));
   assert.ok(fs.existsSync(path.join(p.releasesDir, '2', 'studio-dist')));
   assert.ok(!fs.existsSync(path.join(p.releasesDir, '2.tmp')));
   assert.ok(p.calls.some(c => c.startsWith('node ') && c.endsWith('schemas.test.mjs')), p.calls.join(' | '));
@@ -171,7 +171,7 @@ test('a tree that still has deploy/, a tree without a dashboard and a bad zip ar
 test('an install from a folder leaves out .git, packages and keys, and two installs cannot run together', async () => {
   const p = place();
   const source = path.join(work, 'source');
-  Object.entries(sampleTree({ '.git/HEAD': 'ref', 'studio/node_modules/x.js': '1', 'mini/local.env': 'SECRET', 'dashboard/build.js': 'old' })).forEach(([name, text]) => {
+  Object.entries(sampleTree({ '.git/HEAD': 'ref', 'studio/node_modules/x.js': '1', 'computer/local.env': 'SECRET', 'dashboard/build.js': 'old' })).forEach(([name, text]) => {
     fs.mkdirSync(path.dirname(path.join(source, name)), { recursive: true });
     fs.writeFileSync(path.join(source, name), text);
   });
@@ -181,7 +181,7 @@ test('an install from a folder leaves out .git, packages and keys, and two insta
   assert.equal(info.from, 'git');
   const dir = path.join(p.releasesDir, String(info.version));
   assert.ok(!fs.existsSync(path.join(dir, '.git')) && !fs.existsSync(path.join(dir, 'studio/node_modules')));
-  assert.ok(!fs.existsSync(path.join(dir, 'mini/local.env')) || fs.lstatSync(path.join(dir, 'mini/local.env')).isSymbolicLink());
+  assert.ok(!fs.existsSync(path.join(dir, 'computer/local.env')) || fs.lstatSync(path.join(dir, 'computer/local.env')).isSymbolicLink());
   assert.match(fs.readFileSync(path.join(dir, 'dashboard/build.js'), 'utf8'), /deadbee/);
   assert.ok(!p.calls.some(c => c.startsWith('helper')), 'restart: false asks the helper for nothing');
 });
@@ -193,6 +193,16 @@ test('installing keeps only 5 releases and never removes the one on the wall', a
   await installRelease(p.ctx, { zip: makeZip(sampleTree()), emit: p.emit, studio: false, restart: false });
   assert.equal(p.ctx.releases.currentNumber(), 7);
   assert.deepEqual(p.ctx.releases.numbers(), [7, 6, 5, 4, 3]);
+});
+
+test('flip removes a link called mini that an older install left, and a tree with mini/scripts counts as old', () => {
+  const p = place();
+  fakeRelease(p, 1);
+  fs.symlinkSync(path.join('current', 'mini'), path.join(p.root, 'mini'));
+  p.ctx.releases.flip(1);
+  assert.equal(fs.lstatSync(path.join(p.root, 'mini'), { throwIfNoEntry: false }), undefined, 'the old link is gone');
+  fs.mkdirSync(path.join(p.releasesDir, '1', 'mini', 'scripts'), { recursive: true });
+  assert.equal(p.ctx.releases.isLegacy(1), true);
 });
 
 fs.rmSync(work, { recursive: true, force: true });

@@ -2,7 +2,7 @@
 // boards: a task of the right team and department shows on its panel and on no panel of the other team, General shows on
 // both, Hide takes a task off, the status decides where a task is and not its group, a task with no department never
 // shows, no last name or address reaches a panel, a stale board says so, and tasks whose Timeline is over are overdue.
-// What the Mini does (reading the board, counting the tasks it hides, writing the documents) is tested in
+// What the Teletraan computer does (reading the board, counting the tasks it hides, writing the documents) is tested in
 // tests/monday-script.test.mjs.
 //
 //   node tests/monday-acceptance.test.mjs

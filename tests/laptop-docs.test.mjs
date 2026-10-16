@@ -16,9 +16,9 @@ const read = file => fs.readFileSync(path.join(repo, file), 'utf8');
 
 const laptop = read('docs/laptop-setup.md');
 const shipping = read('docs/shipping-from-the-mac.md');
-const updating = read('docs/updating-the-mini.md');
+const updating = read('docs/updating-the-computer.md');
 const shipScript = read('tools/mac/ship.sh');
-const miniTool = textOf(path.join(repo, 'tools/mini/teletraan-mini'));
+const computerTool = textOf(path.join(repo, 'tools/teletraan/teletraan-tool'));
 
 // Every fenced block of a doc, with the lines in it
 function codeBlocks(text) {
@@ -77,12 +77,12 @@ test('the guide names the commands in the order a coach needs them', () => {
     'npx sanity login',
     'npx sanity projects list',
     'tools/mac/make-app.sh',
-    'tools/mini/teletraan-mini',
+    'tools/teletraan/teletraan-tool',
     'ssh-copy-id hawktimus@teletraan.local',
     'ssh-keygen -t ed25519',
   ];
   let at = 0;
-  const firstOrder = ['git --version', 'node --version', 'git clone https://github.com/Hawktimus/teletraan.git', 'npm ci', 'npx sanity login', 'tools/mac/make-app.sh', 'tools/mini/teletraan-mini'];
+  const firstOrder = ['git --version', 'node --version', 'git clone https://github.com/Hawktimus/teletraan.git', 'npm ci', 'npx sanity login', 'tools/mac/make-app.sh', 'tools/teletraan/teletraan-tool'];
   firstOrder.forEach(command => {
     const found = commands.indexOf(command, at);
     assert.ok(found !== -1, 'comes in this order: ' + command);
@@ -94,7 +94,7 @@ test('the guide names the commands in the order a coach needs them', () => {
   assert.ok(commands.filter(command => command === 'cd studio').length >= 2, 'the Studio steps move into studio');
 });
 
-test('the guide covers what a coach needs: both ways to install, no silent install, the two sign-ins, the app, the Mini, the keys, and what stays out of GitHub', () => {
+test('the guide covers what a coach needs: both ways to install, no silent install, the two sign-ins, the app, the Teletraan computer, the keys, and what stays out of GitHub', () => {
   [
     'Homebrew', 'official sites', 'No step in this guide installs them for you',
     'git pull', 'first push', 'credential helper', 'gh auth login', 'team mentor',
@@ -109,13 +109,13 @@ test('the guide covers what a coach needs: both ways to install, no silent insta
 });
 
 test('the three steps of choice 1 are named in order, with the command each one runs', () => {
-  const where = ['1. **Push.**', '2. **Studio.**', '3. **Mini.**'].map(marker => laptop.indexOf(marker));
+  const where = ['1. **Push.**', '2. **Studio.**', '3. **Teletraan computer.**'].map(marker => laptop.indexOf(marker));
   assert.ok(where.every(index => index !== -1) && where[0] < where[1] && where[1] < where[2], where.join());
-  ['`git push`', '`npm run deploy`', '`tools/mini/teletraan-mini update --yes`'].forEach(command => assert.ok(laptop.includes(command), command));
+  ['`git push`', '`npm run deploy`', '`tools/teletraan/teletraan-tool update --yes`'].forEach(command => assert.ok(laptop.includes(command), command));
 });
 
 test('the commands and files the docs name exist', () => {
-  const made = new Set(['studio/node_modules', 'studio/dist', 'studio/.sanity', 'mini/local.env']);
+  const made = new Set(['studio/node_modules', 'studio/dist', 'studio/.sanity', 'computer/local.env']);
   [laptop, shipping, updating].forEach(text => {
     for (const match of text.matchAll(/`((?:docs|mini|tools|studio)\/[A-Za-z0-9_.\/-]+)`/g)) {
       const file = match[1].replace(/[.,]$/, '');
@@ -123,7 +123,7 @@ test('the commands and files the docs name exist', () => {
       assert.ok(fs.existsSync(path.join(repo, file)), 'the docs name ' + file + ' and it does not exist');
     }
   });
-  ['tools/mac/make-app.sh', 'tools/mac/ship.sh', 'tools/mini/teletraan-mini'].forEach(file => assert.ok((fs.statSync(path.join(repo, file)).mode & 0o111) !== 0, file + ' is executable'));
+  ['tools/mac/make-app.sh', 'tools/mac/ship.sh', 'tools/teletraan/teletraan-tool'].forEach(file => assert.ok((fs.statSync(path.join(repo, file)).mode & 0o111) !== 0, file + ' is executable'));
   const manifest = JSON.parse(read('studio/package.json'));
   assert.equal(manifest.scripts.deploy, 'sanity deploy', 'npm run deploy is the Studio deploy');
   assert.ok(Number(/>=(\d+)/.exec(manifest.engines.node)[1]) === 22 && manifest.engines.node.includes('22.12'), 'the guide says Node 22.12 and so does the Studio');
@@ -133,38 +133,38 @@ test('the commands and files the docs name exist', () => {
 test('the shipping doc agrees with ship.sh: the menu, the action words, the old words and the steps', () => {
   const menu = shipScript.slice(shipScript.indexOf('menu() {'), shipScript.indexOf('[ -n "$action" ] || menu'));
   const choices = Array.from(menu.matchAll(/^\s+([1-5]) ?\) action=(\w+) ;;$/gm)).map(match => [match[1], match[2]]);
-  assert.deepEqual(choices, [['1', 'all'], ['2', 'push'], ['3', 'studio'], ['4', 'mini'], ['5', 'status']]);
+  assert.deepEqual(choices, [['1', 'all'], ['2', 'push'], ['3', 'studio'], ['4', 'computer'], ['5', 'status']]);
   choices.forEach(([number, word]) => assert.ok(shipping.includes('| ' + number + ' | `' + word + '` |'), 'the shipping doc has choice ' + number + ' with `' + word + '`'));
-  ['`all-restart`', '`restart`', '`--dry-run`', 'tools/mini/teletraan-mini update --yes', 'sudo systemctl disable --now teletraan-pull.timer', 'deployment: { appId: ... }', 'git pull --no-rebase', '`git fetch`', '~/.teletraan/config', 'MINI_REPO', 'MINI_KIOSK'].forEach(text => assert.ok(shipping.includes(text), 'the shipping doc says: ' + text));
-  ['Ship everything', 'Push only', 'Studio only', 'Update the Mini only', 'Status of the Mini'].forEach(name => {
+  ['`all-restart`', '`restart`', '`--dry-run`', 'tools/teletraan/teletraan-tool update --yes', 'sudo systemctl disable --now teletraan-pull.timer', 'deployment: { appId: ... }', 'git pull --no-rebase', '`git fetch`', '~/.teletraan/config', 'COMPUTER_REPO', 'COMPUTER_KIOSK'].forEach(text => assert.ok(shipping.includes(text), 'the shipping doc says: ' + text));
+  ['Ship everything', 'Push only', 'Studio only', 'Update the Teletraan computer only', 'Status of the computer'].forEach(name => {
     assert.ok(shipScript.includes(name), 'ship.sh has the menu entry ' + name);
     assert.ok(laptop.includes(name), 'the laptop guide has ' + name);
   });
   assert.ok(shipping.includes('only opens Terminal') && shipping.includes('updates by itself') && shipping.includes('makes its own app'), 'the doc says the app on a Mac updates by itself and a laptop makes its own');
-  ['tells the Mini to pull', 'Mini pulls only', 'Why the pull is not run with sudo', 'MINI_ADDRESS'].forEach(old => {
+  ['tells the Teletraan computer to pull', 'Mini pulls only', 'Why the pull is not run with sudo', 'COMPUTER_ADDRESS'].forEach(old => {
     assert.ok(!shipping.includes(old) && !laptop.includes(old) && !updating.includes(old), 'the old Mini pulls step is gone: ' + old);
   });
 });
 
 test('the doc of the Mac tool names the words, the options and the exit codes the tool has', () => {
-  ['teletraan-mini update', 'teletraan-mini status', 'teletraan-mini restart', '--yes', '--mini NAME', 'exit code'].forEach(text => assert.ok(updating.includes(text), 'docs/updating-the-mini.md says: ' + text));
-  assert.ok(miniTool.includes('Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]'));
-  ['update', 'status', 'restart'].forEach(word => assert.ok(miniTool.includes('  ' + word + ' '), 'the tool lists ' + word));
-  assert.ok(updating.includes('tests/teletraan-mini-commands.test.mjs'));
+  ['teletraan-tool update', 'teletraan-tool status', 'teletraan-tool restart', '--yes', '--computer NAME', 'exit code'].forEach(text => assert.ok(updating.includes(text), 'docs/updating-the-computer.md says: ' + text));
+  assert.ok(computerTool.includes('Usage: teletraan-tool [--computer NAME] [--yes] [update | status | restart]'));
+  ['update', 'status', 'restart'].forEach(word => assert.ok(computerTool.includes('  ' + word + ' '), 'the tool lists ' + word));
+  assert.ok(updating.includes('tests/teletraan-tool-commands.test.mjs'));
 });
 
-test('the other docs point to the new guide and no longer say the Mini pulls after a ship', () => {
-  ['README.md', 'mini/README.md', 'docs/where-things-are.md'].forEach(file => {
+test('the other docs point to the new guide and no longer say the Teletraan computer pulls after a ship', () => {
+  ['README.md', 'computer/README.md', 'docs/where-things-are.md'].forEach(file => {
     const text = read(file);
     assert.ok(text.includes('docs/laptop-setup.md'), file + ' points to docs/laptop-setup.md');
     assert.ok(text.includes('shipping-from-the-mac.md'), file + ' points to docs/shipping-from-the-mac.md');
-    assert.ok(!/tells the Mini to pull|and tells the Mini/.test(text), file + ' still says ship tells the Mini to pull');
+    assert.ok(!/tells the Teletraan computer to pull|and tells the computer/.test(text), file + ' still says ship tells the computer to pull');
   });
   assert.ok(read('README.md').includes('Ship Teletraan.app') && read('README.md').includes('update, status and restart'));
-  assert.ok(read('mini/README.md').includes('teletraan-mini update --yes'));
+  assert.ok(read('computer/README.md').includes('teletraan-tool update --yes'));
   const places = read('docs/where-things-are.md');
-  ['teletraan-mini-commands.test.mjs', 'ship.test.mjs', 'laptop-docs.test.mjs'].forEach(name => assert.ok(places.includes(name), 'where-things-are.md lists ' + name));
-  assert.ok(laptop.includes('docs/shipping-from-the-mac.md') && laptop.includes('docs/updating-the-mini.md'));
+  ['teletraan-tool-commands.test.mjs', 'ship.test.mjs', 'laptop-docs.test.mjs'].forEach(name => assert.ok(places.includes(name), 'where-things-are.md lists ' + name));
+  assert.ok(laptop.includes('docs/shipping-from-the-mac.md') && laptop.includes('docs/updating-the-computer.md'));
 });
 
 test('the docs are plain: no em or en dash, no exclamation mark, no emoji, no filler word, no mention of a tool', () => {
@@ -173,7 +173,7 @@ test('the docs are plain: no em or en dash, no exclamation mark, no emoji, no fi
   const filler = /\b(simply|just|basically|really|very|actually|easily|seamless|robust|leverage|ensure|comprehensive)\b/i;
   // the words are joined from pieces so that this file does not hold them
   const traces = new RegExp('\\b(' + ['cla' + 'ude', 'anthr' + 'opic', 'ope' + 'nai', 'chat' + 'gpt', 'copi' + 'lot', 'gem' + 'ini', 'l' + 'lm', 'assis' + 'tant'].join('|') + ')\\b|\\bA' + 'I\\b', 'i');
-  const written = ['docs/laptop-setup.md', 'docs/shipping-from-the-mac.md', 'docs/updating-the-mini.md'];
+  const written = ['docs/laptop-setup.md', 'docs/shipping-from-the-mac.md', 'docs/updating-the-computer.md'];
   written.forEach(file => {
     const text = read(file);
     assert.ok(!dashes.test(text), file + ' has an em or en dash');
@@ -182,12 +182,12 @@ test('the docs are plain: no em or en dash, no exclamation mark, no emoji, no fi
     assert.ok(!filler.test(text), file + ' has a filler word');
     assert.ok(!traces.test(text), file + ' mentions a tool');
   });
-  ['README.md', 'mini/README.md', 'docs/where-things-are.md'].forEach(file => {
+  ['README.md', 'computer/README.md', 'docs/where-things-are.md'].forEach(file => {
     const text = read(file);
     assert.ok(!dashes.test(text), file + ' has an em or en dash');
     assert.ok(!traces.test(text), file + ' mentions a tool');
   });
-  assert.ok(!filler.test(read('mini/README.md')), 'mini/README.md has a filler word');
+  assert.ok(!filler.test(read('computer/README.md')), 'computer/README.md has a filler word');
   const self = fs.readFileSync(new URL(import.meta.url), 'utf8');
   assert.ok(!dashes.test(self), 'this test has an em or en dash');
   assert.ok(!traces.test(self), 'this test mentions a tool');
@@ -198,7 +198,7 @@ test('the guide keeps no secret: no key, token or calendar address is written in
   assert.ok(!/https:\/\/api\.band\.us\/[^\s`]*token=[A-Za-z0-9]{8,}/.test(text), 'a calendar address');
   assert.ok(!/\b(sk[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b/.test(text), 'a key or token');
   assert.ok(!/(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY)\s*=\s*['"]?[A-Za-z0-9]{8,}/.test(text), 'a key written with a value');
-  assert.ok(laptop.includes('mini/local.env'), 'the guide says where the keys live');
+  assert.ok(laptop.includes('computer/local.env'), 'the guide says where the keys live');
 });
 
 let failures = 0;

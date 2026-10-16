@@ -2350,7 +2350,7 @@ test('a push is kept as handled under a name of its own in localStorage, apart f
   assert.equal(readHandledRequest(storage), request);
   assert.equal(readHandled(storage), secondsAgo(1));
 
-  // a Mini that restarts after a push does not play it again
+  // a computer that restarts after a push does not play it again
   assert.equal(pushedKind({ kind: 'desktop', requestedAt: request }, readHandledRequest(storage), demoNow), '');
   assert.equal(readHandledRequest(brokenStorage), '');
   assert.equal(readHandledRequest(null), '');
@@ -2578,7 +2578,7 @@ test('each play of a set shows the picture after the last one, and the first aga
   ['', 'something-else.png', undefined, null].forEach(last => assert.equal(pictureAfter(list, last).file, 'blue-screen-1.png', String(last)));
 });
 
-test('the last picture of a set is kept in localStorage, so a Mini that restarts carries on with the other one', () => {
+test('the last picture of a set is kept in localStorage, so a computer that restarts carries on with the other one', () => {
   const store = {};
   const first = makePictureChooser(makeStorage(store));
   assert.equal(first.next('blueScreen', () => true).file, 'blue-screen-1.png');

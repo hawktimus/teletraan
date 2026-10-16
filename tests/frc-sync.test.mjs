@@ -1,5 +1,5 @@
-// Tests for mini/scripts/frc-sync.sh and mini/scripts/install-frc.sh. The
-// tools they use on the Mini (curl, date, flock, id, systemctl) are replaced with
+// Tests for computer/scripts/frc-sync.sh and computer/scripts/install-frc.sh. The
+// tools they use on the Teletraan computer (curl, date, flock, id, systemctl) are replaced with
 // small fake ones in a temporary folder, so nothing touches the network or the
 // machine. jq is the real one, because the scripts depend on what it does, so
 // this test needs jq installed. The answers of The Blue Alliance and Statbotics
@@ -17,8 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { textOf, copyWithEdits } from './helpers/script-parts.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const syncFile = path.join(repo, 'mini/scripts/frc-sync.sh');
-const installFile = path.join(repo, 'mini/scripts/install-frc.sh');
+const syncFile = path.join(repo, 'computer/scripts/frc-sync.sh');
+const installFile = path.join(repo, 'computer/scripts/install-frc.sh');
 const unitFiles = ['teletraan-frc.service', 'teletraan-frc.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-frc-'));
 
@@ -160,25 +160,25 @@ function setup(name, options) {
   const stub = path.join(root, 'stub');
   const data = path.join(root, 'data');
   const temp = path.join(root, 'tmp');
-  fs.mkdirSync(path.join(root, 'mini/scripts'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'mini/systemd'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'computer/systemd'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   [bin, stub, temp, path.join(stub, 'tba'), path.join(stub, 'sb')].forEach(folder => fs.mkdirSync(folder));
   if (!options.noData) fs.mkdirSync(data);
 
-  const scriptCopy = path.join(root, 'mini/scripts/frc-sync.sh');
-  copyWithEdits(syncFile, path.join(root, 'mini/scripts'), options.edits);
-  const installCopy = path.join(root, 'mini/scripts/install-frc.sh');
+  const scriptCopy = path.join(root, 'computer/scripts/frc-sync.sh');
+  copyWithEdits(syncFile, path.join(root, 'computer/scripts'), options.edits);
+  const installCopy = path.join(root, 'computer/scripts/install-frc.sh');
   fs.copyFileSync(installFile, installCopy);
   fs.chmodSync(installCopy, fs.statSync(installFile).mode);
-  writeTool(path.join(root, 'mini/scripts'), 'status-write.sh', fakeStatusWrite);
-  fs.copyFileSync(path.join(repo, 'mini/scripts/lib.sh'), path.join(root, 'mini/scripts/lib.sh'));
-  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'mini/systemd', unit), path.join(root, 'mini/systemd', unit)));
+  writeTool(path.join(root, 'computer/scripts'), 'status-write.sh', fakeStatusWrite);
+  fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
+  unitFiles.forEach(unit => fs.copyFileSync(path.join(repo, 'computer/systemd', unit), path.join(root, 'computer/systemd', unit)));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
 
   if (!options.noEnv) {
     const env = options.env !== undefined ? options.env : "TELETRAAN_DATA='" + data + "'\nTBA_AUTH_KEY='" + key + "'\nSANITY_WRITE_TOKEN='" + token + "'\nCALENDAR_TEAM_URL='" + secret + "'\n";
-    fs.writeFileSync(path.join(root, 'mini/local.env'), env.replace('<data>', data));
+    fs.writeFileSync(path.join(root, 'computer/local.env'), env.replace('<data>', data));
   }
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -816,7 +816,7 @@ test('the ETag of each answer is kept, sent back with the next request, and an a
   });
   assert.equal(place.mutations(), 1, 'nothing changed, so nothing was written');
   assert.ok(second.text.includes('frc: nothing changed, status not written'), second.text);
-  assert.ok(second.calls.includes('status-write.sh frc'), 'the Mini still looked, and says so');
+  assert.ok(second.calls.includes('status-write.sh frc'), 'the Teletraan computer still looked, and says so');
   assert.deepEqual(place.document(1).teams, place.document().teams);
 });
 
@@ -840,7 +840,7 @@ test('only an answer that changed is read again: the status is rewritten with it
   assert.equal(JSON.parse(fs.readFileSync(path.join(place.frc, 'etags.json'), 'utf8'))['tba-rankings-' + eventKey], '"changed"');
 });
 
-test('the status is written again after 45 minutes even when nothing changed, so its time shows the Mini is looking', () => {
+test('the status is written again after 45 minutes even when nothing changed, so its time shows the Teletraan computer is looking', () => {
   const place = setup('refresh', { tools: true });
   world(place);
   place.run();
@@ -1259,7 +1259,7 @@ test('it is only time to run once an hour, every 5 minutes while an event is on,
   assert.equal(requestsOf(place.run().calls).length, 0, 'the day after is not');
 });
 
-test('the day of an event is read in the time zone the last run saw, not by the clock of the Mini', () => {
+test('the day of an event is read in the time zone the last run saw, not by the clock of the Teletraan computer', () => {
   const place = setup('timing-zone', { tools: true });
   world(place, { zone: 'America/Los_Angeles' });
   place.run();
@@ -1544,12 +1544,12 @@ test('every address and every place in an answer is in the block at the top, and
 });
 
 test('the unit files name the account ACCOUNT, run the script, and the timer wakes it 2 minutes after boot and every 5 minutes', () => {
-  const service = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-frc.service'), 'utf8');
-  const timer = fs.readFileSync(path.join(repo, 'mini/systemd/teletraan-frc.timer'), 'utf8');
+  const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-frc.service'), 'utf8');
+  const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-frc.timer'), 'utf8');
 
   assert.deepEqual(service.match(/^User=.*$/gm), ['User=ACCOUNT']);
   assert.ok(/^Type=oneshot$/m.test(service));
-  assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/mini/scripts/frc-sync.sh']);
+  assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/computer/scripts/frc-sync.sh']);
   assert.ok(!/^ExecStartPost=/m.test(service), 'the script tells status-mini itself, and only after a run that worked');
   assert.ok(fs.existsSync(syncFile), 'the script the unit runs exists');
   assert.ok(/^OnBootSec=2min$/m.test(timer));
@@ -1560,26 +1560,26 @@ test('the unit files name the account ACCOUNT, run the script, and the timer wak
 });
 
 test('the script tells status-mini through status-write.sh, which knows the job frc', () => {
-  const status = fs.readFileSync(path.join(repo, 'mini/scripts/status-write.sh'), 'utf8');
+  const status = fs.readFileSync(path.join(repo, 'computer/scripts/status-write.sh'), 'utf8');
   assert.ok(status.includes('frc) field=lastFrcSyncAt ;;'));
-  assert.ok(textOf(syncFile).includes('"$mini/scripts/status-write.sh" frc || true'));
+  assert.ok(textOf(syncFile).includes('"$computer/scripts/status-write.sh" frc || true'));
 });
 
 test('install-frc.sh stops, naming the file, when a unit file is missing or empty', () => {
   const missing = setup('install-missing', { tools: true, install: true });
-  fs.rmSync(path.join(missing.root, 'mini/systemd/teletraan-frc.service'));
+  fs.rmSync(path.join(missing.root, 'computer/systemd/teletraan-frc.service'));
   const first = missing.install();
   assert.equal(first.status, 1);
   assert.ok(first.errors.includes('teletraan-frc.service is missing or empty'), first.errors);
 
   const empty = setup('install-empty', { tools: true, install: true });
-  fs.writeFileSync(path.join(empty.root, 'mini/systemd/teletraan-frc.timer'), '');
+  fs.writeFileSync(path.join(empty.root, 'computer/systemd/teletraan-frc.timer'), '');
   const second = empty.install();
   assert.equal(second.status, 1);
   assert.ok(second.errors.includes('teletraan-frc.timer is missing or empty'), second.errors);
 
   const noScript = setup('install-no-script', { tools: true, install: true });
-  fs.chmodSync(path.join(noScript.root, 'mini/scripts/frc-sync.sh'), 0o644);
+  fs.chmodSync(path.join(noScript.root, 'computer/scripts/frc-sync.sh'), 0o644);
   const third = noScript.install();
   assert.equal(third.status, 1);
   assert.ok(third.errors.includes('frc-sync.sh is missing or cannot be run'), third.errors);
@@ -1619,12 +1619,12 @@ test('install-frc.sh copies the two frc units only, with ACCOUNT filled in, and 
 });
 
 test('local.example.env has a TBA_AUTH_KEY line with a placeholder, and the docs say where it goes', () => {
-  const example = fs.readFileSync(path.join(repo, 'mini/local.example.env'), 'utf8');
+  const example = fs.readFileSync(path.join(repo, 'computer/local.example.env'), 'utf8');
   assert.ok(/^TBA_AUTH_KEY='\[[^\n]*\]'$/m.test(example), 'a placeholder that starts with [');
 
-  const mini = fs.readFileSync(path.join(repo, 'docs/rebuilding-the-mini.md'), 'utf8');
+  const mini = fs.readFileSync(path.join(repo, 'docs/rebuilding-the-computer.md'), 'utf8');
   ['TBA_AUTH_KEY', 'install-frc.sh', 'frc-sync.sh --check', 'frc-sync.sh --now', 'sudo apt install curl jq', 'docs/frc-feed.md', '17. **Turn on the FRC feed.**'].forEach(word => {
-    assert.ok(mini.includes(word), 'docs/rebuilding-the-mini.md should mention ' + word);
+    assert.ok(mini.includes(word), 'docs/rebuilding-the-computer.md should mention ' + word);
   });
 
   const feed = fs.readFileSync(path.join(repo, 'docs/frc-feed.md'), 'utf8');

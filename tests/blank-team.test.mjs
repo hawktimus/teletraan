@@ -259,7 +259,7 @@ test('no file of the dashboard, the Studio or the docs writes the old chip text'
     if (entry.isDirectory()) walk(full);
     else if (/\.(js|mjs|css|md|json|html|sh)$/.test(entry.name) && !full.endsWith('blank-team.test.mjs') && /BOTH TEAMS/.test(fs.readFileSync(full, 'utf8'))) found.push(path.relative(repo, full));
   });
-  ['dashboard', 'studio', 'docs', 'mini', 'tools'].forEach(folder => walk(path.join(repo, folder)));
+  ['dashboard', 'studio', 'docs', 'computer', 'tools'].forEach(folder => walk(path.join(repo, folder)));
   assert.deepEqual(found, []);
 });
 

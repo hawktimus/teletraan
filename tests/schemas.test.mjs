@@ -353,7 +353,7 @@ const contract = {
 };
 
 // Fields and types in the Studio that the dashboard never reads, with the reason for each.
-// The notes and the status block store nothing, and the status document is written by the Mini.
+// The notes and the status block store nothing, and the status document is written by the Teletraan computer.
 const studioOnlyFields = {
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
@@ -379,15 +379,15 @@ const studioOnlyFields = {
   'view.tickerLink': 'the link of the Ticker section to Tips and News. It stores nothing',
 };
 const studioOnlyTypes = {
-  status: 'the Mini writes it for the status block, and the dashboard never reads it',
-  calendarStatus: 'the Mini writes it for the Calendars page, and the dashboard never reads it',
+  status: 'the Teletraan computer writes it for the status block, and the dashboard never reads it',
+  calendarStatus: 'the Teletraan computer writes it for the Calendars page, and the dashboard never reads it',
 };
 
-// Types the Mini writes and the dashboard reads as a whole. Their fields are checked together in
+// Types the Teletraan computer writes and the dashboard reads as a whole. Their fields are checked together in
 // checkFrcStatus and not one by one against the contract above.
-const writtenByTheMini = {
-  frcStatus: 'the Mini writes it, and the dashboard reads it to draw the competition cards',
-  mondayStatus: 'the Mini writes it, the Monday tab shows it, and the dashboard reads its daily counts',
+const writtenByTheComputer = {
+  frcStatus: 'the Teletraan computer writes it, and the dashboard reads it to draw the competition cards',
+  mondayStatus: 'the Teletraan computer writes it, the Monday tab shows it, and the dashboard reads its daily counts',
 };
 
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
@@ -465,11 +465,11 @@ const notInSidebar = {
   extraEvent: 'events come from the calendars now, and the screen no longer reads these entries. The type stays, so the entries already typed still open',
   place: 'a task\'s Location field adds a place with Create new and opens it from there',
   demo: 'its buttons are on Start here',
-  status: 'the Mini writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
-  calendarStatus: 'the Mini writes it, and the Calendars page shows it',
-  frcStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
-  mondayStatus: 'the Mini writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
-  milestone: 'the Mini writes it, and the Monday Boards page opens it as its second list, Milestones',
+  status: 'the Teletraan computer writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
+  calendarStatus: 'the Teletraan computer writes it, and the Calendars page shows it',
+  frcStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
+  mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
+  milestone: 'the Teletraan computer writes it, and the Monday Boards page opens it as its second list, Milestones',
 };
 
 // The sidebar titles that people look for by name
@@ -933,7 +933,7 @@ function checkShape() {
     else problems.push(name + ' is missing from schemas/index.js');
   });
   world.types.forEach(type => {
-    if (!contract[type.name] && !studioOnlyTypes[type.name] && !writtenByTheMini[type.name]) problems.push(type.name + ' is a type the dashboard does not read');
+    if (!contract[type.name] && !studioOnlyTypes[type.name] && !writtenByTheComputer[type.name]) problems.push(type.name + ' is a type the dashboard does not read');
   });
   return problems;
 }
@@ -1079,7 +1079,7 @@ function checkPanelIds() {
   return problems;
 }
 
-// The Mini saves CALENDAR_BUILD_SEASON_URL as build_season.ics, so a calendar
+// The Teletraan computer saves CALENDAR_BUILD_SEASON_URL as build_season.ics, so a calendar
 // code is lowercase letters, digits and underscores
 function checkRules() {
   const problems = [];
@@ -1376,7 +1376,7 @@ function checkLookSetting() {
 
   // The description says what each look does, and which one is the default
   const words = look ? look.description || '' : '';
-  need(problems, /Polished is the default/.test(words) && /Flat/.test(words) && /Plain/.test(words) && /Mini/.test(words), 'the look description should say that Polished is the default, what Flat and Plain do, and that the Mini is lighter with them');
+  need(problems, /Polished is the default/.test(words) && /Flat/.test(words) && /Plain/.test(words) && /computer/.test(words), 'the look description should say that Polished is the default, what Flat and Plain do, and that the Teletraan computer is lighter with them');
 
   need(problems, config.looks.indexOf(world.sample.settings.look) !== -1, 'the sample settings need a look of ' + config.looks.join(', '));
   return problems;
@@ -1894,7 +1894,7 @@ function checkPreviewButtons() {
 }
 
 // The Start here page (start-here.js, with its words and numbers in start-here-parts.js): six
-// blocks in this order, a picture of the screen with the areas A to E, the status of the Mini and three links.
+// blocks in this order, a picture of the screen with the areas A to E, the status of the Teletraan computer and three links.
 const startBlocks = ['what', 'picture', 'steps', 'status', 'links', 'coaches'];
 const startLinks = ['The control page', 'The Studio on the web', 'The guides'];
 const startAreas = ['A Banner', 'B Main panel', 'C Countdown', 'D Side panel', 'E Ticker'];
@@ -2024,8 +2024,8 @@ function checkStartHere() {
     });
   });
 
-  // 4. the status of the Mini, drawn by the same input as the status block of Dashboard Settings
-  need(problems, block('status') && nodesWhere(block('status'), node => node.type === world.statusInput.StatusInput).length === 1, 'the status block should hold the status of the Mini, drawn by StatusInput (status-input.js)');
+  // 4. the status of the Teletraan computer, drawn by the same input as the status block of Dashboard Settings
+  need(problems, block('status') && nodesWhere(block('status'), node => node.type === world.statusInput.StatusInput).length === 1, 'the status block should hold the status of the Teletraan computer, drawn by StatusInput (status-input.js)');
 
   // 5. the links: the control page, the Studio on the web and the guides, in new tabs. An address that is a placeholder is words.
   need(problems, parts.links.map(item => item.label).join() === startLinks.join(), 'the links in start-here-parts.js should be, in this order: ' + startLinks.join(', '));
@@ -2656,7 +2656,7 @@ function checkSettingsPage() {
   if (demoActions !== 'publish,discardChanges') problems.push('the Demo page should have these actions: publish,discardChanges. It has: ' + demoActions);
 
   // The New menu in the top bar offers the types an editor adds, and not the pages that exist once, the
-  // status document that the Mini writes, the tasks that the Mini makes or the types with no line in the
+  // status document that the Teletraan computer writes, the tasks that the computer makes or the types with no line in the
   // sidebar. A place is still offered while a document is open, which is where the Location field of a task
   // has Create new.
   const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
@@ -3789,7 +3789,7 @@ async function checkMeetingDayTimes() {
 
 // Presentations: a first name, a title for the TV, a start, a length, a Google Slides
 // link and a status. The slides link has to match the pattern the booking form and
-// the slide fetcher on the Mini use, so a link that is not a Google Slides deck never gets in.
+// the slide fetcher on the Teletraan computer use, so a link that is not a Google Slides deck never gets in.
 function checkPresentations() {
   const problems = [];
   const at = name => fieldAt('presentation.' + name);
@@ -4327,7 +4327,7 @@ function checkStatusWatchdog() {
   return problems;
 }
 
-// The status document the Mini writes (schemas/status.js, mini/scripts/status-write.sh) and the block that shows it
+// The status document the Teletraan computer writes (schemas/status.js, computer/scripts/status-write.sh) and the block that shows it
 function checkStatusBlock() {
   const problems = [];
   const type = typeByName('status');
@@ -4340,9 +4340,9 @@ function checkStatusBlock() {
   fieldsIn(type || {}).filter(field => wanted.concat(build).includes(field.name)).forEach(field => {
     if (build.indexOf(field.name) !== -1) return need(problems, field.type === 'string', 'status.' + field.name + ' should be a string');
     need(problems, field.type === 'datetime', 'status.' + field.name + ' should be a datetime');
-    need(problems, !constraintNamed(constraintsOf(field), 'required'), 'status.' + field.name + ' should not be required: the Mini writes each one after its own job');
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), 'status.' + field.name + ' should not be required: the Teletraan computer writes each one after its own job');
   });
-  need(problems, type && type.readOnly === true, 'status should be read only: the Mini writes it');
+  need(problems, type && type.readOnly === true, 'status should be read only: the Teletraan computer writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'status should be kept out of Studio search');
   need(problems, input.statusId === 'status-mini', 'the status document should have the fixed id status-mini');
   need(problems, input.statusLines.map(line => line.field).join() === wanted.join(), 'the block should show these fields, in this order: ' + wanted.join(', '));
@@ -4352,7 +4352,7 @@ function checkStatusBlock() {
   const offered = world.config.document.newDocumentOptions([{ templateId: 'status' }, { templateId: 'plan' }], {}).map(item => item.templateId).join();
   need(problems, offered === 'plan', 'the New menu should not offer the status document');
 
-  // The script on the Mini writes the same document and fields
+  // The script on the Teletraan computer writes the same document and fields
   const script = world.statusScript;
   need(problems, script.indexOf("'" + input.statusId + "'") !== -1 || script.indexOf('"' + input.statusId + '"') !== -1 || script.indexOf('=' + input.statusId) !== -1, 'status-write.sh should write the document ' + input.statusId);
   wanted.concat(build).forEach(name => need(problems, script.indexOf(name) !== -1, 'status-write.sh should write the field ' + name));
@@ -4455,7 +4455,7 @@ function checkCompetitionTab() {
   return problems;
 }
 
-// The FRC data document the Mini writes (schemas/frcStatus.js, mini/scripts/frc-sync.sh) and the
+// The FRC data document the Teletraan computer writes (schemas/frcStatus.js, computer/scripts/frc-sync.sh) and the
 // block that shows it. The dashboard reads the document with the rest of the content (core/sanity.js).
 function checkFrcStatus() {
   const problems = [];
@@ -4464,16 +4464,16 @@ function checkFrcStatus() {
   const script = world.frcScript;
 
   need(problems, type && type.type === 'document', 'frcStatus should be a document type');
-  need(problems, type && type.readOnly === true, 'frcStatus should be read only: the Mini writes it');
+  need(problems, type && type.readOnly === true, 'frcStatus should be read only: the Teletraan computer writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'frcStatus should be kept out of Studio search');
   need(problems, input.frcStatusId === 'frc-status', 'the FRC data document should have the fixed id frc-status');
   need(problems, script.indexOf('_id: "frc-status"') !== -1 && script.indexOf('_type: "frcStatus"') !== -1, 'frc-sync.sh should write the document frc-status of the type frcStatus');
   need(problems, world.sanitySource.indexOf('"frc": *[_id == "frc-status"][0]') !== -1, 'the content query in core/sanity.js should read the document frc-status');
 
-  // The Mini does not know which fields are required, so none is, at any depth
+  // The Teletraan computer does not know which fields are required, so none is, at any depth
   eachField((where, field) => {
     if (where.split('.')[0] !== 'frcStatus') return;
-    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should not be required: the Mini leaves out what it did not find');
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should not be required: the Teletraan computer leaves out what it did not find');
   });
 
   // The fields are the ones the dashboard cleans (core/frc.js), the sample uses, and the script writes
@@ -4499,13 +4499,13 @@ function checkFrcStatus() {
   const none = input.describeFrcStatus(null, now);
   need(problems, none.length === 3 && none[0].text === 'Not yet' && none[1].text === 'No team was read' && none[2].label === 'Last error' && none[2].text === 'None', 'a missing document should say Not yet, that no team was read, and no error');
   const some = input.describeFrcStatus({ lastSyncAt: ago(5), lastError: 'a key was refused', notes: ['A source was skipped.'], teams: [{ team: 'prime', number: 3229, events: 3 }, { team: 'nova', number: 3426, events: 0 }] }, now);
-  need(problems, /^5 minutes ago \(/.test(some[0].text), 'the first line should say how long ago the Mini last read the data');
-  need(problems, some[1].label === 'Events found, prime 3229' && some[1].text === '3 events' && some[2].label === 'Events found, nova 3426' && some[2].text === 'None', 'each team should have a line with the number of events the Mini found');
+  need(problems, /^5 minutes ago \(/.test(some[0].text), 'the first line should say how long ago the Teletraan computer last read the data');
+  need(problems, some[1].label === 'Events found, prime 3229' && some[1].text === '3 events' && some[2].label === 'Events found, nova 3426' && some[2].text === 'None', 'each team should have a line with the number of events the Teletraan computer found');
   need(problems, some[3].label === 'Notes' && some[3].text === 'A source was skipped.' && some[4].label === 'Last error' && some[4].text === 'a key was refused', 'the notes and the last error should be lines of their own');
   need(problems, input.describeFrcStatus({ lastSyncAt: ago(5), teams: [{ team: 'prime', number: 3229, events: 1 }] }, now)[1].text === '1 event', 'one event should read 1 event');
   need(problems, JSON.stringify(input.frcStatusView(null, now)).indexOf('Reading the competition data') !== -1, 'the block should say it is reading while it waits');
   const missing = JSON.stringify(input.frcStatusView({ doc: null, unreadable: false }, now));
-  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('TBA_AUTH_KEY') !== -1 && missing.indexOf('local.env') !== -1, 'the block should say No connection yet, with the key to add to local.env on the Mini, when the document is missing');
+  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('TBA_AUTH_KEY') !== -1 && missing.indexOf('local.env') !== -1, 'the block should say No connection yet, with the key to add to local.env on the Teletraan computer, when the document is missing');
   need(problems, JSON.stringify(input.frcStatusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the data cannot be read');
   need(problems, JSON.stringify(input.frcStatusView({ doc: { lastSyncAt: ago(5) }, unreadable: false }, now)).indexOf('Last sync') !== -1, 'the block should show the lines when there is a document');
   need(problems, typeof input.FrcStatusInput === 'function' && JSON.stringify(input.FrcStatusInput()).indexOf('Reading the competition data') !== -1, 'FrcStatusInput should start by saying it is reading');
@@ -4862,7 +4862,7 @@ function checkBoardTasks() {
   need(problems, offered === ['task'].concat(world.addTemplates.map(item => item.id)).join(), 'sanity.config.js should add the templates of add-templates.js to the templates of the Studio. It gives: ' + offered);
   const choicesIn = creationContext => world.config.document.newDocumentOptions([{ templateId: 'task' }], { creationContext: creationContext }).map(item => item.templateId).join();
   [undefined, { type: 'global' }, { type: 'structure', schemaType: 'task' }, { type: 'document', documentId: 'task-1', schemaType: 'task' }].forEach(creationContext => {
-    need(problems, choicesIn(creationContext) === '', 'no New menu should offer a task, because the Mini makes them. They offer: ' + choicesIn(creationContext));
+    need(problems, choicesIn(creationContext) === '', 'no New menu should offer a task, because the Teletraan computer makes them. They offer: ' + choicesIn(creationContext));
   });
 
   // the two lists hold every task once. The filters are the ones structure.js gives the Studio.
@@ -4898,7 +4898,7 @@ function checkBoardTasks() {
 // The plus button of each list under Tasks, Events and Roster. A list makes the template
 // named in its add (add-templates.js): a new document of the type the list shows, with the starting
 // values of the group, which are no team, the switch that puts it on the screen turned on and, for
-// a tip, the kind set. The two lists of Monday Tasks have no plus button, because the Mini makes
+// a tip, the kind set. The two lists of Monday Tasks have no plus button, because the Teletraan computer makes
 // the tasks, and their add is an empty list. The New menus of the Studio, and the templates they
 // offer, stay as they were, except that none offers a task (docs/reordering-the-sidebar.md).
 const addGroups = ['TASKS', 'EVENTS', 'ROSTER'];
@@ -5020,8 +5020,8 @@ function checkListAdds() {
   return problems;
 }
 
-// The document the Mini writes for the Calendars page (schemas/calendarStatus.js, written by
-// mini/scripts/calendar-status.sh and status-write.sh calendar-status), and the page under
+// The document the Teletraan computer writes for the Calendars page (schemas/calendarStatus.js, written by
+// computer/scripts/calendar-status.sh and status-write.sh calendar-status), and the page under
 // Events that shows it beside the calendars of Dashboard Settings (calendars-view.js, with its
 // words and rows in calendars-view-parts.js).
 const calendarStatusFields = ['updatedAt', 'eventsNote', 'calendars'];
@@ -5044,9 +5044,9 @@ function checkCalendarStatusType() {
   Object.keys(kinds).forEach(name => {
     const field = fieldAt('calendarStatus.' + name);
     need(problems, field && field.type === kinds[name], 'calendarStatus.' + name + ' should be a ' + kinds[name]);
-    need(problems, field && !constraintNamed(constraintsOf(field), 'required'), 'calendarStatus.' + name + ' should not be required: the Mini writes only what it knows');
+    need(problems, field && !constraintNamed(constraintsOf(field), 'required'), 'calendarStatus.' + name + ' should not be required: the Teletraan computer writes only what it knows');
   });
-  need(problems, type && type.readOnly === true, 'calendarStatus should be read only: the Mini writes it');
+  need(problems, type && type.readOnly === true, 'calendarStatus should be read only: the Teletraan computer writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'calendarStatus should be kept out of Studio search');
 
   // Editors never find it: no line in the sidebar and no place in the New menu
@@ -5054,7 +5054,7 @@ function checkCalendarStatusType() {
   const offered = world.config.document.newDocumentOptions([{ templateId: 'calendarStatus' }, { templateId: 'plan' }], {}).map(item => item.templateId).join();
   need(problems, offered === 'plan', 'the New menu should not offer the calendar status document');
 
-  // The page and the scripts on the Mini use the same id and the same type
+  // The page and the scripts on the Teletraan computer use the same id and the same type
   need(problems, world.calendarsParts.calendarStatusId === 'calendar-status', 'the Calendars page should read the document calendar-status');
   const start = '{"_id":"calendar-status","_type":"calendarStatus",';
   need(problems, world.statusScript.indexOf(start) !== -1, 'status-write.sh should only send a document that starts with ' + start);
@@ -5102,22 +5102,22 @@ function checkCalendarsPage() {
   need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Calendars', 'the page should open with the heading Calendars');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
   need(problems, paragraphs[0] === parts.helpLine, 'the first line under the heading should be the help line');
-  need(problems, parts.helpLine.indexOf(parts.hideOneLabel) !== -1 && parts.helpLine.indexOf(parts.hideAllLabel) !== -1 && /same title/.test(parts.helpLine) && /rules are listed under Calendar filters/.test(parts.helpLine) && /ask a coach/.test(parts.helpLine) && /address on the Mini/.test(parts.helpLine), 'the help line should name the two Hide buttons, say what each one hides, say that the rules are listed under Calendar filters and say to ask a coach to add the address on the Mini');
+  need(problems, parts.helpLine.indexOf(parts.hideOneLabel) !== -1 && parts.helpLine.indexOf(parts.hideAllLabel) !== -1 && /same title/.test(parts.helpLine) && /rules are listed under Calendar filters/.test(parts.helpLine) && /ask a coach/.test(parts.helpLine) && /address on the Teletraan computer/.test(parts.helpLine), 'the help line should name the two Hide buttons, say what each one hides, say that the rules are listed under Calendar filters and say to ask a coach to add the address on the computer');
   need(problems, !/repeating meeting/.test(parts.helpLine), 'the help line should not send people to Calendar filters to hide a repeating meeting now that the events have Hide buttons');
   const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
   const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
   need(problems, left && right, 'the page should have a left side with the calendars and a right side with the events');
 
-  // The left side: a button for each calendar of Dashboard Settings and then the one only the Mini knows, the second picked
+  // The left side: a button for each calendar of Dashboard Settings and then the one only the Teletraan computer knows, the second picked
   const picks = [];
   const buttons = left ? nodesWhere(left, node => node.type === 'button') : [];
-  need(problems, buttons.length === 3 && buttons.every(button => button.props.type === 'button' && typeof button.props.onClick === 'function'), 'the left side should have a button for each calendar: the two of Dashboard Settings and the one only the Mini has');
+  need(problems, buttons.length === 3 && buttons.every(button => button.props.type === 'button' && typeof button.props.onClick === 'function'), 'the left side should have a button for each calendar: the two of Dashboard Settings and the one only the Teletraan computer has');
   need(problems, buttons.map(button => button.props['aria-pressed']).join() === 'false,true,false', 'the picked calendar should be marked pressed');
   const first = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', code => picks.push(code), now);
   nodesWhere(first, node => node.type === 'button').forEach(button => button.props.onClick());
   need(problems, picks.join() === 'team,outreach,old', 'a button should pick the calendar of its row');
   need(problems, buttons[0] && /Team calendar/.test(wordsIn(buttons[0])) && /14 events, 3 hidden/.test(wordsIn(buttons[0])) && /Downloaded 5 minutes ago/.test(wordsIn(buttons[0])), 'a row should say the name, the number of events and when it was downloaded');
-  need(problems, buttons[1] && /Switched off on the screen/.test(wordsIn(buttons[1])) && /Nothing yet/.test(wordsIn(buttons[1])), 'a row for a calendar the Mini has not described should say Nothing yet');
+  need(problems, buttons[1] && /Switched off on the screen/.test(wordsIn(buttons[1])) && /Nothing yet/.test(wordsIn(buttons[1])), 'a row for a calendar the Teletraan computer has not described should say Nothing yet');
 
   // The right side: the 12 events with a badge, and the rule for a hidden one
   const tab = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
@@ -5128,17 +5128,17 @@ function checkCalendarsPage() {
   need(problems, /Download failed, the server said no, so the address may be wrong or expired\./.test(failed), 'a calendar that failed to download should say why in a sentence');
 
   // The line that says how old the document is
-  need(problems, /The Mini wrote this 1 minute ago\./.test(wordsIn(first)), 'the page should say when the Mini wrote the document');
-  need(problems, wordsIn(view.calendarsPage({ entries: entries, status: Object.assign({}, status, { updatedAt: undefined }), entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now)).indexOf('The Mini wrote this') === -1, 'the page should say nothing about when the document was written when it has no time');
+  need(problems, /The Teletraan computer wrote this 1 minute ago\./.test(wordsIn(first)), 'the page should say when the computer wrote the document');
+  need(problems, wordsIn(view.calendarsPage({ entries: entries, status: Object.assign({}, status, { updatedAt: undefined }), entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now)).indexOf('The Teletraan computer wrote this') === -1, 'the page should say nothing about when the document was written when it has no time');
 
   // Nothing yet, reading, and a document that cannot be read
   const nothing = wordsIn(view.calendarsPage({ entries: [], status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now));
   need(problems, nothing.indexOf(parts.nothingYet) !== -1 && nothing.indexOf(parts.noCalendarsLine) !== -1, 'with no status and no calendars the page should say Nothing yet and that Dashboard Settings has no calendars');
   const waiting = wordsIn(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now));
-  need(problems, nodesWhere(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now), node => node.type === 'button').length === 2 && waiting.indexOf(parts.nothingYet) !== -1, 'before the Mini has synced the page should list the calendars of Dashboard Settings and say Nothing yet');
+  need(problems, nodesWhere(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now), node => node.type === 'button').length === 2 && waiting.indexOf(parts.nothingYet) !== -1, 'before the Teletraan computer has synced the page should list the calendars of Dashboard Settings and say Nothing yet');
   need(problems, wordsIn(view.calendarsPage(null, '', () => {}, now)).indexOf('Reading the calendars') !== -1, 'the page should say it is reading while it waits');
   need(problems, wordsIn(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: true }, '', () => {}, now)).indexOf('could not be read') !== -1, 'the page should say so when the status cannot be read');
-  need(problems, wordsIn(view.calendarsPage({ entries: [], status: status, entriesUnreadable: true, statusUnreadable: false }, '', () => {}, now)).indexOf('Dashboard Settings could not be read') !== -1, 'the page should say so when Dashboard Settings cannot be read, and still list the calendars of the Mini');
+  need(problems, wordsIn(view.calendarsPage({ entries: [], status: status, entriesUnreadable: true, statusUnreadable: false }, '', () => {}, now)).indexOf('Dashboard Settings could not be read') !== -1, 'the page should say so when Dashboard Settings cannot be read, and still list the calendars of the Teletraan computer');
   need(problems, typeof view.CalendarsView === 'function' && JSON.stringify(view.CalendarsView()).indexOf('Reading the calendars') !== -1, 'CalendarsView should start by saying it is reading');
 
   // The page draws and never writes itself. The Hide buttons write through calendars-view-parts.js, which
@@ -5322,7 +5322,7 @@ function checkCalendarsHide() {
   const stale = view.calendarsPage(read, 'team', () => {}, now, hiding({ gone: [madeRule.name], rules: [] }));
   need(problems, itemsOf(stale)[2] && labels(itemsOf(stale)[2]) === 'Hide this one | Hide all like this' && /SHOWN/.test(wordsIn(itemsOf(stale)[2])), 'an event that the list says a deleted rule hides should read as shown, with the Hide buttons');
   const hidAtOnce = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: [madeRule, one] }));
-  need(problems, itemsOf(hidAtOnce)[0] && labels(itemsOf(hidAtOnce)[0]) === 'Show again' && /HIDDEN/.test(wordsIn(itemsOf(hidAtOnce)[0])), 'an event that a new rule hides should read as hidden at once, before the Mini lists it again');
+  need(problems, itemsOf(hidAtOnce)[0] && labels(itemsOf(hidAtOnce)[0]) === 'Show again' && /HIDDEN/.test(wordsIn(itemsOf(hidAtOnce)[0])), 'an event that a new rule hides should read as hidden at once, before the Teletraan computer lists it again');
 
   // The sentences a student reads
   [parts.kindLine, parts.hideLine, parts.changeLine, parts.noDayLine, parts.longCodeLine, parts.rulesUnreadableLine, parts.askText('Team calendar', 'Team meeting'), parts.failureText({ statusCode: 403, message: 'Insufficient permissions' }), parts.failureText(new Error('offline')), parts.restingText('Hide all: Team meeting')].forEach(text => checkPlainSentences(problems, 'the Hide buttons ("' + text.slice(0, 30) + '")', text));
@@ -5654,10 +5654,10 @@ function checkTeamTrim() {
   return problems;
 }
 
-// The Monday tab of Dashboard Settings (schemas/settingsMonday.js): the connection block, how often the Mini reads, the
+// The Monday tab of Dashboard Settings (schemas/settingsMonday.js): the connection block, how often the Teletraan computer reads, the
 // task board and the milestones board, the owner switch and the older board rows, which are hidden. The names and the
-// starting values are the ones in dashboard/config.js and at the top of mini/scripts/monday-sync.sh. The boards and the
-// columns are picked from lists that the Mini fills in (monday-pickers.js).
+// starting values are the ones in dashboard/config.js and at the top of computer/scripts/monday-sync.sh. The boards and the
+// columns are picked from lists that the Teletraan computer fills in (monday-pickers.js).
 const mondayTabNames = ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'];
 const taskBlockNames = ['boardId', 'departmentColumn', 'statusColumn', 'teamColumn', 'priorityColumn', 'showColumn', 'assignedColumn', 'pocColumn', 'timelineColumn', 'hoursColumn', 'completedColumn', 'milestoneColumn', 'teamLabels', 'statusIndexes', 'priorityIndexes', 'hideLabel', 'departmentLabels'];
 const milestoneBlockNames = ['boardId', 'dateColumn', 'teamColumn', 'departmentColumn', 'statusColumn', 'teamLabels', 'statusIndexes', 'departmentLabels'];
@@ -5685,7 +5685,7 @@ function checkMondayTab() {
   // How often: 5 to 120 whole minutes, starting at 30, in the words given
   const every = at('mondayEveryMinutes');
   need(problems, every && every.type === 'number' && every.title === 'How often' && every.initialValue === 30 && every.group === 'monday', 'mondayEveryMinutes should be a number titled How often that starts at 30, in the Monday tab');
-  need(problems, every && every.description === 'How often the Mini reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.', 'mondayEveryMinutes should say how often the Mini reads, and what the free plan allows');
+  need(problems, every && every.description === 'How often the Teletraan computer reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.', 'mondayEveryMinutes should say how often the computer reads, and what the free plan allows');
   ['min', 'max'].forEach(name => need(problems, constraintNamed(rulesOf(every), name) && constraintNamed(rulesOf(every), name).args[0] === (name === 'min' ? 5 : 120), 'mondayEveryMinutes needs ' + name + ' ' + (name === 'min' ? 5 : 120)));
   need(problems, constraintNamed(rulesOf(every), 'integer') && !constraintNamed(rulesOf(every), 'required'), 'mondayEveryMinutes should take whole minutes and not be required');
   need(problems, config.defaultSettings.mondayEveryMinutes === 30, 'config.js should start at 30 minutes');
@@ -5784,7 +5784,7 @@ function checkMondayTab() {
   return problems;
 }
 
-// The Monday data document the Mini writes (schemas/mondayStatus.js, mini/scripts/monday-sync.sh), the block
+// The Monday data document the Teletraan computer writes (schemas/mondayStatus.js, computer/scripts/monday-sync.sh), the block
 // that shows it and the task fields the script writes
 const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'snapshots', 'taskCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
 
@@ -5803,11 +5803,11 @@ function checkMondayStatus() {
   need(problems, names(fieldAt('mondayStatus.readings')) === 'boardId,boardName,itemsRead,readAt,note', 'a reading of mondayStatus should have these fields, in this order: boardId, boardName, itemsRead, readAt, note');
   const kinds = { connectedAs: 'string', lastSyncAt: 'datetime', lastError: 'string', boards: 'array', readings: 'array', 'readings.boardId': 'string', 'readings.boardName': 'string', 'readings.itemsRead': 'number', 'readings.readAt': 'datetime', 'readings.note': 'string', snapshots: 'array', taskCount: 'number', hiddenUnassigned: 'number', callsToday: 'number', callsDate: 'date', 'boards.id': 'string', 'boards.name': 'string', 'boards.itemCount': 'number', 'boards.columns': 'array', 'boards.columns.id': 'string', 'boards.columns.title': 'string', 'boards.columns.type': 'string', 'snapshots.date': 'date', 'snapshots.open': 'number' };
   Object.keys(kinds).forEach(name => need(problems, fieldAt('mondayStatus.' + name) && fieldAt('mondayStatus.' + name).type === kinds[name], 'mondayStatus.' + name + ' should be a ' + kinds[name]));
-  need(problems, type && type.readOnly === true, 'mondayStatus should be read only: the Mini writes it');
+  need(problems, type && type.readOnly === true, 'mondayStatus should be read only: the Teletraan computer writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'mondayStatus should be kept out of Studio search');
   eachField((where, field) => {
     if (where.split('.')[0] !== 'mondayStatus') return;
-    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should not be required: the Mini leaves out what it did not find');
+    need(problems, !constraintNamed(constraintsOf(field), 'required'), where + ' should not be required: the Teletraan computer leaves out what it did not find');
   });
 
   // Editors never find it: no line in the sidebar and no place in the New menu
@@ -5853,7 +5853,7 @@ function checkMondayStatus() {
   need(problems, input.describeMondayStatus({ boards: 1 }, now)[2].text === '1 board', 'one board should read 1 board');
   need(problems, JSON.stringify(input.mondayStatusView(null, now)).indexOf('Reading the connection to Monday') !== -1, 'the block should say it is reading while it waits');
   const missing = JSON.stringify(input.mondayStatusView({ doc: null, unreadable: false }, now));
-  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('MONDAY_API_TOKEN') !== -1 && missing.indexOf('local.env') !== -1 && missing.indexOf('5 minutes') !== -1, 'the block should say No connection yet, with the token to add to local.env on the Mini and the 5 minutes to wait, when the document is missing');
+  need(problems, missing.indexOf('No connection yet') !== -1 && missing.indexOf('MONDAY_API_TOKEN') !== -1 && missing.indexOf('local.env') !== -1 && missing.indexOf('5 minutes') !== -1, 'the block should say No connection yet, with the token to add to local.env on the Teletraan computer and the 5 minutes to wait, when the document is missing');
   need(problems, JSON.stringify(input.mondayStatusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the document cannot be read');
   need(problems, JSON.stringify(input.mondayStatusView({ doc: { lastSyncAt: ago(5) }, unreadable: false }, now)).indexOf('Last sync') !== -1, 'the block should show the lines when there is a document');
   need(problems, typeof input.MondayStatusInput === 'function' && JSON.stringify(input.MondayStatusInput()).indexOf('Reading the connection to Monday') !== -1, 'MondayStatusInput should start by saying it is reading');
@@ -5877,7 +5877,7 @@ async function checkMondayRead() {
   return problems;
 }
 
-// The lines under the connection block: how often the Mini reads, the reads used today, and the tasks made with how many are
+// The lines under the connection block: how often the Teletraan computer reads, the reads used today, and the tasks made with how many are
 // hidden for want of a department. A number that cannot be read leaves its line out.
 function checkMondayCounts() {
   const problems = [];
@@ -5927,11 +5927,11 @@ function checkMondayCounts() {
   const line = id => rows.filter(row => row.key === id)[0];
   need(problems, rows.map(row => row.key).join() === '111,222,333,999', 'the block should have a line for each board row that has a board, once each, in the order of the form');
   need(problems, line('111').label === 'Build board' && line('111').text === '12 items read · 3 shown on the TV · Read 5 minutes ago' && line('111').reason === '', 'a board that was read should say its items, the tasks on the TV and when. It reads "' + line('111').text + '"');
-  need(problems, line('222').text === '0 items read · 1 shown on the TV · Read 5 minutes ago' && line('222').reason === 'Monday gave no items for board 222.', 'a board that gave no items should say 0 items read and the reason of the Mini');
-  need(problems, line('333').text === '0 items read · 0 shown on the TV · Not read yet' && line('333').reason === 'The Mini has not read this board yet. Wait for the next sync.', 'a board the Mini has not read yet should say so');
+  need(problems, line('222').text === '0 items read · 1 shown on the TV · Read 5 minutes ago' && line('222').reason === 'Monday gave no items for board 222.', 'a board that gave no items should say 0 items read and the reason of the Teletraan computer');
+  need(problems, line('333').text === '0 items read · 0 shown on the TV · Not read yet' && line('333').reason === 'The Teletraan computer has not read this board yet. Wait for the next sync.', 'a board the computer has not read yet should say so');
   need(problems, line('999').label === 'Board 999' && line('999').text === '0 items read · 0 shown on the TV · Not read yet' && line('999').reason === 'The token cannot see this board, or the board number is wrong.', 'a board number the token cannot see should read 0 items with the reason, whatever an old reading says');
   need(problems, input.describeBoardRows([{ boardId: '111' }], status, null, now)[0].text === '12 items read · Read 5 minutes ago', 'tasks that cannot be counted should leave their words out');
-  need(problems, input.describeBoardRows([{ boardId: '111' }], { readings: [{ boardId: '111', itemsRead: 1, readAt: ago(1) }] }, [], now)[0].reason === '' && input.describeBoardRows([{ boardId: '111' }], null, [], now)[0].reason === 'The Mini has not read this board yet. Wait for the next sync.', 'a document with no list of boards cannot say a board is unseen');
+  need(problems, input.describeBoardRows([{ boardId: '111' }], { readings: [{ boardId: '111', itemsRead: 1, readAt: ago(1) }] }, [], now)[0].reason === '' && input.describeBoardRows([{ boardId: '111' }], null, [], now)[0].reason === 'The Teletraan computer has not read this board yet. Wait for the next sync.', 'a document with no list of boards cannot say a board is unseen');
   need(problems, input.describeBoardRows([{ boardId: '111' }], { names: [{ id: '111', name: 'Empty' }], readings: [{ boardId: '111', itemsRead: 0, readAt: ago(1) }] }, [], now)[0].reason === 'The board has no items.', 'a board with no items and no note should say it has none');
   need(problems, input.describeBoardRows('text', 'text', 'text', now).length === 0 && input.describeBoardRows(undefined, undefined, undefined, now).length === 0, 'answers of an odd shape should give no lines');
   const withRows = JSON.stringify(input.mondayStatusView({ doc: doc, unreadable: false }, now, { every: 30, tasks: 12, boards: rows }));
@@ -6007,7 +6007,7 @@ function checkMondayPickers() {
   kinds.forEach(pair => need(problems, pickers.typeText(pair[0]) === pair[1], 'the column type ' + pair[0] + ' should read ' + pair[1] + ', it reads ' + pickers.typeText(pair[0])));
   const another = [{ id: '111', name: 'A', columns: [{ id: 'mine', title: 'Mine', type: 'status' }] }, { id: '222', name: 'B', columns: [{ id: 'theirs', title: 'Theirs', type: 'status' }] }];
   need(problems, ids(pickers.columnChoices(another, '111', 'status', '')) === ',mine' && ids(pickers.columnChoices(another, '222', 'status', '')) === ',theirs', 'a column list should hold the columns of the board of its own entry and no other');
-  need(problems, sameData(pickers.columnChoices(boards, '222', 'status', ''), []), 'a board whose columns the Mini has not listed yet gives no columns');
+  need(problems, sameData(pickers.columnChoices(boards, '222', 'status', ''), []), 'a board whose columns the Teletraan computer has not listed yet gives no columns');
   need(problems, pickers.columnChoices(boards, '111', 'owner', '')[0].label === 'No owner column' && pickers.columnChoices(boards, '111', 'priority', '')[0].label === 'No priority column' && pickers.columnChoices(boards, '111', 'team', '')[0].label === 'Use the group names', 'the empty lines should say what no column means');
   need(problems, pickers.columnChoices(boards, '111', 'owner', '').filter(choice => choice.group === 'fits').map(choice => choice.id).join() === 'person', 'the owner list should put the people column first');
   need(problems, sameData(pickers.columnChoices(boards, '999', 'status', ''), []) && sameData(pickers.columnChoices(boards, '', 'status', ''), []), 'a board that is not in the list gives no columns');
@@ -6047,9 +6047,9 @@ function checkMondayPickers() {
   need(problems, pickers.waitForSync === 'Read the board first: wait for the next sync.', 'the picker should say: Read the board first: wait for the next sync.');
   ['999', '222'].forEach(boardId => {
     const away = pickers.columnPickerView({ boards: boards, unreadable: false }, props('status'), 'status', boardId);
-    need(problems, away.type === 'p' && words(away).indexOf(pickers.waitForSync) !== -1 && words(away).indexOf('plain-box') === -1, 'a column picker for board ' + boardId + ', whose columns the Mini has not listed, should say to wait for the next sync and not list the columns of another board');
+    need(problems, away.type === 'p' && words(away).indexOf(pickers.waitForSync) !== -1 && words(away).indexOf('plain-box') === -1, 'a column picker for board ' + boardId + ', whose columns the Teletraan computer has not listed, should say to wait for the next sync and not list the columns of another board');
   });
-  need(problems, words(pickers.columnPickerView({ boards: [], unreadable: false }, props(''), 'status', '111')).indexOf(pickers.waitForSync) !== -1, 'a column picker should say to wait for the next sync when the Mini has listed no board at all');
+  need(problems, words(pickers.columnPickerView({ boards: [], unreadable: false }, props(''), 'status', '111')).indexOf(pickers.waitForSync) !== -1, 'a column picker should say to wait for the next sync when the Teletraan computer has listed no board at all');
 
   const columnList = pickers.columnPickerView({ boards: boards, unreadable: false }, props('date4'), 'status', '111');
   need(problems, columnList.type === 'select' && columnList.props.value === 'date4', 'the column picker should be a list with the stored column picked');
@@ -6192,9 +6192,9 @@ function checkMondayBoardsPage() {
   need(problems, /Chosen for both teams/.test(wordsIn(noted)), 'a chosen board with no team should say it is for both teams');
   const reasons = view.boardsPage({ status: Object.assign({}, status, { readings: [{ boardId: '111', itemsRead: 0, readAt: ago(2), note: 'monday gave no items for this board' }] }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links);
   need(problems, /Monday gave no items for this board\./.test(wordsIn(reasons)), 'the note of a reading should be a sentence under its board');
-  need(problems, /The Mini last read Monday 3 minutes ago\./.test(wordsIn(page)) && wordsIn(page).indexOf(parts.openLine) !== -1 && wordsIn(page).indexOf(parts.publicLine) !== -1, 'the page should say when the Mini last read Monday, how to open the tasks of a board, and that the names are public');
+  need(problems, /The Teletraan computer last read Monday 3 minutes ago\./.test(wordsIn(page)) && wordsIn(page).indexOf(parts.openLine) !== -1 && wordsIn(page).indexOf(parts.publicLine) !== -1, 'the page should say when the computer last read Monday, how to open the tasks of a board, and that the names are public');
   need(problems, /dataset/.test(parts.publicLine) && /anyone can read/.test(parts.publicLine), 'the page should say the names are in the dataset that anyone can read');
-  need(problems, wordsIn(view.boardsPage({ status: Object.assign({}, status, { lastError: 'Monday refused the token' }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links)).indexOf('Monday refused the token.') !== -1, 'the last error of the Mini should show as a sentence');
+  need(problems, wordsIn(view.boardsPage({ status: Object.assign({}, status, { lastError: 'Monday refused the token' }), entries: entries, statusUnreadable: false, entriesUnreadable: false }, now, links)).indexOf('Monday refused the token.') !== -1, 'the last error of the Teletraan computer should show as a sentence');
 
   // Nothing yet, reading, nothing to list, and documents that cannot be read
   need(problems, wordsIn(view.boardsPage(null, now, links)).indexOf('Reading the boards') !== -1, 'the page should say it is reading while it waits');
@@ -6224,7 +6224,7 @@ function checkMondayBoardsPage() {
   const resolver = built && built.child && built.child.made && built.child.made.child;
   if (typeof resolver !== 'function') return problems.concat('the Monday Boards page should be given a function that builds the tasks of a board');
 
-  // the second list: the milestones the Mini made, by target date, with no plus button
+  // the second list: the milestones the Teletraan computer made, by target date, with no plus button
   const milestonePane = resolver(parts.milestonesChild, {}).made;
   need(problems, milestonePane.type === 'milestone' && milestonePane.title === 'Milestones' && sameData(milestonePane.defaultOrdering, [{ field: 'targetDate', direction: 'asc' }]) && Array.isArray(milestonePane.initialValueTemplates) && milestonePane.initialValueTemplates.length === 0, 'the second list under Monday Boards should list milestones by target date, with no plus button');
 
@@ -7018,13 +7018,13 @@ async function checkMondayToken() {
   const field = fieldAt('dashboardSettings.mondayTokenTest');
 
   need(problems, field && field.group === 'monday' && field.readOnly === true && field.initialValue === undefined && field.components && field.components.input === input.MondayTokenInput, 'the Monday tab should have a read only Test the token field, drawn by MondayTokenInput (monday-token-input.js)');
-  need(problems, field && field.title === 'Test the token' && /Mini/.test(field.description || '') && /account name or the error/.test(field.description || ''), 'Test the token should say that the Mini answers with the account name or the error');
+  need(problems, field && field.title === 'Test the token' && /computer/.test(field.description || '') && /account name or the error/.test(field.description || ''), 'Test the token should say that the Teletraan computer answers with the account name or the error');
   need(problems, check.checkWord === 'monday-check', 'the helper word should be monday-check');
 
-  // what the Mini answers, in words
+  // what the Teletraan computer answers, in words
   const line = answer => check.answerLine(answer);
   need(problems, line({ ok: true, account: 'Pat Example' }).text === 'Connected as Pat Example.' && line({ ok: true, account: 'Pat Example' }).failed === false && line({ ok: true, output: 'Sam\nsecond line' }).text === 'Connected as Sam.', 'a good answer should say Connected as and the account name');
-  need(problems, line({ ok: false, error: 'Not authorized' }).text === 'Not authorized' && line({ ok: false, error: 'Not authorized' }).failed === true && line({ ok: false }).text === check.words.noAnswer && line(null).failed === true && line({ ok: true }).failed === true, 'a bad answer should give the error, or say the Mini gave no answer');
+  need(problems, line({ ok: false, error: 'Not authorized' }).text === 'Not authorized' && line({ ok: false, error: 'Not authorized' }).failed === true && line({ ok: false }).text === check.words.noAnswer && line(null).failed === true && line({ ok: true }).failed === true, 'a bad answer should give the error, or say the Teletraan computer gave no answer');
 
   // the call: a POST of the word to the helper endpoint of the control page, with the cookie
   const sent = [];
@@ -7099,8 +7099,8 @@ async function main() {
     world.mondayPickers = await load(path.join(folder, 'inputs', 'monday-pickers.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = readModule(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
-    world.frcScript = textOf(path.join(here, '..', 'mini', 'scripts', 'frc-sync.sh'));
-    world.mondayScript = textOf(path.join(here, '..', 'mini', 'scripts', 'monday-sync.sh'));
+    world.frcScript = textOf(path.join(here, '..', 'computer', 'scripts', 'frc-sync.sh'));
+    world.mondayScript = textOf(path.join(here, '..', 'computer', 'scripts', 'monday-sync.sh'));
     world.panelOrderInput = await load(path.join(folder, 'inputs', 'panel-order-input.js'));
     world.screenIds = await load(path.join(folder, 'inputs', 'screen-ids.js'));
     world.screenMap = await load(path.join(folder, 'tools', 'screen-map.js'));
@@ -7111,7 +7111,7 @@ async function main() {
     world.constants = await load(path.join(dashboardFolder, 'core', 'constants.js'));
     world.portrait = await load(path.join(dashboardFolder, 'core', 'portrait.js'));
     world.leadershipModule = await load(path.join(dashboardFolder, 'core', 'leadership.js'));
-    world.statusScript = readModule(path.join(here, '..', 'mini', 'scripts', 'status-write.sh'), 'utf8');
+    world.statusScript = readModule(path.join(here, '..', 'computer', 'scripts', 'status-write.sh'), 'utf8');
     world.sample = JSON.parse(readModule(path.join(dashboardFolder, 'data', 'sample', 'content.json'), 'utf8'));
     world.seed = readModule(path.join(here, '..', 'docs', 'seed', 'extra-events.ndjson'), 'utf8');
     world.placeSeed = readModule(path.join(here, '..', 'docs', 'seed', 'places.ndjson'), 'utf8');
@@ -7128,8 +7128,8 @@ async function main() {
     world.previewPanelsView = await load(path.join(folder, 'inputs', 'preview-panels-view.js'));
     world.mondayBoardsViewSource = readModule(path.join(here, 'inputs', 'monday-boards-view.js'), 'utf8');
     world.mondayBoardsPartsSource = readModule(path.join(here, 'inputs', 'monday-boards-parts.js'), 'utf8');
-    world.calendarStatusScript = readModule(path.join(here, '..', 'mini', 'scripts', 'calendar-status.sh'), 'utf8');
-    world.calendarStatusHelper = readModule(path.join(here, '..', 'mini', 'scripts', 'calendar-status.mjs'), 'utf8');
+    world.calendarStatusScript = readModule(path.join(here, '..', 'computer', 'scripts', 'calendar-status.sh'), 'utf8');
+    world.calendarStatusHelper = readModule(path.join(here, '..', 'computer', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });
   }
@@ -7154,7 +7154,7 @@ async function main() {
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
   check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
   check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
-  check('the Start here page has its six blocks in order, a picture of the screen with the areas A to E, the status of the Mini and three links, and no buttons', checkStartHere);
+  check('the Start here page has its six blocks in order, a picture of the screen with the areas A to E, the status of the Teletraan computer and three links, and no buttons', checkStartHere);
   results.push({ name: 'the requests of the buttons beside Publish and the client write the same request fields, through screen-requests.js', problems: await checkScreenRequests().catch(error => ['the check stopped: ' + error.message]) });
   check('Next look now and Preview competition have their hidden request fields and starting values', checkNewRequests);
   check('Content source and the switch back time are hidden, kept in the schema and ignored by the dashboard, and the two buttons are gone', checkContentSource);
@@ -7188,11 +7188,11 @@ async function main() {
   check('Dashboard Settings, Look and Demo exist once, the New menu offers the right types, and the project files agree', checkSettingsPage);
   check('the Publish all tool is in the top bar and keeps the pages that exist once on their fixed ids', checkPublishAll);
   check('Dashboard Settings has its eight tabs, every field is in the tab the table says, and the notes and the status block store nothing', checkSettingsTabs);
-  check('the status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the block shows its lines in plain words', checkStatusBlock);
+  check('the status document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, and the block shows its lines in plain words', checkStatusBlock);
   check('the status block shows the screen restarts of the day and the last backup', checkStatusWatchdog);
   results.push({ name: 'the status block asks for the published document by its id, and survives a client that fails', problems: await checkStatusRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the Competition tab has the mode, one switch for each card and the connection block, as in dashboard/config.js, core/competition.js and registry.js', checkCompetitionTab);
-  check('the FRC data document has the fields the Mini writes and the dashboard reads, is kept out of the sidebar and the New menu, and the connection block shows its lines in plain words', checkFrcStatus);
+  check('the FRC data document has the fields the Teletraan computer writes and the dashboard reads, is kept out of the sidebar and the New menu, and the connection block shows its lines in plain words', checkFrcStatus);
   results.push({ name: 'the connection block asks for the published FRC data document by its id, and survives a client that fails', problems: await checkFrcRead().catch(error => ['the check stopped: ' + error.message]) });
   check('Panel order is one list of every panel, the older lists are hidden, and the input fills an empty list from them as the dashboard does', checkPanelOrder);
   check('the Monday cards are panels of the large frame, kept out of Panel order, its starting rows and the lists of config.js', checkMondayCards);
@@ -7204,15 +7204,15 @@ async function main() {
   check('every seasonal pack is complete, and draws only in the empty places (tests/check-seasons.test.mjs)', checkSeasonGuard);
   check('a task has a source, a board, a priority and Show on TV, every task is read only except Show on TV, no New menu offers one, and Monday Tasks holds every task once', checkBoardTasks);
   check('each list under Tasks, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
-  check('the calendar status document has the fields the Mini writes, is kept out of the sidebar and the New menu, and the scripts on the Mini write the same document', checkCalendarStatusType);
+  check('the calendar status document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, and the scripts on the computer write the same document', checkCalendarStatusType);
   check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and writes nothing itself', checkCalendarsPage);
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the Calendars page shows the kind of each calendar and the Hide buttons of each event, and every rule they make is accepted by the Calendar filters schema', checkCalendarsHide);
   results.push({ name: 'the Hide buttons make a rule once with createIfNotExists, Show again deletes the rule and its draft, and the rules made on the page are read by their id', problems: await checkCalendarsHideWrite().catch(error => ['the check stopped: ' + error.message]) });
   check('the Monday tab has the connection block, up to 10 board entries with pickers and a choice of group names or a status column, the labels for in progress and done (the Backlog label is hidden and ignored) and the owner switch, as in dashboard/config.js', checkMondayTab);
-  check('the Monday data document has the fields the Mini writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
+  check('the Monday data document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
   results.push({ name: 'the connection block asks for the published Monday data document by its id, and survives a client that fails', problems: await checkMondayRead().catch(error => ['the check stopped: ' + error.message]) });
-  check('the connection block shows how often the Mini reads, the reads used today and the tasks made with the hidden ones below its four lines, a line for each of the two boards, and leaves out a number it cannot read', checkMondayCounts);
+  check('the connection block shows how often the Teletraan computer reads, the reads used today and the tasks made with the hidden ones below its four lines, a line for each of the two boards, and leaves out a number it cannot read', checkMondayCounts);
   results.push({ name: 'the connection block counts the published tasks from the board, and survives a client that fails', problems: await checkMondayTaskCount().catch(error => ['the check stopped: ' + error.message]) });
   results.push({ name: 'the connection block asks for the board of each published task that is on the TV, and survives a client that fails', problems: await checkMondayShownBoards().catch(error => ['the check stopped: ' + error.message]) });
   check('the board and column pickers list the boards and the columns of that board only, with their types in words, clear a column when the board changes, say to wait for the sync when a board has no columns yet, and write only the id', checkMondayPickers);

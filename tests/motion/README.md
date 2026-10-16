@@ -8,14 +8,14 @@ The frames of a failed test are in `_outputs/motion/<test>/` (git ignores it): `
 
 ## How to run them
 
-Playwright is a development dependency of `tools/` and is never on the Mini. On a laptop that has it:
+Playwright is a development dependency of `tools/` and is never on the Teletraan computer. On a laptop that has it:
 
     node tests/motion/run.mjs              every rule, about ten minutes
     node tests/motion/run.mjs swap         only the rules with "swap" in their name
     node tests/run.mjs                     every test of the repository, and this one last
     node tests/run.mjs motion              only the motion tests, through the runner
 
-If Playwright is not installed the runner prints one line, `skip  motion tests`, and carries on, so the Mini and any other Mac stay green. To install it, run `npm install` in `tools/` (ask first, it is a download). To use a copy that is somewhere else, name its folder: `NODE_PATH=/path/to/node_modules node tests/motion/run.mjs`. It uses Chrome for Testing, which Playwright downloads for itself.
+If Playwright is not installed the runner prints one line, `skip  motion tests`, and carries on, so the Teletraan computer and any other Mac stay green. To install it, run `npm install` in `tools/` (ask first, it is a download). To use a copy that is somewhere else, name its folder: `NODE_PATH=/path/to/node_modules node tests/motion/run.mjs`. It uses Chrome for Testing, which Playwright downloads for itself.
 
 ## How a test works
 

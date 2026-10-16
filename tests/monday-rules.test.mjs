@@ -193,7 +193,7 @@ test('the stale color is the one new color, #F0A830, in tokens.css, and the chip
 });
 
 
-// What the screen takes from the Mini
+// What the screen takes from the Teletraan computer
 
 test('the query asks for the new fields of a task and for the milestones, and a task keeps the id of its Team lead', () => {
   assert.ok(sanity.contentQuery.includes('"subteamId": subteam._ref'));
