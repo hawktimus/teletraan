@@ -1,5 +1,7 @@
-// Live weather from Open-Meteo, which is free and needs no key. The newest good
-// reading is saved in the browser, so the screen has weather after a restart.
+// Live weather from Open-Meteo, which is free and needs no key, so nothing about it is in mini/local.env. The newest
+// good reading is saved in the browser, so the screen has weather after a restart. Nothing in here throws at the
+// screen: a read that fails keeps the last reading until it is over two hours old, and then the temperature and the
+// icon are blank.
 
 const refreshMinutes = 15;
 
@@ -7,8 +9,8 @@ const refreshMinutes = 15;
 // connection cannot stop the refreshes
 const requestSeconds = 15;
 
-// Past this a reading is dropped, so old weather is never shown as current
-const tooOldHours = 3;
+// Past this a reading is dropped, so old weather is never shown as current. The panels then draw dashes and no icon.
+const tooOldHours = 2;
 const saveKey = 'teletraan-weather';
 
 // What each weather code means. Codes in the same range look the same on
@@ -161,17 +163,26 @@ export function startWeather(place, onChange, options = {}) {
   let sentEmpty = false;
   let stopped = false;
 
+  // The screen's own function may fail, and that must not stop the refreshes
+  function tell(weather) {
+    try {
+      onChange(weather);
+    } catch (error) {
+      console.error('The weather could not be shown', error);
+    }
+  }
+
   function publish() {
     if (latest === null || stopped) return;
 
     const now = parts.now();
     if (isTooOld(latest, now)) {
-      if (!sentEmpty) onChange(null);
+      if (!sentEmpty) tell(null);
       sentEmpty = true;
       return;
     }
     sentEmpty = false;
-    onChange(toWeather(latest, now));
+    tell(toWeather(latest, now));
   }
 
   // The timer covers reading the answer as well as waiting for it

@@ -319,7 +319,7 @@ test('startWeather stops the 15 second timer when the answer comes in time, and 
   assert.equal(world.timeouts[1].cleared, true);
 });
 
-test('startWeather drops a reading older than 3 hours on its minute timer, even when refreshes hang', async () => {
+test('startWeather drops a reading older than 2 hours on its minute timer, even when refreshes hang', async () => {
   const world = pretendWorld();
   await world.start();
   assert.equal(world.sent.length, 1);
@@ -327,15 +327,15 @@ test('startWeather drops a reading older than 3 hours on its minute timer, even 
   world.answerWith = () => new Promise(() => {}); // refreshes never answer
   const check = world.timers[1].action;
 
+  world.time = startTime + 1 * hour;
+  check();
+  assert.equal(world.sent.length, 1, 'a reading under 2 hours old is left alone');
+
   world.time = startTime + 2 * hour;
   check();
-  assert.equal(world.sent.length, 1, 'a reading under 3 hours old is left alone');
+  assert.equal(world.sent.length, 1, 'exactly 2 hours old is still shown');
 
-  world.time = startTime + 3 * hour;
-  check();
-  assert.equal(world.sent.length, 1, 'exactly 3 hours old is still shown');
-
-  world.time = startTime + 3 * hour + minute;
+  world.time = startTime + 2 * hour + minute;
   check();
   assert.equal(world.sent.length, 2);
   assert.equal(world.sent[1], null);
@@ -345,15 +345,15 @@ test('startWeather drops a reading older than 3 hours on its minute timer, even 
   assert.equal(world.sent.length, 2, 'null is sent once, not every minute');
 });
 
-test('startWeather treats a reading older than 3 hours as no reading', async () => {
+test('startWeather treats a reading older than 2 hours as no reading', async () => {
   logged = [];
   const world = pretendWorld();
   await world.start();
 
   world.answerWith = async () => { throw new Error('offline'); };
-  await world.tick(3 * hour);
+  await world.tick(2 * hour);
   assert.equal(world.sent.length, 2);
-  assert.equal(world.sent[1].ageMinutes, 180, 'exactly 3 hours old is still shown');
+  assert.equal(world.sent[1].ageMinutes, 120, 'exactly 2 hours old is still shown');
 
   await world.tick(1 * minute);
   assert.equal(world.sent.length, 3);
@@ -369,9 +369,9 @@ test('startWeather treats a reading older than 3 hours as no reading', async () 
   assert.equal(world.sent[3].ageMinutes, 0);
 });
 
-test('startWeather does not show a saved reading older than 3 hours', async () => {
+test('startWeather does not show a saved reading older than 2 hours', async () => {
   const world = pretendWorld();
-  world.stored['teletraan-weather'] = savedText({ savedAt: startTime - 3 * hour - minute });
+  world.stored['teletraan-weather'] = savedText({ savedAt: startTime - 2 * hour - minute });
   world.answerWith = () => new Promise(() => {});
 
   startWeather(place, weather => world.sent.push(weather), world.parts);
