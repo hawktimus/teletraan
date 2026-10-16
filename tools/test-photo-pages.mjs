@@ -30,7 +30,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/photo'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/photo/photo.js'), path.join(root, 'panels/photo/photo.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'panels/photo/panel.js'), path.join(root, 'panels/photo/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -48,7 +48,7 @@ let copies = 0;
 async function freshPanel() {
   copies += 1;
   const file = 'panels/photo/photo-' + copies + '.js';
-  fs.copyFileSync(path.join(root, 'panels/photo/photo.js'), path.join(root, file));
+  fs.copyFileSync(path.join(root, 'panels/photo/panel.js'), path.join(root, file));
   return import(base + file);
 }
 

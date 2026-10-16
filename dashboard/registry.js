@@ -16,7 +16,7 @@
 //             and mount are given the page, counting from 1, and a page with nothing
 //             on it is skipped. No panel has it now: the Events panel draws its pages
 //             in one list and scrolls from the first to the next (scrollPages in
-//             panels/events/events.js), as the Monday cards do.
+//             panels/events/panel.js), as the Monday cards do.
 //   competition  a competition card (core/competition.js). It is not in Panel order or in the
 //             rotation lists of config.js: the Competition tab of Dashboard Settings switches it,
 //             and core/competition.js puts the cards that are due in the large panel's rotation.
@@ -88,8 +88,8 @@ export const panels = [
   { id: 'stand-in-tile', region: 'grid2', testOnly: true },
   { id: 'stand-in-ticker', region: 'ticker', testOnly: true },
 ].map(panel => Object.assign({
-  script: './panels/' + panel.id + '/' + panel.id + '.js',
-  style: 'panels/' + panel.id + '/' + panel.id + '.css',
+  script: './panels/' + panel.id + '/panel.js',
+  style: 'panels/' + panel.id + '/panel.css',
 }, panel));
 
 // The panels that stay on screen the whole time, in the order shell.js draws

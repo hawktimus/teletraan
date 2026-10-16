@@ -35,11 +35,11 @@ const cardNames = ['tasks', 'milestones', 'progress', 'milestones-both', 'progre
 cardNames.forEach(name => {
   const id = 'monday-' + name;
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 ['leadership', 'team-leads', 'roster'].forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -56,7 +56,7 @@ const panelOrder = await import(base + 'core/panel-order.js');
 const panels = {};
 for (const name of cardNames) panels[name] = await import(base + 'panels/monday-' + name + '/monday-' + name + '.js');
 const people = {};
-for (const name of ['leadership', 'team-leads', 'roster']) people[name] = await import(base + 'panels/' + name + '/' + name + '.js');
+for (const name of ['leadership', 'team-leads', 'roster']) people[name] = await import(base + 'panels/' + name + '/panel.js');
 
 const tests = [];
 function test(name, run) {
@@ -295,7 +295,7 @@ test('frame.css keeps the list a page up for each page in view, and the styleshe
 
   const shared = read('monday.css');
   assert.ok(/--scroll-step: 420px;/.test(shared), 'a step is five rows of 84');
-  assert.ok(/\.monday\.monday-progress-both \{\s*--scroll-step: 380px;/.test(read('panels/monday-progress-both/monday-progress-both.css')), 'and five rows of 76 on the progress card of both teams');
+  assert.ok(/\.monday\.monday-progress-both \{\s*--scroll-step: 380px;/.test(read('panels/monday-progress-both/panel.css')), 'and five rows of 76 on the progress card of both teams');
   assert.equal(/transform|transition|animation|keyframes/.test(shared), false);
 });
 
@@ -542,7 +542,7 @@ test('a name from the board is never markup on the cards of both teams, and no c
     assert.equal(dashes.test(html), false, name);
     assert.ok(html.includes('&lt;U&gt;LEAD&lt;/U&gt;'), name);
   });
-  ['core/team-title.js', 'core/text-width.js', 'monday.css', 'panels/monday-milestones-both/monday-milestones-both.js', 'panels/monday-progress-both/monday-progress-both.js', 'panels/monday-milestones-both/monday-milestones-both.css', 'panels/monday-progress-both/monday-progress-both.css'].forEach(file => {
+  ['core/team-title.js', 'core/text-width.js', 'monday.css', 'panels/monday-milestones-both/panel.js', 'panels/monday-progress-both/panel.js', 'panels/monday-milestones-both/panel.css', 'panels/monday-progress-both/panel.css'].forEach(file => {
     assert.equal(dashes.test(read(file)), false, file + ' has an em or en dash');
   });
 });
@@ -735,7 +735,7 @@ test('a title is at the size of a heading when it fits before the line that ends
     assert.equal(textWidthModule.textWidth(title, 700, 96) <= headerRoom.titleRoom, big, title);
   });
   ['leadership', 'team-leads', 'roster'].forEach(name => {
-    const css = fs.readFileSync(path.join(dashboardFolder, 'panels', name, name + '.css'), 'utf8');
+    const css = fs.readFileSync(path.join(dashboardFolder, 'panels', name, 'panel.css'), 'utf8');
     assert.ok(/\.title \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;/.test(css), name + ': a title that still does not fit is cut off with an ellipsis');
     assert.ok(/\.title-small \{ font: 700 var\(--size-team\)\/64px/.test(css), name);
     assert.equal(/tag-text/.test(css), false, name + ' has no rule for the old tag text');

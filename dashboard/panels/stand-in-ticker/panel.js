@@ -1,4 +1,4 @@
-// Only used by ?stress. See stand-in-tile.js.
+// Only used by ?stress. See panels/stand-in-tile/panel.js.
 
 import { tagMarkup } from '../../core/plate.js';
 

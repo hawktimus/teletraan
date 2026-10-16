@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { config, contentOf, dashboardFolder, htmlOf, leads, monday, now, panelIds, panels, read, registry, runTests, screens, task, test, views, wordsOf } from './monday-world.mjs';
 
 const studioFolder = fileURLToPath(new URL('../studio/', import.meta.url));
-const sheet = id => read('panels/' + id + '/' + id + '.css');
+const sheet = id => read('panels/' + id + '/panel.css');
 const olderIds = ['monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
 const countOf = (text, piece) => text.split(piece).length - 1;
 
@@ -50,7 +50,7 @@ test('the six panels of the board are flagged monday in registry.js with a scrip
     assert.equal(entry.region, 'grid1', id);
     assert.equal(entry.topic, 'monday', id);
     assert.equal(entry.older === true, olderIds.includes(id), id + ' is marked older only when it is an older panel');
-    assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.css')), id);
+    assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.css')), id);
     assert.ok(!config.defaultSettings.rotation.grid1.some(step => step.panel === id), id);
     assert.ok(!read('core/panel-order.js').includes(id), id);
   });
@@ -68,7 +68,7 @@ test('the older Monday panels are still registered and still draw, and the Studi
 
 test('every panel script has the three functions a panel has, and no animation code, no font size and only the styles of a measured width, a flex share or a color', () => {
   panelIds.forEach(id => {
-    const js = read('panels/' + id + '/' + id + '.js');
+    const js = read('panels/' + id + '/panel.js');
     assert.equal(typeof panels[id].hasContent, 'function', id);
     assert.equal(typeof panels[id].mount, 'function', id);
     assert.equal(typeof panels[id].markupFor, 'function', id);
@@ -533,7 +533,7 @@ test('the measurements of the order are in the stylesheets', () => {
   assert.ok(/\.monday-overall \.team-row \{[^}]*height: 64px;/.test(overall) && /\.monday-overall \.hours \{[^}]*width: 230px;[^}]*font: 600 40px/.test(overall) && /\.monday-overall \.milestone-track \{[^}]*height: 10px;/.test(overall));
 
   const timeline = sheet('monday-timeline');
-  const script = read('panels/monday-timeline/monday-timeline.js');
+  const script = read('panels/monday-timeline/panel.js');
   assert.ok(/const ROW = 72;/.test(script) && /\.monday-timeline \.week \{[^}]*font: 600 28px/.test(timeline) && /\.monday-timeline \.bar text \{[^}]*font: 600 32px/.test(timeline) && /\.monday-timeline \.rule \{[^}]*stroke-width: 3;/.test(timeline));
   assert.ok(/\.monday-timeline \.today \{[^}]*stroke-width: 5;[^}]*stroke-dasharray/.test(timeline), 'today is a dashed line of 5px');
 
@@ -557,7 +557,7 @@ test('the timeline shows the picture for the bar layout only in the bar layout, 
 
 test('no panel of the board writes an em or en dash, an emoji or an exclamation mark', () => {
   panelIds.forEach(id => {
-    const text = read('panels/' + id + '/' + id + '.js') + sheet(id);
+    const text = read('panels/' + id + '/panel.js') + sheet(id);
     assert.equal(/[–—]/.test(text), false, id);
     assert.equal(/!(?!=)(?=[\s'"`)]|$)/.test(text.replace(/<!--[\s\S]*?-->/g, '').replace(/!==?/g, '')), false, id + ' has an exclamation mark');
   });

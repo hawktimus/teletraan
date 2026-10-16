@@ -664,7 +664,7 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
 
 /* People portraits (core/portrait.js). The Roster panel draws one slot for its
    team lead: a portrait 292 square, then the name and the role under it (the
-   box it sits in is in roster.css). The Leadership and Team Leads panels draw
+   box it sits in is in panels/roster/panel.css). The Leadership and Team Leads panels draw
    rows, four to a page at 100 percent, built like the rows of the Events panel:
    four rows of 144px fill the 576px body, and a 2px rule in the team's plate
    color is under a row, except under the last. A row has the portrait at the

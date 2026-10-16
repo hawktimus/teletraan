@@ -35,7 +35,7 @@ export const teams = await load('core/teams.js');
 
 export const panelIds = ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board'];
 export const panels = {};
-for (const id of panelIds) panels[id] = await load('panels/' + id + '/' + id + '.js');
+for (const id of panelIds) panels[id] = await load('panels/' + id + '/panel.js');
 
 // Noon on Thursday October 15 2026 in Holly Springs, written with a Z so it means the same on every computer
 export const now = new Date('2026-10-15T16:00:00Z');

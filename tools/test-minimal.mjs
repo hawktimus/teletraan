@@ -160,7 +160,7 @@ test('the page of Minimal has no scanlines, no raised plate, no stamped id and n
   assert.ok(css.includes('html[data-style="minimal"] .header svg.double-slash { display: none; }'), 'the // mark of a header is off, because the pictures have no slashes');
 
   // The bar layout and its panels have no id, serial text, hazard stripe, slash, conduit, bracket or scanline of their own
-  const files = ['dashboard/layouts/bar.css', 'dashboard/panels/bar-banner/bar-banner.css', 'dashboard/panels/bar-banner/bar-banner.js', 'dashboard/panels/bar-column/bar-column.css', 'dashboard/panels/bar-column/bar-column.js'];
+  const files = ['dashboard/layouts/bar.css', 'dashboard/panels/bar-banner/panel.css', 'dashboard/panels/bar-banner/panel.js', 'dashboard/panels/bar-column/panel.css', 'dashboard/panels/bar-column/panel.js'];
   files.forEach(file => {
     const text = withoutComments(read(file));
     assert.ok(!/plate-id|teamInitials|team-initials|\bHP-|serial|hazard|conduit|bracket|slash|scanline|repeating-linear-gradient/i.test(text), file + ' has none of them');
@@ -203,7 +203,7 @@ test('the layout of Minimal is the numbers of the order: the banner 1856 x 160 w
   assert.equal(layout.hasRegion('bar', 'grid2'), false);
   assert.equal(layout.hasRegion('bar', 'countdown'), false);
 
-  const column = read('dashboard/panels/bar-column/bar-column.js');
+  const column = read('dashboard/panels/bar-column/panel.js');
   const parts = ['class="bar-rail"', 'class="bar-time"', 'class="bar-date"', 'class="bar-weather"', 'class="bar-team"', 'class="bar-school"', 'class="logo bar-logo"'];
   parts.forEach(part => assert.ok(column.includes(part), 'the column has ' + part));
   assert.deepEqual(parts.slice().sort((one, other) => column.indexOf(one) - column.indexOf(other)), parts, 'the rail, then the clock, the date, the weather, the TEAM plate, the school and the hawk, from the top');
@@ -269,8 +269,8 @@ test('the war clock is the narrow form, 766 x 128, in Minimal and the wide form,
   assert.ok(!/war-/.test(original), 'Original has no war clock');
 
   assert.ok(/--style-digits: var\(--team-neon\);/.test(minimal) && /--style-digits: #ffb327;/.test(cybertron), 'team neon in Minimal, amber in Cybertron');
-  assert.ok(read('dashboard/panels/bar-banner/bar-banner.js').includes('${warMarkup()}'), 'the banner of Minimal draws the narrow form');
-  assert.ok(read('dashboard/panels/countdown/countdown.js').includes("warMarkup('wide')"), 'the countdown of Cybertron draws the wide one');
+  assert.ok(read('dashboard/panels/bar-banner/panel.js').includes('${warMarkup()}'), 'the banner of Minimal draws the narrow form');
+  assert.ok(read('dashboard/panels/countdown/panel.js').includes("warMarkup('wide')"), 'the countdown of Cybertron draws the wide one');
 });
 
 test('the mirror turns the regions of Minimal and nothing in them: the rail, the column and the main panel change places, and no rule of its style turns a frame', () => {

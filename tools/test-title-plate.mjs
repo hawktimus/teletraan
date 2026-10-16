@@ -202,7 +202,7 @@ const fixedTitles = [
 
 test('every title that is always the same fits before the line at 96 px, and the widest title there is, LEADERSHIP, fits with 4 to spare', () => {
   fixedTitles.forEach(([panel, title]) => {
-    assert.ok(read('dashboard/panels/' + panel + '/' + panel + '.js').includes(title), panel + ' writes ' + title);
+    assert.ok(read('dashboard/panels/' + panel + '/panel.js').includes(title), panel + ' writes ' + title);
     assert.ok(textWidth(title, 700, 96) <= titleRoom, title + ' is ' + Math.round(textWidth(title, 700, 96)) + ' wide');
   });
 
@@ -244,7 +244,7 @@ test('a title that is longer than its room is cut off with an ellipsis before th
   });
 
   ['roster', 'monday'].forEach(name => {
-    const file = name === 'monday' ? 'dashboard/monday.css' : 'dashboard/panels/roster/roster.css';
+    const file = name === 'monday' ? 'dashboard/monday.css' : 'dashboard/panels/roster/panel.css';
     assert.ok(new RegExp('\\.' + name + ' \\.title-tight \\{ font: 700 var\\(--size-body\\)/64px').test(withoutComments(read(file))), name + ' writes the tight title at 56 px');
   });
 
@@ -275,7 +275,7 @@ test('the widest Daily Agenda date of the year, and every other words the header
 
   // the tag text of the panels that have one is cut off with an ellipsis at the room
   ['tonight', 'sponsor-feature', 'competition-next-match', 'competition-rank', 'competition-results', 'competition-alliance', 'competition-timeline', 'competition-district', 'competition-last-season'].forEach(panel => {
-    const rule = new RegExp('\\.' + panel + ' \\.tag-text \\{([^}]*)\\}').exec(withoutComments(read('dashboard/panels/' + panel + '/' + panel + '.css')));
+    const rule = new RegExp('\\.' + panel + ' \\.tag-text \\{([^}]*)\\}').exec(withoutComments(read('dashboard/panels/' + panel + '/panel.css')));
     assert.ok(rule && rule[1].includes('max-width: ' + wordsRoom + 'px;') && rule[1].includes('text-overflow: ellipsis;'), panel + ' cuts the tag text off at ' + wordsRoom);
   });
 });
@@ -343,8 +343,8 @@ test('Neon Prime puts the row of ticks to the right of the notch, and stops it b
 // The Photo panel
 
 test('the Photo panel has no title and no mark, and its stylesheet has no rule for a header', () => {
-  const script = withoutComments(read('dashboard/panels/photo/photo.js'));
-  const css = withoutComments(read('dashboard/panels/photo/photo.css'));
+  const script = withoutComments(read('dashboard/panels/photo/panel.js'));
+  const css = withoutComments(read('dashboard/panels/photo/panel.css'));
 
   assert.equal(/PHOTOS|<h2|class="header"|class="title"|doubleSlash|markBeside|data-slat="title"|data-slat="tag"/.test(script), false);
   assert.equal(/\.photo \.header|\.photo \.title/.test(css), false);

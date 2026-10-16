@@ -34,7 +34,7 @@ function copyScripts() {
   workFolders.push(folder);
   fs.writeFileSync(path.join(folder, 'package.json'), '{ "type": "module" }\n');
 
-  const files = ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js', 'panels/banner/banner.js', 'panels/countdown/countdown.js'];
+  const files = ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js', 'panels/banner/panel.js', 'panels/countdown/panel.js'];
   fs.readdirSync(path.join(dashboardFolder, 'core')).forEach(name => {
     if (name.endsWith('.js')) files.push('core/' + name);
   });
@@ -376,7 +376,7 @@ const SECONDS_WRITE = ['.seconds span.text', '.seconds span.animate'];
 
 test('the countdown writes only the seconds on most ticks, and only the parts that changed on the others', async () => {
   await onScreen(async world => {
-    const countdown = await import(world.folder + 'panels/countdown/countdown.js');
+    const countdown = await import(world.folder + 'panels/countdown/panel.js');
     const page = makeHost(world.log);
     // 4 days, 3 hours, 22 minutes and 59.75 seconds to go
     countdown.mount(page.host, countdownContent('2026-10-09T18:30'));
@@ -429,7 +429,7 @@ test('the countdown writes only the seconds on most ticks, and only the parts th
 
 test('the countdown writes the top line again, and measures it again, only when the label or the date changes', async () => {
   await onScreen(async world => {
-    const countdown = await import(world.folder + 'panels/countdown/countdown.js');
+    const countdown = await import(world.folder + 'panels/countdown/panel.js');
     const page = makeHost(world.log);
     countdown.mount(page.host, countdownContent('2026-10-09T18:30'));
     const measuredAtStart = world.measured.length;
@@ -462,7 +462,7 @@ test('the countdown writes the top line again, and measures it again, only when 
 
 test('the countdown draws the big days number without a slam the first time, and a three digit number gets the smaller size', async () => {
   await onScreen(async world => {
-    const countdown = await import(world.folder + 'panels/countdown/countdown.js');
+    const countdown = await import(world.folder + 'panels/countdown/panel.js');
     const page = makeHost(world.log);
     countdown.mount(page.host, countdownContent('2027-03-01T12:00'));
 
@@ -474,7 +474,7 @@ test('the countdown draws the big days number without a slam the first time, and
 
 test('the banner writes the clock and the date once a minute, and looks nothing up in between', async () => {
   await onScreen(async world => {
-    const banner = await import(world.folder + 'panels/banner/banner.js');
+    const banner = await import(world.folder + 'panels/banner/panel.js');
     const page = makeHost(world.log);
     const content = { team: { name: '[Team]', number: '[0000]', school: '[School]' }, weather: null, status: {} };
     banner.mount(page.host, content);
@@ -501,7 +501,7 @@ test('the banner writes the clock and the date once a minute, and looks nothing 
 
 test('the banner draws the team that is on the screen: its name and number, and the school of the Team box that both teams share', async () => {
   await onScreen(async world => {
-    const banner = await import(world.folder + 'panels/banner/banner.js');
+    const banner = await import(world.folder + 'panels/banner/panel.js');
     const teams = await import(world.folder + 'core/teams.js');
     document.documentElement.classList = { add() {}, remove() {} };
 
@@ -529,7 +529,7 @@ test('the banner draws the team that is on the screen: its name and number, and 
 
 test('the banner shows the new day and the AM at midnight', async () => {
   await onScreen(async world => {
-    const banner = await import(world.folder + 'panels/banner/banner.js');
+    const banner = await import(world.folder + 'panels/banner/panel.js');
     const page = makeHost(world.log);
     const content = { team: { name: '[Team]', number: '[0000]', school: '[School]' }, weather: null, status: {} };
     banner.mount(page.host, content);
@@ -549,7 +549,7 @@ test('the banner shows the new day and the AM at midnight', async () => {
 
 test('the banner shows the banner line of the seasonal pack that is on the screen, only while one is, and writes nothing when it is the same', async () => {
   await onScreen(async world => {
-    const banner = await import(world.folder + 'panels/banner/banner.js');
+    const banner = await import(world.folder + 'panels/banner/panel.js');
     const page = makeHost(world.log);
     const rule = extra => Object.assign({ name: '[Rule]', kind: 'overlay', overlay: 'christmas', startDate: '2026-10-01', endDate: '2026-10-31', repeatsEveryYear: true }, extra);
     const withLine = line => ({ team: { name: '[Team]', number: '[0000]', school: '[School]' }, weather: null, status: {}, theme: { schedule: [rule({ bannerLine: line })] } });
@@ -611,11 +611,11 @@ test('starting frame.js sets one timer going, and starting it again sets no more
 test('nothing that runs each second reads the size or place of anything, or sets a repeating timer of its own', () => {
   const layoutReads = /offsetWidth|offsetHeight|offsetTop|offsetLeft|getBoundingClientRect|getComputedStyle|clientWidth|clientHeight|scrollWidth|scrollHeight|getClientRects|innerWidth|innerHeight/;
 
-  ['core/tick.js', 'core/countdown.js', 'panels/countdown/countdown.js', 'panels/banner/banner.js', 'core/takeover.js'].forEach(file => {
+  ['core/tick.js', 'core/countdown.js', 'panels/countdown/panel.js', 'panels/banner/panel.js', 'core/takeover.js'].forEach(file => {
     const code = read(file);
     assert.ok(!layoutReads.test(code), file + ' reads layout');
   });
-  ['core/tick.js', 'core/countdown.js', 'panels/countdown/countdown.js', 'panels/banner/banner.js'].forEach(file => {
+  ['core/tick.js', 'core/countdown.js', 'panels/countdown/panel.js', 'panels/banner/panel.js'].forEach(file => {
     assert.ok(!read(file).includes('setInterval'), file + ' has a repeating timer');
   });
   assert.ok(read('core/tick.js').includes('setTimeout'), 'the clock sets one timer at a time');

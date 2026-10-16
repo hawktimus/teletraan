@@ -21,7 +21,7 @@ import { parseLocalDateTime } from '../../core/time.js';
 // does (core/turns.js). Blocked is first and done is last, so a blocked task is
 // always on the first page. The Open Tasks panel counts every task, however
 // many pages there are.
-// A status name must match marks.js, base.css (.mark-...) and tasks.css
+// A status name must match marks.js, base.css (.mark-...) and panels/tasks/panel.css
 // (.status-...). Its colour is in tokens.css (--status-progress for in-progress).
 const groups = [
   { status: 'blocked', label: 'BLOCKED' },

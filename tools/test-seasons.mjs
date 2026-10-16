@@ -482,11 +482,11 @@ test('the box for a mark is 60 x 76, and every panel with a header mark draws it
 
   // a panel that drew its own picture would keep the slashes while a pack is on
   ['tasks', 'events', 'leadership', 'roster', 'tonight', 'spotlight', 'team-leads', 'sponsor-feature', 'custom'].forEach(name => {
-    const code = fs.readFileSync(path.join(dashboardFolder, 'panels', name, name + '.js'), 'utf8');
+    const code = fs.readFileSync(path.join(dashboardFolder, 'panels', name, 'panel.js'), 'utf8');
     assert.ok(/import \{[^}]*\b(doubleSlash|markBeside)\b/.test(code) && (code.includes('${doubleSlash()}') || code.includes('${markBeside(')), name + ' should draw its mark with doubleSlash() or markBeside()');
     assert.ok(!code.includes('class="double-slash"'), name + ' should not draw the slashes itself');
   });
-  assert.equal(fs.readFileSync(path.join(dashboardFolder, 'panels', 'photo', 'photo.js'), 'utf8').includes('doubleSlash'), false, 'the Photo panel has no header, so it has no mark');
+  assert.equal(fs.readFileSync(path.join(dashboardFolder, 'panels', 'photo', 'panel.js'), 'utf8').includes('doubleSlash'), false, 'the Photo panel has no header, so it has no mark');
 });
 
 test('every kind of mistake in a mark is named in plain words', () => {

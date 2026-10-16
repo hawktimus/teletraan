@@ -34,7 +34,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
 const cardIds = ['monday-tasks', 'monday-status-depts', 'monday-overall', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster'];
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -47,7 +47,7 @@ const teamTitle = await import(base + 'core/team-title.js');
 const registry = await import(base + 'registry.js');
 const textWidth = (await import(base + 'core/text-width.js')).textWidth;
 const panels = {};
-for (const id of cardIds) panels[id] = await import(base + 'panels/' + id + '/' + id + '.js');
+for (const id of cardIds) panels[id] = await import(base + 'panels/' + id + '/panel.js');
 
 const tests = [];
 function test(name, run) {
@@ -274,7 +274,7 @@ test('the registry and the panel choices of a Screen row have no Prime or Nova f
 
   // a small panel has no color of its own and no rule for a team: the colors are the page's, set with the banner
   small.forEach(panel => {
-    const css = read('dashboard/panels/' + panel.id + '/' + panel.id + '.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    const css = read('dashboard/panels/' + panel.id + '/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
     assert.equal(/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(css), false, panel.id + ' uses the colors of the theme');
     assert.equal(/prime|nova|--team-/i.test(css), false, panel.id + ' has no rule for a team');
   });

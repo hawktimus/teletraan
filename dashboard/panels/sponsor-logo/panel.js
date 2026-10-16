@@ -6,7 +6,7 @@ import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
 import { makeTurns } from '../../core/turns.js';
 
-// Keep in step with .logo-card in sponsor-logo.css
+// Keep in step with .logo-card in panels/sponsor-logo/panel.css
 const CARD_WIDTH = 560;
 const CARD_HEIGHT = 176;
 

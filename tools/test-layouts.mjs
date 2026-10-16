@@ -218,7 +218,7 @@ test('the strip runs the whole width between the margins, and holds HAWKTIMUS PR
   assert.ok(g.strip.width - 64 - width >= 400, 'and 400 px or more are left at the right end of the strip');
 });
 
-// The widths of the parts at their worst case text, in the display font at the sizes side.css uses, measured
+// The widths of the parts at their worst case text, in the display font at the sizes panels/side/panel.css uses, measured
 // in a real render (px). The clock is 10:59 PM, MON MAR 29 and 104°F, the countdown ROLLOUT IN, MAR 29, 399
 // days and 49 for the hours, minutes and seconds, the plate TEAM 32290, and the school HOLLY SPRINGS HIGH SCHOOL.
 const worst = {
@@ -229,24 +229,24 @@ const worst = {
 
 test('the clock, the date and the weather have the right end of the strip, and the name keeps the rest of it on one line with a gap between', () => {
   const clock = settings.stripClockWidth;
-  assert.ok(clock >= worst.time + 14 + worst.suffix, 'the time with AM or PM fits on its row (14 between them, as side.css has)');
+  assert.ok(clock >= worst.time + 14 + worst.suffix, 'the time with AM or PM fits on its row (14 between them, as panels/side/panel.css has)');
   assert.ok(clock >= worst.date + 16 + worst.weatherIcon + 12 + worst.temperature, 'the date and the weather fit on their row with 16 between them');
 
   const nameSlot = g.strip.width - 32 - clock - 16 - 32; // the slot of the name: 32 at the left, then 16 short of the clock
   assert.ok(nameWidth[settings.nameSize] <= nameSlot, 'the name is not squeezed: ' + nameWidth[settings.nameSize] + ' in ' + nameSlot);
 
   // the clock block is as high as the strip allows
-  const css = withoutComments(read('dashboard/panels/side/side.css'));
+  const css = withoutComments(read('dashboard/panels/side/panel.css'));
   const block = name => new RegExp('html\\[data-layout="sidebar"\\] \\.' + name + ' \\{([^}]*)\\}').exec(css)[1];
   const number = (text, name) => Number(new RegExp('(?:^|[;\\s])' + name + ': (\\d+)px').exec(text)[1]);
-  assert.equal(number(block('side-clock'), 'width'), clock, 'side.css gives the clock the width layout.js does');
+  assert.equal(number(block('side-clock'), 'width'), clock, 'panels/side/panel.css gives the clock the width layout.js does');
   assert.ok(number(block('side-clock'), 'top') + number(block('side-clock'), 'height') <= g.strip.height, 'the time and the date are inside the strip');
   assert.ok(number(block('side-weather'), 'top') + number(block('side-weather'), 'height') <= g.strip.height, 'and so is the weather');
   assert.ok(number(block('side-clock'), 'top') >= 0);
 });
 
 test('384 is the narrowest of the sidebar widths 288, 320, 352 and 384 in which every part fits at its worst case text, and the wordmark does not fit in any', () => {
-  // The width each part needs, from the measurements above and the offsets in side.css
+  // The width each part needs, from the measurements above and the offsets in panels/side/panel.css
   const needs = {
     'the label (16 at each side)': 32 + worst.rolloutIn,
     'DAYS and the date on their rows': Math.max(32 + worst.daysWord + 16 + 36 + 16 + 20, 32 + worst.mar29), // DAYS, one bar, the lamp
@@ -261,7 +261,7 @@ test('384 is the narrowest of the sidebar widths 288, 320, 352 and 384 in which 
   [288, 320, 352].forEach(width => assert.ok(Object.keys(needs).some(name => needs[name] > width), 'something does not fit at ' + width));
   assert.ok(widest > 352, 'so 352 is too narrow');
   assert.ok(worst.wordmarkAt44 > settings.sidebarWidth, 'the wordmark is 44 px high and ' + worst.wordmarkAt44 + ' wide, wider than the column, so it is left out');
-  assert.ok(!read('dashboard/panels/side/side.js').includes('teletraan-wordmark'), 'and the panel does not draw it');
+  assert.ok(!read('dashboard/panels/side/panel.js').includes('teletraan-wordmark'), 'and the panel does not draw it');
 });
 
 test('the strip, the sidebar, the pane space and the ticker are on the screen, inside the margins, with the gaps between them, and none overlaps another', () => {
@@ -333,7 +333,7 @@ test('the ticker is the standard layout\'s, the whole width at the bottom: its s
   const css = withoutComments(read('dashboard/layouts/sidebar.css'));
   assert.ok(!/\.ticker|\.tag|\.message/.test(css), 'sidebar.css has no rule for the ticker\'s parts');
   assert.ok(!/line-clamp|white-space: normal|\.area\[data-area="ticker"\]/.test(css), 'no second line, and no size of its own');
-  const ticker = withoutComments(read('dashboard/panels/ticker/ticker.css'));
+  const ticker = withoutComments(read('dashboard/panels/ticker/panel.css'));
   const message = /\.ticker \.message \{([^}]*)\}/.exec(ticker)[1];
   assert.ok(/overflow: hidden/.test(message) && /text-overflow: ellipsis/.test(message), 'one line, cut with an ellipsis');
   const line = /font: \d+ var\(--size-body\)\/(\d+)px/.exec(message);
@@ -990,12 +990,12 @@ test('the tests and the docs list this file and the new ones', () => {
 
 // The sidebar's content (panels/side, core/countdown.js, core/name.js)
 //
-// side.js is the real file, on a fake page: a clock the test moves, timers that
+// panels/side/panel.js is the real file, on a fake page: a clock the test moves, timers that
 // wait in a list, a canvas that measures text, and one fake node for each
 // selector the panel asks for. Every write to a node goes in a log.
 
-const sideFiles = ['dashboard/config.js', 'dashboard/frame.js', 'dashboard/registry.js', 'dashboard/panels/side/side.js', 'dashboard/panels/countdown/countdown.js',
-  'dashboard/panels/bar-banner/bar-banner.js', 'dashboard/panels/bar-column/bar-column.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']
+const sideFiles = ['dashboard/config.js', 'dashboard/frame.js', 'dashboard/registry.js', 'dashboard/panels/side/panel.js', 'dashboard/panels/countdown/panel.js',
+  'dashboard/panels/bar-banner/panel.js', 'dashboard/panels/bar-column/panel.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']
   .concat(fs.readdirSync(path.join(dashboardFolder, 'core')).filter(name => name.endsWith('.js')).map(name => 'dashboard/core/' + name));
 const nameTree = makeTree('name', ['dashboard/core/name.js', 'dashboard/core/text.js']);
 const nameModule = await import(urlOf(nameTree, 'dashboard/core/name.js'));
@@ -1040,7 +1040,7 @@ function makeBox(log, prefix) {
   return box;
 }
 
-// Runs run(world) with the real side.js, core/countdown.js and frame.js on a fake page whose clock is at atMs
+// Runs run(world) with the real panels/side/panel.js, core/countdown.js and frame.js on a fake page whose clock is at atMs
 async function onSidebar(run, atMs) {
   const folder = makeTree('side-' + (sideWorlds += 1), sideFiles);
   const RealDate = Date;
@@ -1078,7 +1078,7 @@ async function onSidebar(run, atMs) {
 
     world.element = element;
     world.countdown = countdown;
-    return import(urlOf(folder, panelFile || 'dashboard/panels/side/side.js')).then(module => {
+    return import(urlOf(folder, panelFile || 'dashboard/panels/side/panel.js')).then(module => {
       module.mount(host, content);
       world.module = module;
       return module;
@@ -1189,7 +1189,7 @@ test('the sidebar layout draws the side panel in place of the banner and the cou
   assert.equal(side.region, 'banner', 'it is drawn into the banner region');
   assert.equal(side.layout, 'sidebar');
   assert.ok(layout.isLayout(side.layout));
-  assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels/side/side.js')) && fs.existsSync(path.join(dashboardFolder, 'panels/side/side.css')));
+  assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels/side/panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels/side/panel.css')));
   assert.equal(new Set(registryModule.panels.map(panel => panel.id)).size, registryModule.panels.length, 'no id twice');
   registryModule.panels.filter(panel => panel.layout).forEach(panel => assert.ok(layout.hasRegion(panel.layout, panel.region), panel.id + ' is in a region its layout has'));
 });
@@ -1208,7 +1208,7 @@ test('shell.js draws the panels the layout names, starts the logo of the one tha
 
 test('the markup has each part of the sidebar once, with its class, and no other class that starts with side-', async () => {
   await onSidebar(async world => {
-    const side = await import(urlOf(world.folder, 'dashboard/panels/side/side.js'));
+    const side = await import(urlOf(world.folder, 'dashboard/panels/side/panel.js'));
     const markup = side.sideMarkup();
     const classes = classesIn(markup);
 
@@ -1232,7 +1232,7 @@ test('the markup has each part of the sidebar once, with its class, and no other
 
 test('every part that arrives has a line in the table of frame.js, and every line is for a part', async () => {
   await onSidebar(async world => {
-    const side = await import(urlOf(world.folder, 'dashboard/panels/side/side.js'));
+    const side = await import(urlOf(world.folder, 'dashboard/panels/side/panel.js'));
     const parts = new Set((side.sideMarkup().match(/data-part="([a-z-]+)"/g) || []).map(text => /"([a-z-]+)"/.exec(text)[1]));
     const table = world.frame.sequences.side;
 
@@ -1432,9 +1432,9 @@ test('the name goes into the strip\'s slot when there is one, and is still built
     assert.equal(world.element.nodes['.side-name'].dataset.name, 'HAWKTIMUS PRIME');
   });
 
-  const code = read('dashboard/panels/side/side.js');
+  const code = read('dashboard/panels/side/panel.js');
   assert.ok(code.includes("moveTo('strip-name', element, ['.side-name'])") && code.includes("document.getElementById(id)") && code.includes("document.querySelector('#region-strip ' + selector)"));
-  assert.ok(/data-name-effect/.test(read('dashboard/panels/side/side.js')) && !/data-part="title"/.test(code), 'the name keeps the mark the effect looks for, and no part name that nothing would enter');
+  assert.ok(/data-name-effect/.test(read('dashboard/panels/side/panel.js')) && !/data-part="title"/.test(code), 'the name keeps the mark the effect looks for, and no part name that nothing would enter');
 });
 
 test('the clock, the date and the weather go into the strip\'s second slot when there is one, and are still written and updated there', async () => {
@@ -1578,7 +1578,7 @@ test('the top line has the room of the label\'s own 352 px line, the gap and the
     assert.deepEqual(world.core.topLine(stage), { label: 'KICKOFF', date: 'JAN 9' }, 'the standard room: the IN goes first');
     assert.deepEqual(world.core.topLine(stage, 553), { label: 'KICKOFF IN', date: 'JAN 9' }, 'the sidebar room');
     assert.equal(553, 352 + 24 + 177, 'the room is the 352 line, the 24 gap and the widest date, MAR 29 (177 px)');
-    assert.ok(read('dashboard/panels/side/side.js').includes('const COUNTDOWN_LINE_ROOM = 553;'), 'and the panel asks for it');
+    assert.ok(read('dashboard/panels/side/panel.js').includes('const COUNTDOWN_LINE_ROOM = 553;'), 'and the panel asks for it');
 
     await world.draw(teamContent({ settings: { countdown: { kickoff: '2027-01-09T12:00', kickoffLabel: 'KICKOFF', rollout: '', rolloutLabel: '' } } }));
     assert.equal(world.countdown.nodes['.label'].textContent, 'KICKOFF IN', 'the side panel asked for 553');
@@ -1605,8 +1605,8 @@ test('the countdown writes only the seconds on most ticks: the sidebar draws no 
 
 // The stylesheet and the docs
 
-test('every rule in side.css is for the sidebar layout only, and nothing in it moves, glows or is smaller than 44 px', () => {
-  const css = withoutComments(read('dashboard/panels/side/side.css'));
+test('every rule in panels/side/panel.css is for the sidebar layout only, and nothing in it moves, glows or is smaller than 44 px', () => {
+  const css = withoutComments(read('dashboard/panels/side/panel.css'));
   const selectors = [];
   css.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
     list.split(',').forEach(selector => selectors.push(selector.trim()));
@@ -1631,8 +1631,8 @@ test('every rule in side.css is for the sidebar layout only, and nothing in it m
   assert.ok(!/(^|[^-])font(-size)?: [^;]*\b([0-3]\d|4[0-3])px/.test(css), 'no text below 44 px');
 });
 
-test('the budget in docs/layouts.md is the top and height of each part in side.css, the parts follow one another, and the brand ends at the bottom of the column', () => {
-  const css = withoutComments(read('dashboard/panels/side/side.css'));
+test('the budget in docs/layouts.md is the top and height of each part in panels/side/panel.css, the parts follow one another, and the brand ends at the bottom of the column', () => {
+  const css = withoutComments(read('dashboard/panels/side/panel.css'));
   const doc = read('docs/layouts.md');
   const prefix = 'html[data-layout="sidebar"] ';
   const valueIn = (block, name) => { const found = new RegExp('(?:^|[;\\s])' + name + ': (-?\\d+)(?:px)?[;\\s]').exec(block); return found ? Number(found[1]) : null; };
@@ -1657,20 +1657,20 @@ test('the budget in docs/layouts.md is the top and height of each part in side.c
 
   sideParts.concat(countdownParts).forEach(name => {
     assert.ok(rows[name], 'docs/layouts.md has no budget row for .' + name);
-    assert.ok(measured[name], 'side.css has no rule for .' + name);
-    // the lamp is counted from the top of the top line in side.css and from the top of the countdown in the docs
+    assert.ok(measured[name], 'panels/side/panel.css has no rule for .' + name);
+    // the lamp is counted from the top of the top line in panels/side/panel.css and from the top of the countdown in the docs
     const top = valueIn(measured[name], 'top') + (name === 'lamp' ? valueIn(measured['top-line'], 'top') : 0);
-    assert.equal(rows[name].top, top, '.' + name + ' top in the docs and in side.css');
+    assert.equal(rows[name].top, top, '.' + name + ' top in the docs and in panels/side/panel.css');
     ['height', 'left', 'width'].forEach(property => {
       const written = valueIn(measured[name], property);
-      if (written !== null && rows[name][property] !== null) assert.equal(rows[name][property], written, '.' + name + ' ' + property + ' in the docs and in side.css');
+      if (written !== null && rows[name][property] !== null) assert.equal(rows[name][property], written, '.' + name + ' ' + property + ' in the docs and in panels/side/panel.css');
     });
   });
   assert.equal(rows.stripes.height, Number(/height="(\d+)"/.exec(read('dashboard/core/countdown.js').slice(read('dashboard/core/countdown.js').indexOf('function barsMarkup')))[1]), 'the bars are as high as countdown.js draws them');
-  assert.equal(rows.stripes.width, Number(/const STRIPES_WIDTH = (\d+);/.exec(read('dashboard/panels/side/side.js'))[1]), 'and as wide as side.js draws them');
+  assert.equal(rows.stripes.width, Number(/const STRIPES_WIDTH = (\d+);/.exec(read('dashboard/panels/side/panel.js'))[1]), 'and as wide as panels/side/panel.js draws them');
   ['side-name', 'side-wordmark'].forEach(name => {
     assert.equal(rows[name], undefined, name + ' has no row: the name is in the strip, and the wordmark is left out');
-    assert.equal(blockOf(prefix + '.' + name), null, 'and side.css does not place it');
+    assert.equal(blockOf(prefix + '.' + name), null, 'and panels/side/panel.css does not place it');
   });
 
   // in the strip: the clock and the weather are inside it, the weather on the date row
@@ -1718,8 +1718,8 @@ test('docs/layouts.md has a section called The sidebar that names every part by 
   sideClasses.forEach(name => assert.ok(section.includes('`.' + name + '`'), 'the section does not name .' + name));
 });
 
-test('side.js has no animation code, and reads nothing about the size or place of anything', () => {
-  const code = read('dashboard/panels/side/side.js');
+test('panels/side/panel.js has no animation code, and reads nothing about the size or place of anything', () => {
+  const code = read('dashboard/panels/side/panel.js');
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(code), false, 'animation code in the panel');
   assert.equal(/offsetWidth|offsetHeight|offsetTop|offsetLeft|getBoundingClientRect|getComputedStyle|clientWidth|clientHeight|scrollWidth|scrollHeight|getClientRects|innerWidth|innerHeight/.test(code), false, 'reads layout');
   ['frame.', 'nameMarkup', 'logoMarkup', 'startCountdown', 'teamPlateMarkup'].forEach(piece => assert.ok(code.includes(piece), 'does not use ' + piece));
@@ -2349,7 +2349,7 @@ test('the mirror in the bar layout is one rule for every flex row of the layout,
   assert.deepEqual(turned, ['#bar-middle', '.bar-banner', '.bar-column', '.ticker']);
 
   // Every flex row that the layout declares, in its own stylesheet or in a panel's, is one of them or is a part that keeps its order
-  const files = ['layouts/bar.css', 'panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css', 'panels/ticker/ticker.css'];
+  const files = ['layouts/bar.css', 'panels/bar-banner/panel.css', 'panels/bar-column/panel.css', 'panels/ticker/panel.css'];
   const flexRows = [];
   files.forEach(file => {
     withoutComments(read('dashboard/' + file)).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
@@ -2411,9 +2411,9 @@ test('the mirror of the standard layout is in original.css: the columns change p
   assert.ok(/#region-right \{\s*grid-column: 2;/.test(base), 'and the countdown and the small frame in column 2');
 
   // The flex rows of the banner and the ticker are the ones in their own stylesheets
-  const banner = withoutComments(read('dashboard/panels/banner/banner.css'));
-  const ticker = withoutComments(read('dashboard/panels/ticker/ticker.css'));
-  ['.banner-top', '.banner-bottom'].forEach(name => assert.ok(new RegExp('\\.banner ' + name.replace('.', '\\.') + ' \\{[^}]*display: flex;').test(banner), name + ' is a flex row in banner.css'));
+  const banner = withoutComments(read('dashboard/panels/banner/panel.css'));
+  const ticker = withoutComments(read('dashboard/panels/ticker/panel.css'));
+  ['.banner-top', '.banner-bottom'].forEach(name => assert.ok(new RegExp('\\.banner ' + name.replace('.', '\\.') + ' \\{[^}]*display: flex;').test(banner), name + ' is a flex row in panels/banner/panel.css'));
   assert.ok(/\.ticker \{\s*display: flex;/.test(ticker));
   const turnedRule = new RegExp(prefix.replace(/[[\]".]/g, '\\$&') + ' \\.banner \\.banner-top,\\s*' + prefix.replace(/[[\]".]/g, '\\$&') + ' \\.banner \\.banner-bottom,\\s*' + prefix.replace(/[[\]".]/g, '\\$&') + ' \\.ticker \\{\\s*flex-direction: row-reverse;');
   assert.ok(turnedRule.test(css), 'the banner\'s two rows and the ticker are turned by one rule');
@@ -2507,7 +2507,7 @@ test('the bar layout draws two fixed panels, the banner and the side column, and
   assert.equal(regionOf('bar-banner'), 'banner');
   assert.equal(regionOf('bar-column'), 'column');
   ['bar-banner', 'bar-column'].forEach(id => assert.equal(panels.filter(panel => panel.id === id)[0].layout, 'bar', id));
-  ['banner', 'countdown', 'side', 'bar-banner', 'bar-column'].forEach(id => assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.css')), id));
+  ['banner', 'countdown', 'side', 'bar-banner', 'bar-column'].forEach(id => assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.css')), id));
 
   const registry = read('dashboard/registry.js');
   const stays = new Function(registry.slice(registry.indexOf('export const panels = [')).replace('export const panels', 'const panels').replace('export function fixedPanels', 'function fixedPanels') + '\nreturn fixedPanels;')();
@@ -2518,7 +2518,7 @@ test('the bar layout draws two fixed panels, the banner and the side column, and
   // both panels have an entrance in frame.js, with a rule for every data-part they draw
   const frame = read('dashboard/frame.js');
   ['bar-banner', 'bar-column'].forEach(id => {
-    const code = read('dashboard/panels/' + id + '/' + id + '.js');
+    const code = read('dashboard/panels/' + id + '/panel.js');
     const sequence = new RegExp("'" + id + "': \\{([^}]*)\\}").exec(frame);
     assert.ok(sequence, 'frame.js has a sequence for ' + id);
     assert.ok(code.includes('data-sequence="' + id + '"'));
@@ -2528,7 +2528,7 @@ test('the bar layout draws two fixed panels, the banner and the side column, and
 
 test('the variables the bar stylesheets read are the ones layout.js writes, and all of them are used', () => {
   const variables = layout.barCssVariables();
-  const files = ['layouts/bar.css', 'panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'];
+  const files = ['layouts/bar.css', 'panels/bar-banner/panel.css', 'panels/bar-column/panel.css'];
   const used = new Set();
   files.forEach(file => (withoutComments(read('dashboard/' + file)).match(/var\(--bar-[a-z-]+\)/g) || []).forEach(text => used.add(text.slice(4, -1))));
 
@@ -2550,7 +2550,7 @@ test('the variables the bar stylesheets read are the ones layout.js writes, and 
 
 test('every rule in bar.css and in the two bar panels\' stylesheets is for the bar layout only, nothing in them moves or glows, and every text size is a token of 44 px or more', () => {
   const tokens = read('dashboard/tokens.css');
-  ['layouts/bar.css', 'panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'].forEach(file => {
+  ['layouts/bar.css', 'panels/bar-banner/panel.css', 'panels/bar-column/panel.css'].forEach(file => {
     const css = withoutComments(read('dashboard/' + file));
     const selectors = [];
     css.replace(/([^{}]+)\{[^{}]*\}/g, (all, list) => {
@@ -2590,7 +2590,7 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   walk('dashboard');
   assert.ok(allowed.length >= 6, 'found the style and bar files: ' + allowed.join(', '));
 
-  // Text of 24 or 36 px is allowed only for the clocks' labels, titles and dates. They are in panels/countdown/countdown.css,
+  // Text of 24 or 36 px is allowed only for the clocks' labels, titles and dates. They are in panels/countdown/panel.css,
   // which the next test lists one by one, so none of them is in a bar or style file
   const small = [{ what: 'the war clock labels', sizes: [24, 36] }];
   assert.deepEqual(small.map(item => item.what), ['the war clock labels']);
@@ -2600,7 +2600,7 @@ test('the text sizes below 44 px in the whole dashboard are an explicit list: th
   });
 });
 
-test('every literal text size under 44 px in the dashboard stylesheets is on a list: the war clock\'s labels at 24 px and the titles and dates of the clocks at 36 px, in countdown.css', () => {
+test('every literal text size under 44 px in the dashboard stylesheets is on a list: the war clock\'s labels at 24 px and the titles and dates of the clocks at 36 px, in panels/countdown/panel.css', () => {
   const found = [];
   const walk = folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true }).forEach(entry => {
     const relative = folder + '/' + entry.name;
@@ -2620,7 +2620,7 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   walk('dashboard');
 
   // the file and the rule of every size, in the same order whatever order the folders are read in
-  const war = 'dashboard/panels/countdown/countdown.css';
+  const war = 'dashboard/panels/countdown/panel.css';
   const allowed = [
     { file: war, selector: 'html[data-layout="bar"] .war-lines span', size: 36 }, // the title and the date
     { file: war, selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 }, // DAYS
@@ -2631,7 +2631,7 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   ];
   // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
   allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
-  allowed.push({ file: 'dashboard/panels/photo/photo.css', selector: '.photo .credit', size: 30 }); // the credit under the caption of a photo
+  allowed.push({ file: 'dashboard/panels/photo/panel.css', selector: '.photo .credit', size: 30 }); // the credit under the caption of a photo
   // and the sizes the order sets for the Monday cards and the season timeline (orderSmall, below)
   allowed.push.apply(allowed, orderSmall.map(item => ({ file: 'dashboard/' + item.file, selector: item.selector, size: item.size })));
   const order = list => list.map(item => item.file + ' ' + item.selector + ' ' + item.size).sort();
@@ -2686,7 +2686,7 @@ test('the three style files each set their own custom properties for their own s
   // Every custom property a style file or a bar panel reads comes from a style, a team or a token
   const known = new Set();
   ['cybertron', 'minimal'].forEach(name => (read2(name).match(/--[a-z-]+(?=:)/g) || []).forEach(property => known.add(property)));
-  ['panels/bar-banner/bar-banner.css', 'panels/bar-column/bar-column.css'].forEach(file => {
+  ['panels/bar-banner/panel.css', 'panels/bar-column/panel.css'].forEach(file => {
     (withoutComments(read('dashboard/' + file)).match(/var\(--style-[a-z-]+/g) || []).forEach(text => assert.ok(known.has(text.slice(4)), file + ' reads ' + text.slice(4) + ', which no style sets'));
   });
   assert.ok(/--team-neon: #faca2a;/.test(read('dashboard/teams.css')), 'the team neon the styles use is set in teams.css, gold for Prime');
@@ -2699,7 +2699,7 @@ test('the three style files each set their own custom properties for their own s
 
 function stylesheetsOf(style) {
   const linked = Array.from(read('dashboard/index.html').matchAll(/<link rel="stylesheet" href="([^"?]+)\?v=0">/g)).map(match => match[1])
-    .filter(href => href !== 'fonts/fonts.css' && (!href.startsWith('styles/') || href === 'styles/' + style + '.css'));
+    .filter(href => href !== 'fonts/panel.css' && (!href.startsWith('styles/') || href === 'styles/' + style + '.css'));
   const panels = fs.readdirSync(path.join(dashboardFolder, 'panels'), { withFileTypes: true }).filter(entry => entry.isDirectory())
     .reduce((all, entry) => all.concat(fs.readdirSync(path.join(dashboardFolder, 'panels', entry.name)).filter(file => file.endsWith('.css')).map(file => 'panels/' + entry.name + '/' + file)), []);
 
@@ -2778,21 +2778,21 @@ const writtenByScript = {
 // Original sets a title that does not fit at 44 px at 36 (one line or two). The rules of the wide clock and of the red countdown
 // are in every style's stylesheets, so they are in every style's list
 const warLabels = [
-  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-lines span', size: 36 },
-  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 },
-  { file: 'panels/countdown/countdown.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 24 },
+  { file: 'panels/countdown/panel.css', selector: 'html[data-layout="bar"] .war-lines span', size: 36 },
+  { file: 'panels/countdown/panel.css', selector: 'html[data-layout="bar"] .war-days-group .days-word', size: 24 },
+  { file: 'panels/countdown/panel.css', selector: 'html[data-layout="bar"] .war-cell .unit', size: 24 },
 ];
 const clockTitles = [
-  { file: 'panels/countdown/countdown.css', selector: '.war-clock.war-wide .war-lines span', size: 36 },
-  { file: 'panels/countdown/countdown.css', selector: '.countdown[data-title="small"] .top-line', size: 36 },
-  { file: 'panels/countdown/countdown.css', selector: '.countdown[data-title="two"] .top-line', size: 36 },
+  { file: 'panels/countdown/panel.css', selector: '.war-clock.war-wide .war-lines span', size: 36 },
+  { file: 'panels/countdown/panel.css', selector: '.countdown[data-title="small"] .top-line', size: 36 },
+  { file: 'panels/countdown/panel.css', selector: '.countdown[data-title="two"] .top-line', size: 36 },
 ];
 const smallTextOf = { original: clockTitles.slice(), cybertron: clockTitles.slice(), minimal: warLabels.concat(clockTitles) };
 // and the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets, in every style
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.person-line', size: 36 }));
 
 // and the credit under the caption of a photo, 30 px, which every style draws
-const photoCredit = { file: 'panels/photo/photo.css', selector: '.photo .credit', size: 30 };
+const photoCredit = { file: 'panels/photo/panel.css', selector: '.photo .credit', size: 30 };
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push(photoCredit));
 
 // and the build stamp of ?debug=1, 20 px, the one size the order for the version on the wall allows below the rest
@@ -2807,17 +2807,17 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.
 const mondaySmall = (file, entries) => Object.keys(entries).map(selector => ({ file: file, selector: selector, size: entries[selector] }));
 const orderSmall = [
   { file: 'monday.css', selector: '.monday .department', size: 36 },
-  { file: 'panels/competition-timeline/competition-timeline.css', selector: '.competition-timeline .where', size: 36 },
-  { file: 'panels/monday-milestones/monday-milestones.css', selector: '.monday-milestones .milestone-lead', size: 36 },
-  { file: 'panels/monday-milestones/monday-milestones.css', selector: '.monday-milestones .cell-date', size: 36 },
+  { file: 'panels/competition-timeline/panel.css', selector: '.competition-timeline .where', size: 36 },
+  { file: 'panels/monday-milestones/panel.css', selector: '.monday-milestones .milestone-lead', size: 36 },
+  { file: 'panels/monday-milestones/panel.css', selector: '.monday-milestones .cell-date', size: 36 },
 ].concat(
   mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .poc': 40, '.monday .fact-label': 36, '.monday .legend': 36 }),
-  mondaySmall('panels/monday-tasks/monday-tasks.css', { '.monday-tasks .due': 36, '.monday-tasks .chip-overdue': 30 }),
-  mondaySmall('panels/monday-done/monday-done.css', { '.monday-done .date': 36 }),
-  mondaySmall('panels/monday-status-depts/monday-status-depts.css', { '.monday-status-depts .share': 40 }),
-  mondaySmall('panels/monday-overall/monday-overall.css', { '.monday-overall .hours-of': 32, '.monday-overall .milestone-name': 40, '.monday-overall .milestone-date': 32, '.monday-overall .milestone-days': 36, '.monday-overall .milestones-head': 36, '.monday-overall .hours': 40 }),
-  mondaySmall('panels/monday-timeline/monday-timeline.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
-  mondaySmall('panels/monday-board/monday-board.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
+  mondaySmall('panels/monday-tasks/panel.css', { '.monday-tasks .due': 36, '.monday-tasks .chip-overdue': 30 }),
+  mondaySmall('panels/monday-done/panel.css', { '.monday-done .date': 36 }),
+  mondaySmall('panels/monday-status-depts/panel.css', { '.monday-status-depts .share': 40 }),
+  mondaySmall('panels/monday-overall/panel.css', { '.monday-overall .hours-of': 32, '.monday-overall .milestone-name': 40, '.monday-overall .milestone-date': 32, '.monday-overall .milestone-days': 36, '.monday-overall .milestones-head': 36, '.monday-overall .hours': 40 }),
+  mondaySmall('panels/monday-timeline/panel.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
+  mondaySmall('panels/monday-board/panel.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
 );
 Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });
 
@@ -2915,7 +2915,7 @@ test('the mirror of the standard layout turns every flex row the layout declares
 
   // every flex row that the standard layout declares: base.css and the stylesheets of the panels it draws itself. A rule for a layout
   // or a style is not the standard layout's. The pages in the large and small frames are not the layout's rows: they read from the left.
-  const files = ['base.css', 'panels/banner/banner.css', 'panels/ticker/ticker.css', 'panels/countdown/countdown.css'];
+  const files = ['base.css', 'panels/banner/panel.css', 'panels/ticker/panel.css', 'panels/countdown/panel.css'];
   const declared = [];
   files.forEach(file => {
     withoutComments(read('dashboard/' + file)).replace(/([^{}]+)\{([^{}]*)\}/g, (all, selectors, body) => {
@@ -2931,18 +2931,18 @@ test('the mirror of the standard layout turns every flex row the layout declares
   // These rows are read left to right whatever the layout does. The mirror moves the box they are in, and for the name it moves the
   // letters to the other end of the box with justify-content, and turns nothing.
   const keepsOrder = {
-    'panels/banner/banner.css .banner .team-name': 'the letters of the name are read left to right, and original.css moves them to the other end of their box',
-    'panels/banner/banner.css .banner .team-plate span': 'the words of the TEAM plate are read left to right inside a plate that the mirror moves',
-    'panels/banner/banner.css .banner .clock': 'the time and AM or PM are read left to right',
-    'panels/banner/banner.css .banner .date-row': 'the date, the picture and the temperature are read left to right',
-    'panels/ticker/ticker.css .ticker .tag span': 'the word on the ticker\'s tag is read left to right',
-    'panels/countdown/countdown.css .countdown .top-line': 'the countdown is one block that changes columns, and its lines are read left to right',
-    'panels/countdown/countdown.css .countdown .label-group': 'the countdown is one block that changes columns, and its lines are read left to right',
-    'panels/countdown/countdown.css .countdown .days-row': 'the countdown is one block that changes columns, and its lines are read left to right',
-    'panels/countdown/countdown.css .countdown .time-row': 'the countdown is one block that changes columns, and its lines are read left to right',
-    'panels/countdown/countdown.css .countdown .segments': 'the countdown is one block that changes columns, and its lines are read left to right',
-    'panels/countdown/countdown.css .war-clock.war-wide .war-plate': 'the wide war clock is one block that changes columns, and its plates are read left to right',
-    'panels/countdown/countdown.css .war-clock.war-wide .war-days-group': 'the wide war clock is one block that changes columns, and its days are read left to right',
+    'panels/banner/panel.css .banner .team-name': 'the letters of the name are read left to right, and original.css moves them to the other end of their box',
+    'panels/banner/panel.css .banner .team-plate span': 'the words of the TEAM plate are read left to right inside a plate that the mirror moves',
+    'panels/banner/panel.css .banner .clock': 'the time and AM or PM are read left to right',
+    'panels/banner/panel.css .banner .date-row': 'the date, the picture and the temperature are read left to right',
+    'panels/ticker/panel.css .ticker .tag span': 'the word on the ticker\'s tag is read left to right',
+    'panels/countdown/panel.css .countdown .top-line': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/panel.css .countdown .label-group': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/panel.css .countdown .days-row': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/panel.css .countdown .time-row': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/panel.css .countdown .segments': 'the countdown is one block that changes columns, and its lines are read left to right',
+    'panels/countdown/panel.css .war-clock.war-wide .war-plate': 'the wide war clock is one block that changes columns, and its plates are read left to right',
+    'panels/countdown/panel.css .war-clock.war-wide .war-days-group': 'the wide war clock is one block that changes columns, and its days are read left to right',
   };
 
   declared.forEach(row => {
@@ -2994,10 +2994,10 @@ test('the numbers in docs/layouts.md are the numbers of the bar layout in layout
   ['The width of the main panel', 'The mirror', 'Styles'].forEach(title => assert.ok(section.includes('### ' + title), 'the section has "' + title + '"'));
 });
 
-// The side column's parts (panels/bar-column/bar-column.css), and the budget in docs/layouts.md
+// The side column's parts (panels/bar-column/panel.css), and the budget in docs/layouts.md
 
-test('the budget of the side column in docs/layouts.md is the top and height of each part in bar-column.css, and the parts follow one another inside the column', () => {
-  const css = withoutComments(read('dashboard/panels/bar-column/bar-column.css'));
+test('the budget of the side column in docs/layouts.md is the top and height of each part in panels/bar-column/panel.css, and the parts follow one another inside the column', () => {
+  const css = withoutComments(read('dashboard/panels/bar-column/panel.css'));
   const doc = read('docs/layouts.md');
   const section = doc.slice(doc.indexOf('### The side column'), doc.indexOf('### The width of the main panel'));
   const prefix = 'html[data-layout="bar"] ';
@@ -3020,8 +3020,8 @@ test('the budget of the side column in docs/layouts.md is the top and height of 
   const placed = ['bar-clock', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
   placed.forEach(name => {
     const block = blockOf('.' + name);
-    assert.ok(block, 'bar-column.css has no rule for .' + name);
-    assert.equal(rows[name].top, valueIn(block, 'top'), '.' + name + ' top in the docs and in bar-column.css');
+    assert.ok(block, 'panels/bar-column/panel.css has no rule for .' + name);
+    assert.equal(rows[name].top, valueIn(block, 'top'), '.' + name + ' top in the docs and in panels/bar-column/panel.css');
     assert.equal(rows[name].height, valueIn(block, 'height'), '.' + name + ' height');
     if (valueIn(block, 'left') !== null) assert.equal(rows[name].left, valueIn(block, 'left'), '.' + name + ' left');
     if (valueIn(block, 'width') !== null) assert.equal(rows[name].width, valueIn(block, 'width'), '.' + name + ' width');
@@ -3053,11 +3053,11 @@ test('the budget of the side column in docs/layouts.md is the top and height of 
   assert.ok(/\.bar-logo \{[^}]*--k: \.2545;[^}]*width: 280px;[^}]*height: 225px;/.test(css.replace(/html\[data-layout="bar"\] /g, '')), '--k is the width over 1100');
   assert.ok(Math.abs(280 / 1100 - 0.2545) < 0.0001 && Math.abs(280 * 884 / 1100 - 225) < 0.5, 'and the height is the width times 884 over 1100');
   assert.ok(rows['bar-logo'].left >= 0 && rows['bar-logo'].left + rows['bar-logo'].width <= b.column.width, 'the hawk is inside the column, which is above the ticker and not over the main panel');
-  assert.equal(Number(/const TEAM_PLATE_WIDTH = (\d+);/.exec(read('dashboard/panels/bar-column/bar-column.js'))[1]), b.column.width, 'the TEAM plate is drawn as wide as the column');
+  assert.equal(Number(/const TEAM_PLATE_WIDTH = (\d+);/.exec(read('dashboard/panels/bar-column/panel.js'))[1]), b.column.width, 'the TEAM plate is drawn as wide as the column');
 });
 
 test('the clock in the side column fits at its worst case: 10:59 with PM at 84 px, with the letters of the time 5 px closer together', () => {
-  const css = withoutComments(read('dashboard/panels/bar-column/bar-column.css'));
+  const css = withoutComments(read('dashboard/panels/bar-column/panel.css'));
   const clockSize = 84;
   assert.ok(new RegExp('--size-clock: ' + clockSize + 'px;').test(read('dashboard/tokens.css')));
 
@@ -3074,8 +3074,8 @@ test('the clock in the side column fits at its worst case: 10:59 with PM at 84 p
 
 // The bar layout's two panels (panels/bar-banner and panels/bar-column), on the same fake page as the side panel
 
-const barColumnFile = 'dashboard/panels/bar-column/bar-column.js';
-const barBannerFile = 'dashboard/panels/bar-banner/bar-banner.js';
+const barColumnFile = 'dashboard/panels/bar-column/panel.js';
+const barBannerFile = 'dashboard/panels/bar-banner/panel.js';
 const barClasses = ['bar-column', 'bar-rail', 'bar-body', 'bar-clock', 'bar-time', 'bar-date', 'bar-weather', 'bar-line', 'bar-team', 'bar-school', 'bar-sample', 'bar-logo'];
 
 test('the side column has each part once with its class, in the order of the budget, the rail first, and every part that arrives has a line in the table of frame.js', async () => {
@@ -3161,7 +3161,7 @@ test('the banner has the name and the war clock in its slot, draws the name as l
   });
 
   ['bar-banner', 'bar-column'].forEach(id => {
-    const code = read('dashboard/panels/' + id + '/' + id + '.js');
+    const code = read('dashboard/panels/' + id + '/panel.js');
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(code), false, id + ' has animation code');
     assert.equal(/offsetWidth|offsetHeight|offsetTop|offsetLeft|getBoundingClientRect|getComputedStyle|clientWidth|clientHeight|scrollWidth|scrollHeight|getClientRects|innerWidth|innerHeight/.test(code), false, id + ' reads layout');
   });
@@ -3171,7 +3171,7 @@ test('the banner has the name and the war clock in its slot, draws the name as l
 // the bar layout, and nowhere in the sidebar layout
 
 test('in the side column the banner line is one line of 44 px under the weather, and while it is on the parts under it move to the places in docs/layouts.md, with nothing touching and the logo where it was', () => {
-  const css = withoutComments(read('dashboard/panels/bar-column/bar-column.css'));
+  const css = withoutComments(read('dashboard/panels/bar-column/panel.css'));
   const doc = read('docs/layouts.md');
   const section = doc.slice(doc.indexOf('### The side column'), doc.indexOf('### The width of the main panel'));
   const prefix = 'html[data-layout="bar"] ';
@@ -3184,7 +3184,7 @@ test('in the side column the banner line is one line of 44 px under the weather,
 
   // the line itself: under the weather, as wide as the column, 44 px high and 44 px of text, on one line, cut with an ellipsis
   const line = blockOf('.bar-line');
-  assert.ok(line, 'bar-column.css has a rule for .bar-line');
+  assert.ok(line, 'panels/bar-column/panel.css has a rule for .bar-line');
   const weather = blockOf('.bar-clock');
   assert.equal(valueIn(line, 'top'), valueIn(weather, 'top') + valueIn(weather, 'height'), 'under the clock, which ends with the weather');
   assert.equal(valueIn(line, 'height'), 44);
@@ -3229,7 +3229,7 @@ test('in the side column the banner line is one line of 44 px under the weather,
     if (found) rows[found[1]] = { top: Number(found[2]), height: Number(found[3]), without: found[4].trim() };
   });
   assert.deepEqual(Object.keys(rows).sort(), ['bar-line', 'bar-school', 'bar-team'], 'the docs have a row for each part that moves, and for the line');
-  stack.forEach(name => assert.deepEqual([rows['bar-' + name].top, rows['bar-' + name].height], [places[name].top, places[name].height], name + ' in the docs and in bar-column.css'));
+  stack.forEach(name => assert.deepEqual([rows['bar-' + name].top, rows['bar-' + name].height], [places[name].top, places[name].height], name + ' in the docs and in panels/bar-column/panel.css'));
   assert.equal(rows['bar-team'].without, 'top ' + valueIn(blockOf('.bar-team'), 'top'));
   assert.equal(rows['bar-school'].without, 'top ' + valueIn(blockOf('.bar-school'), 'top') + ', height ' + valueIn(blockOf('.bar-school'), 'height'));
 });
@@ -3269,7 +3269,7 @@ test('the side column shows the banner line of the pack that is on the screen in
 });
 
 test('the standard banner puts the line in place of DASHBOARD and the bar on its bottom row, at 44 px on one line, and the sidebar layout draws no banner line', () => {
-  const css = withoutComments(read('dashboard/panels/banner/banner.css'));
+  const css = withoutComments(read('dashboard/panels/banner/panel.css'));
   const blockOf = selector => {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(css);
@@ -3288,14 +3288,14 @@ test('the standard banner puts the line in place of DASHBOARD and the bar on its
   assert.match(on, /font: 600 var\(--size-label\)\/44px var\(--font-display\);/, 'text at 44 px, on a row 44 px high');
   assert.match(blockOf('.banner .banner-bottom'), /height: 44px;/);
 
-  const code = read('dashboard/panels/banner/banner.js');
+  const code = read('dashboard/panels/banner/panel.js');
   assert.ok(code.includes('<span class="banner-line" data-part="line"></span>') && code.includes('packExtras(content).bannerLine'));
   assert.ok(code.indexOf('class="rule bar"') < code.indexOf('class="banner-line"') && code.indexOf('class="banner-line"') < code.indexOf('class="school"'), 'after the bar and before the school');
 
   // the sidebar layout has no free line of 44 px, so the side panel does not ask for one
-  const side = read('dashboard/panels/side/side.js');
+  const side = read('dashboard/panels/side/panel.js');
   assert.equal(/packExtras|bannerLine|banner-line/.test(side), false, 'panels/side does not draw a banner line');
-  assert.equal(/banner-line|bannerLine/.test(read('dashboard/panels/side/side.css') + read('dashboard/layouts/sidebar.css')), false);
+  assert.equal(/banner-line|bannerLine/.test(read('dashboard/panels/side/panel.css') + read('dashboard/layouts/sidebar.css')), false);
   assert.ok(read('docs/layouts.md').includes('The banner line does not'), 'and the docs say so');
   assert.ok(read('docs/seasonal-packs.md').includes('| Sidebar (Neon Prime) | nowhere.'));
 });
@@ -4288,15 +4288,15 @@ function textWidth(text, weight, size, spacing) {
 // The Daily Agenda panel is headed AGENDA, six characters, where it was headed UP NEXT. At the heading size
 // of 96 px it is no wider than that was, to within two pixels, so the room it had in the header is enough
 test('the heading of the Daily Agenda panel is AGENDA and is no wider than UP NEXT was', () => {
-  assert.ok(read('dashboard/panels/tonight/tonight.js').includes('<h2 class="title" data-slat="title">AGENDA</h2>'));
+  assert.ok(read('dashboard/panels/tonight/panel.js').includes('<h2 class="title" data-slat="title">AGENDA</h2>'));
   assert.equal('AGENDA'.length, 6);
   assert.ok(textWidth('AGENDA', 700, 96, 0) <= textWidth('UP NEXT', 700, 96, 0) + 2);
 });
 
-const warCssFile = 'dashboard/panels/countdown/countdown.css';
+const warCssFile = 'dashboard/panels/countdown/panel.css';
 const barRule = 'html[data-layout="bar"] ';
 
-// The war clock's part of countdown.css, which starts with the rule that hides it
+// The war clock's part of panels/countdown/panel.css, which starts with the rule that hides it
 const warSection = () => {
   const css = withoutComments(read(warCssFile));
   return css.slice(css.indexOf('.war-clock { display: none; }'));
@@ -4306,7 +4306,7 @@ const warSection = () => {
 const warRule = selector => {
   const escaped = (barRule + selector).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(warSection());
-  assert.ok(found, 'countdown.css has no rule for ' + selector);
+  assert.ok(found, 'panels/countdown/panel.css has no rule for ' + selector);
   return found[1];
 };
 const warNumber = (selector, name) => {
@@ -4406,7 +4406,7 @@ test('the housing of the war clock is one plate 766 by 128 with the edge of the 
 
 test('the war clock markup has each part once with the class names core/countdown.js looks for, a second housing for two lines, and none of the parts of the other countdowns', async () => {
   await onSidebar(async world => {
-    const countdown = await import(urlOf(world.folder, 'dashboard/panels/countdown/countdown.js'));
+    const countdown = await import(urlOf(world.folder, 'dashboard/panels/countdown/panel.js'));
     const markup = countdown.warMarkup();
     const classes = classesIn(markup);
 
@@ -4530,7 +4530,7 @@ test('the war clock changes its digits at once with the same tick as the countdo
 
   // the standard countdown is as it was: a new number rolls in, and the chevrons close at the minute
   await onSidebar(async world => {
-    await world.draw(teamContent(), 'dashboard/panels/side/side.js');
+    await world.draw(teamContent(), 'dashboard/panels/side/panel.js');
     world.log.length = 0;
     world.nextTick();
     assert.ok(world.log.includes('countdown .seconds span.animate'));
@@ -4617,7 +4617,7 @@ test('the war clock\'s plates, sizes and colors are the ones the order gives, an
   assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original.css'))), 'Original has no war clock');
 });
 
-test('the war clock\'s parts are inside the housing, clear of each other and of the rivets, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in countdown.css', async () => {
+test('the war clock\'s parts are inside the housing, clear of each other and of the rivets, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in panels/countdown/panel.css', async () => {
   const doc = read('docs/layouts.md');
   const section = doc.slice(doc.indexOf('### The war clock'), doc.indexOf('### The side column'));
   assert.ok(section.length > 1000, 'docs/layouts.md has a section called The war clock');
@@ -4634,7 +4634,7 @@ test('the war clock\'s parts are inside the housing, clear of each other and of 
       if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
     });
     assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), state + ': the budget has a row for each part, and no other');
-    Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], state + ': ' + name + ' in the docs and in countdown.css'));
+    Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], state + ': ' + name + ' in the docs and in panels/countdown/panel.css'));
 
     const housing = { x: 0, y: 0, width: 766, height: heights[state] };
     Object.keys(parts).forEach(name => assert.ok(within(boxOf(parts[name]), housing), state + ': ' + name + ' is inside the housing'));
@@ -4723,10 +4723,10 @@ test('nothing in the war clock moves: no animation, transition, glow, shadow or 
   const core = read('dashboard/core/countdown.js');
   assert.ok(core.includes('if (first || state.war) state[name].textContent = text;'));
   assert.ok(core.includes('if (!state.war && state.lastMinute !== null && state.lastMinute !== left.minutes) {'));
-  ['dashboard/panels/countdown/countdown.js', 'dashboard/panels/bar-banner/bar-banner.js'].forEach(file => {
+  ['dashboard/panels/countdown/panel.js', 'dashboard/panels/bar-banner/panel.js'].forEach(file => {
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(read(file)), false, file + ' has animation code');
   });
-  const countdownCode = read('dashboard/panels/countdown/countdown.js');
+  const countdownCode = read('dashboard/panels/countdown/panel.js');
   assert.equal(countdownCode.slice(countdownCode.indexOf('export function warMarkup'), countdownCode.indexOf('export function startWar')).includes('data-part'), false, 'no part of the clock arrives of its own');
   assert.equal(countOf(countdownCode, 'data-part'), 1, 'the wide clock arrives as one piece, in its slot');
   const sequence = /'bar-banner': \{([^}]*)\}/.exec(read('dashboard/frame.js'))[1];
@@ -4738,7 +4738,7 @@ test('the mirror moves the war clock with its slot and turns nothing in it: no r
   assert.ok(!/war-/.test(bar.replace(/\.bar-war|--bar-war-[a-z]+/g, '')), 'no rule of the layout names a part of the clock');
   assert.ok(!/mirrored/.test(warSection()), 'and none of its own');
   assert.ok(/html\.mirrored\[data-layout="bar"\] \.bar-banner,/.test(bar), 'the banner is a row that turns, so the slot changes ends');
-  assert.ok(!/mirror-art/.test(read('dashboard/panels/countdown/countdown.js')) && !/mirror-art/.test(read('dashboard/core/plate.js')), 'nothing in it is turned');
+  assert.ok(!/mirror-art/.test(read('dashboard/panels/countdown/panel.js')) && !/mirror-art/.test(read('dashboard/core/plate.js')), 'nothing in it is turned');
 
   const m = layout.mirrorGeometry(b);
   assert.deepEqual([b.war.x, m.war.x], [1082, 72], 'the slot is at the right end, and at the left end when mirrored');

@@ -11,7 +11,7 @@ import { makeTurns } from '../../core/turns.js';
 const MAX_LIST_ITEMS = 5;
 
 // The width of every block, and the height of the blocks that sit on a card.
-// custom.css has the same numbers. Change them together.
+// panels/custom/panel.css has the same numbers. Change them together.
 const BLOCK_WIDTH = 1056;
 const CARD_HEIGHT = 184;
 const IMAGE_HEIGHT = 220;

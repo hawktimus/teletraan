@@ -399,7 +399,7 @@ test('the frames of Original are the ones they were: the same outlines, the same
   assert.ok(/#stage \{[^}]*padding: 24px 40px;[^}]*grid-template-columns: 1152px 656px;[^}]*grid-template-rows: 212px 708px 72px;[^}]*gap: 20px 32px;/.test(base), 'the stage of the standard layout');
   assert.ok(/#region-right \{[^}]*grid-template-rows: 320px 372px;[^}]*gap: 16px;/.test(base), 'the countdown over the small frame');
   assert.ok(/\.area\[data-area="grid1"\] \{ width: 1152px; height: 708px; \}/.test(base) && /\.area\[data-area="grid2"\] \{ width: 656px; height: 372px; \}/.test(base) && /\.area\[data-area="ticker"\] \{ width: 1840px; height: 72px; \}/.test(base));
-  const banner = withoutComments(read('dashboard/panels/banner/banner.css'));
+  const banner = withoutComments(read('dashboard/panels/banner/panel.css'));
   assert.ok(/\.banner \{\s*display: grid;\s*grid-template-columns: 219px minmax\(0, 1fr\);\s*column-gap: 28px;\s*height: 212px;\s*\}/.test(banner), 'the banner of Original');
   assert.ok(/\.banner \.banner-text \{[^}]*height: 212px;/.test(banner) && /\.banner \.banner-top \{[^}]*height: 160px;/.test(banner));
   assert.ok(!/cybertron|war-/.test(banner), 'the banner\'s own stylesheet says nothing about Cybertron');
@@ -498,7 +498,7 @@ const numberIn = (rule, name) => {
 
 test('the banner is laid out inside its plate: the steel and the neon are clear of the logo, the name, the TEAM plate, the clock and the bottom row', () => {
   const css = withoutComments(read('dashboard/styles/cybertron.css'));
-  const original = withoutComments(read('dashboard/panels/banner/banner.css'));
+  const original = withoutComments(read('dashboard/panels/banner/panel.css'));
   const banner = ruleOf(css, 'html[data-style="cybertron"] .banner');
   const shape = plate.barShape('cybertron-banner');
 
@@ -542,14 +542,14 @@ test('the banner is laid out inside its plate: the steel and the neon are clear 
 
 test('the banner draws its plate only when the page has the frames of Cybertron: Original\'s banner has no plate, and the table of frame.js brings the plate in as the bar banner\'s does', async () => {
   await onPage(async world => {
-    await world.draw(teamContent(), 'dashboard/panels/banner/banner.js');
+    await world.draw(teamContent(), 'dashboard/panels/banner/panel.js');
     assert.ok(!hasText(world.markup, 'class="plate'), 'no plate in the banner of Original');
     assert.ok(!hasText(world.markup, 'bolt-shape'));
     assert.ok(/<section class="panel banner" data-sequence="banner">\s*<div class="logo">/.test(world.markup), 'the logo is the first part, as it was');
   });
 
   await onPage(async world => {
-    await world.draw(teamContent(), 'dashboard/panels/banner/banner.js');
+    await world.draw(teamContent(), 'dashboard/panels/banner/panel.js');
     assert.ok(/<section class="panel banner" data-sequence="banner">\s*<svg class="plate fills"/.test(world.markup), 'the plate is first, under everything');
     assert.equal(countOf(world.markup, 'data-part="frame-a"'), 1);
     assert.equal(countOf(world.markup, 'href="#bolt-shape"'), 6);
@@ -573,7 +573,7 @@ test('the ticker is as high as its plate, which hangs 5 below the row, and has t
   assert.deepEqual([shape.width, shape.height - 5], [1840, 72], 'the area of the ticker (.area[data-area="ticker"] in base.css), and the 5 that the thin edge hangs below it');
 
   // the tag is 72 high like the row, its picture is 77 high like the plate, and it starts over the cut corner
-  const tag = withoutComments(read('dashboard/panels/ticker/ticker.css'));
+  const tag = withoutComments(read('dashboard/panels/ticker/panel.css'));
   assert.equal(numberIn(ruleOf(tag, '.ticker .tag'), 'height'), shape.height - 5);
   assert.equal(numberIn(ruleOf(tag, '.ticker .tag span'), 'height'), shape.height, 'the word is in the middle of the picture');
 
@@ -610,7 +610,7 @@ test('the mirror of the standard layout is the same for Original and Cybertron: 
 
 // The wide war clock
 
-const warCss = () => withoutComments(read('dashboard/panels/countdown/countdown.css'));
+const warCss = () => withoutComments(read('dashboard/panels/countdown/panel.css'));
 const wideSection = () => {
   const css = warCss();
   return css.slice(css.indexOf('.war-clock.war-wide {'));
@@ -714,7 +714,7 @@ test('the wide housing is one steel plate 616 by 200 with the edge of the frames
 
 test('the wide war clock markup has the same parts as the narrow one, once each, with the class war-wide, and the panel is one slot that arrives as a piece', async () => {
   await onPage(async world => {
-    const countdown = await import(urlOf(world.folder, 'dashboard/panels/countdown/countdown.js'));
+    const countdown = await import(urlOf(world.folder, 'dashboard/panels/countdown/panel.js'));
     const wide = countdown.warMarkup('wide');
     const narrow = countdown.warMarkup();
     assert.ok(isBalanced(wide));
@@ -736,7 +736,7 @@ test('the wide war clock markup has the same parts as the narrow one, once each,
 
   // The panel of Cybertron: one section with the sequence of its own, and a slot that is its only part
   await onPage(async world => {
-    await world.draw(teamContent(), 'dashboard/panels/countdown/countdown.js');
+    await world.draw(teamContent(), 'dashboard/panels/countdown/panel.js');
     assert.ok(/<section class="panel countdown-war" data-sequence="countdown-war">\s*<div class="war-slot" data-part="war">/.test(world.markup));
     assert.equal(countOf(world.markup, 'data-part'), 1, 'the slot is the one part');
     assert.ok(!hasText(world.markup, 'class="panel countdown"') && !hasText(world.markup, 'red-metal') && !hasText(world.markup, 'plate-id'), 'no red frame, no stamped id');
@@ -754,7 +754,7 @@ test('the wide war clock markup has the same parts as the narrow one, once each,
 
 test('Original keeps the red countdown with its frame, its id and its rivets, and the war clock is only drawn for Cybertron', async () => {
   await onPage(async world => {
-    await world.draw(teamContent(), 'dashboard/panels/countdown/countdown.js');
+    await world.draw(teamContent(), 'dashboard/panels/countdown/panel.js');
     assert.ok(/<section class="panel countdown" data-sequence="countdown" data-level="calm">/.test(world.markup));
     assert.ok(hasText(world.markup, 'red-metal') && hasText(world.markup, 'class="rivets"') && !hasText(world.markup, 'plate-id'));
     assert.ok(!hasText(world.markup, 'war-') && !hasText(world.markup, 'countdown-war'));
@@ -772,7 +772,7 @@ test('the wide war clock shows the same data as the countdown: the label without
 
   for (const [days, shown] of [[0, '00'], [4, '04'], [92, '92'], [99, '99'], [100, '100'], [146, '146']]) {
     await onPage(async world => {
-      await world.draw(content(kickoffIn(days)), 'dashboard/panels/countdown/countdown.js');
+      await world.draw(content(kickoffIn(days)), 'dashboard/panels/countdown/panel.js');
       const text = selector => world.countdown.nodes[selector].textContent;
       const left = Math.floor((new Date(kickoffIn(days)) - new Date(world.now)) / 1000);
       assert.equal(text('.days-number span'), shown, days + ' days');
@@ -794,7 +794,7 @@ test('the wide war clock shows the same data as the countdown: the label without
   ];
   for (const [kickoff, rollout, label, date, level, over] of states) {
     await onPage(async world => {
-      await world.draw(content(kickoff, rollout), 'dashboard/panels/countdown/countdown.js');
+      await world.draw(content(kickoff, rollout), 'dashboard/panels/countdown/panel.js');
       const name = kickoff + ' ' + rollout;
       assert.equal(world.countdown.nodes['.label'].textContent, label, name);
       assert.equal(world.countdown.nodes['.date'].textContent, date, name);
@@ -806,7 +806,7 @@ test('the wide war clock shows the same data as the countdown: the label without
 
   // New dates from the editors reach the clock through the panel's update, which finds the clock inside the panel
   await onPage(async world => {
-    await world.draw(content('2027-03-01T12:00'), 'dashboard/panels/countdown/countdown.js');
+    await world.draw(content('2027-03-01T12:00'), 'dashboard/panels/countdown/panel.js');
     world.module.update(world.element, content('2026-11-02T12:00', '2026-12-01T12:00'));
     world.nextTick();
     assert.deepEqual([world.countdown.dataset.level, world.countdown.nodes['.date'].textContent], ['critical', 'NOV 2']);
@@ -816,7 +816,7 @@ test('the wide war clock shows the same data as the countdown: the label without
   }, 'cybertron');
 });
 
-test('the parts of the wide war clock are inside the housing, clear of each other and of the rivets and the cut corners, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in countdown.css', async () => {
+test('the parts of the wide war clock are inside the housing, clear of each other and of the rivets and the cut corners, for a title on one line and on two, and the budgets in docs/layouts.md are the numbers in panels/countdown/panel.css', async () => {
   const doc = read('docs/layouts.md');
   const start = doc.indexOf('\n### The wide war clock\n');
   assert.ok(start !== -1, 'docs/layouts.md has a section called The wide war clock');
@@ -835,7 +835,7 @@ test('the parts of the wide war clock are inside the housing, clear of each othe
       if (row) rows[row[1]] = { top: Number(row[2]), height: Number(row[3]), left: Number(row[4]), width: Number(row[5]) };
     });
     assert.deepEqual(Object.keys(rows).sort(), Object.keys(parts).sort(), state + ': the budget has a row for each part, and no other');
-    Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], state + ': ' + name + ' in the docs and in countdown.css'));
+    Object.keys(parts).forEach(name => assert.deepEqual(rows[name], parts[name], state + ': ' + name + ' in the docs and in panels/countdown/panel.css'));
 
     const housing = { x: 0, y: 0, width: 616, height: heights[state] };
     assert.deepEqual([wideNumber('', 'width'), wideVariable('one', 'height')], [616, 200], 'the clock is the size of the housing');
@@ -951,8 +951,8 @@ test('the wide war clock has the colors of the narrow one: amber digits from the
   const style = withoutComments(read('dashboard/styles/cybertron.css'));
   assert.ok(style.includes('html[data-style="cybertron"] .war-clock { display: block; }'));
   assert.ok(style.includes('html[data-style="cybertron"][data-finish="flat"] .war-rust { display: none; }'));
-  assert.ok(withoutComments(read('dashboard/panels/countdown/countdown.css')).indexOf('.war-clock { display: none; }') !== -1, 'and no other style shows it');
-  const countdownCode = read('dashboard/panels/countdown/countdown.js');
+  assert.ok(withoutComments(read('dashboard/panels/countdown/panel.css')).indexOf('.war-clock { display: none; }') !== -1, 'and no other style shows it');
+  const countdownCode = read('dashboard/panels/countdown/panel.js');
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|getAnimations|classList/.test(countdownCode), false, 'no animation code');
 });
 
@@ -1173,7 +1173,7 @@ test('docs/layouts.md describes the two styles and which layout each uses, and t
 
 // A page that the banner and the countdown can be drawn on, as in test-layouts.mjs: a fake clock and a fake page, and the real panels
 
-const panelFiles = baseFiles.concat(['dashboard/panels/countdown/countdown.js', 'dashboard/panels/banner/banner.js']);
+const panelFiles = baseFiles.concat(['dashboard/panels/countdown/panel.js', 'dashboard/panels/banner/panel.js']);
 let pageWorlds = 0;
 
 function makeNode(log, name) {

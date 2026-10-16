@@ -37,7 +37,7 @@ const cardNames = ['next-match', 'rank', 'results', 'alliance', 'timeline', 'dis
 const cardIds = cardNames.map(name => 'competition-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -860,7 +860,7 @@ test('nothing on a card is smaller than 44px, no line is thinner than 3px, and t
   });
 
   // the sentence a card says is 56px, and the biggest numbers use the tokens for them
-  const empty = rulesOf(read('panels/competition-rank/competition-rank.css'))['.competition-rank .empty'];
+  const empty = rulesOf(read('panels/competition-rank/panel.css'))['.competition-rank .empty'];
   assert.equal(fontOf(empty).size, 56);
   assert.equal(tokens['size-days'], 184);
   assert.equal(tokens['size-heading'], 96);
@@ -878,7 +878,7 @@ test('markup has no text of its own size, and the chart is 1096 by 512 at one pi
     assert.equal(/aria-label="[^"]+"/.test(html), true);
   });
   assert.deepEqual(draw.bodySize, { width: 1096, height: 512 });
-  const css = read('panels/competition-rank/competition-rank.css');
+  const css = read('panels/competition-rank/panel.css');
   const body = rulesOf(css)['.competition-rank .body'];
   assert.ok(/left: 28px;/.test(body) && /top: 136px;/.test(body) && /width: 1096px;/.test(body) && /height: 512px;/.test(body));
   assert.ok(28 + 1096 <= 1148 - (136 + 512 - 640) * 80 / 64, 'the body stops before the cut corner of the frame');
@@ -1191,7 +1191,7 @@ test('every card is a panel of the large frame with a script and a stylesheet, i
   const registry = read('registry.js');
   cardIds.forEach(id => {
     assert.ok(registry.includes("{ id: '" + id + "', region: 'grid1', topic: 'competition', competition: true },"), id);
-    assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.css')), id);
+    assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.css')), id);
     assert.ok(!read('core/panel-order.js').includes(id) && !config.defaultSettings.rotation.grid1.some(step => step.panel === id), id + ' is not in a rotation list');
   });
   assert.equal(countOf(registry, 'competition: true'), 7);

@@ -27,7 +27,7 @@ html[data-layout="sidebar"] #stage {
 
 /* The strip across the top. It is a block of its own for the hidden transitions.
    #strip-name is its slot for the team name, which the side panel draws and moves
-   there (panels/side/side.js): one line, as large as the strip allows
+   there (panels/side/panel.js): one line, as large as the strip allows
    (--strip-name-size, which core/layout.js works out the strip's height from).
    The name is a row of letters the name effect splits (core/name.js), and a name
    too long for the room squeezes its letters together, as it does in the banner.
@@ -143,7 +143,7 @@ html[data-layout="sidebar"] #region-right {
 
 /* The ticker, along the whole bottom of the screen, under the sidebar and the
    pane. It is the standard layout's ticker, the same size (1840 by 72, the area
-   in base.css), the same tag and the same one line with an ellipsis (ticker.css),
+   in base.css), the same tag and the same one line with an ellipsis (panels/ticker/panel.css),
    so it needs no rules of its own beyond its place. The connection status text
    (base.css) is already capped to the same width and sits level with it. */
 html[data-layout="sidebar"] #region-ticker {

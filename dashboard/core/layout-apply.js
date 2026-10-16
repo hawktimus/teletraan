@@ -109,7 +109,7 @@ function placeBar(page) {
 // slot for each part of it. The banner and the countdown keep their own panels and regions, which are
 // moved into their slots, and the strip and the sidebar are two of the blocks
 // of the hidden transitions. The team name, the clock and the weather are moved
-// into the strip by the side panel itself (panels/side/side.js), because they are
+// into the strip by the side panel itself (panels/side/panel.js), because they are
 // only drawn when the panel is. The standard layout needs none of this, and is left exactly as index.html
 // has it.
 function placeSidebar(layout, page) {

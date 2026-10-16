@@ -10,7 +10,7 @@ import { escapeHtml } from '../../core/text.js';
 import { eventDate, timeText } from '../../core/events.js';
 import { chipWord, eventsPerPage, shownPages } from '../../core/event-pages.js';
 
-// The pin of a pinned event, 44px square. Its colour is in events.css.
+// The pin of a pinned event, 44px square. Its colour is in panels/events/panel.css.
 const pinMark = `
   <svg class="pin-mark" viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
     <polygon points="12,2 32,2 32,9 12,9"/>

@@ -8,7 +8,7 @@
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
-/* Same box and sizes as the real Open Tasks panel (task-counts.css), so
+/* Same box and sizes as the real Open Tasks panel (panels/task-counts/panel.css), so
    nothing runs past the panel edge */
 .stand-in-tile .tile-content {
   position: absolute;

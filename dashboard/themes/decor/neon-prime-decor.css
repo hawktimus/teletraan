@@ -314,7 +314,7 @@ html.theme-neon-prime #region-sidebar::before {
     var(--bar-steel);
 }
 
-/* The countdown has a flat face (side.css) and no frame of its own. This gives
+/* The countdown has a flat face (panels/side/panel.css) and no frame of its own. This gives
    it a thin steel frame of the banner's bar, with two cut corners (top right and
    bottom left) and a cyan line along each cut. The face is the colour of
    --panel-face, which the countdown sets for its calm, tense and critical looks.

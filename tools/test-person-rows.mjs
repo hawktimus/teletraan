@@ -32,7 +32,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
-['leadership/leadership.js', 'team-leads/team-leads.js'].forEach(file => {
+['leadership/panel.js', 'team-leads/panel.js'].forEach(file => {
   fs.mkdirSync(path.join(root, 'panels', path.dirname(file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'panels', file));
 });
@@ -44,14 +44,14 @@ const leadership = await import(base + 'core/leadership.js');
 const teams = await import(base + 'core/teams.js');
 const sanity = await import(base + 'core/sanity.js');
 const images = await import(base + 'core/images.js');
-const leadershipPanel = await import(base + 'panels/leadership/leadership.js');
-const teamLeadsPanel = await import(base + 'panels/team-leads/team-leads.js');
+const leadershipPanel = await import(base + 'panels/leadership/panel.js');
+const teamLeadsPanel = await import(base + 'panels/team-leads/panel.js');
 
 // A panel keeps the page it showed last, so a test that counts visits asks for a copy of its own
 let copies = 0;
 async function freshPanel(name) {
   copies += 1;
-  return import(base + 'panels/' + name + '/' + name + '.js?copy=' + copies);
+  return import(base + 'panels/' + name + '/panel.js?copy=' + copies);
 }
 
 const { rowSizes, rowsMarkup, rowsPerPage, portraitSizes } = portrait;
@@ -406,7 +406,7 @@ test('the showcase hook gives one department\'s lead and members, and has no com
   assert.equal(lines.slice(at, end).some(line => line.includes('//')), false, 'and there is none inside');
 
   // nothing draws it yet: it is only the hook
-  ['panels/team-leads/team-leads.js', 'panels/leadership/leadership.js', 'panels/roster/roster.js'].forEach(file => assert.equal(read(file).includes('showcaseOf'), false, file));
+  ['panels/team-leads/panel.js', 'panels/leadership/panel.js', 'panels/roster/panel.js'].forEach(file => assert.equal(read(file).includes('showcaseOf'), false, file));
 });
 
 // The Leadership panel
@@ -569,7 +569,7 @@ test('both panels draw their rows at their own portrait size, and at 100 without
 }));
 
 test('the panels draw through the shared rows and the header mark, have no animation code, and the Roster panel is as it was', () => {
-  [['panels/leadership/leadership.js', 'photoAddress(', 'preloadPhotos('], ['panels/team-leads/team-leads.js', 'leadAddress(', 'preloadLeadPhotos(']].forEach(([file, address, preload]) => {
+  [['panels/leadership/panel.js', 'photoAddress(', 'preloadPhotos('], ['panels/team-leads/panel.js', 'leadAddress(', 'preloadLeadPhotos(']].forEach(([file, address, preload]) => {
     const code = read(file);
     ['rowsMarkup(', 'watchPhotos(', 'markBeside(', 'rowLayout(', address, preload].forEach(piece => assert.ok(code.includes(piece), file + ' does not use ' + piece));
     assert.equal(/slotMarkup|slotsPerPage|MAX_CARDS|splitEvenly|leadershipPages/.test(code), false, file + ' still draws the cards');
@@ -577,7 +577,7 @@ test('the panels draw through the shared rows and the header mark, have no anima
     assert.ok(code.includes('makePages(rowsPerPage)'), file + ' does not show a page at a time');
   });
 
-  const roster = read('panels/roster/roster.js');
+  const roster = read('panels/roster/panel.js');
   assert.ok(roster.includes('slotMarkup(') && !roster.includes('rowsMarkup('), 'the Roster panel still draws its team lead as a slot');
   assert.ok(read('registry.js').includes("{ id: 'team-leads', region: 'grid1', topic: 'subteams' },"));
   assert.ok(read('registry.js').includes("{ id: 'leadership', region: 'grid1', topic: 'people' },"));
@@ -614,7 +614,7 @@ test('four rows of 144 fill the 576 body, the name is 72px, the role 44px in the
   [rows, row, name, role, line, chip, ruleOf(css, '.person-row .portrait'), ruleOf(css, '.person-text')].forEach(rule => {
     assert.equal(/font-size|@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(rule), false);
   });
-  ['panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'].forEach(file => {
+  ['panels/leadership/panel.css', 'panels/team-leads/panel.css'].forEach(file => {
     assert.equal(/font-size|font: [^;]*\b\d+px\//.test(read(file).replace(/var\(--size-[a-z-]+\)\/\d+px/g, '')), false, file + ' has a text size of its own');
     assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(read(file)), false, file);
   });
@@ -667,7 +667,7 @@ test('the rows have no rule for a style or a layout but the foot of the large fr
   const css = read('base.css');
   ['.person-rows', '.person-row', '.person-text', '.person-name', '.person-role', '.person-line', '.person-chip', '.person-row .portrait'].forEach(selector => assert.notEqual(ruleOf(css, selector), '', selector));
 
-  const sheets = ['styles/original.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/leadership.css', 'panels/team-leads/team-leads.css'];
+  const sheets = ['styles/original.css', 'styles/minimal.css', 'layouts/bar.css', 'layouts/sidebar.css', 'panels/leadership/panel.css', 'panels/team-leads/panel.css'];
   sheets.forEach(file => assert.equal(/\.person-|\.slots?\b|\.slot-/.test(read(file).replace(/\/\*[\s\S]*?\*\//g, '')), false, file + ' has a rule for the rows'));
 
   // Cybertron has neon slashes along the foot of the large frame, so its rows are a little shorter (tools/test-stripe-foot.mjs).

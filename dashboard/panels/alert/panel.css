@@ -56,7 +56,7 @@
 
 /* The words wrap onto more lines when they are long, and are cut off after
    that. The padding is room for the tails of letters like g and y. A long
-   headline (alert.js) is smaller, with room for three lines. */
+   headline (panels/alert/panel.js) is smaller, with room for three lines. */
 .alert .headline {
   max-height: 340px;
   padding-bottom: 12px;

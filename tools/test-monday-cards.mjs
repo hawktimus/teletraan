@@ -39,7 +39,7 @@ const cardNames = singleNames.concat(bothNames);
 const cardIds = cardNames.map(name => 'monday-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -133,7 +133,7 @@ test('the five cards are panels of the large frame, flagged monday in registry.j
   cardIds.forEach(id => {
     // the older cards are marked older: they stay registered, and the Studio does not offer them (the panels of the one task board are in tools/test-monday-panels.mjs)
     assert.ok(source.includes("{ id: '" + id + "', region: 'grid1', topic: 'monday', monday: true" + (id === 'monday-tasks' ? '' : ', older: true') + ' },'), id);
-    assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, id + '.css')), id);
+    assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.css')), id);
     assert.ok(!config.defaultSettings.rotation.grid1.some(step => step.panel === id), id + ' is not in a rotation list');
     assert.ok(!read('core/panel-order.js').includes(id), id);
   });
@@ -621,13 +621,13 @@ test('no card has a dash in what it writes, and a name from the board is never m
     assert.equal(dashes.test(html), false, name);
     assert.equal(/<(b|u|i)>/.test(html), false, name + ' has markup from a name');
   });
-  ['core/monday.js', 'core/monday-draw.js'].concat(cardIds.map(id => 'panels/' + id + '/' + id + '.js'), cardIds.map(id => 'panels/' + id + '/' + id + '.css')).forEach(file => {
+  ['core/monday.js', 'core/monday-draw.js'].concat(cardIds.map(id => 'panels/' + id + '/panel.js'), cardIds.map(id => 'panels/' + id + '/panel.css')).forEach(file => {
     assert.equal(dashes.test(read(file)), false, file + ' has an em or en dash');
   });
 });
 
 test('the cards are not given a team: the team on the screen decides, as for every other panel', () => {
-  ['core/monday.js', 'core/monday-draw.js'].concat(cardIds.map(id => 'panels/' + id + '/' + id + '.js')).forEach(file => {
+  ['core/monday.js', 'core/monday-draw.js'].concat(cardIds.map(id => 'panels/' + id + '/panel.js')).forEach(file => {
     assert.equal(/\bshowsForTeam\b/.test(read(file)), false, file + ' does not judge the team itself');
   });
   assert.ok(read('core/monday.js').includes('visibleItems('));
@@ -711,7 +711,7 @@ test('nothing on a card is smaller than 44px except the sizes the order sets, no
   assert.equal(tokens['size-label'], 44);
   const seen = {};
 
-  ['monday.css'].concat(cardIds.map(id => 'panels/' + id + '/' + id + '.css')).forEach(file => {
+  ['monday.css'].concat(cardIds.map(id => 'panels/' + id + '/panel.css')).forEach(file => {
     const css = read(file);
     const rules = rulesOf(css);
 
@@ -736,7 +736,7 @@ test('nothing on a card is smaller than 44px except the sizes the order sets, no
   assert.deepEqual(Object.keys(seen).sort(), Object.keys(smaller).sort(), 'every size under 44px that is allowed is used, and no other is');
 
   cardIds.forEach(id => {
-    const js = read('panels/' + id + '/' + id + '.js');
+    const js = read('panels/' + id + '/panel.js');
     assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|@keyframes|transform/.test(js), false, id + ' has animation code');
     assert.equal(/font-size|style="/.test(js), false, id + ' sets a size or a style in its markup');
   });
@@ -750,7 +750,7 @@ test('nothing on a card is smaller than 44px except the sizes the order sets, no
 
 test('the tasks panel fits the large panel: five rows of 84 and the numbers inside its body, which is clear of the frame and the cut corner', async () => {
   const shared = rulesOf(read('monday.css'));
-  const rules = rulesOf(read('panels/monday-tasks/monday-tasks.css'));
+  const rules = rulesOf(read('panels/monday-tasks/panel.css'));
   const body = shared['.monday .body'];
   const { textWidth } = await import(base + 'core/text-width.js');
 
@@ -797,7 +797,7 @@ test('the tasks panel fits the large panel: five rows of 84 and the numbers insi
 });
 
 test('the milestones card fits its body: the heading row, five rows of 84, the cells and the chip in a row, and the line that says how many more', async () => {
-  const rules = rulesOf(read('panels/monday-milestones/monday-milestones.css'));
+  const rules = rulesOf(read('panels/monday-milestones/panel.css'));
   const body = rulesOf(read('monday.css'))['.monday .body'];
   const { textWidth } = await import(base + 'core/text-width.js');
   const row = pixels(rules['.monday-milestones .milestone-row'], 'height');
@@ -826,7 +826,7 @@ test('the milestones card fits its body: the heading row, five rows of 84, the c
 });
 
 test('the text of the line of the progress card stays inside its body and does not run into the text beside it, even with the longest labels', () => {
-  const rules = rulesOf(read('panels/monday-progress/monday-progress.css'));
+  const rules = rulesOf(read('panels/monday-progress/panel.css'));
   const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(letter => 'Subteam ' + letter + 'W');
   const crowded = contentOf(names.map((name, index) => board({ subteam: name, status: ['up-next', 'in-progress', 'done'][index % 3] })).concat(names.map(name => board({ subteam: name, status: 'done' }))), names, raw => {
     raw.monday.snapshots = Array.from({ length: 30 }, (nothing, index) => ({ date: new Date(Date.UTC(2026, 8, 1 + index)).toISOString().slice(0, 10), open: 188 - index }));
@@ -875,7 +875,7 @@ test('the text of the line of the progress card stays inside its body and does n
 });
 
 test('the progress card fits its body: the legend, six rows of 64, the line for more and the totals at the left, clear of the line at the right, and the names fit their column', async () => {
-  const rules = rulesOf(read('panels/monday-progress/monday-progress.css'));
+  const rules = rulesOf(read('panels/monday-progress/panel.css'));
   const shared = rulesOf(read('monday.css'));
   const { textWidth } = await import(base + 'core/text-width.js');
   const bodyHeight = pixels(shared['.monday .body'], 'height');

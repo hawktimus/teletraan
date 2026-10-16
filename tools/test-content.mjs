@@ -45,8 +45,8 @@ async function loadCopy(name, changeConfig) {
   // The Photo and Team Leads panels are here to check that they follow the two size settings.
   // The Daily Agenda panel is here for the rows it draws from the plan and the booked talks.
   // The rest are here to check that each one leaves out the items of the other team (the Teams section).
-  ['events/events.js', 'next-event/next-event.js', 'roster/roster.js', 'leadership/leadership.js', 'photo/photo.js', 'team-leads/team-leads.js', 'tonight/tonight.js',
-    'tasks/tasks.js', 'task-counts/task-counts.js', 'spotlight/spotlight.js', 'sponsor-feature/sponsor-feature.js', 'sponsor-logo/sponsor-logo.js', 'custom/custom.js', 'ticker/ticker.js'].forEach(file => {
+  ['events/panel.js', 'next-event/panel.js', 'roster/panel.js', 'leadership/panel.js', 'photo/panel.js', 'team-leads/panel.js', 'tonight/panel.js',
+    'tasks/panel.js', 'task-counts/panel.js', 'spotlight/panel.js', 'sponsor-feature/panel.js', 'sponsor-logo/panel.js', 'custom/panel.js', 'ticker/panel.js'].forEach(file => {
     fs.mkdirSync(path.join(root, 'dashboard/panels', path.dirname(file)), { recursive: true });
     fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'dashboard/panels', file));
   });
@@ -58,20 +58,20 @@ async function loadCopy(name, changeConfig) {
     content: await import(base + 'core/content.js'),
     device: await import(base + 'core/device.js'),
     events: await import(base + 'core/events.js'),
-    eventsPanel: await import(base + 'panels/events/events.js'),
-    nextEventPanel: await import(base + 'panels/next-event/next-event.js'),
-    rosterPanel: await import(base + 'panels/roster/roster.js'),
-    leadershipPanel: await import(base + 'panels/leadership/leadership.js'),
-    photoPanel: await import(base + 'panels/photo/photo.js'),
-    teamLeadsPanel: await import(base + 'panels/team-leads/team-leads.js'),
-    tonightPanel: await import(base + 'panels/tonight/tonight.js'),
-    tasksPanel: await import(base + 'panels/tasks/tasks.js'),
-    taskCountsPanel: await import(base + 'panels/task-counts/task-counts.js'),
-    spotlightPanel: await import(base + 'panels/spotlight/spotlight.js'),
-    sponsorFeaturePanel: await import(base + 'panels/sponsor-feature/sponsor-feature.js'),
-    sponsorLogoPanel: await import(base + 'panels/sponsor-logo/sponsor-logo.js'),
-    customPanel: await import(base + 'panels/custom/custom.js'),
-    tickerPanel: await import(base + 'panels/ticker/ticker.js'),
+    eventsPanel: await import(base + 'panels/events/panel.js'),
+    nextEventPanel: await import(base + 'panels/next-event/panel.js'),
+    rosterPanel: await import(base + 'panels/roster/panel.js'),
+    leadershipPanel: await import(base + 'panels/leadership/panel.js'),
+    photoPanel: await import(base + 'panels/photo/panel.js'),
+    teamLeadsPanel: await import(base + 'panels/team-leads/panel.js'),
+    tonightPanel: await import(base + 'panels/tonight/panel.js'),
+    tasksPanel: await import(base + 'panels/tasks/panel.js'),
+    taskCountsPanel: await import(base + 'panels/task-counts/panel.js'),
+    spotlightPanel: await import(base + 'panels/spotlight/panel.js'),
+    sponsorFeaturePanel: await import(base + 'panels/sponsor-feature/panel.js'),
+    sponsorLogoPanel: await import(base + 'panels/sponsor-logo/panel.js'),
+    customPanel: await import(base + 'panels/custom/panel.js'),
+    tickerPanel: await import(base + 'panels/ticker/panel.js'),
     layout: await import(base + 'core/layout.js'),
     look: await import(base + 'core/look.js'),
     marks: await import(base + 'core/marks.js'),
@@ -3798,8 +3798,8 @@ test('photos are read from Sanity with the rest of the content, and nothing read
 });
 
 test('the Photo panel uses the visible photos, the order setting, the credit at 30px on the team plate, and loads the next photo', () => {
-  const panel = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.js'), 'utf8');
-  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/photo.css'), 'utf8');
+  const panel = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/panel.js'), 'utf8');
+  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/photo/panel.css'), 'utf8');
 
   assert.ok(panel.includes('queue.takeTurn(photosToShow(content), settings.photoOrder, plan.photos)'));
   assert.ok(panel.includes('return photosToShow(content).length > 0;'));
@@ -4251,13 +4251,13 @@ test('the Subteam roster panel is in the registry with the topic of the other su
   const registry = fs.readFileSync(path.join(dashboardFolder, 'registry.js'), 'utf8');
   assert.ok(registry.includes("{ id: 'roster', region: 'grid1', topic: 'subteams' },"));
 
-  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.js'), 'utf8');
-  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8');
+  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/panel.js'), 'utf8');
+  const style = fs.readFileSync(path.join(dashboardFolder, 'panels/roster/panel.css'), 'utf8');
   ['slotMarkup(', 'watchPhotos(', 'preloadLeadPhotos(', 'leadAddress(', 'makeRosterTurns(', 'markBeside(', 'escapeHtml('].forEach(piece => assert.ok(code.includes(piece), 'roster.js does not use ' + piece));
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(/.test(code), false, 'the roster panel has animation code');
-  assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(style), false, 'roster.css uses an effect that is not allowed');
+  assert.equal(/@keyframes|transition:|animation:|box-shadow|text-shadow|filter|blur/.test(style), false, 'panels/roster/panel.css uses an effect that is not allowed');
   assert.ok(/\.roster \.member\s*\{[^}]*font: 500 var\(--size-body\)\//.test(style), 'the names are not at the body size');
-  assert.equal(/font-size|font: [^;]*\b\d+px\//.test(style.replace(/var\(--size-[a-z-]+\)\/\d+px/g, '')), false, 'roster.css has a text size of its own');
+  assert.equal(/font-size|font: [^;]*\b\d+px\//.test(style.replace(/var\(--size-[a-z-]+\)\/\d+px/g, '')), false, 'panels/roster/panel.css has a text size of its own');
 });
 
 
@@ -4842,7 +4842,7 @@ test('the Daily Agenda panel draws a plan row as it always did, the heading AGEN
 });
 
 test('the stylesheet of the Daily Agenda keeps text at 44px or more and lines at 3px or more, and the tag of a talk follows the badge', () => {
-  const css = fs.readFileSync(path.join(dashboardFolder, 'panels/tonight/tonight.css'), 'utf8');
+  const css = fs.readFileSync(path.join(dashboardFolder, 'panels/tonight/panel.css'), 'utf8');
   const tokens = fs.readFileSync(path.join(dashboardFolder, 'tokens.css'), 'utf8');
   const size = name => Number((new RegExp('--' + name + ': (\\d+)px;').exec(tokens) || [])[1]);
 
@@ -5286,7 +5286,7 @@ test('index.html has the empty hidden connection box after the stage and before 
   assert.ok(page.indexOf('id="connection-status"') < page.indexOf('id="overlay"'), 'the box comes before the overlay');
   assert.ok(!page.includes('device-info'), 'the old strip is gone');
 
-  const banner = fs.readFileSync(path.join(dashboardFolder, 'panels/banner/banner.js'), 'utf8');
+  const banner = fs.readFileSync(path.join(dashboardFolder, 'panels/banner/panel.js'), 'utf8');
   assert.ok(!banner.includes('OFFLINE') && !banner.includes('data-part="status"'), 'the banner has no OFFLINE text');
   const frameScript = fs.readFileSync(path.join(dashboardFolder, 'frame.js'), 'utf8');
   assert.ok(!/'status':/.test(frameScript), 'frame.js has no line for the banner status');
@@ -5337,7 +5337,7 @@ test('makeTurns keeps counting when the list gets shorter between turns', () => 
 test('every script in dashboard/ uses nothing newer than ES2017', () => {
   const files = javascriptFilesIn(dashboardFolder);
   const names = files.map(file => path.relative(dashboardFolder, file).split(path.sep).join('/'));
-  ['shell.js', 'perf.js', 'core/sanity.js', 'panels/tasks/tasks.js'].forEach(name => {
+  ['shell.js', 'perf.js', 'core/sanity.js', 'panels/tasks/panel.js'].forEach(name => {
     assert.ok(names.includes(name), 'the search did not find ' + name);
   });
 
@@ -5409,9 +5409,9 @@ let tasksPanelCopies = 0;
 async function freshTasksPanel() {
   const folder = path.join(workFolder, 'live', 'dashboard', 'panels', 'tasks');
   fs.mkdirSync(folder, { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'tasks.js'), path.join(folder, 'tasks.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', 'tasks', 'panel.js'), path.join(folder, 'panels/tasks/panel.js'));
   tasksPanelCopies += 1;
-  return import(pathToFileURL(path.join(folder, 'tasks.js')).href + '?copy=' + tasksPanelCopies);
+  return import(pathToFileURL(path.join(folder, 'panels/tasks/panel.js')).href + '?copy=' + tasksPanelCopies);
 }
 
 function taskCalled(title, status, extra) {
@@ -5560,7 +5560,7 @@ test('the Roster panel draws its portrait at the Portrait size, and at 100 witho
 
   // the style of the slot does not name a size of its own for the text or the slot
   const base = fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8');
-  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/roster/roster.css'), 'utf8')), 'the slot is still 352 wide');
+  assert.ok(/\.roster \.slot\s*\{[^}]*width: 352px;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/roster/panel.css'), 'utf8')), 'the slot is still 352 wide');
   assert.ok(/\.portrait\s*\{[^}]*margin: 0 auto 8px;/.test(base), 'a smaller portrait is centred in its slot');
 }));
 
@@ -6140,7 +6140,7 @@ test('the ticker panel adds the prefix when it draws a line, and the list of lin
     globalThis.document.documentElement = { className: 'overlay-christmas' };
     assert.deepEqual(live.tickerPanel.items(content).map(item => item.text), ['[Tip]', '[News]', '[Thanks]'], 'the lines are as they were');
   });
-  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/ticker/ticker.js'), 'utf8');
+  const code = fs.readFileSync(path.join(dashboardFolder, 'panels/ticker/panel.js'), 'utf8');
   assert.ok(code.includes("import { prefixFor } from '../../core/pack-extras.js';") && code.includes("import { packExtras } from '../../core/theme.js';"));
   assert.ok(code.includes('prefixFor(packExtras(content).tickerPrefix, line.text)'));
 });

@@ -180,7 +180,7 @@ in `frame.css` is multiplied by it.
   plain colours, so a theme that recolours the plates leaves the logo in its
   brand colours unless the theme sets those three itself.
 - The size of each logo is in the stylesheet of the panel that shows it
-  (`banner.css`, `announcement.css`). `--k` is the box's width divided by 1100.
+  (`panels/banner/panel.css`, `panels/announcement/panel.css`). `--k` is the box's width divided by 1100.
 - `tools/logo.html` shows the logo large with a button for each act, a slider
   that stops an act at any moment, Speed, Motion, Metal and Finish, the name
   effect, and every key pose, large and at the real size of the banner. Open

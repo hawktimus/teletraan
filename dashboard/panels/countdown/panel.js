@@ -1,5 +1,5 @@
 // Counts down to Kickoff, then to Rollout. The nearer the date, the more
-// serious the panel looks (see data-level in countdown.css). This is the
+// serious the panel looks (see data-level in panels/countdown/panel.css). This is the
 // countdown of the standard layout, in its red frame. The parts, and the code
 // that writes the numbers, are in core/countdown.js, which the sidebar layout's
 // panel (panels/side) uses too.
@@ -42,7 +42,7 @@ export function mount(host, content) {
 }
 
 // The wide war clock is 616 of the region's 656, in the middle of its height
-// (countdown.css). It arrives as one piece: the part called war in the table of frame.js
+// (panels/countdown/panel.css). It arrives as one piece: the part called war in the table of frame.js
 function mountWar(host, content) {
   host.innerHTML = `
     <section class="panel countdown-war" data-sequence="countdown-war">
@@ -61,7 +61,7 @@ export function update(element, content) {
 
 
 // The war clock. The narrow form is 766 by 128 and the wide form 616 by 200 (form is 'narrow'
-// or 'wide'). It has a few parts, all placed by hand (countdown.css): the housing, the title
+// or 'wide'). It has a few parts, all placed by hand (panels/countdown/panel.css): the housing, the title
 // and the date on the first line, then the days on a plate and the hours, minutes and seconds on
 // another. The housing is there twice, the second one taller, for a title on two lines. The
 // parts carry the class names that core/countdown.js looks for, and none of them is named

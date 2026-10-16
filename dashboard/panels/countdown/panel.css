@@ -197,7 +197,7 @@
 }
 
 
-/* The war clock (warMarkup in countdown.js): the countdown drawn a third time, in the banner of
+/* The war clock (warMarkup in panels/countdown/panel.js): the countdown drawn a third time, in the banner of
    the bar layout, 766 by 128, in the slot that panels/bar-banner has for it. It has the same
    dates, label and tick, and its own look: a housing in the metal of the team (core/plate.js, warHousingMarkup),
    the title at the left of the first line and the date at the right end of it, and under them the days on

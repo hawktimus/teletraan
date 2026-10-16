@@ -228,7 +228,7 @@ function cacheControl(uri) {
 }
 
 test('nginx sends no-cache for html, js and css (build.js and the entry page too)', () => {
-  ['/dashboard/', '/dashboard/index.html', '/dashboard/build.js', '/dashboard/shell.js', '/dashboard/core/constants.js', '/dashboard/base.css', '/dashboard/panels/tasks/tasks.css'].forEach(uri => {
+  ['/dashboard/', '/dashboard/index.html', '/dashboard/build.js', '/dashboard/shell.js', '/dashboard/core/constants.js', '/dashboard/base.css', '/dashboard/panels/tasks/panel.css'].forEach(uri => {
     assert.equal(cacheControl(uri), 'no-cache', uri);
   });
 });

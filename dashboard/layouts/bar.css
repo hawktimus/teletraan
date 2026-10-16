@@ -90,7 +90,7 @@ html[data-layout="bar"] #region-right {
 }
 
 /* The ticker, along the whole bottom of the screen. It is the standard layout's
-   ticker, with the same tag and the same one line with an ellipsis (ticker.css), 16
+   ticker, with the same tag and the same one line with an ellipsis (panels/ticker/panel.css), 16
    wider because the row is. */
 html[data-layout="bar"] #region-ticker {
   position: absolute;

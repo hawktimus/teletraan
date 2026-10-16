@@ -5,7 +5,7 @@ import { rowBarMarkup } from '../../core/plate.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { escapeHtml } from '../../core/text.js';
 
-// Keep in step with the .icon size in forecast.css
+// Keep in step with the .icon size in panels/forecast/panel.css
 const ICON_SIZE = 112;
 
 export function hasContent(content) {

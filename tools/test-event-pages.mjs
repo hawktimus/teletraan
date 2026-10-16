@@ -33,7 +33,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/events'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/events/events.js'), path.join(root, 'panels/events/events.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'panels/events/panel.js'), path.join(root, 'panels/events/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -44,7 +44,7 @@ const panelOrder = await import(base + 'core/panel-order.js');
 const calendar = await import(base + 'core/calendar.js');
 const { normalizeContent, normalizeSample } = await import(base + 'core/sanity.js');
 const { withDefaults } = await import(base + 'core/content.js');
-const eventsPanel = await import(base + 'panels/events/events.js');
+const eventsPanel = await import(base + 'panels/events/panel.js');
 
 const { chipWord, eventPages, eventsPerPage, kindOf, kindTitle, mostForcedEvents, pageRows } = pages;
 const { forcingRule, hidingRule, mergeEvents } = eventsModule;
@@ -655,7 +655,7 @@ test('the Events panel stays on screen as long as the row says for each page', a
 // The look of a row
 
 test('the chip is 44px or more, the title is on one line that ends in an ellipsis, and only the title gives way', () => {
-  const css = read('panels/events/events.css');
+  const css = read('panels/events/panel.css');
   const tokens = read('tokens.css');
   const labelSize = Number(/--size-label: (\d+)px;/.exec(tokens)[1]);
   assert.ok(labelSize >= 44);
@@ -684,10 +684,10 @@ test('the longest chip and the pin leave the title at least half of the line, in
 });
 
 test('the Events stylesheet moves nothing and has no blur, glow, shadow or filter, and the panel has no animation code', () => {
-  const css = read('panels/events/events.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = read('panels/events/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
   ['animation', 'transition', 'transform', 'box-shadow', 'text-shadow', 'filter', 'blur'].forEach(word => assert.equal(css.includes(word), false, word));
 
-  const script = read('panels/events/events.js') + read('core/event-pages.js');
+  const script = read('panels/events/panel.js') + read('core/event-pages.js');
   ['animate', 'requestAnimationFrame', 'setTimeout', 'setInterval', 'style.transform'].forEach(word => assert.equal(script.includes(word), false, word));
 });
 

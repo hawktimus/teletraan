@@ -280,7 +280,7 @@ decor file): the frame lifts and drops as it does when the metal stays.
 Every decoration is one box with a list of background layers. Each layer is one
 flat shape, a rectangle or a run of stripes, written as a gradient with hard
 stops, which is how this code draws a plain rectangle (the blocked task rows in
-`tasks.css` do the same). The parts:
+`panels/tasks/panel.css` do the same). The parts:
 
 - **The strip** across the top, with the team name and the clock. Its own plate
   (a placeholder in `layouts/sidebar.css`) is taken away and drawn again as the

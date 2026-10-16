@@ -677,13 +677,13 @@ test('redrawFrames puts the frame for the trim of the team on the page round eac
 test('the panels that draw a frame of their own, and the areas, ask for the trim the page was last drawn with, and the page draws them again when the team goes on', () => {
   const readSource = file => read('dashboard/' + file);
 
-  assert.ok(readSource('panels/banner/banner.js').includes("frameKind('banner', layoutNow(), shapesNow(), trimNow())"));
-  assert.ok(readSource('panels/bar-banner/bar-banner.js').includes("plateMarkup(frameKind('banner', 'bar', shapesNow(), trimNow()))"));
-  const countdown = readSource('panels/countdown/countdown.js');
+  assert.ok(readSource('panels/banner/panel.js').includes("frameKind('banner', layoutNow(), shapesNow(), trimNow())"));
+  assert.ok(readSource('panels/bar-banner/panel.js').includes("plateMarkup(frameKind('banner', 'bar', shapesNow(), trimNow()))"));
+  const countdown = readSource('panels/countdown/panel.js');
   assert.ok(countdown.includes("const kind = trimmedKind('countdown', trimNow());") && countdown.includes('${plateMarkup(kind)}') && countdown.includes('${scanMarkup(kind)}'), 'the frame and the sweep of light are for the same corners');
   assert.ok(countdown.includes("warHousingMarkup(wide ? 'wide' : 'narrow', trimNow())"), 'and so is the war clock\'s housing');
-  assert.ok(readSource('panels/alert/alert.js').includes('frameMarkup({ red: true, corner: trimNow().corner })'));
-  assert.ok(readSource('panels/announcement/announcement.js').includes('frameMarkup({ corner: trimNow().corner })'));
+  assert.ok(readSource('panels/alert/panel.js').includes('frameMarkup({ red: true, corner: trimNow().corner })'));
+  assert.ok(readSource('panels/announcement/panel.js').includes('frameMarkup({ corner: trimNow().corner })'));
   const areas = readSource('core/areas.js');
   assert.equal(areas.split('frameKind(region, layoutNow(), shapesNow(), trimNow())').length - 1, 2, 'an area is made, and drawn again, for the trim');
 

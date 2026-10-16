@@ -450,7 +450,7 @@ editors can sign in from anywhere.
       test-person-rows.mjs    checks for the rows of the Team Leads and Leadership panels: four rows to a
                               panel, who is in them, the portrait size, and the sizes in base.css
       test-photo-fit.mjs      checks for the Photo fit setting and the Fit of a photo: which mode a photo
-                              has, the photo that fills the body of the panel and the cut that photo.css makes
+                              has, the photo that fills the body of the panel and the cut that panels/photo/panel.css makes
                               for each frame (worked out from core/plate.js), the plate of the caption and
                               the credit, the fade in frame.css, and the sample photos
       test-photo-pages.mjs    checks for the pages of the Photo panel: how a stay is shared between photos
@@ -514,7 +514,7 @@ editors can sign in from anywhere.
                               above, TELETRAAN I under, the ticker's line and its word) has 2 px clear of the metal
       test-countdown-title.mjs  checks for the title of the countdown: how wide it is in the display font and where it
                               breaks, what the red countdown and the two war clocks write for it (one line at 36 px,
-                              two lines, a smaller size), the room in countdown.css, and the Studio field that warns
+                              two lines, a smaller size), the room in panels/countdown/panel.css, and the Studio field that warns
                               above 28 characters
       test-hawk-cadence.mjs   checks for the Hawktimus icon: the usual mark at rest for both teams, the flying hawk every
                               5 minutes with a swap not starting the count again, and what the icon does in a swap
@@ -811,12 +811,12 @@ alone.
   in `core/sanity.js` keeps a photo's `fit` only when it is `fill` or `whole`,
   and adds its `size`, the part the editor kept in pixels (`keptSize` in
   `core/images.js`), which the panel no longer reads. `fitOf` in `core/photos.js` says
-  how a photo is drawn. `panels/photo/photo.js` only draws: one `figure.shot` for
+  how a photo is drawn. `panels/photo/panel.js` only draws: one `figure.shot` for
   each photo of the turn, each with `data-fit`, on top of each other in
-  `.photo-body`, which is one slat. In `photo.css` a shot is cut with `object-fit:
+  `.photo-body`, which is one slat. In `panels/photo/panel.css` a shot is cut with `object-fit:
   cover` or, shown whole, `contain` on the color of the body of the frame.
   `.photo-body` is the whole panel under the header and is cut to the body of the
-  frame on screen: the rules in `photo.css` are written for each frame the large
+  frame on screen: the rules in `panels/photo/panel.css` are written for each frame the large
   panel can have, found by the `data-frame` of the area (`frameKind` in
   `core/plate.js`), a little in from the metal because the page lies over the
   frame. `tools/test-photo-fit.mjs` works the shapes out from `core/plate.js`
@@ -883,7 +883,7 @@ alone.
   `core/sanity.js` (trimmed, no repeats, at most 24, always a list).
   `core/roster.js` makes the pages of the Subteam roster panel, 16 names to a
   page, and the panel is in `panels/roster/`. Its two columns are 344px wide in
-  `roster.css`, which holds a name of 12 characters at 56px.
+  `panels/roster/panel.css`, which holds a name of 12 characters at 56px.
 - **The events.** They come from the BAND calendars (`core/calendar.js`). Events
   Calendar in Studio (`studio/schemas/extraEvent.js`) is still a kind of content, but it
   has no line in the sidebar, the New menu does not offer it, and the screen no longer
@@ -952,9 +952,9 @@ alone.
   layout, which is Minimal, and 616 by 200 in the countdown's place in Cybertron (the wide form,
   `warMarkup('wide')`, drawn into the countdown panel). It reads the same label and dates as the countdown
   (Dashboard Settings, Countdown tab), so there is nothing to set for it. The numbers come from
-  `core/countdown.js`, `panels/countdown/countdown.js` writes them (`warMarkup`, `startWar` and
+  `core/countdown.js`, `panels/countdown/panel.js` writes them (`warMarkup`, `startWar` and
   `updateWar`), `panels/bar-banner` puts it in its slot, `core/plate.js` draws the housing
-  (`warHousingMarkup`) and `panels/countdown/countdown.css` places every part. The digits are
+  (`warHousingMarkup`) and `panels/countdown/panel.css` places every part. The digits are
   amber in Cybertron and the team's neon in Minimal. The title has the first line with the date at its
   right end, at 36 px, and takes a second line when it does not fit, in both clocks and in the red countdown
   of Original (`core/countdown-title.js`). docs/layouts.md, "The war clock" and "The wide war clock", has

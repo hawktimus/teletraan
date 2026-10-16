@@ -118,7 +118,7 @@ export function update(element, content) {
   setLine(element, line);
 }
 
-// banner.css reads data-line to give the line its place
+// panels/banner/panel.css reads data-line to give the line its place
 function setLine(element, line) {
   const wanted = line === '' ? 'off' : 'on';
   if (element.dataset.line !== wanted) element.dataset.line = wanted;

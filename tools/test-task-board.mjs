@@ -31,7 +31,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
-['tasks/tasks.js', 'task-counts/task-counts.js'].forEach(file => {
+['tasks/panel.js', 'task-counts/panel.js'].forEach(file => {
   fs.mkdirSync(path.join(root, 'panels', path.dirname(file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'panels', file));
 });
@@ -41,8 +41,8 @@ const taskSource = await import(base + 'core/task-source.js');
 const sanity = await import(base + 'core/sanity.js');
 const content = await import(base + 'core/content.js');
 const teams = await import(base + 'core/teams.js');
-const tasksPanel = await import(base + 'panels/tasks/tasks.js');
-const taskCountsPanel = await import(base + 'panels/task-counts/task-counts.js');
+const tasksPanel = await import(base + 'panels/tasks/panel.js');
+const taskCountsPanel = await import(base + 'panels/task-counts/panel.js');
 
 const { isFromBoard, fromBoardOnly } = taskSource;
 const { normalizeContent, normalizeSample, contentQuery } = sanity;
@@ -206,7 +206,7 @@ test('the Tasks panel and the Open Tasks panel leave out a task with Show on TV 
 });
 
 test('only the shared check reads Show on TV: the two panels take their tasks through visibleItems', () => {
-  ['panels/tasks/tasks.js', 'panels/task-counts/task-counts.js'].forEach(file => {
+  ['panels/tasks/panel.js', 'panels/task-counts/panel.js'].forEach(file => {
     assert.equal(read(file).includes('showOnTv'), false, file);
     assert.ok(read(file).includes('visibleItems(content.tasks'), file);
   });

@@ -168,7 +168,7 @@
 /* The banner line of a seasonal pack (core/pack-extras.js). Nothing under the date is
    free for 44 px of text, so while there is a line it takes the place of the word
    DASHBOARD and the bar beside it, on the bottom row, level with the school. It is one
-   line, cut off with an ellipsis, and about 20 characters show. banner.js sets
+   line, cut off with an ellipsis, and about 20 characters show. panels/banner/panel.js sets
    data-line to on when the line is not empty. */
 .banner .banner-line { display: none; }
 .banner[data-line="on"] .subtitle,
@@ -190,7 +190,7 @@
    plate, in room that is otherwise empty, between the team name above and the
    clock on the right. It is taken out of the flow (position: absolute), so
    showing or hiding it can never move anything else. It does not move itself:
-   a badge that came and went would not be a permanent label. banner.js leaves
+   a badge that came and went would not be a permanent label. panels/banner/panel.js leaves
    it empty when the content is the editors' own, and an empty badge is hidden. */
 .banner .sample-badge {
   position: absolute;

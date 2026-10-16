@@ -50,7 +50,7 @@ const lineOf = font => Number(/\/(\d+)px/.exec(font)[1]);
 
 const cybertron = read('dashboard/styles/cybertron.css');
 const own = (panel, selector, property) => rule(cybertron, 'html[data-style="cybertron"] .' + panel + ' ' + selector)[property];
-const base = (panel, selector, property) => rule(read('dashboard/panels/' + panel + '/' + panel + '.css'), '.' + panel + ' ' + selector)[property];
+const base = (panel, selector, property) => rule(read('dashboard/panels/' + panel + '/panel.css'), '.' + panel + ' ' + selector)[property];
 // the Cybertron value when there is one, the panel's own otherwise
 const value = (panel, selector, property) => own(panel, selector, property) || base(panel, selector, property);
 

@@ -15,7 +15,7 @@ import { teamShown } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
 
 // Sizes that the stylesheet repeats. Change them together.
-const TEAM_PLATE_WIDTH = 300; // .bar-team in bar-column.css: the whole column
+const TEAM_PLATE_WIDTH = 300; // .bar-team in panels/bar-column/panel.css: the whole column
 const ICON_SIZE = 48; // the weather picture, in px
 
 // The data-part names are the ones frame.js knows (sequences['bar-column']), so the
@@ -97,7 +97,7 @@ export function update(element, content) {
   setText(element, '.bar-sample', status.source === 'sample' ? 'SAMPLE CONTENT' : '');
 
   // The banner line of the seasonal pack on the screen. While there is one, the parts under
-  // it move down (bar-column.css, data-line)
+  // it move down (panels/bar-column/panel.css, data-line)
   const line = packExtras(content).bannerLine;
   setText(element, '.bar-line', line);
 

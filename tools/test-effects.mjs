@@ -5849,7 +5849,7 @@ test('the talk panel is in the registry, its cards have the parts frame.js moves
   const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
 
   assert.ok(read('registry.js').includes("{ id: 'talk', region: 'overlay' },"));
-  assert.equal(fs.existsSync(path.join(dashboardFolder, 'panels/talk/talk.js')) && fs.existsSync(path.join(dashboardFolder, 'panels/talk/talk.css')), true);
+  assert.equal(fs.existsSync(path.join(dashboardFolder, 'panels/talk/panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels/talk/panel.css')), true);
 
   const html = read('index.html');
   const night = html.indexOf('<div id="night" hidden></div>');
@@ -5860,7 +5860,7 @@ test('the talk panel is in the registry, its cards have the parts frame.js moves
   // frame.js reads the page when it is loaded, so its table is read as text
   const table = /\n  talk: \{([^}]*)\},/.exec(read('frame.js'))[1];
   const lines = Array.from(table.matchAll(/'([a-z-]+)':\s*\['([a-z-]+)'/g));
-  const mountSource = read('panels/talk/talk.js');
+  const mountSource = read('panels/talk/panel.js');
   const parts = Array.from(mountSource.matchAll(/data-part="([a-z-]+)"/g)).map(match => match[1]);
   assert.deepEqual(parts, lines.map(match => match[1]), 'a line in sequences.talk for every part of a card, in the same order');
   assert.ok(mountSource.includes('data-sequence="talk"'));
@@ -5869,7 +5869,7 @@ test('the talk panel is in the registry, its cards have the parts frame.js moves
 
 test('the stylesheet of a talk keeps the rules of the screen: text of 44px or more, lines of 3px or more, nothing that moves but the chip', () => {
   const read = file => fs.readFileSync(path.join(dashboardFolder, file), 'utf8');
-  const css = read('panels/talk/talk.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = read('panels/talk/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
   // every size in a font shorthand is one of the tokens at 44px or more
   const tokens = {};

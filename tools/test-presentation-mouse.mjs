@@ -382,7 +382,7 @@ test('the mouse cursor is hidden in every state: each stylesheet that names a cu
 
   assert.equal(named >= 2, true, 'base.css and the talk layer both name it');
   assert.ok(/html, body \{[^}]*cursor: none;/.test(fs.readFileSync(path.join(dashboardFolder, 'base.css'), 'utf8')));
-  assert.ok(/#talk \{[^}]*cursor: none;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/talk/talk.css'), 'utf8')));
+  assert.ok(/#talk \{[^}]*cursor: none;/.test(fs.readFileSync(path.join(dashboardFolder, 'panels/talk/panel.css'), 'utf8')));
 });
 
 // core/schedule.js with stand-ins for the files it reads. The waits are held by the test, which lets

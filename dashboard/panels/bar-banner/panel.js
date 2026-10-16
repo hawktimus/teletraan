@@ -10,7 +10,7 @@ import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
-import { startWar, updateWar, warMarkup } from '../countdown/countdown.js';
+import { startWar, updateWar, warMarkup } from '../countdown/panel.js';
 
 // The war clock's slot is 766 by 128 (barSettings.warClock in core/layout.js), and its place
 // at the other end of the banner from the name is what the mirror turns round (layouts/bar.css)
@@ -36,7 +36,7 @@ export function mount(host, content) {
 // The name is made of letters so the name effect can split each one. It is only
 // rebuilt when the name changes, because a rebuild in the middle of the effect would
 // start it again. It is one line: a name too long for its slot squeezes its letters
-// together (panels/bar-banner/bar-banner.css), so the war clock never moves.
+// together (panels/bar-banner/panel.css), so the war clock never moves.
 export function update(element, content) {
   updateWar(element.querySelector('.war-clock'), content);
 

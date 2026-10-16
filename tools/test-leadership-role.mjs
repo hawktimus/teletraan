@@ -31,7 +31,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/leadership'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/leadership/leadership.js'), path.join(root, 'panels/leadership/leadership.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'panels/leadership/panel.js'), path.join(root, 'panels/leadership/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const leadership = await import(base + 'core/leadership.js');
@@ -68,7 +68,7 @@ async function withFakePage(run) {
 let copies = 0;
 async function mount(people, settings) {
   copies += 1;
-  const panel = await import(base + 'panels/leadership/leadership.js?copy=' + copies);
+  const panel = await import(base + 'panels/leadership/panel.js?copy=' + copies);
   const host = { innerHTML: '', querySelectorAll: () => [] };
   panel.mount(host, { people: people, settings: settings });
   return host.innerHTML;
@@ -168,7 +168,7 @@ test('every picture has the frame of the panel, whatever the role, and the rows 
   assert.equal(countOf(html, 'red-metal'), 0);
   assert.equal(countOf(html, 'data-metal'), 0);
   assert.equal(countOf(html, '<div class="portrait" style='), 4, 'four plain portraits');
-  assert.equal(/roleMetals|metal:/.test(read('panels/leadership/leadership.js')), false, 'the panel has no metal for a role');
+  assert.equal(/roleMetals|metal:/.test(read('panels/leadership/panel.js')), false, 'the panel has no metal for a role');
 
   assert.deepEqual(leaders(sorted).map(item => item.name), ['[L]', '[K]', '[C]', '[M]']);
   assert.deepEqual(textsOf(html, 'name'), ['[L]', '[K]', '[C]', '[M]']);
@@ -216,7 +216,7 @@ test('a chip of two lines in the last row stays inside the cut corner of the lar
 });
 
 test('the panel and the rows keep no group, no role metal and no animation code', () => {
-  const code = read('panels/leadership/leadership.js');
+  const code = read('panels/leadership/panel.js');
   const core = read('core/leadership.js');
 
   assert.equal(/groupOf|groupNames|roleMetals/.test(code + core), false);

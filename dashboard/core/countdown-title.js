@@ -18,7 +18,7 @@ const smallerSizes = [32, 28, 24, 20];
 const gap = 24;
 
 // The room in px for a line of the title, which the date shares on the first line, in each clock. The
-// stylesheet of the clock has the same number (countdown.css: the width of .war-lines, and of the top
+// stylesheet of the clock has the same number (panels/countdown/panel.css: the width of .war-lines, and of the top
 // line of the red countdown less the lamp and the gap after it). Spacing is the letter spacing in em.
 export const titleRooms = { original: 528, wide: 494, narrow: 660 };
 export const titleSpacing = { original: 0, wide: .06, narrow: .06 };

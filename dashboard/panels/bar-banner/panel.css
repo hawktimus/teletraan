@@ -1,4 +1,4 @@
-/* The banner of the bar layout (panels/bar-banner/bar-banner.js). Every selector
+/* The banner of the bar layout (panels/bar-banner/panel.js). Every selector
    starts with html[data-layout="bar"], so the other layouts are never touched. The
    panel is as big as the banner (#region-banner, layouts/bar.css): a row with the name
    at one end and the war clock's slot at the other, 40 in from each end of the

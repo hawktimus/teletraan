@@ -35,7 +35,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/events'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/events/events.js'), path.join(root, 'panels/events/events.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'panels/events/panel.js'), path.join(root, 'panels/events/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -43,7 +43,7 @@ const registry = await import(base + 'registry.js');
 const pages = await import(base + 'core/event-pages.js');
 const eventsModule = await import(base + 'core/events.js');
 const panelOrder = await import(base + 'core/panel-order.js');
-const eventsPanel = await import(base + 'panels/events/events.js');
+const eventsPanel = await import(base + 'panels/events/panel.js');
 
 const { eventsPerPage, shownPages } = pages;
 const { mergeEvents } = eventsModule;
@@ -202,7 +202,7 @@ test('a bar is under every row but the fourth of a page and the last of the list
 // The window, the step and the stylesheets
 
 test('the rows are a window of four rows and the list moves up by the height of the window: 576 for rows of 144, and 528 in Cybertron for rows of 132', () => {
-  const css = read('panels/events/events.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = read('panels/events/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
   const cybertron = read('styles/cybertron.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
   const windowRule = ruleOf(css, '.events .rows');
@@ -220,20 +220,20 @@ test('the rows are a window of four rows and the list moves up by the height of 
 
   // the style sheets that restyle the rows of the Events panel are these two and no other
   const others = ['original.css', 'minimal.css'].filter(file => /\.events\b/.test(read('styles/' + file)));
-  assert.deepEqual(others, [], 'Original and Minimal use the rows of events.css');
+  assert.deepEqual(others, [], 'Original and Minimal use the rows of panels/events/panel.css');
   ['layouts', 'themes'].forEach(folder => fs.readdirSync(path.join(dashboardFolder, folder)).filter(file => file.endsWith('.css')).forEach(file => {
     assert.equal(/\.events\b/.test(read(folder + '/' + file)), false, folder + '/' + file + ' has no rule for the Events panel');
   }));
 });
 
 test('the row at the foot of a page keeps clear of the cut corner, on the fourth and the eighth row, and nothing moves in the stylesheet or the panel script', () => {
-  const css = read('panels/events/events.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = read('panels/events/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
 
   assert.equal(ruleOf(css, '.events .row:nth-child(4n)').includes('padding-right: 88px;'), true);
   assert.equal(ruleOf(css, '.events .row:nth-child(4)'), '', 'the rule is not for the fourth row only');
   ['animation', 'transition', 'transform', 'box-shadow', 'text-shadow', 'filter', 'blur'].forEach(word => assert.equal(css.includes(word), false, word));
 
-  const script = read('panels/events/events.js') + read('core/event-pages.js');
+  const script = read('panels/events/panel.js') + read('core/event-pages.js');
   ['animate', 'requestAnimationFrame', 'setTimeout', 'setInterval', 'style.transform', 'scrollCard(', 'style='].forEach(word => assert.equal(script.includes(word), false, word));
 
   const frameCss = read('frame.css');

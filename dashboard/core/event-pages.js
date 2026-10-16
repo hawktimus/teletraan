@@ -1,6 +1,6 @@
 // The pages of the Events panel: which events are on page one, which are on page two, and the kind
 // each one is. The panel shows four events at a time. It draws both pages in one list, holds page one,
-// scrolls up by four rows to page two and holds that (scrollPages in panels/events/events.js, and
+// scrolls up by four rows to page two and holds that (scrollPages in panels/events/panel.js, and
 // scrollCard in frame.js). The plain functions only, so tools/test-event-pages.mjs can run them.
 //
 // With Group events by kind off the pages go by date. Page one is the pinned events first, then the
@@ -21,7 +21,7 @@ import { calendarKinds, noCalendarKind } from '../config.js';
 import { forcingRule } from './events.js';
 import { asDate } from './time.js';
 
-// Four rows of 144px fill the 576px body (panels/events/events.css)
+// Four rows of 144px fill the 576px body (panels/events/panel.css)
 export const eventsPerPage = 4;
 export const mostForcedEvents = 3;
 

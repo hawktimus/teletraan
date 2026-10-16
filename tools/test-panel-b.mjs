@@ -76,8 +76,8 @@ test('team-tile is a small panel marked as the last resort, and no other panel i
   assert.equal(tile.testOnly, undefined);
   assert.equal(tile.layout, undefined);
   assert.equal(tile.pages, undefined);
-  assert.equal(tile.script, './panels/team-tile/team-tile.js');
-  assert.equal(tile.style, 'panels/team-tile/team-tile.css');
+  assert.equal(tile.script, './panels/team-tile/panel.js');
+  assert.equal(tile.style, 'panels/team-tile/panel.css');
   assert.ok(fs.existsSync(path.join(root, 'dashboard', tile.script)));
   assert.ok(fs.existsSync(path.join(root, 'dashboard', tile.style)));
 });
@@ -90,13 +90,13 @@ test('the editors are never offered team-tile: it is in no list of config.js', (
 });
 
 test('team-tile always has content: it has no hasContent', () => {
-  const script = read('dashboard/panels/team-tile/team-tile.js');
+  const script = read('dashboard/panels/team-tile/panel.js');
   assert.ok(!/export (function|const) hasContent/.test(script));
   assert.ok(/export function mount\(host, content\)/.test(script));
 });
 
 test('the text of team-tile is 44px or more, and its stylesheet has no animation, shadow, blur or filter', () => {
-  const css = read('dashboard/panels/team-tile/team-tile.css');
+  const css = read('dashboard/panels/team-tile/panel.css');
   const tokens = read('dashboard/tokens.css');
   const size = name => Number(new RegExp('--' + name + ':\\s*(\\d+)px').exec(tokens)[1]);
 
@@ -546,7 +546,7 @@ function standInPage() {
 
 // Each drawing has a copy of the files of its own, because core/teams.js remembers the team that is on the screen
 let tileRuns = 0;
-const tileFiles = ['dashboard/config.js', 'dashboard/core/teams.js', 'dashboard/core/logo.js', 'dashboard/core/text.js', 'dashboard/panels/team-tile/team-tile.js'];
+const tileFiles = ['dashboard/config.js', 'dashboard/core/teams.js', 'dashboard/core/logo.js', 'dashboard/core/text.js', 'dashboard/panels/team-tile/panel.js'];
 
 async function tileOn(content, setUp) {
   const page = standInPage();
@@ -555,7 +555,7 @@ async function tileOn(content, setUp) {
 
   return withGlobals({ document: page.document }, async () => {
     const teams = await import(urlOf(tree, 'dashboard/core/teams.js'));
-    const tile = await import(urlOf(tree, 'dashboard/panels/team-tile/team-tile.js'));
+    const tile = await import(urlOf(tree, 'dashboard/panels/team-tile/panel.js'));
     if (setUp) setUp(teams);
     tile.mount(page.host, content);
     return Object.assign({ html: page.host.innerHTML }, page);

@@ -171,7 +171,7 @@ because the column is not high enough for it (see "The vertical budget"). `index
 (`#region-strip`) and two slots in it, `#strip-name` for the name and
 `#strip-clock` for the clock, hidden while the standard layout is on. The side panel
 draws the name, the clock and the weather and moves them into the slots
-(`placeInStrip` in `panels/side/side.js`), because the panel is only drawn when it
+(`placeInStrip` in `panels/side/panel.js`), because the panel is only drawn when it
 is needed and the strip is a block of its own for the hidden transitions, so the
 clock flies away with the strip. Nothing else is in the strip, except what the
 theme draws as its look: Neon Prime draws a thin steel frame with two cut corners,
@@ -244,8 +244,8 @@ Grid 2 never show the same topic, so with no Grid 2 the pane may show any topic.
 
 ## The sidebar
 
-The column on the left is one panel, `side`: `dashboard/panels/side/side.js` and
-`side.css`. In the standard layout the banner and the countdown stay on the
+The column on the left is one panel, `side`: `dashboard/panels/side/panel.js` and
+`panels/side/panel.css`. In the standard layout the banner and the countdown stay on the
 screen the whole time. In the sidebar layout this panel is what stays, and it
 holds everything they hold, except the wordmark. `registry.js` lists it with
 `layout: 'sidebar'`, and `fixedPanels(layout)` in the same file says which panels
@@ -291,7 +291,7 @@ worst case text: the time 10:59 with PM, the date MON MAR 29, 104°F, the label
 ROLLOUT IN with MAR 29, 399 days, 49 for the hours, minutes and seconds, TEAM
 32290, and HOLLY SPRINGS HIGH SCHOOL (which takes three lines). These are the
 widths in px (the display font, measured in a real render), and what each part needs
-with the offsets side.css gives it:
+with the offsets panels/side/panel.css gives it:
 
 | Part | Its text | Needs |
 |------|----------|-------|
@@ -318,7 +318,7 @@ by hand, with the top it starts at, counted from the top of the column, and the
 height it has. Nothing is moved by what is in another part, so a long school name or
 a three digit day count cannot push anything. The parts inside the brand count from
 the top of the brand, and the parts of the countdown from the top of the countdown.
-`side.css` has the same numbers, and `node tools/test-layouts.mjs` fails if the two
+`panels/side/panel.css` has the same numbers, and `node tools/test-layouts.mjs` fails if the two
 differ.
 
 **In the strip**, at its right end, in the slot `#strip-clock` (the Clock slot row
@@ -358,7 +358,7 @@ them, and the rail:
 | `.days` | 100 | 136 | 0 | 384 | the day count at 184 px (132 for three digits), with a chevron at each side |
 | `.days-word` | 236 | 44 | 16 | as wide as it is | DAYS or DAY, 118 wide, at the left of the DAYS row |
 | `.stripes` | 252 | 12 | 150 | 182 | the row of slanted bars, in the DAYS row, 16 from the word and from the lamp |
-| `.lamp` | 248 | 20 | at the right, 16 in | 20 | the pulsing lamp, at the right end of the DAYS row (side.css counts it from the top of the top line, 240) |
+| `.lamp` | 248 | 20 | at the right, 16 in | 20 | the pulsing lamp, at the right end of the DAYS row (panels/side/panel.css counts it from the top of the top line, 240) |
 | `.time-row` | 284 | 100 | 16 | 352 | the hours, minutes and seconds (56) in three columns, with HRS, MIN and SEC under them (44) |
 | `.segments` | 390 | 12 | 16 | 352 | the rail of 12 blocks |
 
@@ -388,7 +388,7 @@ There is no `.side-wordmark`: the panel does not draw the wordmark (see above).
 
 Every part has `box-sizing: border-box` and a fixed size, so a border a theme
 adds does not change its size. Padding does: a theme that needs a decoration
-should use a border, an outline or a `::before` or `::after`. `side.css` sets
+should use a border, an outline or a `::before` or `::after`. `panels/side/panel.css` sets
 sizes, places and the size of the text, and these colours, all from theme
 variables so that it looks right in any theme: the date, the units and the team
 number are `--yellow`, the countdown has the face `--panel-face` and the numbers
@@ -406,7 +406,7 @@ rail `--accent` (the same as the standard countdown, which set them by
 - **The clock** is written once a minute, as in the banner, into the strip. **The
   weather** is written when new weather arrives, and is `--°F` with no picture until
   there is a reading (or when the last one is too old). Both are found by the panel
-  in the strip when it writes them (`part` in `side.js`).
+  in the strip when it writes them (`part` in `panels/side/panel.js`).
 - **The countdown** is the standard countdown's code (`core/countdown.js`, which
   `panels/countdown` uses too), so its dates come from Dashboard Settings the
   same way and it counts to Kickoff, then Rollout, shows NOW for the rest of the
@@ -438,7 +438,7 @@ rail `--accent` (the same as the standard countdown, which set them by
 
 ### How it is drawn
 
-`panels/side/side.js` builds the panel (`sideMarkup`), and `mount` and `update`
+`panels/side/panel.js` builds the panel (`sideMarkup`), and `mount` and `update`
 are the two calls every panel has. `core/panels.js` calls `update` each time the
 content changes, through `updatePanel('side', content)` in `rebuild()` in
 `shell.js`. The logo, the name effect and the digits that roll are the shared
@@ -523,8 +523,8 @@ The war clock is the countdown drawn a third time, 766 by 128, in the banner's s
 the same source as the countdown in the standard layout and in the sidebar: the dates, the
 labels and the second tick, all from Dashboard Settings (`core/countdown.js` works them out,
 and `startCountdown` is given `{ war: true }` and the room of its title). Only the look is its own. The code is in
-`panels/countdown` (`warMarkup`, `startWar` and `updateWar` in `countdown.js`, the rules in
-`countdown.css`) and the housing is drawn by `warHousingMarkup` in `core/plate.js`.
+`panels/countdown` (`warMarkup`, `startWar` and `updateWar` in `panel.js`, the rules in
+`panels/countdown/panel.css`) and the housing is drawn by `warHousingMarkup` in `core/plate.js`.
 `panels/bar-banner` puts it in its slot, and Minimal shows it (`styles/minimal.css`). Cybertron
 shows the wide form of it in the countdown's place, which is its own section ("The wide war
 clock", under "Cybertron"), and Original shows neither.
@@ -614,7 +614,7 @@ It reads from the left like every plate, and nothing turns it round.
 together, 336 wide. The rail is a box of its own size that the style draws. Every part
 of the column is placed by hand, with the top it starts at, counted from the top of the
 column, and the height it has, so a long school name cannot push anything. The numbers
-are in `bar-column.css`, and `node tools/test-layouts.mjs` fails if they differ.
+are in `panels/bar-column/panel.css`, and `node tools/test-layouts.mjs` fails if they differ.
 
 | Part | Top | Height | Left | Width | What it holds |
 |------|-----|--------|------|-------|---------------|
@@ -645,7 +645,7 @@ not looked at on a screen. All text is 44 px or more.
 
 A seasonal pack can add a banner line (docs/seasonal-packs.md, "Banner line"). It is
 `.bar-line`, one line of 44 px under the weather, centred and cut off with an ellipsis, and about
-10 characters of it fit in 300 px. While there is a line, `bar-column.js` sets `data-line` on the
+10 characters of it fit in 300 px. While there is a line, `panels/bar-column/panel.js` sets `data-line` on the
 panel to `on`, and the parts under it move down. The 44 px come out of the gaps, and the hawk and the
 label stay where they are. These are the places while the line is on:
 
@@ -682,15 +682,15 @@ fixed length, and a variable cannot reach that:
 
 | Panel | Fixed in the stylesheet | Fixed in the code |
 |-------|-------------------------|-------------------|
-| Tasks | header and rows 1152, row text 960 and 900 | row bars 1124 (`tasks.js`) |
-| Events | header and rows 1152 | row bars 1124 (`events.js`) |
-| Daily Agenda (`tonight`) | header and rows 1152, plan card 1096 | plan card 1096 by 140 and row bars 1124 (`tonight.js`) |
-| Subteam spotlight | header and story 1152, name card 1096 | name card 1096 by 128 (`spotlight.js`) |
-| Sponsor feature | header and story 1152, name card 1096 | cards 1096 by 128 and 360 by 280 (`sponsor-feature.js`) |
+| Tasks | header and rows 1152, row text 960 and 900 | row bars 1124 (`panels/tasks/panel.js`) |
+| Events | header and rows 1152 | row bars 1124 (`panels/events/panel.js`) |
+| Daily Agenda (`tonight`) | header and rows 1152, plan card 1096 | plan card 1096 by 140 and row bars 1124 (`panels/tonight/panel.js`) |
+| Subteam spotlight | header and story 1152, name card 1096 | name card 1096 by 128 (`panels/spotlight/panel.js`) |
+| Sponsor feature | header and story 1152, name card 1096 | cards 1096 by 128 and 360 by 280 (`panels/sponsor-feature/panel.js`) |
 | Photo | the body fills the panel under its header, which is empty | card 1096 wide and the caption's edge at 1056 (`core/photos.js`) |
 | Leadership, Team leads | header and rows 1152 | portrait cards, drawn at the size of the setting (`portrait.js`) |
 | Roster | header 1152, the body in a box 1096 wide, in the middle of it | portrait card 292 square |
-| Custom | header 1152, page 1096, blocks 1056 and 1034 | block cards and bars 1056 (`custom.js`) |
+| Custom | header 1152, page 1096, blocks 1056 and 1034 | block cards and bars 1056 (`panels/custom/panel.js`) |
 
 The one box of every panel that does use the width is the header. In the bar layout it is as wide as the area, 1427 before the
 scale (`layouts/bar.css`), and not 1152 like the page it sits on, so what is at the right end of a header, the chip of a team,
@@ -1077,9 +1077,9 @@ countdown's region (656 by 320): 20 from each side and 60 above and below. It is
 the bar layout (see "The war clock") laid out for 616 by 200, and it has the same source: the dates,
 the labels and the second tick come from Dashboard Settings, and `startCountdown` is given
 `{ war: true }` and the room of its title, so the label has no IN, the days are two digits (three from 100) and every number
-changes at once. The code is `warMarkup('wide')` in `panels/countdown/countdown.js`, which `mount`
+changes at once. The code is `warMarkup('wide')` in `panels/countdown/panel.js`, which `mount`
 puts in a slot (`.war-slot`) of a panel of its own (`.countdown-war`), the rules at the end of
-`panels/countdown/countdown.css`, and `warHousingMarkup('wide')` in `core/plate.js`. The panel has
+`panels/countdown/panel.css`, and `warHousingMarkup('wide')` in `core/plate.js`. The panel has
 one part that arrives, the slot (`countdown-war` in the table of `frame.js`), and no part of the
 clock has a line of its own.
 

@@ -40,7 +40,7 @@ const cardNames = ['tasks', 'milestones', 'progress', 'milestones-both', 'progre
 const cardIds = cardNames.map(name => 'monday-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
@@ -147,7 +147,7 @@ test('the body is 24px from the frame at each side in the bar layout as it is in
 });
 
 test('every rule that makes a card wider, and the one that shows the words about the board, is for the bar layout, so the standard layout and the sidebar layout are drawn as they were', () => {
-  const files = ['monday.css'].concat(cardIds.map(id => 'panels/' + id + '/' + id + '.css'));
+  const files = ['monday.css'].concat(cardIds.map(id => 'panels/' + id + '/panel.css'));
   const forBar = [];
 
   files.forEach(file => {
@@ -275,7 +275,7 @@ test('the tasks card and the cards of both teams of milestones take the wider bo
   assert.ok(title > 1104 - fixed);
 
   cardIds.forEach(id => {
-    const css = withoutComments(read('panels/' + id + '/' + id + '.css'));
+    const css = withoutComments(read('panels/' + id + '/panel.css'));
     assert.equal(Array.from(css.matchAll(/html\[data-layout="bar"\][^{]*\{[^}]*\}/g)).some(match => /font/.test(match[0])), false, id + ' sets no font in the bar layout');
   });
 });
@@ -284,7 +284,7 @@ test('the tasks card and the cards of both teams of milestones take the wider bo
 // No line at the right
 
 test('no card draws a vertical rule of its own at the right end, in any style or state', () => {
-  const files = ['monday.css'].concat(cardIds.map(id => 'panels/' + id + '/' + id + '.css'));
+  const files = ['monday.css'].concat(cardIds.map(id => 'panels/' + id + '/panel.css'));
   files.forEach(file => {
     const css = withoutComments(read(file));
     assert.equal(/border-right|border-inline-end|column-rule|outline:|box-shadow/.test(css), false, file + ' draws no line at the right');

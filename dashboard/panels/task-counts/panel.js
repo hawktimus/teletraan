@@ -3,7 +3,7 @@
 
 import { visibleItems } from '../../core/content.js';
 
-// A status name must match task-counts.css (.line-...). Colours are in tokens.css
+// A status name must match panels/task-counts/panel.css (.line-...). Colours are in tokens.css
 // (--status-progress for in-progress, --status-next for up-next).
 const openGroups = [
   { status: 'in-progress', words: 'in progress' },

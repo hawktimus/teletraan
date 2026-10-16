@@ -29,7 +29,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
-['team-leads/team-leads.js', 'roster/roster.js'].forEach(file => {
+['team-leads/panel.js', 'roster/panel.js'].forEach(file => {
   fs.mkdirSync(path.join(root, 'panels', path.dirname(file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'panels', file));
 });
@@ -45,7 +45,7 @@ const images = await import(base + 'core/images.js');
 let copies = 0;
 async function freshPanel(name) {
   copies += 1;
-  return import(base + 'panels/' + name + '/' + name + '.js?copy=' + copies);
+  return import(base + 'panels/' + name + '/panel.js?copy=' + copies);
 }
 
 const { leadAddress, photoAddress } = portrait;

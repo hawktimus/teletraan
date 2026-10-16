@@ -2,7 +2,7 @@
 
 A panel is one page that goes in a box on the screen: Tasks, Events, a photo.
 This page adds one, using `dashboard/panels/tasks/` as the example. Keep
-`tasks.js` and `tasks.css` open beside it.
+`panels/tasks/panel.js` and `panels/tasks/panel.css` open beside it.
 
 The large panel, the small panel and the ticker each keep one frame for as
 long as the screen is up. A panel does not draw a frame. It draws its page,
@@ -18,7 +18,7 @@ two lists, because the Competition tab of Dashboard Settings switches them.
 ## 1. Pick the details
 
 - **id**: lowercase with dashes, for example `my-panel`. It is the folder
-  name and the file names.
+  name. The two files in it are always called `panel.js` and `panel.css`.
 - **region**: `grid1` is the large panel on the left (1152 x 708). `grid2` is
   the small one under the countdown (656 x 372). The ticker is 1840 x 72.
 - **topic**: what it is about. Grid 1 and Grid 2 never show the same topic at
@@ -27,8 +27,8 @@ two lists, because the Competition tab of Dashboard Settings switches them.
 
 ## 2. Make the folder
 
-    dashboard/panels/my-panel/my-panel.js
-    dashboard/panels/my-panel/my-panel.css
+    dashboard/panels/my-panel/panel.js
+    dashboard/panels/my-panel/panel.css
 
 Every selector in the stylesheet starts with the panel's own class, such as
 `.my-panel .row`, so it cannot touch another panel.
@@ -66,8 +66,8 @@ the header plates.
     }
 
 That block is for a Grid 1 panel. For a Grid 2 panel start from the top of
-`panels/next-event/next-event.css` instead. It is 656 x 372 and has a `.label`
-where Grid 1 has a header. For the ticker start from `panels/ticker/ticker.css`.
+`panels/next-event/panel.css` instead. It is 656 x 372 and has a `.label`
+where Grid 1 has a header. For the ticker start from `panels/ticker/panel.css`.
 
 ## 3. Write mount
 
@@ -119,7 +119,7 @@ animation code. The names:
 
 Rows and cards need no number: their place in the page is the order. The
 sixth and every later one go together, so a long page still finishes in
-time. `tasks.js` marks its title, its tag and its three rows. A slat that is
+time. `panels/tasks/panel.js` marks its title, its tag and its three rows. A slat that is
 not marked simply stays still while the others turn, so mark everything that
 has text on it. A name that is not in the table is reported in the console.
 
@@ -136,12 +136,12 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 - **A thin metal bar between rows.** `rowBarMarkup(length)` is a bar in a
   picture 20px high with the line through the middle. Put it inside the row,
   which is `position: relative`, and give `.row-bar` a `left` and a `top` in
-  the panel's stylesheet. `tasks.css` puts it at the bottom of each row but
+  the panel's stylesheet. `panels/tasks/panel.css` puts it at the bottom of each row but
   the last, because the frame is there.
 - **A card.** `cardMarkup(width, height)` is a purple card with a thin metal
   edge and the bottom right corner cut. Put it first inside a box of that
   size that is `position: relative`, then the text. The text needs
-  `position: relative` too, so that it is drawn above the card. `spotlight.js`
+  `position: relative` too, so that it is drawn above the card. `panels/spotlight/panel.js`
   uses cards. `cardMarkup` takes the size, so a card of another size is another
   call, drawn with the same corner and edge.
 - **A portrait slot.** `slotMarkup({ name, role, address, scale })` in
@@ -153,7 +153,7 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   every panel that draws a portrait should pass it. A slot stays at 100 when the
   setting is above it, because the name sits beside it. `look` is
   `portraitLook(content.settings)`, the shape and the frame of the Portraits
-  settings, and leaving it out is the usual look. `roster.js` draws one as
+  settings, and leaving it out is the usual look. `panels/roster/panel.js` draws one as
   the team lead beside a list of names.
 - **Rows of people.** `rowsMarkup(rows, scale, look)` in `core/portrait.js` draws up
   to `rowLayout(scale).rows` rows, each `{ name, role, line, chip, address, metal }`: the
@@ -162,12 +162,12 @@ panel. A panel that needs a line, a card or a bar uses one of these:
   4 rows up to a portrait size of 100, then 3, 2 and 1, because a bigger portrait
   needs a taller row. `scale` is the size setting of the panel and `look` is
   `portraitLook(content.settings)`. The rows have no animation code: each is a slat.
-  `leadership.js` and `team-leads.js` use it. Both get a page of rows at a time
+  `panels/leadership/panel.js` and `panels/team-leads/panel.js` use it. Both get a page of rows at a time
   from `makePages(rowsPerPage)` in `core/turns.js`, which counts the pages
   between turns of the panel, and each turn gives it the size of the page from
   `rowLayout`: `nextPage(list, rowLayout(scale).rows)`. A panel that cuts its list
   to one page would drop people when the page gets smaller, so let it page.
-  `leadership.js` is given everyone by `leaders` in `core/leadership.js`. The
+  `panels/leadership/panel.js` is given everyone by `leaders` in `core/leadership.js`. The
   photo of a team lead comes from `leadAddress` in `core/portrait.js`. Both call
   `watchPhotos` from `core/portrait.js`. The rules of the rows and of the slot are
   in `base.css`, under People portraits.
@@ -183,7 +183,7 @@ panel. A panel that needs a line, a card or a bar uses one of these:
 ## 6. Skip the panel when there is nothing to show
 
 `hasContent(content)` is optional. When it returns `false` the rotation skips
-the panel for now, as `tasks.js` does when there are no tasks. Use
+the panel for now, as `panels/tasks/panel.js` does when there are no tasks. Use
 `visibleItems(list)` from `core/content.js` on every list the editors fill
 in, so hidden and expired items are left out.
 
@@ -426,6 +426,6 @@ small panel or the ticker never needs any of this.
   `escapeHtml()` from `core/text.js` before it goes into a template. It also
   turns a missing field into nothing, so the screen never says `undefined`.
 - **One line per item.** The whole screen is `white-space: nowrap`. Cut a
-  long line with `overflow: hidden; text-overflow: ellipsis`, as `tasks.css`
+  long line with `overflow: hidden; text-overflow: ellipsis`, as `panels/tasks/panel.css`
   does, or set `white-space: normal` on a box that should wrap.
 - **Placeholders** go in [square brackets]. Never invent names or numbers.

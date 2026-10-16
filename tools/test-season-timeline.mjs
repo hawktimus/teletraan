@@ -32,14 +32,14 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/competition-timeline'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/competition-timeline/competition-timeline.js'), path.join(root, 'panels/competition-timeline/competition-timeline.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'panels/competition-timeline/panel.js'), path.join(root, 'panels/competition-timeline/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const frcModule = await import(base + 'core/frc.js');
 const competition = await import(base + 'core/competition.js');
 const sanity = await import(base + 'core/sanity.js');
 const textWidthModule = await import(base + 'core/text-width.js');
-const timeline = await import(base + 'panels/competition-timeline/competition-timeline.js');
+const timeline = await import(base + 'panels/competition-timeline/panel.js');
 
 const tests = [];
 function test(name, run) {
@@ -213,7 +213,7 @@ const fontOf = rule => {
 };
 
 test('the line and the legend fit the body of 1096 by 512, clear of the cut corner, and no text is under 44px but the city and the day', () => {
-  const rules = rulesOf(read('panels/competition-timeline/competition-timeline.css'));
+  const rules = rulesOf(read('panels/competition-timeline/panel.css'));
   const legendTop = pixels(rules['.competition-timeline .legend'], 'top');
   const row = pixels(rules['.competition-timeline .entry'], 'height');
 
@@ -253,8 +253,8 @@ test('the line and the legend fit the body of 1096 by 512, clear of the cut corn
 });
 
 test('no stylesheet or script of the card has an animation, and the card uses no dash', () => {
-  const css = read('panels/competition-timeline/competition-timeline.css');
-  const js = read('panels/competition-timeline/competition-timeline.js');
+  const css = read('panels/competition-timeline/panel.css');
+  const js = read('panels/competition-timeline/panel.js');
 
   assert.equal(/@keyframes|transition:|animation:|transform|box-shadow|text-shadow|filter|blur|background-image|url\(/.test(css), false);
   assert.equal(/setTimeout|setInterval|requestAnimationFrame|animate\(|@keyframes|transform|style="|font-size/.test(js), false);

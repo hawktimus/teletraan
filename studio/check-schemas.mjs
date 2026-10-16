@@ -5573,7 +5573,7 @@ function checkEventPages() {
   need(problems, force && typeof force.hidden === 'function' && force.hidden({ document: undefined }) === true, 'calendarFilter.force should stay hidden while the rule has no document yet');
 
   const events = world.registry.panels.filter(panel => panel.id === 'events')[0];
-  need(problems, events && events.pages === undefined, 'the events panel in registry.js should not have pages: it draws both of its pages in one list and scrolls from the first to the second (scrollPages in panels/events/events.js)');
+  need(problems, events && events.pages === undefined, 'the events panel in registry.js should not have pages: it draws both of its pages in one list and scrolls from the first to the second (scrollPages in panels/events/panel.js)');
   return problems;
 }
 

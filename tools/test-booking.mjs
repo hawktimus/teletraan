@@ -39,7 +39,7 @@ function copyAll(from, to) {
 const base = pathToFileURL(root).href + '/';
 const { normalizeContent } = await import(base + 'core/sanity.js');
 const presentation = await import(base + 'core/presentation.js');
-const tonight = await import(base + 'panels/tonight/tonight.js');
+const tonight = await import(base + 'panels/tonight/panel.js');
 const constants = await import(base + 'core/constants.js');
 const { dueTalk, idleState, nextState, canRun } = presentation;
 

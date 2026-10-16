@@ -33,14 +33,14 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
 const panelIds = ['monday-tasks', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster', 'team-tile'];
 panelIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
-  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, id + '.js'), path.join(root, 'panels', id, id + '.js'));
+  fs.copyFileSync(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
 });
 
 const base = pathToFileURL(root).href + '/';
 const sanity = await import(base + 'core/sanity.js');
 const teams = await import(base + 'core/teams.js');
 const panels = {};
-for (const id of panelIds) panels[id] = await import(base + 'panels/' + id + '/' + id + '.js');
+for (const id of panelIds) panels[id] = await import(base + 'panels/' + id + '/panel.js');
 
 const tests = [];
 function test(name, run) {

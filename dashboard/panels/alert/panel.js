@@ -8,7 +8,7 @@ import { escapeHtml, hasText } from '../../core/text.js';
 const FALLBACK_HEADLINE = 'ALERT';
 
 // A headline longer than this gets a smaller size, so that even 24 wide
-// letters fit in the lines there is room for (see .headline.long in alert.css)
+// letters fit in the lines there is room for (see .headline.long in panels/alert/panel.css)
 const LONG_HEADLINE = 16;
 
 export function mount(host, content) {

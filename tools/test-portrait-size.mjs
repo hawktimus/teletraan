@@ -34,7 +34,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
-['leadership/leadership.js', 'team-leads/team-leads.js', 'roster/roster.js'].forEach(file => {
+['leadership/panel.js', 'team-leads/panel.js', 'roster/panel.js'].forEach(file => {
   fs.mkdirSync(path.join(root, 'panels', path.dirname(file)), { recursive: true });
   fs.copyFileSync(path.join(dashboardFolder, 'panels', file), path.join(root, 'panels', file));
 });
@@ -51,7 +51,7 @@ const images = await import(base + 'core/images.js');
 let copies = 0;
 async function freshPanel(name) {
   copies += 1;
-  return import(base + 'panels/' + name + '/' + name + '.js?copy=' + copies);
+  return import(base + 'panels/' + name + '/panel.js?copy=' + copies);
 }
 
 const { rowSizes, rowLayout, rowsMarkup, rowsPerPage, portraitSizes, slotMarkup } = portrait;
@@ -499,8 +499,8 @@ test('Leadership asks for the photos of the next page early, and a single page a
 // The words
 
 test('the Leadership and Team Leads panels page with the same machinery, from the size the setting gives, and neither cuts a list', () => {
-  const lead = read('panels/leadership/leadership.js');
-  const teamLeads = read('panels/team-leads/team-leads.js');
+  const lead = read('panels/leadership/panel.js');
+  const teamLeads = read('panels/team-leads/panel.js');
   [lead, teamLeads].forEach(code => {
     assert.ok(code.includes('const nextPage = makePages(rowsPerPage);'));
     assert.ok(/nextPage\(.*rowLayout\(scale\)\.rows\)/.test(code), 'the size of the page comes from the setting at each turn');

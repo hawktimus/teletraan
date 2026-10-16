@@ -37,7 +37,7 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const withoutComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
 const panelFiles = ['dashboard/config.js', 'dashboard/frame.js', 'dashboard/registry.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js',
-  'dashboard/panels/countdown/countdown.js', 'dashboard/panels/bar-banner/bar-banner.js', 'dashboard/panels/side/side.js']
+  'dashboard/panels/countdown/panel.js', 'dashboard/panels/bar-banner/panel.js', 'dashboard/panels/side/panel.js']
   .concat(fs.readdirSync(path.join(dashboardFolder, 'core')).filter(name => name.endsWith('.js')).map(name => 'dashboard/core/' + name));
 
 const mainTree = makeTree('main', panelFiles);
@@ -185,12 +185,12 @@ test('nothing is cut off: a title that two lines at 36 px do not hold is set at 
 
 // The rooms are the widths in the stylesheet
 
-const css = withoutComments(read('dashboard/panels/countdown/countdown.css'));
+const css = withoutComments(read('dashboard/panels/countdown/panel.css'));
 
 function ruleOf(selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const found = new RegExp('(?:^|\\})\\s*' + escaped + ' \\{([^{}]*)\\}').exec(css);
-  assert.ok(found, 'countdown.css has no rule for ' + selector);
+  assert.ok(found, 'panels/countdown/panel.css has no rule for ' + selector);
   return found[1];
 }
 const numberIn = (rule, name) => {
@@ -198,7 +198,7 @@ const numberIn = (rule, name) => {
   return found ? Number(found[1]) : null;
 };
 
-test('the room of a title in each clock is the width of its line in countdown.css, and the letters are spaced as the stylesheet spaces them', () => {
+test('the room of a title in each clock is the width of its line in panels/countdown/panel.css, and the letters are spaced as the stylesheet spaces them', () => {
   // the red countdown: the top line is 564 wide, less the lamp (20) and the 16 after it
   const original = 564 - numberIn(ruleOf('.countdown .lamp'), 'width') - numberIn(ruleOf('.countdown .label-group'), 'gap');
   assert.equal(numberIn(ruleOf('.countdown .top-line'), 'width'), 564);
@@ -225,7 +225,7 @@ test('the room of a title in each clock is the width of its line in countdown.cs
   ['.war-clock.war-wide .war-lines .label', 'html[data-layout="bar"] .war-lines .label', '.countdown[data-title="two"] .label'].forEach(selector => {
     assert.ok(/white-space: pre;/.test(ruleOf(selector)), selector + ' keeps the line break');
   });
-  assert.ok(!/text-overflow|line-clamp/.test(css), 'countdown.css cuts nothing off with an ellipsis');
+  assert.ok(!/text-overflow|line-clamp/.test(css), 'panels/countdown/panel.css cuts nothing off with an ellipsis');
 });
 
 test('the red countdown of Original sets a title that does not fit at 44 px at 36, on one line or two, and two lines take the room of the bars so the days stay where they are', () => {
@@ -255,9 +255,9 @@ test('the red countdown of Original sets a title that does not fit at 44 px at 3
 
 // What the clocks write
 
-const countdownFile = 'dashboard/panels/countdown/countdown.js';
-const barBannerFile = 'dashboard/panels/bar-banner/bar-banner.js';
-const sideFile = 'dashboard/panels/side/side.js';
+const countdownFile = 'dashboard/panels/countdown/panel.js';
+const barBannerFile = 'dashboard/panels/bar-banner/panel.js';
+const sideFile = 'dashboard/panels/side/panel.js';
 let worlds = 0;
 
 function makeNode(log, name) {
@@ -487,12 +487,12 @@ test('the war clocks write the title with no IN and nothing measured, on one lin
 });
 
 test('every part of the countdown that writes the title does it through core/countdown-title.js, and the clocks pass the room of their line', () => {
-  const panel = read('dashboard/panels/countdown/countdown.js');
+  const panel = read('dashboard/panels/countdown/panel.js');
   assert.ok(panel.includes("{ title: { room: titleRooms.original, spacing: titleSpacing.original, single: 'small' } }"), 'Original asks for 44 px and then 36');
   assert.ok(panel.includes("{ war: true, title: { room: titleRooms[name], spacing: titleSpacing[name], single: 'normal' } }"), 'the war clocks ask for 36');
   assert.ok(panel.includes("startWar(clock, content, 'wide');"), 'and the wide one says it is wide');
-  assert.ok(read('dashboard/panels/bar-banner/bar-banner.js').includes("startWar(element.querySelector('.war-clock'), content);"), 'the banner of Minimal starts the narrow form, which is the default');
-  assert.ok(!/title/.test(read('dashboard/panels/side/side.js').replace(/data-title|teletraan-title/g, '')), 'the sidebar countdown does not ask for it');
+  assert.ok(read('dashboard/panels/bar-banner/panel.js').includes("startWar(element.querySelector('.war-clock'), content);"), 'the banner of Minimal starts the narrow form, which is the default');
+  assert.ok(!/title/.test(read('dashboard/panels/side/panel.js').replace(/data-title|teletraan-title/g, '')), 'the sidebar countdown does not ask for it');
 });
 
 

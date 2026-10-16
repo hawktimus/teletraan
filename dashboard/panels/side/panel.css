@@ -1,4 +1,4 @@
-/* The sidebar's content (panels/side/side.js, docs/layouts.md, "The sidebar").
+/* The sidebar's content (panels/side/panel.js, docs/layouts.md, "The sidebar").
    Every selector starts with html[data-layout="sidebar"], so the standard
    layout is never touched. The panel is 384 wide and 776 high, which is the
    whole of the column (#region-sidebar), and every part is placed by hand
@@ -11,7 +11,7 @@
 
    The team name, the clock with the date, and the weather are not in this
    column. The panel moves them into the strip across the top of the screen
-   (side.js, placeInStrip), and layouts/sidebar.css gives the strip's slots their
+   (panels/side/panel.js, placeInStrip), and layouts/sidebar.css gives the strip's slots their
    places. The clock and the weather are placed here, counted from the top of
    their slot, which is as high as the strip.
 
@@ -213,7 +213,7 @@ html[data-layout="sidebar"] .side-countdown .chevron polyline {
 }
 
 /* The DAYS row: the word at the left (118 wide), then the row of slanted bars
-   (side.js draws it 182 wide) and the lamp at the right end */
+   (panels/side/panel.js draws it 182 wide) and the lamp at the right end */
 html[data-layout="sidebar"] .side-countdown .days-word {
   position: absolute;
   left: 16px;
@@ -309,7 +309,7 @@ html[data-layout="sidebar"] .side-logo {
    (SAMPLE, then CONTENT, which is 214 wide) at the right of the logo, solid
    yellow with dark text, the highest contrast on the screen. It is taken out of
    the flow (position: absolute), so showing or hiding it can never move anything.
-   side.js leaves it empty when the content is the editors' own, and an empty
+   panels/side/panel.js leaves it empty when the content is the editors' own, and an empty
    label is hidden. */
 html[data-layout="sidebar"] .side-sample {
   position: absolute;

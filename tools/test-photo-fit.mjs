@@ -33,7 +33,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(root, file));
 });
 fs.mkdirSync(path.join(root, 'panels/photo'), { recursive: true });
-fs.copyFileSync(path.join(dashboardFolder, 'panels/photo/photo.js'), path.join(root, 'panels/photo/photo.js'));
+fs.copyFileSync(path.join(dashboardFolder, 'panels/photo/panel.js'), path.join(root, 'panels/photo/panel.js'));
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -42,7 +42,7 @@ const images = await import(base + 'core/images.js');
 const photos = await import(base + 'core/photos.js');
 const plate = await import(base + 'core/plate.js');
 const sanity = await import(base + 'core/sanity.js');
-const photoPanel = await import(base + 'panels/photo/photo.js');
+const photoPanel = await import(base + 'panels/photo/panel.js');
 
 const { fitOf } = photos;
 
@@ -296,7 +296,7 @@ function bodyOf(kind) {
 
 const tenth = number => String(Math.round(number * 10) / 10);
 
-// What photo.css says for a frame: the body cut in by inset from the line of the frame, the corner of
+// What panels/photo/panel.css says for a frame: the body cut in by inset from the line of the frame, the corner of
 // the body box (4, 120) taken off, and a point near the right measured from the right side of the box
 function expectedCut(kind, inset, areaWidth) {
   const inner = plate.offsetOutline(bodyOf(kind), inset);
@@ -332,8 +332,8 @@ function framesOfTheLargePanel() {
 const widthOf = kind => (kind.startsWith('bar-main') ? 1427 : 1152);
 const insetOf = kind => (kind.startsWith('grid1') ? 7 : 12);
 
-test('photo.css cuts the body of the photo to the body of each frame the large panel can have', () => {
-  const css = read('panels/photo/photo.css');
+test('panels/photo/panel.css cuts the body of the photo to the body of each frame the large panel can have', () => {
+  const css = read('panels/photo/panel.css');
   const rules = rulesOfSheet(css);
   const kinds = framesOfTheLargePanel();
 
@@ -376,7 +376,7 @@ function inside(point, polygon) {
 }
 
 test('the plate of the caption is clear of the cut corners and the steps of every frame, by at least 8px', () => {
-  const css = read('panels/photo/photo.css');
+  const css = read('panels/photo/panel.css');
   const note = ruleOf(css, '.photo .note');
   const left = Number(/left: (\d+)px;/.exec(note)[1]);
   const bottom = Number(/bottom: (\d+)px;/.exec(note)[1]);
@@ -393,7 +393,7 @@ test('the plate of the caption is clear of the cut corners and the steps of ever
 });
 
 test('the stylesheet shows the photo with cover, or contain when it is shown whole, and sets the sizes of the text', () => {
-  const css = read('panels/photo/photo.css');
+  const css = read('panels/photo/panel.css');
 
   assert.ok(ruleOf(css, '.photo .shot img').includes('object-fit: cover;'));
   assert.ok(ruleOf(css, '.photo .shot[data-fit="whole"] img').includes('object-fit: contain;'));

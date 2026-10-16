@@ -53,7 +53,7 @@ talks, the panel is left out of the rotation, as it was.
 ## Where the code is
 
 - `studio/schemas/plan.js`: the fields and their limits.
-- `dashboard/panels/tonight/tonight.js`: `rowsFor` works out the lines and
+- `dashboard/panels/tonight/panel.js`: `rowsFor` works out the lines and
   `mount` draws them.
 - `dashboard/core/presentation.js`: `canRun` says which talks count, the same
   ones that start on the TV.

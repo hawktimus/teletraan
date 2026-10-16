@@ -30,7 +30,7 @@
    the cut corner starts to matter, because they reach almost to the right
    edge. The box is 20px wider each side and 8px taller than that, so the
    metal edge of a card and the push of a turning block are not cut off.
-   BLOCK_WIDTH in custom.js is the 1056px. */
+   BLOCK_WIDTH in panels/custom/panel.js is the 1056px. */
 .custom .blocks {
   position: absolute;
   left: 28px;

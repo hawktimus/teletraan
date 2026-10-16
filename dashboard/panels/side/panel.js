@@ -19,15 +19,15 @@ import { countdownParts, startCountdown, updateCountdown } from '../../core/coun
 import { teamShown } from '../../core/teams.js';
 
 // Sizes that the stylesheet repeats. Change them together.
-const TEAM_PLATE_WIDTH = 384; // .side-team in side.css: the whole column
-const STRIPES_WIDTH = 182; // .stripes in side.css: the bars between the word DAYS (118) and the lamp (20), with 16 round them
+const TEAM_PLATE_WIDTH = 384; // .side-team in panels/side/panel.css: the whole column
+const STRIPES_WIDTH = 182; // .stripes in panels/side/panel.css: the bars between the word DAYS (118) and the lamp (20), with 16 round them
 
 // core/countdown.js puts the label and the date on one line, and this panel puts
 // them on two, the label with the whole 352 px line to itself and the date under
 // it. The room is that line, plus the gap that countdown.js keeps between the
 // two (24) and the widest date (177 px, MAR 29 at 44 px). The IN and the date
 // then go only when the label itself is too wide for its line, and one still too
-// wide goes on to a second line, or is cut off (side.css).
+// wide goes on to a second line, or is cut off (panels/side/panel.css).
 const COUNTDOWN_LINE_ROOM = 553;
 
 const ICON_SIZE = 48; // the weather picture, in px

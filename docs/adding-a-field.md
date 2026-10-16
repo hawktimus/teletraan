@@ -49,7 +49,7 @@ on a photo must be added to its part of `contentQuery` and to `normalizePhoto`.
 
 ## 3. The panel
 
-Open the panel that uses the content, here dashboard/panels/tasks/tasks.js,
+Open the panel that uses the content, here dashboard/panels/tasks/panel.js,
 and show the field.
 
 - Pass editor text through `escapeHtml` before it goes into a template.
@@ -162,14 +162,14 @@ status called `review`, change all of these:
    Without one the task has an empty mark.
 3. dashboard/base.css: add a `.mark-review` rule next to the other `.mark-`
    rules, so the shape gets the colour.
-4. dashboard/panels/tasks/tasks.css: add a `.status-review` rule for the
+4. dashboard/panels/tasks/panel.css: add a `.status-review` rule for the
    colour of the group label.
-5. dashboard/panels/tasks/tasks.js: add the line
+5. dashboard/panels/tasks/panel.js: add the line
    `{ status: 'review', label: 'IN REVIEW' }` to `groups`. Its place in the
    list is its place on the screen.
-6. dashboard/panels/task-counts/task-counts.js: if a task with this status is
+6. dashboard/panels/task-counts/panel.js: if a task with this status is
    not finished, add it to `openGroups`, and give it a line colour in
-   task-counts.css if it needs one.
+   panels/task-counts/panel.css if it needs one.
 7. studio/schemas/task.js: add `{ title: 'In review', value: 'review' }` to
    `statuses`. The order of that list is the order editors see.
 8. studio/check-schemas.mjs: add `review` to the list for `task.status` in

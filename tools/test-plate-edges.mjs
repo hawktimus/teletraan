@@ -200,9 +200,9 @@ test('the flat finish and the plain look still make these edges one plain stroke
 // sidebar. The width of each is the number in its script.
 const widthIn = file => Number(/const TEAM_PLATE_WIDTH = (\d+);/.exec(read(file))[1]);
 const plates = {
-  banner: { width: 520, file: 'dashboard/panels/banner/banner.css', span: '.banner .team-plate span', number: '.banner .team-plate b' },
-  bar: { width: widthIn('dashboard/panels/bar-column/bar-column.js'), file: 'dashboard/panels/bar-column/bar-column.css', span: 'html[data-layout="bar"] .bar-team span', number: 'html[data-layout="bar"] .bar-team b' },
-  side: { width: widthIn('dashboard/panels/side/side.js'), file: 'dashboard/panels/side/side.css', span: 'html[data-layout="sidebar"] .side-team span', number: 'html[data-layout="sidebar"] .side-team b' },
+  banner: { width: 520, file: 'dashboard/panels/banner/panel.css', span: '.banner .team-plate span', number: '.banner .team-plate b' },
+  bar: { width: widthIn('dashboard/panels/bar-column/panel.js'), file: 'dashboard/panels/bar-column/panel.css', span: 'html[data-layout="bar"] .bar-team span', number: 'html[data-layout="bar"] .bar-team b' },
+  side: { width: widthIn('dashboard/panels/side/panel.js'), file: 'dashboard/panels/side/panel.css', span: 'html[data-layout="sidebar"] .side-team span', number: 'html[data-layout="sidebar"] .side-team b' },
 };
 
 // The points of the plate's polygon, as plate.js draws it for a width
@@ -302,7 +302,7 @@ test('the TEAM text is as large as it was: the banner keeps 60 px and the other 
 
 test('the metal and the shadow of the plate stay clear of the name above it and of TELETRAAN I under it, in Original and in Cybertron', () => {
   const edge = thinEdge();
-  const banner = rulesOf('dashboard/panels/banner/banner.css');
+  const banner = rulesOf('dashboard/panels/banner/panel.css');
   const cybertron = rulesOf('dashboard/styles/cybertron.css');
   const half = edge.rim / 2;
   const top = 8; // the line of the plate at the top (teamPlateMarkup)
@@ -350,7 +350,7 @@ test('the ticker\'s tag and its three frames have the same line, 1 inside, so th
   assert.equal(tagPoints[2][1], tagPoints[3][1]);
   assert.ok(Math.abs((tagPoints[0][0] - tagPoints[3][0]) - (tagPoints[2][0] - tagPoints[1][0])) < 0.01, 'the same slant at both ends');
 
-  const tag = rulesOf('dashboard/panels/ticker/ticker.css');
+  const tag = rulesOf('dashboard/panels/ticker/panel.css');
   assert.equal(px(declared(tag, '.ticker .tag', 'height')), 72, 'the tag is in the row');
   assert.equal(px(declared(tag, '.ticker .tag span', 'height')), 77, 'and its word is in the middle of the picture, which is 77 high');
   assert.equal(px(declared(baseRules, '.area[data-area="ticker"]', 'height')), 72, 'the area of the ticker is the row of 72');
@@ -404,8 +404,8 @@ test('the Studio\'s 52 characters still have the room beside the longest tag: th
   // Atkinson Hyperlegible Next 500 takes about .46 of the size per letter in ordinary text (52 letters of a sentence fit exactly, on the render)
   const letter = 0.46 * tokenPx('--size-body');
   const row = 1840;
-  const tag = Number(/reminder: \{ word: 'REMINDER', width: (\d+) \}/.exec(read('dashboard/panels/ticker/ticker.js'))[1]);
-  const gap = px(declared(rulesOf('dashboard/panels/ticker/ticker.css'), '.ticker', 'gap'));
+  const tag = Number(/reminder: \{ word: 'REMINDER', width: (\d+) \}/.exec(read('dashboard/panels/ticker/panel.js'))[1]);
+  const gap = px(declared(rulesOf('dashboard/panels/ticker/panel.css'), '.ticker', 'gap'));
   const room = row - 2 * 16 - tag - gap - px(declared(rulesOf('dashboard/styles/cybertron.css'), 'html[data-style="cybertron"] .ticker .message', 'margin-right'));
   assert.ok(room >= 52 * letter, 'the message is ' + room + ' wide and 52 letters are ' + Math.round(52 * letter));
   assert.ok(/Up to 52 characters fit/.test(read('studio/schemas/tipOrNews.js')), 'the Studio says 52');

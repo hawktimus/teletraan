@@ -1,4 +1,4 @@
-/* The side column of the bar layout (panels/bar-column/bar-column.js). Every selector
+/* The side column of the bar layout (panels/bar-column/panel.js). Every selector
    starts with html[data-layout="bar"], so the other layouts are never touched. The
    panel is a row: the rail, 24 of space and the column, which is the whole of
    #region-column (layouts/bar.css), 336 wide and as high as the main panel, 736. The
@@ -105,7 +105,7 @@ html[data-layout="bar"] .bar-weather .weather-icon { display: block; }
 
 /* The banner line of a seasonal pack: one line of 44 px under the weather, centred and
    cut off with an ellipsis, in the accent colour. About 10 characters of it show. It is
-   not there until bar-column.js sets data-line to on. */
+   not there until panels/bar-column/panel.js sets data-line to on. */
 html[data-layout="bar"] .bar-line {
   position: absolute;
   left: 0;
@@ -193,7 +193,7 @@ html[data-layout="bar"] .bar-school .school-text {
    mistakes it for the team's real content. It is two lines of 44 px (SAMPLE, then
    CONTENT, which is 214 wide), solid yellow with dark text, the highest contrast on
    the screen. It is taken out of the flow (position: absolute), so showing or hiding
-   it can never move anything, and it is over the top of the hawk's box. bar-column.js
+   it can never move anything, and it is over the top of the hawk's box. panels/bar-column/panel.js
    leaves it empty when the content is the editors' own, and an empty label is hidden. */
 html[data-layout="bar"] .bar-sample {
   position: absolute;

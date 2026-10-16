@@ -56,7 +56,7 @@ const pixels = value => (String(value).trim() === '0' ? 0 : Number(/(-?\d+(?:\.\
 const lineOf = font => Number(/\/(\d+)px/.exec(font)[1]);
 
 const cybertron = read('dashboard/styles/cybertron.css');
-const panelCss = name => read('dashboard/panels/' + name + '/' + name + '.css');
+const panelCss = name => read('dashboard/panels/' + name + '/panel.css');
 const sheets = { base: read('dashboard/base.css'), monday: read('dashboard/monday.css') };
 
 // The value of a property for a panel in a style: the Cybertron rule when the style is Cybertron and it has
