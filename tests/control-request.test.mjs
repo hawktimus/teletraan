@@ -28,10 +28,16 @@ await check('Next, Play announcement and the presentation test write the time no
   assert.deepEqual(buildRequest('presentation-test', {}, at).set, { presentationTestRequest: { requestedAt: '2026-10-15T12:00:00Z' } });
 });
 
-await check('Hold this panel takes 10 or 30 minutes and a panel id, and ends by itself', () => {
+await check('Hold this panel takes a whole number of minutes from 1 to 60 and a panel id, and ends by itself', () => {
   assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 10 }, at).set, { holdPanel: { panel: 'tasks', until: plus(10) } });
   assert.deepEqual(buildRequest('hold', { panel: 'monday-board', minutes: 30 }, at).set, { holdPanel: { panel: 'monday-board', until: plus(30) } });
-  [{ panel: 'tasks', minutes: 20 }, { panel: 'tasks' }, { minutes: 10 }, { panel: 'Tasks!', minutes: 10 }, { panel: '', minutes: 10 }].forEach(body => {
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 1 }, at).set, { holdPanel: { panel: 'tasks', until: plus(1) } });
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 60 }, at).set, { holdPanel: { panel: 'tasks', until: plus(60) } });
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: '45' }, at).set, { holdPanel: { panel: 'tasks', until: plus(45) } });
+  [0, 61, 120, -5, 1.5, 'abc', '', null, true, undefined].forEach(minutes => {
+    assert.throws(() => buildRequest('hold', { panel: 'tasks', minutes: minutes }, at), error => error.status === 400 && error.message === 'Hold a panel for a whole number of minutes from 1 to 60.', String(minutes));
+  });
+  [{ minutes: 10 }, { panel: 'Tasks!', minutes: 10 }, { panel: '', minutes: 10 }].forEach(body => {
     assert.throws(() => buildRequest('hold', body, at), error => error.status === 400);
   });
 });
@@ -100,7 +106,11 @@ await check('without SANITY_WRITE_TOKEN a request is refused with a plain senten
 
 await check('a bad request is refused before Sanity is asked, and Sanity refusing the key gives a plain sentence', async () => {
   const world = await makeWorld([request]);
-  assert.equal((await world.router.call('POST', '/request', { body: { action: 'hold', panel: 'tasks', minutes: 7 } })).status, 400);
+  for (const minutes of [0, 61, 7.5]) {
+    const answer = await world.router.call('POST', '/request', { body: { action: 'hold', panel: 'tasks', minutes: minutes } });
+    assert.equal(answer.status, 400);
+    assert.equal(answer.json.error, 'Hold a panel for a whole number of minutes from 1 to 60.');
+  }
   assert.equal((await world.router.call('POST', '/request', { body: 'not json' })).status, 400);
   assert.deepEqual(world.fetched, []);
   world.ctx.fetch = async () => ({ ok: false, status: 401, json: async () => ({}) });

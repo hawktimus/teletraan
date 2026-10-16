@@ -8,6 +8,10 @@ The Studio has two ways in: the Studio button on the landing page and in the hea
 
 The page has five tabs: Update, Now showing, Status, Keys and Log. This page covers the service itself and the Update tab. The other tabs have their own notes in the page. The Now showing tab has a Play announcement button, which plays the announcements of Dashboard Settings through the request route, and a box to post a short announcement.
 
+## Holding a panel
+
+On the Now showing tab, Hold this panel has a button, Hold 1 minute, and a field for whole minutes from 1 to 60 (it starts at 10) with the button Hold for that many minutes. The service refuses anything else with a plain sentence, and the hold ends by itself at that time. Show a view has the same kind of field, from 10 to 120 minutes. No other button has one.
+
 ## The Live preview
 
 The Now showing tab has a Live preview card under the card of the wall. It is a copy of the dashboard in a frame, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.

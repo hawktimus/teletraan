@@ -128,6 +128,10 @@ function choice(name, items, label) {
   return '<label class="pick"><span>' + esc(label) + '</span><select name="' + esc(name) + '">' + list + '</select></label>';
 }
 
+function minuteField(name, label, usual, least, most) {
+  return '<label class="pick"><span>' + esc(label) + '</span><input name="' + esc(name) + '" type="number" inputmode="numeric" min="' + least + '" max="' + most + '" step="1" value="' + usual + '"></label>';
+}
+
 export function nowControlsHtml(options) {
   const o = options || {};
   const views = (o.views || []).map(view => ({ value: view.key, label: view.name }));
@@ -139,8 +143,10 @@ export function nowControlsHtml(options) {
 
   return '<div class="grid">' + blocked +
     card('Move on', '<div class="buttons">' + button('next', 'Next') + button('pause', 'Pause rotation') + button('resume', 'Resume rotation') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>') +
-    card('Hold this panel', choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 10 minutes', ' data-minutes="10"') + button('hold', 'Hold 30 minutes', ' data-minutes="30"') + '</div>') +
-    card('Show a view', choice('view', views, 'View') + '<div class="buttons">' + button('view', 'Show this view') + '</div>') +
+    card('Hold this panel', choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
+      minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>') +
+    card('Show a view', choice('view', views, 'View') + '<div class="buttons">' + button('view', 'Show this view') + '</div>' +
+      minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for that many minutes', ' data-minutes-from="view-minutes"') + '</div>') +
     card('Preview a theme', choice('theme', themes, 'Theme') + '<div class="buttons">' + button('theme', 'Preview for 10 minutes') + '</div>') +
     card('Announcements', '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
       '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +

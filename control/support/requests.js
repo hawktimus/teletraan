@@ -7,7 +7,7 @@ import { Refusal } from './http.js';
 
 export const settingsId = 'dashboardSettings';
 
-const holdMinutes = [10, 30];
+export const holdMinutes = { least: 1, most: 60 };
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
 export const themeIds = ['original', 'cybertron', 'retro'];
 const previewMinutes = 10;
@@ -34,6 +34,15 @@ function minutesOf(input, range) {
   return Math.round(wanted);
 }
 
+// A panel is held for a whole number of minutes the caller names. There is no default.
+function holdMinutesOf(input) {
+  const wanted = input === undefined || input === null || input === '' || typeof input === 'boolean' ? NaN : Number(input);
+  if (!Number.isInteger(wanted) || wanted < holdMinutes.least || wanted > holdMinutes.most) {
+    throw new Refusal(400, 'Hold a panel for a whole number of minutes from ' + holdMinutes.least + ' to ' + holdMinutes.most + '.');
+  }
+  return wanted;
+}
+
 const nothing = { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
 
 // The change to Dashboard Settings that an action makes, as { set } for a patch, or { create } for a new document
@@ -51,8 +60,7 @@ export function buildRequest(action, input, now = new Date()) {
       return { set: { pauseRotation: nothing.pauseRotation } };
 
     case 'hold': {
-      const minutes = Number(body.minutes);
-      if (!holdMinutes.includes(minutes)) throw new Refusal(400, 'Hold a panel for ' + holdMinutes.join(' or ') + ' minutes.');
+      const minutes = holdMinutesOf(body.minutes);
       if (typeof body.panel !== 'string' || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(body.panel)) throw new Refusal(400, 'Pick a panel to hold from the list.');
       return { set: { holdPanel: { panel: body.panel, until: later(now, minutes) } } };
     }

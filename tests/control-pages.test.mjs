@@ -45,7 +45,13 @@ check('the card is grey with the number of seconds when the wall has gone quiet'
 check('the Now showing buttons are all there', () => {
   const html = nowControlsHtml({ views: [{ key: 'general', name: 'General' }], themes: ['original'], panels: ['tasks'], talks: [], liveAnnouncements: 1, canWrite: true });
   ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
-  assert.ok(html.includes('data-minutes="10"') && html.includes('data-minutes="30"'));
+  assert.ok(html.includes('Hold 1 minute') && html.includes('data-minutes="1"'));
+  assert.ok(!html.includes('data-minutes="10"') && !html.includes('data-minutes="30"'), 'the two fixed hold buttons are gone');
+  assert.match(html, /name="hold-minutes" type="number" inputmode="numeric" min="1" max="60" step="1" value="10"/);
+  assert.match(html, /data-minutes-from="hold-minutes">Hold for that many minutes</);
+  assert.match(html, /name="view-minutes" type="number" inputmode="numeric" min="10" max="120" step="1" value="30"/);
+  assert.match(html, /data-minutes-from="view-minutes">Show for that many minutes</);
+  assert.equal((html.match(/type="number"/g) || []).length, 2, 'no other control has a minutes field');
   assert.ok(html.includes('maxlength="90"'));
   assert.ok(nowControlsHtml({ canWrite: false }).includes('SANITY_WRITE_TOKEN'));
 });

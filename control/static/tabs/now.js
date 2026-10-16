@@ -5,6 +5,16 @@ import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
 import { nowCardHtml, nowControlsHtml, previewCardHtml, previewScale } from './render.js';
 
+// The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
+function fieldProblem(field) {
+  const text = field ? field.value.trim() : '';
+  const number = Number(text);
+  if (text === '' || !Number.isInteger(number) || number < Number(field.min) || number > Number(field.max)) {
+    return 'Type a whole number of minutes from ' + field.min + ' to ' + field.max + '.';
+  }
+  return '';
+}
+
 function wire(root, options, say) {
   root.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
@@ -14,8 +24,16 @@ function wire(root, options, say) {
     const body = { action: action };
     const value = name => { const field = root.querySelector('[name="' + name + '"]'); return field ? field.value : ''; };
 
-    if (action === 'hold') { body.panel = value('panel'); body.minutes = Number(button.dataset.minutes); }
+    // A fixed button has its minutes in data-minutes; the other one reads the field named in data-minutes-from
+    if (action === 'hold') body.panel = value('panel');
     if (action === 'view') body.key = value('view');
+    if (button.dataset.minutes) body.minutes = Number(button.dataset.minutes);
+    if (button.dataset.minutesFrom) {
+      const field = root.querySelector('[name="' + button.dataset.minutesFrom + '"]');
+      const bad = fieldProblem(field);
+      if (bad) { say(bad, true); return; }
+      body.minutes = Number(field.value);
+    }
     if (action === 'theme') body.theme = value('theme');
     if (action === 'post-announcement') body.text = value('text');
 
