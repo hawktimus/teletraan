@@ -27,7 +27,7 @@ function put(file, text, mode) {
 // A staging tree: the files of this repository the installer reads
 function staging(base, options = {}) {
   const tree = path.join(base, 'staging');
-  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive']) {
+  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/sudoers/teletraan-control', 'computer/git/post-receive']) {
     put(path.join(tree, name), fs.readFileSync(path.join(repo, name)));
   }
   put(path.join(tree, 'dashboard/index.html'), '<html></html>');
@@ -145,6 +145,17 @@ test('local.env gets the login user ids and the root, once, and is made from the
   assert.match(text, new RegExp("^TELETRAAN_ROOT='" + s.root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "'$", 'm'));
   assert.equal(s.run().status, 0);
   assert.equal((fs.readFileSync(path.join(s.root, 'local.env'), 'utf8').match(/^TELETRAAN_UID=/gm) || []).length, 1, 'a second run adds nothing');
+});
+
+test('the screen unit is written again with the new folders and the account, and the pull timer is not', () => {
+  const s = setup();
+  const result = s.run();
+  assert.equal(result.status, 0, result.errors);
+  const kiosk = fs.readFileSync(path.join(s.places.systemd, 'teletraan-kiosk.service'), 'utf8');
+  assert.ok(kiosk.includes('/opt/teletraan/computer/scripts/kiosk.sh') && !kiosk.includes('/deploy/'));
+  assert.match(kiosk, new RegExp('User=' + account));
+  assert.ok(!kiosk.includes('ACCOUNT'));
+  assert.ok(!fs.existsSync(path.join(s.places.systemd, 'teletraan-pull.timer')));
 });
 
 test('the socket, its service and the sudoers file are installed with the login user, and visudo checks the file first', () => {

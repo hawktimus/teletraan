@@ -185,6 +185,16 @@ if command -v visudo > /dev/null 2>&1 && ! visudo -cf "$sudoers_new" > /dev/null
 fi
 install -m 440 "$sudoers_new" "$sudoers_dir/teletraan-control"
 rm -f "$sudoers_new"
+
+# The screen, the timers and their jobs name the folders of the release layout. Copy them again on every install,
+# so a unit written by an older install does not point at a folder that is gone. Whether a timer is on does not change.
+# The pull timer is left out: updates come from the control page.
+for unit in "$tree"/computer/systemd/teletraan-*; do
+  name=$(basename "$unit")
+  case $name in teletraan-control.socket | teletraan-control@.service | teletraan-pull.*) continue ;; esac
+  sed "s/ACCOUNT/$account/g" "$unit" > "$systemd_dir/$name"
+  chmod 644 "$systemd_dir/$name"
+done
 systemctl daemon-reload
 systemctl enable --now teletraan-control.socket
 
