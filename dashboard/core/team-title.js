@@ -3,7 +3,7 @@
 // department reads BUILD TEAM, with the name of the team in a chip at its right end. These are plain
 // functions, so tests/monday-rows.test.mjs can run them.
 
-import { titleRoom } from './header-room.js';
+import { titleRoom, titleSpare } from './header-room.js';
 import { escapeHtml, hasText } from './text.js';
 import { textWidth } from './text-width.js';
 
@@ -51,7 +51,10 @@ export function titleClass(title) {
   return textWidth(title, 700, 60) <= titleRoom ? 'title title-small' : 'title title-tight';
 }
 
-// The class of the title of a Monday card, which is at 60px, or at 56px when 60px does not fit
+// The class of the title of a Monday card, which is at 60px, at 56px when 60px does not fit, and at 44px, the
+// smallest size, when 56px does not either. A title that is longer than the room at 44px is cut off with an
+// ellipsis. The title keeps 8px to spare in its room.
 export function smallTitleClass(title) {
-  return textWidth(title, 700, 60) <= titleRoom ? 'title' : 'title title-tight';
+  if (textWidth(title, 700, 60) <= titleRoom - titleSpare) return 'title';
+  return textWidth(title, 700, 56) <= titleRoom - titleSpare ? 'title title-tight' : 'title title-tighter';
 }
