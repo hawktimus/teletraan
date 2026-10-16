@@ -23,6 +23,15 @@ export function startReforms(getSeconds, getKind) {
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(watchFrame);
 }
 
+// ?reform=off on the address turns both transitions off: the older page change and swap play instead, which is how to compare them
+export function reformOff() {
+  try {
+    return new URLSearchParams(window.location.search).get('reform') === 'off';
+  } catch (error) {
+    return false;
+  }
+}
+
 export function reformKind() {
   return kindOf();
 }

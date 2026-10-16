@@ -38,7 +38,7 @@ The view transition draws the hawk on its own, at the size of the logo on the sc
 
 ## What it costs
 
-The 2011 computer has to hold 30 frames a second, and it could not be tried here. The panel transition has about 245 elements with an animation of their own (4800 elements in the layer, most of them in the copies), the view transition about 550 (11500 elements in the layer). tests/motion/reform.mjs plays each kind in a headless browser at 1920 x 1080 and prints the frame times and the counts. On the computer that was used, which draws with software, an idle page takes 17 ms a frame, the panel transition 17 ms and no frame over 34 ms, and the view transition 22 ms on average with about one frame in thirty over 34 ms. The checks that matter on the Mini are these: `?perf` on the address shows the refresh times while a transition plays, and the 90th percentile should stay under 25 ms.
+The 2011 computer has to hold 30 frames a second, and it could not be tried here. The panel transition has about 245 elements with an animation of their own (4800 elements in the layer, most of them in the copies), the view transition about 550 (11500 elements in the layer). tests/motion/reform.mjs plays each kind in a headless browser at 1920 x 1080 and prints the frame times and the counts. On the computer that was used, which draws with software, an idle page takes 17 ms a frame, the panel transition 17 ms and no frame over 34 ms, and the view transition 22 ms on average with between one frame in thirty and one in nine over 34 ms. The checks that matter on the Mini are these: `?perf` on the address shows the refresh times while a transition plays, and the 90th percentile should stay under 25 ms.
 
 What costs most is not the number of parts but the size of what is drawn into a surface of its own and the layers drawn on top of each other: the flat copies (a whole page each), the chassis behind the squares, and any part that fades. So the covers fade for a moment only, nothing else fades, the edges and the hardware grow from the corners, the squares are hidden until just before the turn, and the hawk is drawn at its size on the screen. If the Mini is too slow, make the grids smaller in `grids` (core/reform-plan.js), take the hardware list down (`hardwareList`), or set the transition off by choosing calm motion.
 
@@ -46,4 +46,4 @@ A screen that is already drawing slowly (the median of the last sixty frames ove
 
 ## Try it
 
-With `?sample=1&clock=fixed` the page has `window.teletraanTest`. `play('reform-panel')` goes to the next row, `play('reform-view')` changes the view.
+`?reform=off` on the address turns both transitions off for that page, so the older page change and swap play instead. With `?sample=1&clock=fixed` the page has `window.teletraanTest`. `play('reform-panel')` goes to the next row, `play('reform-view')` changes the view.

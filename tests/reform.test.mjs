@@ -206,6 +206,7 @@ await test('a page change gets the panel transition inside a view and the view t
   assert.equal(plan.kindToPlay('reform', Object.assign({}, free, { busy: true })), '');
   assert.equal(plan.kindToPlay('reformView', Object.assign({}, free, { running: true, looked: true })), '', 'only one transition plays');
   assert.equal(plan.kindToPlay('reform', Object.assign({}, free, { slow: true })), '', 'a screen that draws slowly gets the plain change');
+  assert.equal(plan.kindToPlay('reformView', Object.assign({}, free, { off: true, looked: true })), '', '?reform=off gives the older swap');
 });
 
 await test('the code of the transitions draws no filter, no blur and no shadow animation, and writes no color', () => {

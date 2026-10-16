@@ -49,7 +49,7 @@ function keyframeProperties() {
 // One look from the start: the effects due every second, the red eyes over the standard layout, then two changes of
 // view, the first into the bar layout and the second into its mirror, with the effects playing in between
 async function runLook(ctx, look) {
-  const page = await ctx.open({}, undefined, { settleMs: 500, look: look });
+  const page = await ctx.open({ reform: 'off' }, undefined, { settleMs: 500, look: look }); // the swaps of the view are the older ones here (reform.mjs has the others)
   const swapped = () => page.waitForFunction(() => document.getElementById('world').hasAttribute('data-pieces'), null, { timeout: 60000 })
     .then(() => page.waitForFunction(() => !document.getElementById('world').hasAttribute('data-pieces'), null, { timeout: 20000 }));
 

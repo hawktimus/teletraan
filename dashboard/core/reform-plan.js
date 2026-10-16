@@ -453,7 +453,7 @@ export function hiddenStops() {
 // motion only, never while something else has the screen or another one plays, and never on a screen that is drawing slowly. A look that is waiting to go on (a preview,
 // a team, a theme) and a Monday card are the swap's, and a view transition only goes with a look that is held for it.
 export function kindToPlay(kind, context) {
-  if (context.motion !== 'full' || context.busy || context.running || context.slow) return '';
+  if (context.motion !== 'full' || context.busy || context.running || context.slow || context.off) return '';
   if (kind === 'reform') return context.looked || context.monday ? '' : 'reform';
   if (kind === 'reformView') return context.looked ? 'reformView' : '';
   return '';

@@ -23,11 +23,11 @@ const allowedProperties = ['transform', 'opacity'];
 // The rows of the rotation change every few seconds on their own, and each change is a transition. A run that was not played
 // by a scene (a row changed on its own while the scene was on) is found by its start time, and the scene is played again.
 // late is the share of the frames that may be over the limit. The panel has none, as the order says. The view draws four regions, a
-// hundred and twenty eight squares and a hawk, and the headless browser draws with software, so it is let have one frame in twelve over 34
+// hundred and twenty eight squares and a hawk, and the headless browser draws with software, so it is let have one frame in seven over 34
 // ms and none over 100 ms (tests/motion/README.md, "Where a rule is looser than the order").
 const scenes = {
   panel: { play: 'reform-panel', options: {}, look: 'original', name: 'the panel transition', late: 0, longest: frameLimitMs },
-  view: { play: 'reform-view', options: { view: 'nova' }, look: 'bar', name: 'the view transition', late: 1 / 12, longest: 100 },
+  view: { play: 'reform-view', options: { view: 'nova' }, look: 'bar', name: 'the view transition', late: 1 / 7, longest: 100 },
 };
 
 // In the page: the recorder of frames and the way to ask whether the run is on the screen

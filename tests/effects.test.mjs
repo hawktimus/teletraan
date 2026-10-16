@@ -3172,7 +3172,7 @@ test('the shell starts the hidden transitions after the demo runner, with the ad
 test('the large panel asks for a hidden transition before its page change, and the other areas wait at a gate while one plays', () => {
   const areas = readModule(path.join(dashboardFolder, 'core/areas.js'), 'utf8');
   assert.ok(areas.includes("const hiddenRegion = 'grid1';"));
-  const offer = areas.indexOf('const offered = hiddenOffer();');
+  const offer = areas.indexOf('const offered = hidden === undefined ? hiddenOffer() : hidden;');
   const normal = areas.indexOf('await frame.leave(area, change);');
   assert.ok(offer !== -1 && normal > offer, 'asked first, and the usual change follows if it is not played');
   assert.ok(areas.indexOf('if (gate) {') < offer, 'a region that is not the large panel waits at the gate before anything');
