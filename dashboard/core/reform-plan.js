@@ -418,3 +418,15 @@ export function partsOf(rect, gridName) {
 
   return { squares: grid.cols * grid.rows * 2, chains: chainsOf(rect).length * 6, hardware: hardwareList(rect).length, covers: 3 };
 }
+
+
+// Which transition a page change of the large panel gets, from the kind the rotation noted and what the screen is doing. It is
+// the name of the kind, or '' for the older way of changing (the page change, or the swap). A transition is drawn in full
+// motion only, never while something else has the screen or another one plays. A look that is waiting to go on (a preview,
+// a team, a theme) and a Monday card are the swap's, and a view transition only goes with a look that is held for it.
+export function kindToPlay(kind, context) {
+  if (context.motion !== 'full' || context.busy || context.running) return '';
+  if (kind === 'reform') return context.looked || context.monday ? '' : 'reform';
+  if (kind === 'reformView') return context.looked ? 'reformView' : '';
+  return '';
+}

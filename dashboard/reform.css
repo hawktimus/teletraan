@@ -27,7 +27,6 @@
   transform-style: preserve-3d;
 }
 .reform-layer-back,
-.reform-covers,
 .reform-layer-front,
 .reform-grid,
 .reform-straps,
@@ -43,6 +42,13 @@
 .reform-seg {
   position: absolute;
   transform-style: preserve-3d;
+}
+.reform-covers {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
 }
 
 /* a square: a drop shadow drawn once, a face, a back that is turned over, and a shade over both */

@@ -4,6 +4,7 @@
 
 import { playPanel } from './reform-panel.js';
 import { playView } from './reform-view.js';
+import { kindToPlay } from './reform-plan.js';
 import { reformKind, reformRunning } from './reform-run.js';
 
 // The kinds. play(swapPage, context) draws the transition, calls swapPage() while the page is covered, and resolves with how
@@ -14,17 +15,10 @@ export const transitionKinds = {
 };
 
 // Asked at each page change of the large panel, with the page on screen and the page to come. Answers null, which is the old
-// way of changing (the page change, or the swap), or { play(swapPage) }. A transition is drawn in full motion only, never while
-// something else has the screen, and never while another one plays. A look that is waiting to go on, a preview, a team or a
-// theme, is the swap's, and so is a Monday card.
+// way of changing (the page change, or the swap), or { play(swapPage) }. kindToPlay in core/reform-plan.js decides.
 export function reformOffer(context) {
-  if (context.motion !== 'full' || context.busy || reformRunning()) return null;
-
-  const kind = reformKind();
+  const kind = kindToPlay(reformKind(), Object.assign({ running: reformRunning() }, context));
   const found = transitionKinds[kind];
-  if (!found) return null;
-  if (kind === 'reform' && (context.looked || context.monday)) return null;
-  if (kind === 'reformView' && !context.looked) return null;
 
-  return { play: swapPage => found.play(swapPage, context) };
+  return found ? { play: swapPage => found.play(swapPage, context) } : null;
 }
