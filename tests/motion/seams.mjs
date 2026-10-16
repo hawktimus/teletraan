@@ -15,6 +15,9 @@ const round = value => Math.round(value * 10) / 10;
 async function runSeams(ctx, look, panel) {
   const page = await ctx.open({ panel: panel, style: look }, undefined, { settleMs: 800 });
   try {
+    // A frame that is still being drawn or swapped has pieces that are not yet in place
+    await page.waitForFunction(() => !window.teletraanTest.busy(), null, { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(800);
     const found = {};
     for (const size of sizes) {
       await page.setViewportSize({ width: size.width, height: size.height });

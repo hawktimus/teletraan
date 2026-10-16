@@ -14,6 +14,8 @@ async function runScroll(ctx, panel, look) {
   try {
     // A look asked for in the address is put on by a swap, and a play made during it is lost
     await page.waitForFunction(() => !window.teletraanTest.busy(), null, { timeout: 20000 }).catch(() => {});
+    // On a slow computer the held card is drawn late
+    await page.waitForFunction(() => document.querySelector('[data-scroll-page]'), null, { timeout: 30000 }).catch(() => {});
     await page.evaluate(() => {
       window.__motion.armScroll();
       window.teletraanTest.play('monday-scroll');
