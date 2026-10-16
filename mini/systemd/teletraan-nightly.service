@@ -1,0 +1,10 @@
+[Unit]
+Description=Restart the Teletraan I screen at night, and reboot the Mini on Sundays
+
+[Service]
+Type=oneshot
+# Runs as root, because restarting the screen and rebooting need it. The script
+# decides from the clock which of the two to do, and skips both when a
+# presentation is booked within the hour (nightly.sh).
+ExecStart=/opt/teletraan/mini/scripts/nightly.sh
+TimeoutStartSec=2min
