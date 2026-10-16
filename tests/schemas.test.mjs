@@ -102,6 +102,15 @@ const contract = {
     show: 'boolean',
     expires: 'datetime',
   },
+  subtheme: {
+    name: text(40),
+    enabled: 'boolean',
+    start: 'date',
+    end: 'date',
+    priority: 'number',
+    assets: rows({ slot: text(20), image: 'image' }, 12),
+    rules: rows({ theme: 'string', view: 'string', slot: text(20), anchor: 'string', size: number(40, 240), motion: 'string' }, 20),
+  },
   sponsor: withFlags({ name: text(19), tier: text(12), blurb: text(80), thankYou: text(54), logoAddress: 'url', team: teamRef, order: 'number' }),
   tipOrNews: withFlags({ kind: 'string', text: text(52), team: teamRef, order: 'number' }),
   announcement: { text: text(90), start: 'datetime', end: 'datetime', team: teamRef, level: 'string' },
@@ -388,6 +397,10 @@ const choices = {
   'task.priority': ['high', 'medium', 'low'],
   'tipOrNews.kind': ['tip', 'news', 'reminder'],
   'calendarFilter.action': ['hide', 'show'],
+  'subtheme.rules.theme': ['', 'original', 'cybertron', 'retro'],
+  'subtheme.rules.view': ['', 'general', 'prime', 'nova', 'family'],
+  'subtheme.rules.anchor': ['banner-left', 'banner-right', 'countdown-top', 'ticker-end', 'side-bottom', 'main-corner'],
+  'subtheme.rules.motion': ['none', 'drift', 'blink', 'fall'],
   'dashboardSettings.calendars.kind': ['meetings', 'competitions', 'outreach', 'deadlines', 'other'],
   'presentation.subteam': ['Build', 'Programming', 'Design', 'Electrical', 'Outreach', 'Business', 'Other'],
   'presentation.status': ['scheduled', 'cancelled', 'done', 'skipped'],
@@ -427,6 +440,7 @@ const listSort = {
   task: 'mondayBoardName',
   plan: 'date',
   calendarFilter: 'name',
+  subtheme: 'name',
   sponsor: 'order',
   tipOrNews: 'order',
   subteam: 'order',
@@ -487,7 +501,7 @@ const typeTitles = {
 const sidebarGroups = [
   'Start here, Screens',
   'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News, Announcements',
-  'EVENTS: Calendars, Calendar filters',
+  'EVENTS: Calendars, Calendar filters, Subthemes',
   'ROSTER: Leadership, Team leads, Sponsors, Photos',
   'COACHES ONLY: Settings, Extra panels',
 ];
@@ -4907,6 +4921,7 @@ const listAdds = {
   'Tips and News': 'newTip',
   Announcements: 'newAnnouncement',
   'Calendar filters': 'newCalendarFilter',
+  Subthemes: 'newSubtheme',
   Leadership: 'newPerson',
   'Team leads': 'newSubteam',
   Sponsors: 'newSponsor',
@@ -4914,7 +4929,7 @@ const listAdds = {
 };
 
 // The switch that puts a new document on the screen, when it is not called show
-const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true], announcement: ['level', 'notice'] };
+const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true], announcement: ['level', 'notice'], subtheme: ['enabled', true] };
 
 // Every line of the sidebar with the heading it sits under, the lines inside the folders too
 function linesUnderHeadings() {

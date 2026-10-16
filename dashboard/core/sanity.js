@@ -11,6 +11,7 @@ import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
 import { tidyScreens } from './screens.js';
 import { tidyViews } from './views.js';
+import { tidySubthemes } from './subthemes.js';
 import { tidyNotices } from './notice.js';
 import { tidyMini } from './dots.js';
 
@@ -132,6 +133,7 @@ export const contentQuery = `{
   },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc) { ..., "team": team->code },
   "calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),
+  "subthemes": *[_type == "subtheme"] | order(_createdAt asc) { name, enabled, start, end, priority, "assets": assets[] { slot, "url": image.asset->url }, rules },
   "customPanels": *[_type == "customPanel"] | order(_createdAt asc) { ..., "team": team->code },
   "teams": *[_type == "team"] | order(order asc, _createdAt asc) {
     ...,
@@ -296,6 +298,7 @@ export function normalizeContent(result, now = new Date()) {
     mini: tidyMini(data.mini),
     screens: tidyScreens(data.screens, settings.mondayStyle),
     views: tidyViews(data.views),
+    subthemes: tidySubthemes(data.subthemes),
   });
 }
 
@@ -327,6 +330,7 @@ export function normalizeSample(raw) {
   content.monday = tidyMondayStatus(data.monday);
   content.screens = tidyScreens(data.screens, content.settings.mondayStyle);
   content.views = tidyViews(data.views);
+  content.subthemes = tidySubthemes(data.subthemes);
   return withDefaults(content);
 }
 

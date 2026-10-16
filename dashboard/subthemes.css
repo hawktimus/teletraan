@@ -1,0 +1,35 @@
+/* The subtheme layer (core/subthemes-layer.js, docs/subthemes.md). A box is as big as its place on the
+   screen and clips its picture, so a picture never leaves its place and never crosses text. The motions
+   are in seasons/motion.css, where every keyframe lives. */
+
+.subtheme-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  contain: strict;
+  pointer-events: none;
+}
+
+.subtheme-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.subtheme-box {
+  position: absolute;
+  overflow: hidden;
+}
+
+.subtheme-sprite {
+  position: absolute;
+  color: var(--accent, #d9b24a);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
