@@ -80,10 +80,14 @@ export function startListsOver() {
 
 // The large area says which page of its card is on screen (data-page-number), for the report to the control page
 function notePageNumber(region, number) {
-  if (region !== 'grid1' || typeof document === 'undefined') return;
+  if (region !== 'grid1' || typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
 
-  const area = document.querySelector('.area[data-area="grid1"]');
-  if (area && area.dataset) area.dataset.pageNumber = String(number);
+  try {
+    const area = document.querySelector('.area[data-area="grid1"]');
+    if (area && area.dataset) area.dataset.pageNumber = String(number);
+  } catch (error) {
+    console.error('The page number could not be written', error);
+  }
 }
 
 // Counts the calls to skipRow(). The loop of the large panel that sees a new number leaves the row it is on.

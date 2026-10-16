@@ -21,7 +21,7 @@ import { canShow } from './panels.js';
 import { moveOn, pauseRotation, resumeRotation, setLookHooks, skipRow, startListsOver } from './schedule.js';
 import { changesBetween, currentScreen, heldLook, holdScreenLook, makeNextLookRunner, styleCanGoOn, swapScaleOf } from './screens.js';
 import { activeRequests } from './screen-requests.js';
-import { layoutFor, previewStyle, shapesFor, shapesNow } from './style.js';
+import { layoutFor, previewStyle, rotateLayout, shapesFor, shapesNow } from './style.js';
 import { queueSwap, startSwaps, swapRunning } from './swap-run.js';
 import { noteWantedTeam } from './team-run.js';
 import { takeoverRunning } from './takeover.js';
@@ -132,7 +132,8 @@ function begin(step) {
   const view = placed(step).view;
   const moved = heldView() !== '' && view !== heldView();
 
-  holdView(view, viewLayoutOf(getContent(), view));
+  holdView(view);
+  rotateLayout(viewLayoutOf(getContent(), view));
   if (!changes.team && !changes.style && !changes.monday && !moved) return;
 
   holdLook(to);

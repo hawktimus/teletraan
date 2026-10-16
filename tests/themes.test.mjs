@@ -24,7 +24,7 @@ fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n'
 ['config.js', 'frame.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
-['theme.js', 'theme-apply.js', 'teams.js', 'style.js', 'busy.js', 'transitions.js', 'tick.js', 'corner-art.js', 'pack-extras.js'].forEach(file => {
+['theme.js', 'theme-apply.js', 'view-apply.js', 'teams.js', 'style.js', 'busy.js', 'transitions.js', 'tick.js', 'corner-art.js', 'pack-extras.js'].forEach(file => {
   fs.copyFileSync(path.join(dashboardFolder, 'core', file), path.join(workFolder, 'dashboard/core', file));
 });
 

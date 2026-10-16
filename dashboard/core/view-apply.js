@@ -11,16 +11,8 @@ export function heldView() {
   return held;
 }
 
-// The layout of the held view. core/style.js asks for it, so that a bar view is in the bar layout whatever theme is on.
-let heldLayoutName = '';
-
-export function heldLayout() {
-  return heldLayoutName;
-}
-
-export function holdView(key, layout = '') {
+export function holdView(key) {
   held = viewKeys.includes(key) ? key : '';
-  heldLayoutName = held !== '' && (layout === 'bar' || layout === 'standard') ? layout : '';
 }
 
 function pageOrNone() {
@@ -49,4 +41,21 @@ export function applyTheme(theme, page = pageOrNone()) {
 
   page.dataset.theme = theme;
   return true;
+}
+
+// The words the banners draw for the view on the page: its name for the tag, its title when it has one of its own, and
+// whether the tag is drawn. shell.js writes them with the view (it has the content), and the banners read them, so a
+// banner does not need the views themselves.
+export function viewLabelsNow(page = pageOrNone()) {
+  const data = page && page.dataset ? page.dataset : {};
+  return { name: data.viewName || '', title: data.viewTitle || '', tag: data.viewTag === 'on' };
+}
+
+export function applyViewLabels(labels, page = pageOrNone()) {
+  if (!page || !page.dataset) return;
+
+  const wanted = { viewName: labels.name, viewTitle: labels.title, viewTag: labels.tag ? 'on' : 'off' };
+  Object.keys(wanted).forEach(name => {
+    if (page.dataset[name] !== wanted[name]) page.dataset[name] = wanted[name];
+  });
 }

@@ -676,21 +676,22 @@ test('a panel the control page holds is the only one the large panel plays, in t
   assert.equal(viewApply.applyTheme('cybertron', page), true);
   assert.equal(page.dataset.theme, 'cybertron');
   assert.equal(viewApply.applyTheme('cybertron', page), false);
+  viewApply.applyViewLabels({ name: 'PRIME', title: '', tag: true }, page);
+  assert.deepEqual(viewApply.viewLabelsNow(page), { name: 'PRIME', title: '', tag: true });
+  assert.deepEqual(viewApply.viewLabelsNow({ dataset: {} }), { name: '', title: '', tag: false });
   assert.ok(read('core/schedule.js').includes("area.dataset.pageNumber = String(number);"));
 });
 
 test('a bar view asks for the bar layout in any theme, and a standard view leaves the layout to the theme', async () => {
   const style = await import(base + 'core/style.js');
-  viewApply.holdView('prime', 'bar');
+  style.rotateLayout('bar');
   try {
     ['original', 'cybertron', 'retro'].forEach(theme => assert.equal(style.layoutFor(theme, 'standard'), 'bar', theme));
-    viewApply.holdView('general', 'standard');
+    style.rotateLayout('standard');
     assert.equal(style.layoutFor('cybertron', 'standard'), 'standard');
     assert.equal(style.layoutFor('original', 'sidebar'), 'sidebar');
-    viewApply.holdView('');
-    assert.equal(style.layoutFor('retro', 'standard'), 'standard');
   } finally {
-    viewApply.holdView('');
+    style.rotateLayout('');
   }
 });
 

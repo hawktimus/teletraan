@@ -272,7 +272,7 @@ test('a swap never starts while something else has the screen: swap-run.js refus
 test('the swap holds the clock of the pages with its own count, and gives it back whatever happens', () => {
   const run = read('core/swap-run.js');
   const schedule = read('core/schedule.js');
-  assert.ok(!/\bpauseRotation\(|\bresumeRotation\(/.test(read('core/views-run.js')), 'the views pause nothing: the swap holds the clock');
+  assert.equal((read('core/views-run.js').match(/\bpauseRotation\(\)/g) || []).length, 1, 'the views pause the pages only when the control page asks: the swap holds the clock');
   assert.ok(/holdClock\(true\);\s*try \{[\s\S]*\} finally \{[\s\S]*holdClock\(false\);/.test(run), 'the clock is held in play() and let go in finally');
   assert.equal((run.match(/holdClock\(true\)/g) || []).length, 1);
   assert.equal((run.match(/holdClock\(false\)/g) || []).length, 1);

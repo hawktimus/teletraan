@@ -37,6 +37,8 @@ const standIns = {
   'core/schedule.js': [
     'export const setLookHooks = hooks => { globalThis.mondayWorld.hooks = hooks; };',
     "export const skipRow = () => globalThis.mondayWorld.log.push('skipRow');",
+    'export const pauseRotation = () => {};',
+    'export const resumeRotation = () => {};',
     "export const startListsOver = () => globalThis.mondayWorld.log.push('startListsOver');",
     "export const moveOn = regions => globalThis.mondayWorld.log.push('moveOn ' + regions.join(' '));",
   ],
@@ -178,7 +180,7 @@ test('when the address asks for a style or a team the Screens hold nothing and a
 
 // A step is chosen: the look it needs is held
 
-test('a step of a bar view is in the style of the bar with a swap into the view, the cards between hold one look, and the next view comes out with a swap', async () => {
+test('a step of a bar view is in the theme of the day with a swap into the view, the cards between hold one look, and the next view comes out with a swap', async () => {
   const world = await start();
 
   world.hooks.begin(step('tasks', '', 'general'));
@@ -188,7 +190,7 @@ test('a step of a bar view is in the style of the bar with a swap into the view,
   world.log.length = 0;
   world.hooks.begin(step('monday-tasks', 'prime', 'prime'));
   assert.deepEqual(world.log, ['checkTheme', 'queueSwap'], 'Prime in the bar layout: the look is held and the next page change is a swap');
-  assert.deepEqual(screens.heldLook(), { team: 'prime', style: 'minimal', monday: true });
+  assert.deepEqual(screens.heldLook(), { team: 'prime', style: 'original', monday: true });
 
   world.log.length = 0;
   world.hooks.begin(step('monday-done', 'prime', 'prime'));
@@ -229,7 +231,7 @@ test('a step that comes from outside the views, a competition card, plays in the
   world.log.length = 0;
   world.hooks.begin({ panel: 'competition-rank', show: true });
   assert.deepEqual(world.log, ['checkTheme'], 'the Monday cards end, and no swap is queued');
-  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'minimal', monday: false }, 'in the team and the style of the view');
+  assert.deepEqual(screens.heldLook(), { team: 'nova', style: 'original', monday: false }, 'in the team and the style of the view');
 });
 
 test('a step is asked about as the team it is drawn for, without that team being held', async () => {
@@ -246,15 +248,16 @@ test('a step is asked about as the team it is drawn for, without that team being
   assert.equal(teamsModule.wantedTeam().code, 'prime');
 });
 
-test('the Screen of the day decides the style of the standard view', async () => {
+test('the theme of the weekday decides the style of the standard view', async () => {
   const world = await start({ content: contentWith(raw => {
-    Object.keys(raw.settings.screenSchedule).forEach(day => { raw.settings.screenSchedule[day] = 'cybertron'; });
+    raw.settings.themeByWeekday = {};
+    ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => { raw.settings.themeByWeekday[day] = 'cybertron'; });
   }) });
 
   world.hooks.begin(step('tasks'));
   assert.equal(screens.heldLook().style, 'cybertron');
   world.hooks.begin(step('monday-tasks', 'prime', 'prime'));
-  assert.equal(screens.heldLook().style, 'minimal', 'a bar view is in the bar style whatever the day says');
+  assert.equal(screens.heldLook().style, 'cybertron', 'a bar view is the theme of the day, in the bar layout');
   world.hooks.begin(step('tasks'));
   assert.equal(screens.heldLook().style, 'cybertron');
 });
@@ -329,7 +332,7 @@ test('Next look now moves the large panel to the next row, once for each click, 
 test('the page side names the cards through the screens, asks the layout the way holdForLayout does, and leaves the look to the swap', () => {
   const file = read('core/views-run.js');
 
-  assert.ok(file.includes("return styleFits(lookOf(step).style);"));
+  assert.ok(file.includes("return styleFits(lookOf(step).style, viewLayoutOf(getContent(), placed(step).view));"));
   assert.ok(file.includes('const wanted = drawnFor(wantedLayout, shapesFor(style, wantedLayout));'), 'the layout is worked out as layout-apply.js does');
   assert.ok(read('core/layout-apply.js').includes('const wanted = drawnFor(wantedLayout, shapesFor(look.style, wantedLayout));'));
   assert.ok(file.includes('window.sessionStorage.getItem(reloadKey) !== wanted'), 'the note of mustReload');

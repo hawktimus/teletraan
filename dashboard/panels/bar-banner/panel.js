@@ -10,8 +10,7 @@ import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
-import { viewNow } from '../../core/view-apply.js';
-import { viewNameOf, viewShowsTag, viewTitleOf } from '../../core/views.js';
+import { viewLabelsNow } from '../../core/view-apply.js';
 import { startWar, updateWar, warMarkup } from '../countdown/panel.js';
 
 // The war clock's slot is 766 by 128 (barSettings.warClock in core/layout.js), and its place
@@ -43,14 +42,13 @@ export function mount(host, content) {
 export function update(element, content) {
   updateWar(element.querySelector('.war-clock'), content);
 
-  const view = viewNow();
+  const view = viewLabelsNow();
   const tag = element.querySelector('.view-tag');
-  const tagText = view !== '' && viewShowsTag(content, view) ? viewNameOf(content, view) : '';
+  const tagText = view.tag ? view.name : '';
   if (tag.textContent !== tagText) tag.textContent = tagText;
 
   const heading = element.querySelector('.bar-name');
-  const title = view === '' ? '' : viewTitleOf(content, view);
-  const name = title !== '' ? title : teamShown(content).name;
+  const name = view.title !== '' ? view.title : teamShown(content).name;
   if (heading.dataset.name === name) return;
 
   heading.dataset.name = name;

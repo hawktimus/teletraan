@@ -19,6 +19,7 @@ import { keepInRange } from './content.js';
 import { forTeam, visibleTasks } from './monday.js';
 import { departmentEntries, departmentsOf } from './monday-views.js';
 import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, tidyMainRow, tidySideRow, weekdayIn } from './screens.js';
+import { rotateLayout } from './style.js';
 import { addressTeam } from './teams.js';
 import { heldView, holdView } from './view-apply.js';
 import { hasText } from './text.js';
@@ -317,6 +318,7 @@ export function resetViews() {
   cycle.seconds = 0;
   cycle.ticks = 0;
   holdView('');
+  rotateLayout('');
   heldPanel = '';
 }
 
@@ -410,7 +412,8 @@ export function holdBootView(content, now = new Date()) {
   if (isRecord(content)) {
     const key = playableViews(content, now)[0] || viewOrderOf(content)[0];
     startView(key);
-    holdView(key, viewLayoutOf(content, key));
+    holdView(key);
+    rotateLayout(viewLayoutOf(content, key));
   }
   holdScreenLook(look);
   return look;

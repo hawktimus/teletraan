@@ -29,7 +29,6 @@
 // title to the list in studio/schemas/dashboardSettings.js.
 
 import { barStyle, defaultSettings, styles, themeIds } from '../config.js';
-import { heldLayout } from './view-apply.js';
 
 export function isStyle(name) {
   return styles.includes(name) || themeIds.includes(name);
@@ -98,10 +97,16 @@ export function chooseStyle(saved, asked, now = new Date()) {
 }
 
 // themeLayout is the layout the theme names (layoutOf in core/layout.js)
-// The held view (core/view-apply.js) can ask for the bar layout in any theme
+// The views hold the layout of the view that plays (core/views-run.js), and the bar layout goes with any theme
+let rotatedLayout = '';
+
+export function rotateLayout(layout) {
+  rotatedLayout = layout === 'bar' ? 'bar' : '';
+}
+
 export function layoutFor(style, themeLayout) {
   const forced = isStyle(style) ? forcedLayout[style] : null;
-  return forced || (heldLayout() === 'bar' ? 'bar' : themeLayout);
+  return forced || rotatedLayout || themeLayout;
 }
 
 function pageOrNone() {

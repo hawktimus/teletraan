@@ -53,8 +53,8 @@ import { redrawFrames } from './core/areas.js';
 import { ensureThemeSheets } from './core/style-loader.js';
 import { applyStyle, recordShapes, shapesFor, shapesNow, startStyle, themeOf } from './core/style.js';
 import { cadenceOf, currentScreen, onScreenChange } from './core/screens.js';
-import { applyTheme, applyView } from './core/view-apply.js';
-import { holdBootView, viewPlaylist, viewSidePlaylist } from './core/views.js';
+import { applyTheme, applyView, applyViewLabels, viewNow } from './core/view-apply.js';
+import { holdBootView, viewNameOf, viewPlaylist, viewShowsTag, viewSidePlaylist, viewTitleOf } from './core/views.js';
 import { resumePreview } from './core/preview.js';
 import { loadPanel, mountPanel, updatePanel } from './core/panels.js';
 import { withPages, withStandIns } from './core/panel-order.js';
@@ -320,6 +320,7 @@ function rebuild() {
   usePageChangeSettings(content.settings);
   useSeasonSwitch();
   usePackExtras();
+  writeViewLabels();
   if (!metals.includes(params.get('metal'))) setPageSwitch('metal', content.settings.frameMetal);
   useLookSetting(content.settings);
   updatePanel('banner', content);
@@ -605,13 +606,26 @@ function useStyle(look) {
 function useView(look) {
   try {
     applyTheme(themeOf(look.style));
-    if (!applyView(look.view) || !content) return;
+    const changed = applyView(look.view);
+    if (!content) return;
+
+    writeViewLabels();
+    if (!changed) return;
 
     updatePanel('banner', content);
     updatePanel('bar-banner', content);
   } catch (error) {
     console.error('Could not put the view on the page', error);
   }
+}
+
+// The words of the view for the banners (core/view-apply.js, viewLabelsNow). They follow the content, so a new name in
+// Dashboard Settings shows at once.
+function writeViewLabels() {
+  const key = viewNow();
+  if (key === '' || !content) return;
+
+  applyViewLabels({ name: viewNameOf(content, key), title: viewTitleOf(content, key), tag: viewShowsTag(content, key) });
 }
 
 // What goes with each look that goes on the page: the style, the neon kit, and the
