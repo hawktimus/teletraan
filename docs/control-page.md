@@ -18,6 +18,10 @@ The Now showing tab has a Live preview card under the card of the wall. It is a 
 
 The copy runs by itself on the phone or laptop, so it may show a different panel than the TV at this moment. The card above it says what the TV shows. The copy does not report to the control page: the dashboard reports only when its address is `localhost` or `127.0.0.1`, and port 3229 refuses a report from any other address. The copy writes nothing. Its title heartbeat is only the title of its own frame.
 
+## On a phone
+
+The page is made for a phone first. It fits 320 to 430 pixels with no sideways scroll, the tabs wrap into rows, long values such as commit hashes and addresses wrap, and every field is 16px or larger so iOS does not zoom. The Live preview does not load by itself under 900px wide: tap Show live preview. It is taken out again when you change tab or the page goes to the background, because the whole dashboard in a frame is too heavy for a phone. If the page still does not finish loading, it shows a line with a Reload link instead of a bare page.
+
 ## First time
 
 Do these once, in this order. The team mentor says yes to the Docker downloads in step 1.
