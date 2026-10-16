@@ -1661,7 +1661,7 @@ test('base.css draws the rivets only while the style is Original, and no other s
     else if (entry.name.endsWith('.css') && !['base.css', 'frame.css'].includes(entry.name) && /rivets/.test(readModule(full, 'utf8'))) others.push(path.relative(dashboardFolder, full));
   });
   walk(dashboardFolder);
-  assert.deepEqual(others, ['layouts/bar-minimal.css', 'styles/retro/theme.css'], 'a style or theme that draws or hides them: the bar drawing, and the Retro copy of Original');
+  assert.deepEqual(others, ['layouts/bar-minimal.css'], 'a style or theme that draws or hides them: the bar drawing');
   const minimalCss = readModule(path.join(dashboardFolder, 'layouts/bar-minimal.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.deepEqual(minimalCss.match(/[^\n]*(\.rivets)[^\n]*/g), ['html[data-layout="bar"] .rivets { display: inline; }'], 'Minimal shows the rivets');
 });
