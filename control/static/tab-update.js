@@ -29,7 +29,7 @@ async function makeZip(files) {
   try {
     fflate = await import('./vendor/fflate.js');
   } catch (error) {
-    throw new Error('The zip library is missing. See control/static/vendor/README-fflate.txt.');
+    throw new Error('The zip library is missing.');
   }
   const entries = {};
   let total = 0;
