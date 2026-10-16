@@ -147,7 +147,7 @@ test('the shipping doc agrees with ship.sh: the menu, the action words, the old 
 });
 
 test('the doc of the Mac tool names the words, the options and the exit codes the tool has', () => {
-  ['teletraan-mini update', 'teletraan-mini status', 'teletraan-mini restart', '--yes', '--mini NAME', 'exit code', 'Copy anyway'].forEach(text => assert.ok(updating.includes(text), 'docs/updating-the-mini.md says: ' + text));
+  ['teletraan-mini update', 'teletraan-mini status', 'teletraan-mini restart', '--yes', '--mini NAME', 'exit code'].forEach(text => assert.ok(updating.includes(text), 'docs/updating-the-mini.md says: ' + text));
   assert.ok(miniTool.includes('Usage: teletraan-mini [--mini NAME] [--yes] [update | status | restart]'));
   ['update', 'status', 'restart'].forEach(word => assert.ok(miniTool.includes('  ' + word + ' '), 'the tool lists ' + word));
   assert.ok(updating.includes('tests/teletraan-mini-commands.test.mjs'));

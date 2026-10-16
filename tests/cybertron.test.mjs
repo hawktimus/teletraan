@@ -1162,7 +1162,7 @@ test('docs/layouts.md describes the two styles and which layout each uses, and t
 
   // the layouts and the styles
   const flat = text => text.replace(/\s+/g, ' ');
-  assert.ok(/The style Minimal has it/.test(flat(doc.slice(0, doc.indexOf('## How a layout is chosen')))), 'the list of layouts says which style has the bar layout');
+  assert.ok(/The Prime, Nova and Family views have it/.test(flat(doc.slice(0, doc.indexOf('## How a layout is chosen')))), 'the list of layouts says which style has the bar layout');
   assert.ok(/Original and Cybertron keep the layout of the theme/.test(flat(doc.slice(doc.indexOf('## How a layout is chosen'), doc.indexOf('## The screen is a fixed canvas')))), 'the choice of the layout says Cybertron keeps the layout of the theme');
   assert.ok(section.includes('redrawFrames') && section.includes('?style=cybertron'));
   assert.ok(section.includes('616 by 200') && section.includes('The wide war clock') && doc.includes('### The wide war clock'));
