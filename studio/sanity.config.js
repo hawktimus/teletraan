@@ -1,6 +1,6 @@
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
-import { projectId, dataset } from './project.js';
+import { projectId, dataset, studioBasePath } from './project.js';
 import { schemaTypes } from './schemas/index.js';
 import { publishAllTool } from './tools/publish-all-tool.js';
 import { structure, settingsType, singletonTypes } from './structure.js';
@@ -55,6 +55,7 @@ export default defineConfig({
   title: 'Teletraan I',
   projectId: projectId,
   dataset: dataset,
+  ...(studioBasePath ? { basePath: studioBasePath } : {}),
   plugins: [structureTool({ structure: structure })],
   // Publish all is a page of its own in the top bar, next to the editing screen (docs/publish-all.md)
   tools: [publishAllTool],
