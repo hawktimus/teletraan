@@ -83,7 +83,7 @@ export function screenRequestFields() {
   return [
     controlField('holdPanel', 'Hold panel', 'The large frame keeps one panel.', [wordField('panel', 'Panel')]),
     controlField('showView', 'Show view', 'The screen shows one view.', [wordField('key', 'View', ['general', 'prime', 'nova', 'family'])]),
-    controlField('previewTheme', 'Preview theme', 'The screen shows one theme.', [wordField('theme', 'Theme', ['original', 'cybertron', 'retro'])]),
+    controlField('previewTheme', 'Preview theme', 'The screen shows one theme.', [wordField('theme', 'Theme', ['original', 'cybertron', 'retro', 'foundry'])]),
     controlField('pauseRotation', 'Pause rotation', 'The rotation stops.', []),
   ];
 }

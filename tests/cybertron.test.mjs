@@ -313,7 +313,7 @@ test('the markup of the large and the small frame is the frame in two halves wit
       ['art-seams', 'art-hazard', 'art-conduit', 'art-slashes', 'art-brackets'].forEach(name => assert.equal(countOf(markup, 'art-cybertron ' + name), 2, kind + ' ' + name + ' once in the frame and once in the piece that is the decoration'));
       assert.equal(countOf(markup, 'class="tab-inset"'), 2, 'the team plate color inset in the tab, in the fills and in its piece');
       assert.equal(countOf(markup, 'href="#bolt-shape"'), 12, 'six bolts in the halves, and each of them in one piece as well');
-      assert.ok(elements(markup) <= 150, kind + ' is under 150 elements: ' + elements(markup));
+      assert.ok(elements(markup) <= 160, kind + ' is under 160 elements: ' + elements(markup));
     });
 
     // the pieces have the names the page change moves: the large frame's of Original
@@ -357,7 +357,7 @@ test('the banner and the ticker are one plate each: the fills and the two halves
     assert.equal(countOf(banner, 'data-part="frame-a"'), 1);
     assert.equal(countOf(banner, 'data-part="frame-b"'), 1);
     assert.equal(countOf(banner, 'class="plate piece"'), 0);
-    assert.equal(countOf(banner, 'art-cybertron'), 2, 'the conduit and the brackets');
+    assert.equal(countOf(banner, 'art-cybertron'), 4, 'the conduit, the brackets, the ruler and the hex field');
     assert.equal(countOf(banner, 'href="#bolt-shape"'), 6);
     assert.equal(countOf(banner, 'data-part="stud"'), 6, 'the bolts arrive with the banner: they are in the table of frame.js');
     assert.ok(elements(banner) <= 40, 'the banner is under 40 elements: ' + elements(banner));
@@ -551,7 +551,7 @@ test('the banner draws its plate only when the page has the frames of Cybertron:
     await world.draw(teamContent(), 'dashboard/panels/banner/panel.js');
     assert.ok(!hasText(world.markup, 'class="plate'), 'no plate in the banner of Original');
     assert.ok(!hasText(world.markup, 'bolt-shape'));
-    assert.ok(/<section class="panel banner" data-sequence="banner">\s*<div class="logo">/.test(world.markup), 'the logo is the first part, as it was');
+    assert.ok(/<section class="panel banner" data-sequence="banner">\s*<div class="theme-art theme-art-banner"[\s\S]*?<div class="logo">/.test(world.markup), 'the logo is the first part after the art of the theme, as it was');
   });
 
   await onPage(async world => {
@@ -1096,7 +1096,7 @@ test('the frames are drawn again in the same step that puts the style on the pag
   const areas = read('dashboard/core/areas.js');
   assert.ok(areas.includes('export function redrawFrames() {'));
   assert.ok(areas.includes('const kind = frameKind(region, layoutNow(), shapesNow(), trimNow());'), 'for the corners of the style and the trim of the team');
-  assert.ok(areas.includes("if (kind !== 'ticker') area.insertAdjacentHTML('afterbegin', areaMarkup(kind));"));
+  assert.ok(areas.includes("area.insertAdjacentHTML('afterbegin', (kind === 'ticker' ? '' : areaMarkup(kind)) + themeArtMarkup(kind));"));
   assert.ok(areas.includes(".filter(child => !child.classList.contains('page-host'))"), 'the page host stays');
 
   // theme-apply.js does not reload for it: holdForLayout only looks at the layout and, in the bar layout, the corners
@@ -1112,15 +1112,15 @@ test('Cybertron paints the plates in the team\'s body color, the metal edge and 
   assert.equal(value('--style-body'), 'var(--team-body)', 'the body of a plate is the team\'s body color');
   assert.equal(value('--style-raised'), '#262b33', 'a raised plate');
   assert.equal(value('--style-chamfer'), '56px');
-  assert.equal(value('--style-grid-size'), '96px');
+  assert.equal(value('--style-grid-size'), '64px');
   assert.equal(value('--style-grid-opacity'), '.07');
-  assert.equal(value('--style-scan-opacity'), '.035');
+  assert.equal(value('--style-scan-opacity'), '.09');
   assert.equal(value('--style-neon'), 'var(--team-neon)');
   assert.equal(value('--style-pink'), 'var(--team-pink)');
 
   // the plate of a frame and of the banner is the body, the header tab is the armor plate with the team's plate color inset
   assert.ok(/html\[data-style="cybertron"\] \.area,\s*html\[data-style="cybertron"\] \.banner \{\s*--panel-face: var\(--style-body\);/.test(css));
-  assert.ok(css.includes('html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }'));
+  assert.ok(/html\[data-style="cybertron"\] \.area > \.plate \.header-left \{\s*fill: var\(--team-accent\);\s*fill-opacity: var\(--style-wedge-opacity\);/.test(css), 'the header is a translucent wedge of the accent');
   assert.ok(/fill: var\(--team-plate\);/.test(withoutComments(read('dashboard/base.css'))), 'the tab has the team plate color inset (base.css)');
 
   // the tokens give the metal of the team to every area and to the page, whatever the page change says: steel to a team that has it, and

@@ -12,6 +12,7 @@ const themes = [
   { title: 'Original', value: 'original' },
   { title: 'Cybertron', value: 'cybertron' },
   { title: 'Retro', value: 'retro' },
+  { title: 'Foundry', value: 'foundry' },
 ];
 
 const views = [

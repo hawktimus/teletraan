@@ -1,0 +1,30 @@
+/* The custom properties of the Foundry theme. What each one is for is listed at the top of theme.css.
+   A color is written here and nowhere else. */
+
+html[data-style="foundry"] {
+  --style-ink: #05060a;
+  --style-steel-dark: #0a0c10;
+  --style-steel-1: #9aa4b2;
+  --style-steel-2: #5c6775;
+  --style-steel-3: #2c333d;
+  --style-steel-4: #171b21;
+  --style-steel-5: #4c5663;
+  --style-steel-6: #8a95a3;
+  --style-steel-hi: #c9d2dd;
+  --style-plate: #262b33;
+  --style-panel: #13161b;
+  --style-bolt: #3a3f47;
+  --style-hazard: #f0b400;
+  --style-hazard-dim: #b48a00;
+  --style-hazard-ink: #0b0c0f;
+  --style-floor: #0a0b0d;
+  --style-grain: rgba(255, 255, 255, .03);
+  --style-floor-light: rgba(255, 255, 255, .05);
+  --style-floor-shade: rgba(0, 0, 0, .55);
+  --style-lamp: rgba(255, 214, 120, .09);
+  --style-lamp-soft: rgba(255, 214, 120, .04);
+  --style-mote: #c9d2dd;
+  --style-chain: #3a4150;
+  --style-trolley: #4c5663;
+  --style-header-ink: var(--team-header-ink, #ffffff);
+}

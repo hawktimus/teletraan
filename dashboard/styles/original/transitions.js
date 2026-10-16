@@ -5,3 +5,7 @@
 import { swapReform, swapShape, swapTimes } from '../../core/swap-plan.js';
 
 export const swapVariant = { name: 'pull-apart', times: swapTimes, reform: swapReform, shape: swapShape };
+
+// The kit of the theme for the panel and view transitions: its pieces and the way each one moves. It holds the id
+// only, and the transitions fill it in.
+export const kit = { id: 'original' };

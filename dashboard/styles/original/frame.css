@@ -1,2 +1,137 @@
-/* The keyframes and animation rules that belong to the Original theme only. There are none: its
-   frames animate as frame.css at the top of the dashboard folder says. */
+/* The keyframes of the Original theme: the four backgrounds that move (core/theme-bg.js). All of them change
+   only transform. The frames of this theme animate as frame.css at the top of the dashboard folder says. */
+
+/* Blueprint: each grid slides by exactly one of its own squares, so the loop has no seam */
+@keyframes bg-drift-fine {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(32px, 32px); }
+}
+@keyframes bg-drift-coarse {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(256px, 256px); }
+}
+
+/* Rays: a band slides back and forth, kept slanted */
+@keyframes bg-ray {
+  from { transform: skewX(-18deg) translateX(-140px); }
+  to   { transform: skewX(-18deg) translateX(140px); }
+}
+
+/* Spotlight: one pool wanders from the top left, across the screen and out of it, and back */
+@keyframes bg-wander {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(900px, 300px) scale(1.25); }
+  100% { transform: translate(1500px, -100px) scale(.9); }
+}
+
+/* Embers: a spark rises from below the screen to above it, drifting a little sideways */
+@keyframes bg-rise {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(28px, -620px); }
+  100% { transform: translate(-12px, -1240px); }
+}
+
+
+/* The background setting (Look tab of Dashboard Settings, html[data-background], core/theme-bg.js and background.js in
+   this folder). Sweep draws nothing. Each of the others is a few elements behind the panels, and moves with transform
+   only. The colors are the team's, so the layers follow the team. */
+/* The old name minimal is the Original theme in the bar layout, so it shows this group too */
+html[data-style="original"] #theme-bg > .bg-original,
+html[data-style="minimal"] #theme-bg > .bg-original { display: block; }
+#theme-bg .bg-bp,
+#theme-bg .bg-ray,
+#theme-bg .bg-pool,
+#theme-bg .bg-glow,
+#theme-bg .bg-ember { display: none; position: absolute; }
+
+/* Blueprint: a fine grid of 32 and a coarse grid of 256 drift diagonally together, 40 seconds for one square of
+   each. The layers are bigger than the screen by one square, so the slide never shows an edge. */
+html[data-background="blueprint"] #theme-bg .bg-bp { display: block; }
+#theme-bg .bg-bp-fine {
+  left: -128px;
+  top: -128px;
+  width: 2176px;
+  height: 1336px;
+  background:
+    linear-gradient(90deg, var(--team-text) 1px, transparent 1px),
+    linear-gradient(0deg, var(--team-text) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: .035;
+  animation: bg-drift-fine 40s linear infinite;
+}
+#theme-bg .bg-bp-coarse {
+  left: -256px;
+  top: -256px;
+  width: 2432px;
+  height: 1592px;
+  background:
+    linear-gradient(90deg, var(--team-accent) 2px, transparent 2px),
+    linear-gradient(0deg, var(--team-accent) 2px, transparent 2px);
+  background-size: 256px 256px;
+  opacity: .08;
+  animation: bg-drift-coarse 40s linear infinite;
+}
+
+/* Rays: three slanted bands of light, each on its own slow drift */
+html[data-background="rays"] #theme-bg .bg-ray { display: block; }
+#theme-bg .bg-ray {
+  top: -216px;
+  height: 1512px;
+  background: linear-gradient(90deg, transparent, var(--team-text), transparent);
+  transform: skewX(-18deg);
+  animation: bg-ray 28s ease-in-out infinite alternate;
+}
+#theme-bg .bg-ray-1 {
+  left: 96px;
+  width: 346px;
+  opacity: .035;
+}
+#theme-bg .bg-ray-2 {
+  left: 768px;
+  width: 499px;
+  opacity: .028;
+  animation-duration: 36s;
+  animation-delay: -9s;
+}
+#theme-bg .bg-ray-3 {
+  left: 1382px;
+  width: 269px;
+  opacity: .04;
+  animation-duration: 24s;
+  animation-delay: -4s;
+}
+
+/* Spotlight: one pool of the team's color wanders behind the panels over 50 seconds */
+html[data-background="spotlight"] #theme-bg .bg-pool { display: block; }
+#theme-bg .bg-pool {
+  left: -400px;
+  top: -400px;
+  width: 1400px;
+  height: 1400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--team-primary) 0, transparent 65%);
+  opacity: .33;
+  animation: bg-wander 50s ease-in-out infinite alternate;
+}
+
+/* Embers: a warm tint at the foot of the screen, and a dozen sparks of the team's accent rising from below it */
+html[data-background="embers"] #theme-bg .bg-glow { display: block; }
+html[data-background="embers"] #theme-bg .bg-ember { display: block; }
+#theme-bg .bg-glow {
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background: linear-gradient(180deg, transparent 60%, var(--style-ember-glow) 100%);
+}
+#theme-bg .bg-ember {
+  left: var(--x, 0px);
+  top: 1120px;
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  border-radius: 50%;
+  background: var(--team-accent);
+  opacity: var(--alpha, .3);
+  animation: bg-rise var(--rise, 26s) linear infinite;
+  animation-delay: var(--lag, 0s);
+}

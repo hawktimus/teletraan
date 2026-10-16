@@ -7,6 +7,7 @@ import { savedContent } from './core/content.js';
 import { mergeEvents } from './core/events.js';
 import { connectionLines, drawConnection } from './core/connection.js';
 import { pageSwitchesFor } from './core/look.js';
+import { backgroundFor } from './core/theme-bg.js';
 import { showDeviceInfo } from './core/device.js';
 import { checkTheme } from './core/theme-apply.js';
 import { changeLayout } from './core/layout-apply.js';
@@ -185,6 +186,7 @@ function setPageSwitch(name, value) {
 export function useLookSetting(settings) {
   const switches = pageSwitchesFor(settings, { look: params.get('look'), finish: params.get('finish'), glint: params.get('glint') });
   Object.keys(switches).forEach(name => setPageSwitch(name, switches[name]));
+  setPageSwitch('background', backgroundFor(settings, params.get('background')));
 }
 
 export function getContent() {

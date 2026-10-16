@@ -13,21 +13,11 @@ import { createReleases } from './lib/releases.js';
 import { createHelper } from './lib/helper-client.js';
 import { createCorsCheck } from './lib/cors.js';
 import { run } from './lib/run.js';
+import { isFresh, staticHeaders } from './lib/static-files.js';
 import { register as registerRoutes } from './routes/index.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const staticFolder = path.join(here, 'static');
-
-const types = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.woff2': 'font/woff2',
-  '.txt': 'text/plain; charset=utf-8',
-};
 
 // What anyone may fetch before signing in
 const openFiles = ['login.html', 'login.js', 'style.css'];
@@ -166,7 +156,14 @@ export async function createService(config, overrides = {}) {
   function serveStatic(req, res, pathname) {
     let name = pathname === '/control/' || pathname === '/control' ? 'index.html' : pathname.replace(/^\/control\//, '');
     const signedIn = auth.isAuthed(req);
-    if (!signedIn) name = openFiles.includes(name) || name.startsWith('fonts/') ? name : 'login.html';
+    if (!signedIn && !(openFiles.includes(name) || name.startsWith('fonts/'))) {
+      // A page asks for the sign-in form; a script or stylesheet gets a plain refusal, not a page in its place
+      if (/\.(js|mjs|css|woff2|json)$/.test(name)) {
+        sendJson(res, 401, { error: 'Sign in with the PIN first.' });
+        return;
+      }
+      name = 'login.html';
+    }
     const file = path.join(staticFolder, name);
     const inside = path.relative(staticFolder, file);
     if (inside.startsWith('..') || path.isAbsolute(inside) || inside.split(path.sep).some(part => part.startsWith('.'))) {
@@ -178,13 +175,14 @@ export async function createService(config, overrides = {}) {
         sendJson(res, 404, { error: 'Not found.' });
         return;
       }
-      res.writeHead(200, {
-        'Content-Type': types[path.extname(file)] || 'application/octet-stream',
-        'Cache-Control': 'no-cache',
-        'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
-      });
-      res.end(bytes);
+      const headers = staticHeaders(file, bytes);
+      if (isFresh(req.headers, headers.ETag)) {
+        res.writeHead(304, headers);
+        res.end();
+        return;
+      }
+      res.writeHead(200, headers);
+      res.end(req.method === 'HEAD' ? undefined : bytes);
     });
   }
 

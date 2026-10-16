@@ -113,9 +113,19 @@ export function previewScale(boxWidth) {
   return Number.isFinite(width) && width > 0 ? Math.round((width / previewWidth) * 10000) / 10000 : 0.1;
 }
 
+// Under this width (a phone) the frame never loads by itself: the whole dashboard in a frame is too much for it
+export const previewAutoWidth = 900;
+
+export function previewAutoLoads(viewportWidth) {
+  return Number(viewportWidth) >= previewAutoWidth;
+}
+
+// The card holds no frame at first. The page makes the frame (tabs/now.js) when the person asks or the screen is
+// wide, and takes it out again, so a phone never holds the whole dashboard in memory. data-src is its address.
 export function previewCardHtml() {
   return card('Live preview',
-    '<div class="preview" data-preview-box><iframe data-preview-frame src="/dashboard/" title="A copy of the dashboard" width="' + previewWidth + '" height="' + previewHeight + '" sandbox="allow-scripts allow-same-origin" tabindex="-1"></iframe></div>' +
+    '<div class="preview" data-preview-box data-src="/dashboard/"><p class="preview-off" data-preview-off>The preview is off.</p></div>' +
+    '<div class="buttons"><button type="button" class="act" data-preview-toggle aria-pressed="false">Show live preview</button></div>' +
     '<p class="note">A copy of the screen on this device. It runs by itself, so it may show a different panel than the TV at this moment. The card above says what the TV shows.</p>');
 }
 
@@ -162,18 +172,18 @@ export function keysHtml(data) {
 
   const keyRows = keys.map(key => '<div class="key" data-key="' + esc(key.name) + '">' +
     '<div><strong>' + esc(key.label) + '</strong><span class="name">' + esc(key.name) + '</span><span class="masked">' + esc(key.masked) + '</span></div>' +
-    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(key.name) + '" placeholder="New value (leave empty to keep)">' +
+    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(key.name) + '" placeholder="New value">' +
     '<button type="button" class="act quiet" data-clear="' + esc(key.name) + '">Clear</button></div></div>').join('');
 
   const calendarRows = calendars.map(calendar => '<div class="key" data-calendar="' + esc(calendar.name) + '">' +
     '<div><strong>' + esc(calendar.code) + '</strong><span class="name">' + esc(calendar.name) + '</span><span class="masked">' + esc(calendar.masked) + '</span></div>' +
-    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(calendar.name) + '" placeholder="New link (leave empty to keep)">' +
+    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(calendar.name) + '" placeholder="New link">' +
     '<button type="button" class="act quiet" data-clear-calendar="' + esc(calendar.name) + '">Clear</button></div></div>').join('');
 
   return '<div class="grid">' +
-    card('Keys', (keyRows || '<p>No keys are known.</p>') + '<p class="note">PIN: fixed</p>') +
-    card('Calendars', (calendarRows || '<p>No calendars yet.</p>') +
-      '<div class="key newcal"><div><strong>Add a calendar</strong></div><div class="keyform"><input name="new-name" placeholder="Name, such as Build season" autocomplete="off"><input type="password" name="new-link" placeholder="Link (https:// or webcal://)" autocomplete="off"></div></div>') +
+    card('Keys', (keyRows || '<p>No keys are known.</p>') + '<p class="note">Leave a box empty to keep what is there. PIN: fixed</p>') +
+    card('Calendars', (calendarRows || '<p>No calendars yet.</p>') + '<p class="note">A link starts with https:// or webcal://. Leave a box empty to keep the link.</p>' +
+      '<div class="key newcal"><div><strong>Add a calendar</strong></div><div class="keyform"><input name="new-name" placeholder="Name" aria-label="Name of the new calendar" autocomplete="off"><input type="password" name="new-link" placeholder="Link" aria-label="Link of the new calendar" autocomplete="off"></div></div>') +
     '</div><div class="buttons"><button type="button" class="act" data-save>Save</button></div><p class="note" data-note></p>';
 }
 

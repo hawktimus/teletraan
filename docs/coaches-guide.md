@@ -15,7 +15,7 @@ This is the table of the README. A file you want to change is in one of these fo
 
 | Folder | What it holds |
 |--------|---------------|
-| `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/<theme>/` (original, cybertron and retro), `themes/` (color files and seasonal packs), `layouts/` and `data/` |
+| `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/<theme>/` (original, cybertron, retro and foundry), `themes/` (color files and seasonal packs), `layouts/` and `data/` |
 | `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the view defaults and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
 | `control/` | The control page service (Node, standard library only) and its pages: updates (Update from GitHub, or a folder), rollback, what is on the wall, the keys and the log (docs/control-page.md) |
 | `computer/` | Everything that runs on the Teletraan computer: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
@@ -131,7 +131,7 @@ A row is a panel and, if you want, the seconds. Without seconds the row follows 
 
 ### Which theme plays on which day
 
-Settings, Themes has a picker for each day, Monday to Sunday (the field Theme of each weekday). The day is the calendar day in the time zone on the Look page. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Retro is a copy of Original until it is designed.
+Settings, Themes has a picker for each day, Monday to Sunday (the field Theme of each weekday). The day is the calendar day in the time zone on the Look page. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Foundry is not in the starting week.
 
 ### The first time a view opens
 

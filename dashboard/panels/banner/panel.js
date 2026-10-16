@@ -7,6 +7,7 @@ import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup, teamPlateMarkup } from '../../core/plate.js';
+import { themeArtMarkup } from '../../core/theme-art.js';
 import { layoutNow } from '../../core/layout.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
@@ -19,6 +20,7 @@ export function mount(host, content) {
   host.innerHTML = `
     <section class="panel banner" data-sequence="banner">
       ${kind === 'banner' ? '' : plateMarkup(kind)}
+      ${themeArtMarkup(kind)}
       <div class="logo">${logoMarkup()}</div>
 
       <div class="banner-text">

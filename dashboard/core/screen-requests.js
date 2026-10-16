@@ -6,7 +6,7 @@
 import { isRecord } from './text.js';
 
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
-export const themeIds = ['original', 'cybertron', 'retro'];
+export const themeIds = ['original', 'cybertron', 'retro', 'foundry'];
 
 // The longest a request may run. The control page asks for 10 to 120 minutes, and a time further off
 // than this is a mistake, so it is not obeyed.

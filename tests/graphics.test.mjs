@@ -126,7 +126,7 @@ await test('every svg in the code has a viewBox, except the ones that only hold 
 // Ids
 
 // The word each family of ids in the hidden defs of index.html starts with
-const families = ['edge', 'armor', 'wear', 'screw', 'bolt', 'logo', 'person', 'metal', 'hawk'];
+const families = ['edge', 'armor', 'wear', 'screw', 'bolt', 'logo', 'person', 'metal', 'hawk', 'theme'];
 
 await test('the ids written in index.html and in the svg files are unique, and start with the word of their family or file', () => {
   const page = read(path.join(dashboard, 'index.html'));
@@ -274,7 +274,7 @@ await test('a hex color is written in the tokens, the tokens of a theme, a theme
 
 await test('the places that may write a color all exist, so the rule above checks something', () => {
   assert.ok(fs.existsSync(path.join(dashboard, 'tokens.css')));
-  ['original', 'cybertron', 'retro'].forEach(id => assert.ok(fs.existsSync(path.join(dashboard, 'styles', id, 'tokens.css')), id));
+  ['original', 'cybertron', 'retro', 'foundry'].forEach(id => assert.ok(fs.existsSync(path.join(dashboard, 'styles', id, 'tokens.css')), id));
   assert.ok(code.filter(file => !mayWriteColors(file)).length > 100, 'most files are held to the rule');
   assert.ok(/--team-primary: #6c18b6;/.test(read(path.join(dashboard, 'tokens.css'))), 'the team colors start in tokens.css');
 });

@@ -1,60 +1,62 @@
-/* The Cybertron style (core/style.js, Style in Dashboard Settings): the sharp style.
-   It has the layout of its theme, like Original (the standard layout, or the sidebar
-   layout for Neon Prime), and any team's colors. What it changes is the drawing: the
-   frames are plates in the team's body color with the metal of the team for their edge (steel
-   or gold, tokens.css) and its neon (core/plate.js, "The frames of
-   Cybertron"), and the countdown is the war clock. The first rule sets custom
-   properties, which the frame drawing reads. The team's colors are --team-neon,
-   --team-pink and the others in teams.css, and they are the ones to use for anything
-   that follows the team. The rules after it paint the page background and the parts of
-   the frames that only this style has, and put the banner and the ticker on their
-   plates. Everything it paints is still: nothing here moves.
+/* The Cybertron theme (core/style.js, Style in Dashboard Settings): translucent readout panels.
+   It has the layout of its theme, like Original (the standard layout, or the sidebar layout for Neon Prime),
+   and any team's colors. What it changes is the drawing. A frame is a readout panel: a body that lets the
+   page behind it show, notched corners, a double hairline border (the edge line and the neon line inside it)
+   that runs from the team's neon to its pink, brackets outside two corners, a ruler of ticks along the top
+   edge, a faint hex field, and on the tall frames the LINK 04 mark at the foot. The header tab is a translucent
+   wedge of the team's accent. The countdown is the war clock. Nothing a frame draws moves of its own; only the
+   background does (core/theme-bg.js and background.js in this folder), and calm and no motion hold it still.
 
-     --style-body            the body of a plate: the team's body color
-     --style-raised          a raised plate
-     --style-armor-top       the top and the bottom of the armor header tab and of the war
-     --style-armor-bottom    clock's housing, which are lighter and darker than --style-raised
-     --style-chamfer         the large cut corners of the large and the small frame (the same 56 as in core/plate.js)
-     --style-neon            the neon strokes of the frames, and the grid on the page background
-     --style-pink            the conduit line along the inner edges
-     --style-digits          the digits of the war clock
-     --style-rust            the rust on the war clock's housing
-     --style-grid-size       the grid on the page background, and how faint it is
-     --style-grid-opacity
-     --style-scan-opacity    the scanlines on the page background
+   The frames are the shapes of core/plate.js ("The frames of Cybertron"). Their edge is five layers and a
+   neon line; this theme draws two of them as hairlines and leaves out the rest. The first rule of tokens.css
+   sets the custom properties, which are listed there. The team's colors are --team-neon, --team-pink and the
+   others in teams.css, and they are the ones to use for anything that follows the team. */
 
-   The frames are drawn by core/plate.js. The steel of their edges is in tokens.css and
-   index.html, and what Cybertron and Minimal share of them is in base.css. */
+/* The old grid and scanlines of the page are not drawn by this theme. Its background is in the layer behind the
+   stage (#theme-bg), which the markup of background.js fills. */
+html[data-style="cybertron"] #screen::before { display: none; }
 
-/* The page background: the team's background color, with the scanlines over it and, in a
-   layer of its own, the grid in the team's neon. Both are drawn with gradients, so there
-   is no picture to load, and both are behind everything on the screen. The grid has its own
-   layer because its color is a team color, which can only be made fainter by fading the
-   layer. The layer is as big as the screen and lets every click through. */
-html[data-style="cybertron"] #screen {
-  background:
-    repeating-linear-gradient(to bottom, rgba(255, 255, 255, var(--style-scan-opacity)) 0, rgba(255, 255, 255, var(--style-scan-opacity)) 3px, transparent 3px, transparent 6px),
-    var(--ground);
-}
-html[data-style="cybertron"] #screen::before {
-  content: "";
+html[data-style="cybertron"] #theme-bg > .bg-cybertron { display: block; }
+html[data-style="cybertron"] #theme-bg .cy-ground {
   position: absolute;
   left: 0;
   top: 0;
   width: 1920px;
   height: 1080px;
+  background: var(--style-ground);
+}
+/* The grid is one tile taller than the screen and slides up by one tile, so the loop has no seam. The
+   color is a team color, which can only be made fainter by fading the layer. */
+html[data-style="cybertron"] #theme-bg .cy-grid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: calc(1080px + var(--style-grid-size));
   background:
-    linear-gradient(to right, var(--style-neon) 0, var(--style-neon) 3px, transparent 3px) 0 0 / var(--style-grid-size) var(--style-grid-size),
-    linear-gradient(to bottom, var(--style-neon) 0, var(--style-neon) 3px, transparent 3px) 0 0 / var(--style-grid-size) var(--style-grid-size);
+    linear-gradient(to right, var(--style-neon) 0, var(--style-neon) 2px, transparent 2px) 0 0 / var(--style-grid-size) var(--style-grid-size),
+    linear-gradient(to bottom, var(--style-neon) 0, var(--style-neon) 2px, transparent 2px) 0 0 / var(--style-grid-size) var(--style-grid-size);
   opacity: var(--style-grid-opacity);
-  pointer-events: none;
+  animation: cy-drift 16s linear infinite;
+}
+html[data-style="cybertron"].grid-dots #theme-bg .cy-grid {
+  background: radial-gradient(circle, var(--style-neon) 0, var(--style-neon) 3px, transparent 3.5px) 0 0 / var(--style-grid-size) var(--style-grid-size);
+}
+/* The scan line is a thin band of the neon with soft edges, one pass from above the screen to below it every 9 seconds */
+html[data-style="cybertron"] #theme-bg .cy-scan {
+  position: absolute;
+  left: 0;
+  top: -40px;
+  width: 1920px;
+  height: 36px;
+  background: linear-gradient(to bottom, transparent, var(--style-neon), transparent);
+  opacity: var(--style-scan-opacity);
+  animation: cy-scan 9s linear infinite;
 }
 
 
-/* The plates. The body of an area's frame and of the banner's is the team's body color. The
-   header tab is a raised armor plate: a gradient, with the bevel, the bright line and the
-   team's plate color inset that plate.js draws on it (base.css). The rest of the header is the
-   same as the body. */
+/* The plates. The body of an area's frame and of the banner's is the team's body color, and lets the page
+   behind it show. */
 html[data-style="cybertron"] .area,
 html[data-style="cybertron"] .banner {
   --panel-face: var(--style-body);
@@ -64,14 +66,83 @@ html[data-style="cybertron"] {
   --head-ink: var(--white);
   --head-number: var(--yellow);
 }
-html[data-style="cybertron"] .area .plate .header-left { fill: url(#armor-face); }
-html[data-style="cybertron"] .area .plate .header-right { fill: var(--style-body); }
+html[data-style="cybertron"] .area > .plate .body,
+html[data-style="cybertron"] .banner > .plate .body {
+  fill-opacity: var(--style-panel-opacity);
+}
 
-/* The TEAM plate, the ticker's tag and the cards are plates in the team's plate color. The
-   cards that only hold a picture have no fill */
+/* The header is a wedge of the team's accent that lets the body show through, with a line of the same
+   gradient along its lit edges. The title on it is the team's text color. The rest of the header is the body. */
+html[data-style="cybertron"] .area > .plate .header-left {
+  fill: var(--team-accent);
+  fill-opacity: var(--style-wedge-opacity);
+}
+html[data-style="cybertron"] .area > .plate .header-right { fill: none; }
+html[data-style="cybertron"] .area .tab-inset,
+html[data-style="cybertron"] .area .tab-bevel { display: none; }
+html[data-style="cybertron"] .area .tab-line {
+  stroke: url(#theme-hair);
+  stroke-opacity: 1;
+  stroke-width: 3px;
+}
+html[data-style="cybertron"] .area .header .title { color: var(--style-header-ink); }
+
+/* The edge is a hairline, and the neon line just inside it is the second. Both run from the neon to the pink.
+   The shadow, the rim, the shade and the ridge of the metal edge are left out, and so are the bolts. */
+html[data-style="cybertron"] .area > .plate .edge-shadow,
+html[data-style="cybertron"] .area > .plate .edge-rim,
+html[data-style="cybertron"] .area > .plate .edge-shade,
+html[data-style="cybertron"] .area > .plate .edge-ridge,
+html[data-style="cybertron"] .area > .plate .screw,
+html[data-style="cybertron"] .area > .plate .screw-shadow,
+html[data-style="cybertron"] .banner > .plate .edge-shadow,
+html[data-style="cybertron"] .banner > .plate .edge-rim,
+html[data-style="cybertron"] .banner > .plate .edge-shade,
+html[data-style="cybertron"] .banner > .plate .edge-ridge,
+html[data-style="cybertron"] .banner > .plate .screw,
+html[data-style="cybertron"] .banner > .plate .screw-shadow { display: none; }
+html[data-style="cybertron"] .area > .plate .edge-face,
+html[data-style="cybertron"] .banner > .plate .edge-face {
+  stroke: url(#theme-hair);
+  stroke-width: 2px;
+}
+html[data-style="cybertron"] .area > .plate .edge-neon,
+html[data-style="cybertron"] .banner > .plate .edge-neon {
+  stroke: url(#theme-hair);
+  stroke-width: 2px;
+}
+
+/* The thin bars between rows are hairlines */
+html[data-style="cybertron"] .area .row-bar .edge-shadow,
+html[data-style="cybertron"] .area .row-bar .edge-shade,
+html[data-style="cybertron"] .area .row-bar .edge-ridge,
+html[data-style="cybertron"] .area .row-bar .edge-rim { display: none; }
+html[data-style="cybertron"] .area .row-bar .edge-face {
+  stroke: url(#theme-hair);
+  stroke-width: 2px;
+}
+
+/* The TEAM plate, the ticker's tag and the cards are readout plates in the team's plate color, with a hairline edge.
+   The cards that only hold a picture have no fill */
 html[data-style="cybertron"] .team-fill,
 html[data-style="cybertron"] .tag-fill,
-html[data-style="cybertron"] .card-fill { fill: var(--team-plate); }
+html[data-style="cybertron"] .card-fill {
+  fill: var(--team-plate);
+  fill-opacity: var(--style-wedge-opacity);
+}
+html[data-style="cybertron"] .team-plate-art .edge-shadow,
+html[data-style="cybertron"] .team-plate-art .edge-rim,
+html[data-style="cybertron"] .team-plate-art .edge-shade,
+html[data-style="cybertron"] .team-plate-art .edge-ridge,
+html[data-style="cybertron"] .tag-plate .edge-shadow,
+html[data-style="cybertron"] .tag-plate .edge-rim,
+html[data-style="cybertron"] .tag-plate .edge-shade,
+html[data-style="cybertron"] .tag-plate .edge-ridge { display: none; }
+html[data-style="cybertron"] .team-plate-art .edge-face,
+html[data-style="cybertron"] .tag-plate .edge-face {
+  stroke: url(#theme-hair);
+  stroke-width: 3px;
+}
 html[data-style="cybertron"] .sponsor-feature .card-fill,
 html[data-style="cybertron"] .photo .card-fill { fill: none; }
 
@@ -85,31 +156,33 @@ html[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accen
    another picture (pack-mark) and stays. */
 html[data-style="cybertron"] .header svg.double-slash { display: none; }
 
-/* What only Cybertron draws on a frame (plate.js, decorMarkup): the hazard stripe in the
-   team's accent under the header, the pink conduit along two inner edges, a row of neon
-   slashes along the bottom, the pink brackets outside two corners and the faint seams of
-   the plates */
+/* What this theme draws on a frame (core/plate-bar.js, decorMarkup). The hazard stripe, the conduit, the
+   row of slashes and the plate seams are in the markup of the frame and are not drawn. The brackets stand outside two
+   corners, the ruler is a row of ticks along the top edge, the link mark is line art at the foot of a tall frame and
+   the hex field is a pattern (index.html, theme-hex) over the body. */
 html[data-style="cybertron"] .art-cybertron { display: inline; }
-html[data-style="cybertron"] .art-hazard { fill: var(--team-accent); }
-html[data-style="cybertron"] .art-conduit {
-  fill: none;
-  stroke: var(--style-pink);
-  stroke-width: 3px;
-}
-html[data-style="cybertron"] .art-slashes {
-  fill: var(--style-neon);
-  fill-opacity: .85;
-}
+html[data-style="cybertron"] .art-hazard,
+html[data-style="cybertron"] .art-conduit,
+html[data-style="cybertron"] .art-slashes,
+html[data-style="cybertron"] .art-seams { display: none; }
 html[data-style="cybertron"] .art-brackets {
   fill: none;
-  stroke: var(--style-pink);
-  stroke-width: 4px;
-}
-html[data-style="cybertron"] .art-seams {
-  fill: none;
-  stroke: var(--plate-ink);
-  stroke-opacity: .6;
+  stroke: var(--style-neon);
   stroke-width: 3px;
+}
+html[data-style="cybertron"] .art-ruler {
+  fill: var(--style-neon);
+  fill-opacity: .55;
+}
+html[data-style="cybertron"] .art-link {
+  fill: none;
+  stroke: var(--style-neon);
+  stroke-opacity: .6;
+  stroke-width: 2px;
+}
+html[data-style="cybertron"] .art-hex {
+  fill: url(#theme-hex);
+  fill-opacity: var(--style-hex-opacity);
 }
 
 

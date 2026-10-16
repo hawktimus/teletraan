@@ -2,7 +2,7 @@
 
 import { registerTab } from '../tabs.js';
 import { api, confirmed, showResult, useStyles } from './api.js';
-import { outcome, statusHtml } from './render.js';
+import { esc, outcome, statusHtml } from './render.js';
 
 const restarts = [
   { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
@@ -57,11 +57,19 @@ registerTab({
     const body = container.querySelector('[data-body]');
     buttons(container.querySelector('[data-buttons]'));
 
+    // Only redrawn when the words changed, so the scroll position stays
+    let last = '';
+    let left = false;
     async function refresh() {
       const answer = await api('GET', '/status');
-      body.innerHTML = answer.ok ? statusHtml(answer.data) : '<section class="card"><h2>Status</h2><p>' + answer.error + '</p></section>';
+      if (left) return;
+      const html = answer.ok ? statusHtml(answer.data) : '<section class="card"><h2>Status</h2><p>' + esc(answer.error) + '</p></section>';
+      if (html === last) return;
+      last = html;
+      body.innerHTML = html;
     }
     await refresh();
-    const timer = setInterval(() => { if (!container.isConnected) clearInterval(timer); else refresh(); }, 30000);
+    const timer = setInterval(refresh, 30000);
+    return () => { left = true; clearInterval(timer); };
   },
 });
