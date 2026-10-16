@@ -74,7 +74,7 @@ function tidyTeam(value) {
 // team, and status by department and overall progress for neither. A Monday row that needs a team and has none is
 // dropped. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
 // tasks, and a row for both teams that is dropped.
-function tidyMainRow(raw) {
+export function tidyMainRow(raw) {
   if (!isRecord(raw) || typeof raw.panel !== 'string') return null;
 
   const panel = panelOf(raw.panel.trim());
@@ -128,7 +128,7 @@ function photoRowOf(raw) {
 
 // A row of the small panel becomes { panel, seconds }. It never has a team: the small panels take the colors of
 // the team on the banner at that moment.
-function tidySideRow(raw) {
+export function tidySideRow(raw) {
   if (!isRecord(raw) || typeof raw.panel !== 'string') return null;
 
   const panel = panelOf(raw.panel.trim());
@@ -329,7 +329,7 @@ export function mainPlaylist(content, now = new Date(), screen = planFor(content
 // department with no visible task is left out as an empty row always was. The page of the step is the team, the department and
 // the turn of the row: how many rows of the same panel, team and department come right before it, plus one, so that a board that
 // plays twice in a row shows the next cards the second time.
-function stepsOfRow(row, index, rows, content, now) {
+export function stepsOfRow(row, index, rows, content, now) {
   const step = { show: true, team: row.team };
   if (row.seconds) step.seconds = row.seconds;
   if (row.photoCount) Object.assign(step, { photoCount: row.photoCount, secondsPerPhoto: row.secondsPerPhoto });

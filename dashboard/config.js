@@ -269,6 +269,64 @@ export const screenLimits = {
   swapSeconds: limits.swapSeconds,
 };
 
+// Views (core/views.js, docs/views.md): four documents in the Studio, one for each key. A view is a layout, a team, a
+// number of minutes on the screen, the rows of the large panel and the rows of the small panel. The id of a document
+// says its key. Dashboard Settings (Look tab) names the order they play in (viewOrder), the name of the General view
+// and the title its banner carries. The Studio copies these lists and limits (tests/schemas.test.mjs compares them).
+//   layout   standard is the banner across the top with the countdown and the small panel at the right. bar is the
+//            banner with the war clock, a thin column and one panel. The team views mirror with their team (Nova)
+export const viewKeys = ['general', 'prime', 'nova', 'family'];
+export const viewIds = { general: 'view-general', prime: 'view-prime', nova: 'view-nova', family: 'view-family' };
+export const viewLayouts = { general: 'standard', prime: 'bar', nova: 'bar', family: 'bar' };
+export const viewTeams = { general: '', prime: 'prime', nova: 'nova', family: '' };
+export const viewLimits = { minutes: { min: 1, max: 30 } };
+
+// A Team lead row of a team view with no department stands for every Team lead marked for Monday, and is worked out
+// each time the view is read, so a new department needs no edit (core/views.js, expandRows)
+const mondayTeamRows = team => [
+  { panel: 'monday-tasks', team: team, department: '', seconds: 30 },
+  { panel: 'monday-done', team: team, seconds: 30 },
+  { panel: 'monday-timeline', team: team, seconds: 30 },
+  { panel: 'monday-board', team: team, seconds: 30 },
+];
+
+// What a view has when its document does not say, or there is no document yet
+export const defaultViews = {
+  general: {
+    minutes: 6,
+    panels: [
+      { panel: 'tonight', seconds: 45 },
+      { panel: 'events', seconds: 30 },
+      { panel: 'leadership', seconds: 20 },
+      { panel: 'photo', photoCount: 4, secondsPerPhoto: 10 },
+      { panel: 'sponsor-feature', seconds: 15 },
+    ],
+    sidePanels: [
+      { panel: 'next-event', seconds: 30 },
+      { panel: 'task-counts', seconds: 20 },
+      { panel: 'safety-days', seconds: 20 },
+      { panel: 'forecast', seconds: 15 },
+      { panel: 'sponsor-logo', seconds: 15 },
+    ],
+  },
+  prime: { minutes: 6, panels: mondayTeamRows('prime'), sidePanels: [] },
+  nova: { minutes: 6, panels: mondayTeamRows('nova'), sidePanels: [] },
+  family: {
+    minutes: 2,
+    panels: [
+      { panel: 'monday-overall', seconds: 30 },
+      { panel: 'monday-status-depts', seconds: 30 },
+    ],
+    sidePanels: [],
+  },
+};
+
+// The panels of the Family view are fixed
+export const familyPanels = ['monday-overall', 'monday-status-depts'];
+
+// The style a bar view is drawn in. The bar layout has the drawing of Minimal in every theme for now
+export const barDrawStyle = 'minimal';
+
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
   motion: 'full',
@@ -406,6 +464,10 @@ export const defaultSettings = {
   //   mondayStyle     the style while a Monday row plays, for a Screen that has not set its own. It seeds the Screens
   screenSchedule: defaultSchedule,
   mondayStyle: 'minimal',
+  // The Views (core/views.js): the name of the General view, the title its banner carries and the order of the rotation
+  generalViewName: 'General',
+  generalViewTitle: 'Hawktimus Dashboard',
+  viewOrder: viewKeys.slice(),
   // The Studio hides these, and the screen does not read them any more. The stored values stay. nameEvery and
   // logoHawkEvery, in seconds, are not read either: the name effect and the flying hawk follow the minutes of the
   // Screen that is on the screen (defaultScreen above)

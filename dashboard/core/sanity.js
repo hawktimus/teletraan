@@ -10,6 +10,7 @@ import { fromBoardOnly } from './task-source.js';
 import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
 import { tidyScreens } from './screens.js';
+import { tidyViews } from './views.js';
 import { tidyNotices } from './notice.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
@@ -150,6 +151,14 @@ export const contentQuery = `{
     swapSeconds,
     mondayStyle
   },
+  "views": *[_type == "view"] | order(_id asc) {
+    _id,
+    title,
+    "team": coalesce(team->code, team),
+    minutes,
+    "panels": coalesce(panels, []),
+    "sidePanels": coalesce(sidePanels, [])
+  },
   "frc": *[_id == "frc-status"][0],
   "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) }
 }`;
@@ -277,6 +286,7 @@ export function normalizeContent(result, now = new Date()) {
     frc: tidyFrc(data.frc),
     monday: tidyMondayStatus(data.monday),
     screens: tidyScreens(data.screens, settings.mondayStyle),
+    views: tidyViews(data.views),
   });
 }
 
@@ -307,6 +317,7 @@ export function normalizeSample(raw) {
   content.frc = tidyFrc(data.frc);
   content.monday = tidyMondayStatus(data.monday);
   content.screens = tidyScreens(data.screens, content.settings.mondayStyle);
+  content.views = tidyViews(data.views);
   return withDefaults(content);
 }
 

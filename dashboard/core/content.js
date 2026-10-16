@@ -11,6 +11,7 @@ import { tidyAnnounceRequest } from './announce.js';
 import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
 import { tidyNextLookRequest, tidySchedule } from './screens.js';
+import { tidyViewSettings } from './views.js';
 import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
@@ -50,7 +51,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, screens: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, screens: [], views: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   // The Mini reads the two Monday blocks and the screen has no use for them
@@ -97,6 +98,8 @@ export function fixSettingValues(settings, saved = settings) {
   // not a setting any more (lookSwaps in config.js) and the stored value is only kept tidy
   settings.screenSchedule = tidySchedule(settings.screenSchedule);
   if (!styles.includes(settings.mondayStyle)) settings.mondayStyle = defaultSettings.mondayStyle;
+  // The Views: the name of the General view, its banner title and the order of the rotation
+  tidyViewSettings(settings);
   if (!lookSwaps.includes(settings.lookSwap)) settings.lookSwap = defaultSettings.lookSwap;
   // The competition cards: the mode here, and a switch for each card in the list of booleans below
   if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
