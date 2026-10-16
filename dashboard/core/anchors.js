@@ -52,6 +52,7 @@ export const anchorsByTheme = {
   original: original,
   cybertron: original,
   retro: original,
+  foundry: original,
 };
 
 // The box of one anchor, or null for a layout with no anchors (the sidebar layout) or a name that is not one

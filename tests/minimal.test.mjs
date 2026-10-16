@@ -301,10 +301,6 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
     if (other && other.body === rule.body) shared.push(rule.selectors.map(unstyled).join(', '));
   });
   assert.deepEqual(shared, [
-    'html[style] #screen::before', // the grid layer: it reads --style-grid-size, which is 96 px in one and 48 px in the other
-    'html[style] .area .plate .header-left', // the armor tab, which both have
-    'html[style] .area .plate .header-right',
-    'html[style] .team-fill, html[style] .tag-fill, html[style] .card-fill', // the TEAM plate, the ticker's tag and the cards in the team's plate color
     'html[style] .sponsor-feature .card-fill, html[style] .photo .card-fill', // the cards that only hold a picture have no fill
     'html[style] .header svg.double-slash', // off in both, because the pictures of both have no // mark
     'html[style] .war-clock', // shown by both: the narrow form in one and the wide form in the other
@@ -321,15 +317,15 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   // the armor colors and the rust are tokens (tokens.css), the same for the bar layout and for Cybertron
   assert.deepEqual(same, ['--style-body', '--style-grid-opacity', '--style-neon', '--style-pink']);
   assert.deepEqual(differ, ['--style-chamfer', '--style-digits', '--style-grid-size']);
-  assert.deepEqual(Object.keys(other).filter(name => one[name] === undefined).sort(), ['--style-armor-bottom', '--style-armor-top', '--style-raised', '--style-rust', '--style-scan-opacity']);
+  assert.deepEqual(Object.keys(other).filter(name => one[name] === undefined).sort(), ['--style-armor-bottom', '--style-armor-top', '--style-ground', '--style-header-ink', '--style-hex-opacity', '--style-panel-opacity', '--style-raised', '--style-rust', '--style-scan-opacity', '--style-wedge-opacity']);
   assert.deepEqual(Object.keys(one).filter(name => other[name] === undefined), [], 'Minimal sets nothing that Cybertron does not');
 
   // Both plates are the team's body color, and the cuts and the grids are different
   assert.equal(other['--style-body'], 'var(--team-body)');
   assert.equal(other['--style-raised'], '#262b33');
   assert.equal(other['--style-chamfer'], '56px');
-  assert.equal(other['--style-grid-size'], '96px');
-  assert.equal(other['--style-scan-opacity'], '.035');
+  assert.equal(other['--style-grid-size'], '64px');
+  assert.equal(other['--style-scan-opacity'], '.09');
   assert.equal(one['--style-body'], 'var(--team-body)');
   assert.equal(one['--style-chamfer'], '34px');
   assert.equal(one['--style-grid-size'], '48px');

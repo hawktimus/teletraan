@@ -3,7 +3,7 @@
 // that plays that day. The schedule is the field themeByWeekday of Dashboard Settings; this page
 // writes only that field, to the draft of Dashboard Settings, and Publish all puts it on the screen.
 //
-// A placeholder theme says so under its name. If Dashboard Settings has never been published the
+// If Dashboard Settings has never been published the
 // page says to open it and publish it once, as the Start here page did.
 //
 // It is written without JSX, so it reads as plain JavaScript:

@@ -1,0 +1,37 @@
+/* The keyframes of the Foundry theme. Everything here moves with transform only, and calm and no motion draw the
+   gears, the pistons and the background still (base.css, #theme-bg, and the rules at the end of theme.css).
+
+   The gears turn all the time: the big one 90 seconds for a turn, the small one that meshes with it the other way
+   at 12 to 9 (67.5 seconds), the far one 120. The pistons stroke every 6 to 7.5 seconds. */
+@keyframes fa-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes fa-spin-back {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes fa-stroke {
+  from { transform: translateY(0); }
+  to   { transform: translateY(10px); }
+}
+
+/* The background: a dust mote drifts up and to the right, a band of hazard stripes creeps along the edge by one
+   pitch of its stripes (68 pixels, so the loop has no seam), the work light pans across, and the hook crosses the
+   rail once every 150 seconds, waiting for most of them */
+@keyframes fy-mote {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(40px, -60px); }
+}
+@keyframes fy-creep {
+  from { transform: translateX(0); }
+  to   { transform: translateX(68px); }
+}
+@keyframes fy-lamp {
+  from { transform: translateX(0); }
+  to   { transform: translateX(1700px); }
+}
+@keyframes fy-hook {
+  0%, 88% { transform: translateX(0); }
+  100%    { transform: translateX(2300px); }
+}

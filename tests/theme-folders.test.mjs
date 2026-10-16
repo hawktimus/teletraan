@@ -1,5 +1,4 @@
-// Tests for the theme folders (dashboard/styles/<theme>/): the four files of each, Retro as a marked copy of
-// Original, the loader that finds a folder from an id, the bar layout keeping one drawing in every theme, and
+// Tests for the theme folders (dashboard/styles/<theme>/): the files of each, the loader that finds a folder from an id, the bar layout keeping one drawing in every theme, and
 // the inverted palette and the purple metal of a team.
 //
 //   node tests/theme-folders.test.mjs
@@ -25,8 +24,8 @@ function test(name, run) {
   try { run(); passed += 1; console.log('ok    ' + name); } catch (error) { console.log('FAIL  ' + name + '\n' + error.stack); process.exitCode = 1; }
 }
 
-test('the themes are original, cybertron and retro, and Minimal is not one of them', () => {
-  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro']);
+test('the themes are original, cybertron, retro and foundry, and Minimal is not one of them', () => {
+  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro', 'foundry']);
   assert.equal(config.themeIds.includes('minimal'), false);
   assert.equal(fs.existsSync(dash + 'styles/minimal.css'), false);
   assert.equal(fs.existsSync(dash + 'styles/minimal'), false);
@@ -76,21 +75,12 @@ test('every theme has a swap variant, and it is the pull apart of core/swap-plan
   assert.equal((await loader.loadSwapVariant('cybertron')).name, 'pull-apart');
 });
 
-test('Retro is a marked copy of Original: the same rules, and the marker file says so', () => {
-  const marker = dash + 'styles/retro/PLACEHOLDER';
-  assert.ok(fs.existsSync(marker), 'the marker exists');
-  if (!fs.existsSync(marker)) return;
-
-  const original = noComments(read('dashboard/styles/original/theme.css'));
-  const retro = noComments(read('dashboard/styles/retro/theme.css'));
-  assert.equal(retro, original + '\nhtml[data-style="retro"] .rivets { display: inline; }', 'the one rule more shows the rivets, as base.css does for Original');
-  ['tokens.css', 'frame.css'].forEach(name => assert.equal(noComments(read('dashboard/styles/retro/' + name)), noComments(read('dashboard/styles/original/' + name)), name));
-  assert.equal(noComments(read('dashboard/styles/retro/transitions.js')).replace(/retro/g, 'original'), noComments(read('dashboard/styles/original/transitions.js')));
-  assert.equal(style.shapesFor('retro'), style.shapesFor('original'), 'the same frames');
+test('Retro and Foundry are designed themes: their frames are drawn by core/theme-art.js, so the page has the usual shapes', () => {
+  assert.equal(style.shapesFor('retro'), style.shapesFor('original'), 'the same frames of plate.js');
+  assert.equal(style.shapesFor('foundry'), '');
   assert.equal(style.hasSteel('retro'), false);
-  const studio = read('studio/inputs/theme-styles.js');
-  assert.ok(studio.includes('Retro is not designed yet; it looks like Original.'), 'the Studio says so');
-  assert.ok(read('dashboard/styles/retro/theme.css').includes('PLACEHOLDER'));
+  assert.equal(style.hasSteel('foundry'), false);
+  assert.equal(fs.existsSync(dash + 'styles/retro/PLACEHOLDER'), false);
 });
 
 test('the Studio list of themes is the one in config.js, in the same order', async () => {

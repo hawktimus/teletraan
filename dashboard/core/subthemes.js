@@ -10,7 +10,7 @@ export const subthemeMotions = ['none', 'drift', 'blink', 'fall'];
 const sizeLeast = 40;
 const sizeMost = 240;
 
-const themeIds = ['original', 'cybertron', 'retro'];
+const themeIds = ['original', 'cybertron', 'retro', 'foundry'];
 const viewKeys = ['general', 'prime', 'nova', 'family'];
 const dayForm = /^\d{4}-\d{2}-\d{2}$/;
 

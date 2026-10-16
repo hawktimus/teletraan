@@ -22,7 +22,7 @@ Dashboard Settings, Look tab: the name and title of the General view and the ord
 
 ## Themes
 
-Settings, then Themes, lists the themes and holds the theme of each day of the week. A change is saved as a draft of Dashboard Settings. Click Publish all. Retro is a copy of Original until it is designed.
+Settings, then Themes, lists the themes and holds the theme of each day of the week. A change is saved as a draft of Dashboard Settings. Click Publish all. Foundry is not in the starting week; pick it for a day to use it.
 
 ## Test the token
 

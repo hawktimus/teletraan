@@ -861,3 +861,45 @@ html.neon-glow:not([data-finish="flat"]) .art-glow { display: inline; }
   font: 700 96px/120px sans-serif;
   text-align: center;
 }
+
+
+/* The background of the theme (core/theme-bg.js) and the drawing a theme puts on the frames (core/theme-art.js).
+   #theme-bg is the first thing in the world, so the stage and everything over it covers it. Each theme has a group
+   in it that its own stylesheet shows (styles/<theme>/), and the groups are hidden until then. Calm and no motion
+   draw every layer still. */
+#theme-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  pointer-events: none;
+}
+#theme-bg > .bg-group {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+html:not([data-motion="full"]) #theme-bg * { animation: none; }
+
+.theme-art {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.theme-art > div {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}

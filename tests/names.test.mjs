@@ -27,7 +27,7 @@ test('a word that is not in the map comes back as it is', () => {
 
 test('the stored names stay: the old settings and the theme ids are still in the config', () => {
   assert.ok('style' in config.defaultSettings && 'look' in config.defaultSettings);
-  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro']);
+  assert.deepEqual(config.themeIds, ['original', 'cybertron', 'retro', 'foundry']);
 });
 
 console.log('\n' + passed + ' passed');

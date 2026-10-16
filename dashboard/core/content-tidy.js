@@ -1,6 +1,6 @@
 // The tidy functions of the content: defaults, ranges and settings (part of content.js).
 
-import { competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, speeds, styles, teamModes } from '../config.js';
+import { backgrounds, competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
@@ -81,6 +81,7 @@ export function fixSettingValues(settings, saved = settings) {
   if (!metals.includes(settings.frameMetal)) settings.frameMetal = defaultSettings.frameMetal;
   if (!looks.includes(settings.look)) settings.look = defaultSettings.look;
   if (!styles.includes(settings.style)) settings.style = defaultSettings.style;
+  if (!backgrounds.includes(settings.background)) settings.background = defaultSettings.background;
   // The page change settings
   if (!pageChangeStyles.includes(settings.pageChangeStyle)) settings.pageChangeStyle = defaultSettings.pageChangeStyle;
   if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;

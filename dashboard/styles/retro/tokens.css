@@ -1,2 +1,15 @@
-/* The theme-level overrides of the team tokens (teams.css) for the Retro placeholder. There are none:
-   it takes the team's colors as Original does. */
+/* The custom properties of the Retro theme. What each one is for is listed at the top of theme.css.
+   A color is written here and nowhere else. */
+
+html[data-style="retro"] {
+  --style-ink: #0b0820;
+  --style-sky-a: #2a1a6e;
+  --style-sky-b: #0d0b2a;
+  --style-cel: var(--team-plate);
+  --style-cel-line: var(--team-primary);
+  --style-cel-chrome: var(--team-body);
+  --style-glint: #ffffff;
+  --style-star: #ffffff;
+  --style-burst-opacity: .035;
+  --style-header-ink: var(--team-header-ink, #ffffff);
+}
