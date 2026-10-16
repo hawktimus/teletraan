@@ -1,0 +1,25 @@
+/* The three dots left of the ticker row (core/dots-run.js). 16px, 28px apart from one centre to the next,
+   in the margin of the stage so that no ticker or frame is covered. Colour only. */
+#status-dots {
+  position: absolute;
+  left: 12px;
+  top: 984px; /* the top of the ticker row */
+  width: 16px;
+  height: 72px;
+  pointer-events: none;
+}
+#status-dots[hidden] { display: none; }
+#status-dots .status-dot {
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #9a9a9a;
+}
+#status-dots .status-dot[data-dot="monday"] { top: 0; }
+#status-dots .status-dot[data-dot="band"] { top: 28px; }
+#status-dots .status-dot[data-dot="sanity"] { top: 56px; }
+#status-dots .status-dot[data-state="green"] { background: #2fd27a; }
+#status-dots .status-dot[data-state="amber"] { background: #ffb300; }
+#status-dots .status-dot[data-state="red"] { background: #ff3b3b; }

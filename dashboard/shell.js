@@ -207,6 +207,10 @@ async function run() {
       // The team on the screen, which in Alternate mode changes with the clock (core/teams.js)
       startOptional('./core/team-run.js', module => module.startTeams(getContent));
 
+      // The three dots and the report to the control page. The report asks the team of the page
+      startOptional('./core/dots-run.js', module => module.startDots(getContent, showingSample));
+      startOptional('./core/now-report.js', module => module.startNowReport(getContent, currentTeam));
+
       // The Screens: the look of each row of the large panel, the swaps, and the Next look now button in the Studio.
       // After the ones they ask about. ?style= and ?team= in the address win over them, so then they do nothing
       if (!onlyTasks) {

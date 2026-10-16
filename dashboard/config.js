@@ -459,6 +459,15 @@ export const defaultSettings = {
   //   competitionPreviewRequest  the last click of Preview competition, the same shape.
   nextLookRequest: { requestedAt: '' },
   competitionPreviewRequest: { requestedAt: '' },
+  // Requests from the control page (core/screen-requests.js). Each ends at its until time.
+  //   holdPanel      keep one panel on the large frame
+  //   showView       show one view (general, prime, nova or family)
+  //   previewTheme   show one theme (original, cybertron or retro)
+  //   pauseRotation  stop the rotation
+  holdPanel: { panel: '', until: '' },
+  showView: { key: '', until: '' },
+  previewTheme: { theme: '', until: '' },
+  pauseRotation: { until: '' },
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',

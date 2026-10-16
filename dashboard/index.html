@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="neon-kit.css?v=0">
   <link rel="stylesheet" href="seasons/season.css?v=0">
   <link rel="stylesheet" href="seasons/motion.css?v=0">
+  <link rel="stylesheet" href="status-dots.css?v=0">
 </head>
 <body>
   <!-- The metal kit. The gradients and the screw are drawn here once, and every
@@ -458,6 +459,9 @@
            the corner of the screen while it is shown, and before the overlay,
            so a full screen alert still covers it. -->
       <div id="connection-status" hidden></div>
+      <!-- The three dots for Monday, Band and Sanity (core/dots-run.js), left of the ticker row. Hidden
+           until the script draws them. -->
+      <div id="status-dots" hidden></div>
       <!-- The night screen, the screensaver (core/night-screen.js): black, with the
            logo and the team number. It is after the stage and the connection
            text, which it covers, and before the overlay, so an alert or an

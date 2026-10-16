@@ -42,3 +42,48 @@ export function nextLookRequestField() {
 export function competitionPreviewRequestField() {
   return requestField('competitionPreviewRequest', 'Last competition preview', 'Preview competition', 'The screen shows the competition cards for 2 minutes, once.');
 }
+
+// The requests of the control page (dashboard/core/screen-requests.js). The page writes them and
+// each ends at its until time, so a forgotten one does nothing after that.
+function untilField() {
+  return defineField({
+    name: 'until',
+    title: 'Until',
+    type: 'datetime',
+    readOnly: true,
+    description: 'When the request ends.',
+  });
+}
+
+function controlField(name, title, what, extra) {
+  return defineField({
+    name: name,
+    title: title,
+    type: 'object',
+    group: 'screen',
+    hidden: true,
+    description: 'Filled in by the control page. ' + what + ' Do not edit it.',
+    fields: extra.concat(untilField()),
+  });
+}
+
+function wordField(name, title, list) {
+  return defineField({
+    name: name,
+    title: title,
+    type: 'string',
+    readOnly: true,
+    description: list ? 'What the request names.' : 'What the request names, up to 60 characters.',
+    options: list ? { list: list } : undefined,
+    validation: list ? undefined : rule => rule.max(60).error('Use 60 characters or fewer.'),
+  });
+}
+
+export function screenRequestFields() {
+  return [
+    controlField('holdPanel', 'Hold panel', 'The large frame keeps one panel.', [wordField('panel', 'Panel')]),
+    controlField('showView', 'Show view', 'The screen shows one view.', [wordField('key', 'View', ['general', 'prime', 'nova', 'family'])]),
+    controlField('previewTheme', 'Preview theme', 'The screen shows one theme.', [wordField('theme', 'Theme', ['original', 'cybertron', 'retro'])]),
+    controlField('pauseRotation', 'Pause rotation', 'The rotation stops.', []),
+  ];
+}
