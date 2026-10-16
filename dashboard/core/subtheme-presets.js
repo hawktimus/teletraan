@@ -9,14 +9,15 @@
 import { frameAnchorBox } from './anchors.js';
 import * as art from './subtheme-shapes.js';
 
-export const presetIds = ['halloween'];
+export const presetIds = ['halloween', 'winter'];
 
 // The seasonal packs that bring a preset when the schedule rule says nothing about subthemes
-export const packSubthemes = { halloween: 'halloween' };
+export const packSubthemes = { halloween: 'halloween', christmas: 'winter' };
 
 // What the Studio lists, in this order. The ids are stored and never change.
 export const presetChoices = [
   { id: 'halloween', name: 'Halloween' },
+  { id: 'winter', name: 'Winter' },
 ];
 
 export function isPreset(id) {
@@ -31,6 +32,25 @@ const presets = {
     { anchor: 'corner-bolt', draw: art.pumpkins },
     { anchor: 'corner-cut-main-a', draw: art.web },
     { anchor: 'ticker-bar-top', draw: art.bats },
+  ],
+  winter: [
+    { anchor: 'banner-bar-top', draw: art.snowCap },
+    { anchor: 'main-bar-top', draw: art.snowCap },
+    { anchor: 'side-bar-top', draw: art.snowCap },
+    { anchor: 'panel-b-bar-top', draw: art.snowCap },
+    { anchor: 'ticker-bar-top', draw: art.snowCap },
+    { anchor: 'ticker-bar-bottom', draw: art.snowCap, rest: 9 },
+    { anchor: 'banner-bar-bottom', draw: art.icicles },
+    { anchor: 'main-header-gap', draw: art.icicles },
+    { anchor: 'corner-cut-main-a', draw: art.frostFan },
+    { anchor: 'corner-cut-main-b', draw: art.frostFan },
+    { anchor: 'corner-cut-aux-a', draw: art.frostFan },
+    { anchor: 'corner-cut-aux-b', draw: art.frostFan },
+    { anchor: 'banner-bar-bottom', draw: art.bulbString },
+    { anchor: 'gap-column', draw: art.snowfall },
+    { anchor: 'margin-left', draw: art.snowfall },
+    { anchor: 'margin-right', draw: art.snowfall },
+    { anchor: 'corner-bolt', draw: art.snowman },
   ],
 };
 

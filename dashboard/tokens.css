@@ -419,7 +419,21 @@ html.palette-inverted {
   --kit-pale: #d9fbff; /* the head of a packet and the sweeping line */
   --subtheme-accent: #d9b24a;
 
-  /* the shipped subthemes (core/subtheme-presets.js, subthemes.css): halloween */
+  /* the shipped subthemes (core/subtheme-presets.js, subthemes.css): halloween and winter */
+  --subtheme-snow: #f4f9ff;
+  --subtheme-snow-shade: #b3c8de;
+  --subtheme-ice: #c4e6f6;
+  --subtheme-ice-shine: #ffffff;
+  --subtheme-frost: #dff2fc;
+  --subtheme-wire: #3a4a40;
+  --subtheme-bulb-a: #e5484d;
+  --subtheme-bulb-b: #f5c542;
+  --subtheme-bulb-c: #4cc38a;
+  --subtheme-bulb-d: #4c9bef;
+  --subtheme-bulb-e: #b47cf0;
+  --subtheme-scarf: #d9363e;
+  --subtheme-coal: #1c1c24;
+  --subtheme-carrot: #f2812d;
   --subtheme-orange: #f28c1f;
   --subtheme-orange-deep: #a8520a;
   --subtheme-purple: #7b3fb8;

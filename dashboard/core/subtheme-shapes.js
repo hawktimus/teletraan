@@ -32,6 +32,154 @@ export function inCorner(corner, w, h, inside) {
   return turn === '' ? inside : '<g' + turn + '>' + inside + '</g>';
 }
 
+// ---- Winter
+
+const humpWidths = [96, 64, 120, 80, 104, 72];
+const humpHeights = [14, 9, 17, 11, 15, 8];
+
+// A drift of snow along a bar: round humps on a flat strip. rest is the thickness of the strip
+// under the humps, and a hump is never taller than the box leaves room for.
+export function snowCap(w, h, rest) {
+  const base = h - (rest === undefined ? 3 : rest);
+  const room = Math.max(4, base - 2);
+  let x = 0;
+  let i = 0;
+  let d = 'M0 ' + h + 'L0 ' + base;
+
+  while (x < w - 1) {
+    const span = Math.min(humpWidths[i % humpWidths.length], w - x);
+    const rise = Math.min(room, humpHeights[i % humpHeights.length] * (span / humpWidths[i % humpWidths.length] + 0.3) * 1.3);
+    const lift = tenth(base - rise * 1.33);
+    d += 'C' + tenth(x + span * 0.08) + ' ' + lift + ' ' + tenth(x + span * 0.92) + ' ' + lift + ' ' + tenth(x + span) + ' ' + base;
+    x += span;
+    i += 1;
+  }
+  d += 'L' + w + ' ' + h + 'Z';
+  return path('sb-snow', d) + path('sb-snow-shade', 'M0 ' + (base + 1) + 'L' + w + ' ' + (base + 1));
+}
+
+const icicleSteps = [62, 48, 70, 54];
+const icicleLengths = [0.6, 1, 0.72, 0.88, 0.5];
+
+// Icicles hanging from the top edge of the box, with a bright line down each
+export function icicles(w, h) {
+  let x = 16;
+  let i = 0;
+  let body = '';
+  let shine = '';
+
+  while (x < w - 20) {
+    const width = 11 + (i % 3) * 3;
+    const length = Math.max(8, tenth(h * icicleLengths[i % icicleLengths.length]));
+    body += 'M' + x + ' 0L' + (x + width) + ' 0L' + tenth(x + width / 2) + ' ' + length + 'Z';
+    shine += 'M' + tenth(x + width * 0.34) + ' 2L' + tenth(x + width * 0.48) + ' ' + tenth(length * 0.62);
+    x += icicleSteps[i % icicleSteps.length];
+    i += 1;
+  }
+  return path('sb-ice', body) + path('sb-ice-shine', shine);
+}
+
+// Rays and small feathers from the corner of a cut, the frost on a window. The box is the two legs
+// of the cut, and the drawing is made for the top left corner.
+export function frostFan(w, h) {
+  const rays = 7;
+  let d = '';
+
+  for (let i = 0; i < rays; i++) {
+    const angle = (Math.PI / 2) * (i / (rays - 1));
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const length = 0.92 / (cos / w + sin / h);
+    d += 'M0 0L' + tenth(cos * length) + ' ' + tenth(sin * length);
+
+    [0.5, 0.76].forEach(at => {
+      const px = cos * length * at;
+      const py = sin * length * at;
+      const feather = length * 0.15;
+      [-0.7, 0.7].forEach(turn => {
+        const a = angle + turn;
+        d += 'M' + tenth(px) + ' ' + tenth(py) + 'L' + tenth(px + Math.cos(a) * feather) + ' ' + tenth(py + Math.sin(a) * feather);
+      });
+    });
+  }
+  return path('sb-frost', d);
+}
+
+const bulbClasses = ['sb-bulb-a', 'sb-bulb-b', 'sb-bulb-c', 'sb-bulb-d', 'sb-bulb-e'];
+
+// A string of bulbs on a wire that sags between hooks. The bulbs are five colors, and each color
+// is one shape that glows in its turn (data-move="glow").
+export function bulbString(w, h) {
+  const swag = 92;
+  const sag = Math.min(7, h * 0.3);
+  const groups = bulbClasses.map(() => '');
+  let wire = '';
+  let sockets = '';
+  let count = 0;
+
+  for (let x = 0; x < w; x += swag) {
+    const end = Math.min(x + swag, w);
+    wire += (x === 0 ? 'M0 2' : '') + 'Q' + tenth((x + end) / 2) + ' ' + tenth(2 + sag * 2) + ' ' + end + ' 2';
+
+    [0.25, 0.75].forEach(t => {
+      const bx = x + (end - x) * t;
+      if (bx > w - 8) return;
+      const by = 2 + sag * 4 * t * (1 - t);
+      sockets += 'M' + tenth(bx - 2) + ' ' + tenth(by) + 'h4v3h-4Z';
+      groups[count % bulbClasses.length] += ellipse(bx, by + 8, 4.6, 6);
+      count += 1;
+    });
+  }
+
+  let markup = path('sb-wire', wire) + path('sb-socket', sockets);
+  bulbClasses.forEach((cls, index) => {
+    markup += path(cls, groups[index], ' data-move="glow" style="--glow-delay:' + tenth(index * -0.7) + 's"');
+  });
+  return markup;
+}
+
+// Flakes that fall through a narrow box. Each group is flakes spaced the same distance apart, and
+// the group moves down by that distance and starts again, so the loop has no seam. Resting, the
+// flakes stay where they begin.
+export function snowfall(w, h) {
+  const plans = [
+    { gap: 270, seconds: 14, shift: 0 },
+    { gap: 330, seconds: 21, shift: 7 },
+  ];
+  let markup = '';
+
+  plans.forEach((plan, index) => {
+    const count = Math.ceil(h / plan.gap) + 2;
+    let flakes = '';
+    for (let i = 0; i < count; i++) {
+      const x = 4 + ((i * 37 + plan.shift * 11 + index * 13) % Math.max(1, w - 8));
+      flakes += dot(x, -plan.gap + i * plan.gap + plan.shift * 9, i % 2 === 0 ? 2.6 : 1.8);
+    }
+    markup += '<g data-move="fall" style="--fall:' + plan.gap + 'px;--fall-seconds:' + plan.seconds + 's;--fall-delay:' + tenth(index * -5) + 's">' + path('sb-flake', flakes) + '</g>';
+  });
+  return markup;
+}
+
+// A snowman standing in the box, hat and scarf, for a box about 40 by 64
+export function snowman(w, h) {
+  const cx = w / 2;
+  const floor = h - 3;
+  const lower = Math.min(15, w * 0.38);
+  const middle = lower * 0.74;
+  const head = lower * 0.54;
+  const lowerY = floor - lower;
+  const middleY = lowerY - lower * 0.8 - middle * 0.5;
+  const headY = middleY - middle * 0.85 - head * 0.45;
+
+  const body = dot(cx, lowerY, lower) + dot(cx, middleY, middle) + dot(cx, headY, head);
+  const hat = 'M' + tenth(cx - head * 1.15) + ' ' + tenth(headY - head * 0.7) + 'h' + tenth(head * 2.3) + 'v3h' + tenth(-head * 2.3) + 'ZM' + tenth(cx - head * 0.7) + ' ' + tenth(headY - head * 0.7) + 'v' + tenth(-head * 1.1) + 'h' + tenth(head * 1.4) + 'v' + tenth(head * 1.1) + 'Z';
+  const scarf = 'M' + tenth(cx - middle * 0.9) + ' ' + tenth(middleY - middle * 0.75) + 'h' + tenth(middle * 1.8) + 'v5h' + tenth(-middle * 1.1) + 'v9h-4v-9h' + tenth(-middle * 0.7) + 'Z';
+  const nose = 'M' + tenth(cx) + ' ' + tenth(headY) + 'l' + tenth(head * 1.1) + ' 1.6l' + tenth(-head * 1.1) + ' 1.8Z';
+  const coal = dot(cx - head * 0.4, headY - head * 0.3, 1.1) + dot(cx + head * 0.4, headY - head * 0.3, 1.1) + dot(cx, middleY + 1, 1.2) + dot(cx, middleY + middle * 0.5, 1.2);
+
+  return path('sb-snow', body) + path('sb-coal', hat) + path('sb-scarf', scarf) + path('sb-carrot', nose) + path('sb-coal', coal);
+}
+
 // ---- Halloween
 
 const swagWidth = 200;

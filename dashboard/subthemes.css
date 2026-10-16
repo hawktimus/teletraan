@@ -57,6 +57,22 @@
 
 .sb-piece path { transform-box: fill-box; transform-origin: center; }
 
+.sb-snow { fill: var(--subtheme-snow); }
+.sb-snow-shade { fill: none; stroke: var(--subtheme-snow-shade); stroke-width: 2px; }
+.sb-ice { fill: var(--subtheme-ice); stroke: var(--subtheme-snow-shade); stroke-width: 1px; stroke-linejoin: round; }
+.sb-ice-shine { fill: none; stroke: var(--subtheme-ice-shine); stroke-width: 1.5px; stroke-linecap: round; }
+.sb-frost { fill: none; stroke: var(--subtheme-frost); stroke-width: 2px; stroke-linecap: round; }
+.sb-wire { fill: none; stroke: var(--subtheme-wire); stroke-width: 2px; }
+.sb-socket { fill: var(--subtheme-wire); }
+.sb-bulb-a { fill: var(--subtheme-bulb-a); }
+.sb-bulb-b { fill: var(--subtheme-bulb-b); }
+.sb-bulb-c { fill: var(--subtheme-bulb-c); }
+.sb-bulb-d { fill: var(--subtheme-bulb-d); }
+.sb-bulb-e { fill: var(--subtheme-bulb-e); }
+.sb-flake { fill: var(--subtheme-snow); }
+.sb-coal { fill: var(--subtheme-coal); }
+.sb-scarf { fill: var(--subtheme-scarf); }
+.sb-carrot { fill: var(--subtheme-carrot); }
 
 .sb-string { fill: none; stroke: var(--subtheme-ink); stroke-width: 2px; }
 .sb-orange { fill: var(--subtheme-orange); }

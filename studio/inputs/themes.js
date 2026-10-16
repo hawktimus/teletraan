@@ -96,4 +96,5 @@ export const cornerArts = [
 // when the ids differ.
 export const subthemePresets = [
   { id: 'halloween', name: 'Halloween' },
+  { id: 'winter', name: 'Winter' },
 ];
