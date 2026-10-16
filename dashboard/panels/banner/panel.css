@@ -75,6 +75,10 @@
   width: 520px;
   height: 76px;
 }
+.banner[data-plate="both"] .team-plate { width: 940px; }
+.banner .team-plate svg + svg,
+.banner[data-plate="both"] .team-plate svg:first-of-type { display: none; }
+.banner[data-plate="both"] .team-plate svg + svg { display: block; }
 .banner .team-plate svg {
   position: absolute;
   left: 0;
@@ -84,7 +88,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 520px;
+  width: 100%;
   height: 76px;
   display: flex;
   align-items: center;
@@ -102,6 +106,12 @@
   margin-left: 16px;
   color: var(--yellow);
 }
+.banner .team-plate .team-more {
+  display: none;
+  font-style: normal;
+  margin-left: 16px;
+}
+.banner[data-plate="both"] .team-plate .team-more { display: inline; }
 
 .banner .banner-right {
   display: flex;
@@ -171,6 +181,7 @@
    line, cut off with an ellipsis, and about 20 characters show. panels/banner/panel.js sets
    data-line to on when the line is not empty. */
 .banner .banner-line { display: none; }
+.banner[data-subtitle="off"] .subtitle,
 .banner[data-line="on"] .subtitle,
 .banner[data-line="on"] .rule { display: none; }
 .banner[data-line="on"] .banner-line {

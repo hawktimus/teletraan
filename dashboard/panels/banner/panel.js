@@ -11,7 +11,7 @@ import { layoutNow } from '../../core/layout.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
-import { viewLabelsNow } from '../../core/view-apply.js';
+import { viewLabelsNow, viewNow } from '../../core/view-apply.js';
 
 export function mount(host, content) {
   const kind = frameKind('banner', layoutNow(), shapesNow(), trimNow());
@@ -26,8 +26,8 @@ export function mount(host, content) {
           <div class="banner-left">
             <h1 class="team-name" data-part="title" data-name-effect></h1>
             <div class="team-plate" data-part="team-plate">
-              ${teamPlateMarkup()}
-              <span>TEAM <b class="team-number"></b></span>
+              ${teamPlateMarkup()}${teamPlateMarkup(940)}
+              <span>TEAM <b class="team-number"></b><i class="team-more">&amp; TEAM <b class="team-number-more"></b></i></span>
             </div>
             <span class="sample-badge" data-part="sample-badge"></span>
           </div>
@@ -100,9 +100,14 @@ function setName(element, name) {
 export function update(element, content) {
   const team = teamShown(content);
   const view = viewLabelsNow();
-  setName(element, view.title !== '' ? view.title : team.name);
+  const name = view.title !== '' ? view.title : team.name;
+  setName(element, name);
+  // A name that already says Dashboard does not need the word again beside the wordmark
+  const subtitle = /\bdashboard\b/i.test(name) ? 'off' : 'on';
+  if (element.dataset.subtitle !== subtitle) element.dataset.subtitle = subtitle;
   setText(element, '.view-tag', view.tag ? view.name : '');
   setText(element, '.team-number', team.number);
+  setSecondTeam(element, content, team);
   setText(element, '.school', content.team.school);
   showTeamLogo(element.querySelector('.logo'), team.logo);
 
@@ -120,6 +125,14 @@ export function update(element, content) {
   const line = packExtras(content).bannerLine;
   setText(element, '.banner-line', line);
   setLine(element, line);
+}
+
+// The General view belongs to both teams, so its plate names both numbers. Any other view shows the one team.
+function setSecondTeam(element, content, team) {
+  const others = (Array.isArray(content.teams) ? content.teams : []).filter(other => other.code !== team.code && typeof other.number === 'string' && other.number !== '');
+  const both = viewNow() === 'general' && others.length > 0;
+  setText(element, '.team-number-more', both ? others[0].number : '');
+  if (element.dataset.plate !== (both ? 'both' : 'one')) element.dataset.plate = both ? 'both' : 'one';
 }
 
 // panels/banner/panel.css reads data-line to give the line its place
