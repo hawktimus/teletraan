@@ -68,7 +68,7 @@ The seven rows of a department are, in order: Tasks in progress (`monday-tasks`)
 - A row can name the small panel shown beside it (`side`, Small panel beside it). While the row is on the screen the small frame plays that panel, whatever the topic of the large one, and the next row moves it on. A row with no side leaves the small frame with the small panels of the view. In the wide layout there is no small frame.
 - `part` is 1 or 2 for Events, Subteam roster and Team leads. Part 2 has nothing to show when the list fits on page 1, and the row is skipped.
 - The Parts request panel draws a QR code of `partsRequestUrl` (Dashboard Settings, Screen tab, Parts request address). The address must start with https:// and be 200 characters or fewer. With none it shows PARTS REQUEST and LINK NOT SET and the rotation skips it. `core/qr.js` makes the code (byte mode, level M, versions 1 to 10), and `tests/qr.test.mjs` reads it back.
-- Drive hours adds the hours of the Monday board for each person, the most hours first, six rows a page, scrolled. The people and hours are those of the roster.
+- Drive hours adds the hours of the Monday board for each person, the most hours first, six rows a page, scrolled, up to 18 people. The people and hours are those of the roster.
 - The status pie shows the tasks of the team, or of the department of its row, by status, with the words of each status and its count beside it.
 - Daily Agenda is not in the default rotation. Add a row for it in Dashboard Settings if it is wanted. The older lists of the views are kept and `migrateRotationFromViews` builds a list from them.
 

@@ -6,9 +6,9 @@
 // has this one). A hidden row keeps its place in the order and plays nothing. Rows that follow each other in the same view
 // are one block, and the view changes only between blocks.
 //
-// An empty list is not played: the screen plays the lists of the views as it did (core/views-play.js), and the Studio fills
-// the list from them the first time Dashboard Settings is opened (migrateRotation here, and the same in
-// studio/tools/rotation-migrate.js).
+// A list with no shown row is not played: the screen plays the default rotation (config-rotation.js), and the Studio fills the
+// list with it the first time Dashboard Settings is opened (migrateRotation here, and the same in
+// studio/tools/rotation-migrate.js). The lists of the views are kept for migrateRotationFromViews.
 
 import { defaultRotationRows, rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
 import { panels } from '../registry.js';

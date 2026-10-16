@@ -73,7 +73,7 @@ export function tidyViewSettings(settings) {
 }
 
 // The rotation list and the length of the transitions (core/rotation.js tidies each row when it is read). A list that is
-// missing is empty and the screen plays the lists of the views. transitionSeconds is 2 to 4.
+// missing is empty and the screen plays the default rotation. transitionSeconds is 2 to 4.
 function tidyRotationSettings(settings) {
   settings.rotationRows = Array.isArray(settings.rotationRows) ? settings.rotationRows : [];
   settings.transitionSeconds = keepInRange(settings.transitionSeconds, transitionSecondsRange, transitionSecondsRange.start);
