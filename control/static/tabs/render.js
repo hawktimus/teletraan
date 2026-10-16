@@ -104,6 +104,21 @@ export function nowCardHtml(now, at = new Date()) {
     (rows ? '<ul class="rows">' + rows + '</ul>' : ''));
 }
 
+// A copy of the screen at 1920 by 1080, drawn smaller by the page (tabs/now.js sets the scale from the width of the box)
+export const previewWidth = 1920;
+export const previewHeight = 1080;
+
+export function previewScale(boxWidth) {
+  const width = Number(boxWidth);
+  return Number.isFinite(width) && width > 0 ? Math.round((width / previewWidth) * 10000) / 10000 : 0.1;
+}
+
+export function previewCardHtml() {
+  return card('Live preview',
+    '<div class="preview" data-preview-box><iframe data-preview-frame src="/dashboard/" title="A copy of the dashboard" width="' + previewWidth + '" height="' + previewHeight + '" sandbox="allow-scripts allow-same-origin" tabindex="-1"></iframe></div>' +
+    '<p class="note">A copy of the screen on this device. It runs by itself, so it may show a different panel than the TV at this moment. The card above says what the TV shows.</p>');
+}
+
 function button(action, label, data = '', kind = '') {
   return '<button type="button" class="act ' + kind + '" data-action="' + esc(action) + '"' + data + '>' + esc(label) + '</button>';
 }

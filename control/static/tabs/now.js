@@ -3,7 +3,7 @@
 
 import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
-import { nowCardHtml, nowControlsHtml } from './render.js';
+import { nowCardHtml, nowControlsHtml, previewCardHtml, previewScale } from './render.js';
 
 function wire(root, options, say) {
   root.addEventListener('click', async event => {
@@ -26,14 +26,27 @@ function wire(root, options, say) {
   });
 }
 
+// The copy of the dashboard is 1920 by 1080 and is shrunk to the width of its box
+function fitPreview(root) {
+  const box = root.querySelector('[data-preview-box]');
+  const frame = root.querySelector('[data-preview-frame]');
+  const fit = () => { frame.style.transform = 'scale(' + previewScale(box.clientWidth) + ')'; };
+  fit();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(box);
+  else window.addEventListener('resize', fit);
+}
+
 registerTab({
   id: 'now',
   title: 'Now showing',
   order: 20,
   async render(container) {
     useStyles();
-    container.innerHTML = '<div class="tab"><div data-card></div><div data-controls></div></div>';
+    container.innerHTML = '<div class="tab"><div data-card></div><div data-preview-card></div><div data-controls></div></div>';
     const cardBox = container.querySelector('[data-card]');
+    const previewBox = container.querySelector('[data-preview-card]');
+    previewBox.innerHTML = previewCardHtml();
+    fitPreview(previewBox);
     const controls = container.querySelector('[data-controls]');
 
     const options = await api('GET', '/request');

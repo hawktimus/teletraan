@@ -8,6 +8,12 @@ The Studio has two ways in: the Studio button on the landing page and in the hea
 
 The page has five tabs: Update, Now showing, Status, Keys and Log. This page covers the service itself and the Update tab. The other tabs have their own notes in the page. The Now showing tab has a Play announcement button, which plays the announcements of Dashboard Settings through the request route, and a box to post a short announcement.
 
+## The Live preview
+
+The Now showing tab has a Live preview card under the card of the wall. It is a copy of the dashboard in a frame, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
+
+The copy runs by itself on the phone or laptop, so it may show a different panel than the TV at this moment. The card above it says what the TV shows. The copy does not report to the control page: the dashboard reports only when its address is `localhost` or `127.0.0.1`, and port 3229 refuses a report from any other address. The copy writes nothing. Its title heartbeat is only the title of its own frame.
+
 ## First time
 
 Do these once, in this order. The team mentor says yes to the Docker downloads in step 1.

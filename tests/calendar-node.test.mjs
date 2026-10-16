@@ -273,7 +273,7 @@ test('the web server shows the whole dashboard folder as it is, so one more file
   assert.equal((nginx.match(/try_files/g) || []).length, 4);
   assert.deepEqual(nginx.match(/^\s*location [^{]+\{/gm).map(line => line.trim()), [
     'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location /studio/ {', 'location ~ ^/dashboard/data/live/slides/[^/]+/manifest\\.json$ {',
-    'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location = /control/api/now {', 'location /studio/ {',
+    'location ~ /\\. {', 'location = / {', 'location /control/ {', 'location = /control/api/now {', 'location /studio/ {', 'location ~ ^/dashboard/data/live/slides/[^/]+/manifest\\.json$ {',
     'location ~ /\\. {', 'location = / {', 'location /studio/ {',
   ]);
 });

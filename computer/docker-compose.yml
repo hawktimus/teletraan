@@ -21,7 +21,7 @@ services:
     ports:
       # 127.0.0.1 keeps the dashboard reachable from this computer only
       - "127.0.0.1:${TELETRAAN_PORT:-8080}:80"
-      # The landing page, the control page, the Studio and for the WiFi and for Tailscale
+      # The landing page, the control page, the Studio and a read only copy of the dashboard, for the WiFi and for Tailscale
       - "3229:3229"
       # The Studio alone
       - "3426:3426"
