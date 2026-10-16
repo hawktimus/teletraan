@@ -377,7 +377,7 @@ editors can sign in from anywhere.
       frc-fixture.mjs         turns one past event into the fixture of the competition cards
       zones.html              the zones of the seasonal packs outlined over the dashboard, at
                               http://localhost:8080/tools/zones.html
-      computer/                   the Mac tool that updates the computer and keeps its keys and calendars:
+      teletraan/                 the Mac tool that updates the computer and keeps its keys and calendars:
                               teletraan-tool (the menu, and the words update, status and restart),
                               Teletraan Tool.command (double-click it) and merge-env.sh, which runs on the
                               computer (docs/updating-the-computer.md)

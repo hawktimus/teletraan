@@ -19,7 +19,7 @@ This is the table of the README. A file you want to change is in one of these fo
 | `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the view defaults and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
 | `control/` | The control page service (Node, standard library only) and its pages: updates, rollback, what is on the wall, the keys and the log (docs/control-page.md) |
 | `computer/` | Everything that runs on the Teletraan computer: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
-| `tools/` | Things a coach runs on a Mac: `computer/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
+| `tools/` | Things a coach runs on a Mac: `teletraan/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
 | `tests/` | Every test, one file for each module or script, and `run.mjs` to run them all |
 | `docs/` | The guides. `docs/paths.md` lists where every file moved to, `docs/where-things-are.md` is the long map and `docs/changelog.md` says what each round changed |
 
