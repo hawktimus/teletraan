@@ -43,6 +43,8 @@
 .tab [data-preview-card] { margin: 16px 0; }
 .tab .preview { position: relative; width: 100%; max-width: 720px; aspect-ratio: 16 / 9; overflow: hidden; background: #000; border: 2px solid var(--card-edge, #3a2c55); }
 .tab .preview iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.tab .preview-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; padding: 12px; text-align: center; color: #b9afcf; }
+.tab .preview-off[hidden] { display: none; }
 @media (min-width: 900px) {
   .tab .grid { grid-template-columns: 1fr 1fr; }
   .tab .keyform { grid-template-columns: 1fr auto; }

@@ -113,9 +113,19 @@ export function previewScale(boxWidth) {
   return Number.isFinite(width) && width > 0 ? Math.round((width / previewWidth) * 10000) / 10000 : 0.1;
 }
 
+// Under this width (a phone) the frame never loads by itself: the whole dashboard in a frame is too much for it
+export const previewAutoWidth = 900;
+
+export function previewAutoLoads(viewportWidth) {
+  return Number(viewportWidth) >= previewAutoWidth;
+}
+
+// The card holds no frame at first. The page makes the frame (tabs/now.js) when the person asks or the screen is
+// wide, and takes it out again, so a phone never holds the whole dashboard in memory. data-src is its address.
 export function previewCardHtml() {
   return card('Live preview',
-    '<div class="preview" data-preview-box><iframe data-preview-frame src="/dashboard/" title="A copy of the dashboard" width="' + previewWidth + '" height="' + previewHeight + '" sandbox="allow-scripts allow-same-origin" tabindex="-1"></iframe></div>' +
+    '<div class="preview" data-preview-box data-src="/dashboard/"><p class="preview-off" data-preview-off>The preview is off.</p></div>' +
+    '<div class="buttons"><button type="button" class="act" data-preview-toggle aria-pressed="false">Show live preview</button></div>' +
     '<p class="note">A copy of the screen on this device. It runs by itself, so it may show a different panel than the TV at this moment. The card above says what the TV shows.</p>');
 }
 
