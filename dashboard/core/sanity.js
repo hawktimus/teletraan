@@ -11,6 +11,7 @@ import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
 import { tidyScreens } from './screens.js';
 import { tidyNotices } from './notice.js';
+import { tidyMini } from './dots.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -151,7 +152,8 @@ export const contentQuery = `{
     mondayStyle
   },
   "frc": *[_id == "frc-status"][0],
-  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) }
+  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) },
+  "mini": *[_id == "status-mini"][0] { lastCalendarSyncAt, "calendarErrors": count(*[_id == "calendar-status"][0].calendars[defined(error)]) }
 }`;
 
 const requestSeconds = 15;
@@ -276,6 +278,7 @@ export function normalizeContent(result, now = new Date()) {
     customPanels: customPanelsFrom(data.customPanels),
     frc: tidyFrc(data.frc),
     monday: tidyMondayStatus(data.monday),
+    mini: tidyMini(data.mini),
     screens: tidyScreens(data.screens, settings.mondayStyle),
   });
 }

@@ -73,12 +73,12 @@ export function dotStates(facts, now = new Date()) {
   };
 }
 
-// The part of status-mini and calendar-status that the screen asks for (core/sanity.js)
+// The part of status-mini and calendar-status that the screen asks for (core/sanity.js). Empty when there is none.
 export function tidyMini(raw) {
-  if (!isRecord(raw)) return null;
+  const source = isRecord(raw) ? raw : {};
 
   return {
-    lastCalendarSyncAt: typeof raw.lastCalendarSyncAt === 'string' && !isNaN(Date.parse(raw.lastCalendarSyncAt)) ? raw.lastCalendarSyncAt : '',
-    calendarErrors: typeof raw.calendarErrors === 'number' && raw.calendarErrors > 0 ? Math.floor(raw.calendarErrors) : 0,
+    lastCalendarSyncAt: typeof source.lastCalendarSyncAt === 'string' && !isNaN(Date.parse(source.lastCalendarSyncAt)) ? source.lastCalendarSyncAt : '',
+    calendarErrors: typeof source.calendarErrors === 'number' && source.calendarErrors > 0 ? Math.floor(source.calendarErrors) : 0,
   };
 }
