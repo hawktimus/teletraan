@@ -19,25 +19,46 @@ dashboard="http://localhost:${port:-8080}/dashboard/"
 data=$(setting TELETRAAN_DATA)
 data=${data:-/var/lib/teletraan/data}
 
-# The build the page asks its files for (?v=<build> in index.html). The same
-# order as status-write.sh version: the stamp the Mac tool leaves (this folder
-# is copied without .git), then git, then the time. Written in one step, so the
-# web server never sends half a line. A failure is ignored: the page falls back
-# to the time by itself when dashboard/build.js is missing.
+# The build the page asks its files for (?v=<build> in index.html), and the version
+# label of core/version-label.js. A release made by the control service has a
+# RELEASE.json next to its mini/ folder: the build is then "<version>-<hash>".
+# Without one (a copy by the Mac tool, a plain checkout) the order of
+# status-write.sh version applies: the stamp the Mac tool leaves, then git, then
+# the time. Written in one step, so the web server never sends half a line. A
+# failure is ignored: the page falls back to the time by itself when
+# dashboard/build.js is missing.
 write_build() {
   repo=$(cd "$mini/.." && pwd)
+  release="$(cd "$mini" && pwd -P)/../RELEASE.json"
+  version=0
+  commit=""
+  built=""
   build=""
-  if [ -f "$mini/build.txt" ]; then
-    build=$(sed -n 's/^commit=//p' "$mini/build.txt" | head -n 1)
+  if [ -f "$release" ]; then
+    version=$(sed -n 's/^ *"version": *\([0-9][0-9]*\).*/\1/p' "$release" | head -n 1)
+    commit=$(sed -n 's/^ *"commit": *"\([0-9a-f]*\)".*/\1/p' "$release" | head -n 1)
+    built=$(sed -n 's/^ *"date": *"\([0-9TZ:.-]*\)".*/\1/p' "$release" | head -n 1)
+    if printf '%s' "$version" | grep -Eq '^[1-9][0-9]*$'; then
+      build="$version"
+      [ -z "$commit" ] || build="$version-$commit"
+    else
+      version=0
+      commit=""
+    fi
   fi
-  if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
-    build=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null || true)
-  fi
-  if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
-    build="t$(date -u +%Y%m%d%H%M%S)"
+  if [ -z "$build" ]; then
+    if [ -f "$mini/build.txt" ]; then
+      build=$(sed -n 's/^commit=//p' "$mini/build.txt" | head -n 1)
+    fi
+    if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
+      build=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null || true)
+    fi
+    if ! printf '%s' "$build" | grep -Eq '^[0-9a-f]{4,40}$'; then
+      build="t$(date -u +%Y%m%d%H%M%S)"
+    fi
   fi
   temporary="$repo/dashboard/.build.js.new"
-  if printf 'export const build = "%s";\n' "$build" > "$temporary" 2> /dev/null; then
+  if printf 'export const build = "%s";\nexport const version = %s;\nexport const commit = "%s";\nexport const date = "%s";\n' "$build" "$version" "$commit" "$built" > "$temporary" 2> /dev/null; then
     chmod 644 "$temporary" 2> /dev/null || true
     mv -f "$temporary" "$repo/dashboard/build.js" 2> /dev/null || rm -f "$temporary"
   fi

@@ -45,6 +45,7 @@ import { pageSwitchesFor } from './core/look.js';
 import { makeSilverGradients } from './core/plate.js';
 import { showDeviceInfo } from './core/device.js';
 import { showStamp } from './core/build-stamp.js';
+import { versionLabel } from './core/version-label.js';
 import { checkTheme, holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
 import { overlayShown, ruleExtras } from './core/theme.js';
 import { changeLayout, holdForLayout, startLayout } from './core/layout-apply.js';
@@ -662,7 +663,7 @@ async function startOptional(path, use) {
 function watchVersion() {
   let known = null;
 
-  showStamp(window.teletraanBuild, params, screen);
+  showStamp(versionLabel(window.teletraanVersion, window.teletraanCommit) || window.teletraanBuild, params, screen);
 
   async function check() {
     try {

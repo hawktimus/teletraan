@@ -501,6 +501,8 @@
       }
 
       import('./build.js').then(function (loaded) {
+        window.teletraanVersion = loaded.version;
+        window.teletraanCommit = loaded.commit;
         start(loaded.build);
       }).catch(function () {
         start(Date.now());
