@@ -26,7 +26,7 @@ Settings, then Themes, lists the themes and holds the theme of each day of the w
 
 ## Test the token
 
-Dashboard Settings, Monday tab, Test the token asks the Mini through the control page who the Monday token belongs to. It shows the account name or the error.
+Dashboard Settings, Monday tab, Test the token asks the Teletraan computer through the control page who the Monday token belongs to. It shows the account name or the error.
 
 ## Not used any more
 

@@ -46,7 +46,7 @@ function lines(file) {
   return text.slice(0, -1).split('\n');
 }
 
-// Makes a copy of the mini folder inside a fake root, with an /etc/issue like
+// Makes a copy of the computer folder inside a fake root, with an /etc/issue like
 // Debian's, and returns how to run the script and what it left behind.
 function setup(name, options) {
   const settings = Object.assign({ place: 'opt/teletraan', issue: debianIssue, fakePr: false }, options || {});

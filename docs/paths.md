@@ -345,3 +345,26 @@ These files kept their names and their functions and variables. Part of each was
 | `tools/mini/teletraan-mini` | `teletraan-mini-ui.sh`, `-secrets.sh`, `-config.sh`, `-deploy.sh`, `-keys.sh` |
 
 `mini/scripts/lib.sh` is new. It holds the readers of `local.env` and `dashboard/config.js` that each script had its own copy of.
+
+## Renames
+
+Later, the Mini was renamed to the Teletraan computer. The tables above name the paths as they were when each move was made. These are the names now.
+
+| Old | New |
+|-----|-----|
+| `mini/` | `computer/` |
+| `/opt/teletraan/mini` and `/opt/teletraan/current/mini` | `/opt/teletraan/computer` and `/opt/teletraan/current/computer` |
+| `tools/mini/` | `tools/teletraan/` |
+| `tools/mini/teletraan-mini` | `tools/teletraan/teletraan-tool` |
+| `tools/mini/teletraan-mini-<part>.sh` | `tools/teletraan/teletraan-tool-<part>.sh` |
+| `tools/mini/Teletraan Mini.command` | `tools/teletraan/Teletraan Tool.command` |
+| `docs/rebuilding-the-mini.md` | `docs/rebuilding-the-computer.md` |
+| `docs/updating-the-mini.md` | `docs/updating-the-computer.md` |
+| `docs/try-it-on-the-mini.md` | `docs/try-it-on-the-computer.md` |
+| `tests/mini-scripts.test.mjs` | `tests/computer-scripts.test.mjs` |
+| `tests/teletraan-mini.test.mjs` | `tests/teletraan-tool.test.mjs` |
+| `tests/teletraan-mini-commands.test.mjs` | `tests/teletraan-tool-commands.test.mjs` |
+
+The Mac tool option `--mini NAME` is now `--computer NAME`, and `tools/mac/ship.sh mini` is now `tools/mac/ship.sh computer`. The environment variables `MINI_HOME`, `MINI_REPO`, `MINI_KIOSK` and `MINI_STAGING` of the Mac tool are now `COMPUTER_HOME`, `COMPUTER_REPO`, `COMPUTER_KIOSK` and `COMPUTER_STAGING`.
+
+These names did not change, because they are stored: the Sanity document `status-mini` and its fields, the field `miniStatus` of Dashboard Settings, the content key `mini` that the dashboard and the control page read from it, the lines `mini.NAME=user@host` in `~/.teletraan/config` on the Mac, and the host name of the computer. The keys file moves with the folder: `computer/local.env`. The installer removes the old link `/opt/teletraan/mini` and a release that has `mini/scripts` counts as older than the move, like one with `deploy/`.

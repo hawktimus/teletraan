@@ -188,4 +188,4 @@ must be on the first page belongs near the top of the list.
 ## Going live
 
 The Studio editors use is a built copy. Run `npm run deploy` in the studio
-folder to update it. The dashboard updates when the Mini next pulls the repo.
+folder to update it. The dashboard updates when the Teletraan computer next pulls the repo.

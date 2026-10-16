@@ -1,7 +1,7 @@
 # The Calendars page
 
 For the coaches and students who want to know what the calendars bring in. The
-Calendars page in Studio, under Events, shows each BAND calendar the Mini
+Calendars page in Studio, under Events, shows each BAND calendar the Teletraan computer
 downloads: its kind, when it last worked, why it failed, and the next 40 events
 with whether the TV shows each one. Each event has buttons that hide it from the
 TV or bring it back.
@@ -12,11 +12,11 @@ TV or bring it back.
   event, takes that one event off the screen. Hide all like this hides every
   event with the same title in the same calendar. Both make a rule, and the
   rules are listed under Calendar filters. To add a calendar, ask a coach to
-  add its address on the Mini.
+  add its address on the Teletraan computer.
 - Left: a button for each row of Dashboard Settings, Calendars. It says the
   calendar's name and code, its kind, whether the TV shows it, how many events it
-  has in the next 30 days and how many of those a rule hides, and when the Mini
-  last downloaded it. A calendar that the Mini has and Dashboard Settings has not
+  has in the next 30 days and how many of those a rule hides, and when the computer
+  last downloaded it. A calendar that the computer has and Dashboard Settings has not
   comes last. The TV shows none of it, so its kind says Not set.
 - Right: the calendar you picked. First the facts, then up to 40 events in date
   order. Each event has its date, time and title as the TV writes them, and
@@ -26,15 +26,15 @@ TV or bring it back.
 - A red line is a problem. "Download failed, the server said no" usually means
   BAND gave the calendar a new link: see docs/calendar-links.md, "Change a
   link". The TV keeps the events of the last good download.
-- Nothing yet means the Mini has not written the page's document. It writes it
+- Nothing yet means the computer has not written the page's document. It writes it
   after every calendar run, which is every 15 minutes, once it has a write
-  token (docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio").
-- Events not listed means the Mini downloaded the calendar but did not list its
+  token (docs/rebuilding-the-computer.md, "Showing what the computer did in Studio").
+- Events not listed means the computer downloaded the calendar but did not list its
   events. The right side says why. The usual reason is that Node is not
-  installed on the Mini, see below.
+  installed on the computer, see below.
 
 To rename a calendar, switch it off or set its kind, use Dashboard Settings,
-Calendars. To add a calendar, ask a coach to add its address on the Mini
+Calendars. To add a calendar, ask a coach to add its address on the Teletraan computer
 (docs/calendar-links.md).
 
 ## The kind of a calendar
@@ -58,7 +58,7 @@ Each event that the TV shows has two buttons:
   day. It asks first, in words, and has Hide and Cancel.
 
 A button makes a rule under Calendar filters, and the TV reads it within a few
-seconds. The event says HIDDEN at once, before the Mini lists it again. A hidden
+seconds. The event says HIDDEN at once, before the Teletraan computer lists it again. A hidden
 event that a button hid has Show again, which deletes the rule. An event that a
 rule from Calendar filters hides names that rule and says to change it there,
 because the page does not touch rules it did not make.
@@ -77,7 +77,7 @@ How the rule is made:
 
 Some events have no button. An event with the title No title has none, because
 there is nothing to look for. An event from a list that was written before the
-Mini listed days only has Hide all like this, and says so. A calendar whose code is
+computer listed days only has Hide all like this, and says so. A calendar whose code is
 longer than 20 characters has none, because Calendar filters refuses such a code.
 
 When the TV still shows an event, check the rule under Calendar filters: an Always
@@ -86,7 +86,7 @@ with the reason at the bottom of the window and changes nothing. "Studio
 refused the change" means the account may not edit Calendar filters. Ask a
 coach.
 
-## What the Mini does
+## What the Teletraan computer does
 
 The calendar service runs every 15 minutes. It does these three things in order,
 and the last two also run when a download failed. A failed download is the case
@@ -105,18 +105,18 @@ the page is for.
    `calendar-status`. It needs `SANITY_WRITE_TOKEN` in `local.env` and does
    nothing without it.
 
-To turn it on, once the new files are on the Mini, run
-`sudo /opt/teletraan/mini/scripts/install-calendars.sh`, or `install-timers.sh`
-on a Mini that pulls by itself. systemd reads a changed unit file only when the
+To turn it on, once the new files are on the Teletraan computer, run
+`sudo /opt/teletraan/computer/scripts/install-calendars.sh`, or `install-timers.sh`
+on a computer that pulls by itself. systemd reads a changed unit file only when the
 script copies it again. The write token is explained in
-docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio".
+docs/rebuilding-the-computer.md, "Showing what the computer did in Studio".
 
-## Node on the Mini
+## Node on the Teletraan computer
 
-The Mini has no Node when it is built, and the page works without it. It then
+The Teletraan computer has no Node when it is built, and the page works without it. It then
 shows the times and the reasons for each calendar but no events, and says so.
-To list the events, install Node on the Mini after the team mentor says yes
-(docs/rebuilding-the-mini.md, step 19):
+To list the events, install Node on the computer after the team mentor says yes
+(docs/rebuilding-the-computer.md, step 19):
 
     sudo apt install nodejs
     node --version
@@ -128,10 +128,10 @@ says so. `apt policy nodejs` shows the version that apt would install. Ask the t
 mentor before installing Node any other way.
 
 Nothing else changes. The next run lists the events. To try it at once, run
-these on the Mini and open the page again:
+these on the Teletraan computer and open the page again:
 
-    /opt/teletraan/mini/scripts/calendar-status.sh
-    /opt/teletraan/mini/scripts/status-write.sh calendar-status
+    /opt/teletraan/computer/scripts/calendar-status.sh
+    /opt/teletraan/computer/scripts/status-write.sh calendar-status
 
 `calendar-status.sh` prints what it did and never prints an address.
 
@@ -148,18 +148,18 @@ A rule that a button makes holds the first 30 characters of the title, and it is
 in the same public dataset.
 
 The document is kept below 90000 bytes. If the titles are so long that 40 events
-of each calendar do not fit, the Mini lists fewer events of each calendar, and the
+of each calendar do not fit, the Teletraan computer lists fewer events of each calendar, and the
 page says how many it shows.
 
-To stop the Mini writing it, take the two `ExecStopPost` lines out of
-`mini/systemd/teletraan-calendars.service`, run `install-calendars.sh` again,
+To stop the Teletraan computer writing it, take the two `ExecStopPost` lines out of
+`computer/systemd/teletraan-calendars.service`, run `install-calendars.sh` again,
 and ask a coach to delete the document `calendar-status` from the dataset.
 
 ## Where the code is
 
-- `mini/scripts/fetch-calendars.sh`, `calendar-status.sh`,
+- `computer/scripts/fetch-calendars.sh`, `calendar-status.sh`,
   `calendar-status.mjs` and `status-write.sh`.
-- `mini/systemd/teletraan-calendars.service`: the two `ExecStopPost` lines. They
+- `computer/systemd/teletraan-calendars.service`: the two `ExecStopPost` lines. They
   are stop steps because systemd skips `ExecStartPost` after a failed download.
 - `dashboard/package.json`: tells Node that the dashboard files are modules.
 - `studio/schemas/calendarStatus.js`: the document, kept out of the sidebar and

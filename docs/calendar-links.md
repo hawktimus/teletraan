@@ -1,11 +1,11 @@
 # Calendar links
 
 For the coaches who add or change a BAND calendar. A calendar link is the iCal
-address BAND gives for a calendar. The Mini downloads each link every 15 minutes
+address BAND gives for a calendar. The Teletraan computer downloads each link every 15 minutes
 and the TV shows the events.
 
 A link is a secret, because anyone who has it can read the whole calendar. It
-lives in one place: the file `mini/local.env` on each Mini. Never put it in the
+lives in one place: the file `computer/local.env` on each computer. Never put it in the
 repository, in Studio, in a doc or in a message. Studio and the dashboard only
 ever see a calendar's code and name.
 
@@ -13,15 +13,15 @@ ever see a calendar's code and name.
 
 Three things that share one short ID, such as GROUP:
 
-1. A line in `mini/local.env` on the Mini. The name is `CALENDAR_`, the ID in
+1. A line in `computer/local.env` on the Teletraan computer. The name is `CALENDAR_`, the ID in
    capital letters and `_URL`. The value is the link, in single quotes.
 
        CALENDAR_GROUP_URL='https://api.band.us/ical?token=PASTE_LINK_HERE'
 
    The link may start with `https://` or `webcal://`. A plain `http://` link is
    refused.
-2. The file the Mini saves from it: the ID in lowercase with `.ics` after it,
-   here `group.ics`. You do not make this file. The Mini does.
+2. The file the Teletraan computer saves from it: the ID in lowercase with `.ics` after it,
+   here `group.ics`. You do not make this file. The computer does.
 3. A row in Dashboard Settings, in the Calendars tab, with the Calendar code
    `group` (the ID in lowercase), a Calendar name, its Kind and Show on screen.
    The TV shows nothing from a calendar that has no row, or whose row is
@@ -32,19 +32,19 @@ Three things that share one short ID, such as GROUP:
 ## Add a calendar
 
 1. Copy the calendar's iCal link from BAND.
-2. Add the line to `mini/local.env` on the Mini. The commands are in
-   docs/rebuilding-the-mini.md, "Adding or changing a calendar". The spare Mini
+2. Add the line to `computer/local.env` on the Teletraan computer. The commands are in
+   docs/rebuilding-the-computer.md, "Adding or changing a calendar". The spare computer
    has its own `local.env`, so add the line there too.
 3. In Studio add the row in Dashboard Settings, Calendars, and click Publish.
 4. The events arrive within 15 minutes, or at once if someone runs
-   `fetch-calendars.sh` on the Mini. To see which events the TV will show, open
+   `fetch-calendars.sh` on the computer. To see which events the TV will show, open
    Calendars under Events in Studio (docs/calendars-page.md), or run
    `check-calendars.sh` (docs/calendar-filters.md, "Checking the rules").
 
 ## Change a link
 
 BAND sometimes gives a calendar a new link, and then the old one stops working.
-Edit the `CALENDAR_<ID>_URL` line in `local.env`, on both Minis, and keep the ID
+Edit the `CALENDAR_<ID>_URL` line in `local.env`, on both computers, and keep the ID
 the same. The file name and the Studio row stay as they are. The TV keeps showing
 the old events until a download works.
 

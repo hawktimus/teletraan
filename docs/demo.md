@@ -64,12 +64,12 @@ Requested at reaches it within a few seconds. Then:
 - **A request starts a demo only if it is recent and new.** It must be no more
   than 60 seconds old, and it must not be the request the screen handled last.
   The screen keeps that request in the browser's storage (`localStorage`, under
-  `teletraan-demo-handled`). So a Mini that restarts a minute after a demo does
+  `teletraan-demo-handled`). So a computer that restarts a minute after a demo does
   not play it again, and one that restarts later finds a request that is too old.
   A request up to 5 seconds in the future counts too, in case the clock of the
-  computer that clicked is a little ahead. The Mini's clock must be right for
+  computer that clicked is a little ahead. The Teletraan computer's clock must be right for
   this: if it is more than a minute out, a demo never starts. The Time line of
-  `mini/scripts/check-connection.sh` shows it (docs/rebuilding-the-mini.md).
+  `computer/scripts/check-connection.sh` shows it (docs/rebuilding-the-computer.md).
 - **The steps play once, in order.** While they play, the normal pages stop
   changing and the logo effects and the screen glitch do not start by themselves.
   When the last step ends, the pages change again and the screen is back where

@@ -4,7 +4,7 @@ How a coach with a new Mac gets the Teletraan code onto it and ships a change
 to the screen from it. Allow an hour, most of it waiting for downloads.
 
 The laptop does the same job as the Mac in the room. It pushes the code to
-GitHub, updates the Studio and copies the files to the Mini. The Mini needs
+GitHub, updates the Studio and copies the files to the Teletraan computer. The computer needs
 nothing new, and nothing here installs anything on it.
 
 ## What you need
@@ -12,9 +12,9 @@ nothing new, and nothing here installs anything on it.
 - A Mac that runs macOS, with internet.
 - The team's GitHub sign-in and the team's Sanity sign-in. The team mentor holds
   both and does the two sign-in steps (3 and 5).
-- The Mini's address as `user@host`, and the Mini's password. The school
-  network or Tailscale must reach the Mini (`docs/rebuilding-the-mini.md`,
-  "Finding the Mini on the network").
+- The Teletraan computer's address as `user@host`, and the computer's password. The school
+  network or Tailscale must reach the computer (`docs/rebuilding-the-computer.md`,
+  "Finding the computer on the network").
 
 ## 1. Install git and Node
 
@@ -168,19 +168,19 @@ holds that path.
 
 ## 7. Run the Mac tool once
 
-The Mac tool keeps the Mini's address, and the Ship app needs it:
+The Mac tool keeps the Teletraan computer's address, and the Ship app needs it:
 
 ```
-tools/mini/teletraan-mini
+tools/teletraan/teletraan-tool
 ```
 
-It asks for the Mini's address as `user@host`, checks that ssh works and asks
-for a short name for the Mini, such as `main`. It saves both in
+It asks for the Teletraan computer's address as `user@host`, checks that ssh works and asks
+for a short name for the computer, such as `main`. It saves both in
 `~/.teletraan/config`. Nothing is saved if ssh cannot connect. Press `q` to quit
 the menu afterwards.
 
-To stop typing the Mini's password for every ssh call, send the laptop's key to
-the Mini once. It asks for the Mini's password this one time. Use the address
+To stop typing the Teletraan computer's password for every ssh call, send the laptop's key to
+the computer once. It asks for the computer's password this one time. Use the address
 you gave the tool:
 
 ```
@@ -194,21 +194,21 @@ If it says there is no key to send, make one, press Return at the questions
 ssh-keygen -t ed25519
 ```
 
-`sudo` on the Mini still asks for its password when the screen restarts. That
+`sudo` on the Teletraan computer still asks for its password when the screen restarts. That
 is on purpose. Nothing stores a password.
 
 ## 8. Keys and calendars (only if this laptop will change them)
 
-The three keys and the calendar links live on the Mini, in `mini/local.env`.
+The three keys and the calendar links live on the Teletraan computer, in `computer/local.env`.
 They are not in GitHub, and shipping never touches them. This laptop needs them
 only to change a key or a calendar with choice 2 of the Mac tool. To bring
 them over, start the tool, choose 3, and answer `y`:
 
 ```
-tools/mini/teletraan-mini
+tools/teletraan/teletraan-tool
 ```
 
-The tool copies them from the Mini into `~/.teletraan/secrets.env`, readable by
+The tool copies them from the Teletraan computer into `~/.teletraan/secrets.env`, readable by
 you only, and prints none of them. Never send them by email or chat, and never
 paste one into a file. Skip this step if the laptop will only ship.
 
@@ -221,8 +221,8 @@ Open `Ship Teletraan.app`. It opens Terminal and shows a menu:
 | 1 | Ship everything: the three steps below, in order, after a look at this Mac and at GitHub |
 | 2 | Push only: runs the checks, commits and pushes to GitHub |
 | 3 | Studio only: puts the Studio's forms on sanity.io |
-| 4 | Update the Mini only: copies the files and restarts the screen |
-| 5 | Status of the Mini: what it last did |
+| 4 | Update the Teletraan computer only: copies the files and restarts the screen |
+| 5 | Status of the computer: what it last did |
 
 Choice 1 does these in order. Each step stops the whole run when it fails:
 
@@ -230,8 +230,8 @@ Choice 1 does these in order. Each step stops the whole run when it fails:
    commits it and pushes it to GitHub (`git push`).
 2. **Studio.** Runs `npm run deploy` in `studio/`. It asks nothing about a
    hostname, because `studio/sanity.cli.js` names the team's Studio.
-3. **Mini.** Runs `tools/mini/teletraan-mini update --yes`. It copies this
-   folder to the Mini and restarts the screen. It asks for the Mini's password
+3. **Teletraan computer.** Runs `tools/teletraan/teletraan-tool update --yes`. It copies this
+   folder to the Teletraan computer and restarts the screen. It asks for the computer's password
    here in the window.
 
 `docs/shipping-from-the-mac.md` explains each step.
@@ -244,18 +244,18 @@ after you fix the cause. A step that has nothing to do says so.
 | What you see | What to do |
 |--------------|------------|
 | This Mac is not ready, with lines under it | Run the command in each line, then start again. Nothing was changed. |
-| GitHub has newer commits that this folder does not have | Run `git pull --no-rebase` in the repository folder, then start again. Shipping from an old folder would put old files on the Mini. |
+| GitHub has newer commits that this folder does not have | Run `git pull --no-rebase` in the repository folder, then start again. Shipping from an old folder would put old files on the Teletraan computer. |
 | The push was refused | The other computer pushed first. Run `git pull --no-rebase`, fix any conflict it reports, and start again. |
 | The Studio did not deploy | If it is a login, run `npx sanity login` in `studio/`. Otherwise the lines above say why. |
-| could not reach the Mini | Is the Mini on? Is the laptop on the school network or on Tailscale? Try `ssh user@host` by hand. |
-| The Mini asks Copy anyway | The Mini also pulls from GitHub by itself. `docs/updating-the-mini.md` says how to turn that off. |
+| could not reach the computer | Is the computer on? Is the laptop on the school network or on Tailscale? Try `ssh user@host` by hand. |
+| The computer asks Copy anyway | The computer also pulls from GitHub by itself. `docs/updating-the-computer.md` says how to turn that off. |
 | A check failed | Run it by itself, for example `node tests/content.test.mjs`, and read why. You may go on anyway, but look first. |
 
 ## 11. Check that it works
 
 - `git pull` ends with "Already up to date" or brings in new files.
-- Choice 5 of the app shows the times of the Mini's last jobs.
-- Choice 1 ends with "Done: checks, commit and push, Studio, Mini update and
+- Choice 5 of the app shows the times of the Teletraan computer's last jobs.
+- Choice 1 ends with "Done: checks, commit and push, Studio, Teletraan computer update and
   restart".
 - In Studio, Dashboard Settings, the Screen tab shows a new time for Screen
   started at the top.
@@ -270,9 +270,9 @@ and restarts the screen.
 Only the `teletraan` folder is on GitHub. These are not, and a fresh clone does
 not have them:
 
-- `mini/local.env`, the keys and calendar links. They stay on the Mini. Step 8
+- `computer/local.env`, the keys and calendar links. They stay on the Teletraan computer. Step 8
   brings them to the laptop when needed.
-- `~/.teletraan/`, the Mini's address and the saved keys. Each Mac makes its
+- `~/.teletraan/`, the computer's address and the saved keys. Each Mac makes its
   own with steps 7 and 8. Never copy that folder by email or chat.
 - `studio/node_modules`, which step 4 makes, and `studio/dist` and `studio/.sanity`,
   which a deploy makes.

@@ -1,6 +1,6 @@
 // Tests that docs/monday.md says what the rebuilt Monday reading does, in the numbers and ids
 // that the script, the settings and the registry use, and that no other document still says the
-// Mini reads every 10 minutes or from board rows. Nothing is drawn and nothing touches the network.
+// computer reads every 10 minutes or from board rows. Nothing is drawn and nothing touches the network.
 //
 //   node tests/monday-docs.test.mjs
 

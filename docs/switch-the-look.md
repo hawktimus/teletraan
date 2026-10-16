@@ -43,7 +43,7 @@ Click Publish. A change of view, row or pack does not happen in front of people.
 
 To see a look first, open the menu next to Publish on Dashboard Settings (the three dots) and click Preview Prime, Preview Nova, Preview Cybertron, Preview Minimal (the bar arrangement) or Preview next pack. The TV shows that look for 2 minutes and then goes back to the saved settings. No setting is changed, so there is nothing to put back. The Now showing tab of the control page can also show a view or try a theme for a few minutes (docs/control-page.md).
 
-On a computer, `?style=cybertron`, `?team=nova` and `?overlay=christmas` on the end of the address show a look for that one page, with the sample content, which has both teams (docs/try-it-on-the-mini.md lists every switch).
+On a computer, `?style=cybertron`, `?team=nova` and `?overlay=christmas` on the end of the address show a look for that one page, with the sample content, which has both teams (docs/try-it-on-the-computer.md lists every switch).
 
 ## Afterwards
 

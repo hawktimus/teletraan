@@ -311,13 +311,13 @@ within a few seconds, while the screen runs: the layer appears or disappears wit
 | Calm motion in Dashboard Settings | the layer is not drawn, and nothing else of the pack moves either |
 | `?motion=calm` in the address | the same, for that page only |
 
-### Caution: the Mini's speed
+### Caution: the Teletraan computer's speed
 
-The screen is shown by a 2011 Mac Mini with a weak graphics chip. **The Mini's speed has not been tested with
+The screen is shown by a 2011 Mac Mini with a weak graphics chip. **The Teletraan computer's speed has not been tested with
 the over layer.** A piece over the panels is composited over a screen that is already busy, with frames that
 draw lines and glints. The limits above (at most 14 over pieces, about 24 moving pieces in a pack, transform and
 opacity only, a contained layer) are a careful guess. Before a pack goes on the real screen for days, put
-it on the Mini with `?perf` and watch "animations running" and the frame rate (docs/try-it-on-the-mini.md). If the
+it on the computer with `?perf` and watch "animations running" and the frame rate (docs/try-it-on-the-computer.md). If the
 screen stutters, turn the switch off first: the header marks and the edge decorations cost far less.
 
 ## The data format

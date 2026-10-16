@@ -63,7 +63,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-// Makes a copy of the mini folder and config.js to run in, a folder of tools
+// Makes a copy of the computer folder and config.js to run in, a folder of tools
 // to run with, and returns how to run the script.
 function setup(name, options) {
   const root = path.join(work, name);

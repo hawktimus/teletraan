@@ -273,10 +273,10 @@ page fade instead of turn, and `&speed=very-slow` to see everything at half
 speed. Then check:
 
 - the browser console shows no errors from your files. It does show a 404
-  line for `data/live/version.txt`. That is expected: the Mini writes that
+  line for `data/live/version.txt`. That is expected: the Teletraan computer writes that
   file, so your computer does not have it. While the screen is on sample
   content (`?sample=1`) it reads only `data/sample/`. On production content it also looks for
-  the Mini's calendar files in `data/live/`, and a missing one is a 404 too.
+  the computer's calendar files in `data/live/`, and a missing one is a 404 too.
 - no text is smaller than 44px
 - nothing crosses the frame or the cut corner
 - everything with text on it turns over, in order from the top, and nothing
@@ -364,8 +364,8 @@ not metal.
 shade, ridge or glint, and every screw a plain silver head with a slot. The
 turning slats, the lifting halves and the turning screws stay, so it is the
 same screen with less to paint. If the
-screen on the Mini is slow, this is the first thing to try
-(docs/try-it-on-the-mini.md). Polish in Dashboard Settings sets it (Flat and
+screen on the Teletraan computer is slow, this is the first thing to try
+(docs/try-it-on-the-computer.md). Polish in Dashboard Settings sets it (Flat and
 Plain).
 
 **The plain look.** Plain is the flat finish with the screws and the default //
@@ -378,7 +378,7 @@ the mark with `doubleSlash()` or `markBeside()`. A seasonal pack's mark and the 
 - write a hex colour, `rgb()` or a gradient for metal in a panel's own
   stylesheet or script
 - use `box-shadow`, `text-shadow`, `filter`, `backdrop-filter`, `blur()`,
-  `drop-shadow()`, `mix-blend-mode` or video. They are too slow on the Mini.
+  `drop-shadow()`, `mix-blend-mode` or video. They are too slow on the Teletraan computer.
   A shadow is a dark copy of the shape moved a few pixels, as the frame does.
 - use a 3D transform (`perspective`, `translateZ`, `rotateX`, `rotateY`). The
   slat turns, the pieces of the mechanical page change, the hidden transitions,

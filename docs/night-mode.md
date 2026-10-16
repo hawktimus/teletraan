@@ -2,10 +2,10 @@
 
 Night mode is the screensaver. From 11:30 pm to 11:30 am the screen
 shows black with the team logo and the team number under it, and the logo drifts
-round the screen. The picture is never turned off: the Mini keeps sending a
+round the screen. The picture is never turned off: the Teletraan computer keeps sending a
 signal, so the TV stays on and nothing has to wake up in the morning. The
-kiosk script (`mini/scripts/kiosk.sh`) already switches off the screen saver
-and power saving of the Mini itself.
+kiosk script (`computer/scripts/kiosk.sh`) already switches off the screen saver
+and power saving of the computer itself.
 
 ## The settings
 
@@ -36,7 +36,7 @@ this page.
 **The time zone is not a setting here.** Night mode uses the Time zone on the
 Look page (it starts as America/New_York), the one the whole screen already
 uses for dates. One zone for the screen means two settings can never disagree.
-The clock in that zone is read with `Intl.DateTimeFormat`, so the Mini's own
+The clock in that zone is read with `Intl.DateTimeFormat`, so the Teletraan computer's own
 time zone never matters.
 
 The end time is before the start time, so night runs past midnight: 23:30 to
@@ -76,7 +76,7 @@ Turn on "Preview night mode" in the Advanced tab and publish. The screen shows
 night mode within a few seconds, even if "Use night mode" is off. Turn the
 preview off and publish when you are done.
 
-To try it on one computer without changing anything for the Mini, add
+To try it on one computer without changing anything for the Teletraan computer, add
 `?night=on` to the address (`http://localhost:8080/dashboard/?night=on`), or
 `?night=off` to make sure it never shows. The address wins over Dashboard
 Settings. `?motion=calm` and `?motion=none` show the still versions. The page

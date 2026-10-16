@@ -1,21 +1,21 @@
-# Rebuilding the Mini
+# Rebuilding the Teletraan computer
 
-How to take the Mac Mini (the Mini, see docs/where-things-are.md) from a fresh Debian install
+How to take the Mac Mini (the Teletraan computer, see docs/where-things-are.md) from a fresh Debian install
 to a working screen. Allow an afternoon.
 
-Most of what the Mini shows comes back from somewhere else: the dashboard from
+Most of what the Teletraan computer shows comes back from somewhere else: the dashboard from
 the repository, the content from Sanity (the service the editors type into)
-and the calendars from BAND. Three things live only on the Mini and are lost
+and the calendars from BAND. Three things live only on the computer and are lost
 when its disk is wiped:
 
-- `mini/local.env`, which holds the calendar feed addresses
+- `computer/local.env`, which holds the calendar feed addresses
 - the deploy key in `/home/hawktimus/.ssh`, if the repository is private
 - the password of the `hawktimus` account
 
 Before you wipe anything, keep a copy of each wherever the team mentor keeps
 the team's passwords. The keys and calendar links in `local.env` can also be
-copied to a Mac with the tool in `docs/updating-the-mini.md` (choice 3), and the
-same tool puts them back on a rebuilt Mini (choice 2).
+copied to a Mac with the tool in `docs/updating-the-computer.md` (choice 3), and the
+same tool puts them back on a rebuilt computer (choice 2).
 
 ## Before you start
 
@@ -31,39 +31,39 @@ said yes.**
 | What | Why | Step |
 |------|-----|------|
 | Debian, and the `hawktimus` account the installer creates | the operating system | 2 |
-| `openssh-server` (optional) | fix the Mini from another computer | 2 |
+| `openssh-server` (optional) | fix the Teletraan computer from another computer | 2 |
 | `systemd-timesyncd`, only if step 3 says the clock is not kept in sync: `sudo apt install systemd-timesyncd`, then `sudo timedatectl set-ntp true` | keep the clock right | 3 |
 | `git`, `curl`, `ca-certificates` | download the repository and the calendars | 4 |
-| `rsync`, only for a Mini that gets its files from a Mac (`docs/updating-the-mini.md`) | receive the files the Mac tool copies | 4 |
+| `rsync`, only for a computer that gets its files from a Mac (`docs/updating-the-computer.md`) | receive the files the Mac tool copies | 4 |
 | Docker Engine and the Compose plugin: `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`. They come from Docker's own apt source, so Docker's apt repository and its signing key are added too. Debian's `docker.io` also works if `docker compose version` then runs. | run the web server | 5 |
-| A read-only deploy key for the repository, if it is private | let the Mini pull updates | 6 |
+| A read-only deploy key for the repository, if it is private | let the computer pull updates | 6 |
 | The `nginx:1.28-alpine` container image, downloaded from Docker Hub by Docker the first time the server starts | the web server itself | 9 |
 | `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the slides of the talks into pictures, and read the list of talks from Sanity | 11 |
 | `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
-| A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the Mini starts and shuts down | 13 |
+| A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the computer starts and shuts down | 13 |
 | A read key for The Blue Alliance, made on the team's account there. `curl` and `jq` are already installed in step 11. | read the public competition data of each team | 17 |
 | A personal API token for Monday, made on an account that can see only the team's boards. `curl` and `jq` are already installed in step 11. | read the team's boards and keep their items as tasks | 18 |
 | `nodejs`, optional, version 18 or newer: `sudo apt install nodejs` | list the coming events of each calendar on the Calendars page in Studio | 19 |
 
 The repository host needs an account that the team mentor holds. This page does
 not create it. The Sanity project already exists, and its ID is in
-dashboard/config.js. Setting up the Studio is done on a Mac, not on the Mini:
+dashboard/config.js. Setting up the Studio is done on a Mac, not on the Teletraan computer:
 see docs/laptop-setup.md.
 
 ## Steps
 
-Step 6 below is the older way to get the repository onto the Mini: a clone in `/opt/teletraan` that the pull timer keeps up to date. A Mini that is set up now gets its files from the installer instead. Do steps 1 to 5 and 7, then run `tools/mini/teletraan-mini update` from a Mac (docs/updating-the-mini.md). The installer puts each version in `/opt/teletraan/releases/<n>`, links `current` to the one on the wall and keeps `local.env` at `/opt/teletraan/local.env`, linked into `mini/` (docs/control-page.md). The scripts are at `/opt/teletraan/mini/scripts` either way, so the later steps do not change.
+Step 6 below is the older way to get the repository onto the Teletraan computer: a clone in `/opt/teletraan` that the pull timer keeps up to date. A computer that is set up now gets its files from the installer instead. Do steps 1 to 5 and 7, then run `tools/teletraan/teletraan-tool update` from a Mac (docs/updating-the-computer.md). The installer puts each version in `/opt/teletraan/releases/<n>`, links `current` to the one on the wall and keeps `local.env` at `/opt/teletraan/local.env`, linked into `computer/` (docs/control-page.md). The scripts are at `/opt/teletraan/computer/scripts` either way, so the later steps do not change.
 
 1. **Turn on power-on after a power cut.** Do this before wiping macOS. Start
-   the Mini in macOS once, open System Preferences (System Settings on a
+   the Teletraan computer in macOS once, open System Preferences (System Settings on a
    newer macOS), choose Energy Saver, and tick "Start up automatically after
-   a power failure". The Mini then switches itself on when the power returns.
+   a power failure". The computer then switches itself on when the power returns.
    The setting normally survives installing Debian. If macOS is already gone,
    skip this step. The power test at the end shows whether it is needed.
 
 2. **Install Debian.** Use a network cable. Put the installer stick in, hold
-   the Option key while the Mini starts, and pick the stick (it may be called
+   the Option key while the Teletraan computer starts, and pick the stick (it may be called
    "EFI Boot"). Name the first user `hawktimus` and leave the root password
    empty, so that user can run `sudo`. (The scripts work with whatever the
    user is called. They use the account that owns the repository.) If the installer offers to install
@@ -72,7 +72,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
    "SSH server" is the one extra to tick, if the team mentor approves it.
 
 3. **Set the time zone.** The date and time on the screen, and the countdown,
-   come from the Mini's clock.
+   come from the Teletraan computer's clock.
 
        sudo timedatectl set-timezone America/New_York
        timedatectl
@@ -85,7 +85,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
        sudo apt update
        sudo apt install git curl ca-certificates
 
-   A Mini that gets its files from a Mac with `docs/updating-the-mini.md` also
+   A computer that gets its files from a Mac with `docs/updating-the-computer.md` also
    needs `rsync`: `sudo apt install rsync`, after the team mentor's yes.
 
 5. **Install Docker.** Follow "Install Docker Engine on Debian" on
@@ -100,7 +100,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
        sudo chown hawktimus:hawktimus /opt/teletraan
        git clone [repository address] /opt/teletraan
 
-   If the repository is private, the Mini needs a read-only deploy key. The
+   If the repository is private, the Teletraan computer needs a read-only deploy key. The
    team mentor sets that up. The key stays in `/home/hawktimus/.ssh` and is
    never put in the repository. On Debian a user's group has the same name as
    the user, so the group is `hawktimus` too. If `git clone` cannot connect, port 22 may be
@@ -114,13 +114,13 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
 
 8. **Make local.env.** Lock the file before the addresses go in.
 
-       cd /opt/teletraan/mini
+       cd /opt/teletraan/computer
        cp local.example.env local.env
        chmod 600 local.env
        nano local.env
 
    Leave `TELETRAAN_PORT` at `'8080'`. That is the port the dashboard uses on
-   this Mini, on the Mini itself only, so the screen is at `http://localhost:8080/dashboard/`,
+   this computer, on the Teletraan computer itself only, so the screen is at `http://localhost:8080/dashboard/`,
    and that address must be a CORS origin in the Sanity project (docs/control-page.md,
    First time, step 4). Port 3229 is the control page and the Studio, so do not use it here.
 
@@ -130,24 +130,24 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
    refuses a plain `http://` one. Adding a calendar later is the same, see
    Adding or changing a calendar below.
 
-   From a Mac, choice 2 of the tool in `docs/updating-the-mini.md` fills in the
+   From a Mac, choice 2 of the tool in `docs/updating-the-computer.md` fills in the
    calendar lines and the three keys from a form, so nothing is typed into `nano`.
-   It needs ssh (step 2) and the repository on the Mini (step 6).
+   It needs ssh (step 2) and the repository on the Teletraan computer (step 6).
 
    Then tell the dashboard which calendars to show. In Studio open Dashboard
    Settings, then the Calendars tab, and add one row for each calendar, with
    its kind (Meetings, Competitions, Outreach, Deadlines or Other). The
    row's code must be the lowercase part of the name in `local.env`: `team`
-   for `CALENDAR_TEAM_URL`. A code can be up to 20 characters. The Mini
+   for `CALENDAR_TEAM_URL`. A code can be up to 20 characters. The Teletraan computer
    downloads every calendar in `local.env`, but the dashboard only shows a
    calendar that has a row. A new Studio starts with one row, `team`.
 
-   To have Studio show what the Mini last did, add a `SANITY_WRITE_TOKEN`
-   line too. It is optional: see Showing what the Mini did in Studio below.
+   To have Studio show what the Teletraan computer last did, add a `SANITY_WRITE_TOKEN`
+   line too. It is optional: see Showing what the computer did in Studio below.
 
 9. **Start the web server.**
 
-       cd /opt/teletraan/mini
+       cd /opt/teletraan/computer
        sudo docker compose --env-file local.env up -d
        curl -I http://localhost:8080/dashboard/
 
@@ -157,27 +157,27 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
 10. **Turn on the timers.** Run the two scripts once by hand first, to see
     that they work.
 
-        /opt/teletraan/mini/scripts/pull.sh
-        /opt/teletraan/mini/scripts/fetch-calendars.sh
-        sudo /opt/teletraan/mini/scripts/install-timers.sh
+        /opt/teletraan/computer/scripts/pull.sh
+        /opt/teletraan/computer/scripts/fetch-calendars.sh
+        sudo /opt/teletraan/computer/scripts/install-timers.sh
 
     `fetch-calendars.sh` prints one line for each calendar and never prints an
     address. `install-timers.sh` turns on the pull timer as well as the
-    calendar timer, so the Mini pulls the repository by itself. A Mini that
+    calendar timer, so the Teletraan computer pulls the repository by itself. A computer that
     must not do that skips this step and does step 11.
 
 11. **Turn on the calendar and slides services.** This installs two things
     and nothing else: the calendar service, which downloads the calendars
     every 15 minutes, and the slides fetcher, which downloads the slides of
     the talks that are coming up every 2 minutes. It does not turn on the
-    pull timer, so this is the step for a Mini that must not pull by itself.
-    A Mini that did step 10 already has the calendar service and leaves out
+    pull timer, so this is the step for a computer that must not pull by itself.
+    A computer that did step 10 already has the calendar service and leaves out
     `install-calendars.sh` below.
 
         sudo apt install poppler-utils curl jq
-        /opt/teletraan/mini/scripts/fetch-calendars.sh
-        sudo /opt/teletraan/mini/scripts/install-calendars.sh
-        sudo /opt/teletraan/mini/scripts/install-slides.sh
+        /opt/teletraan/computer/scripts/fetch-calendars.sh
+        sudo /opt/teletraan/computer/scripts/install-calendars.sh
+        sudo /opt/teletraan/computer/scripts/install-slides.sh
 
     The packages need the team mentor's yes first, see the table at the top.
     Each install script says what it will do and waits for Enter. Both use
@@ -197,12 +197,12 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     To try the slides fetcher, give it the link of a deck that is shared with
     Anyone with the link:
 
-        /opt/teletraan/mini/scripts/slides-sync.sh --test '[link of the deck]'
+        /opt/teletraan/computer/scripts/slides-sync.sh --test '[link of the deck]'
 
     It prints `OK` and the number of pages, or `FAIL` and the reason, and
     deletes what it made.
 
-    The spare Mini needs the same steps. Its `local.env` is its own file, so
+    The spare computer needs the same steps. Its `local.env` is its own file, so
     the calendar lines go into it too.
 
 12. **Set up the screen.** Install the display packages.
@@ -211,15 +211,15 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
 
     The screen runs as a kiosk: a browser that fills the screen with no
     address bar, tabs or menus. Try it by hand before turning on the service,
-    which takes over the Mini's screen. At the Mini's own keyboard, log in as
+    which takes over the Teletraan computer's screen. At the computer's own keyboard, log in as
     `hawktimus` on the text screen and run the command below. If the service
     is already running, stop it first with
     `sudo systemctl stop teletraan-kiosk.service`.
 
-        xinit /opt/teletraan/mini/scripts/kiosk.sh -- :1 vt8
+        xinit /opt/teletraan/computer/scripts/kiosk.sh -- :1 vt8
 
     If it says `Only console users are allowed to run the X server`, the
-    command was not run from the Mini's own text screen. It does not work over
+    command was not run from the Teletraan computer's own text screen. It does not work over
     SSH or from a terminal window inside a desktop. Type `tty` first. It
     should print `/dev/tty1` (or tty2, tty3), not `/dev/pts/0`.
 
@@ -233,21 +233,21 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     The TV now shows the dashboard. To get a terminal back, press Ctrl+Alt+F1
     (hold the Fn key too on a Mac keyboard) and log in. To stop the screen,
     run `sudo systemctl stop teletraan-kiosk.service`. To use Firefox instead
-    of Chromium, see the comments at the end of `mini/scripts/kiosk.sh`.
+    of Chromium, see the comments at the end of `computer/scripts/kiosk.sh`.
 
-13. **Show the boot and shutdown screens.** While the Mini starts, the text
+13. **Show the boot and shutdown screens.** While the Teletraan computer starts, the text
     screen shows a drawing above the login prompt, until the kiosk takes
-    over. When the Mini shuts down or reboots, the TV switches to the text
+    over. When the computer shuts down or reboots, the TV switches to the text
     screen and shows a second drawing. The drawings are the files
-    `mini/console/startup.txt` and `mini/console/shutdown.txt`. They are
+    `computer/console/startup.txt` and `computer/console/shutdown.txt`. They are
     plain text, at most 100 columns wide and 56 rows tall, made for the text
     screen of 240 columns and 67 rows that a 1920 by 1080 TV gets with the
     default 8 by 16 font.
 
-        sudo /opt/teletraan/mini/scripts/install-console.sh
+        sudo /opt/teletraan/computer/scripts/install-console.sh
 
     The script says what it will do and waits for Enter. It installs no
-    packages and uses `chvt`, `clear` and `pr`, which are already on the Mini
+    packages and uses `chvt`, `clear` and `pr`, which are already on the Teletraan computer
     (the kiosk service uses `chvt` too). It does this:
 
     - Keeps a copy of the text now in `/etc/issue` as
@@ -256,7 +256,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     - Writes `/etc/issue` again: the startup drawing, a blank line, then the
       saved text. The login prompt reads that file and still works.
     - Copies `teletraan-console.service` into place and turns it on. It
-      counts as running all the time. When the Mini stops, it clears the
+      counts as running all the time. When the Teletraan computer stops, it clears the
       first text screen, switches the TV to it and prints the shutdown
       drawing. It runs as root and names no account.
 
@@ -264,7 +264,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     nothing. It stops with a message, and changes nothing, if a file is
     missing or empty. Run it again after `startup.txt` changes, because
     `/etc/issue` is a copy of it. A change to `shutdown.txt` needs nothing,
-    because the unit reads the file when the Mini stops.
+    because the unit reads the file when the Teletraan computer stops.
 
     To see the shutdown drawing without shutting down, stop the unit. That
     prints it and switches the TV away from the kiosk. Switch back, and start
@@ -284,7 +284,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     unit is what prints it. `sudo chvt 7` brings the kiosk back. Running
     `install-console.sh` again turns both screens back on.
 
-14. **Stop the Mini sleeping.** `kiosk.sh` already turns off the screen saver
+14. **Stop the Teletraan computer sleeping.** `kiosk.sh` already turns off the screen saver
     and screen blanking. This stops Debian suspending the whole machine:
 
         sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
@@ -304,25 +304,25 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     Then go through What to check.
 
 17. **Turn on the FRC feed.** This is optional, and it can be done at any time
-    after step 11, with no reboot. The Mini reads the public competition data of
+    after step 11, with no reboot. The Teletraan computer reads the public competition data of
     each team and writes it into Sanity for the screen (docs/frc-feed.md). It
     needs `curl` and `jq` from step 11 and the Sanity write token from "Showing
-    what the Mini did in Studio" below. It also needs a read key for The Blue
+    what the computer did in Studio" below. It also needs a read key for The Blue
     Alliance, which needs the team mentor's yes first. Make the key by signing
     in at thebluealliance.com, opening Account, and adding a key under Read API
-    Keys with a short description such as `Teletraan Mini`. Copy it. Then add it
+    Keys with a short description such as `Teletraan Tool`. Copy it. Then add it
     to `local.env`, in single quotes, on its own line:
 
-        nano /opt/teletraan/mini/local.env
+        nano /opt/teletraan/computer/local.env
 
         TBA_AUTH_KEY='[paste the read key here]'
 
-    The tool in `docs/updating-the-mini.md` can add this line from a Mac (choice 2).
+    The tool in `docs/updating-the-computer.md` can add this line from a Mac (choice 2).
     Install the timer and check that the key works:
 
         sudo apt install curl jq
-        sudo /opt/teletraan/mini/scripts/install-frc.sh
-        /opt/teletraan/mini/scripts/frc-sync.sh --check
+        sudo /opt/teletraan/computer/scripts/install-frc.sh
+        /opt/teletraan/computer/scripts/frc-sync.sh --check
 
     The `apt` line only installs what is missing and needs the team mentor's yes.
     `install-frc.sh` says what it will do and waits for Enter, like the other
@@ -331,7 +331,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     the reason. It asks one question and writes nothing. To read the data once
     now, at any time of the day:
 
-        /opt/teletraan/mini/scripts/frc-sync.sh --now
+        /opt/teletraan/computer/scripts/frc-sync.sh --now
 
     It prints a line for each team and `frc: status written`. In Studio, open
     Dashboard Settings: the status block shows the time of the last FRC data
@@ -341,9 +341,9 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     the script does nothing, says so in one line, and ends without an error.
 
 18. **Turn on the Monday board.** This is optional, and it can be done at any time
-    after step 11, with no reboot. The Mini reads the team's Monday boards and
+    after step 11, with no reboot. The Teletraan computer reads the team's Monday boards and
     keeps their items in Sanity as tasks (docs/monday.md). It needs `curl` and
-    `jq` from step 11 and the Sanity write token from "Showing what the Mini did
+    `jq` from step 11 and the Sanity write token from "Showing what the computer did
     in Studio" below. It also needs a personal API token from Monday, which needs
     the team mentor's yes first. Make it in Monday: click your picture at the top
     right, open Developers, then My access tokens, and copy the token. Use the
@@ -351,16 +351,16 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     the boards it sees are written to Sanity, which anyone can read. Then add it
     to `local.env`, in single quotes, on its own line:
 
-        nano /opt/teletraan/mini/local.env
+        nano /opt/teletraan/computer/local.env
 
         MONDAY_API_TOKEN='[paste the Monday token here]'
 
-    The tool in `docs/updating-the-mini.md` can add this line from a Mac (choice 2).
+    The tool in `docs/updating-the-computer.md` can add this line from a Mac (choice 2).
     Install the timer and check that the token works:
 
         sudo apt install curl jq
-        sudo /opt/teletraan/mini/scripts/install-monday.sh
-        /opt/teletraan/mini/scripts/monday-sync.sh --check
+        sudo /opt/teletraan/computer/scripts/install-monday.sh
+        /opt/teletraan/computer/scripts/monday-sync.sh --check
 
     The `apt` line only installs what is missing and needs the team mentor's yes.
     `install-monday.sh` says what it will do and waits for Enter, like the other
@@ -369,14 +369,14 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     `FAIL` and the reason. It asks one question and writes nothing. To read the
     boards once now:
 
-        /opt/teletraan/mini/scripts/monday-sync.sh
+        /opt/teletraan/computer/scripts/monday-sync.sh
 
     It prints how many boards are chosen and how many items it read, and
     `monday: status written`. Until a board is chosen it only writes the list of
     boards. In Studio, open Dashboard Settings, Monday tab: the block at the top
-    says who the token belongs to and when the Mini last read Monday, and the lists
+    says who the token belongs to and when the Teletraan computer last read Monday, and the lists
     of the Task board and the Milestones board offer the boards and their columns. The timer
-    wakes the script 2 minutes after the Mini boots and then every 5 minutes, and the script
+    wakes the script 2 minutes after the computer boots and then every 5 minutes, and the script
     reads the boards as often as How often says (30 minutes to start with). The token
     is never printed or saved anywhere but `local.env`. Without it the script does
     nothing, says so in one line, and ends without an error.
@@ -386,7 +386,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     Studio lists the next 40 events of each calendar, shown or hidden, and has the
     Hide buttons (docs/calendars-page.md). Without it the page still says when each
     calendar was downloaded and why a download failed. The page also needs the
-    Sanity write token from "Showing what the Mini did in Studio" below. Installing
+    Sanity write token from "Showing what the Teletraan computer did in Studio" below. Installing
     Node needs the team mentor's yes first.
 
         sudo apt install nodejs
@@ -395,7 +395,7 @@ Step 6 below is the older way to get the repository onto the Mini: a clone in `/
     `node --version` must print `v18` or a higher number. The `dashboard` folder
     has a `package.json` that tells Node its files are modules, and Node 18 and
     newer read them that way. `apt policy nodejs` shows the version that apt would
-    install on this Mini. If that is lower than 18, stop and ask the team mentor.
+    install on this computer. If that is lower than 18, stop and ask the team mentor.
     The page then says that Node is too old, and nothing else breaks. Then run the
     calendar service once, and look at its log:
 
@@ -415,14 +415,14 @@ for a moment at every page change and drop back to exactly where they were. On
 an LCD or LED TV that does no harm and the code needs no change. On an OLED or
 plasma TV a still picture can leave a faint copy of the frames and plates
 behind. Switch that kind of TV off at night with its own timer or schedule, in
-its settings. The Mini can keep running.
+its settings. The Teletraan computer can keep running.
 
 ## What to check
 
-- The dashboard is on the screen within two minutes of the Mini starting.
-- `ssh hawktimus@<address> /opt/teletraan/mini/scripts/check-connection.sh`
+- The dashboard is on the screen within two minutes of the Teletraan computer starting.
+- `ssh hawktimus@<address> /opt/teletraan/computer/scripts/check-connection.sh`
   ends with `OK` (see Checking the connection below).
-- Choice 5 of the tool in `docs/updating-the-mini.md` shows when the Mini last
+- Choice 5 of the tool in `docs/updating-the-computer.md` shows when the computer last
   wrote each time in the status block, and the check of the calendars.
 - The clock matches a phone, and the date is right.
 - All four sides of the frames and the whole ticker are visible. If
@@ -434,17 +434,17 @@ its settings. The Mini can keep running.
   lifts a little and drops back, or the frame breaks into pieces that fold away
   and click back into place (Look, Page change style), and the screws at
   the joints turn out and back in. A bright dash runs round each big
-  frame every few seconds. If that stutters, see `docs/try-it-on-the-mini.md`:
+  frame every few seconds. If that stutters, see `docs/try-it-on-the-computer.md`:
   `?glint=off` and `?finish=flat` are the first things to try.
 - Events appear. `sudo journalctl -u teletraan-calendars.service -n 20`
   shows `updated` for every calendar. If a calendar says `updated` but its
   events never show, it has no row in Dashboard Settings, Calendars (step 8).
 - The FRC feed, if step 17 was done, runs. `systemctl list-timers 'teletraan-frc*'`
-  lists `teletraan-frc.timer`, and `/opt/teletraan/mini/scripts/frc-sync.sh --check`
+  lists `teletraan-frc.timer`, and `/opt/teletraan/computer/scripts/frc-sync.sh --check`
   prints `OK` twice. `sudo journalctl -u teletraan-frc.service -n 20` is empty
   most of the time, because the script ends at once when it is not time.
 - The Monday board, if step 18 was done, runs. `systemctl list-timers 'teletraan-monday*'`
-  lists `teletraan-monday.timer`, and `/opt/teletraan/mini/scripts/monday-sync.sh --check`
+  lists `teletraan-monday.timer`, and `/opt/teletraan/computer/scripts/monday-sync.sh --check`
   prints `OK` twice. `sudo journalctl -u teletraan-monday.service -n 20` has the lines of the last
   runs, and no `monday:` line on stderr when the last run worked.
 - The slides service runs. `systemctl list-timers 'teletraan-*'` lists
@@ -454,7 +454,7 @@ its settings. The Mini can keep running.
   download with a real deck, use `slides-sync.sh --test` as in step 11.
 - The Photo panel shows the photos that are on in the Photos list in Studio
   (docs/editing-content.md, "Photos"). They come with the rest of the content,
-  so there is nothing on the Mini to set up, and the old `photos.json` file in
+  so there is nothing on the computer to set up, and the old `photos.json` file in
   the data folder is no longer read. If the panel never comes up, the list has
   no photo that is switched on and not expired.
 - Night mode (docs/night-mode.md) puts a black screen with the team logo up from
@@ -464,27 +464,27 @@ its settings. The Mini can keep running.
   itself goes dark, that is the TV's own sleep setting, not the dashboard: turn
   its auto power off or sleep timer off.
 - The hidden transitions (docs/hidden-transitions.md) are two rare surprises that
-  replace a page change. To see each once on the Mini, open Dashboard Settings in
+  replace a page change. To see each once on the computer, open Dashboard Settings in
   Studio, open the menu next to Publish and click Play desktop reveal, then Play
   red eyes. Each plays within about 20 seconds. If the screen stutters during one,
   turn off Allow hidden transitions in the Advanced tab and tell whoever looks after the code.
   They never play at night, in calm motion, or over an alert or announcement.
 - The text screen shows the startup drawing above the login prompt while the
-  Mini starts, and the TV shows the shutdown drawing as it stops (step 13).
+  computer starts, and the TV shows the shutdown drawing as it stops (step 13).
   If there is no drawing, `systemctl is-active teletraan-console.service`
   should say `active`, and `head -n 3 /etc/issue` should show the drawing.
 - Make a small change on a laptop and push it. Within about 6 minutes (up to
   5 for the pull timer, up to 1 for the dashboard to notice) the screen
   reloads and shows it.
-- Pull the power plug and put it back. The Mini should start by itself and
+- Pull the power plug and put it back. The computer should start by itself and
   show the dashboard. If it stays off, go back to step 1. If macOS is gone,
-  ask the team mentor: the fix is a boot-time command for this model of Mini,
-  and it has to be tried on the Mini itself.
-- Switch the Mini and the TV off, then switch the Mini on first and the TV
+  ask the team mentor: the fix is a boot-time command for this model of computer,
+  and it has to be tried on the computer itself.
+- Switch the computer and the TV off, then switch the computer on first and the TV
   30 seconds later. The dashboard must still fill the TV exactly. If it is
-  cropped or the wrong size, see "If the TV is not ready when the Mini
+  cropped or the wrong size, see "If the TV is not ready when the computer
   starts" below.
-- For the speed tests on the real hardware, use `docs/try-it-on-the-mini.md`.
+- For the speed tests on the real hardware, use `docs/try-it-on-the-computer.md`.
 
 The screen always shows what the editors published. Nothing in Studio switches
 it to the sample content. To try things out with made-up content, add
@@ -492,13 +492,13 @@ it to the sample content. To try things out with made-up content, add
 `http://localhost:8080/dashboard/?sample=1`, in a browser. That one page then
 shows the sample content in `dashboard/data/sample/` (the content, with its
 three sample photos, and the calendar) and does not read the calendars that the
-Mini downloads or any other content from Sanity. A SAMPLE CONTENT label shows
+computer downloads or any other content from Sanity. A SAMPLE CONTENT label shows
 beside the TEAM plate. Every piece of sample text is in [square brackets]. It
 still reloads itself after an update, and the browser console shows a 404 for
-`version.txt` in `data/live/` if the Mini has not written it. That is expected.
+`version.txt` in `data/live/` if the Teletraan computer has not written it. That is expected.
 The kiosk opens the address without `?sample=1`, so the TV never shows it.
 
-The Mini asks Sanity from the address `http://localhost:<port>`, with the port in
+The Teletraan computer asks Sanity from the address `http://localhost:<port>`, with the port in
 `TELETRAAN_PORT` in `local.env`, so that address must be a CORS origin in the
 Sanity project settings (docs/control-page.md, First time, step 4). If the screen says SANITY
 UNREACHABLE: CORS BLOCKED, the origin is the first thing to check (see Checking
@@ -507,10 +507,10 @@ the connection, next).
 ## Checking the connection
 
 One command checks everything the screen needs to get its content. Run it from
-any computer that can reach the Mini, with the Mini's address (the screen shows
+any computer that can reach the Teletraan computer, with the computer's address (the screen shows
 it, see the next section):
 
-    ssh hawktimus@<address> /opt/teletraan/mini/scripts/check-connection.sh
+    ssh hawktimus@<address> /opt/teletraan/computer/scripts/check-connection.sh
 
 It prints one line for each check, `OK` or `FAIL` and then what it found, and
 the last line is `OK` if every check passed or `FAIL` if any did not. A missing
@@ -529,15 +529,15 @@ tool or a failed check only fails its own line, so the others still run. Add
             [type]: [number]
     OK
 
-- DNS: the Mini can turn `api.sanity.io` into an address. A FAIL here means the
-  Mini has no working network or DNS.
+- DNS: the Teletraan computer can turn `api.sanity.io` into an address. A FAIL here means the
+  computer has no working network or DNS.
 - Sanity: the Sanity host answers at all. Any answer under 500 counts, and the
   line gives the HTTP code. Code 000 means no answer: the network or a firewall.
 - Dataset: a plain query, with no login, gets a number back. A FAIL says the
   dataset needs a login. It must stay public (docs/laptop-setup.md).
 - CORS: Sanity gives the browser permission to read its answer for
   `http://localhost:<port>`. The port is read from `TELETRAAN_PORT` in
-  `mini/local.env`, and from `mini/docker-compose.yml` if `local.env` has
+  `computer/local.env`, and from `computer/docker-compose.yml` if `local.env` has
   none. A FAIL says to add that address to the project's CORS origins at
   sanity.io/manage.
 - BAND: `api.band.us` answers. Any answer, even "not found", means it can be
@@ -578,7 +578,7 @@ red text comes up at the bottom right of the screen and says why:
 The last good read is the time of day of the last time the screen read
 Sanity. If there has been none since the screen started, it says there has been
 no good read yet, and the screen shows its saved copy, if it has one. The text
-is gone at once when Sanity answers again. The two lines about the Mini are the
+is gone at once when Sanity answers again. The two lines about the Teletraan computer are the
 ones in the next section, and they are only on the screen while the red text is.
 
 The reason is found with a second, plain request to the same Sanity host that
@@ -598,40 +598,40 @@ instead of the red one:
     Calendars read [time]
 
 The first line says `Saved copy from [time]` while the screen shows a copy
-saved on the Mini and has not read Sanity yet. The counts are what Sanity sent,
+saved on the Teletraan computer and has not read Sanity yet. The counts are what Sanity sent,
 including items that are switched off or have expired, so they can be higher
 than what is on the screen. Agenda is 1 when there is one for today and 0 when
 there is not. The calendar time is when the screen last read every calendar
-file, which is not the same as when the Mini downloaded them. It says
+file, which is not the same as when the computer downloaded them. It says
 `Calendars not read yet` until the screen has read them all, and again for as
-long as one calendar file cannot be read. To see when the Mini last downloaded
+long as one calendar file cannot be read. To see when the computer last downloaded
 the calendars, use `sudo journalctl -u teletraan-calendars.service -n 20`.
 
-## Showing what the Mini did in Studio
+## Showing what the Teletraan computer did in Studio
 
 The Screen tab of Dashboard Settings starts with a block that says when the
-Mini last saw a change to the content, downloaded the calendars, downloaded the
+computer last saw a change to the content, downloaded the calendars, downloaded the
 slides, read the Monday boards and the FRC data, and started the screen. The
-Mini writes those times into one document in Sanity, `status-mini`, with
-`mini/scripts/status-write.sh`. That needs a token that is allowed to write.
-Without one the Mini works as before and the block says No status yet.
+computer writes those times into one document in Sanity, `status-mini`, with
+`computer/scripts/status-write.sh`. That needs a token that is allowed to write.
+Without one the Teletraan computer works as before and the block says No status yet.
 
 1. Make the token. Open sanity.io/manage and sign in, open the project, then
-   API, then Tokens, then Add API token. Name it `Mini status`, give it Editor
+   API, then Tokens, then Add API token. Name it `Computer status`, give it Editor
    access and save. Sanity shows the token once, so copy it before leaving.
 
-2. Add it to `local.env` on the Mini, in single quotes, on its own line:
+2. Add it to `local.env` on the Teletraan computer, in single quotes, on its own line:
 
-       nano /opt/teletraan/mini/local.env
+       nano /opt/teletraan/computer/local.env
 
        SANITY_WRITE_TOKEN='[paste the token here]'
 
-   The file is locked to the Mini's account (step 8). A token with Editor
+   The file is locked to the Teletraan computer's account (step 8). A token with Editor
    access can change anything in the dataset, so it goes in this file and
    nowhere else: not in the repository, not in a message and not in Studio.
    `local.example.env` has the line with a placeholder, and the script ignores a
-   value that still starts with `[`. The tool in `docs/updating-the-mini.md` can
-   add the line from a Mac (choice 2), so the token is not typed on the Mini.
+   value that still starts with `[`. The tool in `docs/updating-the-computer.md` can
+   add the line from a Mac (choice 2), so the token is not typed on the computer.
 
 3. Run the install scripts again. The calendar and slides services each have
    a new line in their unit files that runs `status-write.sh` after the job, and
@@ -639,10 +639,10 @@ Without one the Mini works as before and the block says No status yet.
    calendar service has two more, which run `calendar-status.sh` and
    `status-write.sh calendar-status` for the Calendars page:
 
-       sudo /opt/teletraan/mini/scripts/install-calendars.sh
-       sudo /opt/teletraan/mini/scripts/install-slides.sh
+       sudo /opt/teletraan/computer/scripts/install-calendars.sh
+       sudo /opt/teletraan/computer/scripts/install-slides.sh
 
-   A Mini that was set up with `install-timers.sh` (step 10) runs that script
+   A computer that was set up with `install-timers.sh` (step 10) runs that script
    again instead, which copies every unit file.
 
 `status-write.sh` is the only script that uses the token. These start it:
@@ -670,7 +670,7 @@ download too, because the page has to show why a download failed.
 
 To try it by hand:
 
-    /opt/teletraan/mini/scripts/status-write.sh kiosk
+    /opt/teletraan/computer/scripts/status-write.sh kiosk
 
 It prints `status: wrote kioskStartedAt`, or says in plain words why not, and
 prints nothing at all when there is no token. Then open Dashboard Settings in
@@ -696,39 +696,39 @@ content each time Sanity says something changed. The slides service runs every
 2 minutes, so the screen re-reads about that often. Nothing on the screen
 changes when the content has not.
 
-## Finding the Mini on the network
+## Finding the Teletraan computer on the network
 
-Without access to the school's network tools, the Mini tells you its own
+Without access to the school's network tools, the Teletraan computer tells you its own
 address. While the kiosk is running, `scripts/kiosk.sh` writes
 `/var/lib/teletraan/data/device.json` once a minute, in the same safe way
 `pull.sh` writes `version.txt`. It has four values:
 
     {"hostname":"[name]","wifi":"[address]","tailscale":"[address]","time":"[UTC time]"}
 
-- `hostname` is the Mini's name.
+- `hostname` is the Teletraan computer's name.
 - `wifi` is the first IPv4 address on a Wi-Fi interface (a name that starts
-  with `wl`). A Mini on a network cable has no Wi-Fi address, so this is empty.
+  with `wl`). A computer on a network cable has no Wi-Fi address, so this is empty.
 - `tailscale` is the address from `tailscale ip -4`, or the one on the
   `tailscale0` interface. It is empty when Tailscale is not installed or not
   connected. This page does not install Tailscale.
 - `time` is when the file was written, in UTC.
 
-A value the Mini cannot find is left empty, and the file is still written.
-To read it on the Mini:
+A value the Teletraan computer cannot find is left empty, and the file is still written.
+To read it on the computer:
 
     cat /var/lib/teletraan/data/device.json
 
 The screen shows the same thing, but only while the red connection status text
 is up, which is when Sanity has been out of reach for over two minutes (see
 Checking the connection above). The last two lines of that text are about the
-Mini:
+computer:
 
     [name] · Wi-Fi [address] · Tailscale [address]
     ssh hawktimus@[address]
 
 The second line uses the Tailscale address if there is one, and otherwise the
 Wi-Fi address. A part that is empty is left out, and the two lines are left out
-if the Mini has no name or address at all. The text reads the file again every
+if the Teletraan computer has no name or address at all. The text reads the file again every
 minute while it is showing, so it is at most a minute old, and the lines go
 away at once when Sanity answers again. They are never on the screen
 otherwise, not even when Show connection status is on. If the two lines are
@@ -743,9 +743,9 @@ restart it:
 The `ssh` line only works if the SSH server is installed (step 2), and the
 Wi-Fi address only from a computer on the same school network.
 
-## If the TV is not ready when the Mini starts
+## If the TV is not ready when the Teletraan computer starts
 
-After a power cut the Mini often finishes starting before the TV answers. X,
+After a power cut the Teletraan computer often finishes starting before the TV answers. X,
 the display system, then starts without knowing the screen size and cannot
 grow later. Tell it the size in advance. Make the folder if it is missing,
 then create a file in it:
@@ -762,22 +762,22 @@ with this in it:
       EndSubSection
     EndSection
 
-Reboot and repeat the test with the Mini first.
+Reboot and repeat the test with the Teletraan computer first.
 
 ## Adding or changing a calendar
 
-Each BAND calendar is one line in `mini/local.env` on the Mini. From a Mac,
-choice 2 of the tool in `docs/updating-the-mini.md` does steps 2 and 4 below: it
-writes the line into `local.env` on the Mini and runs the calendar service once.
+Each BAND calendar is one line in `computer/local.env` on the Teletraan computer. From a Mac,
+choice 2 of the tool in `docs/updating-the-computer.md` does steps 2 and 4 below: it
+writes the line into `local.env` on the computer and runs the calendar service once.
 Getting the link from BAND and adding the row in Studio stay with you. To do it by
 hand:
 
 1. Get the calendar's iCal link from BAND. It starts with `https://` or
    `webcal://`.
 2. Choose an ID for it in capital letters, such as `GROUP` or `BUILD_SEASON`.
-   Digits and underscores are fine too. Open the file on the Mini:
+   Digits and underscores are fine too. Open the file on the Teletraan computer:
 
-       cd /opt/teletraan/mini
+       cd /opt/teletraan/computer
        nano local.env
 
    Add one line, `CALENDAR_`, then the ID, then `_URL`, with the address in
@@ -785,7 +785,7 @@ hand:
 
        CALENDAR_GROUP_URL='https://api.band.us/ical?token=PASTE_LINK_HERE'
 
-3. The Mini saves the calendar as the ID in lowercase, with `.ics` after it,
+3. The Teletraan computer saves the calendar as the ID in lowercase, with `.ics` after it,
    in the `calendars` folder of the data folder. `CALENDAR_GROUP_URL` is saved
    as `group.ics` and `CALENDAR_BUILD_SEASON_URL` as `build_season.ics`. The
    lowercase ID is the calendar's code. In Studio open Dashboard Settings,
@@ -794,17 +794,17 @@ hand:
 4. The calendar service reads `local.env` each time it runs, so nothing needs
    restarting. To get the calendar now and not within 15 minutes, run:
 
-       /opt/teletraan/mini/scripts/fetch-calendars.sh
+       /opt/teletraan/computer/scripts/fetch-calendars.sh
 
    It prints `calendar group: updated`, or the reason it could not download
    the calendar, and then keeps the old file. It never prints the address.
 5. To see what the screen will do with the calendar, open Calendars under
    Events in Studio after the next run (docs/calendars-page.md). To see every
    event at once, run `check-calendars.sh` on a computer that has Node, a copy
-   of the repository and a `mini/local.env` with the same line. The Mini has
+   of the repository and a `computer/local.env` with the same line. The Teletraan computer has
    no Node, unless it was installed for the Calendars page.
 
-       mini/scripts/check-calendars.sh
+       computer/scripts/check-calendars.sh
 
    It prints a KIND line with the kind of the calendar (no chip when it has none),
    a line for each event in the next 30 days, SHOWN or HIDDEN, and
@@ -818,12 +818,12 @@ hand:
    address.
 
 To change an address, edit `CALENDAR_<ID>_URL` in `local.env`. Keep the ID as
-it is, so the file name and the Studio row stay the same. The Mini uses the new
+it is, so the file name and the Studio row stay the same. The Teletraan computer uses the new
 address the next time the calendar service runs, or at once with
 `fetch-calendars.sh`.
 
-The spare Mini needs the same steps, in its own `local.env`. A line added to
-one Mini's file is not on the other's.
+The spare computer needs the same steps, in its own `local.env`. A line added to
+one computer's file is not on the other's.
 
 ## Recovering
 
@@ -831,23 +831,23 @@ Start with the log for the part that is wrong.
 
 | What you see | What to try |
 |--------------|-------------|
-| `xinit` says "Only console users are allowed to run the X server" | You are not on a real text screen. Run `tty`: if it prints `/dev/pts/...` you are in SSH or in a terminal window. Go to the Mini's own keyboard, press Ctrl+Alt+F3 (hold the Fn key too on a Mac keyboard) and log in as `hawktimus` there. If it still says it on a real text screen, run `sudo dpkg-reconfigure x11-common` and choose "Anybody". If the Mini starts into a desktop with a login picture instead of a text login, it is not set up the way this page assumes: tell the team mentor. The kiosk service does not have this problem, because it starts X on the console itself. |
+| `xinit` says "Only console users are allowed to run the X server" | You are not on a real text screen. Run `tty`: if it prints `/dev/pts/...` you are in SSH or in a terminal window. Go to the Teletraan computer's own keyboard, press Ctrl+Alt+F3 (hold the Fn key too on a Mac keyboard) and log in as `hawktimus` there. If it still says it on a real text screen, run `sudo dpkg-reconfigure x11-common` and choose "Anybody". If the computer starts into a desktop with a login picture instead of a text login, it is not set up the way this page assumes: tell the team mentor. The kiosk service does not have this problem, because it starts X on the console itself. |
 | Black screen, nothing | `sudo journalctl -u teletraan-kiosk.service -n 50`. A line about X or a missing package means step 12 is not finished. `sudo systemctl restart teletraan-kiosk.service` starts it again. |
 | "Teletraan I could not start. Trying again in 30 seconds." | The browser works but the dashboard could not start, for example a file would not load or a panel failed. It retries by itself, and a fix that has been pulled is picked up on the next try. To see why, run the same commit on a laptop (`python3 tools/serve.py`) and read the browser console there. |
 | The screen says SANITY UNREACHABLE | Run `check-connection.sh` (see Checking the connection). Its FAIL lines say which part is wrong, and the reason on the screen says which kind of fault it is. |
-| The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/mini`. If it is not running, run step 9 again. |
+| The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/computer`. If it is not running, run step 9 again. |
 | Calendars are old | Open Calendars under Events in Studio: each calendar says when it was last downloaded and why a download failed. Or `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `CALENDAR_<ID>_URL` in `local.env`, see Adding or changing a calendar. The old file stays on screen until a download works. |
 | The TV says "Slides are not ready. Ask a coach." | `sudo journalctl -u teletraan-slides.service -n 30`. A line such as `talk [id]: no slides, not shared` gives the reason. A deck that is not shared is the usual one, see docs/presentations.md. If there are no lines for the talk at all, check that `sudo systemctl status teletraan-slides.timer` says active, and run step 11 again if it does not. |
 | A change never arrives | `sudo journalctl -u teletraan-pull.service -n 30`, then see the next three rows. |
-| The pull log says local changes would be overwritten | Someone edited a file on the Mini. Look with `git -C /opt/teletraan status`. Ask before throwing those changes away. Files on the Mini should never be edited by hand. |
-| The pull log says "Not possible to fast-forward" | Someone force-pushed or rewrote the shared branch. Do not follow git's hint to merge or rebase. After checking that nobody edited files on the Mini, run `git -C /opt/teletraan fetch` and then `git -C /opt/teletraan reset --hard '@{u}'`. The next pull updates `version.txt`. |
+| The pull log says local changes would be overwritten | Someone edited a file on the computer. Look with `git -C /opt/teletraan status`. Ask before throwing those changes away. Files on the computer should never be edited by hand. |
+| The pull log says "Not possible to fast-forward" | Someone force-pushed or rewrote the shared branch. Do not follow git's hint to merge or rebase. After checking that nobody edited files on the computer, run `git -C /opt/teletraan fetch` and then `git -C /opt/teletraan reset --hard '@{u}'`. The next pull updates `version.txt`. |
 | The pull log says a git lock file is in the way | A power cut stopped git half way. Check that no git is running with `pgrep git`, which should print nothing. Then run `rm /opt/teletraan/.git/index.lock`, and then the two git commands from the row above, because the files may be half updated. |
-| A bad change went out | Fix it on a laptop and push the fix, or push a revert. The Mini follows within 5 minutes. Do not roll the Mini back by hand, the next pull would undo it. |
+| A bad change went out | Fix it on a laptop and push the fix, or push a revert. The computer follows within 5 minutes. Do not roll the computer back by hand, the next pull would undo it. |
 | The screen is blank or frozen | `sudo systemctl restart teletraan-kiosk.service`. If it keeps happening, note the time and tell the team mentor. |
 | Nothing works | Do this page again from step 1. |
 
-When anything under `mini/` changes, someone has to apply it by hand. How
-is in `mini/README.md`.
+When anything under `computer/` changes, someone has to apply it by hand. How
+is in `computer/README.md`.
 
 ## Upkeep
 
@@ -861,12 +861,12 @@ run these and check that the screen comes back:
 Tell the team mentor when you do it. Chromium and Docker are the parts that
 reach the internet, so they matter most.
 
-The web server image is fixed to one version in `mini/docker-compose.yml`.
+The web server image is fixed to one version in `computer/docker-compose.yml`.
 To move to a newer one, ask the team mentor first, change the tag, and run
 step 9 again.
 
 The `hawktimus` account runs the browser and also owns `local.env`, so
-`chmod 600` only keeps other accounts out. Do not use the Mini to browse the
+`chmod 600` only keeps other accounts out. Do not use the Teletraan computer to browse the
 web.
 
 ## Credits

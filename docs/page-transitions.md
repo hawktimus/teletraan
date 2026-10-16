@@ -196,8 +196,8 @@ Keep calm and none motion working: the rules are all under
   one plain silver. `?motion=calm` and `?motion=none` have no breaking, turning
   or screws.
 
-Measure on the Mini. The mechanical change paints the pieces when it starts and
+Measure on the Teletraan computer. The mechanical change paints the pieces when it starts and
 the frame at rest again when it ends, which the slat change does not do, and it
 promotes about a dozen layers while it runs. If that is too much, use Slat change
-only. If the pieces still stutter on the Mini, `?finish=flat` costs less
-(docs/try-it-on-the-mini.md).
+only. If the pieces still stutter on the computer, `?finish=flat` costs less
+(docs/try-it-on-the-computer.md).

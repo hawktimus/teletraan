@@ -1,6 +1,6 @@
 # FRC feed
 
-For the coaches and the students who look after the Mini. The Mini reads the
+For the coaches and the students who look after the Teletraan computer. The computer reads the
 public competition data of each team and keeps it in Sanity, so the screen can
 show the season, the next match, the last results, the rank and the ratings.
 This page says what it reads, what it writes, how often, what to do when it
@@ -37,7 +37,7 @@ zone on the Look page.
 ## What it writes
 
 One document in Sanity with the fixed id `frc-status` and the type `frcStatus`.
-`mini/scripts/frc-sync.sh` replaces it as a whole. Its fields:
+`computer/scripts/frc-sync.sh` replaces it as a whole. Its fields:
 
 - `season`, `lastSyncAt` (the time of the last write), `lastError` (plain words,
   or nothing) and `notes` (things that are not errors, such as Statbotics being
@@ -82,12 +82,12 @@ key and the token are never written in it or in any file.
 
 ## The keys
 
-- `TBA_AUTH_KEY` in `mini/local.env` on the Mini. The Blue Alliance wants it in
+- `TBA_AUTH_KEY` in `computer/local.env` on the Teletraan computer. The Blue Alliance wants it in
   a header on every request. The script hands it to curl on standard input, so it
   never shows in the process list, and it is never printed or saved. How to make
-  one: docs/rebuilding-the-mini.md, step 17.
+  one: docs/rebuilding-the-computer.md, step 17.
 - `SANITY_WRITE_TOKEN` in the same file, the one the status block uses
-  (docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio").
+  (docs/rebuilding-the-computer.md, "Showing what the computer did in Studio").
 - Statbotics needs no key. If it ever answers with a refusal, the script skips
   Statbotics for that run and says so in `notes`.
 
@@ -96,7 +96,7 @@ ends without an error, so the service does not show as failed.
 
 ## When it runs
 
-`teletraan-frc.timer` starts the script 2 minutes after the Mini boots and then
+`teletraan-frc.timer` starts the script 2 minutes after the Teletraan computer boots and then
 every 5 minutes. The script looks at the time of its last run and at the dates of
 the events it saw, and ends at once unless it is time:
 
@@ -107,7 +107,7 @@ the events it saw, and ends at once unless it is time:
 - always, after a run that was stopped by the limit below
 
 There is one timer and not two (hourly, and every 5 minutes during an event)
-because one timer is one thing to install and one thing to look at. A Mini that
+because one timer is one thing to install and one thing to look at. A computer that
 was off at the hour catches up at its next wake, because the script goes by the
 time of its last run and not by the clock. The wakes that end at once cost
 nothing. A run by hand with `--now` ignores the time.
@@ -124,7 +124,7 @@ nothing. A run by hand with `--now` ignores the time.
   the service answers 304 when nothing changed. A 304 still counts as a request.
   Statbotics sends no ETag, so its answers are read again each time.
 - Nothing is written to Sanity when nothing changed. About every 45 minutes it is
-  written anyway, so that `lastSyncAt` shows the Mini is still looking.
+  written anyway, so that `lastSyncAt` shows the Teletraan computer is still looking.
   Status-mini (Dashboard Settings, the status block) gets the time of every run
   that worked, written or not.
 - Three requests in a row that get no answer stop the run, because the network
@@ -134,10 +134,10 @@ nothing. A run by hand with `--now` ignores the time.
 
 ## Trying it
 
-On the Mini:
+On the Teletraan computer:
 
-    /opt/teletraan/mini/scripts/frc-sync.sh --check
-    /opt/teletraan/mini/scripts/frc-sync.sh --now
+    /opt/teletraan/computer/scripts/frc-sync.sh --check
+    /opt/teletraan/computer/scripts/frc-sync.sh --now
     sudo journalctl -u teletraan-frc.service -n 30
     systemctl list-timers 'teletraan-frc*'
 
@@ -151,7 +151,7 @@ journal has what the timer's runs said.
 | What you see | What to do |
 |--------------|------------|
 | `--check` says The Blue Alliance refused the key | The key is wrong or was deleted. Make a new one on the account page and put it in `local.env`. |
-| The script says `TBA_AUTH_KEY is not in local.env yet` | Add the line (docs/rebuilding-the-mini.md, step 17). |
+| The script says `TBA_AUTH_KEY is not in local.env yet` | Add the line (docs/rebuilding-the-computer.md, step 17). |
 | `team nova: not found on The Blue Alliance, skipped` | The Team number in Studio is wrong, or the team has no page yet. Check Teams. |
 | `team nova: no team number, skipped` | The team has no Team number in Studio. Add it if the team should be read. |
 | The notes say Statbotics refused the request | Nothing to do. Ratings and win chances come back when it stops refusing. |
@@ -161,7 +161,7 @@ journal has what the timer's runs said.
 ## If an answer looks different
 
 Every address and every place in an answer is in one file,
-`mini/scripts/frc-contract.sh`, which `frc-sync.sh` reads. The addresses are `tba_` and `statbotics_` lines
+`computer/scripts/frc-contract.sh`, which `frc-sync.sh` reads. The addresses are `tba_` and `statbotics_` lines
 with `{team}`, `{year}`, `{event}`, `{match}`, `{number}` and `{district}` where
 the script puts the values. The places are the `def` lines in `paths`, such as
 `def match_red_score: .alliances.red.score;`. They are jq, and each one is given
@@ -199,19 +199,19 @@ The screen reads the document `frc-status` with the rest of the content, and dra
 it as seven cards in the large panel. Each card is a panel in
 `dashboard/panels/competition-*`, drawn as plain SVG at the size of the large
 panel, with no text under 44px and no line thinner than 3px. A card shows the
-data of the team that is on the screen. A team that the Mini did not read has no
-cards. Nothing on a card is made up: what the Mini did not find is a dash or is
+data of the team that is on the screen. A team that the Teletraan computer did not read has no
+cards. Nothing on a card is made up: what the computer did not find is a dash or is
 left out, and a sentence says so.
 
 | Card | Header | What it shows | When it comes in Auto |
 |------|--------|---------------|-----------------------|
 | Season timeline | SEASON | A line from today to the last coming date, with a numbered dot for each date, and a legend under it with a row for each dot. The dates are the next date of the countdown (Kickoff, then Rollout), each event of the team that is not over, and the state championship. | All season, while there is a date ahead. |
-| Last season at a glance | the year, such as 2026 | The record of the whole season, the rank at each event, and the EPA after each event as a short line. | Before the first event of the season starts, when the Mini has kept last season. |
+| Last season at a glance | the year, such as 2026 | The record of the whole season, the rank at each event, and the EPA after each event as a short line. | Before the first event of the season starts, when the Teletraan computer has kept last season. |
 | Live rank | RANK | The rank as the biggest number, how many teams are ranked, the record and the ranking points. | From two days before an event to its last day. |
 | Next match | MATCH | The match and its time, the three teams on each alliance with their EPA, which side the team is on, and the chance that red wins as one bar split red and blue. | The same days, and it comes first. |
 | Results strip | RESULTS | The last 8 matches as chips in red or blue, the colour the team was on, with the score and a tick for a win. A lost match is dimmer. | The same days. |
 | Alliance board | ALLIANCE | The number of the alliance and the teams on it. | The same days, once the selection has been made. |
-| District points | DISTRICT | The points, the rank and a bar that fills toward the cutoff for the state championship. | All season once the first event has started, when the Mini has the points. |
+| District points | DISTRICT | The points, the rank and a bar that fills toward the cutoff for the state championship. | All season once the first event has started, when the computer has the points. |
 
 The days of an event are in the time zone on the Look page, from the first day to
 the last day. The state championship is on the timeline when the district list
@@ -223,12 +223,12 @@ dot. There is no other text on the line. Under it is a legend with a row for eac
 of the event on one line at 44px, cut off with an ellipsis if it is too long, the city and the day at 36px in the muted color, and the
 days left at the right in the accent (NOW while the event is on). With more than six dates the card says how many are left out, such as +2
 more events. The name of an event is the `short_name` that The Blue Alliance gives it when it has one and its `name` when it has
-none, with a year at the front taken off. The Mini reads the full event lists (`/team/{team}/events/{year}` and
+none, with a year at the front taken off. The Teletraan computer reads the full event lists (`/team/{team}/events/{year}` and
 `/district/{district}/events`) and not the simple ones, because only the full event has `short_name`. The district points card shows no bar until `district_slots` is set (see
 "The district cutoff"), and says so.
 
-A header can say more. Sample data says SAMPLE. Data the Mini wrote more than 2
-hours ago says how old it is, such as 5 HR OLD, so a Mini that has stopped
+A header can say more. Sample data says SAMPLE. Data the Teletraan computer wrote more than 2
+hours ago says how old it is, such as 5 HR OLD, so a computer that has stopped
 reading does not pass for live.
 
 When a card is asked to draw and has nothing to show, it says one sentence:
@@ -243,7 +243,7 @@ When a card is asked to draw and has nothing to show, it says one sentence:
 - Last season at a glance: There are no results from last season yet.
 
 A card with nothing to show is not put in the rotation at all, so a screen with no
-key on the Mini shows no competition card. The sentences are for the card asked
+key on the Teletraan computer shows no competition card. The sentences are for the card asked
 for by hand (`?show=competition-rank` on the address) and for a card that loses
 its data while it waits for its turn.
 
@@ -281,7 +281,7 @@ The cards come in with the rows of the team that is on the banner, with the
 data of that team. A Monday row has its own list, so no competition card comes
 in it.
 
-The first block of the tab shows what the Mini last did: when it last read the
+The first block of the tab shows what the Teletraan computer last did: when it last read the
 data, how many events it found for each team, any note and the last error. With
 no document yet it says No connection yet and what to add to `local.env`.
 
@@ -300,9 +300,9 @@ within a few seconds:
 - The large panel shows every card in order of priority, each for an equal share
   of 2 minutes (about 17 seconds), whatever the mode and the switches say. Then it
   goes back to its own list.
-- Nothing is read from Sanity or from the Mini, and nothing is written. One
+- Nothing is read from Sanity or from the Teletraan computer, and nothing is written. One
   click is handled once: the click that was handled is kept in the browser, so a
-  Mini that restarts never runs it again.
+  computer that restarts never runs it again.
 
 `core/competition-preview.js` decides, and `core/competition-preview-run.js` gives
 it the real screen. `tests/competition.test.mjs` checks it.
@@ -311,9 +311,9 @@ it the real screen. `tests/competition.test.mjs` checks it.
 
 To see every card full, with real numbers, use an event that is over. Nothing here is written to Sanity.
 
-1. On the Mini, read one event into a file. The key of an event is the year and its code, such as `2026ncwak`:
+1. On the Teletraan computer, read one event into a file. The key of an event is the year and its code, such as `2026ncwak`:
 
-       mini/scripts/frc-sync.sh --event 2026ncwak --to /tmp/event.json
+       computer/scripts/frc-sync.sh --event 2026ncwak --to /tmp/event.json
 
    It needs `TBA_AUTH_KEY` in `local.env` and prints no key.
 2. On the Mac, with that file copied over, make the fixture:

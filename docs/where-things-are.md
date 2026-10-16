@@ -4,9 +4,9 @@ This is the longer guide that used to be the top of the README. It says how
 to try the dashboard on a computer, what each folder is for, where each
 setting lives and what to run to check your work.
 
-The Mini is the Mac mini that runs the dashboard on the TV. The team mentor,
+The Teletraan computer is the Mac mini that runs the dashboard on the TV. The team mentor,
 [name of the team mentor], is the adult who holds the team's accounts and
-passwords and says yes to anything new on the Mini. Ask them before you install
+passwords and says yes to anything new on the computer. Ask them before you install
 software or when a step needs a login or a key.
 
 ## Try it on your computer
@@ -22,7 +22,7 @@ the folder and choose Open in Terminal. Then run:
 The terminal will say `Serving HTTP on 127.0.0.1 port 8080`. That is normal.
 Leave it open. Then open http://localhost:8080/dashboard/ in a browser. Press
 Ctrl+C in the terminal to stop the server. This server is for trying things
-on a computer. On the Mini the web server in `mini/` does the same job.
+on a computer. On the Teletraan computer the web server in `computer/` does the same job.
 
 The screen shows the editors' own content (production). To try things out with
 the sample instead, put `?sample=1` on the end of the address, such as
@@ -33,18 +33,18 @@ one place that decides. Until the CORS origin is added in the Sanity project (do
 First time, step 4), which is what lets the screen read Sanity, the screen has nothing
 to show on production, so use `?sample=1`. A Studio with nothing published
 shows an empty production screen. The browser console shows a 404 line for
-`data/live/version.txt`. That is expected: the Mini writes that file.
+`data/live/version.txt`. That is expected: the Teletraan computer writes that file.
 
 A small text at the bottom right of the screen says when Sanity has been out
 of reach for over two minutes, and why (core/connection.js). Its last two lines
-are the Mini's name and addresses (core/device.js). To see it on your computer,
+are the Teletraan computer's name and addresses (core/device.js). To see it on your computer,
 open the dashboard with no internet and no saved copy of the content (a private
 window), wait two minutes, and put the four values in
-`dashboard/data/live/device.json` as in "Finding the Mini on the network" in
-docs/rebuilding-the-mini.md. Git ignores the files in that folder. The Show
+`dashboard/data/live/device.json` as in "Finding the computer on the network" in
+docs/rebuilding-the-computer.md. Git ignores the files in that folder. The Show
 connection status switch in Dashboard Settings keeps a text of this kind on the
 screen all the time, with the last read from Sanity and the item counts
-(docs/rebuilding-the-mini.md, "Checking the connection").
+(docs/rebuilding-the-computer.md, "Checking the connection").
 
 ## The editing screen (Studio)
 
@@ -54,7 +54,7 @@ to run the Studio on a Mac, let the dashboard read from it, type some content
 and look at it on the screen. docs/laptop-setup.md has every step.
 In short, from the `studio` folder in the Terminal app: `npm install`,
 `npx sanity login`, `npm run dev`, then add `http://localhost:8080` (this Mac, and the screen on
-the Mini) and `http://teletraan.local:3229` (the Studio on the Mini) as CORS origins in the Sanity project
+the Teletraan computer) and `http://teletraan.local:3229` (the Studio on the computer) as CORS origins in the Sanity project
 settings, publish some content, and run `npm run deploy` so the
 editors can sign in from anywhere.
 
@@ -64,7 +64,7 @@ editors can sign in from anywhere.
       index.html, shell.js    starts everything. index.html also draws the metal gradients
       registry.js             the list of every panel
       package.json            tells Node that the .js files here are modules, so the calendar scripts on the
-                              Mini can read them (docs/calendars-page.md). Browsers do not use it
+                              computer can read them (docs/calendars-page.md). Browsers do not use it
       config.js               the weather location, the Sanity project, the fallback content flag, the speeds, the defaults
       frame.js, frame.css     everything that moves: the page change (the slat change and the mechanical
                               change, docs/page-transitions.md), the screws, the logo's entrance, spin and
@@ -160,7 +160,7 @@ editors can sign in from anywhere.
                               event-pages.js splits those events into the two pages of the Events panel (which scrolls from one to the next),
                               with the kind of each and the pinned ones first (docs/calendar-filters.md),
                               connection.js decides why Sanity could not be read and writes the
-                              connection status text at the bottom right, device.js reads the Mini's
+                              connection status text at the bottom right, device.js reads the Teletraan computer's
                               name and addresses (data/live/device.json) for the red version of it
                               night.js says when it is night and where the screensaver logo starts,
                               and night-screen.js draws the night screen (docs/night-mode.md),
@@ -200,7 +200,7 @@ editors can sign in from anywhere.
                               re-forms, whether the icon of the logo flutters or only goes with them, and how), swap-run.js plays it on the page, in full motion,
                               calm motion or none, and busy.js says that a transition has the screen
                               (docs/layouts.md, "The swap"),
-                              frc.js cleans the frc-status document the Mini writes and has the date helpers for
+                              frc.js cleans the frc-status document the computer writes and has the date helpers for
                               it, competition.js decides which competition cards are due now (from the document,
                               the clock and the Competition cards setting) and mixes them into the list of the
                               large panel, competition-draw.js is what the cards share, and competition-preview.js
@@ -231,7 +231,7 @@ editors can sign in from anywhere.
                               now-report-parts.js is the plain half of the report
         dots.js               the rules of the three dots (Monday, Band, Sanity); dots-run.js draws them
         heartbeat.js          writes the time in the page title every 30 seconds, which the watchdog
-                              on the Mini reads
+                              on the computer reads
         still.js              the ?panel= preview address; still-run.js draws the one panel
         competition-address.js  ?competition=1&event= puts the competition cards on with one event's
                               data; competition-address-run.js gives it the page
@@ -254,7 +254,7 @@ editors can sign in from anywhere.
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
-      data/live/              files the Mini downloads (never committed)
+      data/live/              files the computer downloads (never committed)
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
@@ -276,11 +276,11 @@ editors can sign in from anywhere.
                               Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
                               the Weekday schedule and the hidden Styles by day, Monday style, Team order and How the look changes.
                               screen.js is the three Screens (docs/coaches-guide.md, "Screens"). status.js is the
-                              document the Mini writes (the status block, settingsStatus.js and inputs/status-input.js), and calendarStatus.js
+                              document the computer writes (the status block, settingsStatus.js and inputs/status-input.js), and calendarStatus.js
                               the one it writes for the Calendars page. inputs/time-text.js has the ages in words that
-                              both use. frcStatus.js is the document the Mini writes for the competition cards,
+                              both use. frcStatus.js is the document the computer writes for the competition cards,
                               settingsCompetition.js the Competition tab and inputs/frc-status-input.js its connection block.
-                              mondayStatus.js is the document the Mini writes for the Monday tab, settingsMonday.js
+                              mondayStatus.js is the document the computer writes for the Monday tab, settingsMonday.js
                               the Monday tab, inputs/monday-status-input.js its connection block and inputs/monday-pickers.js
                               the board and column lists of a board entry (docs/monday.md).
                               The form of a Screen is inputs/screen-input.js: the Editing switch, the map (tools/screen-map.js is its
@@ -320,9 +320,9 @@ editors can sign in from anywhere.
                               env-file.js and sanity.js. static/ is the pages (index.html and one file for each
                               tab) with the browser copy of the tree hash and the fonts. bin/install-tree.js
                               installs a release from the command line
-    mini/                     how the Mini runs it: web server, timers, scripts. scripts/check-connection.sh
-                              checks the Mini's connection to Sanity, BAND, Docker and the kiosk with one
-                              OK or FAIL line each (docs/rebuilding-the-mini.md, "Checking the connection").
+    computer/                     how the computer runs it: web server, timers, scripts. scripts/check-connection.sh
+                              checks the computer's connection to Sanity, BAND, Docker and the kiosk with one
+                              OK or FAIL line each (docs/rebuilding-the-computer.md, "Checking the connection").
                               scripts/fetch-calendars.sh downloads the BAND calendars in local.env into the
                               data folder (docs/calendar-links.md) and leaves calendar-sync.txt, a line for
                               each calendar with its last good download and why a download failed.
@@ -332,13 +332,13 @@ editors can sign in from anywhere.
                               scripts/check-calendars.sh lists the events of each calendar in local.env,
                               says which ones the Calendar filters hide, and for the others which page of
                               the Events panel they are on and their kind. It needs Node, so it runs on a
-                              computer that has it, not on the Mini. check-calendars.mjs is the part of it
+                              computer that has it, not on the computer. check-calendars.mjs is the part of it
                               that runs the dashboard's own calendar code.
                               scripts/slides-sync.sh downloads the slides of the coming talks and turns them
                               into pictures in the data folder (docs/presentations.md).
                               scripts/status-write.sh writes the time of a job into the status-mini document
-                              in Sanity, for the status block in Dashboard Settings (docs/rebuilding-the-mini.md,
-                              "Showing what the Mini did in Studio").
+                              in Sanity, for the status block in Dashboard Settings (docs/rebuilding-the-computer.md,
+                              "Showing what the computer did in Studio").
                               scripts/frc-sync.sh reads the public FRC data of each team and writes it into
                               the frc-status document in Sanity, and install-frc.sh turns on its timer
                               (docs/frc-feed.md).
@@ -364,12 +364,12 @@ editors can sign in from anywhere.
                               repository.
                               scripts/install-timers.sh turns on the calendar timer and the pull timer,
                               install-calendars.sh only the calendar timer and install-slides.sh the slides
-                              timer (docs/rebuilding-the-mini.md, step 11). systemd/ has the unit files they
+                              timer (docs/rebuilding-the-computer.md, step 11). systemd/ has the unit files they
                               copy into place.
                               scripts/install-console.sh writes the startup drawing above the old text of
                               /etc/issue and turns on teletraan-console.service, which shows the shutdown
                               drawing. The two drawings are console/startup.txt and console/shutdown.txt
-                              (docs/rebuilding-the-mini.md, step 13).
+                              (docs/rebuilding-the-computer.md, step 13).
     tools/
       serve.py                the server above
       screenshots.mjs         takes a picture of every panel in each view and theme, into _outputs/screens
@@ -377,10 +377,10 @@ editors can sign in from anywhere.
       frc-fixture.mjs         turns one past event into the fixture of the competition cards
       zones.html              the zones of the seasonal packs outlined over the dashboard, at
                               http://localhost:8080/tools/zones.html
-      mini/                   the Mac tool that updates the Mini and keeps its keys and calendars:
-                              teletraan-mini (the menu, and the words update, status and restart),
-                              Teletraan Mini.command (double-click it) and merge-env.sh, which runs on the
-                              Mini (docs/updating-the-mini.md)
+      computer/                   the Mac tool that updates the computer and keeps its keys and calendars:
+                              teletraan-tool (the menu, and the words update, status and restart),
+                              Teletraan Tool.command (double-click it) and merge-env.sh, which runs on the
+                              computer (docs/updating-the-computer.md)
       icons.html              every weather picture on one page, at
                               http://localhost:8080/tools/icons.html
       logo.html               the hawk logo large, with every act and key pose, at
@@ -389,14 +389,14 @@ editors can sign in from anywhere.
                               from plain plates, in metal or flat, at
                               http://localhost:8080/tools/perf/plates.html
       mac/                    for the Mac you work on: ship.sh checks the code, commits, pushes,
-                              deploys the Studio and has the Mac tool update the Mini and restart the screen;
+                              deploys the Studio and has the Mac tool update the computer and restart the screen;
                               make-app.sh makes Ship Teletraan.app (docs/shipping-from-the-mac.md,
                               docs/laptop-setup.md for a second Mac)
     tests/                  every test, one file for each module or script (<module>.test.mjs). run.mjs runs them all:
                               node tests/run.mjs, or node tests/run.mjs <word> for the files with the word in the name.
                               A test of a shell script is a Node file that runs the script with fakes in a temporary folder.
       run.mjs                 the runner: three files at a time, one line each, a total, and sh -n and bash -n on every shell file
-      mini-scripts.test.mjs   checks that every script in mini/scripts starts the same way (bash, a usage line,
+      computer-scripts.test.mjs   checks that every script in computer/scripts starts the same way (bash, a usage line,
                               set -euo pipefail, lib.sh) and that lib.sh holds the only readers of local.env and
                               config.js. helpers/script-parts.mjs gives a test the parts of a split script
       control-auth, control-keys, control-pages, control-releases, control-request, control-status,
@@ -404,7 +404,7 @@ editors can sign in from anywhere.
                               check the control service: the PIN, cookie and lockout, the Keys tab, the text of
                               the tabs, releases and installs, the Now showing requests, the status routes, the
                               zip check and tree hash, and the host helper (docs/control-page.md)
-      install-sh.test.mjs     checks mini/install.sh: it refuses a tree with deploy/, moves an old tree into
+      install-sh.test.mjs     checks computer/install.sh: it refuses a tree with deploy/, moves an old tree into
                               releases/1, installs the helper socket and the sudoers file
       nightly.test.mjs        checks nightly.sh and its units: the 04:00 restart, the Sunday reboot and the skip
                               when a talk is booked within the hour
@@ -423,7 +423,7 @@ editors can sign in from anywhere.
       content.test.mjs        checks for the code that reads the editors' content, the photo
                               addresses, which photos show and in what order, the pages of
                               portraits, of the subteam roster, the subteam members, the events list and the
-                              lines of the Mini's address, and the reasons and the lines of the
+                              lines of the computer's address, and the reasons and the lines of the
                               connection status text, for the Polish setting: its cleaning, the
                               switches each look sets and the rules for Plain in base.css, and for
                               teams: the cleaning of a team, the team each mode asks for, which items
@@ -470,34 +470,34 @@ editors can sign in from anywhere.
       publish-all.test.mjs    checks for the logic of the Publish all tool: which drafts are listed, the
                               transaction for each, the order, the skipped reasons and the summary
       templates.test.mjs      checks that the CSV templates match the schemas, and the CSV importer
-      check-connection.test.mjs  checks for mini/scripts/check-connection.sh, with fake tools
-      slides-sync.test.mjs  checks for mini/scripts/slides-sync.sh and install-slides.sh, with fake tools
-      install-calendars.test.mjs  checks for mini/scripts/install-calendars.sh: that it stops before it changes
+      check-connection.test.mjs  checks for computer/scripts/check-connection.sh, with fake tools
+      slides-sync.test.mjs  checks for computer/scripts/slides-sync.sh and install-slides.sh, with fake tools
+      install-calendars.test.mjs  checks for computer/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
-      check-calendars.test.mjs  checks for mini/scripts/check-calendars.sh, with a fake curl
+      check-calendars.test.mjs  checks for computer/scripts/check-calendars.sh, with a fake curl
       event-pages.test.mjs    checks for the two pages of the Events panel (core/event-pages.js): four events
                               to a page, no second page for four or fewer, the kind chips, Group events by
                               kind, the pinned events, and the step for each page in the rotation
       events-scroll.test.mjs  checks the scroll of the Events panel: both pages in one list, eight events two pages, five a page
                               of four and a page of one, the step of the list in Original, Minimal and Cybertron, the holds
                               (core/schedule.js with stand-ins) and calm and none (frame.js)
-      status-write.test.mjs   checks for mini/scripts/status-write.sh, with a fake curl, that the services and
+      status-write.test.mjs   checks for computer/scripts/status-write.sh, with a fake curl, that the services and
                               kiosk.sh run it, and that the dashboard never reads the status document
-      calendar-status.test.mjs  checks for what the Mini writes for the Calendars page: the sync file of
+      calendar-status.test.mjs  checks for what the computer writes for the Calendars page: the sync file of
                               fetch-calendars.sh, the document of calendar-status.sh and calendar-status.mjs
                               (SHOWN or HIDDEN with the rule, the error case, no address anywhere, with and
                               without Node), and status-write.sh calendar-status, with a fake curl
       calendars-view.test.mjs checks for the rows and lines of the Calendars page in Studio
       calendars-hide.test.mjs checks for the Hide buttons of the Calendars page: the rules they make, the same
                               id for the same rule, the matching that follows the screen's, Show again, the
-                              day and the 40 events the Mini lists, and the size of the document
+                              day and the 40 events the computer lists, and the size of the document
       calendar-node.test.mjs  checks that the calendar scripts run on Node 18: dashboard/package.json makes the
                               dashboard files modules, nothing in their imports needs a newer Node, and both
                               scripts list events with the newer built-ins taken away
-      frc-sync.test.mjs     checks for mini/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
+      frc-sync.test.mjs     checks for computer/scripts/frc-sync.sh and install-frc.sh, with a fake curl and made-up
                               answers: the requests, the status document, the ETags, the limit of 60 requests, the
                               snapshots, and that the key and the token are never printed or saved
-      monday-sync.test.mjs    checks for mini/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
+      monday-sync.test.mjs    checks for computer/scripts/monday-sync.sh and install-monday.sh, with a fake curl and
                               made-up boards: the statuses and priorities by label number, the department that
                               gives the Team lead, the dates, the hours, the owner names, the milestones, Show on TV
                               that is never written, a task or milestone that goes, the daily counts, the budget of
@@ -506,7 +506,7 @@ editors can sign in from anywhere.
       team-name.test.mjs      checks that a team's name and number come from the Team document only
       build-version.test.mjs  checks the build on the wall (core/build-stamp.js, status-write.sh version)
       sweep.test.mjs          checks tools/sweep.sh, which keeps the words in tools/sweep-words.txt out of the repository
-      watchdog.test.mjs, backup-dataset.test.mjs  check mini/scripts/watchdog.sh and backup-dataset.sh
+      watchdog.test.mjs, backup-dataset.test.mjs  check computer/scripts/watchdog.sh and backup-dataset.sh
                               with a fake curl and a fake browser page list
       notice.test.mjs         checks the announcement bar under the banner (core/notice.js, core/notice-run.js)
       photo-row.test.mjs      checks the Photos row: its count, the seconds of each photo and the total
@@ -514,7 +514,7 @@ editors can sign in from anywhere.
       still.test.mjs, previews.test.mjs  check the panel preview address and the Studio side of it;
                               check-preview.mjs checks the list of preview panels against registry.js
       screenshots.test.mjs    checks tools/screenshots.mjs, which takes a picture of every panel
-                              (node tools/screenshots.mjs, needs Playwright on a laptop, never on the Mini)
+                              (node tools/screenshots.mjs, needs Playwright on a laptop, never on the computer)
       integration.test.mjs  checks where the Monday sync, the preview, the Photos row and the announcement plate meet
       monday-settings.test.mjs  checks for the two Monday settings on the screen's side: the list of boards and the
                               owner switch, and their starting values
@@ -602,11 +602,11 @@ editors can sign in from anywhere.
                               symmetry of the figure, the same text in the sample content), for
                               install-console.sh in a fake root (it stops before it changes anything, keeps the
                               copy of /etc/issue, and does nothing the second time) and for the unit
-      teletraan-mini.test.mjs      checks for the Mac tool in tools/mini/ and for merge-env.sh, with fake ssh, scp
+      teletraan-tool.test.mjs      checks for the Mac tool in tools/teletraan/ and for merge-env.sh, with fake ssh, scp
                               and rsync: the masking, webcal to https, the merge into local.env, the menu
                               choices, and that no key or calendar link is printed or put on a command line
-      teletraan-mini-commands.test.mjs  checks for the words of the Mac tool (update, status, restart, --yes and
-                              --mini), with the same fake tools: the steps in order, the exit code of a failing
+      teletraan-tool-commands.test.mjs  checks for the words of the Mac tool (update, status, restart, --yes and
+                              --computer), with the same fake tools: the steps in order, the exit code of a failing
                               step, and that nothing secret is printed
       ship.test.mjs    checks for tools/mac/ship.sh, with a fake git, node, npm, ssh and rsync on a PATH
                               that holds no real one: the steps in order, a failing step stops the rest, --dry-run
@@ -642,12 +642,12 @@ editors can sign in from anywhere.
                               project manager's page for the Monday boards), announcements.md (the bar under the banner), coaches-guide.md (the coaches' page: the tabs, the status block, the
                               three keys, the Screens and the feeds, with links to the detail),
                               editing-content.md, adding-a-field.md, adding-a-panel.md,
-                              adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-mini.md,
-                              try-it-on-the-mini.md, the-logo.md, page-transitions.md, night-mode.md,
+                              adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-computer.md,
+                              try-it-on-the-computer.md, the-logo.md, page-transitions.md, night-mode.md,
                               hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
-                              add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md, updating-the-mini.md,
+                              add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md, updating-the-computer.md,
                               shipping-from-the-mac.md and laptop-setup.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
@@ -667,7 +667,7 @@ alone.
   is `defaultSettings.countdown.kickoff` in `dashboard/config.js`, written like
   `2027-01-09T12:00`, and its copy `initialValue` in
   `studio/schemas/dashboardSettings.js`, written in UTC. The countdown counts
-  to 12:00 noon on that day, on the Mini's clock, which is set to Eastern
+  to 12:00 noon on that day, on the Teletraan computer's clock, which is set to Eastern
   time. Noon is a guess and not the real start time of the event, so set the
   real time in Dashboard Settings.
 - **How long a panel stays, and in what order.** Dashboard Settings, Screen
@@ -780,18 +780,18 @@ alone.
   `competitionLeadDays` (2 days) and `competitionPreviewSeconds` (120) in `dashboard/config.js`. The cards
   are the panels `dashboard/panels/competition-*`, flagged `competition: true` in `registry.js`, and the
   list of them with the rule for each is `cards` in `dashboard/core/competition.js`. The data is the
-  document `frc-status` (type `frcStatus`, `studio/schemas/frcStatus.js`), which `mini/scripts/frc-sync.sh`
+  document `frc-status` (type `frcStatus`, `studio/schemas/frcStatus.js`), which `computer/scripts/frc-sync.sh`
   writes and `core/sanity.js` reads with the rest of the content and `core/frc.js` cleans. It is public. The
   Preview competition button on Start here writes `competitionPreviewRequest`, and
   `core/competition-preview.js` and `core/competition-preview-run.js` show the cards on the sample data in
   `dashboard/data/sample/content.json`. The block at the top of the tab is `studio/inputs/frc-status-input.js`.
 - **The Monday board.** Dashboard Settings, Monday tab (docs/monday.md). The task board, the milestones board, how
-  often the Mini reads and the owner switch are in `studio/schemas/settingsMonday.js`, with the starting values
+  often the computer reads and the owner switch are in `studio/schemas/settingsMonday.js`, with the starting values
   `mondayTaskBoard`, `mondayMilestoneBoard`, `mondayEveryMinutes` and `mondayShowOwners` in `defaultSettings` in
-  `dashboard/config.js` and at the top of `mini/scripts/monday-sync.sh`; `tests/schemas.test.mjs` and
+  `dashboard/config.js` and at the top of `computer/scripts/monday-sync.sh`; `tests/schemas.test.mjs` and
   `tests/monday-sync.test.mjs` fail when the three differ. The older `mondayBoards` list is hidden and not read. The
-  Mini reads the settings, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
-  `mini/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday, the
+  computer reads the settings, and `fixSettingValues` in `dashboard/core/content.js` only keeps them tidy.
+  `computer/scripts/monday-sync.sh` writes the tasks (id `task-monday-` and the item number, `source` monday, the
   status, priority, `showOnBoard`, `contact`, `owners`, `startDate`, `dueDate`, `estHours`, `completedOn`,
   `milestoneIds` and `hiddenReason`, `mondayBoardId` and `mondayBoardName`), the milestones (id `milestone-monday-` and
   the item number, type `milestone`, `studio/schemas/milestone.js`) and the document `monday-status` (type
@@ -848,11 +848,11 @@ alone.
   decide, and `shell.js` passes them the address. Content source and Switch back
   to production at are still hidden fields in `studio/schemas/dashboardSettings.js`,
   so that nothing saved is lost, and the dashboard does not read them.
-- **What the Mini last did.** Dashboard Settings, Screen tab, Status of the Mini.
-  The Mini writes the document `status-mini` with `mini/scripts/status-write.sh`,
+- **What the computer last did.** Dashboard Settings, Screen tab, Status of the computer.
+  The computer writes the document `status-mini` with `computer/scripts/status-write.sh`,
   which the calendar and slides services and `kiosk.sh` start, and which needs
-  `SANITY_WRITE_TOKEN` in `mini/local.env` (docs/rebuilding-the-mini.md, "Showing
-  what the Mini did in Studio"). The type is `studio/schemas/status.js` and the block
+  `SANITY_WRITE_TOKEN` in `computer/local.env` (docs/rebuilding-the-computer.md, "Showing
+  what the computer did in Studio"). The type is `studio/schemas/status.js` and the block
   is `studio/inputs/status-input.js`. The dashboard never reads it.
 - **Photos for the Photo panel.** Photos in the Studio sidebar
   (`studio/schemas/photo.js`): a picture, an optional caption, a first name
@@ -868,7 +868,7 @@ alone.
   `photoStay` works out), and the panel in `panels/photo/` starts loading the
   photo that opens the next turn. docs/editing-content.md has the advice for the
   people who upload. The sample content's `photos` list is what shows on the sample. There is
-  no photo list file on the Mini.
+  no photo list file on the computer.
 - **How big the pictures are.** Dashboard Settings, Screen tab: the Portraits
   box, and "Photo size, percent" (`photoScale`, hidden and not used, because a
   photo fills the panel). The Portraits box has "Leadership portrait size, percent"
@@ -1014,8 +1014,8 @@ alone.
   `dashboard/config.js`, the Studio field in `studio/schemas/dashboardSettings.js`).
   `core/connection.js` works out the lines and the reason, and `shell.js` draws
   them into `#connection-status`. It comes up in red by itself after two minutes
-  without Sanity. The command for the Mini is `mini/scripts/check-connection.sh`
-  (docs/rebuilding-the-mini.md, "Checking the connection").
+  without Sanity. The command for the computer is `computer/scripts/check-connection.sh`
+  (docs/rebuilding-the-computer.md, "Checking the connection").
 - **The theme (the colours of the whole screen), and seasonal packs (holiday
   overlays).** Look in Studio. Its Default theme, "Use a theme now", Schedule and Time zone
   decide which theme and overlay show. The themes are the files in
@@ -1087,8 +1087,8 @@ alone.
   packets, sweeping lines and others): `dashboard/neon-kit.css`, the section
   "The Neon Prime kit" in `dashboard/frame.js`, and docs/layouts.md, "The kit",
   which also says how to add an effect.
-  Try it with `?theme=neon-prime`, and test its speed on the Mini with
-  docs/try-it-on-the-mini.md, section 7.
+  Try it with `?theme=neon-prime`, and test its speed on the computer with
+  docs/try-it-on-the-computer.md, section 7.
 - **A new panel, or the look of the frames.** See docs/adding-a-panel.md. How the
   frames change page and get their metal is docs/page-transitions.md. The
   plates are flat purple and the metal is on the edges only. The metal is made
@@ -1196,8 +1196,8 @@ A test of a shell script is a Node file that runs the script with fake `curl`, `
     node tests/install-console.test.mjs
     node tests/calendar-status.test.mjs
     node tests/calendars-view.test.mjs
-    node tests/teletraan-mini.test.mjs
-    node tests/teletraan-mini-commands.test.mjs
+    node tests/teletraan-tool.test.mjs
+    node tests/teletraan-tool-commands.test.mjs
     node tests/ship.test.mjs
     node tests/laptop-docs.test.mjs
     node tests/plate-edges.test.mjs
@@ -1253,14 +1253,14 @@ colours were not changed.
   or `?speed=fast`. The address wins over Dashboard Settings.
 - The frames have polished, aged metal edges with silver screws at the joints.
   That is `?finish=metal`, the normal look. `?finish=flat` shows the same screen
-  with plain one-colour edges, flat silver screws and no shadow or glint. Comparing the two on the Mini
+  with plain one-colour edges, flat silver screws and no shadow or glint. Comparing the two on the Teletraan computer
   shows what the metal costs. The Polish setting in Dashboard Settings sets this
   finish: Polished is `metal`, Flat and Plain are `flat`, and `?look=plain` also
-  hides the screws and the double slash in the headers. docs/try-it-on-the-mini.md lists every switch.
+  hides the screws and the double slash in the headers. docs/try-it-on-the-computer.md lists every switch.
 
-## Testing speed on the Mini
+## Testing speed on the Teletraan computer
 
-See docs/try-it-on-the-mini.md. It also compares the metal finish with the
+See docs/try-it-on-the-computer.md. It also compares the metal finish with the
 flat one.
 
 ## Credits

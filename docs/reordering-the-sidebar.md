@@ -64,7 +64,7 @@ under Start here, and is kept for older settings:
   defined just above the list. A list can also have `thenBy`, a second sort for the
   documents that sort alike. The two lists of Monday Tasks are sorted by the name of
   their board (`byBoard`) and then `oldestFirst`. `add: []` takes the plus button away,
-  which both lists of Monday Tasks do, because the Mini makes the tasks.
+  which both lists of Monday Tasks do, because the Teletraan computer makes the tasks.
 - `page` opens the one document of its type, which has a fixed id: Dashboard
   Settings and Look. A page opens the document itself, with no list of one in
   between. Demo is the third page that exists once, and it has no line. The three
@@ -100,7 +100,7 @@ the templates to the Studio and keeps them out of the New menus, so only the fol
 that names one offers it. Every list under TASKS, EVENTS and ROSTER has an `add` with one
 template, so its plus button makes that type with no team and the switch on the screen
 turned on (a tip, for Tips and News). The exception is Monday Tasks, whose lists have
-no plus button. No New menu offers a task either, because the Mini makes them.
+no plus button. No New menu offers a task either, because the Teletraan computer makes them.
 
 Every line except a divider has an `icon`, and no two lines share one. The icons
 come from `@sanity/icons`, which comes with the Studio and is not listed in
@@ -127,7 +127,7 @@ Three kinds of content have no line:
 Events Calendar (the type `extraEvent`, which the screen no longer reads), Places
 (`place`, which a task's Location field adds and opens) and Demo (`demo`, whose
 buttons are on Start here). They are kept in the schema so that nothing already
-typed is lost. The status documents have no line either: the Mini writes them.
+typed is lost. The status documents have no line either: the Teletraan computer writes them.
 `status` is shown by the status block at the top of the Screen tab of Dashboard
 Settings, and `calendarStatus` by the Calendars page.
 

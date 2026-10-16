@@ -6,7 +6,7 @@ docs/students.md. Everything under Coaches only in the sidebar is here:
 Settings (Dashboard Settings, Look, Teams, Views and Themes) and Extra panels.
 
 The Monday feed, the competition feed and the status documents have not been tried
-against the live services, because they need keys that only the Mini holds. Their
+against the live services, because they need keys that only the Teletraan computer holds. Their
 pages say what to change if an answer looks different.
 
 ## Where things are
@@ -18,8 +18,8 @@ This is the table of the README. A file you want to change is in one of these fo
 | `dashboard/` | The TV page: `index.html`, `core/` (the modules with no page in them), `panels/<id>/` (each panel's `panel.js` and `panel.css`), `styles/<theme>/` (original, cybertron and retro), `themes/` (color files and seasonal packs), `layouts/` and `data/` |
 | `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the view defaults and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
 | `control/` | The control page service (Node, standard library only) and its pages: updates, rollback, what is on the wall, the keys and the log (docs/control-page.md) |
-| `mini/` | Everything that runs on the Mini: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
-| `tools/` | Things a coach runs on a Mac: `mini/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
+| `computer/` | Everything that runs on the Teletraan computer: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
+| `tools/` | Things a coach runs on a Mac: `computer/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
 | `tests/` | Every test, one file for each module or script, and `run.mjs` to run them all |
 | `docs/` | The guides. `docs/paths.md` lists where every file moved to, `docs/where-things-are.md` is the long map and `docs/changelog.md` says what each round changed |
 
@@ -37,7 +37,7 @@ docs/editing-content.md, "Dashboard Settings".
 | Countdown | The labels and dates for Kickoff and Rollout |
 | Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
 | Presentations | Run presentations, the one switch for booked talks |
-| Monday | The boards the Mini reads and how an item becomes a task |
+| Monday | The boards the Teletraan computer reads and how an item becomes a task |
 | Competition | When the competition cards come, and a switch for each card |
 | Advanced | Night mode, hidden transitions and the connection text on the screen |
 
@@ -54,49 +54,49 @@ source is not on the page either: the screen always shows what is published, and
 
 ## The status block
 
-The top of the Screen tab says when the Mini last saw a change to the content,
+The top of the Screen tab says when the Teletraan computer last saw a change to the content,
 downloaded the calendars, downloaded the slides, read the Monday boards, read the
 competition data and started the screen. Each line says how long ago and the
-time. You cannot type in it, because the Mini writes it. It says No status yet
-until the Mini has a write token, and a line says Not yet for a job the Mini has
+time. You cannot type in it, because the computer writes it. It says No status yet
+until the computer has a write token, and a line says Not yet for a job the computer has
 not done since the token was added.
 
 A line that stays old for much longer than its timer means the job is failing or
-its timer is off. Start with the log of that job (mini/README.md, "Everyday
+its timer is off. Start with the log of that job (computer/README.md, "Everyday
 commands").
 
 ## The write token
 
 `SANITY_WRITE_TOKEN` is a token from the Sanity project that is allowed to write.
-The Mini uses it to write what it did: the status block, the Calendars page, the
-Monday tasks and the competition data. Without it the Mini works as before and the
+The Teletraan computer uses it to write what it did: the status block, the Calendars page, the
+Monday tasks and the competition data. Without it the computer works as before and the
 status block says No status yet.
 
 - Make it at sanity.io/manage: open the project, then API, Tokens, Add API token.
   Give it Editor access and copy it before you leave the page, because Sanity
   shows it once. The team mentor says yes first.
-- It lives in one place: the file `mini/local.env` on the Mini, on its own line,
-  in single quotes. Git ignores that file and only the Mini's account can read it.
+- It lives in one place: the file `computer/local.env` on the Teletraan computer, on its own line,
+  in single quotes. Git ignores that file and only the computer's account can read it.
 - It never goes in the repository, in Studio, in a doc, in a chat or in a message.
   A token with Editor access can change anything in the dataset. If one leaks,
   delete it at sanity.io/manage and make a new one.
 - After it is added, run the install scripts again, so that the units that call
   `status-write.sh` are copied into place. The commands are in
-  docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio".
+  docs/rebuilding-the-computer.md, "Showing what the computer did in Studio".
 
 ## The three keys
 
-`mini/local.env` on the Mini holds three keys, besides the calendar lines. This
+`computer/local.env` on the Teletraan computer holds three keys, besides the calendar lines. This
 page names them and never holds a value.
 
-| Name | What it lets the Mini do | Where it is made | Steps |
+| Name | What it lets the Teletraan computer do | Where it is made | Steps |
 |------|--------------------------|------------------|-------|
-| `SANITY_WRITE_TOKEN` | Write to Sanity | sanity.io/manage | docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio" |
-| `MONDAY_API_TOKEN` | Read the Monday boards | Monday, Developers, My access tokens | docs/rebuilding-the-mini.md, step 18, and docs/monday.md |
-| `TBA_AUTH_KEY` | Read the competition data | The Blue Alliance, Account, Read API Keys | docs/rebuilding-the-mini.md, step 17, and docs/frc-feed.md |
+| `SANITY_WRITE_TOKEN` | Write to Sanity | sanity.io/manage | docs/rebuilding-the-computer.md, "Showing what the computer did in Studio" |
+| `MONDAY_API_TOKEN` | Read the Monday boards | Monday, Developers, My access tokens | docs/rebuilding-the-computer.md, step 18, and docs/monday.md |
+| `TBA_AUTH_KEY` | Read the competition data | The Blue Alliance, Account, Read API Keys | docs/rebuilding-the-computer.md, step 17, and docs/frc-feed.md |
 
 A script that does not find its key does nothing, says so in one line and ends
-without an error. `mini/local.example.env` has each line with a placeholder. The
+without an error. `computer/local.example.env` has each line with a placeholder. The
 calendar addresses are in the same file, one `CALENDAR_<ID>_URL` line each
 (docs/calendar-links.md). None of them goes in the repository, in Studio or in a
 message.
@@ -141,28 +141,28 @@ To see a theme or a team for 2 minutes without saving anything, open the menu ne
 
 ## Monday setup
 
-The Mini reads the team's two Monday boards, Robotics Tasks and Milestones, as often as How
+The Teletraan computer reads the team's two Monday boards, Robotics Tasks and Milestones, as often as How
 often on the Monday tab says (5 to 120 minutes, 30 to start with), and keeps their items in
 Sanity (docs/monday.md). It needs the team mentor's yes at the first step.
 
-1. Make the token in Monday and add it to `mini/local.env` on the Mini as
-   `MONDAY_API_TOKEN` (docs/rebuilding-the-mini.md, step 18).
-2. On the Mini, install the packages if they are missing (ask the team mentor first), then
+1. Make the token in Monday and add it to `computer/local.env` on the Teletraan computer as
+   `MONDAY_API_TOKEN` (docs/rebuilding-the-computer.md, step 18).
+2. On the computer, install the packages if they are missing (ask the team mentor first), then
    the timer, then check the token. Run the timer line again after every update that changes
-   `mini/systemd`, because the timer now wakes the script every 5 minutes:
+   `computer/systemd`, because the timer now wakes the script every 5 minutes:
 
        sudo apt install curl jq
-       sudo /opt/teletraan/mini/scripts/install-monday.sh
-       /opt/teletraan/mini/scripts/monday-sync.sh --check
+       sudo /opt/teletraan/computer/scripts/install-monday.sh
+       /opt/teletraan/computer/scripts/monday-sync.sh --check
 
 3. Wait 5 minutes. Open Dashboard Settings, Monday tab. The block at the top says who the
-   token belongs to, when the Mini last read Monday, how often, how many reads it used today
+   token belongs to, when the Teletraan computer last read Monday, how often, how many reads it used today
    and how many tasks it made. The two boards and every column are already set. If tasks do
    not show up, go down "If nothing shows up" in docs/monday.md.
 
 What each column does, when a task shows on the TV, the daily read budget and the eleven
 panels are all in docs/monday.md. Show on TV is the one thing you can change on a task in
-Studio: turn it off and the task leaves the TV and moves to Hidden, and the Mini keeps your
+Studio: turn it off and the task leaves the TV and moves to Hidden, and the Teletraan computer keeps your
 choice. Show owner first names on the TV starts off.
 
 The tasks and the board names are public, like the rest of the dataset (docs/monday.md, "The
@@ -170,7 +170,7 @@ dataset is public").
 
 ## Monday Tasks and Monday Boards
 
-Both are under TASKS in the sidebar. Nobody types a task: the Mini makes each one
+Both are under TASKS in the sidebar. Nobody types a task: the Teletraan computer makes each one
 from an item on a Monday board, and the screen shows only those.
 
 - Monday Tasks has two lists, On the TV and Hidden, each sorted by board. A task
@@ -181,17 +181,17 @@ from an item on a Monday board, and the screen shows only those.
   Hidden with Manual (not shown) in its line. The screen never shows it. It stays
   until someone deletes it.
 - Monday Boards lists every board the token can see, with its items and when the
-  Mini last read it, and says which boards Dashboard Settings has chosen. The name of
+  computer last read it, and says which boards Dashboard Settings has chosen. The name of
   a chosen board opens its tasks in the same two lists. Choose boards opens Dashboard
   Settings, at the Task board block of its Monday tab. A second list, Milestones, holds the
-  milestones the Mini made. Nobody can change them there.
+  milestones the Teletraan computer made. Nobody can change them there.
 
 A Monday row shows only when it has something to draw, so a team with no tasks from
 the board has no Monday rows (docs/monday.md, "The eleven panels").
 
 ## The Calendars page
 
-Calendars, under Events, shows each calendar the Mini downloads: its kind, when it
+Calendars, under Events, shows each calendar the Teletraan computer downloads: its kind, when it
 last worked, why it failed, and the next 40 events with SHOWN or HIDDEN. A hidden
 event names the Calendar filter that hides it. Each event has Hide this one and
 Hide all like this, which make a rule under Calendar filters, and Show again, which
@@ -205,17 +205,17 @@ deletes a rule the page made.
 - A red line is a problem. "Download failed, the server said no" usually means BAND
   gave the calendar a new link (docs/calendar-links.md, "Change a link"). The TV
   keeps the events of the last good download.
-- Nothing yet means the Mini has not written the page's document, which needs the
-  write token. Events not listed means the Mini downloaded the calendar but did
+- Nothing yet means the Teletraan computer has not written the page's document, which needs the
+  write token. Events not listed means the computer downloaded the calendar but did
   not list its events, usually because Node is not installed on it
-  (docs/calendars-page.md, "Node on the Mini").
+  (docs/calendars-page.md, "Node on the computer").
 
 The dataset is public, and so is the document behind this page. It holds the
 titles, dates and times of the next 40 events of every calendar, and that includes
 the events that a Calendar filter hides from the TV. Anyone who asks the dataset
 for it can read those titles. It holds no calendar address, no token and no
 location. Do not put anything private in the title of a BAND event. The status
-documents of the Mini, Monday and the competition feed are public in the same way.
+documents of the Teletraan computer, Monday and the competition feed are public in the same way.
 
 ## The Events panel
 
@@ -318,16 +318,16 @@ takes over for a talk.
 
 ## The boot screen
 
-A text drawing fills the TV above the login prompt while the Mini starts, until the
+A text drawing fills the TV above the login prompt while the Teletraan computer starts, until the
 kiosk takes over. A second drawing, with the words "shutting down", shows while the
-Mini shuts down or reboots. They are the files `mini/console/startup.txt` and
-`mini/console/shutdown.txt`, plain text made for the console of a 1080p TV.
+computer shuts down or reboots. They are the files `computer/console/startup.txt` and
+`computer/console/shutdown.txt`, plain text made for the console of a 1080p TV.
 
-`sudo /opt/teletraan/mini/scripts/install-console.sh` puts the first in
+`sudo /opt/teletraan/computer/scripts/install-console.sh` puts the first in
 `/etc/issue` and turns on the unit that prints the second. Run it again after
 `startup.txt` changes, because `/etc/issue` is a copy of it. A change to
 `shutdown.txt` needs nothing. The steps and the way back are in
-docs/rebuilding-the-mini.md, step 13.
+docs/rebuilding-the-computer.md, step 13.
 
 ## The Nova trim fields
 
@@ -354,14 +354,14 @@ says how each is drawn.
 
 ## The competition feed
 
-The Mini reads the public competition data of each team and keeps it in Sanity, and
+The Teletraan computer reads the public competition data of each team and keeps it in Sanity, and
 the screen draws seven cards from it (docs/frc-feed.md).
 
-- Key: `TBA_AUTH_KEY` in `mini/local.env` on the Mini. After it is added, install
-  the timer and check the key (docs/rebuilding-the-mini.md, step 17):
+- Key: `TBA_AUTH_KEY` in `computer/local.env` on the Teletraan computer. After it is added, install
+  the timer and check the key (docs/rebuilding-the-computer.md, step 17):
 
-      sudo /opt/teletraan/mini/scripts/install-frc.sh
-      /opt/teletraan/mini/scripts/frc-sync.sh --check
+      sudo /opt/teletraan/computer/scripts/install-frc.sh
+      /opt/teletraan/computer/scripts/frc-sync.sh --check
 
 - Teams: a team is read when it is Active and has a Team number in Settings,
   Teams. A team without a number is left out, and that is not an error.
@@ -382,13 +382,13 @@ the screen draws seven cards from it (docs/frc-feed.md).
 | Alliance board | The alliance number and its partners | The same days, once the selection is made |
 | District points | The points and the rank against the cutoff | All season once the first event has started |
 
-A card with nothing to show is left out of the rotation, so a Mini with no key
+A card with nothing to show is left out of the rotation, so a computer with no key
 shows no competition card. The data is public: team numbers, nicknames, match
 numbers and times, scores, ranks, award names and ratings, and no person's name.
 
 ## The version on the wall and the sweep
 
-The last line of the status block, On the wall, says which build the screen runs, such as `v14 · a1b2c3d`: the release number and the first seven characters of the commit. The control page makes the number when it installs a release, and the Mac tool does the same through the installer (docs/control-page.md). The control page shows the same text on every tab. A Mini that has no release number, such as a plain checkout, shows the hash and the day of the commit. To see the build on the TV, open the address with `?debug=1` on the end: it shows in the bottom left corner at 20 px, the one text smaller than the usual smallest size.
+The last line of the status block, On the wall, says which build the screen runs, such as `v14 · a1b2c3d`: the release number and the first seven characters of the commit. The control page makes the number when it installs a release, and the Mac tool does the same through the installer (docs/control-page.md). The control page shows the same text on every tab. A computer that has no release number, such as a plain checkout, shows the hash and the day of the commit. To see the build on the TV, open the address with `?debug=1` on the end: it shows in the bottom left corner at 20 px, the one text smaller than the usual smallest size.
 
 The sweep keeps names out of the repository that do not belong there: AI tools, films,
 shows and franchises, and lines that credit a tool or a co-author. `tools/sweep.sh` looks
@@ -404,23 +404,23 @@ A test that has to name a word builds it from pieces, so the sweep does not find
 ## The watchdog
 
 The screen puts the time in its page title every 30 seconds. Every 2 minutes the
-Mini asks the browser for that title (on the Mini's own address 127.0.0.1:9222,
+computer asks the browser for that title (on the Teletraan computer's own address 127.0.0.1:9222,
 which nothing else can reach). If the title is more than 3 minutes old, the page
-is gone or the browser is not running, the Mini restarts the screen. The status
+is gone or the browser is not running, the computer restarts the screen. The status
 block in Dashboard Settings, Screen tab, shows Screen restarts today.
 
 - It restarts at most once in 10 minutes.
 - When a third restart would fall inside one hour, it does not restart again. It
-  writes the count and the time to the status block and waits until the Mini boots.
+  writes the count and the time to the status block and waits until the Teletraan computer boots.
   That means something is broken, such as a bad deploy. Look at
   `sudo journalctl -u teletraan-watchdog.service -n 30`, fix it, then reboot the
-  Mini or delete `/var/lib/teletraan/data/watchdog-state`.
+  computer or delete `/var/lib/teletraan/data/watchdog-state`.
 - The count is kept in `watchdog-state` in the data folder.
 - A browser started less than 3 minutes ago is left alone while it loads.
 
 ## Backups
 
-Every night at 03:15 (the Mini's time) the Mini exports the whole dataset to
+Every night at 03:15 (the Teletraan computer's time) the computer exports the whole dataset to
 `/var/backups/teletraan/production-<date>.tar.gz`, keeps the newest 14 and deletes
 the older ones. The status block shows Last backup. It needs the write token in
 `local.env` and the Sanity tool in `studio/` (`npm install` there once). A failed
@@ -449,12 +449,12 @@ announcements plays. docs/announcements.md has both.
 ## Where the detail is
 
 - docs/editing-content.md: every field, kind of content and tab
-- docs/rebuilding-the-mini.md: setting up the Mini, the steps for each key and the
+- docs/rebuilding-the-computer.md: setting up the Teletraan computer, the steps for each key and the
   boot screen
 - docs/announcements.md: the announcement bar, and how it differs from Play announcements
 - docs/monday.md: the Monday boards, how an item becomes a task and what is public
 - docs/frc-feed.md: the competition data, the seven cards and the Preview button
-- docs/calendars-page.md: the Calendars page and what the Mini writes for it
+- docs/calendars-page.md: the Calendars page and what the computer writes for it
 - docs/calendar-filters.md and docs/calendar-links.md: the rules, and adding a
   calendar
 - docs/layouts.md: the layouts, the swap, the Monday cards and team trim
@@ -463,4 +463,4 @@ announcements plays. docs/announcements.md has both.
   back, and the Preview buttons
 - docs/presentations.md: booking talks, the clicker and the mouse
 - docs/add-the-nova-team.md: the Nova team and its trim
-- mini/README.md: the scripts and timers on the Mini
+- computer/README.md: the scripts and timers on the computer

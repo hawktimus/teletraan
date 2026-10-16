@@ -107,7 +107,7 @@ the alert, and `?overlay=none` to be sure no overlay is on top.
 ## 6. Use it
 
 Run `npm run deploy` in the studio folder so the editors see Ocean in their
-list. The dashboard has it when the Mini next pulls the repo. Then, in Studio,
+list. The dashboard has it when the Teletraan computer next pulls the repo. Then, in Studio,
 open Settings, then Look, and either:
 
 - pick it as the Default theme,
@@ -160,9 +160,9 @@ marks and neon) and giant machines (the cut corners, chevron bars, hazard
 stripes and screwed steel plates). Everything is a flat
 colour. There is no glow, blur, shadow, gradient that fakes a glow, or video, and
 the decoration does not move. What does move is the kit, a set of seven neon
-effects (docs/layouts.md, "The kit"). The Mini has not been tested with this
+effects (docs/layouts.md, "The kit"). The Teletraan computer has not been tested with this
 theme. Its speed with the layout and the kit is not known, so look at
-docs/try-it-on-the-mini.md.
+docs/try-it-on-the-computer.md.
 
 It is made of four files:
 

@@ -1,33 +1,33 @@
-# Trying the dashboard on the Mini
+# Trying the dashboard on the Teletraan computer
 
-This is a speed test. The aim is to find out how smoothly the Mini and the TV
+This is a speed test. The aim is to find out how smoothly the Teletraan computer and the TV
 can move the screen, and whether the metal edges (banded gradients, shadows and
 the glint) and the page change (frame halves lifting, rows turning over) slow
-it down. It is run on the real Mini and the real TV, and through the same
+it down. It is run on the real computer and the real TV, and through the same
 browser command the kiosk uses, so the result includes the graphics settings
 the kiosk uses.
 
-## 1. Check the Mini has the code
+## 1. Check the Teletraan computer has the code
 
-Nothing needs copying. The dashboard is already on the Mini: the pull timer
+Nothing needs copying. The dashboard is already on the Teletraan computer: the pull timer
 keeps `/opt/teletraan` up to date from the repository, and the web server
 shows it at `http://localhost:8080/dashboard/` (8080 is `TELETRAAN_PORT` in
-`mini/local.env`, so use the number that file has). The test runs the code that
+`computer/local.env`, so use the number that file has). The test runs the code that
 has been pushed. To test a change, push it, then wait up to 5 minutes or run
-`/opt/teletraan/mini/scripts/pull.sh`. A Mini that does not pull gets the files
-from a Mac instead: choice 1 of the tool in `docs/updating-the-mini.md` copies
+`/opt/teletraan/computer/scripts/pull.sh`. A computer that does not pull gets the files
+from a Mac instead: choice 1 of the tool in `docs/updating-the-computer.md` copies
 them and restarts the screen. Do not push or copy while a test is running: the
 screen reloads itself on every update, and the readout starts again.
 
 ## 2. Open the dashboard the way the screen does
 
-The kiosk service owns the Mini's screen, so stop it first. At the Mini's own
+The kiosk service owns the Teletraan computer's screen, so stop it first. At the computer's own
 keyboard, press Ctrl+Alt+F1 (with the Fn key too on a Mac keyboard) to get the
 text screen, log in as `hawktimus`, stop the service, and start the kiosk
 script with an address that ends in `?perf`:
 
     sudo systemctl stop teletraan-kiosk.service
-    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
+    xinit /opt/teletraan/computer/scripts/kiosk.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
 
 Keep the quotes. Without them the shell would end the command at the first `&`
 in an address.
@@ -77,7 +77,7 @@ for example `?perf&stress`.
 | `frames=mostly-gold`, `alternate`, `gold`, `silver` | the metal of the large and small page frames, picked again at every page change, for this page only |
 | `theme=<id>` | a theme from `dashboard/themes/registry.js`, for this page only. The address wins over the Look page in Studio. A theme with another layout brings its layout with it (`neon-prime`, section 7) |
 | `overlay=<id>`, `none` | a seasonal pack (its colours and its decorations, docs/seasonal-packs.md), or none, for this page only |
-| `seasonover=on`, `off` | the small pieces a seasonal pack draws over the panels (snow, leaves...), on or off, for this page only. The address wins over the Look page. Calm motion also hides them. They have not been tested on the Mini, so watch `perf` with and without them |
+| `seasonover=on`, `off` | the small pieces a seasonal pack draws over the panels (snow, leaves...), on or off, for this page only. The address wins over the Look page. Calm motion also hides them. They have not been tested on the Teletraan computer, so watch `perf` with and without them |
 | `night=on`, `off` | the night screen (the screensaver, docs/night-mode.md) now whatever the time, or never, for this page only. The address wins over Dashboard Settings. The bouncing logo costs two moving layers, so it is far lighter than the dashboard it covers |
 | `hidden=desktop`, `redEyes`, `off` | plays that hidden transition (docs/hidden-transitions.md) once, at the next page change of the large panel, whatever the hours and the gap say, or never plays any, for this page only. It needs full motion, and the night screen stops it, so add `night=off` at night. While it plays it holds five blocks (four in the sidebar layout), the backdrop, a picture and a red layer or the blue glitch layers as layers, and none when it is over. Play it twice to see both pictures of its set |
 | `glint=on`, `off` | the bright dash that runs round each big frame every few seconds, for this page only. Off shows what the glint costs |
@@ -117,7 +117,7 @@ plates and no drawn lines. It takes the same `perf`, `motion`, `stress`,
 CSS gradients on the plates, where the dashboard's is SVG gradients, so the
 page times both ways of painting it.
 
-The web server on the Mini only shows the `dashboard` folder, so this page
+The web server on the Teletraan computer only shows the `dashboard` folder, so this page
 needs the small server in `tools`. Open a second text screen with Ctrl+Alt+F2,
 log in, and run:
 
@@ -125,7 +125,7 @@ log in, and run:
 
 Then go back with Ctrl+Alt+F1 and start the kiosk script with this address:
 
-    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8081/tools/perf/plates.html?perf' -- :1 vt8
+    xinit /opt/teletraan/computer/scripts/kiosk.sh 'http://localhost:8081/tools/perf/plates.html?perf' -- :1 vt8
 
 Compare it with `'http://localhost:8080/dashboard/?only=tasks&perf'`, and add
 the same `finish` to both addresses so the two pages are painted the same way.
@@ -133,11 +133,11 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
 
 ## 5. What to try
 
-1. Record what the browser does with the Mini's graphics chip. Open the
+1. Record what the browser does with the Teletraan computer's graphics chip. Open the
    browser's graphics page with the kiosk script, take a photo of the screen,
    and note the browser version (`chromium --version`):
 
-       xinit /opt/teletraan/mini/scripts/kiosk.sh chrome://gpu -- :1 vt8
+       xinit /opt/teletraan/computer/scripts/kiosk.sh chrome://gpu -- :1 vt8
 
    Lines that say "Hardware accelerated" mean the chip is doing the work.
    "Software only" means the processor is doing all of it.
@@ -146,12 +146,12 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
    removed. Make the copy, delete the lines `--enable-gpu-rasterization \` and
    `--ignore-gpu-blocklist \` from it, and start it the same way:
 
-       cp /opt/teletraan/mini/scripts/kiosk.sh /tmp/kiosk-no-gpu.sh
+       cp /opt/teletraan/computer/scripts/kiosk.sh /tmp/kiosk-no-gpu.sh
        nano /tmp/kiosk-no-gpu.sh
        xinit /tmp/kiosk-no-gpu.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
 
    If the run without the flags is smoother, or the picture glitches with
-   them, remove the two lines from `mini/scripts/kiosk.sh` and push. Never
+   them, remove the two lines from `computer/scripts/kiosk.sh` and push. Never
    add `--disable-gpu`. If glitches remain, try adding
    `--disable-gpu-compositing`.
 3. Run each of these for 30 minutes and write down typical, p95, worst and late
@@ -171,7 +171,7 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
    each. With nothing moving, the pair shows what the still metal costs.
 5. Run `?perf&demo=crt` for 10 minutes and `?perf&demo=announcement` once.
 6. Leave the normal page running overnight. In the morning read the numbers
-   again and check that the Mini is not hot and the screen has not frozen.
+   again and check that the Teletraan computer is not hot and the screen has not frozen.
 7. Ask two people to stand 20 feet from the TV and read the screen aloud. Try
    again from 30 feet. Note anything they cannot read.
 8. Film `?stress` with a phone. Playing the video slowly makes stutter easy to
@@ -183,7 +183,7 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
 - The numbers from items 3, 4 and 5, with and without the graphics flags, and
   the address each run used, so metal and flat can be told apart
 - Anything the two readers could not make out
-- Whether the Mini felt hot or the fan was loud
+- Whether the Teletraan computer felt hot or the fan was loud
 
 ## 7. The Neon Prime theme (the sidebar layout)
 
@@ -193,17 +193,17 @@ its size, and the ticker across the whole bottom. It also has the kit, a set of
 moving neon (docs/layouts.md, "The kit"): nine small parts that move all the time,
 and a glitch of the team name and a burst of bars at each page change as short
 events. It has been checked in a desktop browser and **has not been run on the
-Mini**, so this is the first speed test of it. The standard layout and the other
+computer**, so this is the first speed test of it. The standard layout and the other
 two themes are not touched by it, so they need no new test.
 
-Before you start, make sure the Mini has the code (section 1) and that the
+Before you start, make sure the Teletraan computer has the code (section 1) and that the
 editors' Studio has been deployed (`npm run deploy` in the studio folder), so
 Neon Prime is in their Look lists. The test does not need Studio: the address
 below picks the theme for that page only.
 
 Start the kiosk script as in section 2, with the theme in the address:
 
-    xinit /opt/teletraan/mini/scripts/kiosk.sh 'http://localhost:8080/dashboard/?theme=neon-prime&perf' -- :1 vt8
+    xinit /opt/teletraan/computer/scripts/kiosk.sh 'http://localhost:8080/dashboard/?theme=neon-prime&perf' -- :1 vt8
 
 Run each of these for 30 minutes, write down typical, p95, worst, late and
 "animations running" at the end, and run the same address with `theme=hawktimus`
@@ -216,7 +216,7 @@ Run each of these for 30 minutes, write down typical, p95, worst, late and
 | `?theme=neon-prime&perf&motion=calm` | the calm variant: nothing of the kit moves, the neon lines, ticks and brackets stand still, and a page change is a fade |
 | `?theme=neon-prime&perf&finish=flat` | the flat variant: the same with plain edges, to see what the metal costs |
 | `?theme=neon-prime&perf&look=plain` | the plain variant: the flat finish with no glint and no screws. The cyan trim on the frames stays, which `finish=flat` alone hides |
-| `?theme=neon-prime&perf&motion=calm&finish=flat` | calm and flat together, the lightest this theme can be. If even this is not smooth on the Mini, the layout is too heavy for it |
+| `?theme=neon-prime&perf&motion=calm&finish=flat` | calm and flat together, the lightest this theme can be. If even this is not smooth on the Teletraan computer, the layout is too heavy for it |
 | `?theme=neon-prime&perf&glint=off` | what the one glint costs |
 | `?theme=neon-prime&perf&change=mechanical` | the heaviest page change |
 | `?theme=neon-prime&perf&stress` | the large frame and the ticker changing every few seconds (there is no small frame to change) |
@@ -231,12 +231,12 @@ What to expect. On a desktop browser the "animations running" number averaged
 8.6 in this layout with `kit=off` and 18.5 with the kit on, against 15.5 in the
 standard one, with a slat page change, and reached 35 at most with the kit off and
 54 with it on, against 51 (docs/layouts.md, "Moving elements"). With
-`motion=calm` it is 0 at rest. The Mini should
+`motion=calm` it is 0 at rest. The Teletraan computer should
 show a similar relation: fewer without the kit, a little more with it. The number is not
 the speed: the layout draws the large frame through a scale, and it is the
-frame times (typical, p95 and late) that show whether the Mini's graphics chip
+frame times (typical, p95 and late) that show whether the computer's graphics chip
 minds that. If this layout is clearly worse than the standard one on the same
-Mini, write the numbers down and do not use it on the TV until someone has
+computer, write the numbers down and do not use it on the TV until someone has
 looked at them.
 
 Also look at the screen itself from 20 feet and from 30 feet. The ground is a
@@ -257,14 +257,14 @@ These are starting points, not rules:
 - no stutter you can see in the phone video
 - the numbers do not get worse overnight
 - the metal finish only a little slower than `finish=flat` on the same
-  address. If flat is clearly smoother, the metal is too heavy for the Mini.
+  address. If flat is clearly smoother, the metal is too heavy for the Teletraan computer.
   If only the glint is the difference, turn it off in Dashboard Settings
   (Glint) and keep the metal.
   Make flat the starting finish with Polish in Dashboard Settings (Screen tab):
   Flat is the flat finish with no glint, and Plain also leaves out the screws and
   the // in the panel headers. No code changes
 
-If the Mini can only manage 30 frames a second, say so. That can still work if
+If the Teletraan computer can only manage 30 frames a second, say so. That can still work if
 it is steady, and it will help decide what to change.
 
 The dashboard needs a browser at least as new as Chromium 84 or Firefox 75.

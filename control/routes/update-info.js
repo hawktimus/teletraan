@@ -21,8 +21,8 @@ export function register(router, ctx) {
     sendJson(res, 200, {
       user: user,
       host: hostName,
-      remoteLine: 'git remote add mini ' + remote,
-      pushLine: 'git push mini main',
+      remoteLine: 'git remote add teletraan ' + remote,
+      pushLine: 'git push teletraan main',
       cloneLine: 'git clone ' + remote + ' teletraan',
     });
   });

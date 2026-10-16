@@ -454,8 +454,8 @@ weather are not in it, because they are in the strip, outside the panel.
 
 The panel adds no moving element and no animated layer that the banner and the
 countdown did not have: the lamp on the countdown pulses, the seconds roll, and
-the logo and the name play now and then. Its speed on the Mini has not been
-tested (see "The Mini", below).
+the logo and the name play now and then. Its speed on the Teletraan computer has not been
+tested (see "The computer", below).
 
 ## The bar layout
 
@@ -1430,7 +1430,7 @@ this section is about the first cards, which stay in the code. A saved row that 
 The older Monday cards are the tasks card, the milestones card and the progress card, and the milestones and progress cards of both
 teams. They are panels of the large frame, `monday-tasks`, `monday-milestones`, `monday-progress`, `monday-milestones-both` and `monday-progress-both`,
 each a folder in `dashboard/panels/` with a script and a stylesheet. What they share is in `dashboard/monday.css`. They draw the tasks that the
-board sync on the Mini keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
+board sync on the Teletraan computer keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
 functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the header, the rows and the page marker.
 The sentence a card says when it has nothing else to show and the text in a chart are the ones the competition cards use
 (`core/competition-draw.js`). `node tests/monday-cards.test.mjs` and `node tests/monday-rows.test.mjs` check them.
@@ -1561,7 +1561,7 @@ With no rows each says one plain sentence.
 
 ### What is on every card
 
-**The words about the board.** At the right end of the header, before the chip, are the words 4 MIN AGO: how long ago the Mini read the
+**The words about the board.** At the right end of the header, before the chip, are the words 4 MIN AGO: how long ago the Teletraan computer read the
 board, in minutes, hours or days, and SAMPLE on the sample. They are muted. They go only where they fit (`wordsAtRight` in `core/monday-draw.js`,
 which counts the width of the words with `core/text-width.js`): they have the 289 px at the right end of every header, and a board that was read ten
 days ago or more has no words, because 10 DAYS AGO is 291 wide. Beside the chip of a team they do not fit in a header 1152 wide, so the header says it has a chip
@@ -1570,7 +1570,7 @@ and the words are shown beside the chip. A card of both teams has no chip, and i
 fit beside the chip, or beside the words when there is no chip.
 
 **With nothing to show.** A card says one plain sentence in place of its body, and the sentence says why. No board is chosen yet. when Dashboard
-Settings, Monday has no board. Waiting for the first sync from the board. when there is a board and the Mini has not written the status yet. Nothing
+Settings, Monday has no board. Waiting for the first sync from the board. when there is a board and the Teletraan computer has not written the status yet. Nothing
 on the chosen boards is showing yet. when the board is read and no board task shows on the TV. The milestones cards say No open board items have a due
 date yet. when there are board tasks and none has a due date. A team with no board tasks has its Monday rows skipped, so these are what the `?show=`
 address shows when there are none. No card invents a number.
@@ -1816,12 +1816,12 @@ from either of them to the standard layout starts it with a panel at once.
 - **The kit**: Neon Prime has a set of moving neon, the kit (below). It stops
   while an alert, an announcement, the night screen or a hidden transition has
   the screen, and in calm and none motion nothing of it moves.
-- **The Mini** is a 2011 Mac mini. The layout itself adds no moving element and
+- **The Teletraan computer** is a 2011 Mac mini. The layout itself adds no moving element and
   no full screen animated layer: it takes the small frame (its frame, screws and
   glint) away and keeps the pane and the ticker as they were. The kit adds nine
   small parts that move all the time and two short bursts (see "Moving
-  elements"). Its speed on the Mini has not been tested. Test it as
-  docs/try-it-on-the-mini.md says before relying on it.
+  elements"). Its speed on the computer has not been tested. Test it as
+  docs/try-it-on-the-computer.md says before relying on it.
 
 ## What does not show in the sidebar layout
 
@@ -1907,7 +1907,7 @@ gives the page, so a change of the numbers there moves the kit too.
   cleared when the theme goes away (`setKit(false)`), and the one that waits is
   cleared when the motion leaves full.
 - **`?kit=off`** in the address switches the whole kit off for that page, to see
-  what it costs (docs/try-it-on-the-mini.md).
+  what it costs (docs/try-it-on-the-computer.md).
 
 `tests/effects.test.mjs` tests all of this with a fake clock.
 
@@ -1949,7 +1949,7 @@ when the screen starts (they draw themselves in).
 An animated element is one that `document.getAnimations()` counts: the CSS
 animations and the Web Animations the shared frame code runs (`frame.js`). The
 readout from `?perf` ("animations running") is the same count. These numbers
-were taken in a desktop Chromium on a Mac, **not on the Mini**, at 1920 x 1080
+were taken in a desktop Chromium on a Mac, **not on the Teletraan computer**, at 1920 x 1080
 with full motion and the glint on, with a page change every 8 seconds (the
 shortest Seconds per page), counting every 200 milliseconds for 50 seconds, six
 seconds after the page started. The same sample content, the six pages open in one
@@ -1992,11 +1992,11 @@ is counted (the count at rest is 0 in both), and while the night screen, an aler
 an announcement or a hidden transition has the screen.
 
 **Be careful with these numbers.** They count elements and say nothing about
-speed. The Mini's speed with the sidebar layout has **not been tested**, and the
+speed. The Teletraan computer's speed with the sidebar layout has **not been tested**, and the
 layout does one thing the standard layout does not: it draws the large frame
-through a CSS scale of 1.0319, and a scaled layer may cost more on the Mini's
-graphics chip than an unscaled one. Run the tests in docs/try-it-on-the-mini.md,
-section 7, on the Mini before relying on this theme on the TV.
+through a CSS scale of 1.0319, and a scaled layer may cost more on the computer's
+graphics chip than an unscaled one. Run the tests in docs/try-it-on-the-computer.md,
+section 7, on the computer before relying on this theme on the TV.
 
 ## Looking at a layout
 

@@ -152,7 +152,7 @@ function slugOf(address) {
   return address.replace(/^\//, '').replace(/\//g, '_');
 }
 
-// Makes a copy of the mini folder and config.js to run in, a folder of tools
+// Makes a copy of the computer folder and config.js to run in, a folder of tools
 // to run with, and returns how to run the scripts.
 function setup(name, options) {
   const root = path.join(work, name);

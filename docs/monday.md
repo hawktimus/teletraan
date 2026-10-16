@@ -1,14 +1,14 @@
 # Monday board
 
-For the coaches, the project manager and the students who look after the Mini. The team
-keeps its tasks on one Monday board and its milestones on another. The Mini reads both and
+For the coaches, the project manager and the students who look after the Teletraan computer. The team
+keeps its tasks on one Monday board and its milestones on another. The computer reads both and
 keeps a copy in Sanity, and the screen draws the copy. This page says how the Monday side is
-set up, what each column does on the screen, when a task shows on the TV, how often the Mini
+set up, what each column does on the screen, when a task shows on the TV, how often the computer
 reads and how many reads a day it may use, what it writes, how to preview the panels, and
 what to do when nothing shows up. The panels themselves are in the table "The eleven panels"
 below, and the rows that play them are in docs/layouts.md.
 
-The two boards were checked by hand on 2026-10-14. The Mini's script has not been tried
+The two boards were checked by hand on 2026-10-14. The Teletraan computer's script has not been tried
 against the live Monday service: its questions and the places in the answers follow the
 public documentation of Monday, and the tests use made-up answers of the same shape. If one
 is wrong, see "If an answer looks different" below.
@@ -18,7 +18,7 @@ is wrong, see "If an answer looks different" below.
 The task board is Robotics Tasks, board `18435126893`. It is a multi-level board: a task is a
 parent item, and the steps of a task are subitems. The screen shows parents only. These are
 its columns, by id. The ids and the label numbers are the contract. Students rename labels,
-so the Mini reads the number of a label and never its words.
+so the Teletraan computer reads the number of a label and never its words.
 
 | Field | Column id | Type | Labels, as label and number |
 |---|---|---|---|
@@ -88,12 +88,12 @@ In the words for students: your task shows on the TV when it has a department, a
 General, Show on TV is Show, and it is not a subitem.
 
 The Show on TV? column becomes `showOnBoard` on the task. The Show on TV switch in Studio is
-`showOnTv`, and only an editor changes it. The Mini never writes it. Both must be on.
+`showOnTv`, and only an editor changes it. The Teletraan computer never writes it. Both must be on.
 
 A task with Team = Prime and Department = Build shows on the Prime Build panel and on no Nova
 panel. The same task with Team = General shows on the Build panel of both teams. Setting Show
 on TV? to Hide removes the task from the screen after the next read. A task with Department =
-Unassigned is written with Show on screen off and the reason `unassigned`, and the Mini counts
+Unassigned is written with Show on screen off and the reason `unassigned`, and the Teletraan computer counts
 it in `hiddenUnassigned`, which the connection block shows as hidden for want of a department.
 
 ## Why status is the column and not the group
@@ -127,19 +127,19 @@ then the milestones board, and on the first run of a day the list of boards for 
 `monday-status` keeps `callsToday` and `callsDate`, the day in the time zone of the screen. When
 `callsToday` reaches 900, the script stops reading until midnight and writes the last error
 "Daily read limit reached; reads resume at midnight." The connection block shows Reads today.
-At 30 minutes the Mini uses about 150 of the 900, so the limit only matters when How often is
+At 30 minutes the Teletraan computer uses about 150 of the 900, so the limit only matters when How often is
 turned down to 5 minutes for a long time, or when something fails and retries.
 
 ## The settings
 
-Dashboard Settings, Monday tab. The block at the top is the connection from the Mini and stores
+Dashboard Settings, Monday tab. The block at the top is the connection from the Teletraan computer and stores
 nothing. Below it:
 
 - **How often**: minutes between reads, 5 to 120.
 - **Task board**: the board (pick it by name), then a picker for each column: Department,
   Status, Team, Priority, Show on TV, Assigned, POC, Timeline, Estimated Hours, Date Completed
   and Milestone. A picker lists the columns of its board, the ones that fit under Fits and the
-  others under Other. If the Mini has not listed the columns yet, it says "Read the board first:
+  others under Other. If the Teletraan computer has not listed the columns yet, it says "Read the board first:
   wait for the next sync." If a list cannot be read, the box is a plain one: type the board
   number or the column id.
   - **Team labels**: rows of a label number and a team. A blank team means both teams. They
@@ -149,7 +149,7 @@ nothing. Below it:
   - **Hide label text**: Hide. It is the only label read by its words, because Hide has no fixed
     number.
   - **Department labels**: rows of a label number, a name and a Team lead. Leave the Team lead
-    blank and the Mini uses the Team lead with the same name. A row marked Never shown (Unassigned
+    blank and the computer uses the Team lead with the same name. A row marked Never shown (Unassigned
     is) gives no Team lead, so its tasks stay off the TV. A number that has no row is treated the
     same way.
 - **Milestones board**: the board, the Target Date, Team, Department and Status columns, and the
@@ -159,7 +159,7 @@ nothing. Below it:
   with a task. The first name of the POC is always kept.
 
 Every value starts as the table above, in Studio, in `dashboard/config.js` and at the top of
-`mini/scripts/monday-sync.sh`. `tests/schemas.test.mjs` and `tests/monday-sync.test.mjs`
+`computer/scripts/monday-sync.sh`. `tests/schemas.test.mjs` and `tests/monday-sync.test.mjs`
 fail when the three differ. The older Boards rows are hidden ("Not used any more") and the script
 ignores them. What was typed in them is kept.
 
@@ -194,13 +194,13 @@ The script never writes Show on TV (`showOnTv`). A task that has it keeps what a
 Milestones. Each milestone becomes one published `milestone` with the id `milestone-monday-` and
 the item's number: `name` (40 characters), `targetDate`, `team` (nothing for both teams),
 `subteam` (nothing for all departments), `status` (`not-started`, `on-track`, `at-risk` or `done`)
-and `show`. Only the Mini writes them. Studio lists them read only under Monday Boards, as a
+and `show`. Only the Teletraan computer writes them. Studio lists them read only under Monday Boards, as a
 second list called Milestones.
 
 The document `monday-status`, which the Monday tab reads, and which the screen reads for the
 time of the last read:
 
-- `connectedAs`, `lastSyncAt` and `lastError`: the first name of the account, when the Mini last
+- `connectedAs`, `lastSyncAt` and `lastError`: the first name of the account, when the Teletraan computer last
   read the task board, and what went wrong in plain words
 - `boards`: every board the account can see, with its columns, for the pickers and the Monday
   Boards page. It is read on the first run of a day
@@ -221,12 +221,12 @@ comes back, so does the document. This happens only when the board was read to i
 run. A run that stopped at 4 requests, or met an error, switches nothing off. A milestone that
 loses its date or is renamed to start with EXAMPLE is switched off the same way.
 
-Tasks that the Mini made from the older boards are not on the new task board, so the first run
+Tasks that the Teletraan computer made from the older boards are not on the new task board, so the first run
 switches them off.
 
 ## The preview
 
-The Studio is hosted at sanity.studio and cannot reach the Mini, so the preview runs on the
+The Studio is hosted at sanity.studio and cannot reach the Teletraan computer, so the preview runs on the
 Studio's own copy of the dashboard. The dashboard accepts an address like this, and draws that
 one panel in the style of that Screen, held still, with no rotation, no clock and no hidden
 effects:
@@ -259,12 +259,12 @@ as `monday-tasks` for the first department of its team.
 
 ## The keys
 
-- `MONDAY_API_TOKEN` in `mini/local.env` on the Mini. Monday wants it in a header on every
+- `MONDAY_API_TOKEN` in `computer/local.env` on the Teletraan computer. Monday wants it in a header on every
   request. The script hands it to curl on standard input, so it never shows in the process
   list, and it is never printed or saved. How to make one: below, and
-  docs/rebuilding-the-mini.md, step 18.
+  docs/rebuilding-the-computer.md, step 18.
 - `SANITY_WRITE_TOKEN` in the same file, the one the status block uses
-  (docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio").
+  (docs/rebuilding-the-computer.md, "Showing what the computer did in Studio").
 
 Without either the script does nothing, says so in one line, and ends without an error, so the
 service does not show as failed.
@@ -274,14 +274,14 @@ service does not show as failed.
 1. Make the token. In Monday, click your picture at the top right, open Developers, then My
    access tokens, and copy the token. It needs the team mentor's yes, and the account it
    belongs to should see only the team's boards.
-2. Add it to `local.env` on the Mini, in single quotes, on its own line
-   (docs/rebuilding-the-mini.md, step 18).
+2. Add it to `local.env` on the Teletraan computer, in single quotes, on its own line
+   (docs/rebuilding-the-computer.md, step 18).
 3. Install the timer with `install-monday.sh`, and try the token with
    `monday-sync.sh --check`. The unit files changed with this version: the timer now wakes the
-   script every 5 minutes, so run `sudo /opt/teletraan/mini/scripts/install-monday.sh` again
-   after every update that touches `mini/systemd`.
+   script every 5 minutes, so run `sudo /opt/teletraan/computer/scripts/install-monday.sh` again
+   after every update that touches `computer/systemd`.
 4. Wait 5 minutes. Open Dashboard Settings, Monday tab. The block at the top says who the token
-   belongs to, when the Mini last read Monday, how often, how many reads it used today, and how
+   belongs to, when the computer last read Monday, how often, how many reads it used today, and how
    many tasks it made. Until then it says No connection yet.
 5. The two boards are already named and every column is set, because the starting values are the
    rebuilt workspace. Change a board or a column only when the workspace changes. Click Publish
@@ -291,10 +291,10 @@ service does not show as failed.
 
 ## Trying it
 
-On the Mini:
+On the Teletraan computer:
 
-    /opt/teletraan/mini/scripts/monday-sync.sh --check
-    /opt/teletraan/mini/scripts/monday-sync.sh
+    /opt/teletraan/computer/scripts/monday-sync.sh --check
+    /opt/teletraan/computer/scripts/monday-sync.sh
 
 `--check` asks Monday who the token belongs to and writes nothing. The second line is one run.
 It reads only when the last read is old enough, so a run right after a good one prints nothing.
@@ -307,19 +307,19 @@ To force a read, set How often to 5 and wait. The journal has the lines of every
 Go down the list. Each step rules out one cause.
 
 1. The connection block says connected. Connected as shows a first name, and Last sync shows a
-   recent time. If it says No connection yet, the token is not in `local.env` on the Mini or the
+   recent time. If it says No connection yet, the token is not in `local.env` on the Teletraan computer or the
    timer is not installed (Setting it up, steps 2 and 3).
 2. The last error is empty. Daily read limit reached means wait for midnight or raise How often.
    Monday refused the token means the token is wrong or expired. The two board lines under the
    block show 0 items and the reason when a board number is wrong.
-3. Wait How often minutes. Last sync shows when the Mini last read.
+3. Wait How often minutes. Last sync shows when the computer last read.
 4. Look under Monday Tasks, On the TV. Tasks from the board in the connection block counts them,
    and says how many are hidden for want of a department.
 5. Look at the task in Monday. It needs a department that is not Unassigned, a team or General,
    Show on TV? set to Show, and it must not be a subitem.
 6. Look at the Show on TV switch of the row in Studio. A task with it off is in the list and not
-   on the TV, and the Mini never changes that switch.
-7. On the Mini, run the line below and read the last lines. A line that starts with `monday:`
+   on the TV, and the computer never changes that switch.
+7. On the computer, run the line below and read the last lines. A line that starts with `monday:`
    says how many tasks and milestones were read, or what went wrong. The script never prints the
    token.
 
@@ -356,7 +356,7 @@ document or file.
 ## If an answer looks different
 
 The address, the version, the four questions and the places in the answers are in one file,
-`mini/scripts/monday-contract.sh`, which `monday-sync.sh` reads: `monday_address`, `monday_version`,
+`computer/scripts/monday-contract.sh`, which `monday-sync.sh` reads: `monday_address`, `monday_version`,
 `monday_query_me`, `monday_query_boards`, `monday_query_items`, `monday_query_more`, and the
 `paths` block of jq functions. Correct a line there and nowhere else. The questions use typed
 fragments (`... on StatusValue { label index }` and the like), because a plain question gave

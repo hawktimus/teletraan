@@ -11,7 +11,7 @@ Words used here:
 - **Publish** saves a change so the TV can see it. A change you have not published
   is a draft, and the TV never shows a draft.
 - **Studio** is the page where you edit. **Sidebar** is the list of lines on its left.
-- **Mini** is the small computer behind the TV. It reads Monday and the calendars
+- **Teletraan computer** is the small computer behind the TV. It reads Monday and the calendars
   for the TV.
 - **Panel** is one block on the TV, such as the agenda or the photos.
 - **Coach** means a coach or mentor of the team.
@@ -74,7 +74,7 @@ Hide after has not passed. The Team choice is Both, or the team that is on the s
 ## Tasks
 
 Tasks come from the team's Monday boards. Nobody types a task in the Studio, so there
-is no plus button. The Mini reads the boards on a timer and makes a task for each item.
+is no plus button. The Teletraan computer reads the boards on a timer and makes a task for each item.
 The reading takes up to 30 minutes, so a change in Monday is not on the TV at once.
 
 Your task shows on the TV when it has a department, a team or General, Show on TV is Show, and it is not a subitem.
@@ -93,8 +93,8 @@ Your task shows on the TV when it has a department, a team or General, Show on T
 
 In the Studio, Monday Tasks lists the tasks in two lists, On the TV and Hidden.
 Each task opens read only. The one thing you can change is **Show on TV**. Monday
-Boards shows every board the Mini can see, with when it was last read. If a Monday
-panel shows a STALE chip, the Mini has not read the boards for a while. Tell a coach.
+Boards shows every board the Teletraan computer can see, with when it was last read. If a Monday
+panel shows a STALE chip, the computer has not read the boards for a while. Tell a coach.
 
 ## Events
 

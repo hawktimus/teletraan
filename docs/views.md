@@ -40,7 +40,7 @@ The look of the views is not designed yet. A bar view is drawn in the bar layout
 
 ## Weather
 
-The weather comes from Open-Meteo, which needs no key, so nothing about it is in `mini/local.env`. It is read every 15 minutes. A failed read keeps the last reading. A reading more than two hours old is dropped, and the panels draw dashes and no icon. Nothing in the weather code throws at the screen.
+The weather comes from Open-Meteo, which needs no key, so nothing about it is in `computer/local.env`. It is read every 15 minutes. A failed read keeps the last reading. A reading more than two hours old is dropped, and the panels draw dashes and no icon. Nothing in the weather code throws at the screen.
 
 ## Files
 

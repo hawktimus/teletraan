@@ -56,7 +56,7 @@ panel and the banner. Themes, beside it, holds the theme of each day. See "Views
   - Meeting days: which days have talk slots and when they start. A day with no
     Meeting day has no slots.
 - Monday Tasks: what the team is working on, from its Monday boards. It is a folder
-  with two lists, On the TV and Hidden, and it has no plus button, because the Mini
+  with two lists, On the TV and Hidden, and it has no plus button, because the Teletraan computer
   makes the tasks. A task has a name, a subteam, an optional point of contact, an
   optional priority (High, Medium or Low), an optional due date, a status (In progress,
   Up next or Done) and the name of its board. The point of contact is a first name, up
@@ -69,19 +69,19 @@ panel and the banner. Themes, beside it, holds the theme of each day. See "Views
     screen is off or the Hide after time has passed. It also holds the tasks typed by
     hand before the board was connected, marked Manual (not shown), which the screen
     never shows. A task is in one list only.
-- Monday Boards: a page of the boards the Mini can see, with their items and when
+- Monday Boards: a page of the boards the computer can see, with their items and when
   each was read. The name of a chosen board opens its tasks, and Choose boards opens
   Dashboard Settings, where the Monday tab has the board rows.
 - Tips and News: the lines that run along the bottom of the screen.
 
 ### Events
 
-- Calendars: the BAND calendars the Mini reads. Pick one on the left to see its
-  next 40 events on the right, each SHOWN or HIDDEN, and when the Mini last
+- Calendars: the BAND calendars the Teletraan computer reads. Pick one on the left to see its
+  next 40 events on the right, each SHOWN or HIDDEN, and when the computer last
   downloaded it (docs/calendars-page.md). Hide this one and Hide all like this on an
   event make a rule under Calendar filters, and Show again deletes it
   (docs/hide-a-repeating-meeting.md). Ask a coach to add the address of a new
-  calendar on the Mini.
+  calendar on the computer.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). An Always show rule can also pin its events to
@@ -140,7 +140,7 @@ every team. Pick a team to show it only while that team is on the screen
 (docs/team-on-an-item.md).
 
 Events are not typed into the Studio. They come from the team's BAND calendars.
-Add or change the event in BAND and it reaches the TV after the Mini next
+Add or change the event in BAND and it reaches the TV after the Teletraan computer next
 downloads the calendars. To get an event on the screen, add it in the calendar app,
 or ask a coach for an Always show rule. To add a BAND calendar or change its link,
 see docs/calendar-links.md.
@@ -156,7 +156,7 @@ The first line of the sidebar. It is a page, not a document, so there is nothing
 1. One line: what Teletraan I is, and that Publish all is the last step of every change.
 2. A picture of the screen. The boxes A to E are the banner, the main panel, the countdown, the side panel and the ticker, drawn in the shape of the screen. Each box names the sidebar items that fill it. The line under it says: Click a letter in Views, under Settings, to change what plays there.
 3. The three steps of every meeting: open Daily Agenda or Monday Tasks, make the change, click Publish all in the top bar. You edit on Draft, and the screen shows Published.
-4. The status of the Mini.
+4. The status of the Teletraan computer.
 5. Links: the control page, the Studio on the web and the guides. A link whose address has not been set is shown as plain words.
 6. One line: anything under Coaches only is for a coach.
 
@@ -177,9 +177,9 @@ What the screen does with them:
   midnight in the Time zone on the Look page. You do not have to delete or hide a
   finished event. The screen checks once a minute, so it goes soon after midnight.
 - The screen writes the dates of every event in that same Time zone: the weekday and
-  the month are never taken from the Mini's own clock. Keep the Time zone the same
-  as the Mini's own time zone (docs/rebuilding-the-mini.md, step 3), because
-  the screen writes times on the Mini's clock.
+  the month are never taken from the Teletraan computer's own clock. Keep the Time zone the same
+  as the computer's own time zone (docs/rebuilding-the-computer.md, step 3), because
+  the screen writes times on the computer's clock.
 
 ### The two pages of the Events panel
 
@@ -262,10 +262,10 @@ Change it there. Use Show on TV to hide it here." The one thing you can change i
 Show on TV. Turn it off and the task leaves the TV and moves to the Hidden list.
 Turn it on and it comes back. The board sync keeps your choice the next time it runs.
 
-The Mini makes these tasks from the task board chosen on the Monday tab of Dashboard
+The Teletraan computer makes these tasks from the task board chosen on the Monday tab of Dashboard
 Settings, as often as How often says (docs/monday.md). Besides the fields above, a task from
 the board has a start date, hours, a completed day, milestones and a reason it is hidden, which
-open read only too. The Mini writes the name (up to 22 characters), the team, the Team lead
+open read only too. The computer writes the name (up to 22 characters), the team, the Team lead
 of the department, the status, the priority, the dates, the hours and the contact. A task with
 no department is hidden, and so is a task whose Show on TV? column holds Hide. An item that is deleted on the board is not deleted here: its task is
 switched off and moves to the Hidden list. A status of To Do is Up next, In Review is In review, and Stuck is Blocked.
@@ -360,7 +360,7 @@ end of the row counts the tasks due later, such as +3 later. At most five rows s
 A bar for each Team lead entry, in three colours for the backlog, in progress and done, with done out of all beside it, and under the
 bars the totals of the team, such as 66 OPEN · 5 OVERDUE. It counts the same tasks as the tasks card. On the right is a
 line of the items left on each day, with a dashed line to nothing on the day of the next countdown date. The line needs the
-counts of at least two days, which the Mini adds once a day. With fewer it says so.
+counts of at least two days, which the Teletraan computer adds once a day. With fewer it says so.
 
 ### Cards of both teams
 
@@ -390,7 +390,7 @@ The Photo panel shows one photo at a time, and the photo fills the whole panel
 under the header, up to the frame. The panel has no title: the header of the
 frame stays empty above the photo. The caption and the photographer's first name
 ("Photo: Sam") are on a plate at the lower left of the photo. Photos are uploaded
-to Studio. Nothing is kept on the Mini. A photo is either cut to fill the panel,
+to Studio. Nothing is kept on the Teletraan computer. A photo is either cut to fill the panel,
 or shown whole with the color of the panel round it. Photo fit in Dashboard
 Settings picks one for all photos, and a photo can pick its own (see "Fill the
 frame or show the whole photo" below). When the panel stays up long enough it
@@ -750,12 +750,12 @@ problem would touch.
 
 ### Screen
 
-- Status of the Mini: the block at the top. It says when the Mini last saw a
+- Status of the Teletraan computer: the block at the top. It says when the computer last saw a
   change to the content, downloaded the calendars, downloaded the slides, read
   the Monday boards, read the FRC data, and started the screen. Each line says
-  how long ago and the time. You cannot type in it: the Mini writes it. It says
-  No status yet until the Mini has a write token (docs/rebuilding-the-mini.md,
-  "Showing what the Mini did in Studio"). A line says Not yet for a job the Mini
+  how long ago and the time. You cannot type in it: the computer writes it. It says
+  No status yet until the computer has a write token (docs/rebuilding-the-computer.md,
+  "Showing what the computer did in Studio"). A line says Not yet for a job the computer
   has not done since the token was added.
 - Team, motion and frames: the team name, number and school in the banner.
   Motion is Full or Calm (Calm only fades panels in and out, with no turning,
@@ -775,7 +775,7 @@ problem would touch.
   switch says. The // stays. Plain is Flat with no screws on the frames and
   no // in the panel headers. The header picture of a seasonal pack, the shapes
   beside the tasks and every other mark stay in all three. Flat and Plain draw
-  less, so the Mini has an easier time (docs/try-it-on-the-mini.md). Polish
+  less, so the computer has an easier time (docs/try-it-on-the-computer.md). Polish
   applies to every theme (Neon Prime keeps its cyan and magenta trim lines in
   Flat and Plain), and Frame metal and Frame finish keep their meaning.
   It does not change Motion, the page change style, the hidden transitions or
@@ -899,7 +899,7 @@ problem would touch.
 
 - Countdown: the labels and dates for Kickoff and Rollout. The countdown counts
   to Kickoff, then to Rollout. Its seconds change right on the second of the
-  Mini's clock, so it keeps time with a phone however long the screen has been
+  computer's clock, so it keeps time with a phone however long the screen has been
   running. In the Cybertron theme and in the bar arrangement the same label and dates are in
   the war clock, with no IN: in the countdown's place in Cybertron, and at one end
   of the banner in the bar arrangement.
@@ -915,7 +915,7 @@ problem would touch.
 - Calendars: give each calendar a name and choose whether it shows. A new Studio
   starts with one row, code team, named Team calendar. A calendar only shows
   events when it has a row here, with a code that matches the calendar on the
-  Mini (the code team is CALENDAR_TEAM_URL there), and its "Show on screen"
+  computer (the code team is CALENDAR_TEAM_URL there), and its "Show on screen"
   switch is on. The code is lowercase letters, digits and underscores. Do not
   change a calendar's code unless you were told to. If you delete every row, no
   events show. To add a calendar, see docs/calendar-links.md.
@@ -940,38 +940,38 @@ problem would touch.
 
 ### Monday
 
-The two Monday boards the Mini reads and how an item becomes a task or a milestone
-(docs/monday.md). The Mini reads Monday as often as How often says and keeps the items in
+The two Monday boards the Teletraan computer reads and how an item becomes a task or a milestone
+(docs/monday.md). The computer reads Monday as often as How often says and keeps the items in
 Sanity, which Monday Tasks lists under On the TV.
 
-- Monday connection from the Mini: a block at the top that you cannot type in. It says who
-  the token belongs to, when the Mini last read Monday, how many boards the token can see,
-  the last error, how often the Mini reads, the reads used today, and how many tasks the
-  Mini has made and how many of them are hidden for want of a department. Then it has a line
-  for each of the two boards: the items the Mini read, the tasks on the TV and when it was
+- Monday connection from the Teletraan computer: a block at the top that you cannot type in. It says who
+  the token belongs to, when the computer last read Monday, how many boards the token can see,
+  the last error, how often the computer reads, the reads used today, and how many tasks the
+  computer has made and how many of them are hidden for want of a department. Then it has a line
+  for each of the two boards: the items the computer read, the tasks on the TV and when it was
   last read. With nothing yet it says No connection yet: a coach has to add the token on the
-  Mini (docs/rebuilding-the-mini.md, step 18). If tasks do not show up, see "If nothing shows
+  computer (docs/rebuilding-the-computer.md, step 18). If tasks do not show up, see "If nothing shows
   up" in docs/monday.md.
 - How often: minutes between reads, 5 to 120, 30 to start with. The free plan allows about
-  1,000 reads a day, and the Mini stops at 900 until midnight.
+  1,000 reads a day, and the computer stops at 900 until midnight.
 - Task board: the board, the column of each field, and the tables that say what each label
   number means (team labels, status indexes, priority indexes, department labels), and the
   Hide label text. The starting values are the rebuilt workspace, so nothing needs typing.
 - Milestones board: the board, its four columns and its tables.
 - Show owner first names on the TV: starts off. On, the first names from Assigned go with a
   task.
-- Boards: not used any more, and hidden. What was typed in it is kept and the Mini ignores it.
+- Boards: not used any more, and hidden. What was typed in it is kept and the computer ignores it.
 
 ### Competition
 
 The cards that show the season, the next match, the rank and the results
-(docs/frc-feed.md). The Mini reads the public data of each team and keeps it in
+(docs/frc-feed.md). The Teletraan computer reads the public data of each team and keeps it in
 Sanity, and the screen draws it.
 
-- Competition data from the Mini: a block at the top that you cannot type in. It
-  says when the Mini last read the data, how many events it found for each team,
+- Competition data from the Teletraan computer: a block at the top that you cannot type in. It
+  says when the computer last read the data, how many events it found for each team,
   any note, and the last error. With no data yet it says No connection yet: a coach
-  has to add the key for the data on the Mini (docs/rebuilding-the-mini.md,
+  has to add the key for the data on the computer (docs/rebuilding-the-computer.md,
   step 17) and the first read comes within an hour.
 - Competition cards: Auto, Always or Off, and Auto to start with. Auto shows each
   card in the time of its own: the cards about an event from two days before its
@@ -986,7 +986,7 @@ Sanity, and the screen draws it.
 - The cards are not rows of a view. The mode, the switches and the data decide
   when they come. Preview competition on the Start here page shows all seven
   for 2 minutes on made-up data.
-- The data itself is a document the Mini writes, FRC data from the Mini. It has no
+- The data itself is a document the computer writes, FRC data from the computer. It has no
   line in the list on the left and is not in the New menu. It is public, like the
   rest of the dataset: team numbers, nicknames, match numbers and times, scores,
   ranks, award names and ratings, and no person's name.
@@ -1035,7 +1035,7 @@ Sanity, and the screen draws it.
   switched off or that have expired. It is for setting up or checking the
   screen, so turn it off again for everyday use. Whatever this says, the same
   text comes up in red by itself when the screen has not been able to reach
-  Sanity for over two minutes, and says why (docs/rebuilding-the-mini.md,
+  Sanity for over two minutes, and says why (docs/rebuilding-the-computer.md,
   "Checking the connection"). A full screen alert or announcement covers it.
 - Content source: it used to be a tab. The screen always shows what you
   publish now, so the field and "Switch back to production at" are hidden and

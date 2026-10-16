@@ -52,7 +52,7 @@ fill the screen, its top and bottom would be lost.
 **They take turns.** Each play of a transition takes the picture after the one it used last,
 and goes back to the first after the second. The last one used is kept in the browser's storage
 (`localStorage`, under `teletraan-hidden-picture-redEyes` and
-`teletraan-hidden-picture-blueScreen`), so a Mini that restarts carries on with the other one.
+`teletraan-hidden-picture-blueScreen`), so a computer that restarts carries on with the other one.
 If the storage cannot be used the pictures still take turns until the page is reloaded. The
 two transitions keep their own place.
 
@@ -67,9 +67,9 @@ ends and the screen comes back.
 1. Make the new picture with the same name as the old one and the same kind of size: 16:9
    for the three that cover the screen (for example 1920 x 1080), and a small picture that is
    already 16:10 for the old blue screen. A bigger picture is fine and looks sharper. Use
-   `webp` or `png`, keep it under 300 KB so the Mini loads it at once, and use your own
+   `webp` or `png`, keep it under 300 KB so the Teletraan computer loads it at once, and use your own
    picture or one you have the right to use.
-2. Put it in `dashboard/assets/hidden/`, replacing the old file, and push. The Mini
+2. Put it in `dashboard/assets/hidden/`, replacing the old file, and push. The computer
    pulls it on its next timer.
 3. If the size or the kind of picture is different (a different shape, or a new name), change its
    line in `core/hidden-pictures.js` (`file`, `width`, `height`, `fit`, `fill` and `crisp`, which
@@ -106,7 +106,7 @@ so the hours are about right and not exact.
 
 After any hidden transition has played, none comes about by chance for 4 hours. The 4 is
 `hiddenGapHours` in `dashboard/config.js`. The time it played is kept in the browser's
-storage (`localStorage`, under `teletraan-hidden-last-fired`), so a Mini that restarts
+storage (`localStorage`, under `teletraan-hidden-last-fired`), so a computer that restarts
 keeps the gap. If the storage is switched off, the screen keeps the time until the page
 is reloaded. A push from the Studio and `?hidden=` ignore the gap, but they start one.
 
@@ -137,10 +137,10 @@ What the screen does with a push:
   seconds.
 - It ignores the hours and the 4 hour gap. It starts a gap, like any transition.
 - It plays once. The screen keeps the push it handled last in the browser's storage
-  (`localStorage`, under `teletraan-hidden-handled`), so a Mini that restarts never
+  (`localStorage`, under `teletraan-hidden-handled`), so a computer that restarts never
   plays it again.
 - It plays only while it is less than 60 seconds old, the same rule as the demo
-  (docs/demo.md). The Mini's clock must be right: if it is more than a minute out,
+  (docs/demo.md). The Teletraan computer's clock must be right: if it is more than a minute out,
   a push never plays.
 - It waits for an alert, an announcement, a demo or the night screen to be over, if
   that happens inside the minute. Otherwise it is dropped.
@@ -190,10 +190,10 @@ What the screen does with it:
 - It ignores each announcement's Time and Days. One set for Friday at 17:00 plays on a
   Monday morning, and one with no day ticked plays too.
 - It plays once. The screen keeps the request it handled last in the browser's storage
-  (`localStorage`, under `teletraan-announce-handled`), so a Mini that restarts never
+  (`localStorage`, under `teletraan-announce-handled`), so a computer that restarts never
   plays it again. This is separate from the demo's and the hidden transitions' own.
 - It plays only while the request is less than 60 seconds old, the same rule as the demo
-  (docs/demo.md) and a pushed hidden transition. The Mini's clock must be right: if it is
+  (docs/demo.md) and a pushed hidden transition. The Teletraan computer's clock must be right: if it is
   more than a minute out, it never plays.
 - It waits for an alert, an announcement, a demo, a hidden transition or the night screen
   to be over, if that happens inside the minute. Otherwise it is dropped.
@@ -269,7 +269,7 @@ What the screen does with it:
   are the ones typed on that pack's rule on the Look page, or the pack's own (docs/seasonal-packs.md).
 - It starts once, and only while the request is less than 60 seconds old, the same rule as the demo
   (docs/demo.md). The screen keeps the request it handled last in `localStorage`, under
-  `teletraan-preview-handled`, so a Mini that restarts never starts it again. This is separate from the
+  `teletraan-preview-handled`, so a computer that restarts never starts it again. This is separate from the
   demo's, the hidden transitions', the announcements' and the presentation test's own.
 - It waits for an alert, an announcement, a talk, a demo, a hidden transition or the night screen to be
   over, if that happens inside the minute. Otherwise it is dropped. An alert that comes on while it is
@@ -280,7 +280,7 @@ What the screen does with it:
 - While a page shows sample content (`?sample=1` on its address) it reads the settings from
   `dashboard/data/sample/content.json`, not from Studio, so the buttons do nothing. To try every style,
   team and pack with the sample content, put `?style=`, `?team=` and `?overlay=` on the address
-  (docs/try-it-on-the-mini.md). The sample content has both teams.
+  (docs/try-it-on-the-computer.md). The sample content has both teams.
 
 To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`, the same id and name to
 `studio/inputs/previews.js`, and the id to the choices in `tests/schemas.test.mjs` (search it for
@@ -293,7 +293,7 @@ To add a preview, add an entry to `previewKinds` in `dashboard/core/preview.js`,
 Add `?hidden=desktop` or `?hidden=redEyes` to the address and that transition plays at
 the next page change of the large panel, once, whatever the hours and the gap say.
 `?hidden=off` never plays any. Add `?night=off` too when it is night in the Look
-time zone, or the night screen will stop it. docs/try-it-on-the-mini.md lists every switch.
+time zone, or the night screen will stop it. docs/try-it-on-the-computer.md lists every switch.
 
 ## The frames collapse and come back
 

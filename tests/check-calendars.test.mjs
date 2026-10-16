@@ -59,7 +59,7 @@ fi
 cp "$STUB_DIR/$id.ics" "$output"
 `;
 
-// Makes a copy of the mini scripts to run in, with the dashboard folder
+// Makes a copy of the computer scripts to run in, with the dashboard folder
 // linked in beside it (the Node file reads the dashboard's code), a folder of
 // tools to run with, and returns how to run the script.
 function setup(name, options) {

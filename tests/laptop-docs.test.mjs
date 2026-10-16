@@ -117,7 +117,7 @@ test('the three steps of choice 1 are named in order, with the command each one 
 test('the commands and files the docs name exist', () => {
   const made = new Set(['studio/node_modules', 'studio/dist', 'studio/.sanity', 'computer/local.env']);
   [laptop, shipping, updating].forEach(text => {
-    for (const match of text.matchAll(/`((?:docs|mini|tools|studio)\/[A-Za-z0-9_.\/-]+)`/g)) {
+    for (const match of text.matchAll(/`((?:docs|computer|tools|studio)\/[A-Za-z0-9_.\/-]+)`/g)) {
       const file = match[1].replace(/[.,]$/, '');
       if (made.has(file) || file.endsWith('/') || file.includes('*')) continue;
       assert.ok(fs.existsSync(path.join(repo, file)), 'the docs name ' + file + ' and it does not exist');

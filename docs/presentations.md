@@ -149,18 +149,18 @@ and the dashboard never does.
    you press the clicker as at a real talk. It needs no internet and no booked
    talk (docs/hidden-transitions.md, "Run presentation test").
 2. To try a real deck, share it with Anyone with the link, then run
-   `slides-sync.sh --test` on the Mini with the deck's link. It prints OK and the
-   number of pages, or FAIL and the reason (docs/rebuilding-the-mini.md, step 11).
+   `slides-sync.sh --test` on the Teletraan computer with the deck's link. It prints OK and the
+   number of pages, or FAIL and the reason (docs/rebuilding-the-computer.md, step 11).
 
 ## 8. Troubleshooting
 
-- The TV says "Slides are not ready. Ask a coach." The Mini downloads each deck
+- The TV says "Slides are not ready. Ask a coach." The Teletraan computer downloads each deck
   once the talk is less than 36 hours away, and again when the talk is 20
   minutes away, so a late edit is included. A failed download is tried again
   2 minutes later. The usual cause is a deck that is not shared, see the next
   point. If it is shared and the slides are still not ready after 10 minutes,
-  tell the team mentor: the Mini may be off the internet or its slides service
-  may not be running (docs/rebuilding-the-mini.md).
+  tell the team mentor: the computer may be off the internet or its slides service
+  may not be running (docs/rebuilding-the-computer.md).
 - The deck is not shared. Open the deck in Google Slides and click Share. Under
   General access pick Anyone with the link, and set it to Viewer. If that choice
   is not offered, the account blocks it: ask the team mentor. The Slides link

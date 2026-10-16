@@ -30,9 +30,9 @@ TV. The dashboard reads what they publish.
     inputs/team-input.js            the Team radio (Both, then each active team) that the Team field of each kind of content uses
     inputs/note-field.js            the one plain line of a note in a form (fields.js, noteField)
     inputs/show-on-tv-input.js      the Show on TV switch of a task, which draws a task with no value as on
-    inputs/status-input.js          the Status of the Mini block at the top of the Screen tab of Dashboard Settings
-    inputs/frc-status-input.js      the block at the top of the Competition tab of Dashboard Settings: when the Mini last read the competition data
-    inputs/monday-status-input.js   the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the Mini last read Monday, the boards chosen and the tasks made, and a line for each board entry
+    inputs/status-input.js          the Status of the Teletraan computer block at the top of the Screen tab of Dashboard Settings
+    inputs/frc-status-input.js      the block at the top of the Competition tab of Dashboard Settings: when the computer last read the competition data
+    inputs/monday-status-input.js   the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the computer last read Monday, the boards chosen and the tasks made, and a line for each board entry
     inputs/monday-pickers.js        the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
     inputs/panel-order-input.js     the Panel order list in Dashboard Settings, which is hidden now and fills itself from the two older panel lists when it is empty
     inputs/screen-input.js          the form of a Screen (Screens, the second line of the sidebar): the Editing switch, the map with the letters A to E, and the first fill of the rows
@@ -95,8 +95,8 @@ docs/where-things-are.md).
    save. Then add `http://localhost:3229` the same way. CORS is the browser
    rule that lets a web page read data from another website only when that
    website has listed the page's address. The first address is the test server
-   on this Mac (`python3 tools/serve.py`) and the second is the Mini, whose web
-   server answers on the port in `TELETRAAN_PORT` in mini/local.env, 3229. If
+   on this Mac (`python3 tools/serve.py`) and the second is the Teletraan computer, whose web
+   server answers on the port in `TELETRAAN_PORT` in computer/local.env, 3229. If
    you ever change that port, add the new address as well.
 7. Type some content into the Studio. Open Dashboard Settings first and click
    Publish. Then check the Screen tab: the two starting announcements, 14:30 and
@@ -197,8 +197,8 @@ write the templates again with `node scripts/make-templates.mjs`.
 After step 8, a small red text at the bottom right of the screen says SANITY
 UNREACHABLE when the dashboard has not managed to read Sanity for over two
 minutes. It keeps showing the last copy it saved, and the text says why: network
-down, CORS blocked, access denied or other error. The Mini can also be checked
-with one command, see "Checking the connection" in docs/rebuilding-the-mini.md.
+down, CORS blocked, access denied or other error. The Teletraan computer can also be checked
+with one command, see "Checking the connection" in docs/rebuilding-the-computer.md.
 Open the browser's console to see more.
 
 - CORS BLOCKED, or a console message that mentions CORS: the origin from step 6
@@ -222,15 +222,15 @@ saved earlier is kept. The dashboard does not read it, and the two buttons that 
 to set it are gone. "Switch back to production at" was removed: no document held a value.
 dashboard/core/source.js decides, and shell.js hands it the address.
 
-## Status of the Mini
+## Status of the Teletraan computer
 
-The Screen tab of Dashboard Settings starts with a block that shows when the Mini
+The Screen tab of Dashboard Settings starts with a block that shows when the Teletraan computer
 last did each of its jobs (`inputs/status-input.js`). It reads the document
-`status-mini`, of the type `status` (`schemas/status.js`), which the Mini writes with
-`mini/scripts/status-write.sh`. The type is not in the sidebar or the New menu,
+`status-mini`, of the type `status` (`schemas/status.js`), which the computer writes with
+`computer/scripts/status-write.sh`. The type is not in the sidebar or the New menu,
 and the field in Dashboard Settings (`schemas/settingsStatus.js`) stores nothing.
-Without a write token on the Mini the block says No status yet.
-docs/rebuilding-the-mini.md, "Showing what the Mini did in Studio", has the steps for
+Without a write token on the computer the block says No status yet.
+docs/rebuilding-the-computer.md, "Showing what the computer did in Studio", has the steps for
 the token.
 
 ## Photos

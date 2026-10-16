@@ -7,7 +7,7 @@ keep them so the TV is right. The detail is in docs/monday.md.
 
 Your task shows on the TV when it has a department, a team or General, Show on TV is Show, and it is not a subitem.
 
-The Mini (the small computer behind the TV) reads the boards about every 30 minutes (a coach can change this) and
+The Teletraan computer (the small computer behind the TV) reads the boards about every 30 minutes (a coach can change this) and
 copies each task to the Studio. A change in Monday can take that long to show. The TV
 only reads that copy. It never talks to Monday, and it never has the Monday key.
 
@@ -43,7 +43,7 @@ only reads that copy. It never talks to Monday, and it never has the Monday key.
 You can rename a label, such as changing In Review to Needs Review. The TV goes by
 the position of the label (its index), not its words. Do not delete a label and do not
 change which one is which. Do not delete a column and add it again. A new column gets
-a new id, and the Mini stops finding it.
+a new id, and the Teletraan computer stops finding it.
 
 ## Settings you must not touch
 
@@ -53,7 +53,7 @@ Leave all of it as it is:
 - the two board ids, and the column of each field
 - Team labels, Status indexes, Priority indexes and Department labels
 - the Hide label text
-- how often the Mini reads, and the switch that shows owners
+- how often the Teletraan computer reads, and the switch that shows owners
 - Choose boards on the Monday Boards page
 
 If one of these looks wrong, tell a coach. You can change **Show on TV** on a single
@@ -61,7 +61,7 @@ task in Monday Tasks. That is the one switch in the Studio meant for you.
 
 ## Checks
 
-- If a Monday panel on the TV shows a STALE chip, the Mini has not read Monday for a while.
+- If a Monday panel on the TV shows a STALE chip, the Teletraan computer has not read Monday for a while.
   Tell a coach.
 - If a task is missing, check the four conditions at the top of this page, then wait 30 minutes.
 - Monday Boards in the Studio shows when each board was last read.

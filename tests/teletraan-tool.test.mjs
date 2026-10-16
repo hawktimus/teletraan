@@ -2,7 +2,7 @@
 // keeps its keys and calendars, and for tools/teletraan/merge-env.sh, the script it
 // runs on the Teletraan computer. ssh, scp, rsync, sudo and systemctl are replaced with small
 // fake ones in a temporary folder, so nothing touches the network or a real
-// Mini, and the "Mini" is a folder. The keys and links in the test are made up.
+// computer, and the computer is a folder. The keys and links in the test are made up.
 //
 //   node tests/teletraan-tool.test.mjs
 
