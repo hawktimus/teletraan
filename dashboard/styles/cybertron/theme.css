@@ -26,22 +26,6 @@
    The frames are drawn by core/plate.js. The steel of their edges is in tokens.css and
    index.html, and what Cybertron and Minimal share of them is in base.css. */
 
-html[data-style="cybertron"] {
-  --style-body: var(--team-body);
-  --style-raised: #262b33;
-  --style-armor-top: #323843;
-  --style-armor-bottom: #1d2128;
-  --style-chamfer: 56px;
-  --style-neon: var(--team-neon);
-  --style-pink: var(--team-pink);
-  --style-digits: #ffb327;
-  --style-rust: #b4672d;
-  --style-grid-size: 96px;
-  --style-grid-opacity: .07;
-  --style-scan-opacity: .035;
-}
-
-
 /* The page background: the team's background color, with the scanlines over it and, in a
    layer of its own, the grid in the team's neon. Both are drawn with gradients, so there
    is no picture to load, and both are behind everything on the screen. The grid has its own
