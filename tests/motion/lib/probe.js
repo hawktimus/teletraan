@@ -408,14 +408,15 @@
 
   // What a piece paints, as paths in the space of their own elements with the matrix that puts them in the window: the
   // fill of each polygon and path, and the line of each stroke. A shadow, a glint, a glow or a layer under half strong
-  // is not paint that covers a seam.
+  // is not paint that covers a seam. A translucent fill is paint, because the Cybertron and Retro frames are drawn
+  // translucent on purpose and the rule is about where the pieces are. Decoration (art-) must be solid to count.
   function shapesOf(piece) {
     const shapes = [];
     const strong = style => Number(style.opacity) * (style.strokeOpacity === '' ? 1 : Number(style.strokeOpacity)) >= 0.9;
     const lineOf = (element, path, matrix) => {
       const style = window.getComputedStyle(element);
       const width = style.stroke !== 'none' && strong(style) && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class'))) ? parseFloat(style.strokeWidth) : 0;
-      const filled = style.fill !== 'none' && Number(style.opacity) >= 0.9 && Number(style.fillOpacity) >= 0.9 && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class')));
+      const filled = style.fill !== 'none' && style.display !== 'none' && Number(style.opacity) >= 0.9 && Number(style.fillOpacity) >= (/\bart-/.test(String(element.getAttribute('class'))) ? 0.9 : 0.1) && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class')));
       if (!filled && !(width > 0)) return;
       shapes.push({ path: path, matrix: matrix, fill: filled, width: width, cap: style.strokeLinecap, join: style.strokeLinejoin });
     };
