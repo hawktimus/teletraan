@@ -56,7 +56,7 @@ function readText(file) {
 }
 
 // The project, dataset and API version the dashboard reads, taken from its config file
-export function readProject(rootDir) {
+function readProject(rootDir) {
   const text = readText(path.join(rootDir, 'current', 'dashboard', 'config.js'));
   const pick = name => (new RegExp(name + ":\\s*'([^']+)'").exec(text) || [])[1] || '';
   return { projectId: pick('projectId') || 'ybfqe345', dataset: pick('dataset') || 'production', apiVersion: pick('apiVersion') || '2025-02-19' };

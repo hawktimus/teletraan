@@ -7,13 +7,13 @@ import { Refusal } from './http.js';
 
 export const settingsId = 'dashboardSettings';
 
-export const holdMinutes = [10, 30];
+const holdMinutes = [10, 30];
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
 export const themeIds = ['original', 'cybertron', 'retro'];
-export const previewMinutes = 10;
+const previewMinutes = 10;
 export const viewMinutes = { least: 10, most: 120, usual: 30 };
-export const pauseMinutes = { least: 5, most: 120, usual: 60 };
-export const noticeMinutes = 120;
+const pauseMinutes = { least: 5, most: 120, usual: 60 };
+const noticeMinutes = 120;
 export const noticeLongest = 90;
 
 export const actions = ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'presentation-test', 'post-announcement', 'schedule'];
@@ -53,7 +53,7 @@ export function buildRequest(action, input, now = new Date()) {
     case 'hold': {
       const minutes = Number(body.minutes);
       if (!holdMinutes.includes(minutes)) throw new Refusal(400, 'Hold a panel for ' + holdMinutes.join(' or ') + ' minutes.');
-      if (typeof body.panel !== 'string' || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(body.panel)) throw new Refusal(400, 'Pick a panel to hold.');
+      if (typeof body.panel !== 'string' || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(body.panel)) throw new Refusal(400, 'Pick a panel to hold from the list.');
       return { set: { holdPanel: { panel: body.panel, until: later(now, minutes) } } };
     }
 

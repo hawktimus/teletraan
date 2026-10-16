@@ -6,8 +6,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const cookieName = 'teletraan_control';
-export const cookieDays = 30;
+const cookieName = 'teletraan_control';
+const cookieDays = 30;
 export const triesAllowed = 6;
 export const triesWindow = 10 * 60 * 1000;
 export const blockTime = 60 * 60 * 1000;

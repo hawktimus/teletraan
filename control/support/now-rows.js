@@ -18,7 +18,7 @@ const questions = {
   custom: '*[_type == "customPanel"][0...3].title',
 };
 
-export function topicsFrom(registryText) {
+function topicsFrom(registryText) {
   const topics = {};
   const pattern = /\{\s*id:\s*'([a-z0-9-]+)'[^}]*?topic:\s*'([a-z]+)'/g;
   let match;
@@ -42,7 +42,7 @@ export function registryText(ctx) {
   }
 }
 
-export function questionFor(panel, topics) {
+function questionFor(panel, topics) {
   const topic = topics[panel];
   return topic && questions[topic] ? questions[topic] : '';
 }

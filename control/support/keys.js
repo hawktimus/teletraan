@@ -39,7 +39,7 @@ export function calendarCode(envName) {
 }
 
 // The link to store, with webcal:// turned into https://. Throws a refusal that never holds the link.
-export function cleanLink(value) {
+function cleanLink(value) {
   let link = String(value || '').trim();
   if (link.startsWith('webcal://')) link = 'https://' + link.slice('webcal://'.length);
   if (link.startsWith('http://')) throw new Refusal(400, 'The link starts with http://, which is not secure. Use the https:// link.');
@@ -48,7 +48,7 @@ export function cleanLink(value) {
   return link;
 }
 
-export function cleanKey(name, value) {
+function cleanKey(name, value) {
   const text = String(value || '').trim();
   if (name === 'CONTROL_PIN') {
     if (!pinPattern.test(text)) throw new Refusal(400, 'The PIN is 6 to 12 digits.');

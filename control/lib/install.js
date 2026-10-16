@@ -12,7 +12,7 @@ import { tail } from './run.js';
 
 export const steps = ['unpack', 'files', 'schemas', 'studio', 'release', 'switch', 'restart', 'wait'];
 
-export const oldTreeMessage = 'This copy is older than round 6; update it.';
+const oldTreeMessage = 'This copy is older than round 6; update it.';
 const waitSeconds = 90;
 
 function copyFolder(from, to) {

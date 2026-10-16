@@ -110,7 +110,7 @@ export function readZip(buffer, options = {}) {
 }
 
 // When every file sits inside one folder (a zip made by right-clicking a folder), that folder name; else ''
-export function commonFolder(entries) {
+function commonFolder(entries) {
   const names = entries.filter(entry => !entry.directory).map(entry => entry.name);
   if (names.length === 0) return '';
   const first = names[0].split('/')[0];

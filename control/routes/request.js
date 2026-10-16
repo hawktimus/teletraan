@@ -15,7 +15,7 @@ const optionsQuery = '{ "teams": *[_type == "team"] | order(order asc) { code, n
   '"requests": *[_id == "dashboardSettings"][0] { holdPanel, showView, previewTheme, pauseRotation } }';
 
 // The names of the four views. The two team views take the name of their Team document.
-export function viewNames(teams, generalName) {
+function viewNames(teams, generalName) {
   const named = {};
   (Array.isArray(teams) ? teams : []).forEach(team => {
     if (team && typeof team.code === 'string') named[team.code] = team.shortName || team.name || team.code;
