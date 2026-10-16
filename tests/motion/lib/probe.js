@@ -298,6 +298,28 @@
     return found;
   };
 
+  // The name effect (the letters of the team name split, class "splitting") and the acts of the hawk are watched every
+  // frame, together with the busy flag of core/busy.js. A line is written each time one of the three changes.
+  motion.armEffects = function () {
+    const log = motion.effects = { events: [], started: performance.now() };
+    const hawkActs = ['robot', 'hawk-in', 'flight', 'hawk-out'];
+    let last = '';
+
+    const loop = () => {
+      const name = Boolean(document.querySelector('[data-name-effect].splitting'));
+      const logo = document.querySelector('#region-banner .logo, .logo');
+      const act = logo ? logo.dataset.act || '' : '';
+      const state = { busy: window.teletraanTest.busy(), name: name, hawk: hawkActs.includes(act) ? act : '' };
+      const text = JSON.stringify(state);
+      if (text !== last) {
+        last = text;
+        log.events.push(Object.assign({ at: performance.now() - log.started }, state));
+      }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  };
+
   // A hidden transition (core/hidden-run.js): the state of the screen at each change of it, and where the pieces are at
   // the moments that matter. The pieces of the rise are seen at the end of their animation.
   function state() {
