@@ -72,6 +72,17 @@ test('the swaps have a frame at 200, 400 and 800 ms and the announcement plate i
   assert.deepEqual(names(shots).filter(name => name.startsWith('photos-row-')), ['photos-row-original', 'photos-row-cybertron', 'photos-row-minimal']);
 });
 
+test('each of the four views is taken in each of the three themes with each team', () => {
+  const shots = tool.planShots(small).filter(shot => shot.kind === 'view');
+  assert.equal(shots.length, 4 * 3 * 2);
+  assert.ok(names(shots).includes('view-family-retro-nova'));
+  assert.ok(names(shots).includes('view-general-original-prime'));
+  shots.forEach(shot => {
+    assert.ok(!shot.url.includes('team=') && !shot.url.includes('style='), 'the address must not stop the views');
+    assert.ok(tool.views.includes(shot.view) && tool.themes.includes(shot.theme) && tool.teams.includes(shot.team));
+  });
+});
+
 test('the real registry gives a plan with a name for each picture, and no name twice', () => {
   const list = names(tool.planShots(panels));
   assert.equal(new Set(list).size, list.length);
@@ -138,6 +149,15 @@ test('a run writes one file for each picture and three for a swap', () => inTemp
   assert.equal(result.failed.length, 0);
   assert.deepEqual(fs.readdirSync(path.join(folder, 'out')).sort(), ['countdown-minimal.png', 'large-tasks-original-prime.png', 'swap-team-200ms.png', 'swap-team-400ms.png', 'swap-team-800ms.png']);
   assert.ok(opened.every(address => address.startsWith('http://127.0.0.1:1/index.html?sample=1')));
+}));
+
+test('a view picture holds the view and the theme in the sample settings and waits for the page to show them', () => inTemp(async folder => {
+  const { playwright } = standIn();
+  const shots = tool.planShots(small).filter(shot => shot.name === 'view-nova-cybertron-nova');
+  const result = await tool.runShots({ playwright: playwright, shots: shots, base: 'http://x', outFolder: folder, limits: { settleMs: 0 } });
+
+  assert.equal(result.failed.length, 0);
+  assert.deepEqual(fs.readdirSync(folder), ['view-nova-cybertron-nova.png']);
 }));
 
 test('a panel that throws is listed, and the run goes on to the next picture', () => inTemp(async folder => {

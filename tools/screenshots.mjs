@@ -17,6 +17,7 @@
 //   swap-style-200ms.png (and 400, 800)    one frame of the swap from Original to Cybertron
 //   announcement-plate-<screen>.png        the plate of an announcement, in the three Screens (skipped when the page draws none)
 //   photos-row-<screen>.png                a Photos row of three photos of eight seconds, in the three Screens
+//   view-<view>-<theme>-<team>.png         each of the four views in each of the three themes with each team (24 pictures)
 //
 // Playwright is a development dependency of tools/ only (tools/package.json). It is loaded with
 // import() when the run starts, so the plan and the run can be tested with a stand-in
@@ -31,6 +32,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const screens = ['original', 'cybertron', 'minimal'];
 export const teams = ['prime', 'nova'];
 export const swapTimes = [200, 400, 800];
+export const views = ['general', 'prime', 'nova', 'family'];
+export const themes = ['original', 'cybertron', 'retro'];
 
 // A Monday panel that is for both teams has no team in its address
 const mondayWithoutTeam = ['monday-status-depts', 'monday-overall'];
@@ -57,7 +60,7 @@ function address(parts) {
 }
 
 // The list of pictures to take, from the panels of dashboard/registry.js. Each is { name, kind, url }.
-// kind is still (a panel held by ?panel=), swap or announcement.
+// kind is still (a panel held by ?panel=), swap, view or announcement.
 export function planShots(panels) {
   const usable = panels.filter(panel => !panel.testOnly);
   const shots = [];
@@ -100,6 +103,12 @@ export function planShots(panels) {
 
   // A Photos row of three photos of eight seconds, in the three Screens
   screens.forEach(screen => shots.push({ name: 'photos-row-' + screen, kind: 'still', url: address({ panel: 'photo', screen: screen, photos: '3', each: '8' }) }));
+
+  // The views run on the moving page, held by the same requests the control page writes (showView, previewTheme).
+  // ?team= and ?style= would stop the views, so the team comes from the sample settings.
+  views.forEach(view => themes.forEach(theme => teams.forEach(team => {
+    shots.push({ name: 'view-' + view + '-' + theme + '-' + team, kind: 'view', url: '/index.html?sample=1&motion=none&night=off', view: view, theme: theme, team: team });
+  })));
   return shots;
 }
 
@@ -200,6 +209,30 @@ async function takeSwap(page, base, shot, folder, limits, log) {
   return files;
 }
 
+// One view in one theme with one team. The sample content is changed on its way to the page so that the
+// view is held for an hour and the theme is previewed. The page says which view and theme it drew in
+// data-view and data-theme, and the picture waits for both.
+async function takeView(page, base, shot, file, limits) {
+  const until = new Date(Date.now() + 3600000).toISOString();
+
+  await page.route('**/data/sample/content.json', async route => {
+    const response = await route.fetch();
+    const content = await response.json();
+    content.settings = Object.assign({}, content.settings, {
+      teamMode: shot.team,
+      showView: { key: shot.view, until: until },
+      previewTheme: { theme: shot.theme, until: until },
+    });
+    await route.fulfill({ response: response, json: content });
+  });
+
+  await page.goto(base + shot.url, { waitUntil: 'load' });
+  await page.waitForFunction(wanted => document.documentElement.dataset.view === wanted.view && document.documentElement.dataset.theme === wanted.theme, { view: shot.view, theme: shot.theme }, { timeout: limits.swapMs });
+  await page.waitForTimeout(limits.settleMs);
+  await page.screenshot({ path: file });
+  return [file];
+}
+
 // The plate of an announcement (B3). Skipped, with the reason, when the page does not draw it.
 async function takePlate(page, base, shot, file, limits) {
   await page.goto(base + shot.url, { waitUntil: 'load' });
@@ -232,6 +265,7 @@ export async function runShots(options) {
         const file = path.join(options.outFolder, shot.name + '.png');
         let made;
         if (shot.kind === 'swap') made = await takeSwap(page, options.base, shot, options.outFolder, limits, log);
+        else if (shot.kind === 'view') made = await takeView(page, options.base, shot, file, limits);
         else if (shot.kind === 'announcement') made = await takePlate(page, options.base, shot, file, limits);
         else made = await takeStill(page, options.base, shot, file, limits);
 
