@@ -1,0 +1,67 @@
+// The Status tab: the three dots with their reasons, what runs, and the restart and sync buttons.
+
+import { registerTab } from '../tabs.js';
+import { api, confirmed, useStyles } from './api.js';
+import { statusHtml } from './render.js';
+
+const restarts = [
+  { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
+  { word: 'restart-services', label: 'Restart services', doing: 'Restarting the services' },
+  { word: 'reboot', label: 'Reboot Mini', doing: 'Rebooting the Mini' },
+];
+const syncs = [
+  { target: 'calendars', label: 'Sync calendars now' },
+  { target: 'monday', label: 'Sync Monday now' },
+  { target: 'frc', label: 'Sync competition now' },
+];
+
+function buttons(box, say) {
+  const run = async (word, body, doing) => {
+    say(doing + '.', false);
+    const result = await api('POST', '/helper/' + word, body);
+    say(result.ok ? 'Done.' : result.error, !result.ok);
+  };
+
+  const big = document.createElement('div');
+  big.className = 'buttons';
+  restarts.forEach(item => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'act';
+    button.textContent = item.label;
+    big.appendChild(button);
+    confirmed(button, 10, item.doing, () => run(item.word, { confirmed: true }, item.doing));
+  });
+
+  const small = document.createElement('div');
+  small.className = 'buttons small';
+  syncs.forEach(item => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'act quiet';
+    button.textContent = item.label;
+    button.addEventListener('click', () => run('sync-now', { target: item.target }, 'Syncing ' + item.target));
+    small.appendChild(button);
+  });
+  box.append(big, small);
+}
+
+registerTab({
+  id: 'status',
+  title: 'Status',
+  order: 30,
+  async render(container) {
+    useStyles();
+    container.innerHTML = '<div class="tab"><div data-body></div><section class="card"><h2>Restart and sync</h2><div data-buttons></div><p class="note" data-note></p></section></div>';
+    const body = container.querySelector('[data-body]');
+    const note = container.querySelector('[data-note]');
+    buttons(container.querySelector('[data-buttons]'), (words, bad) => { note.textContent = words; note.dataset.bad = bad ? 'yes' : 'no'; });
+
+    async function refresh() {
+      const answer = await api('GET', '/status');
+      body.innerHTML = answer.ok ? statusHtml(answer.data) : '<section class="card"><h2>Status</h2><p>' + answer.error + '</p></section>';
+    }
+    await refresh();
+    const timer = setInterval(() => { if (!container.isConnected) clearInterval(timer); else refresh(); }, 30000);
+  },
+});

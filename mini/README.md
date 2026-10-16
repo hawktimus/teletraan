@@ -94,6 +94,8 @@ to attach the data folder to.
 | `scripts/install-frc.sh` | Copies the two FRC unit files into place and turns on the FRC timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/watchdog.sh` | Restarts the kiosk service when the screen has frozen (see above). Runs as root. Needs `curl`, `pgrep` and `awk`. Keeps its count in `watchdog-state` in the data folder |
 | `scripts/install-watchdog.sh` | Copies the two watchdog unit files into place and turns on the watchdog timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/nightly.sh` | Restarts the kiosk service at 04:00 and reboots the Mini at 04:10 on Sundays. Runs as root from `teletraan-nightly.timer`. Skips either when a presentation is booked within the next hour or is running |
+| `scripts/install-nightly.sh` | Copies the two nightly unit files into place and turns on the nightly timer. Needs `curl` |
 | `scripts/backup-dataset.sh` | Exports the dataset with the Sanity tool in `studio/node_modules`, using `SANITY_WRITE_TOKEN` from `local.env` without printing it, keeps the newest 14 files and writes `lastBackupAt` to `status-mini`. Does nothing useful without the token |
 | `scripts/install-backup.sh` | Makes `/var/backups/teletraan`, copies the two backup unit files into place and turns on the backup timer. Stops with the `npm install` line when the Sanity tool is missing from `studio/` |
 | `scripts/install-monday.sh` | Copies the two Monday unit files into place and turns on the Monday timer. Does not install the packages, it prints the `apt install` line when one is missing |
@@ -170,6 +172,8 @@ happens.
   `sudo /opt/teletraan/mini/scripts/install-watchdog.sh`
 - a backup file in `systemd/` changed: run
   `sudo /opt/teletraan/mini/scripts/install-backup.sh`
+- a nightly file in `systemd/` changed: run
+  `sudo /opt/teletraan/mini/scripts/install-nightly.sh`
 - `console/startup.txt` changed: run
   `sudo /opt/teletraan/mini/scripts/install-console.sh`, because `/etc/issue`
   is a copy of it. `console/shutdown.txt` changed: nothing to do, the unit
@@ -192,7 +196,7 @@ the step that uses each one, is the table at the top of
 
 The unit files use the repository location `/opt/teletraan`.
 `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`,
-`install-monday.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
+`install-monday.sh`, `install-watchdog.sh`, `install-nightly.sh`, `install-backup.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
 else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the
 account that owns the repository, so it works whatever the Mini's user is

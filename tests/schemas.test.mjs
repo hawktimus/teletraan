@@ -208,6 +208,10 @@ const contract = {
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
     competitionPreviewRequest: object({ requestedAt: 'datetime' }),
+    holdPanel: object({ panel: text(60), until: 'datetime' }),
+    showView: object({ key: 'string', until: 'datetime' }),
+    previewTheme: object({ theme: 'string', until: 'datetime' }),
+    pauseRotation: object({ until: 'datetime' }),
     countdown: object({ kickoffLabel: titleOfClock, kickoff: 'datetime', rolloutLabel: titleOfClock, rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ order: rows(panelStep), grid1: rows(olderStep), grid2: rows(olderStep), tickerSeconds: number(6, 120) }),
@@ -4218,7 +4222,7 @@ const settingsTabTitles = ['Screen', 'Look', 'Countdown', 'Calendars', 'Presenta
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
 const settingsTabs = {
-  screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
+  screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
   look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames),
   countdown: ['countdown'],

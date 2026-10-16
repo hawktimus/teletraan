@@ -15,6 +15,7 @@ import { fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from '.
 import { reasons } from './connection.js';
 import { showsForTeam } from './teams.js';
 import { markUnreachable } from './monday.js';
+import { tidyScreenRequests } from './screen-requests.js';
 
 // The last content read from Sanity, written after every good read. A screen that was last run before this name
 // has its copy under the old one, which is read once and not written again.
@@ -50,7 +51,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, screens: [], views: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [], views: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   // The Mini reads the two Monday blocks and the screen has no use for them
@@ -158,6 +159,8 @@ export function fixSettingValues(settings, saved = settings) {
   // The last click of Next look now and of Preview competition (Start here page, hidden from editors): a time, or empty
   settings.nextLookRequest = tidyNextLookRequest(settings.nextLookRequest);
   settings.competitionPreviewRequest = tidyRequestTime(settings.competitionPreviewRequest);
+  // The requests of the control page: a panel, a view, a theme or a pause, each with an until time
+  Object.assign(settings, tidyScreenRequests(settings));
   settings.crt = tidyGlitch(settings.crt);
   // The Events panel: Group events by kind (Calendars tab) is a switch that starts off
   if (typeof settings.groupEventsByKind !== 'boolean') settings.groupEventsByKind = defaultSettings.groupEventsByKind;
@@ -219,6 +222,14 @@ function tidyGlitch(raw) {
     everySeconds: keepInRange(everySeconds, limits.crtEvery, defaultSettings.crt.everySeconds),
     durationSeconds: keepInRange(glitch.durationSeconds, limits.crtDuration, defaultSettings.crt.durationSeconds),
   };
+}
+
+// The latest read from Sanity, for the status dots: when the last good one ended and whether the newest one threw.
+// A copy taken from localStorage is not a read.
+let lastRead = { at: null, failed: false };
+
+export function lastContentRead() {
+  return { at: lastRead.at, failed: lastRead.failed };
 }
 
 // Resolves with { content, status } as soon as there is something to show.
@@ -474,6 +485,7 @@ export async function startSanityContent(onChange) {
       const raw = await fetchResult(sanity);
       content = normalizeContent(raw);
       updated = Date.now();
+      lastRead = { at: new Date(updated), failed: false };
       source = 'sanity';
       failed = false;
       offline = false;
@@ -483,6 +495,7 @@ export async function startSanityContent(onChange) {
     } catch (error) {
       console.error('Could not read content from Sanity', error);
       failed = true;
+      lastRead = { at: lastRead.at, failed: true };
       reason = error && reasons.includes(error.reason) ? error.reason : 'other';
       startAlarm();
     }
