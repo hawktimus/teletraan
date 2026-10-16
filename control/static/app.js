@@ -53,4 +53,14 @@ async function start() {
   wallLine();
 }
 
-start();
+// If the list of tabs cannot be read, say so in the page instead of leaving the loading line
+start().catch(error => {
+  const words = document.createElement('p');
+  words.className = 'bad';
+  words.textContent = 'The page could not load its tabs: ' + error.message + ' ';
+  const again = document.createElement('a');
+  again.href = './';
+  again.textContent = 'Reload the page.';
+  words.append(again);
+  page.replaceChildren(words);
+});
