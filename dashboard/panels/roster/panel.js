@@ -6,11 +6,12 @@
 import { markBeside } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { portraitPercentOf, visibleItems } from '../../core/content.js';
-import { makeMondayRosterTurns, makeRosterTurns, mondayRosterPages, rosterPages, rowsPerColumn } from '../../core/roster.js';
+import { makeMondayRosterTurns, makeRosterTurns, mondayRosterPages, rosterPages, rosterRowView, rowsPerColumn } from '../../core/roster.js';
 import { leadAddress, portraitLook, preloadLeadPhotos, slotMarkup, watchPhotos } from '../../core/portrait.js';
 import { chipWidth, departmentTitle, pageTeamName, teamChipMarkup, teamNameOf, titleClass } from '../../core/team-title.js';
 import { wantedTeam } from '../../core/teams.js';
 import { viewNow } from '../../core/view-apply.js';
+import { rosterPageRows } from '../../config.js';
 
 const nextTurn = makeRosterTurns();
 const nextMondayTurn = makeMondayRosterTurns();
@@ -20,7 +21,25 @@ function teamCode() {
   return viewNow() === 'general' ? '' : wantedTeam().code;
 }
 
-export function hasContent(content) {
+// A row of the rotation names a department: the page is { team, department, part }
+function rowOf(page) {
+  return page && typeof page === 'object' && typeof page.department === 'string' && page.department !== '' ? page : null;
+}
+
+function rowView(content, page) {
+  const row = rowOf(page);
+  return row ? rosterRowView(content, new Date(), teamCode(), row.department, row.part) : null;
+}
+
+// How many windows of six rows the row is held for: the second part scrolls through the people after the first six
+export function scrollPages(content, page) {
+  const view = rowView(content, page);
+  return view ? view.pages : 1;
+}
+
+export function hasContent(content, page) {
+  if (rowOf(page)) return rowView(content, page) !== null;
+
   return mondayRosterPages(content, new Date(), teamCode()).length > 0 || rosterPages(content.subteams).length > 0;
 }
 
@@ -40,7 +59,30 @@ function mondayMount(host, page) {
     </section>`;
 }
 
-export function mount(host, content) {
+// One department of a row of the rotation: the first six people, or the rest in windows of six that scroll
+function rowMount(host, view) {
+  const blanks = (view.pages * rosterPageRows) - view.rows.length;
+  const people = view.rows.map(row => `<div class="person" data-slat="item"><span class="person-name">${escapeHtml(row.name)}</span><span class="person-hours">${row.hours} HRS</span></div>`);
+  for (let at = 0; at < blanks; at += 1) people.push('<div class="person person-blank"></div>');
+  const pages = view.parts > 1 ? `<span class="page-count">${view.part}/${view.parts}</span>` : '';
+
+  host.innerHTML = `
+    <section class="page roster roster-board" data-scroll-page="1">
+      <div class="header">
+        <h2 class="${titleClass(view.title)}" data-slat="title">${escapeHtml(view.title)}</h2>
+        <div class="tag" data-slat="tag">${pages}</div>
+      </div>
+      <div class="body"><div class="people people-window"><div data-scroll-list>${people.join('')}</div></div></div>
+    </section>`;
+}
+
+export function mount(host, content, asked) {
+  const named = rowView(content, asked);
+  if (named) {
+    rowMount(host, named);
+    return;
+  }
+
   const board = nextMondayTurn(content, new Date(), teamCode());
   if (board) {
     mondayMount(host, board);

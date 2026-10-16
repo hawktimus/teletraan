@@ -125,8 +125,8 @@ test('the five cards are panels of the large frame, flagged monday in registry.j
     assert.ok(!config.defaultSettings.rotation.grid1.some(step => step.panel === id), id + ' is not in a rotation list');
     assert.ok(!read('core/panel-order.js').includes(id), id);
   });
-  assert.equal(countOf(source, 'monday: true'), 10);
-  assert.deepEqual(registry.panels.filter(panel => panel.monday).map(panel => panel.id), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
+  assert.equal(countOf(source, 'monday: true'), 11);
+  assert.deepEqual(registry.panels.filter(panel => panel.monday).map(panel => panel.id), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'monday-pie']);
   registry.panels.filter(panel => panel.monday).forEach(panel => assert.equal(panel.pages, undefined, panel.id + ' has no fixed pages: the tasks card has one for each lead entry'));
 });
 

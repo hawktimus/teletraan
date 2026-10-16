@@ -252,6 +252,9 @@ skipped by the view, as an empty Monday row is.
 | MQ08, overall progress | `monday-overall` | none | A ring of hours done over hours planned, a bar for each team, and the next three milestones with days left. |
 | MQ09, timeline by team | `monday-timeline` | team | Eight weeks, a row for each department, a bar for each task from start to due, a dashed red line for today. |
 | MQ10 and MQ11, board by team | `monday-board` | team | Four columns: To Do, In Progress, Review (Stuck sits here with a red edge) and Done, two cards each. When the panel runs twice in a row, the second shows cards three and four. |
+| Status pie by team | `monday-pie` | Rotation list only | A donut of the tasks of a team, or of one department of it, by status, with the count and the percent of each status in words beside it. |
+
+A row of the Rotation list can name a department for the tasks, done, board, timeline and pie panels (a Team lead name such as build, or its id). The row then draws that department only, and a row with a department and no team is for both teams (docs/views.md, "The default rotation").
 
 The older ids `monday-team`, `monday-milestones` and `monday-progress`, and the two both-teams
 cards, stay in the code. They are hidden from the picker, and a saved row that names one plays

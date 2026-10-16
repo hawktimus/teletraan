@@ -145,7 +145,7 @@ test('the list that was given is not changed, and the large panels and the test 
 });
 
 test('every small panel of the registry that is not the last resort is a spare when it has no row', () => {
-  const registered = panels.filter(panel => panel.region === 'grid2' && !panel.testOnly && !panel.lastResort).map(panel => panel.id);
+  const registered = panels.filter(panel => panel.region === 'grid2' && !panel.testOnly && !panel.lastResort && !panel.rotationOnly).map(panel => panel.id);
   assert.deepEqual(registered.slice().sort(), smallPanels.slice().sort());
   assert.deepEqual(idsOf(withStandIns([])).slice(0, -1).sort(), registered.slice().sort());
 });

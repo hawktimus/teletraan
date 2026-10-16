@@ -12,13 +12,28 @@ import { wantedTeam } from '../../core/teams.js';
 
 const nextPage = makePages(rowsPerPage);
 
-export function hasContent(content) {
-  return departmentRows(content.subteams).length > 0;
+// A row of the rotation can ask for one page of the list: part 1 is the first page and part 2 the second
+function partOf(page) {
+  return page && typeof page === 'object' && (page.part === 1 || page.part === 2) ? page.part : 0;
 }
 
-export function mount(host, content) {
+// The departments on the page a row asked for, or all of them when it asked for none
+function rowsOfPart(content, page) {
+  const all = departmentRows(content.subteams);
+  const part = partOf(page);
+  if (part === 0) return all;
+
+  const per = rowLayout(portraitPercentOf(content.settings, 'rosterPortrait')).rows;
+  return all.slice((part - 1) * per, part * per);
+}
+
+export function hasContent(content, page) {
+  return rowsOfPart(content, page).length > 0;
+}
+
+export function mount(host, content, asked) {
   const scale = portraitPercentOf(content.settings, 'rosterPortrait');
-  const page = nextPage(departmentRows(content.subteams), rowLayout(scale).rows);
+  const page = partOf(asked) === 0 ? nextPage(departmentRows(content.subteams), rowLayout(scale).rows) : { items: rowsOfPart(content, asked), upcoming: [] };
   const rows = page.items.map(row => leadRow(row, content));
 
   // the header names the team on the screen, and has no chip when every department is for both teams

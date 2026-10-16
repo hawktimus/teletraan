@@ -6,11 +6,11 @@
 // has this one). A hidden row keeps its place in the order and plays nothing. Rows that follow each other in the same view
 // are one block, and the view changes only between blocks.
 //
-// An empty list is not played: the screen plays the lists of the views as it did (core/views-play.js), and the Studio fills
-// the list from them the first time Dashboard Settings is opened (migrateRotation here, and the same in
-// studio/tools/rotation-migrate.js).
+// A list with no shown row is not played: the screen plays the default rotation (config-rotation.js), and the Studio fills the
+// list with it the first time Dashboard Settings is opened (migrateRotation here, and the same in
+// studio/tools/rotation-migrate.js). The lists of the views are kept for migrateRotationFromViews.
 
-import { rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
+import { defaultRotationRows, rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
 import { panels } from '../registry.js';
 import { keepInRange } from './content.js';
 import { isRecord } from './text.js';
@@ -38,6 +38,11 @@ function knownPanel(id) {
   return Boolean(found && found.region === 'grid1' && !found.testOnly);
 }
 
+function smallPanel(id) {
+  const found = panels.find(item => item.id === id);
+  return Boolean(found && found.region === 'grid2' && !found.testOnly && !found.lastResort);
+}
+
 // One row, tidy, or null when it cannot be played at all (no view, no known panel)
 export function tidyRotationRow(raw) {
   if (!isRecord(raw)) return null;
@@ -49,6 +54,8 @@ export function tidyRotationRow(raw) {
   const row = { view: view, panel: panel, shown: raw.shown !== false };
   if (typeof raw.seconds === 'number' && isFinite(raw.seconds) && raw.seconds > 0) row.seconds = Math.round(keepInRange(raw.seconds, { min: 6, max: 120 }, 6));
   if (typeof raw.department === 'string' && raw.department.trim() !== '') row.department = raw.department.trim();
+  if (raw.part === 1 || raw.part === 2) row.part = raw.part;
+  if (typeof raw.side === 'string' && smallPanel(raw.side.trim())) row.side = raw.side.trim();
   if (panel === 'photo') {
     row.photoCount = Math.round(keepInRange(raw.photoCount, { min: 1, max: 20 }, 4));
     row.secondsPerPhoto = Math.round(keepInRange(raw.secondsPerPhoto, { min: 5, max: 60 }, 10));
@@ -61,15 +68,22 @@ export function tidyRotationRows(list) {
   return (Array.isArray(list) ? list : []).map(tidyRotationRow).filter(row => row !== null);
 }
 
-// The rows of the content, tidy. Empty when the Studio has none.
-export function rotationRowsOf(content) {
+// The rows the Studio has saved, tidy. Empty when it has none.
+export function savedRotationRows(content) {
   const settings = isRecord(content) && isRecord(content.settings) ? content.settings : {};
   return tidyRotationRows(settings.rotationRows);
 }
 
-// True when the list has a row that is shown, which is when it is played
+// The rows the screen plays: the saved ones, or the default rotation (config-rotation.js) while the list has no row that is
+// shown, so an untouched Studio plays the fifteen blocks
+export function rotationRowsOf(content) {
+  const saved = savedRotationRows(content);
+  return saved.some(row => row.shown) ? saved : tidyRotationRows(defaultRotationRows());
+}
+
+// True when the Studio has a list with a row that is shown, which is the list that is played instead of the default one
 export function rotationOn(content) {
-  return rotationRowsOf(content).some(row => row.shown);
+  return savedRotationRows(content).some(row => row.shown);
 }
 
 // The blocks of a list: the shown rows that follow each other in one view, in order. A hidden row is not in a block, and
@@ -93,7 +107,7 @@ export function mainRowOf(row, content) {
   const team = row.view === 'robotics' ? '' : resolveView(content, viewKeyOfRotation(row.view)).team;
   const main = { panel: row.panel, team: team };
 
-  ['seconds', 'department', 'photoCount', 'secondsPerPhoto'].forEach(name => {
+  ['seconds', 'department', 'photoCount', 'secondsPerPhoto', 'side', 'part'].forEach(name => {
     if (row[name] !== undefined) main[name] = row[name];
   });
   return main;
@@ -167,9 +181,14 @@ function agendaFirst(rows) {
   return out;
 }
 
+// The list the Studio is filled with when it has none: the default rotation, fifteen blocks (config-rotation.js)
+export function migrateRotation() {
+  return tidyRotationRows(defaultRotationRows());
+}
+
 // The list built from the lists of the views, in the order of the views (viewOrder) and the order of each list, so that the
-// wall plays what it played. Family, whose two panels were fixed, becomes Robotics rows.
-export function migrateRotation(content) {
+// wall plays what it played. Family, whose two panels were fixed, becomes Robotics rows. It is not the first fill any more.
+export function migrateRotationFromViews(content) {
   const rows = [];
 
   viewOrderOf(content).forEach(key => rowsOfView(content, key).forEach(row => rows.push(row)));

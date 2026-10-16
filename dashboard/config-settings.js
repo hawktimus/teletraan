@@ -22,6 +22,9 @@ export const defaultSettings = {
   // seconds of its own, or a ticker with its own, uses those instead. The
   // rows below have none, so they follow this.
   pageSeconds: 20,
+  // The address the QR code of the Parts request panel opens (panels/qrParts). https only, up to 200 characters. Empty shows
+  // LINK NOT SET and the rotation skips the panel.
+  partsRequestUrl: '',
   // The logo settings in the Studio (Look tab). logoAnimations is the master switch: off, and
   // nothing in the logo moves (the entrance, the spin, the flying hawk and the
   // name effect), whatever the switches below say. Every animation that plays
@@ -151,8 +154,8 @@ export const defaultSettings = {
   generalViewTitle: 'HAWKTIMUS ROBOTICS',
   viewOrder: viewKeys,
   themeByWeekday: defaultThemeByWeekday,
-  // The one ordered rotation list, rows of { view, panel, seconds, shown } (core/rotation.js). Empty plays the lists of the
-  // views. transitionSeconds is the length of a whole transition, 2 to 4.
+  // The one ordered rotation list, rows of { view, panel, seconds, shown } (core/rotation.js). Empty plays the default rotation
+  // (config-rotation.js). transitionSeconds is the length of a whole transition, 2 to 4.
   rotationRows: [],
   transitionSeconds: 3,
   // The "Play announcements" button in the Studio (core/announce.js, core/announce-run.js, docs/hidden-transitions.md).

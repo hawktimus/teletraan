@@ -134,6 +134,12 @@ const panels = {
     const height = pixels(valueIn(style, panelCss('roster'), '.roster .body', 'height'));
     return { bottom: top + height, box: top + height, top: top };
   },
+  // Drive hours draws the page of the roster board
+  driveHours: style => {
+    const top = pixels(valueIn(style, panelCss('roster'), '.roster .body', 'top'));
+    const height = pixels(valueIn(style, panelCss('roster'), '.roster .body', 'height'));
+    return { bottom: top + height, box: top + height, top: top };
+  },
   custom: style => {
     const top = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'top'));
     const height = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'height'));
@@ -176,6 +182,7 @@ const mondayLowest = {
     const css = panelCss('monday-board');
     return body.top + pixels(rule(css, '.monday-board .column-head').height) + pixels(rule(css, '.monday-board .column-head')['margin-bottom']) + 2 * (pixels(rule(css, '.monday-board .card').height) + 14) + lineOf(rule(css, '.monday-board .more').font);
   },
+  'monday-pie': (style, body) => body.top + 440,
   'monday-milestones': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-milestones'), '.monday-milestones .more', 'top')) + lineOf(rule(panelCss('monday-milestones'), '.monday-milestones .more').font),
   'monday-progress': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-progress'), '.monday-progress .totals', 'top')) + lineOf(rule(panelCss('monday-progress'), '.monday-progress .totals').font),
   'monday-milestones-both': (style, body) => body.top + pixels(rule(sheets.monday, '.monday .rows-window').height),

@@ -22,7 +22,7 @@ const missing = previewRegistryIds(previewPanels).filter(id => !registered.inclu
 missing.forEach(id => problems.push('the preview lists "' + id + '", which dashboard/registry.js does not have'));
 previewPanels.forEach(item => {
   const entry = panels.find(panel => panel.id === item.panel);
-  if (entry && entry.region !== 'grid1') problems.push('"' + item.panel + '" should be a large panel (grid1) in dashboard/registry.js');
+  if (entry && entry.region !== 'grid1' && entry.region !== 'grid2') problems.push('"' + item.panel + '" should be a large or a small panel (grid1 or grid2) in dashboard/registry.js');
 });
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'studio', 'package.json'), 'utf8'));

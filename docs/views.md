@@ -24,11 +24,53 @@ One ordered list says what the large panel plays: Dashboard Settings, Look tab, 
 - The screen walks the list from the top and starts again at the end. Rows that follow each other in one view are a block. The view changes only between blocks, with the swap. Inside a block the panels change with the plain page change.
 - A row whose panel has nothing to show right now (no Monday tasks, no photos, no events) is skipped, with no change and no gap. A block with nothing to show is skipped whole. If only one block has something to show, it stays and starts again.
 - A block stays for the seconds of its rows that have something to show. A row with no seconds follows Seconds per page.
-- The first time Dashboard Settings is opened with the list empty, the Studio fills it from the lists of the views, in the order of the views and of each list, with Daily Agenda first in every Robotics block, and the Family rows become Robotics rows. Click Publish all to keep it. `rotationRows`, `transitionSeconds` and the Shown switch of a row all have starting values (an empty list, 3 seconds, on), so an untouched Studio changes nothing on the wall. Until the list has a Shown row the screen plays the lists of the views as it did, so an untouched Studio changes nothing on the wall.
+- The first time Dashboard Settings is opened with the list empty, the Studio fills it with the default rotation (below). Click Publish all to keep it. `rotationRows`, `transitionSeconds` and the Shown switch of a row all have starting values (an empty list, 3 seconds, on). Until the list has a Shown row the screen plays the default rotation.
 - `viewOrder`, the minutes of a view and the rows of a view are hidden and marked Not used any more. They are kept, and the first fill reads them.
 - `core/rotation.js` has `transitionKindFor(previousRow, nextRow)`. It says `reformView` when the view changes and `reform` inside a view. Until those two transitions are drawn, the screen plays the swap for the first and the page change for the second. `transitionSeconds` (Look tab, 2 to 4, starts at 3) is the length of a whole transition.
 - The minutes stand still while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen. The view that was interrupted comes back at the panel that was next.
 - The control page can hold a view (`showView`, robotics or general), hold a panel (`holdPanel`), preview a theme (`previewTheme`) or pause the rotation (`pauseRotation`). The runtime reads them once a second through `activeRequests()` in `core/screen-requests.js`. A held panel is the only one the large panel plays, in the first view that has it. With `?style=` or `?team=` in the address the screen plays the first view and holds nothing.
+
+## The default rotation
+
+An untouched Studio plays this list, and it is what the Rotation list is filled with the first time Dashboard Settings is opened with the list empty. The screen plays it too whenever the list has no row that is Shown. It is in `config-rotation.js` (`defaultRotationRows`) and in `studio/tools/default-rotation.js`, and `tests/default-rotation.test.mjs` pins both. A panel that has nothing to show right now is skipped with no change, so a department with no tasks leaves its Monday rows out.
+
+| Block | View | Rows, in order |
+|-------|------|----------------|
+| 1 | Robotics | Six pairs of the split layout, large panel and small panel: Leadership with Sponsor logo, Events part 1 with Task counts, Events part 2 with Weather forecast, Sponsor feature with Next event, Subteam spotlight with Mini panel idea 1, Photos with Parts request. Then the wide layout: Business tasks and done, Operations tasks and done, Marketing tasks and done, and one roster for Business and Marketing |
+| 2 | Prime | Team leads page 1 and 2, then the seven rows of Build |
+| 3 | Nova | The same for Nova |
+| 4, 5 | Prime, Nova | The seven rows of Electrical |
+| 6 | Robotics | The six pairs of block 1, with no Business rows |
+| 7, 8 | Prime, Nova | The seven rows of Programming |
+| 9, 10 | Prime, Nova | The seven rows of Design and CNC (one department, DESIGN · CNC) |
+| 11 | Robotics | The six pairs again |
+| 12, 13 | Prime, Nova | The seven rows of Strategy |
+| 14, 15 | Prime, Nova | Robot status, 3D view, Drive hours, Competition rank |
+
+The seven rows of a department are, in order: Tasks in progress (`monday-tasks`), Tasks to do and done (`monday-done`), Team roster part 1 and part 2 (`roster`), Team kanban chart (`monday-board`), Team status pie chart (`monday-pie`) and Team milestones chart (`monday-timeline`). The row names its department (`department`, a Team lead name in any case, or two with a comma) and the team comes from the view.
+
+| Named panel | Registry id |
+|-------------|-------------|
+| Leadership Roster | `leadership` |
+| Upcoming Events 1 and 2 | `events`, `part` 1 and 2 |
+| Sponsor Spotlight, Sponsor Logo Spotlight | `sponsor-feature`, `sponsor-logo` |
+| Task Counts, Weather Forecast, Next Event | `task-counts`, `forecast`, `next-event` |
+| Subteam Spotlight, Photos | `spotlight`, `photo` (4 photos of 10 seconds) |
+| Mini Panel Idea 1 | `miniIdea1`, a title and a dashed inner frame |
+| QR Code for Parts Request | `qrParts`, see below |
+| Team Leads, Team Leads 2 | `team-leads`, `part` 1 and 2 |
+| Team Roster 1, Team Roster 2 (Scroll) | `roster`, `part` 1 (six people) and 2 (the people after them, scrolled six at a time) |
+| Team Status Pie Chart | `monday-pie`, new |
+| Total Robot Status, 3D Wireframe of Robot | `robotStatus`, `wireframe` |
+| Drive Hours Recorded | `driveHours`, new |
+| Prime FRC Ranking, Nova FRC Ranking | `competition-rank`, in the team of the view |
+
+- A row can name the small panel shown beside it (`side`, Small panel beside it). While the row is on the screen the small frame plays that panel, whatever the topic of the large one, and the next row moves it on. A row with no side leaves the small frame with the small panels of the view. In the wide layout there is no small frame.
+- `part` is 1 or 2 for Events, Subteam roster and Team leads. Part 2 has nothing to show when the list fits on page 1, and the row is skipped.
+- The Parts request panel draws a QR code of `partsRequestUrl` (Dashboard Settings, Screen tab, Parts request address). The address must start with https:// and be 200 characters or fewer. With none it shows PARTS REQUEST and LINK NOT SET and the rotation skips it. `core/qr.js` makes the code (byte mode, level M, versions 1 to 10), and `tests/qr.test.mjs` reads it back.
+- Drive hours adds the hours of the Monday board for each person, the most hours first, six rows a page, scrolled, up to 18 people. The people and hours are those of the roster.
+- The status pie shows the tasks of the team, or of the department of its row, by status, with the words of each status and its count beside it.
+- Daily Agenda is not in the default rotation. Add a row for it in Dashboard Settings if it is wanted. The older lists of the views are kept and `migrateRotationFromViews` builds a list from them.
 
 ## Robotics
 

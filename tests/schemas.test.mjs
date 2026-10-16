@@ -166,6 +166,7 @@ const contract = {
     look: 'string',
     style: 'string',
     pageSeconds: number(8, 120),
+    partsRequestUrl: text(200),
     logoAnimations: 'boolean',
     logoEntrance: 'boolean',
     logoSpin: 'boolean',
@@ -213,7 +214,7 @@ const contract = {
     generalViewTitle: text(28),
     viewOrder: { kind: 'choiceList' },
     transitionSeconds: number(2, 4),
-    rotationRows: rows({ view: 'string', panel: 'string', seconds: number(6, 120), shown: 'boolean', department: { kind: 'plainString' }, photoCount: number(1, 20), secondsPerPhoto: number(5, 60) }),
+    rotationRows: rows({ view: 'string', panel: 'string', seconds: number(6, 120), shown: 'boolean', side: 'string', part: number(1, 2), department: { kind: 'plainString' }, photoCount: number(1, 20), secondsPerPhoto: number(5, 60) }),
     themeByWeekday: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
     background: 'string',
     screenSchedule: object({ monday: 'string', tuesday: 'string', wednesday: 'string', thursday: 'string', friday: 'string', saturday: 'string', sunday: 'string' }),
@@ -1069,7 +1070,7 @@ function differences(expected, actual, expectedName, actualName, problems) {
 // way round, or a new panel can never be switched on
 function checkPanelIds() {
   const problems = [];
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly);
 
   rotationAreas.forEach(area => {
     const inRegistry = registered.filter(panel => panel.region === area).map(panel => panel.id);
@@ -4236,7 +4237,7 @@ const settingsTabTitles = ['Screen', 'Look', 'Countdown', 'Calendars', 'Presenta
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
 const settingsTabs = {
-  screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince']
+  screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
   look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['rotationRows', 'transitionSeconds']),
   countdown: ['countdown'],
@@ -4664,7 +4665,7 @@ function checkPanelOrder() {
   const problems = [];
   const config = world.dashboard;
   const at = name => fieldAt('dashboardSettings.rotation.' + name);
-  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder);
+  const registered = world.registry.panels.filter(panel => !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly);
   const ids = rotationAreas.reduce((all, area) => all.concat(registered.filter(panel => panel.region === area).map(panel => panel.id)), []);
 
   const order = at('order');
@@ -4738,7 +4739,7 @@ function checkPanelOrder() {
 // are marked older: the Studio does not offer them.
 function checkMondayCards() {
   const problems = [];
-  const ids = ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
+  const ids = ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'monday-pie'];
   const flagged = world.registry.panels.filter(panel => panel.monday).map(panel => panel.id);
   need(problems, flagged.join() === ids.join(), 'registry.js should have the panels ' + ids.join(', ') + ' with monday: true, in that order');
 
@@ -6320,7 +6321,7 @@ function checkScreenType() {
 
   const at = name => fieldAt('screen.' + name);
   const rulesOf = field => (field ? constraintsOf(field) : []);
-  const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder).map(panel => panel.id);
+  const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly).map(panel => panel.id);
   const listOf = pathText => choicesOf(pathText).map(item => item.value + '=' + item.title).join();
   const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id]);
   const monday = ['monday-tasks=Monday: Tasks by team and department', 'monday-done=Monday: Done by team', 'monday-status-depts=Monday: Status by department', 'monday-overall=Monday: Overall progress', 'monday-timeline=Monday: Timeline by team', 'monday-board=Monday: Board by team'];

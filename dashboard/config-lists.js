@@ -86,6 +86,7 @@ export const mondayKinds = {
   'monday-overall': 'none',
   'monday-timeline': 'team',
   'monday-board': 'team',
+  'monday-pie': 'team',
 };
 
 // The older Monday panels: still in the registry, so that a saved row keeps working, and not in the picker

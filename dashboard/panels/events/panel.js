@@ -19,18 +19,31 @@ const pinMark = `
     <polygon points="20,33 24,33 24,42 22,44 20,42"/>
   </svg>`;
 
+// A row of the rotation can ask for one half of the list: part 1 is the first page and part 2 the second, each held as it is
+function partOf(page) {
+  return page && typeof page === 'object' && (page.part === 1 || page.part === 2) ? page.part : 0;
+}
+
+// The pages the panel draws: all of them, or the one a row asked for
+function pagesOf(content, page) {
+  const pages = shownPages(content);
+  const part = partOf(page);
+
+  return part === 0 ? pages : pages.slice(part - 1, part);
+}
+
 // The panel has content when a page has an event
-export function hasContent(content) {
-  return shownPages(content).length > 0;
+export function hasContent(content, page) {
+  return pagesOf(content, page).length > 0;
 }
 
 // How many pages the panel has to hold for: one for each page that has events
-export function scrollPages(content) {
-  return Math.max(1, shownPages(content).length);
+export function scrollPages(content, page) {
+  return Math.max(1, pagesOf(content, page).length);
 }
 
-export function mount(host, content) {
-  const pages = shownPages(content);
+export function mount(host, content, page) {
+  const pages = pagesOf(content, page);
   const zone = timeZoneOf(content);
   const lines = pages.map((rows, index) => pageMarkup(rows, index === pages.length - 1, zone)).join('');
 

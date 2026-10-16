@@ -1032,7 +1032,7 @@ test('frame.css shows the pieces while #world has data-pieces, and the swap has 
 test('the Monday panels are marked in the registry, the six of the task board and the four older ones, and nothing else is', () => {
   const registry = read('registry.js');
   const marked = [...registry.matchAll(/\{ id: '([^']+)'[^}]*monday: true(?:, older: true)? \}/g)].map(match => match[1]);
-  assert.deepEqual(marked, ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both']);
+  assert.deepEqual(marked, ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'monday-pie']);
 });
 
 

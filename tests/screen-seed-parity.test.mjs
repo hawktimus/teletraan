@@ -67,7 +67,8 @@ function compare(rotation, teamDocuments, extra) {
 test('the panels that follow the team are the same list on both sides', () => {
   assert.deepEqual(studioPanels.teamSpecificPanels, config.teamPanels);
   assert.deepEqual(studioPanels.seededMondayPanels, config.mondayRows, 'the Monday rows a team is seeded with');
-  assert.deepEqual(studioPanels.idsOf(studioPanels.mondayPanels), Object.keys(config.mondayKinds), 'the Monday panels the Studio offers');
+  // the status pie is offered in the Rotation list only, not in the rows of a Screen
+  assert.deepEqual(studioPanels.idsOf(studioPanels.mondayPanels), Object.keys(config.mondayKinds).filter(id => id !== 'monday-pie'), 'the Monday panels the Studio offers');
 });
 
 test('the Panel order the owner saved gives 16 main rows and 5 side rows on both sides', () => {

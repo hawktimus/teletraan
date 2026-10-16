@@ -1,9 +1,10 @@
-// The first rotation list. Dashboard Settings, rotationRows, is filled once from the lists of the views, in the order of the
-// views (viewOrder) and the order of each list, so that the wall plays what it played. dashboard/core/rotation.js
-// (migrateRotation) does the same on the screen side, and tests/rotation.test.mjs compares the two.
+// The first rotation list. Dashboard Settings, rotationRows, is filled once with the default rotation (default-rotation.js).
+// dashboard/core/rotation.js (migrateRotation) does the same on the screen side, and tests/rotation.test.mjs compares the two.
+// The older way, from the lists of the views, is migrateRotationRowsFromViews.
 //
 // Plain functions only, so that the test can run them with node.
 
+import { defaultRotationRows } from './default-rotation.js';
 import { defaultViews, familyPanels } from './view-defaults.js';
 
 export const rotationViewNames = ['robotics', 'prime', 'nova'];
@@ -55,9 +56,14 @@ function agendaFirst(rows) {
   return out;
 }
 
-// order is viewOrder of Dashboard Settings (empty: the four views), views is { general, prime, nova, family } with the
-// documents that exist. The result has a key on every row.
-export function migrateRotationRows(order, views) {
+// The first fill: the default rotation, fifteen blocks (default-rotation.js), with a key on every row
+export function migrateRotationRows() {
+  return defaultRotationRows().map((row, index) => Object.assign({ _key: 'rotation-' + (index + 1) }, row));
+}
+
+// The list the lists of the views make. order is viewOrder of Dashboard Settings (empty: the four views), views is
+// { general, prime, nova, family } with the documents that exist. The result has a key on every row. It is not the first fill any more.
+export function migrateRotationRowsFromViews(order, views) {
   const listed = (Array.isArray(order) ? order : []).filter((key, at, all) => viewKeys.includes(key) && all.indexOf(key) === at);
   const keys = listed.length > 0 ? listed : viewKeys;
   const source = views && typeof views === 'object' ? views : {};

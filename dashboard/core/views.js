@@ -20,6 +20,6 @@ export {
 export {
   expandRows, viewSteps, viewSideSteps, dayThemeFor, viewPlan, viewLayoutOf, layoutOfStep, drawStyleFor, stepInView,
   lookForViewStep, cycleKey, cycleBlock, cycleSeconds, resetViews, holdPanelId, findViewWithPanel, viewPlaylist,
-  viewSidePlaylist, tickView, holdBootView,
+  viewSidePlaylist, pairSide, tickView, holdBootView,
 } from './views-play.js';
 export { heldView, holdView } from './view-apply.js';

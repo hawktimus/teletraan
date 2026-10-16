@@ -30,7 +30,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
 });
 // The studio tool is plain JavaScript with no package in it
 fs.mkdirSync(path.join(workFolder, 'studio-tools'), { recursive: true });
-['rotation-migrate.js', 'view-defaults.js'].forEach(file => fs.copyFileSync(path.join(studioFolder, 'tools', file), path.join(workFolder, 'studio-tools', file)));
+['rotation-migrate.js', 'view-defaults.js', 'default-rotation.js'].forEach(file => fs.copyFileSync(path.join(studioFolder, 'tools', file), path.join(workFolder, 'studio-tools', file)));
 
 const base = pathToFileURL(root).href + '/';
 const config = await import(base + 'config.js');
@@ -103,9 +103,9 @@ test('transitionKindFor says reformView when the view changes and reform inside 
   assert.equal(rotation.transitionKindFor(null, row('prime', 'events', 20)), 'reform');
 });
 
-test('the migration keeps the order of the views and of each list, puts the agenda first in Robotics and turns Family into Robotics rows', () => {
+test('the older migration keeps the order of the views and of each list, puts the agenda first in Robotics and turns Family into Robotics rows', () => {
   const content = contentWith();
-  const rows = rotation.migrateRotation(content);
+  const rows = rotation.migrateRotationFromViews(content);
   assert.deepEqual(rows.slice(0, 5).map(item => [item.view, item.panel]), [['robotics', 'tonight'], ['robotics', 'events'], ['robotics', 'leadership'], ['robotics', 'photo'], ['robotics', 'sponsor-feature']]);
   assert.deepEqual(rows.slice(5, 9).map(item => [item.view, item.panel]), [['prime', 'monday-tasks'], ['prime', 'monday-done'], ['prime', 'monday-timeline'], ['prime', 'monday-board']]);
   assert.deepEqual(rows.slice(9, 13).map(item => item.view), ['nova', 'nova', 'nova', 'nova']);
@@ -114,24 +114,28 @@ test('the migration keeps the order of the views and of each list, puts the agen
   assert.equal(rows[3].seconds, 40, 'the photos keep their product');
 });
 
-test('the migration follows viewOrder and puts the agenda first when the list had it elsewhere', () => {
+test('the older migration follows viewOrder and puts the agenda first when the list had it elsewhere', () => {
   const content = contentWith(raw => { raw.settings.viewOrder = ['nova', 'general']; });
-  const rows = rotation.migrateRotation(content);
+  const rows = rotation.migrateRotationFromViews(content);
   assert.equal(rows[0].view, 'nova');
   assert.equal(rows.find(item => item.view === 'robotics').panel, 'tonight');
 });
 
-test('the Studio migration makes the same rows as the screen', () => {
+test('the Studio migration makes the same rows as the screen, for the first fill and for the older way', () => {
   const content = contentWith();
-  const fromScreen = rotation.migrateRotation(content).map(item => [item.view, item.panel, item.seconds]);
-  const fromStudio = studio.migrateRotationRows(content.settings.viewOrder, {}).map(item => [item.view, item.panel, item.seconds]);
+  const key = item => [item.view, item.panel, item.seconds, item.department, item.part, item.side];
+  assert.deepEqual(studio.migrateRotationRows().map(key), rotation.migrateRotation(content).map(key));
+
+  const fromScreen = rotation.migrateRotationFromViews(content).map(item => [item.view, item.panel, item.seconds]);
+  const fromStudio = studio.migrateRotationRowsFromViews(content.settings.viewOrder, {}).map(item => [item.view, item.panel, item.seconds]);
   assert.deepEqual(fromStudio, fromScreen);
-  assert.ok(studio.migrateRotationRows([], {}).every(item => typeof item._key === 'string'));
+  assert.ok(studio.migrateRotationRowsFromViews([], {}).every(item => typeof item._key === 'string'));
+  assert.ok(studio.migrateRotationRows().every(item => typeof item._key === 'string'));
 });
 
-test('with a list the views play its blocks, and with none they play their own lists', () => {
+test('with a list the views play its blocks, and with none they play the default rotation', () => {
   const plain = contentWith();
-  assert.equal(views.viewSteps(plain, 'general', monday12).map(step => step.panel).join(), 'tonight,events,leadership,photo,sponsor-feature');
+  assert.equal(views.viewSteps(plain, 'general', monday12, 0).map(step => step.panel).slice(0, 5).join(), 'leadership,events,events,sponsor-feature,spotlight', 'the default rotation plays');
 
   const listed = contentWith(raw => { raw.settings.rotationRows = [row('robotics', 'events', 30), row('robotics', 'tonight', 25)]; });
   assert.deepEqual(views.viewSteps(listed, 'general', monday12).map(step => [step.panel, step.seconds]), [['events', 30], ['tonight', 25]]);
@@ -165,16 +169,15 @@ test('a block with nothing to show is skipped, and with a hidden row between vie
   views.resetViews();
 });
 
-test('an untouched Studio changes nothing: with no list the views play their own rows, and the new fields have their starting values', () => {
+test('an untouched Studio plays the default rotation, and the new fields have their starting values', () => {
   const content = contentWith();
-  ['general', 'prime', 'nova'].forEach(key => {
-    const own = views.resolveView(content, key).panels.map(item => item.panel);
-    const played = views.viewSteps(content, key, monday12).map(step => step.panel);
-    played.forEach(panel => assert.ok(own.includes(panel), key + ' plays ' + panel));
-  });
+  views.resetViews();
   assert.equal(config.defaultSettings.transitionSeconds, 3);
   assert.deepEqual(config.defaultSettings.rotationRows, []);
-  assert.equal(views.cycleBlock(), -1);
+  assert.equal(rotation.rotationRowsOf(content).length, config.defaultRotationRows().length);
+  views.tickView(content, monday12, {});
+  assert.ok(views.cycleBlock() >= 0, 'the clock is on a block of the default rotation');
+  views.resetViews();
 });
 
 test('the control page can name robotics for a view and gets the general view', () => {

@@ -9,7 +9,7 @@ export const previewPath = '/dashboard/index.html';
 
 export const previewScreens = ['original', 'cybertron', 'minimal'];
 
-// The eleven boards of the Monday panels, in order. slot is which Team lead of the team the row
+// The boards of the Monday panels, the status pies, Drive hours and the two small panels of the rotation, in order. slot is which Team lead of the team the row
 // takes: 1 is the first by order, 2 the second. A panel with no slot takes no department.
 export const previewPanels = [
   { id: 'tasks-prime-1', title: 'Prime tasks, first department', panel: 'monday-tasks', team: 'prime', slot: 1 },
@@ -23,6 +23,11 @@ export const previewPanels = [
   { id: 'timeline-prime', title: 'Prime timeline', panel: 'monday-timeline', team: 'prime', slot: 0 },
   { id: 'board-prime', title: 'Prime board', panel: 'monday-board', team: 'prime', slot: 0 },
   { id: 'board-nova', title: 'Nova board', panel: 'monday-board', team: 'nova', slot: 0 },
+  { id: 'pie-prime', title: 'Prime status pie', panel: 'monday-pie', team: 'prime', slot: 0 },
+  { id: 'pie-nova', title: 'Nova status pie', panel: 'monday-pie', team: 'nova', slot: 0 },
+  { id: 'drive-hours', title: 'Drive hours', panel: 'driveHours', team: '', slot: 0 },
+  { id: 'parts-request', title: 'Parts request (small panel)', panel: 'qrParts', team: '', slot: 0 },
+  { id: 'mini-idea-1', title: 'Mini panel idea 1 (small panel)', panel: 'miniIdea1', team: '', slot: 0 },
 ];
 
 // The registry ids the previews use, once each

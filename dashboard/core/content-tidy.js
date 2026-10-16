@@ -73,10 +73,24 @@ export function tidyViewSettings(settings) {
 }
 
 // The rotation list and the length of the transitions (core/rotation.js tidies each row when it is read). A list that is
-// missing is empty and the screen plays the lists of the views. transitionSeconds is 2 to 4.
+// missing is empty and the screen plays the default rotation. transitionSeconds is 2 to 4.
 function tidyRotationSettings(settings) {
   settings.rotationRows = Array.isArray(settings.rotationRows) ? settings.rotationRows : [];
   settings.transitionSeconds = keepInRange(settings.transitionSeconds, transitionSecondsRange, transitionSecondsRange.start);
+}
+
+// The address of the Parts request QR code: an https address of up to 200 characters with no space, or nothing
+export const longestPartsUrl = 200;
+
+export function tidyPartsUrl(value) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (text === '' || text.length > longestPartsUrl || /\s/.test(text) || !/^https:\/\//i.test(text)) return '';
+
+  try {
+    return new URL(text).protocol === 'https:' ? text : '';
+  } catch (error) {
+    return '';
+  }
 }
 
 // Settings that are one of a few words, an on/off switch, or a number in a
@@ -128,6 +142,7 @@ export function fixSettingValues(settings, saved = settings) {
   ['pageSeconds', 'photoSeconds', 'nightLogoWidth'].concat(logoNumbers, transitionNumbers, hiddenNumbers, teamNumbers).forEach(name => {
     settings[name] = keepInRange(settings[name], limits[name], defaultSettings[name]);
   });
+  settings.partsRequestUrl = tidyPartsUrl(settings.partsRequestUrl);
   ['portraitScale', 'photoScale'].forEach(name => {
     settings[name] = tidyScale(name, settings[name]);
   });

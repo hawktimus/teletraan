@@ -124,8 +124,13 @@ export function mainPlaylist(content, now = new Date(), screen = planFor(content
 export function stepsOfRow(row, index, rows, content, now) {
   const step = { show: true, team: row.team };
   if (row.seconds) step.seconds = row.seconds;
+  if (row.side) step.side = row.side;
   if (row.photoCount) Object.assign(step, { photoCount: row.photoCount, secondsPerPhoto: row.secondsPerPhoto });
-  if (!isMondayPanel(row.panel)) return [Object.assign({ panel: row.panel }, step)];
+  if (!isMondayPanel(row.panel)) {
+    // a panel that is one half of a list, or one department's, is told so in its page
+    const named = row.part || row.department;
+    return [Object.assign({ panel: row.panel }, step, named ? { page: { team: row.team, department: row.department || '', part: row.part || 0 } } : {})];
+  }
 
   let turn = 1;
   const same = other => other.panel === row.panel && other.team === row.team && (other.department || '') === (row.department || '');

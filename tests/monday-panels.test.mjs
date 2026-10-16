@@ -46,9 +46,9 @@ function fontSizes(css) {
 
 test('the six panels of the board are flagged monday in registry.js with a script and a stylesheet each, in the large panel, and none is in a rotation list', () => {
   const flagged = registry.panels.filter(panel => panel.monday).map(panel => panel.id);
-  assert.deepEqual(flagged, panelIds.concat(olderIds));
+  assert.deepEqual(flagged, panelIds.concat(olderIds, ['monday-pie']));
 
-  panelIds.concat(olderIds).forEach(id => {
+  panelIds.concat(olderIds, ['monday-pie']).forEach(id => {
     const entry = registry.panels.find(panel => panel.id === id);
     assert.equal(entry.region, 'grid1', id);
     assert.equal(entry.topic, 'monday', id);
@@ -393,7 +393,7 @@ test('a Monday row has the team and the department its panel takes: a department
     { panel: 'monday-status-depts', team: '' },
     { panel: 'monday-overall', team: '' },
   ]);
-  assert.deepEqual(config.mondayKinds, { 'monday-tasks': 'department', 'monday-done': 'team', 'monday-status-depts': 'none', 'monday-overall': 'none', 'monday-timeline': 'team', 'monday-board': 'team' });
+  assert.deepEqual(config.mondayKinds, { 'monday-tasks': 'department', 'monday-done': 'team', 'monday-status-depts': 'none', 'monday-overall': 'none', 'monday-timeline': 'team', 'monday-board': 'team', 'monday-pie': 'team' });
 });
 
 test('the steps of a Monday row carry the team, the department and the turn, the second board in a row has turn 2, and a row with nothing to show has no step', () => {
@@ -455,6 +455,7 @@ test('the builder offers the six panels under Monday, asks for the department be
   assert.equal(picker.teamProblem('monday-overall', ''), '');
   assert.equal(picker.teamProblem('monday-tasks', ''), 'Pick the team for this Monday row.');
   assert.deepEqual(config.mondayKinds, picker.mondayKinds, 'the builder and the dashboard agree on what each panel takes');
+  assert.equal(picker.rotationPanels.some(panel => panel.value === 'monday-pie'), true, 'the pie is offered in the Rotation list only');
   assert.deepEqual(picker.seededMondayPanels, config.mondayRows);
 });
 

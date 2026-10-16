@@ -308,7 +308,7 @@ test('the weld seam of Minimal is not drawn while a Monday card is on screen, an
   // every id of a Monday card starts with monday-, and no other panel does
   const registry = read('registry.js');
   cardIds.forEach(id => assert.ok(registry.includes("{ id: '" + id + "', region: 'grid1', topic: 'monday', monday: true"), id));
-  assert.deepEqual(Array.from(registry.matchAll(/\{ id: '(monday-[a-z-]+)'/g)).map(match => match[1]), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board'].concat(cardIds.slice(1)), 'the cards are the panels with the prefix: the six of the one task board and the older ones');
+  assert.deepEqual(Array.from(registry.matchAll(/\{ id: '(monday-[a-z-]+)'/g)).map(match => match[1]), ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board'].concat(cardIds.slice(1), ['monday-pie']), 'the cards are the panels with the prefix: the six of the one task board and the older ones');
 
   // the seam is still in the frame of the main panel, which is where the other panels see it
   assert.ok(/html\[data-layout="bar"\] \.art-weld-dark \{/.test(css) && /html\[data-layout="bar"\] \.art-weld-light \{/.test(css), 'the seam is still painted');

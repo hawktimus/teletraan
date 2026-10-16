@@ -33,6 +33,7 @@
     "look": "polished",
     "style": "original",
     "showConnectionStatus": false,
+    "partsRequestUrl": "https://example.org/parts-placeholder",
     "pageSeconds": 20,
     "logoAnimations": true,
     "logoEntrance": true,

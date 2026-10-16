@@ -25,6 +25,11 @@ const root = path.join(workFolder, 'dashboard');
 fs.mkdirSync(path.join(root, 'core'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
 ['config.js', 'registry.js'].forEach(file => copyModule(path.join(dashboardFolder, file), path.join(root, file)));
+// The tests of this file are about the lists of the views and the clock of their minutes, which the screen plays only when the
+// rotation has no block. The default rotation is turned off in this copy, so those lists are what plays. The default rotation
+// is tested in tests/default-rotation.test.mjs.
+copyModule(path.join(dashboardFolder, 'config-rotation.js'), path.join(root, 'config-rotation.js'));
+fs.writeFileSync(path.join(root, 'config-rotation.js'), fs.readFileSync(path.join(root, 'config-rotation.js'), 'utf8').replace('export function defaultRotationRows() {', 'export function defaultRotationRows() {\n  return [];'));
 fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith('.js')).forEach(file => {
   copyModule(path.join(dashboardFolder, 'core', file), path.join(root, 'core', file));
 });
