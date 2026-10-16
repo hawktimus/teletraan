@@ -21,8 +21,11 @@
 
 * { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
   margin: 0;
+  overflow-wrap: anywhere;
   background: var(--paper);
   color: var(--ink);
   font: 18px/1.45 var(--text);
@@ -31,17 +34,18 @@ body {
 header {
   background: var(--purple);
   color: #fff;
-  padding: 12px 16px 0;
+  padding: calc(12px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
   border-bottom: 4px solid var(--yellow);
 }
 
 header h1 { margin: 0; font: 700 24px/1.2 var(--display); }
 header .on-wall { margin: 2px 0 8px; font-size: 16px; opacity: .9; }
 
-nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
-.bar { display: flex; align-items: flex-end; gap: 8px; }
+/* The tabs wrap into rows instead of being cut off or scrolled out of sight */
+nav { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 280px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
 .studio {
-  display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 6px; padding: 0 16px;
+  display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 6px; margin-left: auto; padding: 0 16px;
   border: 2px solid var(--yellow); border-radius: 8px; color: var(--yellow); font: 600 18px var(--display); text-decoration: none;
 }
 nav button {
@@ -56,10 +60,11 @@ nav button {
 }
 nav button[aria-selected="true"] { background: var(--paper); color: var(--purple-dark); }
 
-main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+main { max-width: 1200px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
 
-.columns { display: grid; gap: 16px; grid-template-columns: 1fr; }
-@media (min-width: 900px) { .columns { grid-template-columns: 1fr 1fr; } }
+.columns { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.columns > *, .card { min-width: 0; }
+@media (min-width: 900px) { .columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
 .card h2 { margin: 0 0 8px; font: 700 20px var(--display); color: var(--purple-dark); }
@@ -82,12 +87,14 @@ button.quiet { background: #fff; color: var(--purple-dark); border: 2px solid va
 
 input[type="text"], input[type="password"], input[type="number"], select {
   width: 100%;
+  max-width: 100%;
   min-height: 44px;
   padding: 0 12px;
   border: 2px solid var(--line);
   border-radius: 8px;
   font: 18px var(--text);
   background: #fff;
+  color: var(--ink);
 }
 
 .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 8px 0; }
@@ -95,9 +102,9 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .good { color: var(--good); }
 .bad { color: var(--bad); }
 .warn { color: var(--warn); }
-code, pre { font: 15px ui-monospace, Menlo, monospace; background: #f0ecf7; border-radius: 6px; }
+code, pre { font: 16px ui-monospace, Menlo, monospace; background: #f0ecf7; border-radius: 6px; }
 code { padding: 1px 5px; }
-pre { padding: 10px; overflow-x: auto; }
+pre { padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 progress { width: 100%; height: 18px; }
 
@@ -111,3 +118,9 @@ ol.steps li.info::before { content: "note  "; color: var(--warn); font-weight: 6
 .sign-in { max-width: 420px; margin: 48px auto; }
 
 button.link { background: none; border: 0; color: var(--purple-dark); text-decoration: underline; font: inherit; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+
+@media (max-width: 600px) {
+  header h1 { font-size: 22px; }
+  .card { padding: 12px; }
+  button.action, label.action { white-space: normal; text-align: center; }
+}

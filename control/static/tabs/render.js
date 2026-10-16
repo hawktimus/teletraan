@@ -172,18 +172,18 @@ export function keysHtml(data) {
 
   const keyRows = keys.map(key => '<div class="key" data-key="' + esc(key.name) + '">' +
     '<div><strong>' + esc(key.label) + '</strong><span class="name">' + esc(key.name) + '</span><span class="masked">' + esc(key.masked) + '</span></div>' +
-    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(key.name) + '" placeholder="New value (leave empty to keep)">' +
+    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(key.name) + '" placeholder="New value">' +
     '<button type="button" class="act quiet" data-clear="' + esc(key.name) + '">Clear</button></div></div>').join('');
 
   const calendarRows = calendars.map(calendar => '<div class="key" data-calendar="' + esc(calendar.name) + '">' +
     '<div><strong>' + esc(calendar.code) + '</strong><span class="name">' + esc(calendar.name) + '</span><span class="masked">' + esc(calendar.masked) + '</span></div>' +
-    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(calendar.name) + '" placeholder="New link (leave empty to keep)">' +
+    '<div class="keyform"><input type="password" autocomplete="off" name="' + esc(calendar.name) + '" placeholder="New link">' +
     '<button type="button" class="act quiet" data-clear-calendar="' + esc(calendar.name) + '">Clear</button></div></div>').join('');
 
   return '<div class="grid">' +
-    card('Keys', (keyRows || '<p>No keys are known.</p>') + '<p class="note">PIN: fixed</p>') +
-    card('Calendars', (calendarRows || '<p>No calendars yet.</p>') +
-      '<div class="key newcal"><div><strong>Add a calendar</strong></div><div class="keyform"><input name="new-name" placeholder="Name, such as Build season" autocomplete="off"><input type="password" name="new-link" placeholder="Link (https:// or webcal://)" autocomplete="off"></div></div>') +
+    card('Keys', (keyRows || '<p>No keys are known.</p>') + '<p class="note">Leave a box empty to keep what is there. PIN: fixed</p>') +
+    card('Calendars', (calendarRows || '<p>No calendars yet.</p>') + '<p class="note">A link starts with https:// or webcal://. Leave a box empty to keep the link.</p>' +
+      '<div class="key newcal"><div><strong>Add a calendar</strong></div><div class="keyform"><input name="new-name" placeholder="Name" aria-label="Name of the new calendar" autocomplete="off"><input type="password" name="new-link" placeholder="Link" aria-label="Link of the new calendar" autocomplete="off"></div></div>') +
     '</div><div class="buttons"><button type="button" class="act" data-save>Save</button></div><p class="note" data-note></p>';
 }
 

@@ -202,8 +202,10 @@ registerTab({
     const go = element('button', 'Switch to this version', 'action quiet');
     go.type = 'button';
     const backNote = element('p', '', 'muted');
-    back.append(choose, element('div', '', 'row'), backNote);
-    back.children[2].append(go);
+    const chosen = element('p', '', 'muted');
+    back.append(choose, chosen, element('div', '', 'row'), backNote);
+    back.children[3].append(go);
+    choose.addEventListener('change', () => { chosen.textContent = choose.selectedOptions.length ? choose.selectedOptions[0].textContent : ''; });
 
     function renderRollback() {
       choose.replaceChildren();
@@ -215,6 +217,7 @@ registerTab({
         choose.append(option);
       });
       go.disabled = !releases.some(release => !release.current && !release.legacy);
+      chosen.textContent = choose.selectedOptions.length ? choose.selectedOptions[0].textContent : '';
     }
 
     go.addEventListener('click', async () => {
