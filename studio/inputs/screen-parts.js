@@ -54,7 +54,7 @@ export const words = {
   editing: 'Editing',
   mapLabel: 'The screen. Click a letter to open that part below.',
   mapHelp: 'Click a letter to change what plays there. The team switch only changes which team document A opens.',
-  oldScreen: 'The wall does not play this page any more. Rotation, Views and Themes and backgrounds replaced it. It is kept so nothing is lost.',
+  oldScreen: 'The wall does not play this page any more. Rotation, Views and Look replaced it. It is kept so nothing is lost.',
   oldView: 'The rotation does not play this view. The page is kept so nothing is lost.',
   noSidePanel: 'This screen has no side panel.',
   openTeam: 'Open the team document',

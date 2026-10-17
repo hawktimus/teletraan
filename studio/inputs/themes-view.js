@@ -1,4 +1,5 @@
-// The Themes and backgrounds page, under SCREEN in the sidebar. It is a page of its own, not a document. It lists
+// The theme list, the weekday pickers and the background choices of the Look page (look-view.js), and the page they
+// were first made for, now kept for the tests. It is a page of its own, not a document. It lists
 // the themes and holds the weekday schedule: a picker for each day of the week that chooses the theme
 // that plays that day. The schedule is the field themeByWeekday of Dashboard Settings; the background of the
 // Original theme is the field background. This page writes only those two fields, to the draft of Dashboard

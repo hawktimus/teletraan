@@ -107,7 +107,7 @@ export function photosFields() {
       type: 'number',
       group: 'screen',
       hidden: true,
-      description: 'The old size, from 60 to 200. The screen uses it only while neither Leadership nor Roster portrait size has a value.',
+      description: 'Not used any more. The old size, from 60 to 200, used only while neither Leadership nor Roster portrait size has a value.',
       initialValue: 100,
       validation: Rule => [
         Rule.required().error('Enter a percent from 60 to 200.'),

@@ -62,6 +62,7 @@ import { SquareIcon } from '@sanity/icons/Square';
 import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
 import { SyncIcon } from '@sanity/icons/Sync';
+import { TargetIcon } from '@sanity/icons/Target';
 import { TaskIcon } from '@sanity/icons/Task';
 import { ThLargeIcon } from '@sanity/icons/ThLarge';
 import { ThListIcon } from '@sanity/icons/ThList';
@@ -74,6 +75,7 @@ import { milestonesChild } from './inputs/monday-boards-parts.js';
 import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 import { LookView } from './inputs/look-view.js';
+import { CompetitionView } from './inputs/competition-view.js';
 import { RotationView } from './inputs/rotation-view.js';
 import { TodayView } from './inputs/today-view.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
@@ -207,6 +209,7 @@ export const sidebarEntries = [
     ],
   },
   { kind: 'component', title: 'Look', id: 'look', icon: ColorWheelIcon, component: LookView, children: lookChildren },
+  { kind: 'component', title: 'Competition', id: 'competition', icon: TargetIcon, component: CompetitionView },
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },

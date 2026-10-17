@@ -513,7 +513,7 @@ const typeTitles = {
 // The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Look',
+  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Look, Competition',
   'COACHES ONLY: Dashboard Settings, Extra panels, Old screens (not used)',
 ];
 
@@ -1413,7 +1413,7 @@ function checkStyleSetting() {
   need(problems, config.styles.join() === 'original,cybertron,minimal', 'styles in config.js should be original, cybertron and minimal, not ' + config.styles.join());
   need(problems, config.defaultSettings.style === 'original', 'the default style in config.js should be original');
   need(problems, style && style.initialValue === 'original', 'style should start as original');
-  need(problems, style && style.group === 'look', 'style should be in the Look tab');
+  need(problems, style && style.group === 'advanced', 'style should be in the Advanced tab: the Logo and motion tab is gone and its hidden fields moved there');
   need(problems, style && style.title === 'Style', 'style should be titled Style');
   need(problems, style && style.type === 'string' && style.options && style.options.layout === 'radio', 'style should be a radio list');
   need(problems, offered.map(item => item.value).join() === config.styles.join(), 'style should offer the same names, in the same order, as styles in config.js: ' + config.styles.join(', '));
@@ -1676,14 +1676,15 @@ function checkPresentationsTab() {
   const settings = typeByName('dashboardSettings');
   const at = name => fieldAt('dashboardSettings.' + name);
 
-  need(problems, settings.groups.filter(group => group.title === 'Presentations').length === 1, 'Dashboard Settings should have exactly one tab named Presentations');
-  need(problems, settings.groups.filter(group => group.name === 'presentations' && group.title === 'Presentations').length === 1, 'the Presentations tab should be the group presentations');
+  need(problems, settings.groups.filter(group => group.title === 'Presentations').length === 0, 'Dashboard Settings has five tabs now, so Presentations is a section of the Advanced tab, not a tab');
+  need(problems, (settings.fieldsets || []).filter(set => set.name === 'presentations' && set.title === 'Presentations' && set.description).length === 1, 'the Advanced tab should have a Presentations section (a fieldset called presentations) with a one line description');
 
-  // Nothing else is in the tab, so deleting settingsPresentations.js removes the whole section. The last field is
+  // Nothing else is in the section, so deleting settingsPresentations.js removes the whole section. The last field is
   // the hidden one that Run presentation test fills in (checkRunPresentationTest).
-  const inTab = fieldsIn(settings).filter(field => field.group === 'presentations').map(field => field.name);
+  const inTab = fieldsIn(settings).filter(field => field.fieldset === 'presentations').map(field => field.name);
   const wanted = presentationNames.concat('presentationTestRequest');
-  need(problems, inTab.join() === wanted.join(), 'the Presentations tab should hold, in this order: ' + wanted.join(', ') + ', not ' + inTab.join(', '));
+  need(problems, inTab.join() === wanted.join(), 'the Presentations section should hold, in this order: ' + wanted.join(', ') + ', not ' + inTab.join(', '));
+  need(problems, fieldsIn(settings).filter(field => field.fieldset === 'presentations').every(field => field.group === 'advanced'), 'the Presentations section should be in the Advanced tab');
 
   const titles = { presentationsEnabled: 'Run presentations', noShowMinutes: 'Wait for the speaker (minutes)', graceMinutes: 'Overrun allowed (minutes)' }; // the last two are hidden, see checkFixedValues
   Object.keys(titles).forEach(name => need(problems, at(name) && at(name).title === titles[name], name + ' should be titled ' + titles[name]));
@@ -1775,7 +1776,7 @@ function checkRunPresentationTest() {
 
   // The field: an object with one read only time, hidden from editors, with no starting value of its own
   need(problems, request && request.type === 'object', 'presentationTestRequest should be an object');
-  need(problems, request && request.group === 'presentations', 'presentationTestRequest should be in the Presentations tab');
+  need(problems, request && request.group === 'advanced' && request.fieldset === 'presentations', 'presentationTestRequest should be in the Presentations section of the Advanced tab');
   need(problems, request && request.hidden === true, 'presentationTestRequest should be hidden from editors (hidden: true)');
   need(problems, request && request.initialValue === undefined, 'presentationTestRequest should have no starting value in the Studio');
   need(problems, request && /Run presentation test/.test(request.description || ''), 'the presentationTestRequest description should name the button Run presentation test');
@@ -4253,19 +4254,19 @@ function checkTeamsTab() {
 // The tabs of Dashboard Settings, in order, and the tab of every field. A new field has to be given a
 // tab here. Advanced is the last tab because Studio has no tab that starts folded. Screen opens first.
 // The order of the fields inside a tab is the order of the fields in dashboardSettings.js.
-const settingsTabTitles = ['Screen', 'Logo and motion', 'Countdown', 'Calendars', 'Presentations', 'Monday', 'Competition', 'Advanced'];
+// Five tabs now. The look is on the Look page, the alert and the messages on Today, the cards on Competition, and the
+// fields they show stay in the schema, hidden. Presentations, Night mode and Hidden transitions are sections of Advanced.
+const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
 const settingsTabs = {
-  screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
+  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds']),
   countdown: ['countdown'],
-  calendars: ['calendars', 'groupEventsByKind'],
-  presentations: presentationNames.concat('presentationTestRequest'),
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'],
-  competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
-  advanced: nightNames.concat(hiddenNames, ['contentSource', 'showConnectionStatus', 'rotationRows']),
+  calendars: ['calendars', 'groupEventsByKind'],
+  advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, nightNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus']),
 };
 
 function checkSettingsTabs() {
@@ -4273,10 +4274,10 @@ function checkSettingsTabs() {
   const settings = typeByName('dashboardSettings');
   const fields = fieldsIn(settings);
 
-  // The tabs are these eight, in this order, and only Screen is the default
+  // The tabs are these five, in this order, and only Timing is the default
   need(problems, settings.groups.map(group => group.title).join() === settingsTabTitles.join(), 'Dashboard Settings should have these tabs, in this order: ' + settingsTabTitles.join(', ') + '. It has: ' + settings.groups.map(group => group.title).join(', '));
   need(problems, settings.groups.map(group => group.name).join() === Object.keys(settingsTabs).join(), 'the tabs should be the groups ' + Object.keys(settingsTabs).join(', '));
-  need(problems, settings.groups.filter(group => group.default === true).map(group => group.name).join() === 'screen', 'Screen should be the one tab that opens first (default: true)');
+  need(problems, settings.groups.filter(group => group.default === true).map(group => group.name).join() === 'screen', 'Timing should be the one tab that opens first (default: true)');
 
   // Every field is in the tab the table says, and the table has no field the schema lacks
   Object.keys(settingsTabs).forEach(tab => {
@@ -4292,10 +4293,8 @@ function checkSettingsTabs() {
 
   // The status block and the notes are the first field of their tab
   const first = tab => fields.filter(field => field.group === tab)[0];
-  need(problems, first('screen') && first('screen').name === 'miniStatus', 'the status block miniStatus should be the first field of the Screen tab');
-  need(problems, first('look') && first('look').name === 'lookNote', 'the first field of the Look tab should be its note, lookNote');
+  need(problems, first('screen') && first('screen').name === 'miniStatus', 'the status block miniStatus should be the first field of the Timing tab');
   need(problems, first('monday') && first('monday').name === 'mondayConnection', 'the first field of the Monday tab should be the connection block, mondayConnection');
-  need(problems, first('competition') && first('competition').name === 'frcConnection', 'the first field of the Competition tab should be the connection block, frcConnection');
 
   // The fields that leave the form stay in the schema
   ['contentSource'].forEach(name => need(problems, fieldAt('dashboardSettings.' + name) && fieldAt('dashboardSettings.' + name).hidden === true, name + ' should be hidden but stay in the schema'));
@@ -4459,7 +4458,7 @@ function checkCompetitionTab() {
     const field = at(name);
     need(problems, field && field.type === 'boolean' && field.initialValue === true && config.defaultSettings[name] === true, name + ' should be a switch that starts on, and so should its default in config.js');
     need(problems, field && field.title === titles[index], name + ' should be titled ' + titles[index]);
-    need(problems, field && field.group === 'competition' && rulesOf(field).length === 0, name + ' should be in the Competition tab and have no rules');
+    need(problems, field && field.group === 'advanced' && field.hidden === true && rulesOf(field).length === 0, name + ' should be hidden in Dashboard Settings (the Competition page shows it) and have no rules');
     need(problems, world.sample.settings[name] === true, 'the sample settings need ' + name);
   });
   need(problems, config.competitionModes.indexOf(world.sample.settings.competitionMode) !== -1, 'the sample settings need a competitionMode of ' + config.competitionModes.join(', '));
@@ -4641,8 +4640,8 @@ function checkSeasonGuard() {
 const fixedValues = {
   'dashboardSettings.nightStart': { constant: 'nightStart', value: '23:30', group: 'advanced' },
   'dashboardSettings.nightEnd': { constant: 'nightEnd', value: '11:30', group: 'advanced' },
-  'dashboardSettings.noShowMinutes': { constant: 'noShowMinutes', value: 5, group: 'presentations' },
-  'dashboardSettings.graceMinutes': { constant: 'graceMinutes', value: 5, group: 'presentations' },
+  'dashboardSettings.noShowMinutes': { constant: 'noShowMinutes', value: 5, group: 'advanced' },
+  'dashboardSettings.graceMinutes': { constant: 'graceMinutes', value: 5, group: 'advanced' },
   'presentationDay.closeMinutesBefore': { constant: '', value: 30, group: '' },
 };
 
@@ -5483,7 +5482,7 @@ function checkLookRotation() {
   const from = names.indexOf('lookNote');
   need(problems, names.slice(from, from + 8 + rotationNames.length).join() === ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames).join(), 'the Look tab should start with lookNote, cycleNote, the view fields, screenSchedule and then ' + rotationNames.join(', '));
   rotationNames.forEach(name => {
-    need(problems, at(name) && at(name).group === 'look', name + ' should be in the Look tab');
+    need(problems, at(name) && at(name).group === 'advanced', name + ' should stay in Dashboard Settings, in the Advanced tab where the Look tab moved');
     if (name === 'lookSwap') {
       need(problems, at(name) && at(name).hidden === true, 'lookSwap should be hidden but stay in the schema: every change of look is one swap now, and a saved value is kept');
       need(problems, /^Not used any more\./.test((at(name) && at(name).description) || ''), 'the lookSwap description should begin Not used any more');
@@ -5537,14 +5536,14 @@ function checkLookRotation() {
   // The old choices stay in the schema, hidden, with their starting values. The screen uses them until a Screen has chosen a style or a team.
   teamNames.concat('style').forEach(name => {
     need(problems, at(name) && at(name).hidden === true, name + ' should be hidden but stay in the schema, so that a saved value is kept');
-    need(problems, at(name) && at(name).group === 'look', name + ' should stay in the Look tab');
-    need(problems, at(name) && /^Used only until a Screen has chosen the (style|team)/.test(at(name).description || ''), 'the ' + name + ' description should begin by saying that it is used only until a Screen has chosen the style or the team');
+    need(problems, at(name) && at(name).group === 'advanced', name + ' should stay in Dashboard Settings, in the Advanced tab where the Look tab moved');
+    need(problems, at(name) && /^Not used any more\./.test(at(name).description || ''), 'the ' + name + ' description should begin Not used any more: the views and the themes choose the team and the look');
   });
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
   need(problems, cycle && /Rotation page/.test(cycle.description || '') && /Views, under Teams and views/.test(cycle.description || ''), 'the second note on the Logo and motion tab should say that what plays is the Rotation page and that a view holds its arrangement in Views, under Teams and views');
-  need(problems, at('lookNote') && /The theme of each day and the Original background are on the Themes and backgrounds page/.test(at('lookNote').description || ''), 'the first note on the Logo and motion tab should say that the Themes and backgrounds page sets the theme of each day');
+  need(problems, at('lookNote') && /The theme of each day, the background, the motion, the logo and the seasonal packs are on the Look page/.test(at('lookNote').description || ''), 'the first note, now hidden, should say that the Look page sets the look');
   need(problems, at('screenSchedule') && at('screenSchedule').hidden === true && /^Not used any more/.test(at('screenSchedule').description || ''), 'screenSchedule should be hidden, kept in the schema, and say Not used any more');
 
   // The sample content carries the four settings, with values the dashboard accepts
@@ -6461,7 +6460,7 @@ function checkScreenType() {
   const days = config.weekdays;
   need(problems, days.join() === Object.keys(weekdayStarts).join(), 'weekdays in config.js should be monday to sunday, in that order');
   need(problems, sameData(config.defaultSettings.screenSchedule, weekdayStarts), 'screenSchedule in config.js should be Original on Monday, Wednesday, Friday and Sunday, and Cybertron on Tuesday, Thursday and Saturday: Minimal is not scheduled');
-  need(problems, schedule && schedule.type === 'object' && schedule.group === 'look' && schedule.title === 'Weekday schedule', 'screenSchedule should be an object titled Weekday schedule in the Look tab');
+  need(problems, schedule && schedule.type === 'object' && schedule.group === 'advanced' && schedule.title === 'Weekday schedule', 'screenSchedule should be an object titled Weekday schedule, hidden in the Advanced tab');
   need(problems, schedule && fieldsIn(schedule).map(field => field.name).join() === days.join() && fieldsIn(schedule).map(field => field.title).join() === days.map(day => day.charAt(0).toUpperCase() + day.slice(1)).join(), 'screenSchedule should have a picker for each day, Monday to Sunday, titled with the day');
   days.forEach(day => {
     const field = fieldAt('dashboardSettings.screenSchedule.' + day);
@@ -6838,9 +6837,9 @@ function checkViewSettings() {
   need(problems, at('viewOrder') && at('viewOrder').type === 'array' && at('viewOrder').initialValue.join() === 'general,prime,nova,family' && config.defaultSettings.viewOrder.join() === 'general,prime,nova,family' && constraintNamed(rulesOf(at('viewOrder')), 'unique'), 'viewOrder should start as General, Prime, Nova, Family, as config.js says, and hold each view once');
   const member = at('viewOrder') && at('viewOrder').of[0];
   need(problems, member && member.options.list.map(item => item.value).join() === 'general,prime,nova,family' && constraintNamed(constraintsOf(member), 'valid'), 'each row of viewOrder should be one of the four views');
-  need(problems, at('generalViewTitle') && at('generalViewTitle').group === 'look' && !at('generalViewTitle').hidden, 'generalViewTitle should show in the Logo and motion tab');
-  need(problems, at('generalViewName') && at('generalViewName').group === 'look' && at('generalViewName').hidden === true && /^Not used any more\./.test(at('generalViewName').description || ''), 'generalViewName should be hidden but stay in the schema, because the view tag is not drawn any more');
-  need(problems, at('viewOrder') && at('viewOrder').group === 'look' && at('viewOrder').hidden === true && /Not used any more/.test(at('viewOrder').description || ''), 'viewOrder should be hidden in the Look tab and say Not used any more');
+  need(problems, at('generalViewTitle') && at('generalViewTitle').group === 'screen' && at('generalViewTitle').fieldset === 'banner' && !at('generalViewTitle').hidden, 'generalViewTitle should show in the Banner section of the Timing tab');
+  need(problems, at('generalViewName') && at('generalViewName').group === 'advanced' && at('generalViewName').hidden === true && /^Not used any more\./.test(at('generalViewName').description || ''), 'generalViewName should be hidden but stay in the schema, because the view tag is not drawn any more');
+  need(problems, at('viewOrder') && at('viewOrder').group === 'advanced' && at('viewOrder').hidden === true && /Not used any more/.test(at('viewOrder').description || ''), 'viewOrder should be hidden and say Not used any more');
   need(problems, fieldAt('theme.timeZone') && fieldAt('theme.timeZone').type === 'string', 'the time zone should stay a field of the Look page');
 
   // the weekday themes
@@ -6850,7 +6849,7 @@ function checkViewSettings() {
   need(problems, themes.themeWeekdays.map(day => day.name).join() === days.join() && sameData(themes.startingThemeByWeekday, config.defaultThemeByWeekday) && sameData(config.defaultSettings.themeByWeekday, config.defaultThemeByWeekday), 'the weekday themes should start the same in the Studio and in config.js');
   need(problems, Object.keys(themes.startingThemeByWeekday).every(day => themes.startingThemeByWeekday[day] === (['monday', 'wednesday', 'friday', 'sunday'].indexOf(day) !== -1 ? 'original' : 'cybertron')), 'Original should start on Monday, Wednesday, Friday and Sunday and Cybertron on Tuesday, Thursday and Saturday, with Retro and Foundry unscheduled');
   const schedule = at('themeByWeekday');
-  need(problems, schedule && schedule.type === 'object' && schedule.hidden === true && schedule.group === 'look' && /Themes and backgrounds page/.test(schedule.description || ''), 'themeByWeekday should be hidden in the Look tab, and say the Themes and backgrounds page sets it');
+  need(problems, schedule && schedule.type === 'object' && schedule.hidden === true && schedule.group === 'advanced' && /Look page/.test(schedule.description || ''), 'themeByWeekday should be hidden, and say the Look page sets it');
   days.forEach(day => {
     const field = fieldAt('dashboardSettings.themeByWeekday.' + day);
     need(problems, field && field.initialValue === config.defaultThemeByWeekday[day] && field.options.list.map(item => item.value).join() === 'original,cybertron,retro,foundry' && constraintNamed(constraintsOf(field), 'valid'), 'themeByWeekday.' + day + ' should start as in config.js and offer the four themes');
@@ -6870,7 +6869,7 @@ function checkViewSettings() {
   // No theme is a placeholder
   need(problems, themes.themeChoices.every(theme => !theme.placeholder) && !fs.existsSync(path.join(dashboardFolder, 'styles', 'retro', 'PLACEHOLDER')), 'no theme should be marked as a placeholder, and Retro has no marker file');
   const bgField = at('background');
-  need(problems, bgField && bgField.group === 'look' && bgField.initialValue === 'sweep' && bgField.options.list.map(item => item.value).join() === config.backgrounds.join() && bgField.hidden === true && /Themes and backgrounds page/.test(bgField.description || ''), 'the background field should stay in the Look tab, start on sweep, offer the dashboard\'s five words, be hidden and point to the Themes and backgrounds page, where it is edited');
+  need(problems, bgField && bgField.group === 'advanced' && bgField.initialValue === 'sweep' && bgField.options.list.map(item => item.value).join() === config.backgrounds.join() && bgField.hidden === true && /Look page/.test(bgField.description || ''), 'the background field should stay in Dashboard Settings, start on sweep, offer the dashboard\'s five words, be hidden and point to the Look page, where it is edited');
 
   // the old look lists stay
   need(problems, fieldAt('theme.schedule') && fieldAt('dashboardSettings.teamOrder') && fieldAt('dashboardSettings.dailyStyles'), 'the stored schedule of the Look page and the older lists should stay in the schema');
@@ -7243,6 +7242,7 @@ async function main() {
     world.teamColorsInput = await load(path.join(folder, 'inputs', 'team-colors-input.js'));
     world.lookParts = await load(path.join(folder, 'inputs', 'look-parts.js'));
     world.lookView = await load(path.join(folder, 'inputs', 'look-view.js'));
+    world.competitionView = await load(path.join(folder, 'inputs', 'competition-view.js'));
     world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));
     world.screenPanels = await load(path.join(folder, 'inputs', 'screen-panels.js'));
     world.defaultRotation = await load(path.join(folder, 'tools', 'default-rotation.js'));
