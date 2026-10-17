@@ -103,7 +103,8 @@ function useStyle(look) {
 }
 
 // The view of the look (core/view-apply.js). It goes on in the same step as the layout and the style, and the two banners,
-// which carry the name of the view, are drawn again when it changes. A problem here never stops the colors.
+// which carry the name of the view, and the side column are drawn again when it changes. The team plate follows the view from
+// the stylesheet (family-line.css) and does not depend on this. A problem here never stops the colors.
 function useView(look) {
   try {
     applyTheme(themeOf(look.style));
@@ -115,6 +116,7 @@ function useView(look) {
 
     updatePanel('banner', shellState.content);
     updatePanel('bar-banner', shellState.content);
+    updatePanel('bar-column', shellState.content);
   } catch (error) {
     console.error('Could not put the view on the page', error);
   }
