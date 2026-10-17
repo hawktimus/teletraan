@@ -6,8 +6,13 @@ colors in the starting file are placeholders until the team has chosen its own. 
 the four steps in order.
 
 The name, short name and number of a team are read from its Team document and nowhere else. To
-rename a team or change its number, change them in Settings, Teams. The Monday board is not
+rename a team or change its number, change them under Teams. The Monday board is not
 connected to the name, so a rename there is done by hand.
+
+A Team document keeps its own colors. Changing the seed file or the built-in team does not change a
+team that is already saved. To put the standard colors back on Hawktimus Prime or Hawktimus Nova, open
+the team under Teams, open the menu beside Publish and choose Use the standard colors for this team.
+It asks first, lists what changes and changes the draft only. Click Publish to put it on the screen.
 
 ## 1. Import the two teams
 

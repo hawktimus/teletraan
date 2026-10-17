@@ -259,8 +259,9 @@ editors can sign in from anywhere.
       data/live/              files the computer downloads (never committed)
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
-                              docs/reordering-the-sidebar.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons),
-                              its three pages that are not documents (inputs/start-here.js, inputs/calendars-view.js and
+                              docs/reordering-the-sidebar.md, docs/studio-map.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons;
+                              tools/team-actions.js: Use the standard colors for this team, with its table in tools/team-standard.js),
+                              its pages that are not documents (inputs/start-here.js, inputs/rotation-view.js, inputs/themes-view.js, inputs/calendars-view.js and
                               inputs/monday-boards-view.js, whose rows and words are in inputs/calendars-view-parts.js,
                               docs/calendars-page.md, and inputs/monday-boards-parts.js),
                               the words and picture of Start here (inputs/start-here-parts.js), what its request
@@ -647,7 +648,7 @@ editors can sign in from anywhere.
                               editing-content.md, adding-a-field.md, adding-a-panel.md,
                               adding-a-theme.md, layouts.md, adding-a-holiday-overlay.md, seasonal-packs.md, rebuilding-the-computer.md,
                               try-it-on-the-computer.md, the-logo.md, page-transitions.md, night-mode.md,
-                              hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md,
+                              hidden-transitions.md, demo.md, publish-all.md, reordering-the-sidebar.md, studio-map.md,
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
                               add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md, updating-the-computer.md,
@@ -1058,7 +1059,7 @@ alone.
   right end, at 36 px, and takes a second line when it does not fit, in both clocks and in the red countdown
   of Original (`core/countdown-title.js`). docs/layouts.md, "The war clock" and "The wide war clock", has
   the sizes.
-- **The teams, and the team on the screen.** Teams in the Studio sidebar, under Settings
+- **The teams, and the team on the screen.** Teams in the Studio sidebar, under Coaches only
   (`studio/schemas/team.js`): a name, a short name, a number, a code, an optional logo, seven
   colors, Mirror the layout, six trim choices (bolts, cut corners, header end, page grid,
   ticker label and countdown color), the Outlined name switch (the older Team name look and Bird pose are hidden), Active and Order. The two starting teams are in
