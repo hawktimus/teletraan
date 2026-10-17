@@ -1,9 +1,10 @@
 // The Now showing tab: what is on the wall, and the buttons that change it. The card refreshes every
-// 10 seconds, the length of the dashboard's own report.
+// 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
 import { registerTab } from '../tabs.js';
 import { api, showResult, useStyles } from './api.js';
-import { nowCardHtml, nowControlsHtml, outcome, previewAutoLoads, previewCardHtml, previewHeight, previewScale, previewWidth } from './render.js';
+import { nowCardHtml, nowControlsHtml, outcome, previewCardHtml } from './render.js';
+import { wirePreview } from './preview.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
 function fieldProblem(field) {
@@ -44,71 +45,6 @@ function wire(root) {
     const shown = outcome(result, action, body);
     showResult(button, shown.state, shown.words);
   });
-}
-
-// The copy of the dashboard is 1920 by 1080 and is shrunk to the width of its box. It loads only on a wide screen or
-// when the person taps the button, and it is taken out again when the tab or the page goes away. Returns a
-// function that removes it and its listeners.
-function wirePreview(root) {
-  const box = root.querySelector('[data-preview-box]');
-  const toggle = root.querySelector('[data-preview-toggle]');
-  const off = root.querySelector('[data-preview-off]');
-  // screen.width keeps a phone narrow even when a wide page makes the browser widen its layout
-  const wide = () => previewAutoLoads(Math.min(window.innerWidth, window.screen && window.screen.width ? window.screen.width : window.innerWidth));
-  let wanted = wide();
-  let frame = null;
-
-  const fit = () => { if (frame) frame.style.transform = 'scale(' + previewScale(box.clientWidth) + ')'; };
-  let watcher = null;
-  if (typeof ResizeObserver === 'function') { watcher = new ResizeObserver(fit); watcher.observe(box); }
-  else window.addEventListener('resize', fit);
-
-  function draw() {
-    off.hidden = Boolean(frame);
-    toggle.textContent = frame ? 'Hide live preview' : 'Show live preview';
-    toggle.setAttribute('aria-pressed', String(Boolean(frame)));
-  }
-  function load() {
-    if (!frame) {
-      frame = document.createElement('iframe');
-      frame.title = 'A copy of the dashboard';
-      frame.width = previewWidth;
-      frame.height = previewHeight;
-      frame.loading = 'lazy';
-      frame.tabIndex = -1;
-      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      box.append(frame);
-      fit();
-      frame.src = box.dataset.src;
-    }
-    draw();
-  }
-  function unload() {
-    if (frame) { frame.removeAttribute('src'); frame.remove(); frame = null; }
-    draw();
-  }
-
-  toggle.addEventListener('click', () => {
-    wanted = !frame;
-    if (wanted) load(); else unload();
-  });
-  // A phone asks again after the page was in the background; a wide screen brings the copy back by itself
-  const visibility = () => {
-    if (document.hidden) {
-      unload();
-      if (!wide()) wanted = false;
-    } else if (wanted) load();
-  };
-  document.addEventListener('visibilitychange', visibility);
-
-  if (wanted) load(); else unload();
-
-  return () => {
-    unload();
-    document.removeEventListener('visibilitychange', visibility);
-    window.removeEventListener('resize', fit);
-    if (watcher) watcher.disconnect();
-  };
 }
 
 registerTab({
