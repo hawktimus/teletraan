@@ -87,6 +87,17 @@ No GitHub is needed. The installer makes a bare repository at `/srv/teletraan.gi
     git remote add teletraan <user>@<host>:/srv/teletraan.git
     git push teletraan main
 
+The login user is not in the docker group, so the hook does not run docker. It calls `sudo -n /usr/local/sbin/teletraan-install-tree <staging folder> <commit>`. That file is a root-owned copy of `computer/git/install-tree-as-root.sh`, and the sudoers file lets the login user run that one path and nothing else. The wrapper checks that the folder is a real folder directly under `/var/tmp`, named `teletraan-push.*`, owned by the caller, and that the commit is a short hash. It then runs the same install as the Update tab, with the root, the user ids and the image read from `/usr/local/etc/teletraan-install.conf`, and restarts the control service.
+
+The first push after this change needs the Mac tool update once (`tools/teletraan/teletraan-tool update`, menu 1), because only the installer writes the wrapper, the config file and the sudoers line. After that, `git push teletraan main` installs.
+
+What the errors mean:
+
+- `The install needs the sudoers rule. Run the installer again from the Mac tool (menu 1).`: the sudoers line is not there yet. Run the update once.
+- `teletraan-install.conf is missing` or `sudo: a password is required` with no wrapper: the same cause.
+- `the staging folder ...` or `the commit is not a short hash`: the wrapper refused its arguments. The hook always gives it good ones, so this means something else called it.
+- `The install stopped. The wall is unchanged.`: the install itself failed. The lines above it say why, and the Log tab has the rest.
+
 On a new computer: `git clone <user>@<host>:/srv/teletraan.git teletraan`. This needs an SSH key. docs/new-mac.md says when you do not need one.
 
 ## When the page cannot be reached

@@ -3,3 +3,6 @@
 # The helper runs these by the first path of each. On Debian /bin is a link to /usr/bin and /sbin to /usr/sbin, and
 # reboot is a link to systemctl, so the other spellings of the reboot are listed in case sudo compares the path as typed.
 ACCOUNT ALL=(root) NOPASSWD: /usr/bin/systemctl restart teletraan-*, /usr/bin/docker restart teletraan-web, /usr/bin/systemctl start teletraan-*.service, /usr/bin/systemctl reboot, /bin/systemctl reboot, /usr/sbin/reboot, /sbin/reboot
+# The git hook runs the install as root through this wrapper, which checks its two arguments itself (computer/git/install-tree-as-root.sh).
+# With no argument list in the rule, sudo allows any arguments, so the wrapper is the check. Only this path may run.
+ACCOUNT ALL=(root) NOPASSWD: /usr/local/sbin/teletraan-install-tree

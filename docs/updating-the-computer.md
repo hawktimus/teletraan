@@ -202,6 +202,7 @@ Choices 3 and `c` stay in the menu, because they ask questions.
 | no computer is saved on this Mac yet | A command word needs a saved computer. Run `tools/teletraan/teletraan-tool` with no word, once, and give it the address. |
 | a question needed an answer and none came | The command had nobody to ask. Add `--yes` to `update`, or run the update by hand and answer. |
 | A calendar was added and the screen shows nothing from it | It needs a row in Dashboard Settings, Calendars, with the code the tool printed. |
+| `git push teletraan main` says the install needs the sudoers rule, or permission denied for docker | The push hook gets its root helper and sudoers line from `computer/install.sh`. Choose 1 once, then push again (docs/control-page.md, "The git path"). |
 | The Reboot or Run presentation test button on the control page does nothing | The Update tab and Update from GitHub do not touch the sudoers file, the unit files or the compose file. They come from `computer/install.sh`. Choose 1 once so that the computer has the newest ones (the reboot rule, port 3426, the landing page and the keys folder). Then read `docs/control-page.md`, "When a button does nothing". |
 | macOS will not open the .command file | Right-click it, choose Open, and choose Open again. |
 

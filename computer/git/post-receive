@@ -1,12 +1,8 @@
 #!/bin/sh
 # The hook of the optional git path (docs/control-page.md). A push of main to this bare repository installs it
 # as the next release, with the same steps as the Update tab. Other branches are ignored.
-# computer/install.sh copies this file into /srv/teletraan.git/hooks and fills in ROOT, UID_GID and IMAGE.
+# computer/install.sh copies this file into /srv/teletraan.git/hooks.
 set -u
-
-root=ROOT
-ids=UID_GID
-image=IMAGE
 
 while read -r old new ref; do
   [ "$ref" = refs/heads/main ] || continue
@@ -14,12 +10,13 @@ while read -r old new ref; do
   git archive "$new" | tar -x -C "$work"
   commit=$(git rev-parse --short "$new")
   echo "Installing $commit on the Teletraan computer..."
-  if docker run --rm -u "$ids" -e CONTROL_ROOT=/opt/teletraan -e HOME=/opt/teletraan/cache/home -e NPM_CONFIG_CACHE=/opt/teletraan/cache/npm \
-    -v "$root:/opt/teletraan" -v /run/teletraan:/run/teletraan -v "$work:/staging:ro" -w /staging "$image" \
-    node control/bin/install-tree.js /staging --from git --commit "$commit" --note "git push"; then
-    # The service runs the code it started with; this starts it on the new release
-    docker restart teletraan-control > /dev/null 2>&1 || true
-  else
+  # The login user is not in the docker group; a root-owned wrapper (computer/git/install-tree-as-root.sh) runs the install
+  out=$(sudo -n /usr/local/sbin/teletraan-install-tree "$work" "$commit" 2>&1) && status=0 || status=$?
+  [ -z "$out" ] || printf '%s\n' "$out"
+  if [ "$status" -ne 0 ]; then
+    case $out in
+      *"password is required"*|*"a terminal is required"*) echo "The install needs the sudoers rule. Run the installer again from the Mac tool (menu 1)." ;;
+    esac
     echo "The install stopped. The wall is unchanged."
   fi
   rm -rf "$work"
