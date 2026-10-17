@@ -96,14 +96,14 @@ export function rotationField() {
     title: 'Ticker',
     type: 'object',
     group: 'screen',
-    description: 'How long each ticker line stays. The panels, their order and their seconds are set in Views, under Settings in the sidebar.',
+    description: 'How long each ticker line stays. The panels, their order and their seconds are on the Rotation page in the sidebar.',
     fields: [
       defineField({
         name: 'order',
         title: 'Panel order',
         type: 'array',
         hidden: true,
-        description: 'Not used any more. The rows of each View (Views under Settings in the sidebar) replace this list. It stays so that a saved list is kept.',
+        description: 'Not used any more. The rows of each View (Views, under SCREEN) replace this list. It stays so that a saved list is kept.',
         of: [stepMember(allPanels, true)],
         initialValue: startingList(allPanels),
         components: { input: PanelOrderInput },

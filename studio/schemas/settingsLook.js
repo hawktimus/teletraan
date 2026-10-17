@@ -1,7 +1,7 @@
 // The weekday schedule and the fields the Screens replaced, in the Look tab of Dashboard Settings.
 //
 //   screenSchedule  a picker for each day of the week, Monday to Sunday, that chose the Screen that played
-//                   that day. It is hidden now: the Themes page picks the theme of each day and stores it in
+//                   that day. It is hidden now: the Themes and backgrounds page picks the theme of each day and stores it in
 //                   themeByWeekday (settingsViews.js). The saved schedule is kept.
 //
 // The four fields the Screens replaced stay in the schema, hidden, with what was saved in them, so
@@ -59,7 +59,7 @@ function dayField(day) {
     name: day.name,
     title: day.title,
     type: 'string',
-    description: 'Not used any more. The theme of ' + day.title + ' is set on the Themes page.',
+    description: 'Not used any more. The theme of ' + day.title + ' is set on the Themes and backgrounds page.',
     options: { list: styles, layout: 'radio', direction: 'horizontal' },
     initialValue: day.start,
     validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
@@ -74,7 +74,7 @@ function scheduleField() {
     type: 'object',
     group: 'look',
     hidden: true,
-    description: 'Not used any more. The Themes page picks the theme of each day. It stays so that a saved schedule is kept.',
+    description: 'Not used any more. The Themes and backgrounds page picks the theme of each day. It stays so that a saved schedule is kept.',
     fields: weekdays.map(dayField),
   });
 }

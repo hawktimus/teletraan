@@ -2,7 +2,7 @@
 // page of its own, not a document. It has six blocks, top to bottom: what the
 // screen is, a picture of the screen, the three steps of every meeting, the
 // status of the Teletraan computer, links to the control page, the Studio on the web and the
-// guides, and a line for the coaches' pages. It has no buttons that act on the
+// guides, and the lines for the coaches' pages (including how to put a team's standard colors back). It has no buttons that act on the
 // screen: those are on the control page.
 //
 // The words and numbers that need no Studio are in start-here-parts.js, so that
@@ -12,7 +12,7 @@
 // h(tag, props, ...children) is React's createElement.
 
 import { createElement } from 'react';
-import { screen, areas, labelsOf, links, isReal, clickLine } from './start-here-parts.js';
+import { screen, areas, labelsOf, links, isReal, clickLine, dotsLine } from './start-here-parts.js';
 import { StatusInput } from './status-input.js';
 
 const h = createElement;
@@ -25,7 +25,7 @@ const primaryBackground = 'var(--card-badge-primary-bg-color, #dbeafe)';
 const primaryText = 'var(--card-badge-primary-fg-color, #1e40af)';
 
 const styles = {
-  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 32px' },
+  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 16px' },
   column: { maxWidth: 760, margin: '0 auto' },
   heading: { fontSize: 24, fontWeight: 600, margin: '0 0 8px' },
   subheading: { fontSize: 16, fontWeight: 600, margin: '32px 0 8px' },
@@ -68,7 +68,8 @@ function whatItIs() {
   return h(
     'div',
     { 'data-block': 'what' },
-    h('p', { style: styles.text }, 'Teletraan I is the screen on the wall, and Publish all is the last step of every change.')
+    h('p', { style: styles.text }, 'Teletraan I is the screen on the wall, and Publish all is the last step of every change.'),
+    h('p', { style: styles.muted }, 'The sidebar goes by what you do. SCREEN is what plays and how it looks. TASKS is the work of the day. EVENTS is the calendars. PEOPLE is the roster and the photos. COACHES ONLY is for coaches.')
   );
 }
 
@@ -107,7 +108,7 @@ function pictureOfTheScreen() {
         h('rect', { x: 4, y: 4, width: screen.width - 8, height: screen.height - 8, rx: 24, style: styles.screenEdge }),
         areas.map(areaShapes)
       ),
-      h('figcaption', { style: styles.caption }, 'Each box is a part of the screen. The words in a box are the sidebar items that fill it. ' + clickLine)
+      h('figcaption', { style: styles.caption }, 'Each box is a part of the screen. The words in a box are the sidebar items that fill it. ' + clickLine + ' ' + dotsLine)
     )
   );
 }
@@ -153,7 +154,8 @@ function forCoaches() {
   return h(
     'div',
     { 'data-block': 'coaches' },
-    h('p', { style: styles.muted }, 'Anything under Coaches only is for a coach, so ask a coach.')
+    h('p', { style: styles.muted }, 'Anything under Coaches only is for a coach, so ask a coach.'),
+    h('p', { style: styles.muted }, 'Each team keeps its own colors. To put the standard ones back, open the team under Teams. Click the menu beside Publish. Choose Use the standard colors for this team. Then click Publish.')
   );
 }
 

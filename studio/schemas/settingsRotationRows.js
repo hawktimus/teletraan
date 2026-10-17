@@ -1,4 +1,5 @@
-// The one ordered rotation list of Dashboard Settings (docs/views.md, "The rotation"), in the Look tab.
+// The one ordered rotation list of Dashboard Settings (docs/views.md, "The rotation"). Editors change it on the Rotation page (inputs/rotation-view.js);
+// the field is in the Advanced tab as the full form.
 //
 //   transitionSeconds  how long a whole panel or view transition takes, 2 to 4 seconds, 3 to start with (dashboard/config.js)
 //   rotationRows  the rows the large panel plays, top to bottom, each { view, panel, seconds, shown }. Drag a row to move it.
@@ -91,10 +92,10 @@ export function rotationRowsFields() {
   return [
     defineField({
       name: 'rotationRows',
-      title: 'Rotation',
+      title: 'Rotation (full form)',
       type: 'array',
-      group: 'look',
-      description: 'What the large panel plays, top to bottom, then again. Drag a row to move it. Rows of one view in a row are a block. Empty plays the default rotation.',
+      group: 'advanced',
+      description: 'The same list as the Rotation page in the sidebar. Use that page. This form is only for a row the page cannot fix.',
       of: [rotationRow],
       components: { input: RotationInput },
     }),

@@ -1,11 +1,12 @@
-// The sidebar. To change the order, move a line in sidebarEntries below.
+// The sidebar. To change the order, move a line in sidebarEntries below. It is ordered by what people do:
+// SCREEN (what plays and how it looks), TASKS, EVENTS, PEOPLE and COACHES ONLY. docs/studio-map.md says what lives where.
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
 // here either: they come from the team's Monday boards, and Monday Tasks lists them
 // with one switch each, Show on TV. Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
 // which the screen no longer reads), place (a task's Location field adds and opens
-// them) and demo (its buttons are on Start here). The status documents, which the Teletraan computer
+// them) and demo (its buttons moved to the control page). The status documents, which the Teletraan computer
 // writes, have no line either: status, which the status block in Dashboard Settings
 // shows, calendarStatus, which the Calendars page shows, and frcStatus and mondayStatus,
 // which the connection blocks of the Competition and Monday tabs show. tests/schemas.test.mjs
@@ -17,8 +18,8 @@
 //                     thenBy sorts the documents that sort alike by a second field. add names
 //                     the template in add-templates.js that the plus button of the list makes.
 //                     add: [] takes the plus button away
-//   kind 'page'       opens the one document of its type, which has a fixed id. The three Screens
-//                     are three pages of one type, each with an id of its own (screen-ids.js)
+//   kind 'page'       opens the one document of its type, which has a fixed id. The old Screens
+//                     and the Views are pages of one type each, each with an id of its own (screen-ids.js, view-ids.js)
 //   kind 'group'      a folder: opens a list of the lines under entries. A folder holds
 //                     lists, pages and one more folder, which holds lists or pages. add names
 //                     the types, or the templates in add-templates.js, that the plus button
@@ -54,6 +55,7 @@ import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
 import { PanelLeftIcon } from '@sanity/icons/PanelLeft';
+import { PlayIcon } from '@sanity/icons/Play';
 import { PresentationIcon } from '@sanity/icons/Presentation';
 import { ProjectsIcon } from '@sanity/icons/Projects';
 import { SparkleIcon } from '@sanity/icons/Sparkle';
@@ -74,6 +76,7 @@ import { milestonesChild } from './inputs/monday-boards-parts.js';
 import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 import { ThemesView } from './inputs/themes-view.js';
+import { RotationView } from './inputs/rotation-view.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
@@ -85,19 +88,22 @@ export const demoType = 'demo';
 export const demoId = 'demo';
 export const singletonTypes = [settingsType, themeType, demoType];
 
-// The three Screens, Original, Cybertron and Minimal, are pages of one type with an id each. They
-// are the second line of the sidebar, right under Start here.
+// The three old Screens, Original, Cybertron and Minimal, are pages of one type with an id each. The wall
+// does not play them any more (the Rotation page and the Views replaced them). They sit in the folder Old
+// screens (not used) under COACHES ONLY, so nothing already typed is lost.
 export { screenType };
 export const screenIds = screenStyles.map(screenIdOf);
 const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
 const screenPages = screenStyles.map(style => ({ kind: 'page', title: screenTitles[style], icon: screenIcons[style], type: screenType, id: screenIdOf(style) }));
 
-// The four Views, General, Prime, Nova and Family, are pages of one type with an id each. They sit in a folder
-// under Settings, next to Themes.
+// The four Views, Robotics, Prime, Nova and Family, are pages of one type with an id each. The rotation plays
+// Robotics, Prime and Nova, so those three sit in the folder Views under SCREEN. Family is not in the rotation
+// and sits with the old screens.
 export { viewType };
 export const viewIds = viewKeys.map(viewIdOf);
+const familyPage = { kind: 'page', title: viewTitles.family, icon: FaceHappyIcon, type: viewType, id: viewIdOf('family') };
 const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIcon, family: FaceHappyIcon };
-const viewPages = viewKeys.map(key => ({ kind: 'page', title: viewTitles[key], icon: viewIcons[key], type: viewType, id: viewIdOf(key) }));
+const viewPages = viewKeys.filter(key => key !== 'family').map(key => ({ kind: 'page', title: viewTitles[key], icon: viewIcons[key], type: viewType, id: viewIdOf(key) }));
 
 // The same version as the screen's own questions to Sanity
 const apiVersion = '2025-02-19';
@@ -132,7 +138,13 @@ const tasksHidden = 'source != "monday" || showOnTv == false || showOnBoard == f
 
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
-  { kind: 'group', title: 'Screens', icon: StackIcon, id: 'screens', entries: screenPages },
+  { kind: 'divider', title: 'SCREEN' },
+  { kind: 'component', title: 'Rotation', id: 'rotation', icon: PlayIcon, component: RotationView },
+  { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
+  { kind: 'component', title: 'Themes and backgrounds', id: 'themes', icon: HighlightIcon, component: ThemesView },
+  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
+  { kind: 'list', title: 'Announcements', icon: BellIcon, type: 'announcement', sort: latestStart, add: ['newAnnouncement'] },
+  { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
   { kind: 'divider', title: 'TASKS' },
   {
     kind: 'group',
@@ -168,31 +180,25 @@ export const sidebarEntries = [
   },
   { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsTabs, children: tasksOfBoard },
   { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
-  { kind: 'list', title: 'Announcements', icon: BellIcon, type: 'announcement', sort: latestStart, add: ['newAnnouncement'] },
   { kind: 'divider', title: 'EVENTS' },
   { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
   { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
-  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
-  { kind: 'divider', title: 'ROSTER' },
+  { kind: 'divider', title: 'PEOPLE' },
   { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
   { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
   { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
   { kind: 'list', title: 'Photos', icon: ImagesIcon, type: 'photo', sort: newestUploadFirst, add: ['newPhoto'] },
   { kind: 'divider', title: 'COACHES ONLY' },
+  { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
+  { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
+  { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
   {
     kind: 'group',
-    title: 'Settings',
-    icon: CogIcon,
-    id: 'settings',
-    entries: [
-      { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
-      { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
-      { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
-      { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
-      { kind: 'component', title: 'Themes', id: 'themes', icon: HighlightIcon, component: ThemesView },
-    ],
+    title: 'Old screens (not used)',
+    icon: StackIcon,
+    id: 'oldScreens',
+    entries: [{ kind: 'divider', title: 'The wall does not play these. They are kept so nothing is lost.' }].concat(screenPages, [familyPage]),
   },
-  { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
 ];
 
 // The list of one kind of document that a sidebar entry opens. times is { since, now }.

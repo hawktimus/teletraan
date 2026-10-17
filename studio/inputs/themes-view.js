@@ -1,7 +1,8 @@
-// The Themes page, in the sidebar under Settings. It is a page of its own, not a document. It lists
+// The Themes and backgrounds page, under SCREEN in the sidebar. It is a page of its own, not a document. It lists
 // the themes and holds the weekday schedule: a picker for each day of the week that chooses the theme
-// that plays that day. The schedule is the field themeByWeekday of Dashboard Settings; this page
-// writes only that field, to the draft of Dashboard Settings, and Publish all puts it on the screen.
+// that plays that day. The schedule is the field themeByWeekday of Dashboard Settings; the background of the
+// Original theme is the field background. This page writes only those two fields, to the draft of Dashboard
+// Settings, and Publish all puts them on the screen.
 //
 // If Dashboard Settings has never been published the
 // page says to open it and publish it once, as the Start here page did.
@@ -12,6 +13,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { themeChoices, themeWeekdays, tidyThemeByWeekday } from './theme-ids.js';
+import { backgroundChoices, backgroundIds } from './background-ids.js';
 
 const h = createElement;
 
@@ -24,7 +26,7 @@ const border = '1px solid var(--card-border-color, rgba(128, 128, 128, 0.4))';
 const muted = 'var(--card-muted-fg-color, inherit)';
 
 const styles = {
-  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 32px' },
+  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 16px' },
   column: { maxWidth: 760, margin: '0 auto' },
   heading: { fontSize: 24, fontWeight: 600, margin: '0 0 8px' },
   subheading: { fontSize: 16, fontWeight: 600, margin: '32px 0 8px' },
@@ -32,13 +34,17 @@ const styles = {
   muted: { color: muted, lineHeight: 1.5, margin: '0 0 16px' },
   failed: { color: 'var(--card-badge-critical-fg-color, #b91c1c)', lineHeight: 1.5, margin: '0 0 16px' },
   list: { margin: '0 0 16px', paddingLeft: 24, lineHeight: 1.5 },
-  day: { display: 'flex', alignItems: 'center', gap: 16, margin: '0 0 8px' },
+  day: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 16px', margin: '0 0 8px' },
   dayName: { minWidth: 120, fontWeight: 600 },
-  select: { boxSizing: 'border-box', minHeight: 40, padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },
+  choice: { display: 'flex', alignItems: 'flex-start', gap: 12, minHeight: 44, margin: '0 0 8px', cursor: 'pointer' },
+  radio: { width: 24, height: 24, flex: '0 0 24px', margin: '10px 0 0' },
+  select: { boxSizing: 'border-box', minHeight: 44, maxWidth: '100%', padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },
 };
 
 export const words = {
   intro: 'A theme is a style: frames, textures, type and transitions. Every view looks the same in every theme.',
+  background: 'Background of the Original theme',
+  backgroundHelp: 'It is drawn behind the panels when the day plays Original. The other themes draw their own. Calm motion draws each one still.',
   schedule: 'The theme of each day of the week',
   scheduleHelp: 'The day is the calendar day in the time zone of the Look page. The theme is picked at start-up and at the first row change after midnight. Click Publish all in the top bar to put a change on the screen.',
   reading: 'Reading Dashboard Settings.',
@@ -49,7 +55,7 @@ export const words = {
 
 // What the page asks for: the draft of Dashboard Settings and the published one, in the raw
 // perspective, so that the draft wins when both exist
-const question = '*[_id in [$draft, $published]]{ _id, _type, themeByWeekday }';
+const question = '*[_id in [$draft, $published]]{ _id, _type, themeByWeekday, background }';
 
 // The schedule to show, from the documents found: the draft first, then the published one. Nothing
 // when neither exists.
@@ -61,9 +67,26 @@ export function scheduleFrom(documents) {
   return source ? tidyThemeByWeekday(source.themeByWeekday) : null;
 }
 
+// The background to show, from the documents found: the draft first, then the published one. Sweep when it has none
+// or one that does not exist. Nothing when there is neither document.
+export function backgroundFrom(documents) {
+  const found = Array.isArray(documents) ? documents : [];
+  const source = found.filter(doc => doc && doc._id === draftId)[0] || found.filter(doc => doc && doc._id === settingsId)[0];
+  if (!source) return null;
+  return backgroundIds.indexOf(source.background) !== -1 ? source.background : 'sweep';
+}
+
 // Writes the whole schedule to the draft of Dashboard Settings. The draft is made from the published
 // document first when there is none, so the other fields are kept. It gives back a promise.
-export async function saveSchedule(client, schedule) {
+export function saveSchedule(client, schedule) {
+  return saveFields(client, { themeByWeekday: schedule });
+}
+
+export function saveBackground(client, background) {
+  return saveFields(client, { background: background });
+}
+
+async function saveFields(client, fields) {
   const published = await client.getDocument(settingsId);
   const draft = await client.getDocument(draftId);
   if (!draft && !published) throw new Error(words.notPublished);
@@ -72,7 +95,7 @@ export async function saveSchedule(client, schedule) {
     ['_rev', '_createdAt', '_updatedAt'].forEach(name => delete copy[name]);
     await client.createIfNotExists(copy);
   }
-  return client.patch(draftId).set({ themeByWeekday: schedule }).commit();
+  return client.patch(draftId).set(fields).commit();
 }
 
 function themeList() {
@@ -96,8 +119,28 @@ function dayRow(day, schedule, change, busy) {
   );
 }
 
+function backgroundChoice(choice, state, changeBackground) {
+  return h(
+    'label',
+    { key: choice.id, style: styles.choice },
+    h('input', { type: 'radio', name: 'background', value: choice.id, checked: state.background === choice.id, disabled: state.busy, style: styles.radio, onChange: () => changeBackground(choice.id) }),
+    h('span', null, h('strong', null, choice.title), ' ', choice.description)
+  );
+}
+
+function backgroundBlock(state, changeBackground) {
+  if (!state.background || typeof changeBackground !== 'function') return null;
+  return h(
+    'div',
+    { 'data-block': 'background' },
+    h('h2', { style: styles.subheading }, words.background),
+    h('p', { style: styles.muted }, words.backgroundHelp),
+    backgroundChoices.map(choice => backgroundChoice(choice, state, changeBackground))
+  );
+}
+
 // The page for what it knows: schedule is null while reading or when there is no Dashboard Settings
-export function pageOf(state, change) {
+export function pageOf(state, change, changeBackground) {
   let body;
 
   if (!state.read) body = h('p', { style: styles.muted }, words.reading);
@@ -110,12 +153,13 @@ export function pageOf(state, change) {
     h(
       'div',
       { style: styles.column },
-      h('h1', { style: styles.heading }, 'Themes'),
+      h('h1', { style: styles.heading }, 'Themes and backgrounds'),
       h('p', { style: styles.text }, words.intro),
       themeList(),
       h('h2', { style: styles.subheading }, words.schedule),
       h('p', { style: styles.muted }, words.scheduleHelp),
       body,
+      state.schedule ? backgroundBlock(state, changeBackground) : null,
       state.text ? h('p', { role: state.failed ? 'alert' : undefined, 'aria-live': 'polite', style: state.failed ? styles.failed : styles.muted }, state.text) : null
     )
   );
@@ -123,7 +167,7 @@ export function pageOf(state, change) {
 
 export function ThemesView() {
   const client = useClient({ apiVersion: apiVersion });
-  const [state, setState] = useState({ read: false, schedule: null, busy: false, text: '', failed: false });
+  const [state, setState] = useState({ read: false, schedule: null, background: null, busy: false, text: '', failed: false });
 
   useEffect(() => {
     let stopped = false;
@@ -131,10 +175,10 @@ export function ThemesView() {
     Promise.resolve()
       .then(() => client.fetch(question, { draft: draftId, published: settingsId }, { perspective: 'raw' }))
       .then(found => {
-        if (!stopped) setState({ read: true, schedule: scheduleFrom(found), busy: false, text: '', failed: false });
+        if (!stopped) setState({ read: true, schedule: scheduleFrom(found), background: backgroundFrom(found), busy: false, text: '', failed: false });
       })
       .catch(() => {
-        if (!stopped) setState({ read: true, schedule: null, busy: false, text: '', failed: false });
+        if (!stopped) setState({ read: true, schedule: null, background: null, busy: false, text: '', failed: false });
       });
     return () => {
       stopped = true;
@@ -146,9 +190,17 @@ export function ThemesView() {
     setState(Object.assign({}, state, { schedule: schedule, busy: true, text: '', failed: false }));
 
     return saveSchedule(client, schedule)
-      .then(() => setState({ read: true, schedule: schedule, busy: false, text: words.saved, failed: false }))
-      .catch(error => setState({ read: true, schedule: state.schedule, busy: false, text: words.problem + (error && error.message ? error.message : ''), failed: true }));
+      .then(() => setState(Object.assign({}, state, { schedule: schedule, busy: false, text: words.saved, failed: false })))
+      .catch(error => setState(Object.assign({}, state, { busy: false, text: words.problem + (error && error.message ? error.message : ''), failed: true })));
   }
 
-  return pageOf(state, change);
+  function changeBackground(background) {
+    setState(Object.assign({}, state, { background: background, busy: true, text: '', failed: false }));
+
+    return saveBackground(client, background)
+      .then(() => setState(Object.assign({}, state, { background: background, busy: false, text: words.saved, failed: false })))
+      .catch(error => setState(Object.assign({}, state, { busy: false, text: words.problem + (error && error.message ? error.message : ''), failed: true })));
+  }
+
+  return pageOf(state, change, changeBackground);
 }
