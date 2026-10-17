@@ -1,5 +1,49 @@
-/* The Robotics view belongs to both teams, so it draws no team plate. The banner of the standard layout and the side column
-   of the bar layout hide it while the page says data-plate="family" (panels/banner, panels/bar-column). */
+/* The Robotics view belongs to both teams, so its team plate shows both numbers. The stylesheet reads the view from the
+   page (html[data-view], core/view-apply.js), so the plate is right the moment the view changes, with no panel drawn again.
+   The panels write only data-plate: "two" when two teams have a number, "one" when there is one (panels/banner,
+   panels/bar-column).
 
-.banner[data-plate="family"] .team-plate,
-.bar-column[data-plate="family"] .bar-team { display: none; }
+   Standard layout: one wide plate, TEAM 3229 & TEAM 3426, at the size of the single plate's text.
+   Bar layout: the plain part of the narrow plate is 49px high, so two lines fit only at 30px with 24px between them
+   (the size of a chip). The first number is in the label color and the second in the second accent. */
+
+.banner .team-plate .team-both,
+.banner .team-plate svg:nth-of-type(2),
+.bar-column .bar-team .team-both { display: none; }
+
+html[data-view="general"] .banner[data-plate="two"] .team-plate { width: 940px; }
+html[data-view="general"] .banner[data-plate="two"] .team-plate svg:nth-of-type(1),
+html[data-view="general"] .banner[data-plate="two"] .team-plate .team-line,
+html[data-view="general"] .bar-column[data-plate="two"] .bar-team .team-line { display: none; }
+html[data-view="general"] .banner[data-plate="two"] .team-plate svg:nth-of-type(2) { display: block; }
+html[data-view="general"] .banner[data-plate="two"] .team-plate .team-both { display: flex; }
+/* The wide plate leaves no room beside it for SAMPLE CONTENT, so on this view the badge sits over the hawk in two lines, as
+   it does in the side column of the bar layout. */
+html[data-view="general"] .banner[data-plate="two"] .sample-badge {
+  left: -250px;
+  top: 76px;
+  z-index: 1;
+  width: 230px;
+  height: 88px;
+  padding: 0;
+  text-align: center;
+  white-space: normal;
+}
+.banner .team-both i { font-style: normal; }
+.banner .team-both i.second { margin-left: 22px; }
+.banner .team-both i.second b { margin-left: 16px; }
+
+html[data-view="general"] .bar-column[data-plate="two"] .bar-team .team-both {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bar-column .bar-team .team-both em {
+  display: block;
+  letter-spacing: 0;
+  font: 700 30px/24px var(--font-display);
+  font-style: normal;
+  color: var(--team-label);
+}
+.bar-column .bar-team .team-both em + em { color: var(--team-pink); }
+.bar-column .bar-team .team-both b { margin-left: 8px; color: inherit; }

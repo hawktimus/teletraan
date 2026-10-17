@@ -12,7 +12,7 @@ import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { teamPlateMarkup } from '../../core/plate.js';
-import { teamShown } from '../../core/teams.js';
+import { teamNumbersOf, teamShown } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
 
 // Sizes that the stylesheet repeats. Change them together.
@@ -44,6 +44,7 @@ export function mount(host, content) {
         <div class="bar-team" data-part="team-plate">
           ${teamPlateMarkup(TEAM_PLATE_WIDTH)}
           <span class="team-line">TEAM <b class="team-number"></b></span>
+          <span class="team-both"><em>TEAM <b class="number-first"></b></em><em class="second">TEAM <b class="number-second"></b></em></span>
         </div>
         <div class="bar-school" data-part="school"><span class="school-text"></span></div>
         <span class="bar-sample" data-part="sample-badge"></span>
@@ -95,8 +96,12 @@ export function update(element, content) {
   const markup = weather ? weatherIcon(weather.code, weather.isDay, ICON_SIZE) : '';
   if (icon.innerHTML !== markup) icon.innerHTML = markup;
 
-  const plate = viewNow() === 'general' ? 'family' : 'one';
-  if (element.dataset.plate !== plate) element.dataset.plate = plate;
+  // The Robotics view shows both numbers; the stylesheet reads the view from the page (family-line.css)
+  const numbers = teamNumbersOf(content);
+  setText(element, '.number-first', numbers[0] || '');
+  setText(element, '.number-second', numbers[1] || '');
+  const count = numbers.length > 1 ? 'two' : 'one';
+  if (element.dataset.plate !== count) element.dataset.plate = count;
 
   const status = content.status || {};
   setText(element, '.bar-sample', status.source === 'sample' ? 'SAMPLE CONTENT' : '');

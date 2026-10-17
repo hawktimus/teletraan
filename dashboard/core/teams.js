@@ -288,6 +288,15 @@ export function teamShown(content, team = currentTeam()) {
   });
 }
 
+// The numbers on the team plate of the Robotics view: Prime's and then Nova's, from the Team documents. A team
+// that has no document has no number here, so one document gives one number.
+export function teamNumbersOf(content) {
+  const order = ['prime', 'nova'];
+  const list = activeTeams(teams).filter(team => order.includes(team.code));
+  list.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
+  return list.map(team => teamShown(content, team).number).filter(number => typeof number === 'string' && number !== '');
+}
+
 // Reads the team list and the Teams settings from the content and works out the wanted team.
 // The first call puts the team on the page at once, because there is nothing yet to change. After
 // that a different team waits for changeTeamNow(), or goes on after waitedTooLong. The same

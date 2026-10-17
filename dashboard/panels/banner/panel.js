@@ -10,9 +10,11 @@ import { frameKind, plateMarkup, teamPlateMarkup } from '../../core/plate.js';
 import { themeArtMarkup } from '../../core/theme-art.js';
 import { layoutNow } from '../../core/layout.js';
 import { shapesNow } from '../../core/style.js';
-import { teamShown, trimNow } from '../../core/teams.js';
+import { teamNumbersOf, teamShown, trimNow } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
 import { viewLabelsNow, viewNow } from '../../core/view-apply.js';
+
+const WIDE_PLATE_WIDTH = 940; // .team-plate on the Robotics view (family-line.css)
 
 export function mount(host, content) {
   const kind = frameKind('banner', layoutNow(), shapesNow(), trimNow());
@@ -29,7 +31,9 @@ export function mount(host, content) {
             <h1 class="team-name" data-part="title" data-name-effect></h1>
             <div class="team-plate" data-part="team-plate">
               ${teamPlateMarkup()}
+              ${teamPlateMarkup(WIDE_PLATE_WIDTH)}
               <span class="team-line">TEAM <b class="team-number"></b></span>
+              <span class="team-both"><i>TEAM <b class="number-first"></b></i><i class="second">& TEAM <b class="number-second"></b></i></span>
             </div>
             <span class="sample-badge" data-part="sample-badge"></span>
           </div>
@@ -107,7 +111,7 @@ export function update(element, content) {
   const subtitle = /\bdashboard\b/i.test(name) ? 'off' : 'on';
   if (element.dataset.subtitle !== subtitle) element.dataset.subtitle = subtitle;
   setText(element, '.team-number', team.number);
-  setPlate(element);
+  setNumbers(element, content);
   setText(element, '.school', content.team.school);
   showTeamLogo(element.querySelector('.logo'), team.logo);
   showLogoTeam(element.querySelector('.logo'), logoTeamOf(team.code, viewNow()));
@@ -128,10 +132,14 @@ export function update(element, content) {
   setLine(element, line);
 }
 
-// The Robotics view belongs to both teams, so it has no team plate. Any other view shows the one team's.
-function setPlate(element) {
-  const wanted = viewNow() === 'general' ? 'family' : 'one';
-  if (element.dataset.plate !== wanted) element.dataset.plate = wanted;
+// The Robotics view shows both numbers on a wide plate. Whether it is the Robotics view is read by the stylesheet from the
+// page (family-line.css), so a change of view needs no redraw. Only the numbers are written here.
+function setNumbers(element, content) {
+  const numbers = teamNumbersOf(content);
+  setText(element, '.number-first', numbers[0] || '');
+  setText(element, '.number-second', numbers[1] || '');
+  const count = numbers.length > 1 ? 'two' : 'one';
+  if (element.dataset.plate !== count) element.dataset.plate = count;
 }
 
 // panels/banner/panel.css reads data-line to give the line its place

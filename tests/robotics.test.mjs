@@ -37,15 +37,15 @@ test('the title of the Robotics banner is HAWKTIMUS ROBOTICS and no view draws a
   ['general', 'prime', 'nova'].forEach(key => assert.equal(playing.viewShowsTag(content, key), false));
 });
 
-test('the Robotics view draws no team plate, in both layouts', () => {
+test('the Robotics view shows both team numbers on the team plate, in both layouts', () => {
   ['panels/banner/panel.js', 'panels/bar-column/panel.js'].forEach(file => {
     const code = read(file);
-    assert.ok(code.includes("viewNow() === 'general'"), file + ' knows the Robotics view');
-    assert.ok(!code.includes('roboticsPlate') && !code.includes('family-line'), file + ' has no text for the plate');
+    assert.ok(code.includes('teamNumbersOf(content)') && code.includes('number-second'), file + ' has both numbers');
   });
   const css = read('family-line.css');
-  assert.ok(/\.banner\[data-plate="family"\] \.team-plate/.test(css) && /\.bar-column\[data-plate="family"\] \.bar-team/.test(css), 'the plate is hidden in both layouts');
-  assert.equal(config.roboticsPlate, undefined, 'the words are gone from config');
+  assert.ok(/html\[data-view="general"\] \.banner\[data-plate="two"\] \.team-plate \{ width: 940px; \}/.test(css), 'one wide plate in the standard layout');
+  assert.ok(/html\[data-view="general"\] \.bar-column\[data-plate="two"\]/.test(css), 'two lines in the side column');
+  assert.equal(config.roboticsPlate, undefined, 'there are no words for the plate in config');
 });
 
 test('Design and CNC are one department, DESIGN · CNC, with the tasks of both', () => {
