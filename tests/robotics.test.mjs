@@ -37,17 +37,15 @@ test('the title of the Robotics banner is HAWKTIMUS ROBOTICS and no view draws a
   ['general', 'prime', 'nova'].forEach(key => assert.equal(playing.viewShowsTag(content, key), false));
 });
 
-test('the team plate has TWO TEAMS and ONE FAMILY and no number on the Robotics view, in both layouts', () => {
-  assert.deepEqual(config.roboticsPlate, ['TWO TEAMS', 'ONE FAMILY']);
+test('the Robotics view draws no team plate, in both layouts', () => {
   ['panels/banner/panel.js', 'panels/bar-column/panel.js'].forEach(file => {
     const code = read(file);
-    assert.ok(code.includes('roboticsPlate[0]') && code.includes('roboticsPlate[1]'), file);
     assert.ok(code.includes("viewNow() === 'general'"), file + ' knows the Robotics view');
+    assert.ok(!code.includes('roboticsPlate') && !code.includes('family-line'), file + ' has no text for the plate');
   });
   const css = read('family-line.css');
-  assert.ok(/\.family-line em \+ em \{ color: var\(--team-pink\); \}/.test(css), 'the second line is in the second accent');
-  assert.ok(/\.family-line em \{[^}]*color: var\(--team-label\)/.test(css), 'the first line is in the label color');
-  assert.ok(!read('panels/banner/panel.js').includes('team-number-more'), 'the plate of both numbers is gone');
+  assert.ok(/\.banner\[data-plate="family"\] \.team-plate/.test(css) && /\.bar-column\[data-plate="family"\] \.bar-team/.test(css), 'the plate is hidden in both layouts');
+  assert.equal(config.roboticsPlate, undefined, 'the words are gone from config');
 });
 
 test('Design and CNC are one department, DESIGN · CNC, with the tasks of both', () => {

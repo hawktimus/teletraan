@@ -45,6 +45,6 @@ export {
   primeTeam, invertedHeaderInk,
 } from './config-more.js';
 export {
-  defaultRotationRows, rotationViews, rotationAliases, rotationKeyOfView, roboticsTitle, roboticsPlate, olderGeneralTitle,
+  defaultRotationRows, rotationViews, rotationAliases, rotationKeyOfView, roboticsTitle, olderGeneralTitle,
   transitionSecondsRange, placeholderPanels, designDepartment, bothTeamDepartments, rosterPageRows, roboticsWidePanels,
 } from './config-rotation.js';

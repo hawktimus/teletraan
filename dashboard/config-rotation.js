@@ -8,7 +8,6 @@ export const rotationKeyOfView = { robotics: 'general', prime: 'prime', nova: 'n
 
 // The words the Robotics banner and team plate carry. There is no team number on the view.
 export const roboticsTitle = 'HAWKTIMUS ROBOTICS';
-export const roboticsPlate = ['TWO TEAMS', 'ONE FAMILY'];
 // The title the General view had before Robotics. A stored title that is still this one reads as the new title.
 export const olderGeneralTitle = 'Hawktimus Dashboard';
 

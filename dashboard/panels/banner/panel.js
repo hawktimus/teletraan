@@ -2,7 +2,6 @@
 // it stands on a plate (frameKind in core/plate.js, with the corners the page's style has).
 
 import * as frame from '../../frame.js';
-import { roboticsPlate } from '../../config.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
@@ -31,7 +30,6 @@ export function mount(host, content) {
             <div class="team-plate" data-part="team-plate">
               ${teamPlateMarkup()}
               <span class="team-line">TEAM <b class="team-number"></b></span>
-              <span class="family-line"><em>${roboticsPlate[0]}</em><em>${roboticsPlate[1]}</em></span>
             </div>
             <span class="sample-badge" data-part="sample-badge"></span>
           </div>
@@ -130,8 +128,7 @@ export function update(element, content) {
   setLine(element, line);
 }
 
-// The Robotics view belongs to both teams, so its plate has no number: it says TWO TEAMS and ONE FAMILY on two lines.
-// Any other view shows the one team.
+// The Robotics view belongs to both teams, so it has no team plate. Any other view shows the one team's.
 function setPlate(element) {
   const wanted = viewNow() === 'general' ? 'family' : 'one';
   if (element.dataset.plate !== wanted) element.dataset.plate = wanted;

@@ -74,7 +74,7 @@ The seven rows of a department are, in order: Tasks in progress (`monday-tasks`)
 
 ## Robotics
 
-- The banner title is HAWKTIMUS ROBOTICS (Look tab, Title of the Robotics view; the older default title reads as the new one). There is no team number anywhere on the view. The team plate says TWO TEAMS and ONE FAMILY on two lines, the first in the label color and the second in the second accent, at 30px because two lines do not fit the plate at 44px (`family-line.css`).
+- The banner title is HAWKTIMUS ROBOTICS (Look tab, Title of the Robotics view; the older default title reads as the new one). There is no team number anywhere on the view. The view draws no team plate (`family-line.css` hides it in both layouts).
 - The look is the Prime look: its logo and colors. Items that are for one team show for Prime and the shared ones for both.
 - Two layouts, chosen for each row by its panel (`roboticsWidePanels` in `config-rotation.js`). Split is the standard layout: the main panel at the left, the Gamedrop countdown with its red clock frame at the top right and Panel B at the bottom right. Wide is the bar layout: the countdown in the banner and the side column at the left. The Monday cards, the roster and the two placeholders are wide, and every other panel is split. A change of layout between two rows is a swap.
 - Prime and Nova keep their structure. Nova is mirrored.

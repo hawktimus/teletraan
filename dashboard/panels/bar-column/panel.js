@@ -7,7 +7,6 @@
 // each).
 
 import * as frame from '../../frame.js';
-import { roboticsPlate } from '../../config.js';
 import { viewNow } from '../../core/view-apply.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
@@ -45,7 +44,6 @@ export function mount(host, content) {
         <div class="bar-team" data-part="team-plate">
           ${teamPlateMarkup(TEAM_PLATE_WIDTH)}
           <span class="team-line">TEAM <b class="team-number"></b></span>
-          <span class="family-line"><em>${roboticsPlate[0]}</em><em>${roboticsPlate[1]}</em></span>
         </div>
         <div class="bar-school" data-part="school"><span class="school-text"></span></div>
         <span class="bar-sample" data-part="sample-badge"></span>

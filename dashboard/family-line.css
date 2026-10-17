@@ -1,23 +1,5 @@
-/* The team plate of the Robotics view has no team number. It says TWO TEAMS and ONE FAMILY on two lines, the first in the
-   label color and the second in the second accent. The plain part of the plate is 49px high, so two lines fit only at
-   30px (the size of a chip) with 24px between them. Both the banner of the standard layout and the side column of the
-   bar layout draw the same two spans (panels/banner, panels/bar-column), shown while the page says data-plate="family". */
+/* The Robotics view belongs to both teams, so it draws no team plate. The banner of the standard layout and the side column
+   of the bar layout hide it while the page says data-plate="family" (panels/banner, panels/bar-column). */
 
-.banner .team-plate .family-line,
-.bar-column .bar-team .family-line { display: none; }
-.banner[data-plate="family"] .team-plate .team-line,
-.bar-column[data-plate="family"] .bar-team .team-line { display: none; }
-.banner[data-plate="family"] .team-plate .family-line,
-.bar-column[data-plate="family"] .bar-team .family-line {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.family-line em {
-  display: block;
-  letter-spacing: 0;
-  font: 700 30px/24px var(--font-display);
-  font-style: normal;
-  color: var(--team-label);
-}
-.family-line em + em { color: var(--team-pink); }
+.banner[data-plate="family"] .team-plate,
+.bar-column[data-plate="family"] .bar-team { display: none; }
