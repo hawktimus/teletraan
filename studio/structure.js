@@ -40,7 +40,6 @@ import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
 import { ClockIcon } from '@sanity/icons/Clock';
-import { CogIcon } from '@sanity/icons/Cog';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
 import { DashboardIcon } from '@sanity/icons/Dashboard';
 import { DesktopIcon } from '@sanity/icons/Desktop';

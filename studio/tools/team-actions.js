@@ -51,7 +51,7 @@ export function useStandardColorsAction(props) {
 
   return {
     label: 'Use the standard colors for this team',
-    title: standard ? 'Put the standard colors, metal and trim of this team into the draft. Nothing is published.' : 'Only the teams with the code prime or nova have standard colors.',
+    title: !standard ? 'Only the teams with the code prime or nova have standard colors.' : changes.lines.length === 0 ? 'This team already has the standard colors.' : 'Put the standard colors, metal and trim of this team into the draft. Nothing is published.',
     disabled: !standard || changes.lines.length === 0 || Boolean(patch.disabled),
     onHandle: () => setOpen(true),
     dialog: dialog,
