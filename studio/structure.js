@@ -2,7 +2,7 @@
 // SCREEN (what plays and how it looks), TASKS, EVENTS, PEOPLE and COACHES ONLY. docs/studio-map.md says what lives where.
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
-// here either: they come from the team's Monday boards, and Monday Tasks lists them
+// here either: they come from the team's Monday boards, and the Items tab of the Monday page lists them
 // with one switch each, Show on TV. Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
 // which the screen no longer reads), place (a task's Location field adds and opens
@@ -27,7 +27,7 @@
 //   kind 'component'  opens a page that is not a document. component is a plain function
 //                     that draws it (start-here.js, calendars-view.js), and it needs an id.
 //                     children names a function (S, times) that builds the pane that a link
-//                     on the page opens (monday-boards-view.js)
+//                     on the page opens (mondayPanes, for the Monday page)
 //   kind 'divider'    a thin line between groups. With a title it is a heading
 // Every entry except a divider needs an icon, and no two entries share one.
 // The icons come from @sanity/icons. Each is imported from its own file, such as
@@ -72,7 +72,7 @@ import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './inputs/start-here.js';
 import { CalendarsView } from './inputs/calendars-view.js';
 import { milestonesChild } from './inputs/monday-boards-parts.js';
-import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
+import { MondayPage, oldTasksChild } from './inputs/monday-page.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 import { ThemesView } from './inputs/themes-view.js';
 import { RotationView } from './inputs/rotation-view.js';
@@ -127,13 +127,26 @@ const byTargetDate = { field: 'targetDate', direction: 'asc' };
 const startedRecently = '!defined(start) || start >= $since';
 const startedEarlier = 'defined(start) && start < $since';
 
-// The two lists of Monday Tasks. Each task is in exactly one of them. A task is on the TV when
+// The two old lists of tasks. Each task is in exactly one of them. A task is on the TV when
 // it comes from the board and is not switched off, here or by the Show on TV column of the board. Every other task is hidden, including a task
 // typed by hand, which the screen no longer shows: a task with no source counts as typed by hand,
 // so every task made before the team board is under Hidden. A task that expires while the Studio
 // is open moves when the page is loaded again, because $now is fixed until then.
 const tasksOnTv = 'source == "monday" && showOnTv != false && showOnBoard != false && show != false && (!defined(expires) || expires > $now)';
 const tasksHidden = 'source != "monday" || showOnTv == false || showOnBoard == false || show == false || (defined(expires) && expires <= $now)';
+
+// The two old lists of tasks, On the TV and Hidden, which the Old manual tasks link on the Items tab of Monday opens.
+// They are not a line of the sidebar. A task typed by hand lives only here.
+export const oldTasksFolder = {
+  kind: 'group',
+  title: 'Old manual tasks',
+  icon: TaskIcon,
+  id: 'mondayTasks',
+  entries: [
+    { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'tasksOnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksOnTv, add: [] },
+    { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'tasksHidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksHidden, add: [] },
+  ],
+};
 
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
@@ -167,17 +180,7 @@ export const sidebarEntries = [
       { kind: 'list', title: 'Meeting days', icon: ClockIcon, type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] },
     ],
   },
-  {
-    kind: 'group',
-    title: 'Monday Tasks',
-    icon: TaskIcon,
-    id: 'mondayTasks',
-    entries: [
-      { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'tasksOnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksOnTv, add: [] },
-      { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'tasksHidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksHidden, add: [] },
-    ],
-  },
-  { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsTabs, children: tasksOfBoard },
+  { kind: 'component', title: 'Monday', id: 'monday', icon: ThListIcon, component: MondayPage, children: mondayPanes },
   { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
   { kind: 'divider', title: 'EVENTS' },
   { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
@@ -223,14 +226,16 @@ function listOf(S, entry, times) {
   return S.listItem().title(entry.title).id(id).icon(entry.icon).child(paneOf(S, entry, times));
 }
 
-// The second list under Monday Boards: the milestones the Teletraan computer made. The page links to it with this
-// id (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
+// The milestones list the Teletraan computer made, a second list the older Boards page linked to with this id
+// (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
 const milestoneList = { kind: 'list', title: 'Milestones', id: 'milestones', type: 'milestone', sort: byTargetDate, add: [] };
 
-// What a board on the Monday Boards page opens: the tasks of that board in the same two lists as
-// Monday Tasks. The function it gives back is handed the board number by the link on the page.
-function tasksOfBoard(S, times) {
+// What a link on the Monday page opens. The link named oldTasksChild opens the two old lists of tasks. The
+// older Boards page linked a board number, which opens the tasks of that board in the same two lists, and
+// milestonesChild, which opens the milestones. The function it gives back is handed the id of the link.
+function mondayPanes(S, times) {
   return boardId => {
+    if (boardId === oldTasksChild) return groupList(S, oldTasksFolder, times);
     if (boardId === milestonesChild) return paneOf(S, milestoneList, times);
     const kept = filter => 'mondayBoardId == $board && (' + filter + ')';
     const lists = [
@@ -247,13 +252,17 @@ function tasksOfBoard(S, times) {
 // A sidebar entry that opens a list of the lines under it. The plus button of a
 // folder with add offers a new document of each of those types, the way the
 // plus button of a list of one type does, or the new document of a template in add-templates.js.
-function groupOf(S, entry, times) {
+function groupList(S, entry, times) {
   let list = S.list()
     .title(entry.title)
     .id(entry.id)
     .items(entry.entries.map(inner => itemFor(S, inner, times)));
   if (entry.add) list = list.menuItems(S.menuItemsFromInitialValueTemplateItems(entry.add.map(type => S.initialValueTemplateItem(type).serialize())));
-  return S.listItem().title(entry.title).id(entry.id).icon(entry.icon).child(list);
+  return list;
+}
+
+function groupOf(S, entry, times) {
+  return S.listItem().title(entry.title).id(entry.id).icon(entry.icon).child(groupList(S, entry, times));
 }
 
 // A sidebar entry that opens the one document of its type
