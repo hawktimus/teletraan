@@ -76,6 +76,8 @@ import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 import { ThemesView } from './inputs/themes-view.js';
 import { RotationView } from './inputs/rotation-view.js';
+import { PhotosView } from './inputs/photos-view.js';
+import { photosChild } from './inputs/photos-parts.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
@@ -186,7 +188,7 @@ export const sidebarEntries = [
   { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
   { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
   { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
-  { kind: 'list', title: 'Photos', icon: ImagesIcon, type: 'photo', sort: newestUploadFirst, add: ['newPhoto'] },
+  { kind: 'component', title: 'Photos', id: 'photos', icon: ImagesIcon, component: PhotosView, children: photosOf },
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
   { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
@@ -221,6 +223,13 @@ function paneOf(S, entry, times) {
 function listOf(S, entry, times) {
   const id = entry.id || entry.type;
   return S.listItem().title(entry.title).id(id).icon(entry.icon).child(paneOf(S, entry, times));
+}
+
+// The list of photos behind the Photos page. The page links to it with the id photosChild.
+const photoList = { kind: 'list', title: 'Photos', id: photosChild, type: 'photo', sort: newestUploadFirst, add: ['newPhoto'] };
+
+function photosOf(S, times) {
+  return () => paneOf(S, photoList, times);
 }
 
 // The second list under Monday Boards: the milestones the Teletraan computer made. The page links to it with this

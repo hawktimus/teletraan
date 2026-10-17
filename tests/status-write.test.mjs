@@ -493,7 +493,8 @@ test('the script has valid sh syntax, is executable, and local.env is never prin
 test('the status document and the fields in the script are the ones the Studio has', () => {
   const schema = readModule(path.join(repo, 'studio/schemas/status.js'), 'utf8');
   const studioFields = Array.from(schema.matchAll(/timeField\('(\w+)'/g)).map(match => match[1]);
-  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).sort());
+  // photosDriveAt is written by the job photos-drive, which has its own test (tests/photos-drive.test.mjs)
+  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt']).sort());
 
   const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));

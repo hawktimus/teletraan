@@ -120,9 +120,10 @@ last step of every change. See "The Start here page" below.
   shows the lead and the members of each subteam (see Subteam members).
 - Sponsors: name, tier, a short line about them, a thank-you line for the
   ticker, and the web address of their logo.
-- Photos: the pictures for the Photo panel. Each has a picture you upload, an
-  optional short caption and the first name of the person who took it. See
-  "Photos" below.
+- Photos: a page where you pick where the pictures for the Photo panel come from
+  (Upload photos, Google Drive folder or Both), add many pictures at once, and open the
+  list of photos. Each photo has a picture, an optional short caption and the first
+  name of the person who took it. See "Photos" below and docs/photos-drive.md.
 
 ### Coaches only
 
@@ -397,15 +398,29 @@ The Photo panel shows one photo at a time, and the photo fills the whole panel
 under the header, up to the frame. The panel has no title: the header of the
 frame stays empty above the photo. The caption and the photographer's first name
 ("Photo: Sam") are on a plate at the lower left of the photo. Photos are uploaded
-to Studio. Nothing is kept on the Teletraan computer. A photo is either cut to fill the panel,
+to Studio. Nothing is kept on the Teletraan computer, except the copies of the pictures of a Google Drive folder. A photo is either cut to fill the panel,
 or shown whole with the color of the panel round it. Photo fit in Dashboard
 Settings picks one for all photos, and a photo can pick its own (see "Fill the
 frame or show the whole photo" below). When the panel stays up long enough it
 shows several photos, one after another (see "Order, time on screen and size").
 
+### Many photos at once
+
+Open Photos in the sidebar. Under Where do the photos come from, pick Upload photos or
+Both. Under Upload photos, click Choose pictures and select as many pictures as you like.
+Each one becomes a draft photo with no caption, switched on. You can type a first name
+for the credit and a Hide after time for the whole batch first. Click Publish all in the
+top bar. To add a caption or move the focus point of one photo, click Open the list of
+photos.
+
+### Photos from a Google Drive folder
+
+Pick Google Drive folder or Both, paste the folder link and click Save folder. The steps to
+set it up once, including the Google key, are in docs/photos-drive.md.
+
 ### Adding a photo
 
-1. Open Photos in the sidebar and click the plus button.
+1. Open Photos in the sidebar, click Open the list of photos and click the plus button.
 2. Under Picture, drag a photo onto the box or click it and choose one. A large
    photo straight from a phone is fine: the screen asks Sanity for a copy that
    is no wider than the screen, in a small file format, so you do not need to

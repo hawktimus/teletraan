@@ -68,6 +68,7 @@ export const defaultSettings = {
   // The photo settings in the Studio (Screen tab). The photos themselves are Photo documents
   // (core/photos.js shows the visible ones).
   //   photoOrder    see photoOrders above
+  //   photoSource   see photoSources above. upload is how the panel always got its photos.
   //   photoSeconds  how long the Photo panel stays, when its row in the Panels
   //                 list has no seconds of its own. It is used instead of pageSeconds.
   //   portraitScale the old Portrait size. It is hidden in the Studio and used only when neither of the two
@@ -83,6 +84,7 @@ export const defaultSettings = {
   //                 the panel. The Studio field is hidden and keeps what was saved in it.
   //   photoFit      see photoFits above. fill is how the panel always drew a photo.
   photoOrder: 'random',
+  photoSource: 'upload',
   photoSeconds: 16,
   portraitScale: 100,
   leadershipPortrait: 100,

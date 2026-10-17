@@ -32,7 +32,7 @@ export {
   speeds, metals, looks, themeIds, barStyle, styles, screenIds, weekdays, defaultSchedule, standardSwapSeconds,
   defaultScreen, teamPanels, mondayRows, mondayKinds, mondayOldPanels, teamModes, lookSwaps, competitionModes,
   competitionSwitches, competitionLeadDays, competitionPreviewSeconds, pageChangeStyles, frameFinishes,
-  photoOrders, photoFits, portraitShapes, portraitFrames, nightStyles, nightSpeeds, nightFirstHit, limits,
+  photoOrders, photoSources, photoFits, portraitShapes, portraitFrames, nightStyles, nightSpeeds, nightFirstHit, limits,
   defaultPhotoRow, screenLimits, viewKeys, scheduledThemeIds, defaultThemeByWeekday, viewIds, viewTeams,
   viewLimits, viewLayoutNames, countdownPlaces, viewColors, defaultViews, familyPanels,
 } from './config-lists.js';

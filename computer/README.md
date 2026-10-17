@@ -102,6 +102,8 @@ to attach the data folder to.
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/photos-drive-sync.sh` | Copies the pictures of the Google Drive folder named on the Photos page in Studio into the data folder, with a manifest. Needs `GOOGLE_API_KEY` (docs/photos-drive.md) |
+| `scripts/install-photos-drive.sh` | Copies the two Drive photo unit files into place and turns on the timer (every 15 minutes). Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/install-frc.sh` | Copies the two FRC unit files into place and turns on the FRC timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/mirror.py` | The picture of the screen for the Live preview (see above). Needs python3 only. Run by `systemd/teletraan-mirror.service`; `MIRROR_PORT`, `MIRROR_DATA`, `MIRROR_IDLE` and `MIRROR_MAX` change its port, folder and limits |
 | `scripts/watchdog.sh` | Restarts the kiosk service when the screen has frozen (see above). Runs as root. Needs `curl`, `pgrep` and `awk`. Keeps its count in `watchdog-state` in the data folder |
@@ -178,6 +180,8 @@ happens.
   `sudo /opt/teletraan/computer/scripts/install-calendars.sh`
 - a slides file in `systemd/` changed: run
   `sudo /opt/teletraan/computer/scripts/install-slides.sh`
+- a Drive photos file in `systemd/` changed: run
+  `sudo /opt/teletraan/computer/scripts/install-photos-drive.sh`
 - an FRC file in `systemd/` changed: run
   `sudo /opt/teletraan/computer/scripts/install-frc.sh`
 - a Monday file in `systemd/` changed: run
@@ -209,7 +213,7 @@ the step that uses each one, is the table at the top of
 ## Names this folder assumes
 
 The unit files use the repository location `/opt/teletraan`.
-`install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-frc.sh`,
+`install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-frc.sh`,
 `install-monday.sh`, `install-watchdog.sh`, `install-nightly.sh`, `install-backup.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
 else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the

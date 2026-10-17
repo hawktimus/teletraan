@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "fetchedAt": "2027-03-01T12:00:00Z",
+  "folder": "sample",
+  "photos": [
+    { "id": "sample1", "name": "[Name] - [Drive photo one].png", "file": "drive-sample-1.png", "modified": "2027-03-01T12:00:00.000Z", "width": 640, "height": 360, "credit": "", "caption": "[Drive photo one]" },
+    { "id": "sample2", "name": "[Drive photo two].png", "file": "drive-sample-2.png", "modified": "2027-02-27T12:00:00.000Z", "width": 640, "height": 360, "credit": "", "caption": "" }
+  ]
+}

@@ -5,6 +5,7 @@ import { fixedPanels } from './registry.js';
 import { frameFinishes, metals, pageChangeStyles } from './config.js';
 import { savedContent } from './core/content.js';
 import { mergeEvents } from './core/events.js';
+import { mixPhotos, usesDrive } from './core/photos-drive.js';
 import { connectionLines, drawConnection } from './core/connection.js';
 import { pageSwitchesFor } from './core/look.js';
 import { backgroundFor } from './core/theme-bg.js';
@@ -63,6 +64,7 @@ export function setBase(newBase, newStatus) {
 
   if (switched) {
     delete extras.events;
+    delete extras.drivePhotos;
     shellState.calendarsKey = null; // makes rebuild() read the calendars again
     shellState.calendarsReadAt = null;
   }
@@ -96,10 +98,24 @@ function chooseTeam() {
   }
 }
 
+// The photos of the content: the Studio photos, the Google Drive photos or both, as the Photo source says.
+// A problem here leaves the Studio photos as they are. The first Drive read starts here when the source
+// asks for Drive, so a change of source does not wait for the next timed read.
+function useDrivePhotos() {
+  try {
+    const content = shellState.content;
+    content.photos = mixPhotos(shellState.base.photos, extras.drivePhotos, content.settings);
+    if (usesDrive(content.settings) && extras.drivePhotos === undefined && shellState.rereadDrivePhotos) shellState.rereadDrivePhotos();
+  } catch (error) {
+    console.error('Could not mix the Google Drive photos in', error);
+  }
+}
+
 export function rebuild() {
   shellState.content = Object.assign({}, shellState.base, extras, { status: shellState.status });
   chooseTeam(); // before the events, so everything below is built for the team on the screen
   shellState.content.events = mergedEvents();
+  useDrivePhotos();
   if (!params.has('motion')) frame.setMotion(shellState.content.settings.motion); // so a change in Dashboard Settings shows at once
   if (!params.has('speed')) frame.setSpeed(shellState.content.settings.speed);
   const glitch = shellState.content.settings.crt;

@@ -145,6 +145,13 @@ export const frameFinishes = ['mostly-gold', 'alternate', 'gold', 'silver'];
 //   newest-first  from the newest photo to the oldest, then over again
 export const photoOrders = ['random', 'newest-first'];
 
+// Where the Photo panel gets its pictures (core/photos-drive.js). The pictures of Google Drive are
+// copied to the Teletraan computer by computer/scripts/photos-drive-sync.sh.
+//   upload  the Photo documents uploaded in Studio
+//   drive   the pictures of the Google Drive folder named on the Photos page
+//   both    the two together
+export const photoSources = ['upload', 'drive', 'both'];
+
 // How the Photo panel fits a photo to its card (core/photos.js). The setting picks one for every photo,
 // and a Photo document can pick its own, or say it follows the setting.
 //   fill   the card keeps one shape, and the picture is cut to it, around the hotspot

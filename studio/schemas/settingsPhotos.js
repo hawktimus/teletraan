@@ -31,11 +31,19 @@
 // values for anything missing from the published settings.
 
 import { defineField } from 'sanity';
+import { checkDriveFolder } from './driveFolder.js';
 
 // The values are the names in photoOrders in dashboard/config.js
 const orders = [
   { title: 'Random', value: 'random' },
   { title: 'Newest first', value: 'newest-first' },
+];
+
+// The values are the names in photoSources in dashboard/config.js
+const sources = [
+  { title: 'Upload photos', value: 'upload' },
+  { title: 'Google Drive folder', value: 'drive' },
+  { title: 'Both', value: 'both' },
 ];
 
 // The values are the names in photoFits in dashboard/config.js
@@ -85,6 +93,28 @@ export function photosFields() {
         Rule.required().error('Pick random or newest first.'),
         Rule.valid(orders.map(order => order.value)).error('Pick random or newest first.'),
       ],
+    }),
+
+    // Chosen on the Photos page, which writes only these two fields to the draft. They are not required: a page
+    // saved before they existed has neither, and the screen reads that as Upload photos.
+    defineField({
+      name: 'photoSource',
+      title: 'Photo source',
+      type: 'string',
+      group: 'screen',
+      description: 'Where the Photo panel gets its pictures: photos uploaded in Studio, the pictures of a Google Drive folder, or both. Chosen on the Photos page.',
+      options: { list: sources, layout: 'radio', direction: 'horizontal' },
+      initialValue: 'upload',
+      validation: Rule => Rule.valid(sources.map(source => source.value)).error('Pick upload photos, Google Drive folder or both.'),
+    }),
+
+    defineField({
+      name: 'photoDriveFolder',
+      title: 'Google Drive folder',
+      type: 'string',
+      group: 'screen',
+      description: 'The link of the Google Drive folder, shared with Anyone with the link as Viewer, or its id. Used when the Photo source includes Google Drive.',
+      validation: Rule => Rule.custom(checkDriveFolder),
     }),
 
     defineField({

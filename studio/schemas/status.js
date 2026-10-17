@@ -35,6 +35,10 @@ export default defineType({
     defineField({ name: 'kioskRestarts', title: 'Screen restarts today', type: 'number', description: 'How many times the watchdog restarted the screen on the day of the last restart. The Teletraan computer writes this.' }),
     defineField({ name: 'lastKioskRestartAt', title: 'Last screen restart', type: 'datetime', description: 'When the watchdog last restarted the screen, or stopped restarting it. The Teletraan computer writes this.' }),
     defineField({ name: 'lastBackupAt', title: 'Last backup', type: 'datetime', description: 'When the nightly backup of the dataset last finished. The Teletraan computer writes this.' }),
+    // The Google Drive photo folder (computer/scripts/photos-drive-sync.sh, status-write.sh photos-drive)
+    timeField('photosDriveAt', 'Last Drive photos read', 'When the Teletraan computer last looked at the Google Drive photo folder. The computer writes this.'),
+    textField('photosDriveState', 'Drive photos state', 'How the last read of the Google Drive photo folder went: ok, off, no-folder, no-key, bad-key, api-off or not-shared. The Teletraan computer writes this.'),
+    defineField({ name: 'photosDriveCount', title: 'Drive photos', type: 'number', description: 'How many pictures the Google Drive photo folder had at the last read. The Teletraan computer writes this.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Status of the Teletraan computer' }),

@@ -65,7 +65,7 @@ case $word in
     ;;
   sync-now)
     case $argument in
-      calendars|monday|frc) ;;
+      calendars|monday|frc|photos-drive) ;;
       *) refuse "$shown" ;;
     esac
     ;;

@@ -1,0 +1,16 @@
+[Unit]
+Description=Copy the pictures of the Google Drive photo folder for Teletraan I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-photos-drive.sh with the account that owns the
+# repository, so this file does not depend on what the Teletraan computer's user is called.
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/photos-drive-sync.sh
+# Tells Studio when the folder was read and how many photos it has. The leading minus means a
+# failure here is ignored: the status must never mark a download as failed.
+ExecStartPost=-/opt/teletraan/computer/scripts/status-write.sh photos-drive
+# Each download gives up after 2 minutes. This is for the whole run.
+TimeoutStartSec=30min

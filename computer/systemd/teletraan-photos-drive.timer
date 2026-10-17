@@ -1,0 +1,9 @@
+[Unit]
+Description=Copy the pictures of the Google Drive photo folder every 15 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+
+[Install]
+WantedBy=timers.target

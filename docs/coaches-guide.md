@@ -95,6 +95,7 @@ page names them and never holds a value.
 | `SANITY_WRITE_TOKEN` | Write to Sanity | sanity.io/manage | docs/rebuilding-the-computer.md, "Showing what the computer did in Studio" |
 | `MONDAY_API_TOKEN` | Read the Monday boards | Monday, Developers, My access tokens | docs/rebuilding-the-computer.md, step 18, and docs/monday.md |
 | `TBA_AUTH_KEY` | Read the competition data | The Blue Alliance, Account, Read API Keys | docs/rebuilding-the-computer.md, step 17, and docs/frc-feed.md |
+| `GOOGLE_API_KEY` | Copy the pictures of a Google Drive photo folder | Google Cloud console, an API key for the Google Drive API | docs/photos-drive.md |
 
 A script that does not find its key does nothing, says so in one line and ends
 without an error. `computer/local.example.env` has each line with a placeholder. The

@@ -37,6 +37,30 @@ export async function startExtras() {
     setInterval(shellState.rereadEvents, 10 * 60 * 1000);
   }));
 
+  // The photos of the Google Drive folder, copied by the Teletraan computer. Read again every 10 minutes, and at
+  // once when the source asks for Drive (rebuild in shell-content.js). A read that fails keeps the list it had.
+  ready.push(startOptional('./core/photos-drive.js', module => {
+    let reading = false;
+    shellState.rereadDrivePhotos = async () => {
+      if (reading) return;
+      reading = true;
+      try {
+        const sample = shellState.showingSample;
+        const result = await module.readDrivePhotos(fetch.bind(window), sample);
+        if (sample !== shellState.showingSample) return;
+        // A first read that fails counts as no photos, so a broken folder is not asked for again at every rebuild
+        if (!result && extras.drivePhotos !== undefined) return;
+        extras.drivePhotos = result ? result.photos : [];
+        rebuild();
+      } finally {
+        reading = false;
+      }
+    };
+    setInterval(() => {
+      if (shellState.content && module.usesDrive(shellState.content.settings)) shellState.rereadDrivePhotos();
+    }, 10 * 60 * 1000);
+  }));
+
   // An event that has finished must leave the list even when nothing else
   // changes, and a new day starts at midnight in the Look time zone
   setInterval(() => {

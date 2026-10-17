@@ -51,6 +51,7 @@
     "frameFinish": "mostly-gold",
     "silverChance": 10,
     "photoOrder": "random",
+    "photoSource": "both",
     "photoSeconds": 16,
     "portraitScale": 100,
     "leadershipPortrait": 100,

@@ -44,6 +44,14 @@ export function register(router, ctx) {
     } catch (error) {
       synced = false;
     }
+    // A new Google key starts the Drive photo copy at once, so Studio shows its state without a wait
+    if (changed.some(item => item.name === 'GOOGLE_API_KEY' && item.did === 'set')) {
+      try {
+        await ctx.helper('sync-now', ['photos-drive']);
+      } catch (error) {
+        // the timer runs it within 15 minutes
+      }
+    }
     send(res, 200, { ok: true, changed: changed, calendarsRun: synced, ...describe(readEnv(envPath(ctx))) });
   });
 }

@@ -26,6 +26,7 @@ export const shellState = {
   status: null,
   content: null, // base and extras together, always the newest
   rereadEvents: null, // set once the calendar reader is running
+  rereadDrivePhotos: null, // set once the reader of the Google Drive photos is running (core/photos-drive.js)
   calendarsKey: null, // the calendar list the events were last read for
   showingSample: false, // true while the page shows the sample content (?sample=1)
   extrasStarted: false, // the events are being read, so a change of source has to redo them

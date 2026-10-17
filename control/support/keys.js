@@ -5,12 +5,13 @@
 
 import { Refusal } from './http.js';
 
-export const keyNames = ['SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'SANITY_AUTH_TOKEN'];
+export const keyNames = ['SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'GOOGLE_API_KEY', 'SANITY_AUTH_TOKEN'];
 
 export const labels = {
   SANITY_WRITE_TOKEN: 'Sanity write key',
   MONDAY_API_TOKEN: 'Monday token',
   TBA_AUTH_KEY: 'The Blue Alliance key',
+  GOOGLE_API_KEY: 'Google key for the photo folder',
   SANITY_AUTH_TOKEN: 'Sanity read key (optional)',
 };
 

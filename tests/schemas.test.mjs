@@ -184,6 +184,7 @@ const contract = {
     frameFinish: 'string',
     silverChance: number(0, 100),
     photoOrder: 'string',
+    photoSource: 'string',
     photoSeconds: number(6, 120),
     portraitScale: number(60, 200),
     photoScale: number(60, 100),
@@ -361,6 +362,7 @@ const contract = {
 // Fields and types in the Studio that the dashboard never reads, with the reason for each.
 // The notes and the status block store nothing, and the status document is written by the Teletraan computer.
 const studioOnlyFields = {
+  'dashboardSettings.photoDriveFolder': 'the link of the Google Drive photo folder. Only computer/scripts/photos-drive-sync.sh reads it',
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
   'view.rotationNote': 'the note on the Main panel tab of a view, which points to the Rotation list. It stores nothing',
@@ -479,6 +481,7 @@ const notInSidebar = {
   frcStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
   mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
   milestone: 'the Teletraan computer writes it, and the Monday Boards page opens it as its second list, Milestones',
+  photo: 'the Photos page opens the list of photos as its child, after the source and the upload (tests/photos-page.test.mjs)',
 };
 
 // The sidebar titles that people look for by name
@@ -1169,7 +1172,7 @@ function checkLogoTab(problems) {
 // and Silver chance. The section is all in schemas/settingsTransitions.js. The
 // number fields and their limits are compared with config.js in checkLookAndTiming.
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
-const photoNames = ['photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
+const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
@@ -4933,7 +4936,6 @@ const listAdds = {
   Leadership: 'newPerson',
   'Team leads': 'newSubteam',
   Sponsors: 'newSponsor',
-  Photos: 'newPhoto',
 }; // null is the plain plus button of the type
 
 // The switch that puts a new document on the screen, when it is not called show

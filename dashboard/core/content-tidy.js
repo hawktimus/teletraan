@@ -1,6 +1,6 @@
 // The tidy functions of the content: defaults, ranges and settings (part of content.js).
 
-import { transitionSecondsRange, backgrounds, competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, speeds, styles, teamModes } from '../config.js';
+import { transitionSecondsRange, backgrounds, photoSources, competitionModes, competitionSwitches, defaultSettings, defaultThemeByWeekday, scheduledThemeIds, viewKeys, defaultTeam, frameFinishes, limits, looks, lookSwaps, metals, nightSpeeds, nightStyles, pageChangeStyles, photoFits, photoOrders, portraitFrames, portraitShapes, speeds, styles, teamModes } from '../config.js';
 import { parseLocalDateTime } from './time.js';
 import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
@@ -108,6 +108,7 @@ export function fixSettingValues(settings, saved = settings) {
   if (!frameFinishes.includes(settings.frameFinish)) settings.frameFinish = defaultSettings.frameFinish;
   // The photo settings
   if (!photoOrders.includes(settings.photoOrder)) settings.photoOrder = defaultSettings.photoOrder;
+  if (!photoSources.includes(settings.photoSource)) settings.photoSource = defaultSettings.photoSource;
   if (!photoFits.includes(settings.photoFit)) settings.photoFit = defaultSettings.photoFit;
   if (!portraitShapes.includes(settings.portraitShape)) settings.portraitShape = defaultSettings.portraitShape;
   if (!portraitFrames.includes(settings.portraitFrame)) settings.portraitFrame = defaultSettings.portraitFrame;

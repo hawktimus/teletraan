@@ -32,7 +32,7 @@ fi
 
 # Only the keys and the calendars are handled here, so a wrong file cannot
 # change the port or the data folder
-names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|CALENDAR_[A-Za-z0-9_]+_URL'
+names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|CALENDAR_[A-Za-z0-9_]+_URL'
 bad=$(grep -n -v -E "^(($names)=.*)?\$" "$incoming" | cut -d : -f 1 | head -n 1)
 if [ -n "$bad" ]; then
   echo "Line $bad of the new values is not a key or a calendar, so nothing was changed." >&2
