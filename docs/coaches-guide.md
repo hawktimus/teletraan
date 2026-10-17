@@ -114,6 +114,7 @@ A row is a panel and, if you want, the seconds. Without seconds the row follows 
 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
 - The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
+- Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents, which are in Old screens (not used) and kept for that. The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
 - The competition cards still come in by themselves from two days before an event, as the Competition tab says. They are not rows.
 - When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
 

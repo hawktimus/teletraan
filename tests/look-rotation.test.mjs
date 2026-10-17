@@ -625,7 +625,7 @@ test('the docs name the views, the Screens that are kept, the hidden fields and 
   assert.ok(layouts.includes('## The views'), 'layouts.md has the section');
   assert.ok(layouts.includes('## The swap'), 'and the swap');
   ['screenSchedule', 'mainRows', 'sideRows', 'swapSeconds', 'nameEffectEveryMinutes', 'hawkEveryMinutes', 'mondayStyle', 'dailyStyles', 'teamOrder', 'lookSwap', 'rotation.order', 'hidden'].forEach(word => assert.ok(layouts.includes(word), 'layouts.md names ' + word));
-  ['Weekday schedule', 'Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Order of the views', 'Screens, the second line', 'hidden and keep what was saved'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
+  ['Weekday schedule', 'Styles by day', 'Monday style', 'Team order', 'How the look changes', 'Order of the views', 'Old screens (not used)', 'hidden and keep what was saved'].forEach(word => assert.ok(editing.includes(word), 'editing-content.md names ' + word));
   ['coaches-guide.md', 'switch-the-look.md', 'add-the-nova-team.md'].forEach(file => {
     assert.ok(!/Assemble, Slats or Cut/.test(readModule(path.join(docsFolder, file), 'utf8')), file + ' no longer offers the three swaps');
   });

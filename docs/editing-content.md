@@ -713,7 +713,7 @@ steps. With no Teams at all the TV shows the built-in Prime team, as it always h
 Views, under SCREEN, has three pages, Robotics, Prime and Nova. Each is one document that always exists: nothing adds, copies or deletes one. A page opens on a map of the screen with the letters of Start here, and a picker above the map moves to another view. Click a letter or its box to open that part below the map. Family is not in the rotation, and its page is in Old screens (not used). The detail for coaches is in docs/coaches-guide.md, "Rotation, views and themes".
 
 - A Banner: the team, the arrangement (standard or bar), Mirror and the colors.
-- B Main panel: a note. What plays is the Rotation page. Each row there has a panel and, if you want, seconds from 6 to 120, and the view it plays in. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on.
+- B Main panel: a note. What plays is the Rotation page. Each row there has a panel and, if you want, seconds from 6 to 120, and the view it plays in. The panel is one of the large panels or one of the Monday rows. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on.
 - C Countdown: where the countdown sits. The title and dates of Kickoff and Rollout are shown from Dashboard Settings, Countdown tab, and are the same in every view.
 - D Side panel: the rows of the small panels. Only the standard arrangement has them.
 - E Ticker: a link that opens Tips and News. The ticker shows every published tip and news item in order.
@@ -849,7 +849,7 @@ problem would touch.
   (docs/views.md). The order of the views and what plays are on the Rotation page. The theme of each
   day of the week and the background of Original are chosen on the Themes and backgrounds page, under SCREEN
   (docs/views-and-themes.md). The day starts at midnight in the Time zone on the Look page. The name of the
-  Robotics view and the order of the views are hidden and keep what was saved in them.
+  Robotics view (Name of the Robotics view) and Order of the views are hidden and keep what was saved in them.
 - The old Weekday schedule of Screens, Styles by day, Monday style and Team order are hidden and keep what was
   saved in them. How the look changes is hidden too, and the screen ignores it.
 - A change of look is one move: the frames pull apart, the new look goes on, and they re-form. It
