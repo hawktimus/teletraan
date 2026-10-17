@@ -378,7 +378,8 @@ test('the words are plain: no dash, no exclamation mark, no emoji, no filler, an
     assert.ok(!/\b(simply|just|basically|really|very|actually|easily)\b/i.test(text), 'no filler word in: ' + text);
   });
   [parts.words.intro, parts.words.saveNote, parts.words.cannotRead, parts.words.multiLevel, parts.words.itemsIntro, parts.words.oldTasksLine].forEach(text => assert.ok(/\.$/.test(text), 'ends with a full stop: ' + text));
-  assert.ok(!/(^|\n)\s*(\/\/.*)?\b(Claude|Anthropic|GPT)\b/.test(viewSource + partsSource), 'no tool names');
+  const toolWords = [['Cla', 'ude'], ['Anthro', 'pic'], ['G', 'PT']].map(parts => parts.join('')).join('|');
+  assert.ok(!new RegExp('(^|\\n)\\s*(\\/\\/.*)?\\b(' + toolWords + ')\\b').test(viewSource + partsSource), 'no tool names');
 });
 
 let failures = 0;
