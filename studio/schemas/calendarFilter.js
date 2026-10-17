@@ -13,6 +13,11 @@ const actions = [
   { title: 'Always show', value: 'show' },
 ];
 
+const scopes = [
+  { title: 'Every matching event', value: 'many' },
+  { title: 'One event', value: 'one' },
+];
+
 // The week starts on Monday here. The values are the ones Date.getDay gives,
 // so Sunday is 0.
 const weekdays = [
@@ -44,9 +49,12 @@ function toDateIsNotBefore(value, context) {
   return value >= from || 'The to date is before the from date.';
 }
 
+const isOneEvent = document => Boolean(document) && document.scope === 'one';
+
 // A rule with none of these would match every event
 function hasACondition(rule) {
   if (!rule) return true;
+  if (rule.scope === 'one') return oneEventProblem(rule);
 
   const hasWord = Array.isArray(rule.words) && rule.words.some(word => typeof word === 'string' && word.trim() !== '');
   const hasDay = Array.isArray(rule.days) && rule.days.length > 0;
@@ -54,6 +62,12 @@ function hasACondition(rule) {
   if (hasWord || hasDay || hasCalendar || rule.fromDate || rule.toDate) return true;
 
   return 'Add at least one of: title words, days, a calendar or a date. A rule with none would match every event.';
+}
+
+// A one event rule is judged by its calendar, its title and its start alone
+function oneEventProblem(rule) {
+  const filled = [rule.eventCalendar, rule.eventTitle, rule.eventStart].every(value => typeof value === 'string' && value.trim() !== '');
+  return filled || 'A one event rule needs the calendar, the exact title and the start of the event. Make it from the Calendars page.';
 }
 
 // Mon, Thu
@@ -159,14 +173,46 @@ export default defineType({
       name: 'expires',
       title: 'Hide after',
       type: 'datetime',
-      description: 'Optional. After this date and time the rule stops. Leave empty to keep it going.',
+      description: 'Optional. After this date and time the rule stops. Leave empty to keep it going. A one event rule sets it a day after the event.',
+    }),
+    defineField({
+      name: 'scope',
+      title: 'Applies to',
+      type: 'string',
+      description: 'Optional. Every matching event is the usual rule. One event is made by the Calendars page and matches a single event by its calendar, title and start.',
+      options: { list: scopes, layout: 'radio', direction: 'horizontal' },
+      initialValue: 'many',
+    }),
+    defineField({
+      name: 'eventCalendar',
+      title: 'Event calendar',
+      type: 'string',
+      hidden: ({ document }) => !isOneEvent(document),
+      description: 'Optional. The calendar code of the one event, such as team. The Calendars page fills it in. Up to 20 characters.',
+      validation: Rule => [tooLong(Rule, 20), Rule.regex(calendarCode, { name: 'lowercase code' }).error('Use lowercase letters, digits and underscores only, such as team.')],
+    }),
+    defineField({
+      name: 'eventTitle',
+      title: 'Event title',
+      type: 'string',
+      hidden: ({ document }) => !isOneEvent(document),
+      description: 'Optional. The exact title of the one event, as the Calendars page lists it. Up to 63 characters.',
+      validation: Rule => tooLong(Rule, 63),
+    }),
+    defineField({
+      name: 'eventStart',
+      title: 'Event start',
+      type: 'datetime',
+      hidden: ({ document }) => !isOneEvent(document),
+      description: 'Optional. The exact start of the one event. The Calendars page fills it in.',
     }),
   ],
   validation: Rule => Rule.custom(hasACondition),
   orderings: [aToZ('name')],
   preview: {
-    select: { title: 'name', action: 'action', words: 'words', days: 'days', calendar: 'calendar', from: 'fromDate', to: 'toDate', show: 'show', expires: 'expires' },
+    select: { title: 'name', action: 'action', words: 'words', days: 'days', calendar: 'calendar', from: 'fromDate', to: 'toDate', show: 'show', expires: 'expires', scope: 'scope', eventTitle: 'eventTitle' },
     prepare(item) {
+      if (item.scope === 'one') return { title: item.title || 'Rule with no name', subtitle: subtitleFor(['One event', titleOf(actions, item.action), item.eventTitle].filter(Boolean).join(' · '), item, 'Off') };
       const words = (item.words || []).filter(Boolean).join(' or ');
       const text = [titleOf(actions, item.action), words, dayText(item.days), item.calendar, dateText(item.from, item.to)].filter(Boolean).join(' · ');
       return { title: item.title || 'Rule with no name', subtitle: subtitleFor(text, item, 'Off') };

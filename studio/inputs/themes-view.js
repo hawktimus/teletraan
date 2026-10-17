@@ -1,4 +1,5 @@
-// The Themes and backgrounds page, under SCREEN in the sidebar. It is a page of its own, not a document. It lists
+// The theme list, the weekday pickers and the background choices of the Look page (look-view.js), and the page they
+// were first made for, now kept for the tests. It is a page of its own, not a document. It lists
 // the themes and holds the weekday schedule: a picker for each day of the week that chooses the theme
 // that plays that day. The schedule is the field themeByWeekday of Dashboard Settings; the background of the
 // Original theme is the field background. This page writes only those two fields, to the draft of Dashboard
@@ -98,7 +99,7 @@ async function saveFields(client, fields) {
   return client.patch(draftId).set(fields).commit();
 }
 
-function themeList() {
+export function themeList() {
   return h(
     'ul',
     { style: styles.list, 'data-list': 'themes' },
@@ -106,7 +107,7 @@ function themeList() {
   );
 }
 
-function dayRow(day, schedule, change, busy) {
+export function dayRow(day, schedule, change, busy) {
   return h(
     'label',
     { key: day.name, style: styles.day },
@@ -128,7 +129,7 @@ function backgroundChoice(choice, state, changeBackground) {
   );
 }
 
-function backgroundBlock(state, changeBackground) {
+export function backgroundBlock(state, changeBackground) {
   if (!state.background || typeof changeBackground !== 'function') return null;
   return h(
     'div',

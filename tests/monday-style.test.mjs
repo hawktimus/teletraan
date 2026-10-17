@@ -89,6 +89,9 @@ function contentWith(change) {
   const raw = sampleRaw();
   raw.settings.countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN', rollout: '' };
   Object.keys(raw.settings.screenSchedule).forEach(day => { raw.settings.screenSchedule[day] = 'original'; });
+  // The style of the day comes from the theme of the weekday, so every day is Original and no test depends on the real day
+  raw.settings.themeByWeekday = {};
+  ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => { raw.settings.themeByWeekday[day] = 'original'; });
   if (change) change(raw);
   return sanity.normalizeSample(raw);
 }

@@ -752,7 +752,7 @@ test('the Look switch reaches the screen through config.js, theme.js, shell.js, 
   const schema = read('studio/schemas/theme.js');
   assert.match(schema, /name: 'seasonOverPanels',\s*title: 'Seasonal pieces over the panels',\s*type: 'boolean',/);
   assert.match(schema, /initialValue: true,/);
-  assert.ok(/fields: \[[^\]]*seasonOverPanelsField\]/.test(schema), 'the field is on the Look page');
+  assert.ok(/fields: \[[^\]]*seasonOverPanelsField[^\]]*\]/.test(schema), 'the field is on the Look document');
   assert.ok(read('tests/schemas.test.mjs').includes("seasonOverPanels: 'boolean'"), 'tests/schemas.test.mjs lists the field');
 });
 

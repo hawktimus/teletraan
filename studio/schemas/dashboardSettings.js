@@ -23,19 +23,42 @@ import { competitionFields } from './settingsCompetition.js';
 import { mondayFields } from './settingsMonday.js';
 import { calendarsField, groupEventsByKindField } from './settingsCalendars.js';
 import { countdownField } from './settingsCountdown.js';
+import { settingsNames as shownOnLookPage } from '../inputs/look-parts.js';
+import { settingsNames as shownOnCompetitionPage } from '../inputs/competition-parts.js';
 
-// The tabs, in order. Screen opens first. Studio has no folded tab, so Advanced,
-// for the things only a coach debugging the screen would touch, is the last one.
+// The five tabs, in order. Timing opens first. Studio has no folded tab, so Advanced, for the things that are set
+// once and never touched again, is the last one. The look of the screen is on the Look page, the alert and the
+// messages on the Today page, the competition cards on the Competition page, and the teams under Teams and views.
 const groups = [
-  { name: 'screen', title: 'Screen', default: true },
-  { name: 'look', title: 'Logo and motion' },
+  { name: 'screen', title: 'Timing', default: true },
   { name: 'countdown', title: 'Countdown' },
-  { name: 'calendars', title: 'Calendars' },
-  { name: 'presentations', title: 'Presentations' },
   { name: 'monday', title: 'Monday' },
-  { name: 'competition', title: 'Competition' },
+  { name: 'calendars', title: 'Calendars' },
   { name: 'advanced', title: 'Advanced' },
 ];
+
+// A field of a tab that is gone is moved to Advanced (they are all hidden or set once), keeping its stored name
+const tabOf = { look: 'advanced', presentations: 'advanced', competition: 'advanced' };
+
+// The sections of the Timing and Advanced tabs. A section is a fieldset with one line that says what it holds.
+const open = { collapsible: true, collapsed: false };
+const sectionFieldsets = [
+  { name: 'timing', title: 'Timing', description: 'How long a page stays up, how long a finished task stays, the safety days and the parts request address.', options: open },
+  { name: 'banner', title: 'Banner', description: 'The big title across the banner while the Robotics rows play.', options: open },
+  { name: 'presentations', title: 'Presentations', description: 'Booked talks take the whole screen at their start time. Turn them off to keep the screen as it is.', options: open },
+  { name: 'night', title: 'Night mode', description: 'The screen at night, from 23:30 to 11:30: a bouncing logo or a dark screen.', options: open },
+  { name: 'hiddenTransitions', title: 'Hidden transitions', description: 'The desktop reveal and the red eyes, which come about once every few hours of screen time.', options: open },
+  { name: 'other', title: 'Other', description: 'The connection text at the bottom of the screen, and fields kept for the older versions.', options: open },
+];
+
+// Which section a field is in, by its stored name
+const sectionOf = {};
+['pageSeconds', 'rotation', 'doneDays', 'safetyDaysSince', 'partsRequestUrl'].forEach(name => { sectionOf[name] = 'timing'; });
+sectionOf.generalViewTitle = 'banner';
+presentationsFields().concat([presentationTestRequestField()]).forEach(field => { sectionOf[field.name] = 'presentations'; });
+nightFields().forEach(field => { sectionOf[field.name] = 'night'; });
+hiddenFields().forEach(field => { sectionOf[field.name] = 'hiddenTransitions'; });
+['rotationRows', 'showConnectionStatus', 'contentSource'].forEach(name => { sectionOf[name] = 'other'; });
 
 const motions = [
   { title: 'Full', value: 'full' },
@@ -76,7 +99,8 @@ const teamField = defineField({
   title: 'Team',
   type: 'object',
   group: 'screen',
-  description: 'The school line in the banner. The name and number here are used only while no team is saved under Teams.',
+  hidden: true,
+  description: 'Used only while no team is saved. The name, number and colors of each team are on its page under Teams and views.',
   fields: [
     defineField({
       name: 'name',
@@ -155,7 +179,7 @@ const styleField = defineField({
   type: 'string',
   group: 'look',
   hidden: true,
-  description: 'Used only until a Screen has chosen the style. Original is the screen as now, Cybertron is steel plates, Minimal is one main panel, whatever the theme.',
+  description: 'Not used any more. Was: Original, Cybertron steel plates, or Minimal, whatever the theme. Themes and views choose the look now.',
   options: { list: styles, layout: 'radio', direction: 'horizontal' },
   initialValue: 'original',
   validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick original, cybertron or minimal.'),
@@ -191,7 +215,7 @@ const frameMetalField = defineField({
   title: 'Frame metal',
   type: 'string',
   group: 'screen',
-  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Logo and motion tab).',
+  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish, in the same section.',
   options: { list: metals, layout: 'radio', direction: 'horizontal' },
   initialValue: 'gold',
   validation: Rule => [
@@ -274,7 +298,8 @@ const alertField = defineField({
   title: 'Alert',
   type: 'object',
   group: 'screen',
-  description: 'A message that covers the whole screen until you turn it off.',
+  hidden: true,
+  description: 'Set on the Today page, in the sidebar. A message that covers the whole screen until you turn it off.',
   fields: [
     defineField({
       name: 'on',
@@ -353,16 +378,35 @@ const safetyDaysField = defineField({
   description: 'The date the safety day count starts from. The Safety Days panel counts the days since this date.',
 });
 
-// The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
-const lookNoteField = noteField('lookNote', 'The theme of each day and the Original background are on the Themes and backgrounds page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation page in the sidebar. A view holds its small panels and its arrangement in Views, under SCREEN.', 'look');
+// The two notes are hidden: they pointed at the pages that the Look page replaced.
+const lookNoteField = noteField('lookNote', 'The theme of each day, the background, the motion, the logo and the seasonal packs are on the Look page, in the sidebar.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation page in the sidebar. A view holds its small panels and its arrangement in Views, under Teams and views.', 'look');
+
+// The Look page (inputs/look-view.js) shows these fields, so the form does not: hidden, with the stored values kept.
+// The two notes only pointed at the pages that the Look page replaced.
+// The Competition page shows the competition cards. The Rotation page is the only door to the rotation list (its full
+// form is kept, hidden). The Team section is hidden and kept as the fallback.
+// The Photos page picks the photo source and the Drive folder, so the form does not.
+const movedToPages = shownOnLookPage.concat(['lookNote', 'cycleNote'], shownOnCompetitionPage, ['rotationRows', 'photoSource', 'photoDriveFolder']);
+
+function moved(field) {
+  return movedToPages.indexOf(field.name) === -1 ? field : Object.assign({}, field, { hidden: true });
+}
+
+function placed(field) {
+  const next = Object.assign({}, field);
+  if (tabOf[next.group]) next.group = tabOf[next.group];
+  if (next.name === 'generalViewTitle') next.group = 'screen';
+  if (sectionOf[next.name]) next.fieldset = sectionOf[next.name];
+  return next;
+}
 
 export default defineType({
   name: 'dashboardSettings',
   title: 'Dashboard Settings',
   type: 'document',
   groups: groups,
-  fieldsets: portraitFieldsets,
+  fieldsets: portraitFieldsets.concat(sectionFieldsets),
   fields: [
     statusBlockField(),
     teamField,
@@ -385,7 +429,6 @@ export default defineType({
     ...teamsFields(),
     ...logoFields(),
     ...transitionsFields(),
-    ...rotationRowsFields(),
     countdownField,
     alertField,
     pageSecondsField,
@@ -396,17 +439,18 @@ export default defineType({
     ...photosFields(),
     announcementsField(),
     announceRequestField(),
-    ...nightFields(),
-    ...hiddenFields(),
     ...presentationsFields(),
     presentationTestRequestField(),
+    ...nightFields(),
+    ...hiddenFields(),
     calendarsField,
     groupEventsByKindField,
     ...mondayFields(),
     ...competitionFields(),
+    ...rotationRowsFields(),
     contentSourceField,
     showConnectionStatusField,
-  ],
+  ].map(moved).map(placed),
   preview: {
     prepare: () => ({ title: 'Dashboard Settings' }),
   },

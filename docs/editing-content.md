@@ -22,10 +22,10 @@ received.
 
 ## The sidebar
 
-The sidebar is in groups, by what you do: SCREEN, TASKS, EVENTS, PEOPLE and COACHES ONLY
-(docs/studio-map.md). Start here is at the top. The group names are headings. Views, Daily
-Agenda, Monday Tasks and Old screens (not used) are folders, and so is Presentations inside
-Daily Agenda: click one and its lines open beside it. Each line has an icon.
+The sidebar goes by what is on the screen (docs/studio-map.md): Start here, Rotation, Today,
+Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition, and then the
+heading Coaches only. Events, People, Monday Tasks and Teams and views are folders, and so is
+Views inside Teams and views: click one and its lines open beside it. Each line has an icon.
 
 A row in a list reads like the TV: the name or text, then what goes with it, such as
 the subteam and status of a task or the time and first name of a talk. Hidden or
@@ -35,35 +35,34 @@ filter is switched off.
 Start here: a short page that says what the screen is and that Publish all is the
 last step of every change. See "The Start here page" below.
 
-### Screen group
+### The screen
 
 - Rotation: the list the wall plays, top to bottom. Drag a row to move it. Turn Shown
   off to skip a row. Seconds is how long it stays (docs/views-and-themes.md).
-- Views: a folder with three pages, Robotics, Prime and Nova. Each holds the arrangement,
-  the team, the colors and the small panels of that view. See "Views" below.
-- Themes and backgrounds: the theme of each day of the week, and the background of the
-  Original theme.
-- Subthemes: small pictures drawn over a theme between two dates (docs/subthemes.md).
-- Announcements: a short notice in a bar under the banner (docs/announcements.md).
-- Extra panels: a panel you build yourself from blocks (heading, text, number, list,
-  image address, progress bar, countdown). About 3 blocks fit. A block that does not fit is
-  left out. The title shows in capital letters, 7 at most.
+- Today: everything that puts a message on the TV today. It has three sections, each with
+  a plain sentence about how it looks on the TV. Alert covers the whole screen until you turn
+  it off. Announcements on the bar are the lines under the banner: type a line and click New
+  announcement, and each card has the start, the end, the team and the level
+  (docs/announcements.md). Full screen messages at set times are the cards that play at a
+  time of day, such as WHAT TIME IS IT? at 14:30 and 17:00. The page ends with links to the
+  agenda, the booked talks and the meeting days.
+- Ticker: the lines that run along the bottom of the screen.
 
-### Tasks
+### Tasks, agenda and talks
 
-- Daily Agenda: a folder with three lines. Its plus button adds an Agenda item or a
-  Presentation.
-  - Agenda items: the schedule for today's meeting, up to 5 rows. The TV shows the
-    first one that is switched on and is dated today or has no date. One from
-    another day is skipped, so an old one that is still switched on does not
-    hide today's. The talks booked for today fill the rows the schedule leaves
-    free (docs/up-next.md). The panel is headed AGENDA.
-  - Presentations: the talks students book in a Google Form, and the ones a coach
-    adds by hand. They have the same fields, the slides link too, and they are in
-    the same lists. Upcoming and Past are the two lists, where a coach can cancel
-    or move a talk (docs/presentations.md).
-  - Meeting days: which days have talk slots and when they start. A day with no
-    Meeting day has no slots.
+The agenda, the talks and the meeting days open from the links at the foot of the Today page.
+
+- Agenda items: the schedule for today's meeting, up to 5 rows. The TV shows the
+  first one that is switched on and is dated today or has no date. One from
+  another day is skipped, so an old one that is still switched on does not
+  hide today's. The talks booked for today fill the rows the schedule leaves
+  free (docs/up-next.md). The panel is headed AGENDA.
+- Presentations: the talks students book in a Google Form, and the ones a coach
+  adds by hand. They have the same fields, the slides link too, and they are in
+  the same lists. Upcoming and Past are the two lists, where a coach can cancel
+  or move a talk (docs/presentations.md).
+- Meeting days: which days have talk slots and when they start. A day with no
+  Meeting day has no slots.
 - Monday Tasks: what the team is working on, from its Monday boards. It is a folder
   with two lists, On the TV and Hidden, and it has no plus button, because the Teletraan computer
   makes the tasks. A task has a name, a subteam, an optional point of contact, an
@@ -81,16 +80,16 @@ last step of every change. See "The Start here page" below.
 - Monday Boards: a page of the boards the computer can see, with their items and when
   each was read. The name of a chosen board opens its tasks, and Choose boards opens
   Dashboard Settings, where the Monday tab has the board rows.
-- Tips and News: the lines that run along the bottom of the screen.
+- Extra panels, under Coaches only, builds a panel from blocks (heading, text, number, list,
+  image address, progress bar, countdown). About 3 blocks fit. A block that does not fit is
+  left out. The title shows in capital letters, 7 at most.
 
 ### Events
 
-- Calendars: the BAND calendars the Teletraan computer reads. Pick one on the left to see its
-  next 40 events on the right, each SHOWN or HIDDEN, and when the computer last
-  downloaded it (docs/calendars-page.md). Hide this one and Hide all like this on an
-  event make a rule under Calendar filters, and Show again deletes it
-  (docs/hide-a-repeating-meeting.md). Ask a coach to add the address of a new
-  calendar on the computer.
+- Calendars: the coming events the Teletraan computer downloaded from BAND, by day,
+  with whether the TV shows each one and a Show and Hide switch for that one event
+  (docs/calendars-page.md). A switch makes a draft, so click Publish all to apply it.
+  Ask a coach to add the link of a new calendar on the control page, Keys tab.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). An Always show rule can also pin its events to
@@ -129,17 +128,23 @@ last step of every change. See "The Start here page" below.
 
 If you are not a coach, leave these alone and ask a coach.
 
-- Dashboard Settings: the settings for the whole screen, described below.
-- Teams: the teams the TV can show, each with a name, a number, a logo, seven
-  colors and a switch that flips the screen left to right. See "Teams" below.
-  The menu beside Publish has Use the standard colors for this team.
-- Look: the color themes of the whole screen, and holiday colours for set dates.
-  See "Look" below.
-- Old screens (not used): Original, Cybertron, Minimal and Family. The wall does not play
-  them. They are kept so that nothing already typed is lost.
+- Teams and views: Hawktimus Prime and Hawktimus Nova, each a plain form with the name, the
+  number, the logo, the metal and the colors on top, and the short name, the code, the mirror
+  switch and the trim under Advanced. The Colors field has a row of swatches and the button
+  Use the standard colors for this team. Under it is Views: a folder with three pages, Robotics,
+  Prime and Nova. Each holds the arrangement, the team, the colors and the small panels of that
+  view. See "Teams" and "Views" below.
+- Look: the theme of each weekday, the background, the seasonal decorations, motion, frame
+  polish and the logo and name effects. See "Look" below.
+- Competition: the mode of the competition cards and a switch for each card (docs/frc-feed.md).
+- Dashboard Settings: the settings that are set once, in five tabs, described below.
+- Extra panels, under Coaches only: see above.
+- Kept data: the old Screens (Original, Cybertron, Minimal), the Condensed view and the old
+  events calendar type. The wall does not use them. Do not delete: some old values are read
+  when a new list is empty.
 
 Three kinds of content are in the Studio but have no line in the list: Events
-Calendar entries, Places and Demo. They are explained below.
+Calendar entries (on Kept data), Places and Demo. They are explained below.
 
 Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips and News, Extra panels,
 Meeting days and booked talks each have a Team choice:
@@ -767,11 +772,14 @@ box.
 ## Dashboard Settings
 
 One page, with tabs along the top. It cannot be deleted or copied. The tabs, in
-order, are Screen, Logo and motion, Countdown, Calendars, Presentations, Monday,
-Competition and Advanced. It opens on Screen. Studio also adds a tab called All
+order, are Timing, Countdown, Monday, Calendars and Advanced. It opens on Timing. Studio also adds a tab called All
 fields, which shows every tab one under the other. Studio cannot start a tab
-folded, so Advanced is the last tab: it holds what only a coach looking into a
-problem would touch.
+folded, so Advanced is the last tab: it holds Presentations, Night mode and Hidden
+transitions, each a section with a line that says what it holds. The look, the alert, the messages, the
+competition cards and the team name are on their own pages now (Look, Today, Competition and
+Teams and views). Their fields are hidden in Dashboard Settings and keep what was saved in them.
+The headings below that name a tab that is gone, such as Logo and motion, describe the fields as they are
+now on the page that took them.
 
 ### Screen
 

@@ -2,7 +2,7 @@
 //
 //   background  sweep (the screen as it has always been), blueprint, rays, spotlight or embers. It is the
 //               background behind the panels of the Original theme. The other themes draw their own.
-//               It is edited on the Themes and backgrounds page (inputs/themes-view.js), under SCREEN in the
+//               It is edited on the Look page (inputs/look-view.js), in the
 //               sidebar, so the field is hidden here. The stored value and its name stay.
 //
 // The choices are the names in backgrounds in dashboard/config.js, and the starting value is the same as
@@ -22,7 +22,7 @@ export function backgroundFields() {
       type: 'string',
       group: 'look',
       hidden: true,
-      description: 'Set on the Themes and backgrounds page, under SCREEN in the sidebar. Behind the panels of the Original theme. Sweep is the screen as it has always been.',
+      description: 'Set on the Look page, in the sidebar. Behind the panels of the Original theme. Sweep is the screen as it has always been.',
       options: { list: backgroundChoices.map(choice => ({ title: choice.title, value: choice.id })), layout: 'radio' },
       initialValue: 'sweep',
       validation: Rule => Rule.valid(backgroundIds).error('Pick sweep, blueprint, rays, spotlight or embers.'),

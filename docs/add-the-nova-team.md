@@ -1,17 +1,17 @@
 # Add the Nova team
 
 For the coaches. The TV can show a second team, Hawktimus Nova, with its own name,
-number, logo and colors. The team starts as a document in the Teams list. The
+number, logo and colors. The team starts as a document, with a page of its own under Teams and views. The
 colors in the starting file are placeholders until the team has chosen its own. Do
 the four steps in order.
 
 The name, short name and number of a team are read from its Team document and nowhere else. To
-rename a team or change its number, change them under Teams. The Monday board is not
+rename a team or change its number, change them under Teams and views. The Monday board is not
 connected to the name, so a rename there is done by hand.
 
 A Team document keeps its own colors. Changing the seed file or the built-in team does not change a
 team that is already saved. To put the standard colors back on Hawktimus Prime or Hawktimus Nova, open
-the team under Teams, open the menu beside Publish and choose Use the standard colors for this team.
+the team under Teams and views, open Colors and click Use the standard colors for this team.
 It asks first, lists what changes and changes the draft only. Click Publish to put it on the screen.
 
 ## 1. Import the two teams
@@ -35,7 +35,7 @@ team, and the Nova view stays on Prime.
 
 ## 2. Fill in the Nova team
 
-In Studio open Settings, then Teams, then Hawktimus Nova. These are the fields.
+In Studio open Teams and views, then Hawktimus Nova. These are the fields.
 
 - Team name: up to 20 characters. It is the name in the banner.
 - Short name: up to 8 characters, such as NOVA.

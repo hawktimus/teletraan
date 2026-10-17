@@ -139,7 +139,8 @@ export function announcementsField() {
     title: 'Announcements',
     type: 'array',
     group: 'screen',
-    description: 'Full screen messages that play at set times of the day.',
+    hidden: true,
+    description: 'Set on the Today page, in the sidebar. Full screen messages that play at set times of the day.',
     of: [announcementMember],
     initialValue: startingList,
   });

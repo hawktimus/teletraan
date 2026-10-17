@@ -4,58 +4,44 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 `sidebarEntries`. One line is one entry, from top to bottom. To change the
 order, move a line.
 
-The sidebar reads like this. A heading in capitals is a divider with a title, not
-a folder. Views, Daily Agenda, Monday Tasks and Old screens (not used) are folders, and
-Presentations is a folder inside Daily Agenda. The groups go by what people do: SCREEN is
-what plays and how it looks, TASKS is the work of the day, EVENTS is the calendars, PEOPLE is
-the roster and the photos, and COACHES ONLY is for coaches (docs/studio-map.md):
+The sidebar reads like this. COACHES ONLY is a divider with a title, not a folder. Events, People,
+Teams and views is a folder, and Views is a folder inside Teams and views. The lines go
+by what is on the screen (docs/studio-map.md):
 
     Start here
-    SCREEN
-      Rotation
+    Rotation
+    Today
+    Ticker
+    Events
+      Calendars
+      Calendar filters
+    People
+      Leadership
+      Team leads
+      Sponsors
+    Photos
+    Monday
+    Teams and views
+      Hawktimus Prime
+      Hawktimus Nova
       Views
         Robotics
         Prime
         Nova
-      Themes and backgrounds
-      Subthemes
-      Announcements
-      Extra panels
-    TASKS
-      Daily Agenda
-        Agenda items
-        Presentations (Upcoming, Past)
-        Meeting days
-      Monday Tasks
-        On the TV
-        Hidden
-      Monday Boards
-      Tips and News
-    EVENTS
-      Calendars
-      Calendar filters
-    PEOPLE
-      Leadership
-      Team leads
-      Sponsors
-      Photos
+    Look
+    Competition
     COACHES ONLY
       Dashboard Settings
-      Teams
-      Look
-      Old screens (not used)
-        Original
-        Cybertron
-        Minimal
-        Family
+      Extra panels
+      Kept data
 
 ## The five kinds of line
 
     { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder },
-    { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
-    { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: [ ... ] },
+    { kind: 'page', title: 'Hawktimus Prime', icon: CubeIcon, type: 'team', id: 'team-prime' },
+    { kind: 'group', title: 'Events', icon: CalendarIcon, id: 'events', entries: [ ... ] },
     { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
-    { kind: 'divider', title: 'TASKS' },
+    { kind: 'divider', title: 'COACHES ONLY' },
 
 - `list` opens the list of one kind of document. `title` is what editors read
   in the sidebar and at the top of the list. `type` is the document type, the
@@ -69,29 +55,31 @@ the roster and the photos, and COACHES ONLY is for coaches (docs/studio-map.md):
   their board (`byBoard`) and then `oldestFirst`. `add: []` takes the plus button away,
   which both lists of Monday Tasks do, because the Teletraan computer makes the tasks.
 - `page` opens the one document of its type, which has a fixed id: Dashboard
-  Settings and Look. A page opens the document itself, with no list of one in
+  Settings, the two teams (`team-prime`, `team-nova`) and the Views. A page opens the document itself, with no list of one in
   between. Demo is the third page that exists once, and it has no line. The three old
-  Screens are three pages of one type, `screen`, each with an id of its own:
+  Screens are three documents of one type, `screen`, each with an id of its own:
   `screen-original`, `screen-cybertron` and `screen-minimal` (`studio/inputs/screen-ids.js`).
-  The four Views are four pages of the type `view` (`studio/inputs/view-ids.js`). Robotics,
-  Prime and Nova are in the Views folder and Family is with the old screens.
+  The four Views are four documents of the type `view` (`studio/inputs/view-ids.js`). Robotics,
+  Prime and Nova are in the Views folder. The old Screens and Family are opened by links on the Kept data page.
   Nothing can copy, delete or add one, and the New menu does not offer the type.
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
-  or pages. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
-  Meeting days. Monday Tasks holds On the TV and Hidden. Views holds Robotics, Prime and
-  Nova. Old screens (not used) holds a divider with one plain line that says what the folder
-  is, then Original, Cybertron, Minimal and Family. A divider may sit inside a folder for
-  that line only.
+  or pages. Events holds Calendars and Calendar filters. People holds Leadership, Team leads and
+  Sponsors. Teams and views holds the two teams and the Views
+  folder, and Views holds Robotics, Prime and Nova. A divider may sit inside a folder for that line only.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/inputs/start-here.js`
   and Calendars is `CalendarsView` in `studio/inputs/calendars-view.js`. A component
-  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-view.js` and
-  Themes and backgrounds is `ThemesView` in `studio/inputs/themes-view.js`. Monday Boards is `MondayBoardsView` in
-  `studio/inputs/monday-boards-view.js`, and its line has `children`, a function that builds
-  the two lists of the tasks of a board, which the name of a board on the page opens.
+  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-board-view.js`, Today is `TodayView`
+  in `studio/inputs/today-view.js`, Look is `LookView` in `studio/inputs/look-view.js`, Competition is
+  `CompetitionView` in `studio/inputs/competition-view.js` and Kept data is `KeptDataView` in
+  `studio/inputs/kept-data-view.js`. Monday is `MondayPage` in
+  `studio/inputs/monday-page.js`. A component line can have `children`, a function that builds the
+  pane a link on the page opens: the two lists of the tasks of a board (Monday), the agenda, the
+  talks, the meeting days or one announcement (Today), the dated rules or the subthemes (Look), and the
+  old Screens (Kept data).
 - `divider` is a thin line between groups. Give it a `title` and it is a
-  heading, such as TASKS. Every divider in the sidebar has a title.
+  heading, such as COACHES ONLY. Every divider in the sidebar has a title.
 
 A folder can have `add`, a list of document types. The plus button of the
 folder then offers a new document of each type. Daily Agenda has
@@ -103,9 +91,10 @@ is found there. The words in the menu are the titles of the types in
 The `add` of a folder can also name a template from `studio/tools/add-templates.js`,
 which is a new document with its own words and starting values. `sanity.config.js` gives
 the templates to the Studio and keeps them out of the New menus, so only the folder or list
-that names one offers it. Every list under SCREEN (except Extra panels), TASKS, EVENTS and PEOPLE has an `add` with one
+that names one offers it. Every list in the sidebar (except Extra panels) has an `add` with one
 template, so its plus button makes that type with no team and the switch on the screen
-turned on (a tip, for Tips and News). The exception is Monday Tasks, whose lists have
+turned on (a tip, for Ticker). The lists behind the Today and Look pages (the agenda, the meeting
+days, the talks and the subthemes) have one too. The exception is Monday Tasks, whose lists have
 no plus button. No New menu offers a task either, because the Teletraan computer makes them.
 
 Every line except a divider has an `icon`, and no two lines share one. The icons
@@ -129,12 +118,14 @@ page is loaded again. The lists of one board add `$board`, the number of the boa
 
 Events are not edited in the Studio. They come from the BAND calendars, and
 Calendars is a page that shows what each one brings in (docs/calendars-page.md).
-Three kinds of content have no line:
-Events Calendar (the type `extraEvent`, which the screen no longer reads), Places
+Some kinds of content have no line of their own: the types behind the Today page (`plan`, `presentation`,
+`presentationDay` and `announcement`), behind the Look page (`theme` and `subtheme`) and the old Screens, all in
+`notInSidebar` in `tests/schemas.test.mjs` with the reason. Three more have none:
+Events Calendar (the type `extraEvent`, which the screen no longer reads, listed on Kept data), Places
 (`place`, which a task's Location field adds and opens) and Demo (`demo`, whose
 buttons are on the control page). They are kept in the schema so that nothing already
 typed is lost. The status documents have no line either: the Teletraan computer writes them.
-`status` is shown by the status block at the top of the Screen tab of Dashboard
+`status` is shown by the status block at the top of the Timing tab of Dashboard
 Settings, and `calendarStatus` by the Calendars page.
 
 ## Change the order
@@ -156,7 +147,7 @@ Settings, and `calendarStatus` by the Calendars page.
 Change `title` on the line. The title is only words on the screen. Do not change
 `type`: it is the name Sanity stores each document under, and the dashboard asks
 for it by that name. The Agenda items list, for example, is the type `plan`, Team
-leads is `subteam`, Extra panels is `customPanel` and Look is `theme`.
+leads is `subteam`, Extra panels is `customPanel` and the Look document is `theme`.
 
 Words in the schema that name a list, such as a description that says "the
 Team leads list", change with it. The title of the type, which the New menu and

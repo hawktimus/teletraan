@@ -14,57 +14,45 @@ For adjusting the content that gets displayed, Sanity will be used.
 
 Almost everything on the screen is typed into the Studio, which is the editing page for the dashboard. Open it at [Studio address] and sign in.
 
-The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Screens, Daily Agenda, Monday Tasks, Settings and Views are folders, with Presentations inside Daily Agenda:
+The list on the left is what you can change. It goes by what is on the screen. Coaches only is a heading, and Events, People, Teams and views and Views are folders:
 
     Start here
-    SCREEN
-      Rotation
+    Rotation
+    Today
+    Ticker
+    Events
+      Calendars
+      Calendar filters
+    People
+      Leadership
+      Team leads
+      Sponsors
+    Photos
+    Monday
+    Teams and views
+      Hawktimus Prime
+      Hawktimus Nova
       Views
         Robotics
         Prime
         Nova
-      Themes and backgrounds
-      Subthemes
-      Announcements
-      Extra panels
-    TASKS
-      Daily Agenda
-        Agenda items
-        Presentations (Upcoming, Past)
-        Meeting days
-      Monday Tasks
-        On the TV
-        Hidden
-      Monday Boards
-      Tips and News
-    EVENTS
-      Calendars
-      Calendar filters
-    PEOPLE
-      Leadership
-      Team leads
-      Sponsors
-      Photos
+    Look
+    Competition
     COACHES ONLY
       Dashboard Settings
-      Teams
-      Look
-      Old screens (not used)
-        Original
-        Cybertron
-        Minimal
-        Family
+      Extra panels
+      Kept data
 
 Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds. Students start with docs/students.md, which has the same parts as the Start here page. Coaches have docs/coaches-guide.md.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Rotation** (under SCREEN) is the list the wall plays, top to bottom. Drag a row, or use Up and Down, turn Shown off to skip a row, and set the seconds. **Views** holds the arrangement, the team and the small panels of Robotics, Prime and Nova. **Themes and backgrounds** holds the theme of each weekday (docs/studio-map.md, docs/views-and-themes.md).
-- **Dashboard Settings** is the one page for the whole board: how long each page stays, the countdown dates, the announcement times and words, an alert, how presentations run, how big the portraits and photos are and how the portraits are drawn, and the Weekday schedule, the polish and the speed.
-- Under Daily Agenda, Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md). The plus button of Daily Agenda adds an Agenda item or a Presentation.
+- **Rotation** is the board the wall plays, top to bottom. Each row is a view, a panel and the time shown, and Show on screen skips a row. **Teams and views** holds the two teams and the arrangement of Robotics, Prime and Nova. **Look** holds the theme of each weekday, the background, the decorations, the motion and the logo (docs/studio-map.md, docs/views-and-themes.md).
+- **Today** holds everything that puts a message on the TV: the alert, the announcements on the bar, and the full screen messages at set times. **Dashboard Settings** holds what is set once, in five tabs: how long each page stays, the countdown dates, the Monday boards, the calendars, and presentations, night mode and hidden transitions under Advanced.
+- Today links to Agenda items, Presentations and Meeting days. Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md).
 - Events are not typed in here. They come from the team's BAND calendars, and the Calendars page says how to add or hide one. To get an event on the screen, add it in the calendar app, or ask a coach for an Always show rule. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
-- Events Calendar, Places and Demo are not in the list on the left. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on the control page.
+- The old Screens, the Condensed view and Events Calendar are on the Kept data page, the last line of Coaches only. Places and Demo are not in the list on the left. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on the control page.
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
 
 More detail is in docs/editing-content.md.

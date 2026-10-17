@@ -1,9 +1,12 @@
-// The sidebar. To change the order, move a line in sidebarEntries below. It is ordered by what people do:
-// SCREEN (what plays and how it looks), TASKS, EVENTS, PEOPLE and COACHES ONLY. docs/studio-map.md says what lives where.
+// The sidebar. To change the order, move a line in sidebarEntries below. It goes by what is on the screen: Start here,
+// Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition, and under the heading
+// COACHES ONLY Dashboard Settings, Extra panels and Kept data. docs/studio-map.md says what lives where.
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
-// here either: they come from the team's Monday boards, and Monday Tasks lists them
-// with one switch each, Show on TV. Three types are kept in the schema with no line
+// here either: they come from the team's Monday boards, and the Items tab of the Monday page lists them
+// with one switch each, Show on TV. The types behind the Today page (the agenda, the talks, the meeting days and the
+// announcements), the Look page (the dated rules and the subthemes) and the old Screens have no line of their own: a
+// link on their page opens them (notInSidebar in tests/schemas.test.mjs gives the reason for each). Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
 // which the screen no longer reads), place (a task's Location field adds and opens
 // them) and demo (its buttons moved to the control page). The status documents, which the Teletraan computer
@@ -27,7 +30,7 @@
 //   kind 'component'  opens a page that is not a document. component is a plain function
 //                     that draws it (start-here.js, calendars-view.js), and it needs an id.
 //                     children names a function (S, times) that builds the pane that a link
-//                     on the page opens (monday-boards-view.js)
+//                     on the page opens (mondayPanes, for the Monday page)
 //   kind 'divider'    a thin line between groups. With a title it is a heading
 // Every entry except a divider needs an icon, and no two entries share one.
 // The icons come from @sanity/icons. Each is imported from its own file, such as
@@ -36,46 +39,46 @@
 
 import { ArchiveIcon } from '@sanity/icons/Archive';
 import { BellIcon } from '@sanity/icons/Bell';
-import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
-import { ClockIcon } from '@sanity/icons/Clock';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
+import { CubeIcon } from '@sanity/icons/Cube';
 import { DashboardIcon } from '@sanity/icons/Dashboard';
 import { DesktopIcon } from '@sanity/icons/Desktop';
 import { DiamondIcon } from '@sanity/icons/Diamond';
 import { EarthGlobeIcon } from '@sanity/icons/EarthGlobe';
 import { EyeClosedIcon } from '@sanity/icons/EyeClosed';
-import { FaceHappyIcon } from '@sanity/icons/FaceHappy';
 import { FilterIcon } from '@sanity/icons/Filter';
 import { HeartIcon } from '@sanity/icons/Heart';
-import { HighlightIcon } from '@sanity/icons/Highlight';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
-import { PanelLeftIcon } from '@sanity/icons/PanelLeft';
+import { MoonIcon } from '@sanity/icons/Moon';
 import { PlayIcon } from '@sanity/icons/Play';
 import { PresentationIcon } from '@sanity/icons/Presentation';
 import { ProjectsIcon } from '@sanity/icons/Projects';
 import { SparkleIcon } from '@sanity/icons/Sparkle';
-import { SquareIcon } from '@sanity/icons/Square';
 import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
-import { SunIcon } from '@sanity/icons/Sun';
 import { SyncIcon } from '@sanity/icons/Sync';
+import { TargetIcon } from '@sanity/icons/Target';
 import { TaskIcon } from '@sanity/icons/Task';
 import { ThLargeIcon } from '@sanity/icons/ThLarge';
 import { ThListIcon } from '@sanity/icons/ThList';
-import { TimelineIcon } from '@sanity/icons/Timeline';
 import { TokenIcon } from '@sanity/icons/Token';
+import { UserIcon } from '@sanity/icons/User';
 import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './inputs/start-here.js';
 import { CalendarsView } from './inputs/calendars-view.js';
 import { milestonesChild } from './inputs/monday-boards-parts.js';
-import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
-import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
-import { ThemesView } from './inputs/themes-view.js';
-import { RotationView } from './inputs/rotation-view.js';
+import { MondayPage, oldTasksChild } from './inputs/monday-page.js';
+import { screenType, screenStyles, screenIdOf } from './inputs/screen-ids.js';
+import { LookView } from './inputs/look-view.js';
+import { CompetitionView } from './inputs/competition-view.js';
+import { KeptDataView } from './inputs/kept-data-view.js';
+import { targetOf as keptTargetOf } from './inputs/kept-data-parts.js';
+import { RotationView } from './inputs/rotation-board-view.js';
+import { TodayView } from './inputs/today-view.js';
 import { PhotosView } from './inputs/photos-view.js';
 import { photosChild } from './inputs/photos-parts.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
@@ -90,20 +93,21 @@ export const demoId = 'demo';
 export const singletonTypes = [settingsType, themeType, demoType];
 
 // The three old Screens, Original, Cybertron and Minimal, are pages of one type with an id each. The wall
-// does not play them any more (the Rotation page and the Views replaced them). They sit in the folder Old
-// screens (not used) under COACHES ONLY, so nothing already typed is lost.
+// does not play them any more (the Rotation page and the Views replaced them). The Kept data page, the last line
+// of COACHES ONLY, links to them, so nothing already typed is lost.
 export { screenType };
 export const screenIds = screenStyles.map(screenIdOf);
-const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
-const screenPages = screenStyles.map(style => ({ kind: 'page', title: screenTitles[style], icon: screenIcons[style], type: screenType, id: screenIdOf(style) }));
+
+// The two teams are pages too, with the ids of the starting teams (docs/seed/teams.ndjson). Another team is still
+// added from the New menu, and still appears in the Team choice of every item.
+export const teamPageIds = { prime: 'team-prime', nova: 'team-nova' };
 
 // The four Views, Robotics, Prime, Nova and Family, are pages of one type with an id each. The rotation plays
-// Robotics, Prime and Nova, so those three sit in the folder Views under SCREEN. Family is not in the rotation
-// and sits with the old screens.
+// Robotics, Prime and Nova, so those three sit in the folder Views under Teams and views. Family is not in the
+// rotation and is linked from the Kept data page.
 export { viewType };
 export const viewIds = viewKeys.map(viewIdOf);
-const familyPage = { kind: 'page', title: viewTitles.family, icon: FaceHappyIcon, type: viewType, id: viewIdOf('family') };
-const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIcon, family: FaceHappyIcon };
+const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIcon };
 const viewPages = viewKeys.filter(key => key !== 'family').map(key => ({ kind: 'page', title: viewTitles[key], icon: viewIcons[key], type: viewType, id: viewIdOf(key) }));
 
 // The same version as the screen's own questions to Sanity
@@ -129,7 +133,7 @@ const byTargetDate = { field: 'targetDate', direction: 'asc' };
 const startedRecently = '!defined(start) || start >= $since';
 const startedEarlier = 'defined(start) && start < $since';
 
-// The two lists of Monday Tasks. Each task is in exactly one of them. A task is on the TV when
+// The two old lists of tasks. Each task is in exactly one of them. A task is on the TV when
 // it comes from the board and is not switched off, here or by the Show on TV column of the board. Every other task is hidden, including a task
 // typed by hand, which the screen no longer shows: a task with no source counts as typed by hand,
 // so every task made before the team board is under Hidden. A task that expires while the Studio
@@ -137,69 +141,82 @@ const startedEarlier = 'defined(start) && start < $since';
 const tasksOnTv = 'source == "monday" && showOnTv != false && showOnBoard != false && show != false && (!defined(expires) || expires > $now)';
 const tasksHidden = 'source != "monday" || showOnTv == false || showOnBoard == false || show == false || (defined(expires) && expires <= $now)';
 
+// Today and the other pages that open lists in the next pane give their links an id. The agenda, the booked talks
+// and the meeting days sit behind the Today page, and one announcement opens from its card.
+const agendaList = { kind: 'list', title: 'Agenda items', id: 'agenda', type: 'plan', sort: newestDateFirst, add: ['newPlan'] };
+const meetingDaysList = { kind: 'list', title: 'Meeting days', id: 'meetingDays', type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] };
+const talksFolder = {
+  kind: 'group',
+  title: 'Presentations',
+  icon: PresentationIcon,
+  id: 'presentations',
+  add: ['newPresentation'],
+  entries: [
+    { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently, add: ['newPresentation'] },
+    { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
+  ],
+};
+export const announcementChild = 'announcement-';
+const subthemesList = { kind: 'list', title: 'Subthemes', id: 'subthemes', type: 'subtheme', sort: byName, add: ['newSubtheme'] };
+
+// The two old lists of tasks, On the TV and Hidden, which the Old manual tasks link on the Items tab of Monday opens.
+// They are not a line of the sidebar. A task typed by hand lives only here.
+export const oldTasksFolder = {
+  kind: 'group',
+  title: 'Old manual tasks',
+  icon: TaskIcon,
+  id: 'mondayTasks',
+  entries: [
+    { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'tasksOnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksOnTv, add: [] },
+    { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'tasksHidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksHidden, add: [] },
+  ],
+};
+
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
-  { kind: 'divider', title: 'SCREEN' },
   { kind: 'component', title: 'Rotation', id: 'rotation', icon: PlayIcon, component: RotationView },
-  { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
-  { kind: 'component', title: 'Themes and backgrounds', id: 'themes', icon: HighlightIcon, component: ThemesView },
-  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
-  { kind: 'list', title: 'Announcements', icon: BellIcon, type: 'announcement', sort: latestStart, add: ['newAnnouncement'] },
-  { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
-  { kind: 'divider', title: 'TASKS' },
+  { kind: 'component', title: 'Today', id: 'today', icon: BellIcon, component: TodayView, children: todayChildren },
+  { kind: 'list', title: 'Ticker', id: 'tipOrNews', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
   {
     kind: 'group',
-    title: 'Daily Agenda',
+    title: 'Events',
     icon: CalendarIcon,
-    id: 'dailyAgenda',
-    add: ['plan', 'presentation'],
+    id: 'events',
     entries: [
-      { kind: 'list', title: 'Agenda items', icon: TimelineIcon, type: 'plan', sort: newestDateFirst, add: ['newPlan'] },
-      {
-        kind: 'group',
-        title: 'Presentations',
-        icon: PresentationIcon,
-        id: 'presentations',
-        add: ['newPresentation'],
-        entries: [
-          { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently, add: ['newPresentation'] },
-          { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
-        ],
-      },
-      { kind: 'list', title: 'Meeting days', icon: ClockIcon, type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] },
+      { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
+      { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
     ],
   },
   {
     kind: 'group',
-    title: 'Monday Tasks',
-    icon: TaskIcon,
-    id: 'mondayTasks',
+    title: 'People',
+    icon: UserIcon,
+    id: 'people',
     entries: [
-      { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'tasksOnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksOnTv, add: [] },
-      { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'tasksHidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksHidden, add: [] },
+      { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
+      { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
+      { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
     ],
   },
-  { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsTabs, children: tasksOfBoard },
-  { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
-  { kind: 'divider', title: 'EVENTS' },
-  { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
-  { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
-  { kind: 'divider', title: 'PEOPLE' },
-  { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
-  { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
-  { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
   { kind: 'component', title: 'Photos', id: 'photos', icon: ImagesIcon, component: PhotosView, children: photosOf },
+  { kind: 'component', title: 'Monday', id: 'monday', icon: ThListIcon, component: MondayPage, children: mondayPanes },
+  {
+    kind: 'group',
+    title: 'Teams and views',
+    icon: TokenIcon,
+    id: 'teamsAndViews',
+    entries: [
+      { kind: 'page', title: 'Hawktimus Prime', icon: CubeIcon, type: 'team', id: teamPageIds.prime },
+      { kind: 'page', title: 'Hawktimus Nova', icon: MoonIcon, type: 'team', id: teamPageIds.nova },
+      { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
+    ],
+  },
+  { kind: 'component', title: 'Look', id: 'look', icon: ColorWheelIcon, component: LookView, children: lookChildren },
+  { kind: 'component', title: 'Competition', id: 'competition', icon: TargetIcon, component: CompetitionView },
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
-  { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
-  { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
-  {
-    kind: 'group',
-    title: 'Old screens (not used)',
-    icon: StackIcon,
-    id: 'oldScreens',
-    entries: [{ kind: 'divider', title: 'The wall does not play these. They are kept so nothing is lost.' }].concat(screenPages, [familyPage]),
-  },
+  { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
+  { kind: 'component', title: 'Kept data', id: 'keptData', icon: StackIcon, component: KeptDataView, children: keptChildren },
 ];
 
 // The list of one kind of document that a sidebar entry opens. times is { since, now }.
@@ -232,14 +249,16 @@ function photosOf(S, times) {
   return () => paneOf(S, photoList, times);
 }
 
-// The second list under Monday Boards: the milestones the Teletraan computer made. The page links to it with this
-// id (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
+// The milestones list the Teletraan computer made, a second list the older Boards page linked to with this id
+// (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
 const milestoneList = { kind: 'list', title: 'Milestones', id: 'milestones', type: 'milestone', sort: byTargetDate, add: [] };
 
-// What a board on the Monday Boards page opens: the tasks of that board in the same two lists as
-// Monday Tasks. The function it gives back is handed the board number by the link on the page.
-function tasksOfBoard(S, times) {
+// What a link on the Monday page opens. The link named oldTasksChild opens the two old lists of tasks. The
+// older Boards page linked a board number, which opens the tasks of that board in the same two lists, and
+// milestonesChild, which opens the milestones. The function it gives back is handed the id of the link.
+function mondayPanes(S, times) {
   return boardId => {
+    if (boardId === oldTasksChild) return groupList(S, oldTasksFolder, times);
     if (boardId === milestonesChild) return paneOf(S, milestoneList, times);
     const kept = filter => 'mondayBoardId == $board && (' + filter + ')';
     const lists = [
@@ -253,16 +272,54 @@ function tasksOfBoard(S, times) {
   };
 }
 
+// What a link on the Today page opens: the agenda, the booked talks, the meeting days, or one announcement in its
+// full form. The function it gives back is handed the id of the link.
+function todayChildren(S, times) {
+  return childId => {
+    if (childId.indexOf(announcementChild) === 0) {
+      return S.document().title('Announcement').schemaType('announcement').documentId(childId.slice(announcementChild.length));
+    }
+    if (childId === 'agenda') return paneOf(S, agendaList, times);
+    if (childId === 'meetingDays') return paneOf(S, meetingDaysList, times);
+    return groupList(S, talksFolder, times);
+  };
+}
+
+// What a link on the Look page opens: the dated rules, the default theme and the time zone (the Look document), or the subthemes
+function lookChildren(S, times) {
+  return childId => {
+    if (childId === 'subthemes') return paneOf(S, subthemesList, times);
+    return S.document().title('Dated rules, default theme and time zone').schemaType(themeType).documentId(themeId);
+  };
+}
+
+// What a link on the Kept data page opens: an old Screen or the Condensed view in its form, or the list of the old
+// events calendar. Nothing here can be added to: the plus button of the list is taken away.
+const extraEventList = { kind: 'list', title: 'Events Calendar', id: 'extraEvent', type: 'extraEvent', sort: { field: 'startDate', direction: 'asc' }, add: [] };
+
+function keptChildren(S, times) {
+  return childId => {
+    const target = keptTargetOf(childId);
+    if (!target) throw new Error('structure.js: "' + childId + '" is not a link of the Kept data page.');
+    if (target.list) return paneOf(S, extraEventList, times);
+    return S.document().title(target.title).schemaType(target.type).documentId(target.id);
+  };
+}
+
 // A sidebar entry that opens a list of the lines under it. The plus button of a
 // folder with add offers a new document of each of those types, the way the
 // plus button of a list of one type does, or the new document of a template in add-templates.js.
-function groupOf(S, entry, times) {
+function groupList(S, entry, times) {
   let list = S.list()
     .title(entry.title)
     .id(entry.id)
     .items(entry.entries.map(inner => itemFor(S, inner, times)));
   if (entry.add) list = list.menuItems(S.menuItemsFromInitialValueTemplateItems(entry.add.map(type => S.initialValueTemplateItem(type).serialize())));
-  return S.listItem().title(entry.title).id(entry.id).icon(entry.icon).child(list);
+  return list;
+}
+
+function groupOf(S, entry, times) {
+  return S.listItem().title(entry.title).id(entry.id).icon(entry.icon).child(groupList(S, entry, times));
 }
 
 // A sidebar entry that opens the one document of its type

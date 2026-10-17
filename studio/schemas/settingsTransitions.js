@@ -68,7 +68,7 @@ export function transitionsFields() {
       title: 'Frame finish',
       type: 'string',
       group: 'look',
-      description: 'The metal of the page frames, picked at every page change. Frame metal (Screen tab) is for the banner, countdown and logo, which never change.',
+      description: 'The metal of the page frames, picked at every page change. Frame metal is for the banner, countdown and logo, which never change.',
       options: { list: finishes, layout: 'radio', direction: 'horizontal' },
       initialValue: 'mostly-gold',
       validation: Rule => [

@@ -23,19 +23,18 @@ sidebar lines that fill each one.
 
 | Area | What it shows | Where you change it |
 |------|---------------|---------------------|
-| A Banner | The team name and number, the school, the date, the time and the weather | Teams and Dashboard Settings, for coaches |
-| B Main panel | The big panel. It takes turns showing the agenda, the events, the Monday task cards, the team leads, the leadership, the sponsors, the photos and the extra panels | Rotation, Daily Agenda, Calendars, Monday Tasks, Team leads, Leadership, Sponsors, Photos, Extra panels |
+| A Banner | The team name and number, the school, the date, the time and the weather | Teams and views, for coaches |
+| B Main panel | The big panel. It takes turns showing the agenda, the events, the Monday task cards, the team leads, the leadership, the sponsors, the photos and the extra panels | Rotation, Today, Calendars, Monday, Team leads, Leadership, Sponsors, Photos, Extra panels |
 | C Countdown | The time left to Kickoff, then to Rollout | Dashboard Settings, for coaches |
-| D Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast | Views, Monday Tasks, Sponsors, Calendars |
-| E Ticker | One tip, news item or reminder at a time along the bottom | Tips and News, Sponsors |
+| D Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast | Teams and views, Monday, Sponsors, Calendars |
+| E Ticker | One tip, news item or reminder at a time along the bottom | Ticker, Sponsors |
 
 Two teams use the TV, Prime and Nova. The TV plays a list called the Rotation, which takes turns between the views Robotics, Prime and Nova, and swaps between them. An item with the
 Team field left blank shows for both. An item for one team shows only while that
 team is on the screen.
 
-Which panels play, in what order and for how many seconds is the Rotation page, under
-SCREEN. Which theme plays each day is Themes and backgrounds, under SCREEN. Ask a coach
-before you change them. docs/studio-map.md shows the whole sidebar.
+Which panels play, in what order and for how many seconds is the Rotation page. Which theme
+plays each day is the Look page. Ask a coach before you change them. docs/studio-map.md shows the whole sidebar.
 
 Some things cover the whole TV. A booked talk takes the full screen at its time.
 An alert does too. The night screen is dark from 11:30 pm to 11:30 am.
@@ -61,17 +60,17 @@ Hide after has not passed. The Team choice is Both, or the team that is on the s
 
 | To change | Open | Notes |
 |-----------|------|-------|
-| Today's schedule | Daily Agenda, Agenda items | One for each meeting, with its date. The panel is headed AGENDA (docs/up-next.md) |
-| A talk | Daily Agenda, Presentations | Students book talks in the Form. A coach can change one here |
-| A tip, news item or reminder | Tips and News | One line of up to 52 characters |
-| A notice that people must see today | Announcements, or the Post an announcement box on the control page | A bar under the banner (docs/announcements.md) |
-| Whether a task shows | Monday Tasks | The task itself is changed in Monday |
+| Today's schedule | Today, then Agenda items | One for each meeting, with its date. The panel is headed AGENDA (docs/up-next.md) |
+| A talk | Today, then Presentations | Students book talks in the Form. A coach can change one here |
+| A tip, news item or reminder | Ticker | One line of up to 52 characters |
+| A notice that people must see today | Today, Announcements on the bar, or the Post an announcement box on the control page | A bar under the banner (docs/announcements.md) |
+| Whether a task shows | Monday | The task itself is changed in Monday |
 | Events | The team calendars | Not in the Studio. See Events below |
 | A leader or a team lead | Leadership, Team leads | First names only |
 | A sponsor | Sponsors | |
 | A photo | Photos | See Photos below |
 | What plays, in what order | Rotation | Drag a row, or use Up and Down. Turn Shown off to skip a row |
-| The banner, the countdown, the look | Dashboard Settings, Teams, Look | Under Coaches only, for coaches |
+| The banner, the countdown, the look | Teams and views, Look, Dashboard Settings | For coaches |
 
 ## Tasks
 
@@ -93,7 +92,7 @@ Your task shows on the TV when it has a department, a team or General, Show on T
 - **Timeline** and **Estimated Hours** feed the due date, the overdue mark and the
   progress numbers. A task with no hours counts as one hour.
 
-In the Studio, Monday Tasks lists the tasks in two lists, On the TV and Hidden.
+In the Studio, the Items tab of Monday lists the tasks, with a switch for each.
 Each task opens read only. The one thing you can change is **Show on TV**. Monday
 Boards shows every board the Teletraan computer can see, with when it was last read. If a Monday
 panel shows a STALE chip, the computer has not read the boards for a while. Tell a coach.
@@ -155,6 +154,6 @@ To run a sample talk with six sample slides, a coach opens the menu beside Publi
 
 - A change that will not show, or a Monday question: [mentor name, added when chosen].
 - The TV is dark, frozen or shows an old page: [mentor name, added when chosen].
-- Anything under Coaches only (Dashboard Settings, Teams and Look): a coach. The coaches page is
+- Teams and views, Look, Competition and anything under Coaches only (Dashboard Settings, Extra panels and Kept data): a coach. The coaches page is
   docs/coaches-guide.md.
 - Coaches control the TV from the control page (docs/control-page.md): updates, restarts and rollbacks.

@@ -16,11 +16,11 @@ import { controlAddress } from './control-address.js';
 export const screen = { width: 1920, height: 1080 };
 
 export const areas = [
-  { letter: 'A', name: 'Banner', feeds: [['Teams', 'Dashboard Settings']], x: 40, y: 24, width: 1840, height: 212 },
+  { letter: 'A', name: 'Banner', feeds: [['Teams and views', 'Look']], x: 40, y: 24, width: 1840, height: 212 },
   {
     letter: 'B',
     name: 'Main panel',
-    feeds: [['Rotation', 'Daily Agenda'], ['Monday Tasks', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
+    feeds: [['Rotation', 'Today'], ['Monday', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
     x: 40,
     y: 256,
     width: 1152,
@@ -30,13 +30,13 @@ export const areas = [
   {
     letter: 'D',
     name: 'Side panel',
-    feeds: [['Views', 'Calendars'], ['Monday Tasks'], ['Sponsors']],
+    feeds: [['Views', 'Calendars'], ['Monday'], ['Sponsors']],
     x: 1224,
     y: 592,
     width: 656,
     height: 372,
   },
-  { letter: 'E', name: 'Ticker', feeds: [['Tips and News', 'Sponsors']], x: 40, y: 984, width: 1840, height: 72 },
+  { letter: 'E', name: 'Ticker', feeds: [['Ticker', 'Sponsors']], x: 40, y: 984, width: 1840, height: 72 },
 ];
 
 // The lines under the picture. The picture has no links. The three dots are the small status dots at the foot of the

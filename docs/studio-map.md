@@ -1,63 +1,71 @@
 # Studio map
 
-The sidebar of the Studio, from top to bottom, and what lives where. It goes by what you do. The page you are reading is for everyone. Students need only the first four groups.
+The sidebar of the Studio, from top to bottom, and what lives where. It goes by what is on the screen: one line for each thing the audience sees. The page you are reading is for everyone. Students need only the lines above Coaches only.
 
 Every change has three steps: open a line in the sidebar, make the change, click Publish all in the top bar. A change you have not published is a draft, and the TV never shows a draft.
 
 ## The sidebar
 
-| Group | Line | What it is |
-|-------|------|------------|
-| (top) | Start here | What the screen is, a picture of its five areas, the status of the Teletraan computer and the links |
-| SCREEN | Rotation | The list the wall plays, top to bottom. Drag a row, or use Up and Down. Turn Shown off to skip a row. Seconds is how long it stays |
-| SCREEN | Views | Robotics, Prime and Nova: the arrangement, the team, the colors and the small panels of each |
-| SCREEN | Themes and backgrounds | The theme of each weekday, and the background of the Original theme |
-| SCREEN | Subthemes | Small pictures drawn over a theme between two dates |
-| SCREEN | Announcements | A short notice in a bar under the banner |
-| SCREEN | Extra panels | A panel you build from blocks |
-| TASKS | Daily Agenda | Agenda items, Presentations (Upcoming and Past) and Meeting days |
-| TASKS | Monday Tasks | Tasks from the Monday board. On the TV and Hidden. The one thing to change is Show on TV |
-| TASKS | Monday Boards | The boards the Teletraan computer can see, and the milestones |
-| TASKS | Tips and News | The lines that run along the bottom of the screen |
-| EVENTS | Calendars | What each BAND calendar brings in, and whether the TV shows each event |
-| EVENTS | Calendar filters | Rules that hide events or keep them on the screen |
-| PEOPLE | Leadership | Coaches, captains and mentors |
-| PEOPLE | Team leads | Each subteam, its lead and its students |
-| PEOPLE | Sponsors | Name, tier, a short line and the logo address |
-| PEOPLE | Photos | The pictures for the Photo panel |
-| COACHES ONLY | Dashboard Settings | The settings of the whole screen, in eight tabs |
-| COACHES ONLY | Teams | Hawktimus Prime and Hawktimus Nova: name, number, logo, colors and trim |
-| COACHES ONLY | Look | Color themes, seasonal packs and the time zone |
-| COACHES ONLY | Old screens (not used) | Original, Cybertron, Minimal and Family. The wall does not play them. They are kept so nothing is lost |
+| Line | What it is |
+|------|------------|
+| Start here | What the screen is, a picture of its five areas, the status of the Teletraan computer and the links |
+| Rotation | The board the wall plays, top to bottom, like a Monday board. Each row is a view, a panel, a small panel, the time shown and a Show on screen switch. Settings for the small panel or the photos appear for the row that needs them (written by the Rotation board lane) |
+| Today | Everything that puts a message on the TV today: the alert, the announcements on the bar under the banner, and the full screen messages at set times. Links to Agenda items, Presentations and Meeting days |
+| Ticker | The tips, news and reminders that run along the bottom of the screen |
+| Events | Calendars, which shows what each BAND calendar brings in and lets you show or hide each coming event, and Calendar filters, which are rules that hide events or keep them |
+| People | Leadership, Team leads and Sponsors |
+| Photos | The pictures for the Photo panel: upload a series, or take them from a Google Drive folder |
+| Monday | The Monday boards the computer can see, a preview of their items, and the Show on TV switch for each task (written by the Monday lane) |
+| Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
+| Look | The theme of each weekday, the background, the seasonal decorations, motion, frame polish, and the logo and name effects, on one page |
+| Competition | The competition cards: the mode, and one switch for each card |
+| Coaches only | A heading. Under it: Dashboard Settings, Extra panels and Kept data |
+
+Under Coaches only:
+
+| Line | What it is |
+|------|------------|
+| Dashboard Settings | The settings that are set once, in five tabs: Timing, Countdown, Monday, Calendars and Advanced. Presentations, Night mode and Hidden transitions are sections of Advanced |
+| Extra panels | A panel you build from blocks |
+| Kept data | The old Screens, the Condensed view and the old events calendar type. The wall does not use them. Do not delete them: some old values are read when a new list is empty |
 
 ## Where do I change
 
 | I want to | Open |
 |-----------|------|
 | Change what plays, in what order, for how long | Rotation |
-| Skip a panel for now | Rotation, turn Shown off |
-| Pick the theme for a weekday | Themes and backgrounds |
-| Change the background of Original | Themes and backgrounds |
-| Add today's schedule | Daily Agenda, Agenda items |
-| Hide a task from the TV | Monday Tasks |
-| Hide a repeating meeting | Calendars, or Calendar filters |
-| Add a notice for today | Announcements |
-| Add a tip or news line | Tips and News |
-| Add a leader, a lead or a sponsor | Leadership, Team leads, Sponsors |
+| Skip a panel for now | Rotation, turn Show on screen off |
+| Put up an alert | Today, Alert |
+| Add a notice for today | Today, Announcements on the bar |
+| Play a card at a time of day, such as WHAT TIME IS IT? | Today, Full screen messages at set times |
+| Add today's schedule | Today, Agenda items |
+| Add or look at a talk | Today, Presentations |
+| Add a tip or news line | Ticker |
+| Hide a repeating meeting | Events, Calendars, or Calendar filters |
+| Add a leader, a lead or a sponsor | People |
 | Add a photo | Photos |
-| Change the team name, number or colors | Teams |
-| Put the standard colors back on a team | Teams, open the team, the menu beside Publish, Use the standard colors for this team |
+| Hide a task from the TV | Monday |
+| Change the team name, number, logo or metal | Teams and views, then the team |
+| Put the standard colors back on a team | Teams and views, open the team, open Colors, click Use the standard colors for this team |
+| Change the arrangement of a view | Teams and views, Views |
+| Pick the theme for a weekday | Look, Theme by day of the week |
+| Change the background of Original | Look, Background |
+| Switch the holiday decorations on a date | Look, Seasonal decorations, Dated rules |
+| Calm the screen | Look, Motion |
+| Change the logo and the name effect | Look, Logo and name effects |
+| Choose which competition cards show | Competition |
 | Change the countdown dates | Dashboard Settings, Countdown tab |
-| Change the logo and the page change | Dashboard Settings, Logo and motion tab |
+| Change how long a page stays | Dashboard Settings, Timing tab |
+| Find an old Screen | Coaches only, Kept data |
 
 ## Things to know
 
-- Each Team document keeps its own colors. A new default in the code never reaches a team already saved. To reset one, open it and choose Use the standard colors for this team from the menu beside Publish. It changes the draft only. Nothing reaches the TV until you click Publish.
-- The Rotation list is one list for the whole wall. Its full form is also a field in Dashboard Settings, Advanced tab. Use the Rotation page.
-- A page in the sidebar that is not a document (Start here, Rotation, Themes and backgrounds, Calendars, Monday Boards) saves what you change as a draft of Dashboard Settings. Click Publish all to put it on the screen.
+- Each Team document keeps its own colors. A new default in the code never reaches a team already saved. To reset one, open the team, open Colors and click Use the standard colors for this team. The button shows what it would change and writes to the draft only. Nothing reaches the TV until you click Publish.
+- A page in the sidebar that is not a document (Start here, Rotation, Today, Look, Competition, Calendars, Monday) saves what you change as a draft of the document it shows. Click Publish all to put it on the screen.
+- Dashboard Settings still holds every setting it ever had. The ones the pages took over (the alert, the messages, the look, the competition cards and the team fallback) are hidden there, with their stored values. The ones the old Screens left behind say Not used any more.
 - Anything under Coaches only is for a coach.
 - Events are not typed in the Studio. They come from the BAND calendars.
 
 ## Where it is in the code
 
-`studio/structure.js` holds the sidebar as one list. To move a line, move it in that list (docs/reordering-the-sidebar.md). The pages that are not documents are in `studio/inputs/`. `tests/schemas.test.mjs` checks the sidebar, so a change to it changes that test.
+`studio/structure.js` holds the sidebar as one list. To move a line, move it in that list (docs/reordering-the-sidebar.md). The pages that are not documents are in `studio/inputs/`: `today-view.js`, `look-view.js`, `competition-view.js`, `kept-data-view.js`, and the others named in the table above. The rows they share are `field-editor.js`. `tests/schemas.test.mjs` checks the sidebar, so a change to it changes that test.

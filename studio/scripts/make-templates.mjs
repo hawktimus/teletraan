@@ -112,7 +112,7 @@ export async function loadSchemas() {
     ['schemas', 'structure.js', 'inputs', 'tools'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
     // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
-    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue'], react: ['createElement', 'createContext', 'useContext', 'useEffect', 'useRef', 'useState'] };
+    const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue', 'useDocumentOperation'], react: ['createElement', 'createContext', 'useContext', 'useEffect', 'useRef', 'useState'] };
     Object.keys(stubs).forEach(packageName => {
       const stub = path.join(folder, 'node_modules', packageName);
       fs.mkdirSync(stub, { recursive: true });

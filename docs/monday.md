@@ -81,7 +81,7 @@ A task shows on the TV when all of these are true:
 - it has a team, or General
 - Show on TV? is Show, which is the default
 - it is not a subitem
-- its Show on TV switch in Studio is on (Monday Tasks, On the TV), and its Show on screen
+- its Show on TV switch in Studio is on (Monday, Items), and its Show on screen
   switch is on
 
 In the words for students: your task shows on the TV when it has a department, a team or
@@ -130,13 +130,47 @@ then the milestones board, and on the first run of a day the list of boards for 
 At 30 minutes the Teletraan computer uses about 150 of the 900, so the limit only matters when How often is
 turned down to 5 minutes for a long time, or when something fails and retries.
 
+## The Monday page
+
+One line of the sidebar, Monday, under TASKS. It replaces Monday Tasks and Monday Boards. It has four tabs.
+
+- **Boards**: a card for every board the token can see, with its name, how many items it has and when the
+  Teletraan computer last read it. Each card has two choices: Show tasks from this board and Show
+  milestones from this board. Click one and it is saved as a draft of Dashboard Settings, in the same two
+  fields as before (the board of the Task board block and of the Milestones board block). Click Publish all
+  in the top bar to put it on the screen. Each card says in plain words whether the computer can read the
+  board. The Check the token button asks Monday who the token belongs to. The page also holds the minutes
+  between reads (5 to 120, the same setting as How often) and the reads used today out of 900.
+- **Items**: the tasks of the chosen task board, grouped by department in the order Build, Electrical,
+  Programming, Design, CNC, Strategy, Business, Operations, Marketing and General, then any other
+  department, then tasks with no department. Filter by department, status and on or off the TV, or search
+  a word of the title or an owner. Each task has a Show on TV switch, the one thing an editor changes, and
+  each group has Hide all in this group and Show all in this group. A task the computer kept off the TV says
+  why under its switch. A long title wraps and is never cut. The link Old manual tasks at the foot opens the
+  two old lists, On the TV and Hidden, for tasks typed by hand before the team board was connected. Those
+  tasks stay and are never shown on the screen.
+- **Milestones**: the milestones the computer read, read only.
+- **Preview the panels**: the pictures of the panels (see The preview).
+
+If a chosen board is not among the boards the token can see, the top of the Boards tab says so in red with
+the board number and what to do: in Monday open the board, click Share, and add the account the token
+belongs to, or choose another board. Robotics Tasks, the board the team works in, is a multi-level board.
+Monday may not list a multi-level board for a token, even when the token can read it, so a missing
+Robotics Tasks may be this and not a wrong number. The first thing to check is that the account of the
+token is a member of the board.
+
+The switch on a task changes the draft of that task. The draft is a copy of the task as it was. Publish all
+puts it on the screen, and the next read from Monday may change the other fields of the task again.
+
 ## The settings
 
-Dashboard Settings, Monday tab. The block at the top is the connection from the Teletraan computer and stores
-nothing. Below it:
+Dashboard Settings, Monday tab, holds the connection from the Teletraan computer (it stores nothing), the Test
+the token button, How often and Show owner first names. The Task board and Milestones board blocks are on
+the Advanced tab, because the board is chosen on the Monday page and what is left in them is the contract:
+the column ids and the label numbers. Nothing was removed, and the same fields are stored.
 
-- **How often**: minutes between reads, 5 to 120.
-- **Task board**: the board (pick it by name), then a picker for each column: Department,
+- **How often**: minutes between reads, 5 to 120. The Monday page changes the same field.
+- **Task board** (Advanced tab): the board (it is chosen on the Monday page too), then a picker for each column: Department,
   Status, Team, Priority, Show on TV, Assigned, POC, Timeline, Estimated Hours, Date Completed
   and Milestone. A picker lists the columns of its board, the ones that fit under Fits and the
   others under Other. If the Teletraan computer has not listed the columns yet, it says "Read the board first:
@@ -194,8 +228,8 @@ The script never writes Show on TV (`showOnTv`). A task that has it keeps what a
 Milestones. Each milestone becomes one published `milestone` with the id `milestone-monday-` and
 the item's number: `name` (40 characters), `targetDate`, `team` (nothing for both teams),
 `subteam` (nothing for all departments), `status` (`not-started`, `on-track`, `at-risk` or `done`)
-and `show`. Only the Teletraan computer writes them. Studio lists them read only under Monday Boards, as a
-second list called Milestones.
+and `show`. Only the Teletraan computer writes them. Studio lists them read only on the Milestones tab of the
+Monday page.
 
 The document `monday-status`, which the Monday tab reads, and which the screen reads for the
 time of the last read:
@@ -216,7 +250,7 @@ The connection block also shows "Reads every N minutes". The time of each good r
 ## When an item goes
 
 The script never deletes anything. A task or milestone whose item is no longer on its board is
-switched off: `show` goes off and a task moves to the Hidden list under Monday Tasks. If the item
+switched off: `show` goes off and a task shows on the Items tab of the Monday page as off the TV. If the item
 comes back, so does the document. This happens only when the board was read to its end in that
 run. A run that stopped at 4 requests, or met an error, switches nothing off. A milestone that
 loses its date or is renamed to start with EXAMPLE is switched off the same way.
@@ -234,8 +268,8 @@ effects:
     /dashboard/?panel=monday-tasks&team=prime&dept=<Team lead id>&screen=original&still=1
 
 Each Monday row of a view has a Preview button. It opens the panel in a 960 by 540
-frame below the row, which is the 1920 by 1080 canvas at half size. The Monday Boards page has a
-Preview the panels tab that lists all eleven the same way. The preview reads the published
+frame below the row, which is the 1920 by 1080 canvas at half size. The Monday page (the Monday Boards
+page before it) has a Preview the panels tab that lists all eleven the same way. The preview reads the published
 dataset, the same as the TV, so a draft shows only after Publish.
 
 ## The eleven panels
@@ -289,8 +323,8 @@ service does not show as failed.
 5. The two boards are already named and every column is set, because the starting values are the
    rebuilt workspace. Change a board or a column only when the workspace changes. Click Publish
    if you did.
-6. Within How often minutes the tasks are in Monday Tasks, On the TV. Turn Show on TV off on a
-   row to keep it off the screen.
+6. Within How often minutes the tasks are on the Items tab of the Monday page. Turn Show on TV off on a
+   task to keep it off the screen.
 
 ## Trying it
 
@@ -316,7 +350,7 @@ Go down the list. Each step rules out one cause.
    Monday refused the token means the token is wrong or expired. The two board lines under the
    block show 0 items and the reason when a board number is wrong.
 3. Wait How often minutes. Last sync shows when the computer last read.
-4. Look under Monday Tasks, On the TV. Tasks from the board in the connection block counts them,
+4. Look on the Items tab of the Monday page. Tasks from the board in the connection block counts them,
    and says how many are hidden for want of a department.
 5. Look at the task in Monday. It needs a department that is not Unassigned, a team or General,
    Show on TV? set to Show, and it must not be a subitem.
@@ -381,5 +415,6 @@ starting values, the owner names on and off, the hours and the dates, the quiet 
 How often, the 900 reads a day, the four requests, a task or milestone that goes, errors from
 Monday, and that no token is printed or saved. It does not touch the network.
 `tests/monday-settings.test.mjs` checks the settings on the screen's side,
-`tests/monday-boards.test.mjs` the rows of the Monday Boards page, and
+`tests/monday-boards.test.mjs` the rows of the older Boards page, `tests/monday-page.test.mjs` the Monday
+page, and
 `tests/monday-docs.test.mjs` this page.
