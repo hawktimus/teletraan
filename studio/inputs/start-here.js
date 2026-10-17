@@ -69,7 +69,7 @@ function whatItIs() {
     'div',
     { 'data-block': 'what' },
     h('p', { style: styles.text }, 'Teletraan I is the screen on the wall, and Publish all is the last step of every change.'),
-    h('p', { style: styles.muted }, 'The sidebar goes by what you do. SCREEN is what plays and how it looks. TASKS is the work of the day. EVENTS is the calendars. PEOPLE is the roster and the photos. COACHES ONLY is for coaches.')
+    h('p', { style: styles.muted }, 'The sidebar goes by what is on the screen. Rotation is what plays. Today is the messages and the agenda. Ticker, Events, People and Photos are the lists. Teams and views, Look and Competition are how it looks. Coaches only is for coaches.')
   );
 }
 
@@ -122,7 +122,7 @@ function threeSteps() {
     h(
       'ol',
       { style: styles.steps },
-      h('li', null, 'Open Daily Agenda or Monday Tasks.'),
+      h('li', null, 'Open a line in the sidebar, such as Today or Monday.'),
       h('li', null, 'Make the change.'),
       h('li', null, 'Click Publish all in the top bar.')
     ),

@@ -1986,7 +1986,7 @@ function checkStartHere() {
   const what = wordsIn(block('what'));
   need(problems, /Teletraan I/.test(what) && /Publish all is the last step/.test(what), 'the first block should say what Teletraan I is and that Publish all is the last step of every change');
   const steps = block('steps') ? nodesWhere(block('steps'), node => node.type === 'li').map(wordsIn) : [];
-  need(problems, steps.length === 3 && /Daily Agenda/.test(steps[0]) && /Tasks/.test(steps[0]) && /Publish all/.test(steps[2]), 'the steps should be three lines: open Daily Agenda or Tasks, make the change, click Publish all');
+  need(problems, steps.length === 3 && /Today/.test(steps[0]) && /Monday/.test(steps[0]) && /Publish all/.test(steps[2]), 'the steps should be three lines: open a line such as Today or Monday, make the change, click Publish all');
   need(problems, /Draft/.test(wordsIn(block('steps'))) && /Published/.test(wordsIn(block('steps'))), 'the steps block should have the sentence about Draft and Published');
   need(problems, /Coaches only/.test(wordsIn(block('coaches'))) && /coach/.test(wordsIn(block('coaches'))), 'the last block should say that anything under Coaches only is for a coach');
 
@@ -5032,7 +5032,7 @@ function checkListAdds() {
   const lookBehind = look && typeof look.children === 'function' ? look.children(fakeBuilder(), { since: new Date().toISOString(), now: new Date().toISOString() }) : null;
   need(problems, lookBehind && lookBehind('subthemes').made.type === 'subtheme' && templatesOf(lookBehind('subthemes').made) === 'newSubtheme', 'the Look page should open the subthemes with a plus button that makes a subtheme');
   need(problems, lookBehind && lookBehind('rules').made.documentId === 'theme' && lookBehind('rules').made.schemaType === 'theme', 'the Look page should open the dated rules as the one Look document');
-  need(problems, behind && opened('announcement:abc').documentId === 'abc' && opened('announcement:abc').schemaType === 'announcement', 'a card of the Today page should open its announcement in the full form');
+  need(problems, behind && opened('announcement-abc').documentId === 'abc' && opened('announcement-abc').schemaType === 'announcement', 'a card of the Today page should open its announcement in the full form');
 
   // the Studio's own templates and New menus are as they were: the plain templates first and in order,
   // then these, which no New menu offers
@@ -6443,7 +6443,7 @@ function checkScreenType() {
   // the three pages are behind the Kept data line of the sidebar (the last line of Coaches only), and what a page of a Screen can and cannot do
   const kept = world.structure.sidebarEntries.filter(entry => entry.title === 'Kept data')[0];
   const keptPane = id => kept.children(fakeBuilder(), { since: '', now: '' })(id).made;
-  need(problems, kept && kept.kind === 'component' && world.structure.sidebarEntries[world.structure.sidebarEntries.length - 1] === kept && ['screen-original', 'screen-cybertron', 'screen-minimal'].every((id, index) => keptPane('kept:' + id).schemaType === 'screen' && keptPane('kept:' + id).documentId === id && keptPane('kept:' + id).title === ['Original', 'Cybertron', 'Minimal'][index]), 'Kept data, the last line of Coaches only, should link to the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
+  need(problems, kept && kept.kind === 'component' && world.structure.sidebarEntries[world.structure.sidebarEntries.length - 1] === kept && ['screen-original', 'screen-cybertron', 'screen-minimal'].every((id, index) => keptPane('kept-' + id).schemaType === 'screen' && keptPane('kept-' + id).documentId === id && keptPane('kept-' + id).title === ['Original', 'Cybertron', 'Minimal'][index]), 'Kept data, the last line of Coaches only, should link to the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
   need(problems, world.structure.screenIds.join() === screenPageIds.join() && world.screenIds.screenStyles.join() === config.styles.join() && Object.keys(config.screenIds).join() === config.styles.join() && config.styles.every(style => config.screenIds[style] === 'screen-' + style && world.screenIds.screenIdOf(style) === 'screen-' + style), 'the ids of the Screens should be screen-original, screen-cybertron and screen-minimal in the Studio and in config.js');
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'screen' }).map(item => item.action).join() === 'publish,discardChanges', 'a Screen should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -6812,7 +6812,7 @@ function checkViewType() {
   const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Views' && entry.kind === 'group')[0];
   const kept = world.structure.sidebarEntries.filter(entry => entry.title === 'Kept data')[0];
   need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view', 'Views, under Teams and views, should list the pages Robotics (id view-general), Prime and Nova, each of the type view with the id view- and its key');
-  const familyPane = kept && kept.children(fakeBuilder(), { since: '', now: '' })('kept:view-family').made;
+  const familyPane = kept && kept.children(fakeBuilder(), { since: '', now: '' })('kept-view-family').made;
   need(problems, familyPane && familyPane.schemaType === 'view' && familyPane.documentId === 'view-family' && familyPane.title === 'Condensed', 'Family, which the rotation does not play, should be linked from Kept data as Condensed');
   need(problems, world.structure.viewIds.join() === viewPageIds.join(), 'the ids of the Views in structure.js should be ' + viewPageIds.join(', '));
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));

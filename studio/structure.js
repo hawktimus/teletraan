@@ -1,9 +1,12 @@
-// The sidebar. To change the order, move a line in sidebarEntries below. It is ordered by what people do:
-// SCREEN (what plays and how it looks), TASKS, EVENTS, PEOPLE and COACHES ONLY. docs/studio-map.md says what lives where.
+// The sidebar. To change the order, move a line in sidebarEntries below. It goes by what is on the screen: Start here,
+// Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition, and under the heading
+// COACHES ONLY Dashboard Settings, Extra panels and Kept data. docs/studio-map.md says what lives where.
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
 // here either: they come from the team's Monday boards, and Monday Tasks lists them
-// with one switch each, Show on TV. Three types are kept in the schema with no line
+// with one switch each, Show on TV. The types behind the Today page (the agenda, the talks, the meeting days and the
+// announcements), the Look page (the dated rules and the subthemes) and the old Screens have no line of their own: a
+// link on their page opens them (notInSidebar in tests/schemas.test.mjs gives the reason for each). Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
 // which the screen no longer reads), place (a task's Location field adds and opens
 // them) and demo (its buttons moved to the control page). The status documents, which the Teletraan computer
@@ -151,7 +154,7 @@ const talksFolder = {
     { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
   ],
 };
-export const announcementChild = 'announcement:';
+export const announcementChild = 'announcement-';
 const subthemesList = { kind: 'list', title: 'Subthemes', id: 'subthemes', type: 'subtheme', sort: byName, add: ['newSubtheme'] };
 
 export const sidebarEntries = [

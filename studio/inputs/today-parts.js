@@ -43,6 +43,9 @@ export const words = {
   textFirst: 'Write the text first. An announcement with no text is not published.',
 };
 
+// The link of a card opens its announcement in the full form: this prefix, then the id (structure.js, todayChildren)
+export const announcementChildPrefix = 'announcement-';
+
 export const links = [
   { id: 'agenda', label: 'Agenda items', says: 'The plan for the day, headed AGENDA on the screen.' },
   { id: 'presentations', label: 'Presentations', says: 'Booked talks: upcoming and past.' },

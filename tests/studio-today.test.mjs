@@ -71,8 +71,8 @@ test('the page has the alert, the bar, the full screen messages and the links, e
 test('the links open the agenda, the talks and the meeting days in the next pane', async () => {
   const { page } = await opened();
   const links = nodesWhere(page.tree(), node => node.type === 'ChildLink').map(node => node.props.childId);
-  assert.deepEqual(links.filter(id => id.indexOf('announcement:') !== 0), ['agenda', 'presentations', 'meetingDays']);
-  assert.ok(links.indexOf('announcement:a1') !== -1, 'a card opens its announcement in the full form');
+  assert.deepEqual(links.filter(id => id.indexOf(parts.announcementChildPrefix) !== 0), ['agenda', 'presentations', 'meetingDays']);
+  assert.ok(links.indexOf(parts.announcementChildPrefix + 'a1') !== -1, 'a card opens its announcement in the full form');
 });
 
 test('announcements become cards: the draft wins, live and coming ones first, past ones last', () => {

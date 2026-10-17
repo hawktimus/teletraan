@@ -2,9 +2,10 @@
 
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
-docs/students.md. Everything under Coaches only in the sidebar is here:
-Dashboard Settings, Teams, Look and Old screens (not used). The Rotation page and the
-other lines under SCREEN are for anyone who edits, and docs/studio-map.md has the whole sidebar.
+docs/students.md. The coach lines of the sidebar are here: Teams and views, Look,
+Competition, and under the heading Coaches only, Dashboard Settings, Extra panels and
+Kept data. Rotation, Today and the other lines are for anyone who edits, and
+docs/studio-map.md has the whole sidebar.
 
 The Monday feed, the competition feed and the status documents have not been tried
 against the live services, because they need keys that only the Teletraan computer holds. Their
@@ -26,26 +27,29 @@ This is the table of the README. A file you want to change is in one of these fo
 
 ## Dashboard Settings
 
-One page with tabs along the top. It opens on Screen. Studio also adds a tab
+One page with five tabs along the top. It opens on Timing. Studio also adds a tab
 called All fields that shows every tab one under the other. Change a tab and
 click Publish, or use Publish all. The detail of every field is in
-docs/editing-content.md, "Dashboard Settings".
+docs/editing-content.md, "Dashboard Settings". The look, the alert, the messages, the
+competition cards and the team name moved to their own pages, and their fields are hidden
+here with the stored values kept.
 
 | Tab | What is in it |
 |-----|---------------|
-| Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, the seconds per page and per ticker line, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
-| Logo and motion | The banner title for Robotics, the logo and name effects and the page changes |
+| Timing | The status block, the seconds per page and per ticker line, how many days finished tasks stay, the safety day count, the parts request address, the banner title for Robotics and the photo and portrait settings |
 | Countdown | The labels and dates for Kickoff and Rollout |
-| Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
-| Presentations | Run presentations, the one switch for booked talks |
 | Monday | The boards the Teletraan computer reads and how an item becomes a task |
-| Competition | When the competition cards come, and a switch for each card |
-| Advanced | Night mode, hidden transitions and the connection text on the screen |
+| Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
+| Advanced | Three sections: Presentations (Run presentations), Night mode and Hidden transitions. Then the connection text on the screen |
 
-The Logo and motion tab here has the banner title for Robotics, the logo and the page changes.
-The Look line under Coaches only in the sidebar is another page: the color themes, the
-seasonal packs and the time zone (docs/switch-the-look.md). What plays is the Rotation page,
-and the theme of each day is the Themes and backgrounds page (see Rotation, views and themes below).
+The other coach pages are lines of the sidebar. Teams and views holds Hawktimus Prime and
+Hawktimus Nova on a plain form (name, number, logo, metal and colors on top, the rest under
+Advanced) and the Views. Look is the color theme of each day, the background, the seasonal
+decorations, the motion, the frame polish and the logo effects (docs/switch-the-look.md).
+Competition is the mode of the competition cards and a switch for each card. Today is the
+alert and the messages. What plays is the Rotation page. Kept data holds the old Screens, the
+Condensed view and the old events calendar type. The wall does not use them, and nothing in it
+may be deleted, because some old values are read when a new list is empty.
 
 Some values have one right answer and are not settings: night mode from 11:30 pm
 to 11:30 am, how long a talk waits for its speaker (5 minutes) and how far a talk
@@ -55,7 +59,7 @@ source is not on the page either: the screen always shows what is published, and
 
 ## The status block
 
-The top of the Screen tab says when the Teletraan computer last saw a change to the content,
+The top of the Timing tab says when the Teletraan computer last saw a change to the content,
 downloaded the calendars, downloaded the slides, read the Monday boards, read the
 competition data and started the screen. Each line says how long ago and the
 time. You cannot type in it, because the computer writes it. It says No status yet
@@ -104,13 +108,13 @@ message.
 
 ## Rotation, views and themes
 
-The wall plays one list, the Rotation. Each row is a panel, in a view, for some seconds. A view is Robotics, Prime or Nova. A theme is how the screen is drawn. Every view looks the same in every theme. The lines are under SCREEN in the sidebar: Rotation, Views, and Themes and backgrounds (docs/views-and-themes.md, docs/views.md).
+The wall plays one list, the Rotation. Each row is a panel, in a view, for some seconds. A view is Robotics, Prime or Nova. A theme is how the screen is drawn. Every view looks the same in every theme. The lines in the sidebar are Rotation, Teams and views, and Look (docs/views-and-themes.md, docs/views.md).
 
 ### The Rotation page
 
-Rotation is the first line under SCREEN. The wall plays the list top to bottom, and then over again. Drag a row to move it. On a phone use Up and Down. Turn Shown off to skip a row. Seconds is how long it stays. More opens the details of a row. A change is saved as a draft of Dashboard Settings, so click Publish all afterwards. The same list is the field Rotation (full form) on the Advanced tab of Dashboard Settings, kept for a row the page cannot fix.
+Rotation is the second line of the sidebar. The wall plays the list top to bottom, and then over again. Drag a row to move it. On a phone use Up and Down. Turn Shown off to skip a row. Seconds is how long it stays. More opens the details of a row. A change is saved as a draft of Dashboard Settings, so click Publish all afterwards. The same list is the field Rotation (full form) of Dashboard Settings. It is hidden there and kept, and the Rotation page is the only way in.
 
-A row is a panel and, if you want, the seconds. Without seconds the row follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per photo (5 to 60, starting at 10), and the time it stays up is the two multiplied. Four photos of 10 seconds stay up 40 seconds.
+A row is a panel and, if you want, the seconds. Without seconds the row follows Seconds per page on the Timing tab of Dashboard Settings. The Photo row has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per photo (5 to 60, starting at 10), and the time it stays up is the two multiplied. Four photos of 10 seconds stay up 40 seconds.
 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
 - The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
@@ -120,7 +124,7 @@ A row is a panel and, if you want, the seconds. Without seconds the row follows 
 
 ### Views
 
-Views, under SCREEN, has three pages, Robotics, Prime and Nova. Each is one document that always exists, so you cannot add, copy or delete one. Robotics has the standard arrangement: the banner, the main panel, the countdown over the side panel, and the ticker. Prime and Nova have the bar arrangement: the banner with the war clock across the top, a thin column at the left, one main panel and the ticker, and no side panel. Nova is turned left to right because the Nova team has Mirror switched on. Family is not in the rotation. Its page is in Old screens (not used).
+Views, under Teams and views, has three pages, Robotics, Prime and Nova. Each is one document that always exists, so you cannot add, copy or delete one. Robotics has the standard arrangement: the banner, the main panel, the countdown over the side panel, and the ticker. Prime and Nova have the bar arrangement: the banner with the war clock across the top, a thin column at the left, one main panel and the ticker, and no side panel. Nova is turned left to right because the Nova team has Mirror switched on. Family is not in the rotation. Its page is linked from Kept data.
 
 A view opens on a map of the screen. Click a letter or its box and that part opens below the map. The letters are the ones on Start here. Above the map is a picker that moves to another view.
 
@@ -132,11 +136,11 @@ A view opens on a map of the screen. Click a letter or its box and that part ope
 | D | Side panel | The rows the small panel plays, on its own timer. Only the standard arrangement has it |
 | E | Ticker | A link that opens Tips and News. The ticker shows every published tip and news item in order |
 
-The banner title for Robotics is on the Logo and motion tab of Dashboard Settings. The swap, the pull apart and re-form of the frames, plays at every change of view. Outlined name is a switch on the team document: off draws the team name solid, and both teams are off to start with.
+The banner title for Robotics is in the Banner section of the Timing tab of Dashboard Settings. The swap, the pull apart and re-form of the frames, plays at every change of view. Outlined name is a switch on the team document: off draws the team name solid, and both teams are off to start with.
 
-### Themes and backgrounds
+### Look: themes and backgrounds
 
-Themes and backgrounds, under SCREEN, has a picker for each day, Monday to Sunday (the field Theme of each weekday), and the background of the Original theme. The day is the calendar day in the time zone on the Look page. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Foundry is not in the starting week.
+The Look page has a picker for each day, Monday to Sunday (the field Theme of each weekday), and the background of the Original theme. The day is the calendar day in the time zone of the dated rules, which Look links to. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Foundry is not in the starting week.
 
 ### The first time a view opens
 
@@ -179,7 +183,7 @@ dataset is public").
 
 ## Monday Tasks and Monday Boards
 
-Both are under TASKS in the sidebar. Nobody types a task: the Teletraan computer makes each one
+Both are under Monday in the sidebar. Nobody types a task: the Teletraan computer makes each one
 from an item on a Monday board, and the screen shows only those.
 
 - Monday Tasks has two lists, On the TV and Hidden, each sorted by board. A task
@@ -268,7 +272,7 @@ holds three people or fewer.
   match the row shows the silhouette. Turn off Show photo on screen on the entry
   to show the silhouette whatever Leadership has.
 
-The Portraits box in the Screen tab changes the photos and never the text. The
+The Portraits box in the Timing tab changes the photos and never the text. The
 Leadership portrait size and the Team leads and Roster portrait size go from 60 to
 220: 100 is a portrait that fills a row of four. Above 100 the rows get taller, so
 a page holds 3 people (to 138), 2 (to 200) or 1 (to 220), and the panels
@@ -416,7 +420,7 @@ The screen puts the time in its page title every 30 seconds. Every 2 minutes the
 computer asks the browser for that title (on the Teletraan computer's own address 127.0.0.1:9222,
 which nothing else can reach). If the title is more than 3 minutes old, the page
 is gone or the browser is not running, the computer restarts the screen. The status
-block in Dashboard Settings, Screen tab, shows Screen restarts today.
+block in Dashboard Settings, Timing tab, shows Screen restarts today.
 
 - It restarts at most once in 10 minutes.
 - When a third restart would fall inside one hour, it does not restart again. It
@@ -454,12 +458,12 @@ for the team mentor.
 
 ## Announcements
 
-TASKS, Announcements holds the lines for the bar under the banner. Start here has a Post an
-announcement button that opens a new one starting now and ending in two hours. Each has a text
+Today holds the lines for the bar under the banner, under Announcements on the bar. Type a
+line and click New announcement: it starts now and ends at the end of the day. Each has a text
 of up to 90 characters, a start, an end, an optional team and a level (Notice or Important).
 It shows while it is live and the team on the banner matches. With two live, the bar swaps
-every 12 seconds. This is not the full-screen announcement of Dashboard Settings, which Play
-announcements plays. docs/announcements.md has both.
+every 12 seconds. The full screen messages at set times (WHAT TIME IS IT? at 14:30 and 17:00) are the next
+section of Today. The alert is the first. docs/announcements.md has all three.
 
 ## Where the detail is
 

@@ -32,6 +32,7 @@ import {
   withoutRow,
   withDay,
   rowTitle,
+  announcementChildPrefix,
 } from './today-parts.js';
 
 const h = createElement;
@@ -84,7 +85,7 @@ function card(item, model, handlers) {
   const document = item.document;
   const specs = specsOf(announcementType.fields, cardNames, 'card-' + item.id + '-');
   const level = Object.assign({}, levelSpec, { id: 'card-' + item.id + '-level' });
-  const link = model.ChildLink ? h(model.ChildLink, { childId: 'announcement:' + item.id }, words.openForm) : null;
+  const link = model.ChildLink ? h(model.ChildLink, { childId: announcementChildPrefix + item.id }, words.openForm) : null;
 
   return h(
     'div',

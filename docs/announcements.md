@@ -8,10 +8,10 @@ that you pick, and it goes away by itself.
 
 The Teletraan has two things that are called announcements. They are not the same.
 
-- **Announcements in the sidebar (this page).** A thin bar under the banner. The panels stay on
-  the screen and get a little smaller while the bar is up. You make one in Studio under TASKS,
-  Announcements, or with Post an announcement on Start here.
-- **Announcements in Dashboard Settings.** A full-screen card with a title and a follow-up line
+- **Announcements on the bar (this page).** A thin bar under the banner. The panels stay on
+  the screen and get a little smaller while the bar is up. You make one in Studio on the Today
+  page, under Announcements on the bar, or with the box on the Now showing tab of the control page.
+- **Full screen messages at set times.** On the Today page too, under Full screen messages at set times. A full-screen card with a title and a follow-up line
   that plays at a time of day. The Play announcements button plays them. They cover the whole
   screen. See docs/hidden-transitions.md, "Play announcements".
 
@@ -19,9 +19,9 @@ The Play announcement button on the Now showing tab of the control page plays th
 
 ## Post one
 
-1. On Start here click **Post an announcement**. A new announcement opens that starts now and
-   ends in two hours. You can also open TASKS, Announcements and click the plus button.
-2. Write the **Text**. Up to 90 characters. About 45 fit at full size. A longer line is drawn
+1. Open **Today**. Under Announcements on the bar, type the text and click **New announcement**.
+   It starts now and ends at the end of the day. Its card has the other fields.
+2. The **Text** is up to 90 characters. About 45 fit at full size. A longer line is drawn
    smaller, and a long one is cut with three dots, so keep it short.
 3. Change **Starts at** and **Ends at** if you need to. The times are in the time zone of the TV.
 4. Leave **Team** blank for both teams, or pick one team. The bar shows only while that team is

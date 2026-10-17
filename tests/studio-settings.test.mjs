@@ -145,7 +145,7 @@ test('the Kept data page says the wall does not use them and not to delete them,
   assert.match(text, /The wall does not use these\./);
   assert.match(text, /Do not delete: some old values are read when a new list is empty\./);
   const links = nodesWhere(tree, node => node.type === 'ChildLink').map(node => node.props.childId);
-  assert.deepEqual(links, ['kept:screen-original', 'kept:screen-cybertron', 'kept:screen-minimal', 'kept:view-family', 'kept:extraEvent']);
+  assert.deepEqual(links, ['kept-screen-original', 'kept-screen-cybertron', 'kept-screen-minimal', 'kept-view-family', 'kept-extraEvent']);
   ['Old screens', 'The Condensed view', 'The old events calendar type'].forEach(title => assert.ok(text.indexOf(title) !== -1, title));
   assert.ok(!/[\u2014\u2013!]/.test(text));
   assert.equal(nodesWhere(tree, node => node.type === 'button' || node.type === 'input').length, 0, 'the page changes nothing');
@@ -159,11 +159,11 @@ test('each link opens its document in the next pane, and the old events list has
     documentTypeList: type => { const node = { type: type }; ['title', 'defaultOrdering', 'initialValueTemplates'].forEach(name => { node[name] = value => { node[name + 'Value'] = value; return node; }; }); return node; },
   };
   const open = line.children(builder, { since: '', now: '' });
-  open('kept:screen-minimal');
+  open('kept-screen-minimal');
   assert.deepEqual([made.title, made.schemaType, made.documentId], ['Minimal', 'screen', 'screen-minimal']);
-  open('kept:view-family');
+  open('kept-view-family');
   assert.deepEqual([made.title, made.schemaType, made.documentId], ['Condensed', 'view', 'view-family']);
-  const list = open('kept:extraEvent');
+  const list = open('kept-extraEvent');
   assert.equal(list.type, 'extraEvent');
   assert.deepEqual(list.initialValueTemplatesValue, []);
   assert.throws(() => open('somewhere'), /not a link of the Kept data page/);

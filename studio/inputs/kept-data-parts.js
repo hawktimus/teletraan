@@ -13,7 +13,7 @@ export const words = {
 
 // The link ids. A screen and the Condensed view open the document with that id. The old events calendar opens its list.
 export const eventsChild = 'extraEvent';
-export const keptChildPrefix = 'kept:';
+export const keptChildPrefix = 'kept-';
 
 export const groups = [
   {
