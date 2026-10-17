@@ -2,10 +2,17 @@
 
 import { readStill, useStillSwitches } from './core/still.js';
 import { readCompetitionAsk } from './core/competition-address.js';
+import { rotateLayout } from './core/style.js';
+import { applyView } from './core/view-apply.js';
 
 export const params = new URLSearchParams(window.location.search);
 export const stillAsk = readStill(params); // ?panel= draws that one panel and holds it (core/still.js)
-if (stillAsk) useStillSwitches(params, stillAsk);
+if (stillAsk) {
+  useStillSwitches(params, stillAsk);
+  // Only a still address (the control page's copy of the TV) asks for these two
+  if (stillAsk.layout === 'bar') rotateLayout('bar');
+  if (stillAsk.view) applyView(stillAsk.view);
+}
 export const competitionAsk = readCompetitionAsk(params); // ?competition=1&event= puts the competition cards on (core/competition-address.js)
 export const stress = params.has('stress');
 export const onlyTasks = params.get('only') === 'tasks';

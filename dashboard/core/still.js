@@ -5,13 +5,16 @@
 //   panel   the registry id of the one panel to draw and hold. Without it nothing here applies
 //   team    a team code, passed on to the ?team= switch
 //   dept    the _id of a Team lead document, for the Monday rows that take a department
-//   screen  the Screen whose style the panel is drawn in, passed on to the ?style= switch
+//   screen  the Screen or theme whose style the panel is drawn in, passed on to the ?style= switch
+//   view    general, prime, nova or family: the view key written on the page, for a copy that follows the TV
+//   layout  bar draws the bar layout in any theme, for the same reason
 //   still   1 stops the clock and every movement, so the picture holds still
 //   photos, each   for the Photos row: how many photos and the seconds of each (the row's starting values without them)
 
 import { trimText } from './text.js';
+import { themeIds, viewKeys } from '../config.js';
 
-const stillScreens = ['original', 'cybertron', 'minimal'];
+const stillScreens = ['original', 'cybertron', 'minimal'].concat(themeIds.filter(id => !['original', 'cybertron'].includes(id)));
 
 // What the address asks for, or null when it has no panel. search is the part after the ?
 // and may be a URLSearchParams.
@@ -28,6 +31,10 @@ export function readStill(search) {
     screen: stillScreens.includes(screen) ? screen : '',
     still: params.get('still') === '1',
   };
+  // Left out when absent, so an address without them reads as it always did
+  const view = trimText(params.get('view'));
+  if (viewKeys.includes(view)) ask.view = view;
+  if (trimText(params.get('layout')) === 'bar') ask.layout = 'bar';
   if (panel === 'photo') {
     ask.photoCount = Number(trimText(params.get('photos'))) || 0;
     ask.secondsPerPhoto = Number(trimText(params.get('each'))) || 0;
