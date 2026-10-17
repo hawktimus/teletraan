@@ -110,7 +110,7 @@ export function viewNameOf(content, key) {
   const view = resolveView(content, key);
 
   if (key === 'general') return trimmed(settings.generalViewName, longestName, defaultSettings.generalViewName);
-  if (key === 'family') return view.title !== '' ? view.title : 'Family';
+  if (key === 'family') return view.title !== '' ? view.title : 'Condensed';
 
   const team = (isRecord(content) && Array.isArray(content.teams) ? content.teams : []).find(item => item.code === view.team);
   if (team && hasText(team.shortName)) return String(team.shortName).trim();

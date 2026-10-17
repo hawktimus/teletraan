@@ -20,7 +20,7 @@ function viewNames(teams, generalName) {
   (Array.isArray(teams) ? teams : []).forEach(team => {
     if (team && typeof team.code === 'string') named[team.code] = team.shortName || team.name || team.code;
   });
-  return viewKeys.map(key => ({ key: key, name: key === 'general' ? (generalName || 'General') : named[key] || (key.charAt(0).toUpperCase() + key.slice(1)) }));
+  return viewKeys.map(key => ({ key: key, name: key === 'general' ? (generalName || 'General') : key === 'family' ? 'Condensed' : named[key] || (key.charAt(0).toUpperCase() + key.slice(1)) }));
 }
 
 // The screen ignores the test while Run presentations is off, so the page says so instead of reporting a send that does nothing.

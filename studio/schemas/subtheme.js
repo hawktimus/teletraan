@@ -21,7 +21,7 @@ const views = [
   { title: 'General', value: 'general' },
   { title: 'Prime', value: 'prime' },
   { title: 'Nova', value: 'nova' },
-  { title: 'Family', value: 'family' },
+  { title: 'Condensed', value: 'family' },
 ];
 
 const anchors = [

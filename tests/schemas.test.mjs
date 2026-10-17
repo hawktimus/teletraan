@@ -521,7 +521,7 @@ const folderLines = {
   'Views': 'Robotics, Prime, Nova',
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
   'Monday Tasks': 'On the TV, Hidden',
-  'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Family',
+  'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Condensed',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -6793,7 +6793,7 @@ function checkViewType() {
   const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Views')[0];
   const old = world.structure.sidebarEntries.filter(entry => entry.title === 'Old screens (not used)')[0];
   need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view', 'Views, under SCREEN, should list the pages Robotics (id view-general), Prime and Nova, each of the type view with the id view- and its key');
-  need(problems, old && old.entries.filter(entry => entry.type === 'view').map(entry => entry.title + '=' + entry.id).join() === 'Family=view-family', 'Family, which the rotation does not play, should be a page in Old screens (not used)');
+  need(problems, old && old.entries.filter(entry => entry.type === 'view').map(entry => entry.title + '=' + entry.id).join() === 'Condensed=view-family', 'Family, which the rotation does not play, should be a page in Old screens (not used)');
   need(problems, world.structure.viewIds.join() === viewPageIds.join(), 'the ids of the Views in structure.js should be ' + viewPageIds.join(', '));
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'view' }).map(item => item.action).join() === 'publish,discardChanges', 'a View should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -7122,7 +7122,7 @@ async function checkViewSeed() {
   await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
   need(problems, changes.length === 1 && Array.isArray(changes[0]) && patchOf(changes[0], 'key').value === 'nova' && patchOf(changes[0], 'team').value._ref === 'team-nova', 'opening an empty View should fill it once, in one change');
   const radios = nodesWhere(tree, node => node.type === 'input' && node.props.type === 'radio');
-  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'picker')) === 'Editing view: Robotics Prime Nova Family' && radios.map(node => node.props.checked).join() === 'false,false,true,false', 'the picker should show the four views with the open one picked');
+  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'picker')) === 'Editing view: Robotics Prime Nova Condensed' && radios.map(node => node.props.checked).join() === 'false,false,true,false', 'the picker should show the four views with the open one picked');
   radios[1].props.onChange();
   need(problems, JSON.stringify(navigated[0]) === JSON.stringify(['edit', { id: 'view-prime', type: 'view' }]), 'a choice in the picker should open that view (' + JSON.stringify(navigated[0]) + ')');
   const boxes = node => nodesWhere(node, item => item.type === 'g' && item.props && item.props['data-letter'] !== undefined);

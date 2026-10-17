@@ -250,7 +250,7 @@ test('General is named by its setting, a team view by the short name of its team
   assert.equal(views.viewNameOf(content, 'general'), 'Shop');
   assert.equal(views.viewNameOf(content, 'prime'), 'PRIME');
   assert.equal(views.viewNameOf(content, 'nova'), 'NOVA');
-  assert.equal(views.viewNameOf(content, 'family'), 'Family');
+  assert.equal(views.viewNameOf(content, 'family'), 'Condensed');
   ['general', 'prime', 'nova', 'family'].forEach(key => assert.equal(views.viewShowsTag(content, key), false, 'no view chips: ' + key));
   assert.equal(views.viewTitleOf(content, 'general'), 'HAWKTIMUS ROBOTICS');
   assert.equal(views.viewTitleOf(contentWith(raw => { raw.settings.generalViewTitle = 'Hawktimus Dashboard'; }), 'general'), 'HAWKTIMUS ROBOTICS', 'the older default title reads as the new one');

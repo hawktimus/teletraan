@@ -125,7 +125,7 @@ await check('GET request gives the views with the names of the Team documents, t
   const options = (await world.router.call('GET', '/request')).json;
   assert.deepEqual(options.views.map(view => view.key), ['general', 'prime', 'nova', 'family']);
   assert.equal(options.views[1].name, 'Prime');
-  assert.equal(options.views[3].name, 'Family');
+  assert.equal(options.views[3].name, 'Condensed');
   assert.deepEqual(options.themes, ['original', 'cybertron', 'retro', 'foundry']);
   assert.ok(options.panels.includes('tasks') && options.panels.includes('monday-board'));
   assert.ok(!options.panels.includes('banner'));

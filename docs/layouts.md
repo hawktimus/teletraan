@@ -13,7 +13,7 @@ A layout is where the regions of the screen sit. A view names one (docs/views.md
   no small frame. The color file Neon Prime has it.
 - **bar**: a banner across the top with the team name at one end and the war clock
   at the other, under it a thin side column and one main panel, and the ticker
-  across the whole bottom. There is no small frame. The Prime, Nova and Family views
+  across the whole bottom. There is no small frame. The Prime, Nova and Condensed views
   have it, whatever theme is on (see "The bar layout").
 
 In this page a **theme** is one of the folders of `dashboard/styles/` (original, cybertron, retro and foundry),
