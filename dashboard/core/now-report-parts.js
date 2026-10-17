@@ -30,6 +30,7 @@ export function cleanReport(raw, now = new Date()) {
     at: now.toISOString(),
     view: text(source.view, 20),
     theme: text(source.theme, 20),
+    layout: text(source.layout, 10),
     team: text(source.team, 40),
     panel: text(source.panel, 60),
     build: text(source.build, 40),
@@ -41,7 +42,7 @@ export function cleanReport(raw, now = new Date()) {
 }
 
 // The report for a moment. parts holds what the page knows:
-//   view, theme, team, panel, page, build   words or empty
+//   view, theme, layout, team, panel, page, build   words or empty
 //   requests                                 activeRequests() of core/screen-requests.js
 //   dots                                     dotStates() of core/dots.js
 export function makeReport(parts, now = new Date()) {

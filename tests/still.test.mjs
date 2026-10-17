@@ -110,6 +110,15 @@ test('the copy step puts the dashboard in the static folder and leaves out the l
   }
 });
 
+test('view, layout and the other themes are read, and an address without them reads as before', () => {
+  const ask = readStill('?panel=events&screen=retro&view=family&layout=bar&still=1');
+  assert.deepEqual(ask, { panel: 'events', team: '', department: '', screen: 'retro', still: true, view: 'family', layout: 'bar' });
+  const plain = readStill('?panel=events&view=robotics&layout=wide&screen=foundry');
+  assert.equal(plain.screen, 'foundry');
+  assert.ok(!('view' in plain) && !('layout' in plain));
+  assert.equal(useStillSwitches(new URLSearchParams('?panel=events&screen=retro'), readStill('?panel=events&screen=retro')).get('style'), 'retro');
+});
+
 let failed = 0;
 for (const entry of tests) {
   try {

@@ -20,8 +20,9 @@ test('the card names /dashboard/ with no added parameter, holds no frame yet, an
   assert.ok(html.includes('data-src="/dashboard/"') && !/ src=/.test(html), 'no src until the person asks, and no parameter on the address');
   assert.ok(!html.includes('<iframe'), 'the page makes the frame when the person asks (tabs/now.js)');
   assert.ok(/<button[^>]*data-preview-toggle[^>]*>Show live preview<\/button>/.test(html));
-  assert.ok(read('control/static/tabs/now.js').includes('frame.width = previewWidth') && read('control/static/tabs/now.js').includes('frame.height = previewHeight'));
-  assert.ok(html.includes('A copy of the screen on this device. It runs by itself, so it may show a different panel than the TV at this moment. The card above says what the TV shows.'));
+  assert.ok(read('control/static/tabs/preview.js').includes('frame.width = previewWidth') && read('control/static/tabs/preview.js').includes('frame.height = previewHeight'));
+  assert.ok(html.includes('A copy that follows the screen. It shows the same panel, team and theme as the TV, and changes when the TV changes, within about ten seconds. Animations and the exact moment can differ.'));
+  assert.ok(html.includes('The TV has not reported yet'));
   assert.ok(!html.includes('!'));
   assert.equal(previewWidth / previewHeight, 16 / 9);
 });
@@ -36,7 +37,8 @@ test('the scale is the width of the box over 1920, and a box with no width still
 test('the tab puts the card between the card of the wall and the buttons, and fits it to its box', () => {
   const text = read('control/static/tabs/now.js');
   assert.ok(text.indexOf('data-card') < text.indexOf('data-preview-card') && text.indexOf('data-preview-card') < text.indexOf('data-controls'));
-  assert.ok(text.includes('previewScale(box.clientWidth)') && text.includes('ResizeObserver'));
+  const preview = read('control/static/tabs/preview.js');
+  assert.ok(preview.includes('previewScale(box.clientWidth)') && preview.includes('ResizeObserver'));
   const css = read('control/static/tabs/tabs.css');
   assert.ok(/aspect-ratio: 16 \/ 9/.test(css) && /\.preview iframe \{[^}]*width: 1920px; height: 1080px/.test(css));
 });

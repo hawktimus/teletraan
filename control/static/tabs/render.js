@@ -126,7 +126,87 @@ export function previewCardHtml() {
   return card('Live preview',
     '<div class="preview" data-preview-box data-src="/dashboard/"><p class="preview-off" data-preview-off>The preview is off.</p></div>' +
     '<div class="buttons"><button type="button" class="act" data-preview-toggle aria-pressed="false">Show live preview</button></div>' +
-    '<p class="note">A copy of the screen on this device. It runs by itself, so it may show a different panel than the TV at this moment. The card above says what the TV shows.</p>');
+    '<p class="note" data-preview-mode></p>' +
+    '<p class="note" data-preview-line>' + esc(followLine(null)) + '</p>' +
+    '<p class="note">' + esc(followNote) + '</p>');
+}
+
+// The mirror: a moving picture of the TV that the Teletraan computer makes (computer/scripts/mirror.py). The words of
+// the card for each state, and the frame rate from the times the frames were drawn.
+export const mirrorWords = {
+  waiting: 'Starting the mirror.',
+  failed: 'The mirror could not start. Showing the copy that follows the screen.',
+  noPython: 'The mirror needs python3 on the computer. Showing the copy that follows the screen.',
+};
+
+export const mirrorFrameWait = 10000;
+
+export function mirrorLive(fps) {
+  const number = Number.isFinite(fps) && fps > 0 ? Math.round(fps * 10) / 10 : 0;
+  return 'Live from the TV, ' + number + ' frames a second';
+}
+
+// times are the millisecond clock readings of the frames drawn; only the last windowMs count
+export function framesPerSecond(times, now, windowMs = 3000) {
+  const recent = (Array.isArray(times) ? times : []).filter(time => now - time <= windowMs && time <= now);
+  if (recent.length < 2) return 0;
+  const span = (recent[recent.length - 1] - recent[0]) / 1000;
+  return span > 0 ? (recent.length - 1) / span : 0;
+}
+
+export function mirrorPictureAddress(counter) {
+  return '/mirror/frame.jpg?n=' + encodeURIComponent(String(counter).trim());
+}
+
+export const followNote ='A copy that follows the screen. It shows the same panel, team and theme as the TV, and changes when the TV changes, within about ten seconds. Animations and the exact moment can differ.';
+
+// Panels the dashboard address cannot hold: a takeover has no panel of its own to hold, and a stand-in is only drawn
+// when something else is missing. The nearest plain panel is shown instead.
+const noAddress = ['alert', 'announcement', 'talk', 'stand-in-tile', 'stand-in-ticker', 'banner', 'countdown', 'side', 'bar-banner', 'bar-column', 'ticker'];
+const nearestPanel = 'tonight';
+const mondayPanels = /^monday-/;
+const themeWords = ['original', 'cybertron', 'retro', 'foundry'];
+const viewWords = ['general', 'prime', 'nova', 'family'];
+
+function words(id) {
+  const text = String(id || '').replace(/-/g, ' ').trim();
+  return text === '' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// What the preview frame should hold for one report of the wall: { src, line }. src is '' when the wall has not
+// reported. Only the panel, team, theme, view and layout are in the address, so the frame changes only when one of
+// them does. The page number is shown in the line and is not in the address: the dashboard address holds a panel at
+// its first page.
+export function followFor(report) {
+  if (!report || typeof report !== 'object' || String(report.panel || '') === '') return { src: '', line: followLine(null) };
+
+  const notes = [];
+  let panel = String(report.panel);
+  if (noAddress.includes(panel)) {
+    notes.push(words(panel) + ' cannot be copied, so the copy shows ' + nearestPanel);
+    panel = nearestPanel;
+  } else if (mondayPanels.test(panel)) {
+    notes.push('the copy has no department for this card');
+  }
+
+  const params = ['panel=' + encodeURIComponent(panel)];
+  const team = String(report.team || '').trim();
+  if (team !== '') params.push('team=' + encodeURIComponent(team));
+  const theme = String(report.theme || '').trim();
+  if (themeWords.includes(theme)) params.push('screen=' + theme);
+  const view = String(report.view || '').trim();
+  if (viewWords.includes(view)) params.push('view=' + view);
+  if (report.layout === 'bar') params.push('layout=bar');
+  params.push('still=1');
+
+  const page = String(report.page || '').trim();
+  const shown = [words(panel) + (page !== '' && page !== '1' ? ' (page ' + page + ')' : ''), team === '' ? 'both teams' : team, theme === '' ? 'theme not known' : theme];
+  return { src: '/dashboard/?' + params.join('&'), line: followLine(shown, notes) };
+}
+
+export function followLine(shown, notes = []) {
+  if (!shown) return 'The TV has not reported yet';
+  return 'Showing: ' + shown.join(', ') + (notes.length ? '. Note: ' + notes.join('; ') + '.' : '');
 }
 
 function button(action, label, data = '', kind = '') {

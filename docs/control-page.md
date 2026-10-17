@@ -14,9 +14,29 @@ On the Now showing tab, Hold this panel has a button, Hold 1 minute, and a field
 
 ## The Live preview
 
-The Now showing tab has a Live preview card under the card of the wall. It is a copy of the dashboard in a frame, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
+The Now showing tab has a Live preview card under the card of the wall. It shows the TV moving, as a picture the Teletraan computer makes of the TV's own browser (the mirror, below). When the mirror cannot start, it shows a copy of the dashboard in a frame that follows the TV, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
 
-The copy runs by itself on the phone or laptop, so it may show a different panel than the TV at this moment. The card above it says what the TV shows. The copy does not report to the control page: the dashboard reports only when its address is `localhost` or `127.0.0.1`, and port 3229 refuses a report from any other address. The copy writes nothing. Its title heartbeat is only the title of its own frame.
+### The mirror
+
+When you open the tab (on a phone, when you tap Show live preview) the page asks the Teletraan computer to start the mirror. The page calls `POST /control/api/mirror/watch`, which asks the helper for `mirror-watch`. The helper touches the file `mirror/watch` in the data folder and starts `teletraan-mirror.service` if it is not running. That service runs `computer/scripts/mirror.py`, which asks the kiosk browser for a screencast over its debug port and writes the newest frame to `mirror/frame.jpg`, with a counter in `mirror/frame.n`. The page reads the counter, fetches the picture when the counter moved, and shows it under the words `Live from the TV` with the frames a second it draws. It asks `mirror-watch` again every 30 seconds while the tab is visible.
+
+The service stops by itself when the watch file is older than 2 minutes (nobody is looking), when the browser closes its socket, or after 30 minutes. It leaves no picture behind. The page stops asking when you change tab or the page goes to the background.
+
+If no picture arrives within 10 seconds, the card says `The mirror could not start. Showing the copy that follows the screen.` and shows the copy below. If python3 is missing on the computer the helper says `mirror: no python3` and the card says `The mirror needs python3 on the computer.` The installer checks `python3 --version`. Without it, it skips the unit and says so, and the rest of the install goes on. Python 3 is on a standard Debian install. Nothing is installed by the page.
+
+What is exposed: the browser's debug port stays on 127.0.0.1 and nothing serves it. The web server on port 3229 serves two files from the data folder, read only and never cached: `/mirror/frame.jpg` and `/mirror/frame.n`. Like the dashboard on that port, they need no PIN, so anyone on the same WiFi or Tailscale network who knows the address can see the picture while the mirror runs. It is a picture of the TV and nothing else. The watch file is not served. Starting the mirror needs the PIN, because `/control/api/mirror/watch` is a control route.
+
+The mirror is made at 960 by 540, JPEG quality 45, about 30 frames a second at most. The page shows fewer when the network is slow.
+
+### The copy that follows the screen
+
+The copy follows the TV. A page cannot join the session of another browser, so the copy is built from the report the TV posts every 10 seconds (view, theme, layout, team, panel, page). The tab asks for the report every 5 seconds. It builds the address of the frame from it, for example `/dashboard/?panel=events&team=prime&screen=cybertron&view=prime&still=1`, and changes the frame only when that address is not the one it holds. A report that did not change never reloads the frame. The line under the card says `Showing: <panel>, <team>, <theme>`, or `The TV has not reported yet` when there is no report.
+
+The copy is a still picture of the same panel in the same team, theme, view and layout. It does not rotate, play transitions, hidden transitions, talks, alerts or announcements, and it writes nothing. It changes when the TV changes, within about ten seconds. Animations and the exact moment can differ. The page number is shown in the line but not copied: the copy holds the panel at its first page.
+
+Some things cannot be copied. A takeover (alert, announcement, talk) or a stand-in has no panel to hold, so the copy shows the Tonight panel and the line says so. A Monday card is copied without its department, and the line says so. The view and the bar layout are written on the copy but the mirror of the Family view is not.
+
+The copy does not report to the control page: the dashboard reports only when its address is `localhost` or `127.0.0.1`, and port 3229 refuses a report from any other address. The addresses `view=` and `layout=bar` are read only together with `panel=` and `still=1`. The `screen=` address also takes the themes Retro and Foundry.
 
 ## On a phone
 

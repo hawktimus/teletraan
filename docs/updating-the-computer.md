@@ -72,6 +72,8 @@ After the copy the tool gives the installer the short hash of this repository. T
 
 The tool refuses to copy from a folder that is not the Teletraan repository, and from a copy that still has a `deploy/` folder: "This copy is older than round 6; update it." Nothing is copied then. The password is asked before anything is copied, so a wrong one costs nothing: "That password was wrong. Choose the same thing again to try another."
 
+The first update that has the mirror (the moving Live preview) needs this tool once, because it adds a unit file, `teletraan-mirror.service`, which only the installer copies into place. The control page's Update tab does not copy unit files. After that, updates from the control page are enough. The installer checks `python3 --version` and skips the unit with a note when python3 is missing. The existing sudoers rule already lets the helper start `teletraan-*.service` units, so nothing in sudoers needs to change.
+
 A computer that pulls from GitHub by itself with the pull timer should not also get files from this tool. Use one. To make the Teletraan computer a copy-only computer, turn the timer off on the computer:
 
     sudo systemctl disable --now teletraan-pull.timer

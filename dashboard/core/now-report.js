@@ -1,7 +1,7 @@
 // Tells the control page what is on the wall, every 10 seconds (control/routes/now.js keeps the
 // last report and shows it on the Now showing tab). Only a page opened on the Teletraan computer itself reports,
 // because the control service answers on this address only through the Teletraan computer's own web server. The
-// report is { at, view, theme, team, panel, build, page }, plus hold, pause and dots.
+// report is { at, view, theme, layout, team, panel, build, page }, plus hold, pause and dots.
 //
 // The view and the theme are read from the page: the runtime puts them on the root element as
 // data-view and data-theme. The panel is the one in the large frame.
@@ -28,6 +28,7 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
   return {
     view: root.dataset.view || '',
     theme: root.dataset.theme || '',
+    layout: root.dataset.layout || '',
     team: readTeam(getTeam),
     panel: large ? large.dataset.page || '' : '',
     page: large ? large.dataset.pageNumber || '' : '',

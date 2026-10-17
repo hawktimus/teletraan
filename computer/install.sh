@@ -194,6 +194,12 @@ rm -f "$sudoers_new"
 for unit in "$tree"/computer/systemd/teletraan-*; do
   name=$(basename "$unit")
   case $name in teletraan-control.socket | teletraan-control@.service | teletraan-pull.*) continue ;; esac
+  # The picture of the screen needs python3 and nothing else. Without it the unit is left out, the Live preview shows the
+  # still copy that follows the screen, and the install goes on.
+  if [ "$name" = teletraan-mirror.service ] && ! python3 --version > /dev/null 2>&1; then
+    say "python3 is not installed here, so the moving picture of the screen (the mirror) is skipped. The Live preview shows the still copy."
+    continue
+  fi
   sed "s/ACCOUNT/$account/g" "$unit" > "$systemd_dir/$name"
   chmod 644 "$systemd_dir/$name"
 done

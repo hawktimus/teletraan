@@ -34,8 +34,9 @@ test('the live preview has no frame in the markup, a button of its own, and load
 
 test('the frame is made on demand, lazy, in a 16 by 9 box, and taken out on leaving the tab and on the background', () => {
   const now = read('control/static/tabs/now.js');
-  assert.ok(now.includes("createElement('iframe')") && now.includes("frame.loading = 'lazy'"));
-  assert.ok(now.includes("'visibilitychange'") && now.includes('document.hidden') && now.includes('frame.remove()'));
+  const preview = read('control/static/tabs/preview.js');
+  assert.ok(preview.includes("createElement('iframe')") && preview.includes("frame.loading = 'lazy'"));
+  assert.ok(preview.includes("'visibilitychange'") && preview.includes('document.hidden') && preview.includes('frame.remove()'));
   assert.ok(now.includes('return leave;'), 'the tab hands back a function that removes the frame');
   assert.ok(/aspect-ratio: 16 \/ 9/.test(read('control/static/tabs/tabs.css')));
   assert.ok(read('control/static/app.js').includes('Promise.resolve(result)'), 'an async tab is still told when it is left');

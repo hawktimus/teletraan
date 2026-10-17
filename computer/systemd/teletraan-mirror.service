@@ -1,0 +1,11 @@
+[Unit]
+Description=A moving picture of the Teletraan I screen for the control page
+
+[Service]
+Type=simple
+# Started only when someone opens the Live preview (the helper word mirror-watch), so this file has no install section.
+# ACCOUNT is replaced by the installer with the login user, who owns the data folder it writes to.
+# It stops by itself: when the watch file is older than 2 minutes, when the browser closes, or after 30 minutes.
+User=ACCOUNT
+ExecStart=/usr/bin/python3 /opt/teletraan/computer/scripts/mirror.py
+TimeoutStopSec=10

@@ -60,7 +60,7 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|monday-check)
+  restart-kiosk|restart-services|reboot|status|monday-check|mirror-start|mirror-watch|mirror-status)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   sync-now)
@@ -133,6 +133,29 @@ case $word in
     [ ! -f "$root/local.env" ] || cp -p "$root/local.env" "$root/local.env.previous" 2> /dev/null || true
     code=0
     mv -f "$temporary" "$root/local.env" || code=$?
+    finish "$code"
+    ;;
+  mirror-start|mirror-watch|mirror-status)
+    # The picture of the screen (computer/scripts/mirror.py). It needs python3 and nothing else. mirror-watch also
+    # touches the file that keeps it running, and starting a service that already runs does nothing.
+    if ! command -v python3 > /dev/null 2>&1; then
+      echo "mirror: no python3"
+      finish 0
+    fi
+    mirror_data=${TELETRAAN_DATA_DIR:-$(setting TELETRAAN_DATA)}
+    mirror_data=${mirror_data:-/var/lib/teletraan/data}
+    code=0
+    if [ "$word" = mirror-watch ]; then
+      { mkdir -p "$mirror_data/mirror" && touch "$mirror_data/mirror/watch"; } || code=$?
+    fi
+    if [ "$word" != mirror-status ] && [ "$code" -eq 0 ]; then
+      as_root "$systemctl_bin" start teletraan-mirror.service || code=$?
+    fi
+    if "$systemctl_bin" is-active --quiet teletraan-mirror.service 2> /dev/null; then
+      echo "mirror: running"
+    else
+      echo "mirror: stopped"
+    fi
     finish "$code"
     ;;
 esac
