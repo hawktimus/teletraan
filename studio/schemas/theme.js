@@ -26,7 +26,7 @@ const subthemeChoices = subthemePresets.map(preset => ({ title: preset.name, val
 const noOverlay = { title: 'No seasonal pack', value: 'none' };
 
 const kinds = [
-  { title: 'Theme', value: 'theme' },
+  { title: 'Color theme', value: 'theme' },
   { title: 'Seasonal pack', value: 'overlay' },
 ];
 
@@ -72,9 +72,9 @@ function endsBeforeStart(rule) {
 
 const defaultThemeField = defineField({
   name: 'defaultTheme',
-  title: 'Default theme',
+  title: 'Default color theme',
   type: 'string',
-  description: 'The look when Use a theme now and the schedule say nothing. Style and team set the base values. Neon Prime has a sidebar and no small frame.',
+  description: 'The colors when Use a color theme now and the schedule say nothing. Not the same as the theme of each day. Neon Prime has a sidebar.',
   options: { list: themeChoices },
   initialValue: 'hawktimus',
   validation: Rule => [
@@ -85,15 +85,15 @@ const defaultThemeField = defineField({
 
 const useNowField = defineField({
   name: 'useNow',
-  title: 'Use a theme now',
+  title: 'Use a color theme now',
   type: 'object',
-  description: 'Show a theme or a seasonal pack at once. This wins over the schedule. Leave a part empty to let the schedule decide it.',
+  description: 'Show a color theme or a seasonal pack at once. This wins over the schedule. Leave a part empty to let the schedule decide it.',
   fields: [
     defineField({
       name: 'theme',
-      title: 'Theme',
+      title: 'Color theme',
       type: 'string',
-      description: 'Optional. The theme to show now. Leave empty to follow the schedule. Neon Prime has a sidebar and no small frame.',
+      description: 'Optional. The color theme to show now. Leave empty to follow the schedule. Neon Prime has a sidebar and no small frame.',
       options: { list: themeChoices },
       validation: Rule => Rule.valid(ids(themeChoices)).error('Pick a theme from the list.'),
     }),
@@ -140,9 +140,9 @@ const ruleMember = defineArrayMember({
     }),
     defineField({
       name: 'theme',
-      title: 'Theme',
+      title: 'Color theme',
       type: 'string',
-      description: 'The theme to show on these dates. Neon Prime has a sidebar and no small frame.',
+      description: 'The color theme to show on these dates. Neon Prime has a sidebar and no small frame.',
       options: { list: themeChoices },
       hidden: ({ parent }) => !parent || parent.kind !== 'theme',
       validation: Rule => [
@@ -242,7 +242,7 @@ const scheduleField = defineField({
   name: 'schedule',
   title: 'Schedule',
   type: 'array',
-  description: 'Rules that change the theme or add a seasonal pack on certain dates. For each kind, the first rule that covers today is used.',
+  description: 'Rules that change the color theme or add a seasonal pack on certain dates. For each kind, the first rule that covers today is used.',
   of: [ruleMember],
   validation: Rule => Rule.max(24).error('Up to 24 rules fit. Remove one.'),
 });
@@ -269,7 +269,7 @@ const seasonOverPanelsField = defineField({
 });
 
 // Points to the Look tab of Dashboard Settings, which points back
-const settingsNoteField = noteField('settingsNote', 'Colors, seasonal packs and the time zone are set here. Which style and team come on is set in Dashboard Settings, on the Look tab.');
+const settingsNoteField = noteField('settingsNote', 'Color themes, seasonal packs and the time zone are set here. The theme of each day, such as Original or Cybertron, is on the Themes and backgrounds page.');
 
 export default defineType({
   name: 'theme',

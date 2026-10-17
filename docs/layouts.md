@@ -1231,7 +1231,7 @@ out from the font and not looked at on a screen.
 
 ## The views
 
-What plays on the screen is set by four View documents, General, Prime, Nova and Family (Settings, Views, in the Studio; the type
+What plays on the screen is set by four View documents, Robotics (stored as general), Prime, Nova and Family (Views, under SCREEN, in the Studio, and Family in Old screens (not used); the type
 `view`, with the ids `view-general`, `view-prime`, `view-nova` and `view-family`). docs/views.md has the whole page. In short:
 
 - A view has a layout, a team, the minutes it stays (1 to 30), `panels` (the rows of the main panel, area B, each a panel from

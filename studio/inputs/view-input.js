@@ -165,6 +165,7 @@ export function ViewInput(props) {
     h(
       'div',
       null,
+      key === 'family' ? h('p', { style: styles.caption, 'data-note': 'old' }, words.oldView) : null,
       pickerOf(key, other => paneRouter.navigateIntent('edit', { id: viewIdOf(other), type: viewType })),
       read && read.unreadable ? h('p', { style: styles.caption }, words.teamsUnreadable) : null,
       pictureOf(map, open, choose),

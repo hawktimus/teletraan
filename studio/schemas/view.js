@@ -1,7 +1,7 @@
 // A View: what plays on the TV for a while, with its own arrangement, main panel rows and small panel
 // rows. There are four, General, Prime, Nova and Family, each a document that exists once with a fixed
 // id (view-general, view-prime, view-nova, view-family). The id says which view it is, and key stores
-// the same word. They are under Settings, Views, in the sidebar (structure.js).
+// the same word. Robotics, Prime and Nova are under SCREEN, Views, in the sidebar, and Family is in Old screens (not used) (structure.js).
 //
 // The form opens on the map of the screen (view-input.js) with a picker of the four views above it. Its
 // five letters are the five tabs, as on a Screen:
@@ -75,7 +75,8 @@ export default defineType({
       title: 'Name on the screen',
       type: 'string',
       group: 'banner',
-      description: 'Optional. The name in the view tag. Empty uses the Look tab name (General) or the short name of the team. Up to 16 characters fit.',
+      hidden: true,
+      description: 'Not used any more. The name tag is not drawn. It stays so that a saved name is kept. Up to 16 characters fit.',
       validation: Rule => tooLong(Rule, 16),
     }),
     defineField({
@@ -131,7 +132,7 @@ export default defineType({
       validation: Rule => Rule.valid(colorChoices.map(item => item.value)).error('Pick team or general.'),
     }),
 
-    noteField('rotationNote', 'The order of the panels, their seconds and which view each one plays in is the Rotation list in Dashboard Settings, Look tab.', 'main'),
+    noteField('rotationNote', 'The order of the panels, their seconds and which view each one plays in is the Rotation page in the sidebar.', 'main'),
     defineField({
       name: 'minutes',
       title: 'Minutes on the screen',
@@ -148,7 +149,7 @@ export default defineType({
       group: 'main',
       hidden: true,
       readOnly: isFamily,
-      description: 'Not used any more. The Rotation list in Dashboard Settings, Look tab, replaces these rows, and is filled from them the first time it is opened.',
+      description: 'Not used any more. The Rotation page in the sidebar replaces these rows, and is filled from them the first time it is opened.',
       of: [mainRow],
     }),
 

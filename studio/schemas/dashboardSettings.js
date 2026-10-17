@@ -28,7 +28,7 @@ import { countdownField } from './settingsCountdown.js';
 // for the things only a coach debugging the screen would touch, is the last one.
 const groups = [
   { name: 'screen', title: 'Screen', default: true },
-  { name: 'look', title: 'Look' },
+  { name: 'look', title: 'Logo and motion' },
   { name: 'countdown', title: 'Countdown' },
   { name: 'calendars', title: 'Calendars' },
   { name: 'presentations', title: 'Presentations' },
@@ -76,7 +76,7 @@ const teamField = defineField({
   title: 'Team',
   type: 'object',
   group: 'screen',
-  description: 'The team details shown in the banner at the top of the screen.',
+  description: 'The school line in the banner. The name and number here are used only while no team is saved under Teams.',
   fields: [
     defineField({
       name: 'name',
@@ -191,7 +191,7 @@ const frameMetalField = defineField({
   title: 'Frame metal',
   type: 'string',
   group: 'screen',
-  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Look tab).',
+  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Logo and motion tab).',
   options: { list: metals, layout: 'radio', direction: 'horizontal' },
   initialValue: 'gold',
   validation: Rule => [
@@ -354,8 +354,8 @@ const safetyDaysField = defineField({
 });
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
-const lookNoteField = noteField('lookNote', 'Which theme plays on each day is set on the Themes page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation list on this tab. A view holds its small panels and its look in Views, under Settings in the sidebar.', 'look');
+const lookNoteField = noteField('lookNote', 'The theme of each day and the Original background are on the Themes and backgrounds page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation page in the sidebar. A view holds its small panels and its arrangement in Views, under SCREEN.', 'look');
 
 export default defineType({
   name: 'dashboardSettings',

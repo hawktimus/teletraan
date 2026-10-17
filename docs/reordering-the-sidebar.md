@@ -5,15 +5,22 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. A heading in capitals is a divider with a title, not
-a folder. Screens, Daily Agenda, Monday Tasks, Settings and Views are folders, and
-Presentations is a folder inside Daily Agenda. Screens is the second line, right
-under Start here, and is kept for older settings:
+a folder. Views, Daily Agenda, Monday Tasks and Old screens (not used) are folders, and
+Presentations is a folder inside Daily Agenda. The groups go by what people do: SCREEN is
+what plays and how it looks, TASKS is the work of the day, EVENTS is the calendars, PEOPLE is
+the roster and the photos, and COACHES ONLY is for coaches (docs/studio-map.md):
 
     Start here
-    Screens
-      Original
-      Cybertron
-      Minimal
+    SCREEN
+      Rotation
+      Views
+        Robotics
+        Prime
+        Nova
+      Themes and backgrounds
+      Subthemes
+      Announcements
+      Extra panels
     TASKS
       Daily Agenda
         Agenda items
@@ -27,30 +34,26 @@ under Start here, and is kept for older settings:
     EVENTS
       Calendars
       Calendar filters
-      Subthemes
-    ROSTER
+    PEOPLE
       Leadership
       Team leads
       Sponsors
       Photos
     COACHES ONLY
-      Settings
-        Dashboard Settings
-        Look
-        Teams
-        Views
-          General
-          Prime
-          Nova
-          Family
-        Themes
-      Extra panels
+      Dashboard Settings
+      Teams
+      Look
+      Old screens (not used)
+        Original
+        Cybertron
+        Minimal
+        Family
 
 ## The five kinds of line
 
     { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder },
     { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
-    { kind: 'group', title: 'Settings', icon: CogIcon, id: 'settings', entries: [ ... ] },
+    { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: [ ... ] },
     { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
     { kind: 'divider', title: 'TASKS' },
 
@@ -67,21 +70,24 @@ under Start here, and is kept for older settings:
   which both lists of Monday Tasks do, because the Teletraan computer makes the tasks.
 - `page` opens the one document of its type, which has a fixed id: Dashboard
   Settings and Look. A page opens the document itself, with no list of one in
-  between. Demo is the third page that exists once, and it has no line. The three
+  between. Demo is the third page that exists once, and it has no line. The three old
   Screens are three pages of one type, `screen`, each with an id of its own:
   `screen-original`, `screen-cybertron` and `screen-minimal` (`studio/inputs/screen-ids.js`).
-  The four Views are four pages of the type `view` (`studio/inputs/view-ids.js`).
+  The four Views are four pages of the type `view` (`studio/inputs/view-ids.js`). Robotics,
+  Prime and Nova are in the Views folder and Family is with the old screens.
   Nothing can copy, delete or add one, and the New menu does not offer the type.
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
   or pages. Daily Agenda holds Agenda items, Presentations (Upcoming and Past) and
-  Meeting days. Monday Tasks holds On the TV and Hidden. Screens holds Original,
-  Cybertron and Minimal. Settings holds Dashboard Settings, Look, Teams, Views (General, Prime,
-  Nova and Family) and Themes. Themes is a `component`, the page of the weekday schedule.
+  Meeting days. Monday Tasks holds On the TV and Hidden. Views holds Robotics, Prime and
+  Nova. Old screens (not used) holds a divider with one plain line that says what the folder
+  is, then Original, Cybertron, Minimal and Family. A divider may sit inside a folder for
+  that line only.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/inputs/start-here.js`
   and Calendars is `CalendarsView` in `studio/inputs/calendars-view.js`. A component
-  line needs an `id`. Monday Boards is `MondayBoardsView` in
+  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-view.js` and
+  Themes and backgrounds is `ThemesView` in `studio/inputs/themes-view.js`. Monday Boards is `MondayBoardsView` in
   `studio/inputs/monday-boards-view.js`, and its line has `children`, a function that builds
   the two lists of the tasks of a board, which the name of a board on the page opens.
 - `divider` is a thin line between groups. Give it a `title` and it is a
@@ -97,7 +103,7 @@ is found there. The words in the menu are the titles of the types in
 The `add` of a folder can also name a template from `studio/tools/add-templates.js`,
 which is a new document with its own words and starting values. `sanity.config.js` gives
 the templates to the Studio and keeps them out of the New menus, so only the folder or list
-that names one offers it. Every list under TASKS, EVENTS and ROSTER has an `add` with one
+that names one offers it. Every list under SCREEN (except Extra panels), TASKS, EVENTS and PEOPLE has an `add` with one
 template, so its plus button makes that type with no team and the switch on the screen
 turned on (a tip, for Tips and News). The exception is Monday Tasks, whose lists have
 no plus button. No New menu offers a task either, because the Teletraan computer makes them.
@@ -126,7 +132,7 @@ Calendars is a page that shows what each one brings in (docs/calendars-page.md).
 Three kinds of content have no line:
 Events Calendar (the type `extraEvent`, which the screen no longer reads), Places
 (`place`, which a task's Location field adds and opens) and Demo (`demo`, whose
-buttons are on Start here). They are kept in the schema so that nothing already
+buttons are on the control page). They are kept in the schema so that nothing already
 typed is lost. The status documents have no line either: the Teletraan computer writes them.
 `status` is shown by the status block at the top of the Screen tab of Dashboard
 Settings, and `calendarStatus` by the Calendars page.

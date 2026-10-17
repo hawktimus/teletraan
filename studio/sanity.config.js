@@ -6,6 +6,7 @@ import { publishAllTool } from './tools/publish-all-tool.js';
 import { structure, settingsType, singletonTypes, viewType } from './structure.js';
 import { addTemplates } from './tools/add-templates.js';
 import { screenType } from './inputs/screen-ids.js';
+import { useStandardColorsAction } from './tools/team-actions.js';
 import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewActions } from './tools/actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
@@ -24,6 +25,7 @@ const buttonsOf = {
 };
 
 function actionsFor(actions, context) {
+  if (context.schemaType === 'team') return actions.concat([useStandardColorsAction]);
   if (pageTypes.indexOf(context.schemaType) === -1) return actions;
 
   const kept = actions.filter(item => removedFromSingletons.indexOf(item.action) === -1);

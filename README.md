@@ -17,10 +17,16 @@ Almost everything on the screen is typed into the Studio, which is the editing p
 The list on the left is what you can change. It opens with Start here and has four groups. A name in capitals is a heading, and Screens, Daily Agenda, Monday Tasks, Settings and Views are folders, with Presentations inside Daily Agenda:
 
     Start here
-    Screens (kept for older settings, not used any more)
-      Original
-      Cybertron
-      Minimal
+    SCREEN
+      Rotation
+      Views
+        Robotics
+        Prime
+        Nova
+      Themes and backgrounds
+      Subthemes
+      Announcements
+      Extra panels
     TASKS
       Daily Agenda
         Agenda items
@@ -34,35 +40,31 @@ The list on the left is what you can change. It opens with Start here and has fo
     EVENTS
       Calendars
       Calendar filters
-      Subthemes
-    ROSTER
+    PEOPLE
       Leadership
       Team leads
       Sponsors
       Photos
     COACHES ONLY
-      Settings
-        Dashboard Settings
-        Look
-        Teams
-        Views
-          General
-          Prime
-          Nova
-          Family
-        Themes
-      Extra panels
+      Dashboard Settings
+      Teams
+      Look
+      Old screens (not used)
+        Original
+        Cybertron
+        Minimal
+        Family
 
 Click the one you want, change it, and press **Publish**. Nothing shows on the TV until it is published, and it gets there within a few seconds. Students start with docs/students.md, which has the same parts as the Start here page. Coaches have docs/coaches-guide.md.
 
 - Every item has a **Show on screen** switch and an optional **Hide after** date, so things come down on their own.
 - Every field says how many characters fit on the screen. Studio will not let you publish text that is too long.
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
-- **Views** (Settings, then Views) is what plays on the TV: General, Prime, Nova and Family, each with a map of the screen. Click a letter to change the rows of the main panel and the side panel, or the banner. **Themes** (Settings, then Themes) holds the theme of each day of the week (docs/views-and-themes.md, docs/coaches-guide.md, "Views and themes").
+- **Rotation** (under SCREEN) is the list the wall plays, top to bottom. Drag a row, or use Up and Down, turn Shown off to skip a row, and set the seconds. **Views** holds the arrangement, the team and the small panels of Robotics, Prime and Nova. **Themes and backgrounds** holds the theme of each weekday (docs/studio-map.md, docs/views-and-themes.md).
 - **Dashboard Settings** is the one page for the whole board: how long each page stays, the countdown dates, the announcement times and words, an alert, how presentations run, how big the portraits and photos are and how the portraits are drawn, and the Weekday schedule, the polish and the speed.
 - Under Daily Agenda, Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md). The plus button of Daily Agenda adds an Agenda item or a Presentation.
 - Events are not typed in here. They come from the team's BAND calendars, and the Calendars page says how to add or hide one. To get an event on the screen, add it in the calendar app, or ask a coach for an Always show rule. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
-- Events Calendar, Places and Demo are not in the list on the left. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on Start here.
+- Events Calendar, Places and Demo are not in the list on the left. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on the control page.
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
 
 More detail is in docs/editing-content.md.
@@ -169,6 +171,7 @@ The scripts are in `computer/scripts/`, and the units that start them are in `co
 - docs/students.md: the students' page, with the same parts as the Start here page (docs/using-the-studio.md points to it)
 - docs/monday-one-pager.md: one page for the project manager, with the Monday board rules and the settings not to touch
 - docs/coaches-guide.md: the coaches' page, with the tabs of Dashboard Settings, the status block, the keys, the views and themes, Monday, the Calendars page and the competition feed
+- docs/studio-map.md: the sidebar of the Studio and what lives where
 - docs/editing-content.md: using the Studio
 - docs/publish-all.md: publishing many drafts at once, and what skipped and failed mean
 - docs/switch-the-look.md: the four steps that change the theme, the view, the team and the seasonal pack

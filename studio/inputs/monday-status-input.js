@@ -52,9 +52,9 @@ const styles = {
   note: { margin: 0, fontSize: 14, color: 'var(--card-muted-fg-color, inherit)' },
   advice: { margin: '8px 0 0', fontSize: 14 },
   line: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
-  label: { minWidth: 220, fontWeight: 600 },
+  label: { minWidth: 'min(220px, 100%)', fontWeight: 600 },
   board: { margin: '12px 0 0' },
-  reason: { margin: '0 0 4px 236px', fontSize: 14, color: 'var(--card-badge-caution-fg-color, #92400e)' },
+  reason: { margin: '0 0 4px 0', fontSize: 14, color: 'var(--card-badge-caution-fg-color, #92400e)' },
 };
 
 // 1 board, 3 boards, or None

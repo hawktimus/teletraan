@@ -203,6 +203,7 @@ export function ScreenInput(props) {
     h(
       'div',
       null,
+      h('p', { style: styles.caption, 'data-note': 'old' }, words.oldScreen),
       switchOf(teams, chosen, setEditing),
       read && read.unreadable ? h('p', { style: styles.caption }, words.teamsUnreadable) : null,
       pictureOf(map, open, choose),

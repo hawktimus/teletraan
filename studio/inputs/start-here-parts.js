@@ -20,7 +20,7 @@ export const areas = [
   {
     letter: 'B',
     name: 'Main panel',
-    feeds: [['Monday Tasks', 'Daily Agenda'], ['Calendars', 'Team leads', 'Leadership'], ['Sponsors', 'Photos', 'Extra panels']],
+    feeds: [['Rotation', 'Daily Agenda'], ['Monday Tasks', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
     x: 40,
     y: 256,
     width: 1152,
@@ -30,7 +30,7 @@ export const areas = [
   {
     letter: 'D',
     name: 'Side panel',
-    feeds: [['Monday Tasks'], ['Sponsors', 'Calendars'], ['Dashboard Settings']],
+    feeds: [['Views', 'Calendars'], ['Monday Tasks'], ['Sponsors']],
     x: 1224,
     y: 592,
     width: 656,
@@ -39,9 +39,10 @@ export const areas = [
   { letter: 'E', name: 'Ticker', feeds: [['Tips and News', 'Sponsors']], x: 40, y: 984, width: 1840, height: 72 },
 ];
 
-// The line under the picture that says where the letters can be clicked. The picture on this page has
-// no links: the map at the top of each View (Views, under Settings) has them.
-export const clickLine = 'Click a letter in Views, under Settings, to change what plays there.';
+// The lines under the picture. The picture has no links. The three dots are the small status dots at the foot of the
+// screen, left of the ticker (dashboard/core/dots.js).
+export const clickLine = 'Rotation says which panel plays and for how long.';
+export const dotsLine = 'Three small dots at the foot of the screen show if Monday, the calendars and Sanity were read lately. Green is good. Amber or red means tell a coach.';
 
 // A wide guess at the width of some text, since the page cannot measure it before it is drawn.
 // A letter is about 0.55 of its size wide, so 0.6 leaves room.

@@ -24,17 +24,18 @@ sidebar lines that fill each one.
 | Area | What it shows | Where you change it |
 |------|---------------|---------------------|
 | A Banner | The team name and number, the school, the date, the time and the weather | Teams and Dashboard Settings, for coaches |
-| B Main panel | The big panel. It takes turns showing the agenda, the events, the Monday task cards, the team leads, the leadership, the sponsors, the photos and the extra panels | Daily Agenda, Calendars, Monday Tasks, Team leads, Leadership, Sponsors, Photos, Extra panels |
+| B Main panel | The big panel. It takes turns showing the agenda, the events, the Monday task cards, the team leads, the leadership, the sponsors, the photos and the extra panels | Rotation, Daily Agenda, Calendars, Monday Tasks, Team leads, Leadership, Sponsors, Photos, Extra panels |
 | C Countdown | The time left to Kickoff, then to Rollout | Dashboard Settings, for coaches |
-| D Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast | Monday Tasks, Sponsors, Calendars, Dashboard Settings |
+| D Side panel | The small panel under the countdown. It takes turns showing the next event, the task counts, the safety days, a sponsor logo and the forecast | Views, Monday Tasks, Sponsors, Calendars |
 | E Ticker | One tip, news item or reminder at a time along the bottom | Tips and News, Sponsors |
 
-Two teams use the TV, Prime and Nova. The TV plays four views in turn, General, Prime, Nova and Family, and swaps between them. An item with the
+Two teams use the TV, Prime and Nova. The TV plays a list called the Rotation, which takes turns between the views Robotics, Prime and Nova, and swaps between them. An item with the
 Team field left blank shows for both. An item for one team shows only while that
 team is on the screen.
 
-A coach chooses which theme plays each day, and which panels play in each area of
-each view, under Settings (Themes and Views). You do not need to touch it.
+Which panels play, in what order and for how many seconds is the Rotation page, under
+SCREEN. Which theme plays each day is Themes and backgrounds, under SCREEN. Ask a coach
+before you change them. docs/studio-map.md shows the whole sidebar.
 
 Some things cover the whole TV. A booked talk takes the full screen at its time.
 An alert does too. The night screen is dark from 11:30 pm to 11:30 am.
@@ -69,7 +70,8 @@ Hide after has not passed. The Team choice is Both, or the team that is on the s
 | A leader or a team lead | Leadership, Team leads | First names only |
 | A sponsor | Sponsors | |
 | A photo | Photos | See Photos below |
-| The banner, the countdown, the look | Settings | For coaches |
+| What plays, in what order | Rotation | Drag a row, or use Up and Down. Turn Shown off to skip a row |
+| The banner, the countdown, the look | Dashboard Settings, Teams, Look | Under Coaches only, for coaches |
 
 ## Tasks
 
@@ -153,6 +155,6 @@ To run a sample talk with six sample slides, a coach opens the menu beside Publi
 
 - A change that will not show, or a Monday question: [mentor name, added when chosen].
 - The TV is dark, frozen or shows an old page: [mentor name, added when chosen].
-- Anything under Coaches only (Settings and Extra panels): a coach. The coaches page is
+- Anything under Coaches only (Dashboard Settings, Teams and Look): a coach. The coaches page is
   docs/coaches-guide.md.
 - Coaches control the TV from the control page (docs/control-page.md): updates, restarts and rollbacks.

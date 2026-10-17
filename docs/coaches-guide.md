@@ -3,7 +3,8 @@
 For the coaches. This page says where each coach setting is, what to know before
 you change it, and which page has the detail. Students use
 docs/students.md. Everything under Coaches only in the sidebar is here:
-Settings (Dashboard Settings, Look, Teams, Views and Themes) and Extra panels.
+Dashboard Settings, Teams, Look and Old screens (not used). The Rotation page and the
+other lines under SCREEN are for anyone who edits, and docs/studio-map.md has the whole sidebar.
 
 The Monday feed, the competition feed and the status documents have not been tried
 against the live services, because they need keys that only the Teletraan computer holds. Their
@@ -33,7 +34,7 @@ docs/editing-content.md, "Dashboard Settings".
 | Tab | What is in it |
 |-----|---------------|
 | Screen | The status block, the team name, number and school, motion, speed, frame metal, glint, polish, the screen glitch, the alert, the seconds per page and per ticker line, photos, announcements, how many days finished tasks stay and the date the safety day count starts |
-| Look | The order of the views, the name and title of General, the logo and name effects and the page changes |
+| Logo and motion | The banner title for Robotics, the logo and name effects and the page changes |
 | Countdown | The labels and dates for Kickoff and Rollout |
 | Calendars | A row for each calendar with its code, name, kind and Show on screen switch, and Group events by kind |
 | Presentations | Run presentations, the one switch for booked talks |
@@ -41,10 +42,10 @@ docs/editing-content.md, "Dashboard Settings".
 | Competition | When the competition cards come, and a switch for each card |
 | Advanced | Night mode, hidden transitions and the connection text on the screen |
 
-The Look tab here has the order of the views and the name of the General view
-(see Views and themes below). The Look line under Settings in the sidebar is another page:
-the colors of the whole screen, the seasonal packs and the time zone
-(docs/switch-the-look.md).
+The Logo and motion tab here has the banner title for Robotics, the logo and the page changes.
+The Look line under Coaches only in the sidebar is another page: the color themes, the
+seasonal packs and the time zone (docs/switch-the-look.md). What plays is the Rotation page,
+and the theme of each day is the Themes and backgrounds page (see Rotation, views and themes below).
 
 Some values have one right answer and are not settings: night mode from 11:30 pm
 to 11:30 am, how long a talk waits for its speaker (5 minutes) and how far a talk
@@ -101,43 +102,51 @@ calendar addresses are in the same file, one `CALENDAR_<ID>_URL` line each
 (docs/calendar-links.md). None of them goes in the repository, in Studio or in a
 message.
 
-## Views and themes
+## Rotation, views and themes
 
-A view is what plays on the TV for a few minutes: General, Prime, Nova or Family. A theme is how the screen is drawn. Every view looks the same in every theme. Settings has two lines for them, Views and Themes (docs/views-and-themes.md, docs/views.md).
+The wall plays one list, the Rotation. Each row is a panel, in a view, for some seconds. A view is Robotics, Prime or Nova. A theme is how the screen is drawn. Every view looks the same in every theme. The lines are under SCREEN in the sidebar: Rotation, Views, and Themes and backgrounds (docs/views-and-themes.md, docs/views.md).
 
-A view is one document that always exists, so you cannot add, copy or delete one. General has the standard arrangement: the banner, the main panel, the countdown over the side panel, and the ticker. Prime, Nova and Family have the bar arrangement: the banner with the war clock across the top, a thin column at the left, one main panel and the ticker, and no side panel. Nova is turned left to right because the Nova team has Mirror switched on.
+### The Rotation page
+
+Rotation is the first line under SCREEN. The wall plays the list top to bottom, and then over again. Drag a row to move it. On a phone use Up and Down. Turn Shown off to skip a row. Seconds is how long it stays. More opens the details of a row. A change is saved as a draft of Dashboard Settings, so click Publish all afterwards. The same list is the field Rotation (full form) on the Advanced tab of Dashboard Settings, kept for a row the page cannot fix.
+
+A row is a panel and, if you want, the seconds. Without seconds the row follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per photo (5 to 60, starting at 10), and the time it stays up is the two multiplied. Four photos of 10 seconds stay up 40 seconds.
+
+- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
+- The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
+- Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents, which are in Old screens (not used) and kept for that. The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
+- The competition cards still come in by themselves from two days before an event, as the Competition tab says. They are not rows.
+- When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
+
+### Views
+
+Views, under SCREEN, has three pages, Robotics, Prime and Nova. Each is one document that always exists, so you cannot add, copy or delete one. Robotics has the standard arrangement: the banner, the main panel, the countdown over the side panel, and the ticker. Prime and Nova have the bar arrangement: the banner with the war clock across the top, a thin column at the left, one main panel and the ticker, and no side panel. Nova is turned left to right because the Nova team has Mirror switched on. Family is not in the rotation. Its page is in Old screens (not used).
 
 A view opens on a map of the screen. Click a letter or its box and that part opens below the map. The letters are the ones on Start here. Above the map is a picker that moves to another view.
 
 | Letter | Part | What is there |
 |--------|------|---------------|
-| A | Banner | The name in the view tag, the team, the arrangement (standard or bar), Mirror, the view tag, the team chip and the colors |
-| B | Main panel | The minutes the view stays (1 to 30) and the rows the main panel plays, top to bottom, and then over again |
+| A | Banner | The team, the arrangement (standard or bar), Mirror and the colors |
+| B | Main panel | A note that points to the Rotation page |
 | C | Countdown | Where the countdown sits. The title and the dates of Kickoff and Rollout come from Dashboard Settings, Countdown tab, and are the same in every view |
 | D | Side panel | The rows the small panel plays, on its own timer. Only the standard arrangement has it |
 | E | Ticker | A link that opens Tips and News. The ticker shows every published tip and news item in order |
 
-The order of the views and the name and title of General are on the Look tab of Dashboard Settings (Order of the views, Name of the General view, Title of the General view). A view left out of the order never plays. The swap, the pull apart and re-form of the frames, plays at every change of view, and its length, the name effect and the flying hawk keep the numbers of the Screen documents (Screens, the second line of the sidebar), which are kept for that. Outlined name is a switch on the team document: off draws the team name solid, and both teams are off to start with.
+The banner title for Robotics is on the Logo and motion tab of Dashboard Settings. The swap, the pull apart and re-form of the frames, plays at every change of view. Outlined name is a switch on the team document: off draws the team name solid, and both teams are off to start with.
 
-### The rows of the main panel
+### Themes and backgrounds
 
-A row is a panel and, if you want, the seconds. Without seconds the row follows Seconds per page on the Screen tab of Dashboard Settings. The Photo row has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per photo (5 to 60, starting at 10), and the time it stays up is the two multiplied, shown beside them. Four photos of 10 seconds stay up 40 seconds.
-
-- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
-- The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
-- Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents (Screens, the second line of the sidebar). The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
-- The competition cards still come in by themselves from two days before an event, as the Competition tab says. They are not rows.
-- When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
-
-### Which theme plays on which day
-
-Settings, Themes has a picker for each day, Monday to Sunday (the field Theme of each weekday). The day is the calendar day in the time zone on the Look page. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Foundry is not in the starting week.
+Themes and backgrounds, under SCREEN, has a picker for each day, Monday to Sunday (the field Theme of each weekday), and the background of the Original theme. The day is the calendar day in the time zone on the Look page. The screen picks the theme of the day when it starts and at the next change of view after midnight, so a screen that restarts lands on the same theme. Foundry is not in the starting week.
 
 ### The first time a view opens
 
-A view with no main panel rows is filled once from the Screens that were in use before the views: rows of Prime go to Prime, rows of Nova to Nova and rows with no team to General. A view that finds no rows starts with the starting rows in `studio/tools/view-defaults.js`. Click Publish all afterwards. The Screens, the Panel order, Styles by day, Team order and Monday style in Dashboard Settings are hidden now, with what was saved in them, and the screen does not read them for the rows.
+A view with no main panel rows is filled once from the Screens that were in use before the views: rows of Prime go to Prime, rows of Nova to Nova and rows with no team to Robotics. A view that finds no rows starts with the starting rows in `studio/tools/view-defaults.js`. Click Publish all afterwards. The old Screens (now in Old screens (not used)), the Panel order, Styles by day, Team order and Monday style in Dashboard Settings are hidden, with what was saved in them, and the screen does not read them for the rows.
 
 To see a theme or a team for 2 minutes without saving anything, open the menu next to Publish on Dashboard Settings (the three dots) and click one of the Preview buttons (docs/hidden-transitions.md, "Preview a look"). The Now showing tab of the control page can also show a view, hold a panel or try a theme for a few minutes (docs/control-page.md).
+
+### Putting a team's standard colors back
+
+Each Team document keeps its own colors. A change to the seed file or to the built-in team never reaches a team that is already saved. To reset one, open Teams, pick the team, open the menu beside Publish and choose Use the standard colors for this team. It asks first, lists what changes and changes the draft only. Nothing is published until you click Publish. It knows the teams with the code prime and nova. The standard values are in `studio/tools/team-standard.js`, and `tests/team-standard.test.mjs` checks them against the seed file and the built-in team.
 
 ## Monday setup
 
@@ -331,7 +340,7 @@ docs/rebuilding-the-computer.md, step 13.
 
 ## The Nova trim fields
 
-A team document has six Trim choices, in Settings, Teams, that make a team look
+A team document has six Trim choices, under Teams, that make a team look
 like itself beyond its colors and the mirror. Each is one of two. Prime has the
 first of each, which is how the screen has always looked, and Nova has the other.
 A team saved before the trim existed looks like Prime. Outlined name is a switch

@@ -508,19 +508,20 @@ const typeTitles = {
 // The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here, Screens',
-  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News, Announcements',
-  'EVENTS: Calendars, Calendar filters, Subthemes',
-  'ROSTER: Leadership, Team leads, Sponsors, Photos',
-  'COACHES ONLY: Settings, Extra panels',
+  'Start here',
+  'SCREEN: Rotation, Views, Themes and backgrounds, Subthemes, Announcements, Extra panels',
+  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
+  'EVENTS: Calendars, Calendar filters',
+  'PEOPLE: Leadership, Team leads, Sponsors, Photos',
+  'COACHES ONLY: Dashboard Settings, Teams, Look, Old screens (not used)',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
 const folderLines = {
-  'Screens': 'Original, Cybertron, Minimal',
+  'Views': 'Robotics, Prime, Nova',
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
   'Monday Tasks': 'On the TV, Hidden',
-  'Settings': 'Dashboard Settings, Look, Teams, Views (Robotics, Prime, Nova, Family), Themes',
+  'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Family',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -1426,7 +1427,7 @@ function checkStyleSetting() {
   need(problems, world.layoutModule.layouts.indexOf('bar') !== -1, 'the dashboard needs the bar layout, which Minimal has');
 
   const theme = fieldAt('theme.defaultTheme');
-  need(problems, theme && /Style and team set the base values/.test(theme.description || ''), 'the Look page should say that the style and the team set the base values');
+  need(problems, theme && theme.title === 'Default color theme' && /Not the same as the theme of each day/.test(theme.description || ''), 'the Look page should call its theme the color theme and say it is not the theme of each day');
   return problems;
 }
 
@@ -1991,11 +1992,11 @@ function checkStartHere() {
   need(problems, size.width * 9 === size.height * 16, 'the picture should have the 16 to 9 shape of the screen');
   need(problems, picture && picture.props.role === 'img' && String(picture.props['aria-label'] || '') !== '', 'the picture should have role img and a label for a screen reader');
   const caption = nodesWhere(page, node => node.type === 'figcaption').map(wordsIn)[0] || '';
-  need(problems, parts.clickLine === 'Click a letter in Views, under Settings, to change what plays there.' && caption.indexOf(parts.clickLine) !== -1, 'the line under the picture should say: Click a letter in Views, under Settings, to change what plays there.');
-  // The words of that line are lines of the sidebar: Settings is a folder that holds the Views folder
-  const settingsFolder = world.structure.sidebarEntries.filter(entry => entry.title === 'Settings')[0];
-  const viewsFolder = settingsFolder && settingsFolder.entries.filter(entry => entry.title === 'Views')[0];
-  need(problems, world.structure.sidebarEntries[0] && world.structure.sidebarEntries[0].title === 'Start here' && viewsFolder && viewsFolder.kind === 'group' && viewsFolder.entries.map(entry => entry.title).join() === 'Robotics,Prime,Nova,Family' && parts.clickLine.indexOf('Views') !== -1 && parts.clickLine.indexOf('Settings') !== -1, 'the line under the picture names Views, under Settings, which should be a folder that holds Robotics, Prime, Nova and Family');
+  need(problems, parts.clickLine === 'Rotation says which panel plays and for how long.' && caption.indexOf(parts.clickLine) !== -1 && caption.indexOf(parts.dotsLine) !== -1, 'the line under the picture should say what Rotation does and what the three dots mean');
+  need(problems, /Monday/.test(parts.dotsLine) && /calendars/.test(parts.dotsLine) && /Sanity/.test(parts.dotsLine), 'the line about the dots should name Monday, the calendars and Sanity');
+  need(problems, world.structure.sidebarEntries[0] && world.structure.sidebarEntries[0].title === 'Start here' && world.structure.sidebarEntries.some(entry => entry.title === 'Rotation'), 'Start here should be the first line of the sidebar and Rotation should be a line of it');
+  need(problems, !/Screens|Family|General|theme tag|view tag/i.test(wordsIn(page)), 'the Start here page should not mention Screens, Family, General or a view tag');
+  need(problems, /Use the standard colors for this team/.test(wordsIn(block('coaches'))) && /own colors/.test(wordsIn(block('coaches'))), 'the last block should say that a team keeps its own colors and how to put the standard ones back');
   const shown = picture ? nodesWhere(picture, node => node.type === 'text').map(wordsIn) : [];
   need(problems, shown.filter(text => /^[A-Z]$/.test(text)).join('') === 'ABCDE', 'the picture should have the letters A to E, in order, one for each area. It has: ' + shown.filter(text => /^[A-Z]$/.test(text)).join(''));
   need(problems, parts.areas.map(area => area.letter + ' ' + area.name).join() === startAreas.join(), 'the picture should have the areas ' + startAreas.join(', '));
@@ -2456,6 +2457,7 @@ function checkSidebarLines(problems) {
         return checkFolder(inner, innerLine, depth + 1);
       }
       if (inner.kind === 'component') return checkComponent(inner, innerLine);
+      if (inner.kind === 'divider') return need(problems, typeof inner.title === 'string' && inner.title !== '', innerLine + ' is a divider with no words. A divider inside a folder is one plain line that says what the folder is.');
       if (inner.kind !== 'page' && inner.kind !== 'list') return problems.push(innerLine + ' has the kind "' + inner.kind + '". A folder holds lists, pages, components and one more folder.');
       checkLine(inner, innerLine);
     });
@@ -2489,7 +2491,7 @@ function checkSidebarGroups(problems) {
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Screens, Daily Agenda, Monday Tasks and Settings are the folders, and Presentations is the one folder inside a folder.
+  // Views, Daily Agenda, Monday Tasks and Old screens are the folders, and Presentations is the one folder inside a folder.
   // A heading is a divider, not a folder.
   const folders = entries.filter(entry => entry.kind === 'group');
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
@@ -2498,7 +2500,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 6, 'the sidebar should have six folders in all: Screens, Daily Agenda, Presentations inside it, Monday Tasks, Settings and Views inside it');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Views, Daily Agenda, Presentations inside it, Monday Tasks and Old screens (not used)');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -3999,10 +4001,10 @@ function checkTeams() {
   need(problems, /Change the name, number or colors here and the screen follows\. The Monday board is not connected to this name; a rename there is done by hand\./.test(type.description || ''), 'the team document should open with its description about the name and number');
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
 
-  // The Teams line is right after Look, in the Settings folder, and is a list sorted by order
-  const entries = (world.structure.sidebarEntries.filter(entry => entry.title === 'Settings')[0] || { entries: [] }).entries;
-  const after = entries[entries.map(entry => entry.title).indexOf('Look') + 1];
-  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Look in the Settings folder in structure.js');
+  // The Teams line is right after Dashboard Settings, under COACHES ONLY, and is a list sorted by order
+  const entries = world.structure.sidebarEntries;
+  const after = entries[entries.map(entry => entry.title).indexOf('Dashboard Settings') + 1];
+  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Dashboard Settings under COACHES ONLY in structure.js');
 
   return problems.concat(checkTeamSeed(type));
 }
@@ -4237,19 +4239,19 @@ function checkTeamsTab() {
 // The tabs of Dashboard Settings, in order, and the tab of every field. A new field has to be given a
 // tab here. Advanced is the last tab because Studio has no tab that starts folded. Screen opens first.
 // The order of the fields inside a tab is the order of the fields in dashboardSettings.js.
-const settingsTabTitles = ['Screen', 'Look', 'Countdown', 'Calendars', 'Presentations', 'Monday', 'Competition', 'Advanced'];
+const settingsTabTitles = ['Screen', 'Logo and motion', 'Countdown', 'Calendars', 'Presentations', 'Monday', 'Competition', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
 const settingsTabs = {
   screen: ['miniStatus', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
-  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['rotationRows', 'transitionSeconds']),
+  look: ['lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds']),
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'],
   competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
-  advanced: nightNames.concat(hiddenNames, ['contentSource', 'showConnectionStatus']),
+  advanced: nightNames.concat(hiddenNames, ['contentSource', 'showConnectionStatus', 'rotationRows']),
 };
 
 function checkSettingsTabs() {
@@ -4295,7 +4297,7 @@ function checkSettingsTabs() {
   const lookNote = fieldAt('dashboardSettings.lookNote');
   const themeNote = fieldAt('theme.settingsNote');
   need(problems, lookNote && /Look/.test(lookNote.description || '') && /sidebar/.test(lookNote.description || ''), 'the note on the Look tab should point to Look in the sidebar');
-  need(problems, themeNote && /Dashboard Settings/.test(themeNote.description || '') && /Look tab/.test(themeNote.description || ''), 'the note on the Look page should point to the Look tab of Dashboard Settings');
+  need(problems, themeNote && /Themes and backgrounds page/.test(themeNote.description || ''), 'the note on the Look page should point to the Themes and backgrounds page');
   need(problems, fieldsIn(typeByName('theme'))[0].name === 'settingsNote', 'the note should be the first field of the Look page');
   need(problems, world.noteField.NoteField({ schemaType: { description: 'A line.' } }).children[0] === 'A line.' && world.noteField.NoteField({ schemaType: {} }) === null, 'NoteField should draw the description, and nothing without one');
 
@@ -4913,10 +4915,13 @@ function checkBoardTasks() {
 // a tip, the kind set. The two lists of Monday Tasks have no plus button, because the Teletraan computer makes
 // the tasks, and their add is an empty list. The New menus of the Studio, and the templates they
 // offer, stay as they were, except that none offers a task (docs/reordering-the-sidebar.md).
-const addGroups = ['TASKS', 'EVENTS', 'ROSTER'];
+const addGroups = ['SCREEN', 'TASKS', 'EVENTS', 'PEOPLE'];
 
 // The template each list makes, by the title of the list
 const listAdds = {
+  Subthemes: 'newSubtheme',
+  Announcements: 'newAnnouncement',
+  'Extra panels': null,
   'Agenda items': 'newPlan',
   Upcoming: 'newPresentation',
   Past: 'newPresentation',
@@ -4924,14 +4929,12 @@ const listAdds = {
   'On the TV': '',
   Hidden: '',
   'Tips and News': 'newTip',
-  Announcements: 'newAnnouncement',
   'Calendar filters': 'newCalendarFilter',
-  Subthemes: 'newSubtheme',
   Leadership: 'newPerson',
   'Team leads': 'newSubteam',
   Sponsors: 'newSponsor',
   Photos: 'newPhoto',
-};
+}; // null is the plain plus button of the type
 
 // The switch that puts a new document on the screen, when it is not called show
 const onSwitches = { presentation: ['status', 'scheduled'], presentationDay: ['open', true], announcement: ['level', 'notice'], subtheme: ['enabled', true] };
@@ -4991,6 +4994,7 @@ function checkListAdds() {
   const inGroups = lines.filter(item => addGroups.indexOf(item.heading) !== -1 && item.line.kind === 'list').map(item => item.line);
   need(problems, inGroups.map(line => line.title).join() === Object.keys(listAdds).join(), 'the lists under ' + addGroups.join(', ') + ' should be: ' + Object.keys(listAdds).join(', ') + '. They are: ' + inGroups.map(line => line.title).join(', ') + '. Add the new list to listAdds in tests/schemas.test.mjs.');
   inGroups.forEach(line => {
+    if (listAdds[line.title] === null) return need(problems, line.add === undefined, line.title + ' should keep the plain plus button');
     if (listAdds[line.title] === '') return need(problems, Array.isArray(line.add) && line.add.length === 0, line.title + ' should have no plus button. Its add should be an empty list.');
 
     const template = templates.filter(item => item.id === listAdds[line.title])[0];
@@ -5520,8 +5524,8 @@ function checkLookRotation() {
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
-  need(problems, cycle && /Rotation list/.test(cycle.description || '') && /Views, under Settings/.test(cycle.description || ''), 'the second note on the Look tab should say that what plays is the Rotation list and that a view holds its look in Views, under Settings');
-  need(problems, at('lookNote') && /Which theme plays on each day is set on the Themes page/.test(at('lookNote').description || ''), 'the first note on the Look tab should say that the Themes page sets which theme plays on each day');
+  need(problems, cycle && /Rotation page/.test(cycle.description || '') && /Views, under SCREEN/.test(cycle.description || ''), 'the second note on the Logo and motion tab should say that what plays is the Rotation page and that a view holds its arrangement in Views, under SCREEN');
+  need(problems, at('lookNote') && /The theme of each day and the Original background are on the Themes and backgrounds page/.test(at('lookNote').description || ''), 'the first note on the Logo and motion tab should say that the Themes and backgrounds page sets the theme of each day');
   need(problems, at('screenSchedule') && at('screenSchedule').hidden === true && /^Not used any more/.test(at('screenSchedule').description || ''), 'screenSchedule should be hidden, kept in the schema, and say Not used any more');
 
   // The sample content carries the four settings, with values the dashboard accepts
@@ -6314,7 +6318,7 @@ const screenGroupFields = {
   side: ['sideRows'],
   ticker: ['tickerLink'],
 };
-const mainRowTip = 'Not used any more. The rows of each View (Views under Settings) replace this list. It stays so that a saved list is kept.';
+const mainRowTip = 'Not used any more. The rows of each View (Views, under SCREEN) replace this list. It stays so that a saved list is kept.';
 const weekdayStarts = { monday: 'original', tuesday: 'cybertron', wednesday: 'original', thursday: 'cybertron', friday: 'original', saturday: 'cybertron', sunday: 'original' };
 
 function checkScreenType() {
@@ -6419,8 +6423,8 @@ function checkScreenType() {
   need(problems, draft && draft.problem === '' && draft.publishedId === 'screen-cybertron' && draft.title === 'Cybertron' && world.publishAll.labelOf(draft) === 'Screen: Cybertron', 'Publish all should publish a draft of each Screen under its own id and call it Screen: Cybertron');
 
   // the three pages in the sidebar, and what a page of a Screen can and cannot do
-  const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Screens' && entry.kind === 'group')[0];
-  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Original=screen-original=screen,Cybertron=screen-cybertron=screen,Minimal=screen-minimal=screen', 'Screens, the second line of the sidebar, should list the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
+  const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Old screens (not used)' && entry.kind === 'group')[0];
+  need(problems, folder && folder.entries.filter(entry => entry.kind === 'page' && entry.type === 'screen').map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Original=screen-original=screen,Cybertron=screen-cybertron=screen,Minimal=screen-minimal=screen', 'Old screens (not used), under COACHES ONLY, should list the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
   need(problems, world.structure.screenIds.join() === screenPageIds.join() && world.screenIds.screenStyles.join() === config.styles.join() && Object.keys(config.screenIds).join() === config.styles.join() && config.styles.every(style => config.screenIds[style] === 'screen-' + style && world.screenIds.screenIdOf(style) === 'screen-' + style), 'the ids of the Screens should be screen-original, screen-cybertron and screen-minimal in the Studio and in config.js');
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'screen' }).map(item => item.action).join() === 'publish,discardChanges', 'a Screen should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -6786,9 +6790,10 @@ function checkViewType() {
   if (config.defaultViews) need(problems, sameData(JSON.parse(JSON.stringify(config.defaultViews)), JSON.parse(JSON.stringify(defaults))), 'defaultViews in config.js should be the same as defaultViews in studio/tools/view-defaults.js');
 
   // the pages: four, in a folder under Settings, each of the type view with an id of its own
-  const settings = world.structure.sidebarEntries.filter(entry => entry.title === 'Settings')[0];
-  const folder = settings && settings.entries.filter(entry => entry.title === 'Views')[0];
-  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view,Family=view-family=view', 'Views, under Settings, should list the pages Robotics (id view-general), Prime, Nova and Family, each of the type view with the id view- and its key');
+  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Views')[0];
+  const old = world.structure.sidebarEntries.filter(entry => entry.title === 'Old screens (not used)')[0];
+  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view', 'Views, under SCREEN, should list the pages Robotics (id view-general), Prime and Nova, each of the type view with the id view- and its key');
+  need(problems, old && old.entries.filter(entry => entry.type === 'view').map(entry => entry.title + '=' + entry.id).join() === 'Family=view-family', 'Family, which the rotation does not play, should be a page in Old screens (not used)');
   need(problems, world.structure.viewIds.join() === viewPageIds.join(), 'the ids of the Views in structure.js should be ' + viewPageIds.join(', '));
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'view' }).map(item => item.action).join() === 'publish,discardChanges', 'a View should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -6814,7 +6819,8 @@ function checkViewSettings() {
   need(problems, at('viewOrder') && at('viewOrder').type === 'array' && at('viewOrder').initialValue.join() === 'general,prime,nova,family' && config.defaultSettings.viewOrder.join() === 'general,prime,nova,family' && constraintNamed(rulesOf(at('viewOrder')), 'unique'), 'viewOrder should start as General, Prime, Nova, Family, as config.js says, and hold each view once');
   const member = at('viewOrder') && at('viewOrder').of[0];
   need(problems, member && member.options.list.map(item => item.value).join() === 'general,prime,nova,family' && constraintNamed(constraintsOf(member), 'valid'), 'each row of viewOrder should be one of the four views');
-  ['generalViewName', 'generalViewTitle'].forEach(name => need(problems, at(name) && at(name).group === 'look' && !at(name).hidden, name + ' should show in the Look tab'));
+  need(problems, at('generalViewTitle') && at('generalViewTitle').group === 'look' && !at('generalViewTitle').hidden, 'generalViewTitle should show in the Logo and motion tab');
+  need(problems, at('generalViewName') && at('generalViewName').group === 'look' && at('generalViewName').hidden === true && /^Not used any more\./.test(at('generalViewName').description || ''), 'generalViewName should be hidden but stay in the schema, because the view tag is not drawn any more');
   need(problems, at('viewOrder') && at('viewOrder').group === 'look' && at('viewOrder').hidden === true && /Not used any more/.test(at('viewOrder').description || ''), 'viewOrder should be hidden in the Look tab and say Not used any more');
   need(problems, fieldAt('theme.timeZone') && fieldAt('theme.timeZone').type === 'string', 'the time zone should stay a field of the Look page');
 
@@ -6825,7 +6831,7 @@ function checkViewSettings() {
   need(problems, themes.themeWeekdays.map(day => day.name).join() === days.join() && sameData(themes.startingThemeByWeekday, config.defaultThemeByWeekday) && sameData(config.defaultSettings.themeByWeekday, config.defaultThemeByWeekday), 'the weekday themes should start the same in the Studio and in config.js');
   need(problems, Object.keys(themes.startingThemeByWeekday).every(day => themes.startingThemeByWeekday[day] === (['monday', 'wednesday', 'friday', 'sunday'].indexOf(day) !== -1 ? 'original' : 'cybertron')), 'Original should start on Monday, Wednesday, Friday and Sunday and Cybertron on Tuesday, Thursday and Saturday, with Retro and Foundry unscheduled');
   const schedule = at('themeByWeekday');
-  need(problems, schedule && schedule.type === 'object' && schedule.hidden === true && schedule.group === 'look' && /Themes page/.test(schedule.description || ''), 'themeByWeekday should be hidden in the Look tab, and say the Themes page sets it');
+  need(problems, schedule && schedule.type === 'object' && schedule.hidden === true && schedule.group === 'look' && /Themes and backgrounds page/.test(schedule.description || ''), 'themeByWeekday should be hidden in the Look tab, and say the Themes and backgrounds page sets it');
   days.forEach(day => {
     const field = fieldAt('dashboardSettings.themeByWeekday.' + day);
     need(problems, field && field.initialValue === config.defaultThemeByWeekday[day] && field.options.list.map(item => item.value).join() === 'original,cybertron,retro,foundry' && constraintNamed(constraintsOf(field), 'valid'), 'themeByWeekday.' + day + ' should start as in config.js and offer the four themes');
@@ -6845,7 +6851,7 @@ function checkViewSettings() {
   // No theme is a placeholder
   need(problems, themes.themeChoices.every(theme => !theme.placeholder) && !fs.existsSync(path.join(dashboardFolder, 'styles', 'retro', 'PLACEHOLDER')), 'no theme should be marked as a placeholder, and Retro has no marker file');
   const bgField = at('background');
-  need(problems, bgField && bgField.group === 'look' && bgField.initialValue === 'sweep' && bgField.options.list.map(item => item.value).join() === config.backgrounds.join() && typeof bgField.hidden === 'function', 'the background field should be in the Look tab, start on sweep, offer the dashboard\'s five words and hide itself');
+  need(problems, bgField && bgField.group === 'look' && bgField.initialValue === 'sweep' && bgField.options.list.map(item => item.value).join() === config.backgrounds.join() && bgField.hidden === true && /Themes and backgrounds page/.test(bgField.description || ''), 'the background field should stay in the Look tab, start on sweep, offer the dashboard\'s five words, be hidden and point to the Themes and backgrounds page, where it is edited');
 
   // the old look lists stay
   need(problems, fieldAt('theme.schedule') && fieldAt('dashboardSettings.teamOrder') && fieldAt('dashboardSettings.dailyStyles'), 'the stored schedule of the Look page and the older lists should stay in the schema');
@@ -6865,7 +6871,7 @@ async function checkThemesPage() {
   const wordsOf = node => wordsIn(node);
   const schedule = world.themeIds.tidyThemeByWeekday({});
   const page = view.pageOf({ read: true, schedule: schedule, busy: false, text: '', failed: false }, () => {});
-  need(problems, wordsOf(nodesWhere(page, node => node.type === 'h1')) === 'Themes', 'the Themes page should open with the heading Themes');
+  need(problems, wordsOf(nodesWhere(page, node => node.type === 'h1')) === 'Themes and backgrounds', 'the Themes and backgrounds page should open with the heading Themes and backgrounds');
   const listed = nodesWhere(page, node => node.type === 'li').map(wordsOf);
   need(problems, listed.length === 4 && listed[0].indexOf('Original') === 0 && listed[1].indexOf('Cybertron') === 0 && listed[2].indexOf('Retro') === 0 && listed[3].indexOf('Foundry') === 0, 'the page should list Original, Cybertron, Retro and Foundry');
   const selects = nodesWhere(page, node => node.type === 'select');
@@ -6901,6 +6907,19 @@ async function checkThemesPage() {
   await view.saveSchedule(client({}), schedule).catch(error => { refused = error.message; });
   need(problems, refused === view.words.notPublished, 'with no Dashboard Settings at all the page should say to publish it once');
 
+  // the background of the Original theme: five choices, written alone to the draft
+  need(problems, view.backgroundFrom([published]) === 'sweep' && view.backgroundFrom([Object.assign({}, published, { background: 'rays' }), Object.assign({}, draft, { background: 'embers' })]) === 'embers' && view.backgroundFrom([]) === null && view.backgroundFrom([Object.assign({}, published, { background: 'nope' })]) === 'sweep', 'the page should show the draft background, then the published one, sweep when it has none, and nothing without Dashboard Settings');
+  const picks = [];
+  const withBackground = view.pageOf({ read: true, schedule: schedule, background: 'rays', busy: false, text: '', failed: false }, () => {}, value => picks.push(value));
+  const radios = nodesWhere(withBackground, node => node.type === 'input' && node.props.type === 'radio');
+  need(problems, radios.map(node => node.props.value).join() === world.backgroundIds.backgroundIds.join() && radios.filter(node => node.props.checked).map(node => node.props.value).join() === 'rays', 'the page should offer the five backgrounds as choices and mark the one in use');
+  radios[4].props.onChange();
+  need(problems, picks.join() === 'embers', 'a background choice should hand its word to the page');
+  need(problems, nodesWhere(page, node => node.type === 'input').length === 0, 'with no background read the page should draw no background choices');
+  const backgroundSave = client({ dashboardSettings: published, 'drafts.dashboardSettings': draft });
+  await view.saveBackground(backgroundSave, 'blueprint');
+  need(problems, backgroundSave.calls.length === 1 && Object.keys(backgroundSave.calls[0].set).join() === 'background' && backgroundSave.calls[0].set.background === 'blueprint', 'the page should set background on the draft and nothing else');
+
   // the component: reads on open and writes on a change, and survives a client that fails
   globalThis.studioEffects = [];
   globalThis.studioClient = { fetch: async () => { throw new Error('offline'); } };
@@ -6909,6 +6928,113 @@ async function checkThemesPage() {
   need(problems, tree && tree.props && wordsOf(tree).indexOf(view.words.reading) !== -1, 'the page should open on a line saying it is reading');
   globalThis.studioEffects = [];
   globalThis.studioClient = undefined;
+  return problems;
+}
+
+// The Rotation page (inputs/rotation-view.js): the one sentence at the top, a card for each row with big buttons, and a
+// save that sets rotationRows on the draft of Dashboard Settings and nothing else. Every value of a row the page does not
+// show is kept when the row changes.
+async function checkRotationPage() {
+  const problems = [];
+  const view = world.rotationView;
+  const rows = view.withKeys([
+    { _key: 'a', view: 'robotics', panel: 'events', part: 1, side: 'task-counts', seconds: 30, shown: true },
+    { _key: 'b', view: 'prime', panel: 'monday-tasks', department: 'build', seconds: 30, shown: true },
+    { view: 'nova', panel: 'photo', photoCount: 4, secondsPerPhoto: 10, shown: false },
+  ]);
+  need(problems, rows.length === 3 && rows.every(row => typeof row._key === 'string' && row._key !== '') && new Set(rows.map(row => row._key)).size === 3, 'every row should get its own key');
+
+  // the sentence the owner asked for, word for word
+  need(problems, view.words.intro === 'The wall plays this list top to bottom. Drag a row to move it. Turn Shown off to skip a row. Seconds is how long it stays.', 'the Rotation page should open with: The wall plays this list top to bottom. Drag a row to move it. Turn Shown off to skip a row. Seconds is how long it stays.');
+
+  // the pure changes keep what they do not touch
+  need(problems, view.moveRow(rows, 0, 1).map(row => row._key).join() === [rows[1]._key, 'a', rows[2]._key].join() && view.moveRow(rows, 0, -1) === rows && view.moveRow(rows, 2, 1) === rows, 'moving a row down should swap it with the next, and the first row cannot go up');
+  const edited = view.setRowValue(rows, 0, 'seconds', 45);
+  need(problems, edited[0].seconds === 45 && edited[0].part === 1 && edited[0].side === 'task-counts' && rows[0].seconds === 30, 'changing seconds should keep the part and the small panel, and not change the old rows');
+  need(problems, !('seconds' in view.setRowValue(rows, 0, 'seconds', '')[0]) && view.setRowValue(rows, 2, 'shown', true)[2].photoCount === 4, 'an empty value should take the field away, and the photo values stay');
+  const copied = view.copyRow(rows, 1);
+  need(problems, copied.length === 4 && copied[2].department === 'build' && copied[2]._key !== rows[1]._key, 'copy should put a row with the same values and a new key under the row');
+  need(problems, view.removeRow(rows, 1).length === 2 && view.addRow(rows, 'nova', 'events')[3].shown === true, 'remove takes a row out and add puts a shown row at the end');
+  need(problems, view.secondsFrom('') === '' && view.secondsFrom('45') === 45 && view.secondsFrom('5') === null && view.secondsFrom('121') === null && view.secondsFrom('4.5') === null && view.secondsFrom('abc') === null, 'seconds should be empty or a whole number from 6 to 120');
+  need(problems, view.detailsOf(rows[0]) === 'Page 1 · With Task counts' && view.detailsOf(rows[1]) === 'Department: build' && /4 photos/.test(view.detailsOf(rows[2])), 'the line under a row should name its department, page, small panel and photos');
+  need(problems, view.startingRows().length === world.defaultRotation.defaultRotationRows().length, 'Start from the standard rotation should give the standard list');
+
+  // what the page shows: the draft first, then the published one
+  const published = { _id: 'dashboardSettings', rotationRows: [{ _key: 'p', view: 'robotics', panel: 'tonight' }] };
+  const draft = { _id: 'drafts.dashboardSettings', rotationRows: [{ _key: 'd', view: 'prime', panel: 'events' }] };
+  need(problems, view.rowsFrom([published, draft])[0]._key === 'd' && view.rowsFrom([published])[0]._key === 'p' && view.rowsFrom([]) === null && view.rowsFrom('x') === null, 'the page should show the draft rows, then the published ones, and nothing without Dashboard Settings');
+
+  // the page: a card for each row with the buttons, big enough for a thumb
+  const noActions = { edit() {}, seconds() {}, move() {}, copy() {}, remove() {}, toggle() {}, pick() {}, add() {}, start() {} };
+  const state = { read: true, rows: rows, busy: false, text: '', failed: false, open: 'b', newView: 'robotics', newPanel: 'tasks' };
+  const page = view.pageOf(state, noActions);
+  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Rotation', 'the page should open with the heading Rotation');
+  const cards = nodesWhere(page, node => node.props && node.props['data-row'] !== undefined);
+  need(problems, cards.length === 3, 'the page should draw a card for each row');
+  const buttons = nodesWhere(page, node => node.type === 'button');
+  need(problems, buttons.length > 0 && buttons.every(node => node.props.style.minHeight >= 44), 'every button of the page should be at least 44 pixels high');
+  const controls = nodesWhere(page, node => ['select', 'input'].indexOf(node.type) !== -1 && node.props.type !== 'checkbox' && node.props.type !== 'radio');
+  need(problems, controls.length > 0 && controls.every(node => node.props.style.minHeight >= 44), 'every picker and box of the page should be at least 44 pixels high');
+  need(problems, nodesWhere(page, node => node.props && node.props['data-more'] === 'b').length === 1 && nodesWhere(page, node => node.props && node.props['data-more'] === 'a').length === 0, 'only the open row should show its details');
+  const upButtons = buttons.filter(node => node.props['aria-label'] === 'Move up');
+  need(problems, upButtons[0].props.disabled === true && upButtons[1].props.disabled === false, 'the first row cannot move up');
+  const calls = [];
+  const live = view.pageOf(state, Object.assign({}, noActions, { move: (index, delta) => calls.push('move' + index + ':' + delta), edit: (index, field, value) => calls.push(field + index + '=' + value), copy: index => calls.push('copy' + index) }));
+  const liveButtons = nodesWhere(live, node => node.type === 'button');
+  liveButtons.filter(node => node.props['aria-label'] === 'Move down')[0].props.onClick();
+  liveButtons.filter(node => node.children.join() === 'Copy')[1].props.onClick();
+  nodesWhere(live, node => node.type === 'input' && node.props['aria-label'] === 'Shown')[0].props.onChange({ target: { checked: false } });
+  need(problems, calls.join() === 'move0:1,copy1,shown0=false', 'the buttons should hand the row and the change to the page. They did: ' + calls.join());
+  need(problems, nodesWhere(view.pageOf(Object.assign({}, state, { busy: true }), noActions), node => node.type === 'button' && !node.props.disabled).length === 0, 'the buttons should wait while a change is being saved');
+  need(problems, wordsIn(view.pageOf({ read: false }, noActions)).indexOf(view.words.reading) !== -1 && wordsIn(view.pageOf({ read: true, rows: null }, noActions)).indexOf(view.words.notPublished) !== -1 && wordsIn(view.pageOf({ read: true, rows: [] }, noActions)).indexOf(view.words.start) !== -1, 'the page should say when it is reading, when Dashboard Settings was never published, and offer the standard rotation when the list is empty');
+  nodesWhere(page, node => ['h1', 'h2', 'p'].indexOf(node.type) !== -1).forEach(node => checkPlainSentences(problems, 'the Rotation page ("' + wordsIn(node).slice(0, 30) + '")', wordsIn(node)));
+  Object.values(view.words).forEach(text => checkPlainSentences(problems, 'a line of the Rotation page', text));
+  need(problems, view.panelChoices.every(panel => world.screenPanels.panelTitle(panel.value) === panel.title), 'the panels the page offers should have the titles of screen-panels.js');
+
+  // saving: the rows go to the draft, which is made from the published document when it is not there, and nothing else is set
+  function client(documents) {
+    const written = [];
+    return {
+      calls: written,
+      getDocument: async id => documents[id] || null,
+      createIfNotExists: async doc => { written.push({ create: doc }); },
+      patch: id => ({ set: fields => ({ commit: async () => { written.push({ patch: id, set: fields }); return {}; } }) }),
+    };
+  }
+  const fresh = client({ dashboardSettings: Object.assign({ _rev: 'r1', motion: 'calm' }, published) });
+  await view.saveRows(fresh, rows);
+  need(problems, fresh.calls.length === 2 && fresh.calls[0].create._id === 'drafts.dashboardSettings' && fresh.calls[0].create.motion === 'calm' && fresh.calls[0].create._rev === undefined, 'with no draft the page should make one from the published Dashboard Settings');
+  need(problems, fresh.calls[1].patch === 'drafts.dashboardSettings' && Object.keys(fresh.calls[1].set).join() === 'rotationRows' && fresh.calls[1].set.rotationRows === rows, 'the page should set rotationRows on the draft and nothing else');
+  let refused = '';
+  await view.saveRows(client({}), rows).catch(error => { refused = error.message; });
+  need(problems, refused === view.words.notPublished, 'with no Dashboard Settings at all the page should say to publish it once');
+
+  // the field of Dashboard Settings is the full form, in the Advanced tab, and says to use the page
+  const field = fieldAt('dashboardSettings.rotationRows');
+  need(problems, field && field.group === 'advanced' && /Rotation page/.test(field.description || ''), 'the rotationRows field should be in the Advanced tab and point to the Rotation page');
+  const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Rotation')[0];
+  need(problems, line && line.kind === 'component' && line.component === view.RotationView && world.structure.sidebarEntries.indexOf(line) === 2, 'Rotation should be the first line under SCREEN and open the Rotation page');
+  return problems;
+}
+
+// The pages of the Studio that are not documents (inputs/) must work on a phone 390 pixels wide: a 16 pixel gutter
+// at each side, no box fixed wider than the screen, and buttons and pickers at least 44 pixels high.
+function checkPhonePages() {
+  const problems = [];
+  const pages = ['start-here.js', 'themes-view.js', 'rotation-view.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js'];
+  pages.forEach(file => {
+    const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
+    need(problems, /page: \{[^}]*padding: '24px 16px'/.test(text), file + ' should have a page with a 16 pixel gutter (padding: 24px 16px)');
+    need(problems, !/padding: '24px 32px'/.test(text), file + ' should not have the 32 pixel gutter');
+  });
+  fs.readdirSync(path.join(here, 'inputs')).filter(file => file.endsWith('.js')).forEach(file => {
+    const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
+    (text.match(/min[Ww]idth: \d+/g) || []).forEach(found => need(problems, Number(found.replace(/\D/g, '')) < 300, file + ' has "' + found + '", which does not fit a phone. Use min(Npx, 100%) or a smaller number.'));
+    (['start-here-parts.js', 'preview-panels.js'].indexOf(file) !== -1 ? [] : text.match(/\bwidth: [3-9]\d\d\b/g) || []).forEach(found => need(problems, false, file + ' has "' + found + '", a fixed width that does not fit a phone'));
+    (text.match(/minHeight: \d+/g) || []).forEach(found => need(problems, Number(found.replace(/\D/g, '')) === 0 || Number(found.replace(/\D/g, '')) >= 44, file + ' has "' + found + '". A button or picker should be at least 44 pixels high.'));
+  });
+  const preview = fs.readFileSync(path.join(here, 'inputs', 'panel-preview.js'), 'utf8');
+  need(problems, /aspectRatio: '16 \/ 9'/.test(preview) && /maxWidth: frameSize\.width/.test(preview), 'the panel preview should keep the shape of the screen and shrink to the width of the page');
   return problems;
 }
 
@@ -7093,7 +7219,11 @@ async function main() {
     world.viewSeed = await load(path.join(folder, 'tools', 'view-seed.js'));
     world.viewInput = await load(path.join(folder, 'inputs', 'view-input.js'));
     world.themeIds = await load(path.join(folder, 'inputs', 'theme-ids.js'));
+    world.backgroundIds = await load(path.join(folder, 'inputs', 'background-ids.js'));
     world.themesView = await load(path.join(folder, 'inputs', 'themes-view.js'));
+    world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));
+    world.screenPanels = await load(path.join(folder, 'inputs', 'screen-panels.js'));
+    world.defaultRotation = await load(path.join(folder, 'tools', 'default-rotation.js'));
     world.mondayCheck = await load(path.join(folder, 'tools', 'monday-check.js'));
     world.mondayTokenInput = await load(path.join(folder, 'inputs', 'monday-token-input.js'));
     world.mondayTokenInputSource = readModule(path.join(here, 'inputs', 'monday-token-input.js'), 'utf8');
@@ -7158,7 +7288,7 @@ async function main() {
   check('the Speed setting offers the speeds the dashboard has', checkSpeed);
   check('frame metal, glint, seconds per page and the name effect agree with dashboard/config.js', checkLookAndTiming);
   check('the Polish setting offers the looks in dashboard/config.js and starts on Polished', checkLookSetting);
-  check('the Style setting offers the styles in dashboard/config.js and starts on Original, and the Look page says the style and team set the base values', checkStyleSetting);
+  check('the Style setting offers the styles in dashboard/config.js and starts on Original, and the Look page calls its theme the color theme', checkStyleSetting);
   check('the page change fields agree with dashboard/config.js', checkTransitionsTab);
   check('the night mode fields agree with dashboard/config.js', checkNightTab);
   check('the hidden transition fields agree with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
@@ -7236,6 +7366,8 @@ async function main() {
   results.push({ name: 'the form of a Screen has the Editing switch and the map, a click or a key on a letter opens its tab, an empty Screen is filled once from the Panel order, and the inputs of the sections work', problems: await checkScreenForm().catch(error => ['the check stopped: ' + error.message]) });
   check('a View has the five tabs of the map, a team on Prime and Nova, rows that are the rows of a Screen, Family locked, and starting values that agree with the order', checkViewType);
   check('the Look tab has the name, title and order of the views, the weekday themes start as in dashboard/config.js and are kept tidy, and no theme is a placeholder', checkViewSettings);
+  results.push({ name: 'the Rotation page has the owner\'s sentence, a card for each row with big buttons, keeps every value it does not show, and writes only rotationRows to the draft of Dashboard Settings', problems: await checkRotationPage().catch(error => ['the check stopped: ' + error.stack]) });
+  results.push({ name: 'the pages of the Studio fit a phone: a 16 pixel gutter, nothing fixed wider than 390 pixels and buttons of 44 pixels', problems: checkPhonePages() });
   results.push({ name: 'the Themes page lists the themes, has a picker for each weekday, and writes only themeByWeekday to the draft of Dashboard Settings', problems: await checkThemesPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'a View is filled once from the Screens split by team, Family keeps its two panels, and the form has the picker and the map', problems: await checkViewSeed().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'Test the token asks the control page for the monday-check word and shows the account name or the error', problems: await checkMondayToken().catch(error => ['the check stopped: ' + error.stack]) });

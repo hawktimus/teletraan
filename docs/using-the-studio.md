@@ -1,1 +1,1 @@
-The students' page is docs/students.md.
+The students' page is docs/students.md. The sidebar of the Studio, line by line, is docs/studio-map.md. The long page for every kind of content is docs/editing-content.md, and the coaches' page is docs/coaches-guide.md.

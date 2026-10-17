@@ -238,8 +238,8 @@ Screen use these lists, and the check compares them with `config.js` and
 `registry.js`.
 
 A view that already has rows keeps them, so the new panel stays off the screen
-until an editor opens a view (Settings, Views), clicks B or D on the map, uses
-"Add item", picks the panel and drags the row into place. If the panel is for one
+until an editor opens the Rotation page, adds a row (or opens Views, clicks D on the map and
+uses "Add item" for a small panel), picks the panel and moves the row into place. If the panel is for one
 team (its items have a Team field), add its name to `teamSpecificPanels` in the same
 file and to the list of the same name in the dashboard, so that the first rows of a
 view put it with the right team (`studio/tools/view-seed.js`).

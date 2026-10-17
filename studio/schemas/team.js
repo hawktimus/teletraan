@@ -74,7 +74,7 @@ export default defineType({
   name: 'team',
   title: 'Teams',
   type: 'document',
-  description: 'Change the name, number or colors here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand.',
+  description: 'Change the name, number or colors here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand. Each team keeps its own colors: a new default never reaches a team already saved. To reset one, open it, click the menu beside Publish, choose Use the standard colors for this team, then Publish.',
   fieldsets: [
     {
       name: 'trim',
