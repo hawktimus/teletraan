@@ -1,6 +1,6 @@
 // Tests for computer/scripts/backup-dataset.sh, its unit files and its installer.
-// The Sanity tool is a fake that writes a small gzip file, and status-write.sh is a
-// fake that logs its call, so nothing touches Sanity. The token in the test is made up.
+// curl is a fake that logs its arguments and its standard input and answers like the
+// export address, and status-write.sh is a fake that logs its call, so nothing touches Sanity. The token in the test is made up.
 //
 //   node tests/backup-dataset.test.mjs
 
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-backup-'));
 const scriptFile = path.join(repo, 'computer/scripts/backup-dataset.sh');
-const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'mkdir', 'rm', 'mv', 'ls', 'sort', 'gzip', 'basename'];
+const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'mkdir', 'rm', 'mv', 'ls', 'sort', 'gzip', 'basename', 'wc', 'tr'];
 const token = 'skTESTtoken0123456789abcdef';
 const config = fs.readFileSync(path.join(repo, 'dashboard/config.js'), 'utf8');
 const dataset = config.match(/dataset: '([^']*)'/)[1];
@@ -30,17 +30,25 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-// The fake export: sanity dataset export NAME FILE --overwrite. It writes a gzip
-// file, or fails with the code in export.exit, or writes junk when junk exists.
-// It logs its arguments, and whether the token came in its environment.
-const fakeSanity = `#!/bin/sh
-echo "sanity $*" >> "$STUB_LOG"
-[ -n "\${SANITY_AUTH_TOKEN:-}" ] && echo "token-in-environment" >> "$STUB_LOG"
-echo "directory $(basename "$(pwd)")" >> "$STUB_LOG"
-[ -f "$STUB_DIR/export.exit" ] && exit "$(cat "$STUB_DIR/export.exit")"
-if [ -f "$STUB_DIR/junk" ]; then echo "not a gzip" > "$4"; exit 0; fi
-if [ -f "$STUB_DIR/empty" ]; then : > "$4"; exit 0; fi
-echo "export of $3" | gzip > "$4"
+// The fake curl: it logs its arguments (argv) and the config it reads from standard
+// input (stdin), writes the headers file named by -D, and prints documents (or what
+// the flags in STUB_DIR ask for) on standard output.
+const fakeCurl = `#!/bin/sh
+echo "argv $*" >> "$STUB_LOG"
+while IFS= read -r line; do echo "stdin $line" >> "$STUB_LOG"; done
+headers=""
+while [ "$#" -gt 0 ]; do
+  [ "$1" = "-D" ] && headers="$2"
+  shift
+done
+[ -f "$STUB_DIR/curl.exit" ] && exit "$(cat "$STUB_DIR/curl.exit")"
+status=200
+[ -f "$STUB_DIR/status" ] && status="$(cat "$STUB_DIR/status")"
+printf 'HTTP/2 %s\\r\\ncontent-type: application/x-ndjson\\r\\n\\r\\n' "$status" > "$headers"
+if [ -f "$STUB_DIR/junk" ]; then echo "not a gzip" | gzip -dc 2> /dev/null; echo "not ndjson"; exit 0; fi
+if [ -f "$STUB_DIR/empty" ]; then exit 0; fi
+echo '{"_id":"a1","_type":"tip"}'
+echo '{"_id":"a2","_type":"tip"}'
 `;
 const fakeStatusWrite = `#!/bin/sh
 echo "status-write $*" >> "$STUB_LOG"
@@ -63,11 +71,14 @@ function setup(options = {}) {
   fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
   writeTool(path.join(root, 'computer/scripts'), 'status-write.sh', fakeStatusWrite);
-  if (!options.noSanity) writeTool(path.join(root, 'studio/node_modules/.bin'), 'sanity', fakeSanity);
+  if (!options.noCurl) writeTool(bin, 'curl', fakeCurl);
   const env = options.env === undefined ? "SANITY_WRITE_TOKEN='" + token + "'\n" : options.env;
   fs.writeFileSync(path.join(root, 'computer/local.env'), "TELETRAAN_BACKUP_DIR='" + backups + "'\n" + env);
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
+  // jq is optional for the script; with it, the first line must be a document
+  const jq = spawnSync('/bin/sh', ['-c', 'command -v jq'], { encoding: 'utf8' }).stdout.trim();
+  if (jq && !options.noJq) fs.symlinkSync(jq, path.join(bin, 'jq'));
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
 
@@ -79,7 +90,7 @@ function setup(options = {}) {
     },
     // Files as earlier nights left them, named by day
     nights(days) {
-      days.forEach(day => fs.writeFileSync(path.join(backups, dataset + '-' + day + '.tar.gz'), 'old'));
+      days.forEach((day, index) => fs.writeFileSync(path.join(backups, dataset + '-' + day + (index % 2 ? '.tar.gz' : '.ndjson.gz')), 'old'));
     },
     files() {
       return fs.readdirSync(backups).sort();
@@ -97,25 +108,31 @@ function setup(options = {}) {
 
 // 20 days before a day in 2020, so none is today and all are older than the new file
 const oldDays = Array.from({ length: 20 }, (item, index) => '2020-01-' + String(index + 1).padStart(2, '0'));
-const todayName = () => dataset + '-' + spawnSync('date', ['+%F'], { encoding: 'utf8' }).stdout.trim() + '.tar.gz';
+const todayName = () => dataset + '-' + spawnSync('date', ['+%F'], { encoding: 'utf8' }).stdout.trim() + '.ndjson.gz';
+const projectId = config.match(/projectId: '([^']*)'/)[1];
+const nameOf = (day, index) => dataset + '-' + day + (index % 2 ? '.tar.gz' : '.ndjson.gz');
 
 const tests = [];
 function test(name, run) {
   tests.push({ name: name, run: run });
 }
 
-test('it exports the dataset from studio/ to <dataset>-<date>.tar.gz, with the token in the environment and never on a command line', () => {
+test('it downloads the documents to <dataset>-<date>.ndjson.gz, with the token only in the curl config on stdin', () => {
   const place = setup();
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
   assert.deepEqual(place.files(), [todayName()]);
-  assert.ok(gunzipOk(path.join(place.backups, todayName())));
-  const call = result.calls.find(line => line.startsWith('sanity '));
-  assert.ok(call.startsWith('sanity dataset export ' + dataset + ' ' + path.join(place.backups, todayName())), call);
-  assert.ok(result.calls.includes('token-in-environment'));
-  assert.ok(result.calls.includes('directory studio'), 'it runs in studio/');
-  assert.ok(!result.calls.join('\n').includes(token), 'the token is in no call');
+  const file = path.join(place.backups, todayName());
+  assert.ok(gunzipOk(file));
+  assert.ok(spawnSync('gzip', ['-dc', file], { encoding: 'utf8' }).stdout.includes('"_id":"a1"'));
+  const argv = result.calls.find(line => line.startsWith('argv '));
+  assert.ok(argv.includes('https://' + projectId + '.api.sanity.io/v2025-02-19/data/export/' + dataset), argv);
+  assert.ok(argv.includes('-K -'), 'the config comes from stdin');
+  const all = result.calls.join('\n');
+  assert.ok(!argv.includes(token), 'the token is not in the arguments');
+  assert.ok(result.calls.some(line => line.startsWith('stdin ') && line.includes('Bearer ' + token)), 'the token is in the stdin config');
   assert.ok(!result.text.includes(token) && !result.errors.includes(token), 'the token is never printed');
+  assert.ok(all.split('\n').filter(line => line.includes(token)).every(line => line.startsWith('stdin ')));
   assert.deepEqual(result.calls.filter(line => line.startsWith('status-write')), ['status-write backup']);
 });
 
@@ -133,7 +150,7 @@ test('the rotation keeps the newest 14, counting the new file, and leaves other 
   const kept = place.files().filter(name => name.startsWith(dataset + '-'));
   assert.equal(kept.length, 14);
   assert.ok(kept.includes(todayName()), 'the new file is kept');
-  assert.ok(kept.includes(dataset + '-2020-01-20.tar.gz') && !kept.includes(dataset + '-2020-01-07.tar.gz') && kept.includes(dataset + '-2020-01-08.tar.gz'), 'the newest old ones stay: ' + kept.join());
+  assert.ok(kept.includes(nameOf('2020-01-20', 19)) && !kept.includes(nameOf('2020-01-07', 6)) && kept.includes(nameOf('2020-01-08', 7)), 'the newest old ones stay: ' + kept.join());
   assert.ok(place.files().includes('notes.txt') && place.files().includes('other-2020-01-01.tar.gz'));
 });
 
@@ -145,20 +162,30 @@ test('fewer than 14 files are all kept, and running twice in a day keeps one fil
   assert.equal(place.files().length, 6);
 });
 
-test('a failed export keeps every old backup, leaves no half file, and does not tell Studio', () => {
-  const place = setup();
-  place.nights(oldDays.slice(0, 14));
-  place.flag('export.exit', '1');
-  const result = place.run();
-  assert.notEqual(result.status, 0);
-  assert.ok(result.errors.includes('The old backups were kept'), result.errors);
-  assert.equal(place.files().length, 14);
-  assert.ok(!place.files().some(name => name.includes('partial')));
-  assert.equal(result.calls.filter(line => line.startsWith('status-write')).length, 0);
+test('a failed download keeps every old backup, leaves no half file, names the cause and does not tell Studio', () => {
+  const cases = [
+    ['401', 'status', '401', 'cannot read the dataset'],
+    ['403', 'status', '403', 'cannot read the dataset'],
+    ['500', 'status', '500', 'Check the network'],
+    ['network error', 'curl.exit', '6', 'Check the network'],
+  ];
+  cases.forEach(([name, flag, value, words]) => {
+    const place = setup();
+    place.nights(oldDays.slice(0, 14));
+    place.flag(flag, value);
+    const result = place.run();
+    assert.notEqual(result.status, 0, name);
+    assert.ok(result.errors.includes('The old backups were kept') && result.errors.includes(words), name + ': ' + result.errors);
+    assert.equal(place.files().length, 14, name);
+    assert.ok(!place.files().some(file => file.includes('partial')), name);
+    assert.equal(result.calls.filter(line => line.startsWith('status-write')).length, 0, name);
+    assert.ok(!result.errors.includes(token), name);
+  });
 });
 
-test('an empty export or a file that is not a gzip is not a backup and pushes nothing out', () => {
+test('an empty body or a first line that is not a document is not a backup and pushes nothing out', () => {
   ['empty', 'junk'].forEach(kind => {
+    if (kind === 'junk' && !spawnSync('/bin/sh', ['-c', 'command -v jq']).stdout.length) return;
     const place = setup();
     place.nights(oldDays.slice(0, 14));
     place.flag(kind);
@@ -169,21 +196,29 @@ test('an empty export or a file that is not a gzip is not a backup and pushes no
   });
 });
 
-test('no token, an odd token or no Sanity tool stops it with a plain line and exports nothing', () => {
+test('no token, an odd token or no curl stops it with a plain line and exports nothing', () => {
   const cases = [
     ['no token', { env: '' }, 'SANITY_WRITE_TOKEN is not in local.env'],
     ['the placeholder', { env: "SANITY_WRITE_TOKEN='[paste it here]'\n" }, 'SANITY_WRITE_TOKEN is not in local.env'],
     ['an odd token', { env: "SANITY_WRITE_TOKEN='sk bad token'\n" }, 'does not look like a token'],
-    ['no tool', { noSanity: true }, 'npm install'],
+    ['no curl', { noCurl: true }, 'curl is not installed'],
   ];
   cases.forEach(([name, options, words]) => {
     const place = setup(options);
     const result = place.run();
     assert.notEqual(result.status, 0, name);
     assert.ok(result.errors.includes(words), name + ': ' + result.errors);
-    assert.equal(result.calls.filter(line => line.startsWith('sanity ')).length, 0, name);
+    assert.equal(result.calls.filter(line => line.startsWith('argv ')).length, 0, name);
     assert.ok(!result.errors.includes('bad token'), 'a bad token is not repeated');
   });
+});
+
+test('without jq a body with a first line is accepted', () => {
+  const place = setup({ noJq: true });
+  place.flag('junk');
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(place.files().includes(todayName()));
 });
 
 test('a failure to tell Studio does not fail the backup', () => {
@@ -212,6 +247,8 @@ test('the script is valid sh, is executable, and writes at 03:15 through the tim
   assert.ok(text.includes('/var/backups/teletraan'));
   assert.ok(text.includes('User=ACCOUNT') && text.includes('stat -c %U'), 'the account is read from the repository');
   assert.ok(!text.includes(token));
+  assert.ok(!text.includes('node_modules') && !text.includes('npm install'), 'the installer does not ask for the Sanity tool');
+  assert.ok(text.includes('command -v curl') && text.includes('command -v gzip'));
   // The installer never prints the token line
   assert.ok(!/echo[^\n]*\$token|cat[^\n]*local\.env/.test(text));
 });

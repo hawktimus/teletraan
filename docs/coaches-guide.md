@@ -420,18 +420,24 @@ block in Dashboard Settings, Screen tab, shows Screen restarts today.
 
 ## Backups
 
-Every night at 03:15 (the Teletraan computer's time) the computer exports the whole dataset to
-`/var/backups/teletraan/production-<date>.tar.gz`, keeps the newest 14 and deletes
-the older ones. The status block shows Last backup. It needs the write token in
-`local.env` and the Sanity tool in `studio/` (`npm install` there once). A failed
-export keeps the old backups.
+Every night at 03:15 (the Teletraan computer's time) the computer downloads every document of
+the dataset to `/var/backups/teletraan/production-<date>.ndjson.gz`, keeps the newest
+14 and deletes the older ones (old `.tar.gz` files count in the 14). The status block
+shows Last backup. It needs only `curl` and `gzip` on the computer and the write token
+in `local.env`. The file holds the documents. The image files stay in Sanity's own
+storage and are not in it. A failed download keeps the old backups and says why: a
+401 or 403 means the token cannot read the dataset, anything else means check the
+network.
 
 Restoring a backup. Never import straight over production. Import into a new
-dataset first, look at it, and only then decide what to do:
+dataset first, look at it, and only then decide what to do. The import needs the
+Studio's packages, which the Teletraan computer does not have, so do it on the laptop
+that has the repository and has run `npm ci` in `studio/`. Copy the file there, then:
 
-    cd /opt/teletraan/studio
+    gunzip -k production-<date>.ndjson.gz
+    cd studio
     npx sanity dataset create restore-test
-    npx sanity dataset import /var/backups/teletraan/production-<date>.tar.gz restore-test
+    npx sanity dataset import ../production-<date>.ndjson restore-test
 
 Open the new dataset to check it. Moving the screen to it means changing the
 dataset name in `dashboard/config.js` and `studio/project.js`, which is a change

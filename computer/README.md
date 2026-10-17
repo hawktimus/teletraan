@@ -44,9 +44,9 @@ installing anything on the computer, and whenever a step needs a login or a key.
   minutes old, the page is missing or the browser is gone. At most one restart
   in 10 minutes, and a third in an hour stops it until the next boot. Its count
   is the file `watchdog-state` in the data folder (`docs/coaches-guide.md`).
-- A timer runs `backup-dataset.sh` at 03:15 every night. It exports the Sanity
-  dataset to `/var/backups/teletraan/production-<date>.tar.gz` and keeps the
-  newest 14 (`docs/coaches-guide.md`, Backups).
+- A timer runs `backup-dataset.sh` at 03:15 every night. It downloads every
+  document of the Sanity dataset to `/var/backups/teletraan/production-<date>.ndjson.gz`
+  and keeps the newest 14 (`docs/coaches-guide.md`, Backups).
 - The kiosk service starts a browser full screen when the computer boots. A kiosk
   is a browser with no address bar, tabs or menus.
 - Two text drawings, `console/startup.txt` and `console/shutdown.txt`, fill the
@@ -101,8 +101,8 @@ to attach the data folder to.
 | `scripts/install-watchdog.sh` | Copies the two watchdog unit files into place and turns on the watchdog timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/nightly.sh` | Restarts the kiosk service at 04:00 and reboots the computer at 04:10 on Sundays. Runs as root from `teletraan-nightly.timer`. Skips either when a presentation is booked within the next hour or is running |
 | `scripts/install-nightly.sh` | Copies the two nightly unit files into place and turns on the nightly timer. Needs `curl` |
-| `scripts/backup-dataset.sh` | Exports the dataset with the Sanity tool in `studio/node_modules`, using `SANITY_WRITE_TOKEN` from `local.env` without printing it, keeps the newest 14 files and writes `lastBackupAt` to `status-mini`. Does nothing useful without the token |
-| `scripts/install-backup.sh` | Makes `/var/backups/teletraan`, copies the two backup unit files into place and turns on the backup timer. Stops with the `npm install` line when the Sanity tool is missing from `studio/` |
+| `scripts/backup-dataset.sh` | Downloads the dataset documents from the Sanity export address with `curl` and `gzip` (no Node needed), using `SANITY_WRITE_TOKEN` from `local.env` without printing it, keeps the newest 14 files and writes `lastBackupAt` to `status-mini`. Does nothing useful without the token |
+| `scripts/install-backup.sh` | Makes `/var/backups/teletraan`, copies the two backup unit files into place and turns on the backup timer. Checks for `curl`, `gzip` and the token |
 | `scripts/install-monday.sh` | Copies the two Monday unit files into place and turns on the Monday timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/install-console.sh` | Keeps a copy of `/etc/issue` once, writes the startup drawing above that text, copies `teletraan-console.service` and turns it on. Installs no package and is safe to run twice. The way back is in `docs/rebuilding-the-computer.md`, step 13 |
 | `console/startup.txt`, `console/shutdown.txt` | The drawing shown above the login prompt while the computer starts, and the same drawing with the words "shutting down" for when it stops. Plain 7 bit text, at most 100 columns by 56 rows, with no backslash because the login prompt reads one as a code |
