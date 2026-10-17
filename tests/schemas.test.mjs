@@ -7017,6 +7017,27 @@ async function checkRotationPage() {
   return problems;
 }
 
+// The pages of the Studio that are not documents (inputs/) must work on a phone 390 pixels wide: a 16 pixel gutter
+// at each side, no box fixed wider than the screen, and buttons and pickers at least 44 pixels high.
+function checkPhonePages() {
+  const problems = [];
+  const pages = ['start-here.js', 'themes-view.js', 'rotation-view.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js'];
+  pages.forEach(file => {
+    const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
+    need(problems, /page: \{[^}]*padding: '24px 16px'/.test(text), file + ' should have a page with a 16 pixel gutter (padding: 24px 16px)');
+    need(problems, !/padding: '24px 32px'/.test(text), file + ' should not have the 32 pixel gutter');
+  });
+  fs.readdirSync(path.join(here, 'inputs')).filter(file => file.endsWith('.js')).forEach(file => {
+    const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
+    (text.match(/min[Ww]idth: \d+/g) || []).forEach(found => need(problems, Number(found.replace(/\D/g, '')) < 300, file + ' has "' + found + '", which does not fit a phone. Use min(Npx, 100%) or a smaller number.'));
+    (['start-here-parts.js', 'preview-panels.js'].indexOf(file) !== -1 ? [] : text.match(/\bwidth: [3-9]\d\d\b/g) || []).forEach(found => need(problems, false, file + ' has "' + found + '", a fixed width that does not fit a phone'));
+    (text.match(/minHeight: \d+/g) || []).forEach(found => need(problems, Number(found.replace(/\D/g, '')) === 0 || Number(found.replace(/\D/g, '')) >= 44, file + ' has "' + found + '". A button or picker should be at least 44 pixels high.'));
+  });
+  const preview = fs.readFileSync(path.join(here, 'inputs', 'panel-preview.js'), 'utf8');
+  need(problems, /aspectRatio: '16 \/ 9'/.test(preview) && /maxWidth: frameSize\.width/.test(preview), 'the panel preview should keep the shape of the screen and shrink to the width of the page');
+  return problems;
+}
+
 async function checkViewSeed() {
   const problems = [];
   const seed = world.viewSeed;
@@ -7346,6 +7367,7 @@ async function main() {
   check('a View has the five tabs of the map, a team on Prime and Nova, rows that are the rows of a Screen, Family locked, and starting values that agree with the order', checkViewType);
   check('the Look tab has the name, title and order of the views, the weekday themes start as in dashboard/config.js and are kept tidy, and no theme is a placeholder', checkViewSettings);
   results.push({ name: 'the Rotation page has the owner\'s sentence, a card for each row with big buttons, keeps every value it does not show, and writes only rotationRows to the draft of Dashboard Settings', problems: await checkRotationPage().catch(error => ['the check stopped: ' + error.stack]) });
+  results.push({ name: 'the pages of the Studio fit a phone: a 16 pixel gutter, nothing fixed wider than 390 pixels and buttons of 44 pixels', problems: checkPhonePages() });
   results.push({ name: 'the Themes page lists the themes, has a picker for each weekday, and writes only themeByWeekday to the draft of Dashboard Settings', problems: await checkThemesPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'a View is filled once from the Screens split by team, Family keeps its two panels, and the form has the picker and the map', problems: await checkViewSeed().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'Test the token asks the control page for the monday-check word and shows the account name or the error', problems: await checkMondayToken().catch(error => ['the check stopped: ' + error.stack]) });

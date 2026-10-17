@@ -29,7 +29,7 @@ const question = '*[_id == $id][0] { lastSyncAt, lastError, notes, "teams": team
 const styles = {
   note: { margin: 0, fontSize: 14, color: 'var(--card-muted-fg-color, inherit)' },
   line: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
-  label: { minWidth: 220, fontWeight: 600 },
+  label: { minWidth: 'min(220px, 100%)', fontWeight: 600 },
 };
 
 // 1 event, 3 events, or None

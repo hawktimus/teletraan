@@ -68,7 +68,7 @@ const primaryBackground = 'var(--card-badge-primary-bg-color, #dbeafe)';
 const primaryText = 'var(--card-badge-primary-fg-color, #1e40af)';
 
 const styles = {
-  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 32px' },
+  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 16px' },
   column: { maxWidth: 1000, margin: '0 auto' },
   heading: { fontSize: 24, fontWeight: 600, margin: '0 0 8px' },
   help: { lineHeight: 1.5, margin: '0 0 16px' },
@@ -80,6 +80,7 @@ const styles = {
   row: {
     boxSizing: 'border-box',
     width: '100%',
+    minHeight: 44,
     padding: '10px 12px',
     fontFamily: 'inherit',
     fontSize: 14,
@@ -99,18 +100,18 @@ const styles = {
   failure: { color: critical, margin: '8px 0 0', padding: '8px 0', fontSize: 14, position: 'sticky', bottom: 0, background: 'var(--card-bg-color, Canvas)', borderTop: border },
   subheading: { fontSize: 20, fontWeight: 600, margin: '0 0 8px' },
   fact: { display: 'flex', flexWrap: 'wrap', gap: '4px 16px', margin: '0 0 4px', fontSize: 14 },
-  factLabel: { minWidth: 200, fontWeight: 600 },
+  factLabel: { minWidth: 'min(200px, 100%)', fontWeight: 600 },
   events: { margin: '16px 0 0', padding: 0, listStyle: 'none' },
   event: { display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '2px 12px', padding: '8px 0', borderTop: border, fontSize: 14 },
   eventDate: { minWidth: 96, fontWeight: 600 },
   eventTime: { minWidth: 72 },
-  eventTitle: { flex: '1 1 200px', minWidth: 0 },
+  eventTitle: { flex: '1 1 200px', minWidth: 0, overflowWrap: 'anywhere' },
   badge: { fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 4 },
   shown: { background: 'var(--card-badge-positive-bg-color, #dcfce7)', color: 'var(--card-badge-positive-fg-color, #166534)' },
   hidden: { background: 'var(--card-badge-caution-bg-color, #fef3c7)', color: 'var(--card-badge-caution-fg-color, #92400e)' },
   rule: { flexBasis: '100%', color: muted, fontSize: 13 },
   controls: { flexBasis: '100%', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 8px' },
-  button: { fontFamily: 'inherit', fontSize: 13, padding: '4px 10px', color: 'inherit', background: 'transparent', border: border, borderRadius: 4, cursor: 'pointer' },
+  button: { boxSizing: 'border-box', minHeight: 44, fontFamily: 'inherit', fontSize: 14, padding: '4px 12px', color: 'inherit', background: 'transparent', border: border, borderRadius: 4, cursor: 'pointer' },
   buttonBusy: { opacity: 0.5, cursor: 'default' },
   controlNote: { color: muted, fontSize: 13 },
 };

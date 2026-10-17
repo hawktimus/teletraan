@@ -29,8 +29,8 @@ const styles = {
   column: { maxWidth: 760, margin: '0 auto' },
   heading: { fontSize: 24, fontWeight: 600, margin: '0 0 8px' },
   subheading: { fontSize: 16, fontWeight: 600, margin: '32px 0 8px' },
-  text: { lineHeight: 1.5, margin: '0 0 16px' },
-  muted: { color: muted, lineHeight: 1.5, margin: '0 0 16px' },
+  text: { lineHeight: 1.5, margin: '0 0 16px', overflowWrap: 'anywhere' },
+  muted: { color: muted, lineHeight: 1.5, margin: '0 0 16px', overflowWrap: 'anywhere' },
   steps: { lineHeight: 1.5, margin: '0 0 16px', paddingLeft: 24 },
   figure: { margin: 0 },
   caption: { color: muted, fontSize: 14, lineHeight: 1.4, margin: '8px 0 0' },
@@ -60,7 +60,7 @@ const styles = {
     cursor: 'pointer',
   },
   link: { display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' },
-  says: { color: muted, fontSize: 14, lineHeight: 1.4, margin: '8px 0 0' },
+  says: { color: muted, fontSize: 14, lineHeight: 1.4, margin: '8px 0 0', overflowWrap: 'anywhere' },
 };
 
 // Block 1

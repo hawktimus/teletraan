@@ -23,7 +23,7 @@ const primaryBackground = 'var(--card-badge-primary-bg-color, #dbeafe)';
 const primaryText = 'var(--card-badge-primary-fg-color, #1e40af)';
 
 const styles = {
-  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 32px' },
+  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 16px' },
   tabs: { display: 'flex', gap: 8, margin: '0 0 16px' },
   tab: { minHeight: 44, padding: '8px 16px', fontFamily: 'inherit', fontSize: 16, fontWeight: 600, border: border, borderRadius: 4, background: 'transparent', color: 'inherit', cursor: 'pointer' },
   tabOn: { background: primaryBackground, color: primaryText },

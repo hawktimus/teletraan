@@ -51,7 +51,7 @@ const primaryBackground = 'var(--card-badge-primary-bg-color, #dbeafe)';
 const primaryText = 'var(--card-badge-primary-fg-color, #1e40af)';
 
 const styles = {
-  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 32px' },
+  page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 16px' },
   column: { maxWidth: 760, margin: '0 auto' },
   heading: { fontSize: 24, fontWeight: 600, margin: '0 0 8px' },
   help: { lineHeight: 1.5, margin: '0 0 16px' },
