@@ -21,10 +21,10 @@ here is whether one event shows on the TV.
   calendar run, which is every 15 minutes. Events not listed means the computer
   downloaded a calendar but did not list its events. The usual reason is that Node
   is not installed on it, see below.
-- Filters: pick one calendar, type a word to search the title, the place or the
+- Filters: pick one calendar, type a word to search the title or the
   calendar, or turn on Hidden only to see what the TV does not show.
 - The events: grouped by day, with Today and Tomorrow first and then the date.
-  Each one has its time, title, place, calendar and, when the calendar has a kind,
+  Each one has its time, title, calendar and, when the calendar has a kind,
   a chip. No kind, no chip. The kind is set in Dashboard Settings, on the
   Calendars tab. An event that lasts all day says All day.
 - Past events are never listed. An event that already ended earlier today is
@@ -95,7 +95,7 @@ the page is for.
    filters from Sanity the way the TV does and works out repeating events with
    the dashboard's own calendar code, so the list is what the TV does. Each event
    has its day like 2026-10-12, the first day of the event in the time zone of the
-   TV, its place, and its exact start and end. The switch matches an event by its
+   TV, and its exact start and end. The switch matches an event by its
    start.
 3. `status-write.sh calendar-status` sends the file to Sanity as the document
    `calendar-status`. It needs `SANITY_WRITE_TOKEN` in `local.env` and does
@@ -134,11 +134,11 @@ these on the Teletraan computer and open the page again:
 ## Who can read it
 
 The dataset is public. The TV reads it without a login, and so can anyone who
-knows the project ID. The document `calendar-status` holds the titles, places, dates
+knows the project ID. The document `calendar-status` holds the titles, dates
 and times of the next 40 events of every calendar, and that includes the events that
 a Calendar filter hides from the TV. Anyone who asks the dataset for it can read
-them. It holds no calendar address and no token. Do not put anything in the title
-or the place of a BAND event that must stay private.
+them. It holds no calendar address, no token and no event location. Do not put anything in the title
+of a BAND event that must stay private.
 
 A one event rule holds the title and the start of its event, and it is in the same
 public dataset.

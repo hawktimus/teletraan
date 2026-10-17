@@ -9,7 +9,7 @@
 //       prints the calendar status document as one line of JSON: for each calendar
 //       its code, when it was last downloaded, why the last download failed, how
 //       many events it has in the next 30 days, how many of those the filters
-//       hide, and the next 40 with their title, date, day and time (and their place, start and end moments), whether the
+//       hide, and the next 40 with their title, date, day and time (and their start and end moments), whether the
 //       screen shows each one, and the name of the rule that hides it
 
 import fs from 'node:fs';
@@ -68,12 +68,6 @@ function readSyncRows(text) {
 // Every event of the next 30 days of one calendar file, in order, judged by the
 // Calendar filters. A day back is read as well, so an event that is on right now
 // is found, as the screen does.
-// The place of an event on one line, cut at 60 characters, or nothing
-function plainLocation(text) {
-  const line = String(text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
-  return line.length <= longestText ? line : line.slice(0, longestText - 3).trim() + '...';
-}
-
 function occurrencesOf(content, code, text, now) {
   const zone = content.theme.timeZone;
   const from = new Date(now.getTime() - dayMs);
@@ -91,13 +85,11 @@ function occurrencesOf(content, code, text, now) {
         time: timeText(event),
         shown: rule === null,
         rule: rule ? plainText(rule.name, 'a rule with no name') : '',
-        location: plainLocation(event.location),
         start: event.start.toISOString(),
         end: event.end.toISOString(),
       };
       // The day the filters judge by, so a rule made on the Calendars page matches this event
       if (listing.day === '') delete listing.day;
-      if (listing.location === '') delete listing.location;
       return listing;
     });
 }

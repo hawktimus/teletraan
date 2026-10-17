@@ -691,7 +691,7 @@ test('the installers say when Node is missing, and the note does not stop them',
 
 test('the docs say the titles are readable by anyone who asks the dataset, even the ones a rule hides, and how to turn the event lists on', () => {
   const page = fs.readFileSync(path.join(repo, 'docs/calendars-page.md'), 'utf8').replace(/\s+/g, ' ');
-  ['The dataset is public', 'anyone who knows the project ID', 'titles, places, dates and times', 'a Calendar filter hides', 'Anyone who asks the dataset', 'no calendar address and no token', 'sudo apt install nodejs', 'ExecStopPost', 'Nothing yet', 'Events not listed'].forEach(words => {
+  ['The dataset is public', 'anyone who knows the project ID', 'titles, dates and times', 'a Calendar filter hides', 'Anyone who asks the dataset', 'no calendar address, no token', 'sudo apt install nodejs', 'ExecStopPost', 'Nothing yet', 'Events not listed'].forEach(words => {
     assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words);
   });
 

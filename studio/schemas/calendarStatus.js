@@ -23,7 +23,6 @@ const occurrence = defineArrayMember({
     defineField({ name: 'time', title: 'Time', type: 'string', description: 'The start time as the screen writes it. Empty for an event that lasts all day.' }),
     defineField({ name: 'shown', title: 'Shown on the screen', type: 'boolean', description: 'Off when a Calendar filter hides the event.' }),
     defineField({ name: 'rule', title: 'Rule', type: 'string', description: 'The name of the Calendar filter that hides the event. Empty when the event is shown.' }),
-    defineField({ name: 'location', title: 'Location', type: 'string', description: 'Where the event is, cut at 60 characters. Empty when the calendar gives none.' }),
     defineField({ name: 'start', title: 'Starts at', type: 'string', description: 'The exact moment the event starts, written like 2026-10-09T22:00:00.000Z. A one event rule on the Calendars page matches it.' }),
     defineField({ name: 'end', title: 'Ends at', type: 'string', description: 'The exact moment the event ends, in the same form. The Calendars page uses it to leave out an event that is over.' }),
   ],

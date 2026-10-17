@@ -5046,7 +5046,7 @@ function checkListAdds() {
 // words and rows in calendars-view-parts.js).
 const calendarStatusFields = ['updatedAt', 'eventsNote', 'calendars'];
 const calendarEntryFields = ['code', 'fetchedAt', 'error', 'eventCount', 'hiddenCount', 'occurrences'];
-const calendarEventFields = ['title', 'date', 'day', 'time', 'shown', 'rule', 'location', 'start', 'end'];
+const calendarEventFields = ['title', 'date', 'day', 'time', 'shown', 'rule', 'start', 'end'];
 
 function checkCalendarStatusType() {
   const problems = [];
@@ -5060,7 +5060,7 @@ function checkCalendarStatusType() {
   need(problems, names(entry) === calendarEntryFields.join(), 'a calendar of calendarStatus should have these fields, in this order: ' + calendarEntryFields.join(', '));
   need(problems, names(events) === calendarEventFields.join(), 'an event of calendarStatus should have these fields, in this order: ' + calendarEventFields.join(', '));
 
-  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.day': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string', 'calendars.occurrences.location': 'string', 'calendars.occurrences.start': 'string', 'calendars.occurrences.end': 'string' };
+  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.day': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string', 'calendars.occurrences.start': 'string', 'calendars.occurrences.end': 'string' };
   Object.keys(kinds).forEach(name => {
     const field = fieldAt('calendarStatus.' + name);
     need(problems, field && field.type === kinds[name], 'calendarStatus.' + name + ' should be a ' + kinds[name]);
@@ -5095,7 +5095,7 @@ function checkCalendarsPage() {
   const now = new Date('2026-10-09T15:00:00.000Z');
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
   const entries = [{ id: 'team', name: 'Team calendar', show: true, kind: 'meetings' }, { id: 'outreach', name: 'Outreach', show: false }];
-  const event = (key, title, start, end, shown, rule) => ({ _key: key, title: title, date: 'X', day: start.slice(0, 10), time: '6:00 PM', location: 'Room 4', start: start, end: end, shown: shown, rule: rule });
+  const event = (key, title, start, end, shown, rule) => ({ _key: key, title: title, date: 'X', day: start.slice(0, 10), time: '6:00 PM', start: start, end: end, shown: shown, rule: rule });
   const status = {
     _id: 'calendar-status',
     updatedAt: ago(1),
@@ -5127,7 +5127,7 @@ function checkCalendarsPage() {
   const items = nodesWhere(page, node => node.type === 'li' && node.props && node.props['data-state']);
   need(problems, items.length === 2, 'the page should list the two coming events, not the failed calendar');
   need(problems, nodesWhere(page, node => node.type === 'h2').map(wordsIn).join() === 'Today,Mon Oct 12', 'the days should be Today and then the date');
-  need(problems, items[0] && /6:00 PM/.test(wordsIn(items[0])) && /Team meeting/.test(wordsIn(items[0])) && /Room 4/.test(wordsIn(items[0])) && /Team calendar/.test(wordsIn(items[0])) && /Meetings/.test(wordsIn(items[0])) && /Shows on the TV/.test(wordsIn(items[0])), 'a row should say the time, title, location, calendar, kind and that it shows on the TV');
+  need(problems, items[0] && /6:00 PM/.test(wordsIn(items[0])) && /Team meeting/.test(wordsIn(items[0])) && /Team calendar/.test(wordsIn(items[0])) && /Meetings/.test(wordsIn(items[0])) && /Shows on the TV/.test(wordsIn(items[0])), 'a row should say the time, title, calendar, kind and that it shows on the TV');
   need(problems, items[1] && /Hidden by the rule Hide Pre-Season\./.test(wordsIn(items[1])), 'a hidden row should name its rule');
   const noKind = view.calendarsPage(model({ read: Object.assign({}, model().read, { entries: [{ id: 'team', name: 'Team calendar', show: true }] }) }), actions());
   need(problems, !/Meetings/.test(wordsIn(noKind)), 'a calendar with no kind has no chip');

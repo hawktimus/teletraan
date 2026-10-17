@@ -217,10 +217,10 @@ they live on the control page, Keys tab.
   (docs/calendars-page.md, "Node on the computer").
 
 The dataset is public, and so is the document behind this page. It holds the
-titles, places, dates and times of the next 40 events of every calendar, and that
+titles, dates and times of the next 40 events of every calendar, and that
 includes the events that a Calendar filter hides from the TV. Anyone who asks the
-dataset for it can read those titles. It holds no calendar address and no token.
-Do not put anything private in the title or the place of a BAND event. The status
+dataset for it can read those titles. It holds no calendar address, no token and no
+location. Do not put anything private in the title of a BAND event. The status
 documents of the Teletraan computer, Monday and the competition feed are public in the same way.
 
 ## The Events panel

@@ -140,7 +140,6 @@ function eventItem(row, state, actions) {
       'span',
       null,
       h('span', { className: 'cal-title' }, row.title),
-      row.location ? h('span', { className: 'cal-sub', style: { display: 'block' } }, row.location) : null,
       h('span', { className: 'cal-sub', style: { display: 'block' } }, row.calendarName, row.kind ? h('span', { style: styles.kind }, row.kind) : null)
     ),
     h(

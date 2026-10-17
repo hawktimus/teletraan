@@ -109,7 +109,6 @@ export function eventRows(status, entries, now, zone) {
         kind: entry ? kindTitles[entry.kind] || '' : '',
         calendarOn: entry !== null && entry.show !== false,
         title: title,
-        location: textOf(event.location),
         time: textOf(event.time) || 'All day',
         start: textOf(event.start),
         end: textOf(event.end),
@@ -332,7 +331,7 @@ export function filterRows(rows, states, options) {
     if (options.calendar && row.code !== options.calendar) return false;
     if (options.hiddenOnly && (states[row.key].on || states[row.key].id === 'earlier')) return false;
     if (search === '') return true;
-    return [row.title, row.location, row.calendarName].join(' ').toLowerCase().includes(search);
+    return [row.title, row.calendarName].join(' ').toLowerCase().includes(search);
   });
 }
 

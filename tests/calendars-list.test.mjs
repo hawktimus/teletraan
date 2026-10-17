@@ -46,7 +46,7 @@ const status = {
       occurrences: [
         event('a', 'Yesterday meeting', at('08', '22'), at('08', '23')),
         event('b', 'Morning stand-up', at('09', '12'), at('09', '13')),
-        event('c', 'Team meeting', at('09', '22'), at('09', '23'), { location: 'Room 4' }),
+        event('c', 'Team meeting', at('09', '22'), at('09', '23')),
         event('d', 'Pre-Season', at('10', '22'), at('10', '23')),
         event('e', 'Build day', at('12', '14'), at('12', '20')),
         event('f', 'Long camp', at('07', '14'), at('11', '20')),
@@ -84,10 +84,9 @@ test('events are grouped by day, with Today and Tomorrow first and then the date
   assert.equal(parts.dayLabel('2026-10-12', '2026-10-09'), 'Mon Oct 12');
 });
 
-test('each row carries the time, title, location, calendar name and a kind only when one is set', () => {
+test('each row carries the time, title, calendar name and a kind only when one is set', () => {
   const meeting = rowTitled('Team meeting');
   assert.equal(meeting.time, '6:00 PM');
-  assert.equal(meeting.location, 'Room 4');
   assert.equal(meeting.calendarName, 'Team calendar');
   assert.equal(meeting.kind, 'Meetings');
   assert.equal(parts.eventRows(status, [{ id: 'team', name: 'Team calendar', show: true }], now, zone)[0].kind, '', 'no kind, no chip');
@@ -262,14 +261,14 @@ test('rules are read with drafts, grouped by id, and a draft wins over the publi
   assert.equal(await parts.readRuleGroups({ fetch: async () => { throw new Error('offline'); } }), null);
 });
 
-test('filters: by calendar, by search words in the title, place or calendar, and Hidden only', () => {
+test('filters: by calendar, by search words in the title or calendar, and Hidden only', () => {
   const list = rows().filter(row => row.calendarOn);
   const states = {};
   const rule = { _id: 'calendarFilter-1', name: 'Hide Pre-Season', action: 'hide', words: ['Pre-Season'], show: true };
   list.forEach(row => { states[row.key] = parts.stateOf(row, [published(rule)], now); });
   const titles = options => parts.filterRows(list, states, Object.assign({ calendar: '', search: '', hiddenOnly: false }, options)).map(row => row.title);
   assert.equal(titles({}).length, list.length);
-  assert.deepEqual(titles({ search: 'room 4' }), ['Team meeting']);
+  assert.deepEqual(titles({ search: 'team meet' }), ['Team meeting']);
   assert.deepEqual(titles({ search: 'TEAM CAL', calendar: 'team' }).length, list.length);
   assert.deepEqual(titles({ calendar: 'gears' }), []);
   assert.deepEqual(titles({ hiddenOnly: true }), ['Pre-Season']);
