@@ -274,7 +274,8 @@ const alertField = defineField({
   title: 'Alert',
   type: 'object',
   group: 'screen',
-  description: 'A message that covers the whole screen until you turn it off.',
+  hidden: true,
+  description: 'Set on the Today page, in the sidebar. A message that covers the whole screen until you turn it off.',
   fields: [
     defineField({
       name: 'on',

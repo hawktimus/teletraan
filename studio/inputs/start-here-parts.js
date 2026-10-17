@@ -20,7 +20,7 @@ export const areas = [
   {
     letter: 'B',
     name: 'Main panel',
-    feeds: [['Rotation', 'Daily Agenda'], ['Monday Tasks', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
+    feeds: [['Rotation', 'Today'], ['Monday Tasks', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
     x: 40,
     y: 256,
     width: 1152,
@@ -36,7 +36,7 @@ export const areas = [
     width: 656,
     height: 372,
   },
-  { letter: 'E', name: 'Ticker', feeds: [['Tips and News', 'Sponsors']], x: 40, y: 984, width: 1840, height: 72 },
+  { letter: 'E', name: 'Ticker', feeds: [['Ticker', 'Sponsors']], x: 40, y: 984, width: 1840, height: 72 },
 ];
 
 // The lines under the picture. The picture has no links. The three dots are the small status dots at the foot of the

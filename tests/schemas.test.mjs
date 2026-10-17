@@ -479,6 +479,10 @@ const notInSidebar = {
   frcStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
   mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
   milestone: 'the Teletraan computer writes it, and the Monday Boards page opens it as its second list, Milestones',
+  plan: 'the Today page links to the list of agenda items and opens it in the next pane',
+  presentation: 'the Today page links to the talks, Upcoming and Past, and opens them in the next pane',
+  presentationDay: 'the Today page links to the meeting days and opens them in the next pane',
+  announcement: 'the Today page lists the announcements and edits them in place, and each card opens the full form in the next pane',
 };
 
 // The sidebar titles that people look for by name
@@ -508,24 +512,21 @@ const typeTitles = {
 // The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here',
-  'SCREEN: Rotation, Views, Themes and backgrounds, Subthemes, Announcements, Extra panels',
-  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
-  'EVENTS: Calendars, Calendar filters',
-  'PEOPLE: Leadership, Team leads, Sponsors, Photos',
-  'COACHES ONLY: Dashboard Settings, Teams, Look, Old screens (not used)',
+  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Views, Themes and backgrounds, Subthemes',
+  'COACHES ONLY: Dashboard Settings, Teams, Look, Extra panels, Old screens (not used)',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
 const folderLines = {
-  'Views': 'Robotics, Prime, Nova',
-  'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
+  'Events': 'Calendars, Calendar filters',
+  'People': 'Leadership, Team leads, Sponsors',
   'Monday Tasks': 'On the TV, Hidden',
+  'Views': 'Robotics, Prime, Nova',
   'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Condensed',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
-const folderAdds = { 'Daily Agenda': 'plan,presentation' };
+const folderAdds = {};
 
 // The titles the sidebar used to have, in the first rebuild or before it. None of them may be left
 // in a title, a description or a message that an editor reads.
@@ -2493,17 +2494,17 @@ function checkSidebarGroups(problems) {
 
   // Views, Daily Agenda, Monday Tasks and Old screens are the folders, and Presentations is the one folder inside a folder.
   // A heading is a divider, not a folder.
-  const folders = entries.filter(entry => entry.kind === 'group');
+  const folders = entries.filter(entry => entry.kind === 'group').sort((a, b) => Object.keys(folderLines).indexOf(a.title) - Object.keys(folderLines).indexOf(b.title));
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
   folders.forEach(folder => {
     const want = folderLines[folder.title];
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Views, Daily Agenda, Presentations inside it, Monday Tasks and Old screens (not used)');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Events, People, Monday Tasks, Views and Old screens (not used)');
 
-  ['Start here', 'Calendars'].forEach(title => {
-    const entry = entries.filter(item => item.title === title)[0];
+  ['Start here', 'Calendars', 'Today'].forEach(title => {
+    const entry = allLines(entries).filter(item => item.title === title)[0];
     need(problems, entry && entry.kind === 'component' && typeof entry.component === 'function', 'the sidebar should have a ' + title + ' line that opens a page drawn by a component');
   });
 }
@@ -4915,25 +4916,21 @@ function checkBoardTasks() {
 // a tip, the kind set. The two lists of Monday Tasks have no plus button, because the Teletraan computer makes
 // the tasks, and their add is an empty list. The New menus of the Studio, and the templates they
 // offer, stay as they were, except that none offers a task (docs/reordering-the-sidebar.md).
-const addGroups = ['SCREEN', 'TASKS', 'EVENTS', 'PEOPLE'];
+const addGroups = ['', 'COACHES ONLY'];
 
 // The template each list makes, by the title of the list
 const listAdds = {
-  Subthemes: 'newSubtheme',
-  Announcements: 'newAnnouncement',
-  'Extra panels': null,
-  'Agenda items': 'newPlan',
-  Upcoming: 'newPresentation',
-  Past: 'newPresentation',
-  'Meeting days': 'newPresentationDay',
-  'On the TV': '',
-  Hidden: '',
-  'Tips and News': 'newTip',
+  Ticker: 'newTip',
   'Calendar filters': 'newCalendarFilter',
   Leadership: 'newPerson',
   'Team leads': 'newSubteam',
   Sponsors: 'newSponsor',
   Photos: 'newPhoto',
+  'On the TV': '',
+  Hidden: '',
+  Subthemes: 'newSubtheme',
+  Teams: null,
+  'Extra panels': null,
 }; // null is the plain plus button of the type
 
 // The switch that puts a new document on the screen, when it is not called show
@@ -5013,8 +5010,15 @@ function checkListAdds() {
     const names = given && given.map(template => template.serialize().templateId);
     need(problems, (names || []).join() === (pair.entry.add || []).join() && (pair.entry.add === undefined) === (given === undefined), pair.entry.title + ' should give the Studio the templates ' + ((pair.entry.add || []).join() || 'of the plain plus button') + '. It gives: ' + ((names || []).join() || 'none'));
   });
-  const talks = entries.filter(entry => entry.title === 'Daily Agenda')[0].entries.filter(entry => entry.title === 'Presentations')[0];
-  need(problems, talks && talks.add && talks.add.join() === 'newPresentation', 'the Presentations folder should make a presentation in its plus button');
+  // the lists behind the Today page: the agenda, the meeting days and the talks make their own template
+  const today = entries.filter(entry => entry.title === 'Today')[0];
+  const behind = today && typeof today.children === 'function' ? today.children(fakeBuilder(), { since: new Date().toISOString(), now: new Date().toISOString() }) : null;
+  const opened = id => behind(id).made;
+  const templatesOf = pane => (pane.initialValueTemplates || []).map(template => template.serialize().templateId).join();
+  need(problems, behind && templatesOf(opened('agenda')) === 'newPlan' && templatesOf(opened('meetingDays')) === 'newPresentationDay', 'the Today page should open the agenda with a plus button that makes an agenda item and the meeting days with one that makes a meeting day');
+  const talks = behind && opened('presentations');
+  need(problems, talks && talks.id === 'presentations' && talks.items.map(item => item.made.title).join() === 'Upcoming,Past' && talks.menuItems.map(menu => menu.intent.params.template).join() === 'newPresentation', 'the Today page should open the talks as Upcoming and Past, with a plus button that makes a presentation');
+  need(problems, behind && opened('announcement:abc').documentId === 'abc' && opened('announcement:abc').schemaType === 'announcement', 'a card of the Today page should open its announcement in the full form');
 
   // the Studio's own templates and New menus are as they were: the plain templates first and in order,
   // then these, which no New menu offers
@@ -6673,7 +6677,7 @@ async function checkScreenForm() {
   need(problems, parts.countdownLines({ kickoffLabel: '  ' }).every(line => line.text === 'Not set') && parts.countdownLines(null).length === 4, 'a countdown with nothing in it should say Not set for every line');
 
   // the Ticker section: a link to the line of Tips and News in the sidebar
-  const tips = world.structure.sidebarEntries.filter(entry => entry.title === 'Tips and News')[0];
+  const tips = world.structure.sidebarEntries.filter(entry => entry.title === 'Ticker')[0];
   const tipsLink = fields.TickerInput();
   need(problems, tips && parts.tipsAndNewsPath === '/structure/' + (tips.id || tips.type) && tipsLink.props.href === parts.tipsAndNewsPath && wordsIn(tipsLink) === 'Open Tips and News', 'the Ticker section should link to Tips and News in the sidebar (' + parts.tipsAndNewsPath + ')');
 
@@ -7013,7 +7017,7 @@ async function checkRotationPage() {
   const field = fieldAt('dashboardSettings.rotationRows');
   need(problems, field && field.group === 'advanced' && /Rotation page/.test(field.description || ''), 'the rotationRows field should be in the Advanced tab and point to the Rotation page');
   const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Rotation')[0];
-  need(problems, line && line.kind === 'component' && line.component === view.RotationView && world.structure.sidebarEntries.indexOf(line) === 2, 'Rotation should be the first line under SCREEN and open the Rotation page');
+  need(problems, line && line.kind === 'component' && line.component === view.RotationView && world.structure.sidebarEntries.indexOf(line) === 1, 'Rotation should be the second line of the sidebar, after Start here, and open the Rotation page');
   return problems;
 }
 
@@ -7021,7 +7025,7 @@ async function checkRotationPage() {
 // at each side, no box fixed wider than the screen, and buttons and pickers at least 44 pixels high.
 function checkPhonePages() {
   const problems = [];
-  const pages = ['start-here.js', 'themes-view.js', 'rotation-view.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js'];
+  const pages = ['start-here.js', 'themes-view.js', 'rotation-view.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js', 'page-styles.js'];
   pages.forEach(file => {
     const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
     need(problems, /page: \{[^}]*padding: '24px 16px'/.test(text), file + ' should have a page with a 16 pixel gutter (padding: 24px 16px)');

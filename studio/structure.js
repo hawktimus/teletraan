@@ -39,7 +39,6 @@ import { BellIcon } from '@sanity/icons/Bell';
 import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
-import { ClockIcon } from '@sanity/icons/Clock';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
 import { DashboardIcon } from '@sanity/icons/Dashboard';
 import { DesktopIcon } from '@sanity/icons/Desktop';
@@ -66,8 +65,8 @@ import { SyncIcon } from '@sanity/icons/Sync';
 import { TaskIcon } from '@sanity/icons/Task';
 import { ThLargeIcon } from '@sanity/icons/ThLarge';
 import { ThListIcon } from '@sanity/icons/ThList';
-import { TimelineIcon } from '@sanity/icons/Timeline';
 import { TokenIcon } from '@sanity/icons/Token';
+import { UserIcon } from '@sanity/icons/User';
 import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './inputs/start-here.js';
 import { CalendarsView } from './inputs/calendars-view.js';
@@ -76,6 +75,7 @@ import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 import { ThemesView } from './inputs/themes-view.js';
 import { RotationView } from './inputs/rotation-view.js';
+import { TodayView } from './inputs/today-view.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
@@ -135,38 +135,50 @@ const startedEarlier = 'defined(start) && start < $since';
 const tasksOnTv = 'source == "monday" && showOnTv != false && showOnBoard != false && show != false && (!defined(expires) || expires > $now)';
 const tasksHidden = 'source != "monday" || showOnTv == false || showOnBoard == false || show == false || (defined(expires) && expires <= $now)';
 
+// Today and the other pages that open lists in the next pane give their links an id. The agenda, the booked talks
+// and the meeting days sit behind the Today page, and one announcement opens from its card.
+const agendaList = { kind: 'list', title: 'Agenda items', id: 'agenda', type: 'plan', sort: newestDateFirst, add: ['newPlan'] };
+const meetingDaysList = { kind: 'list', title: 'Meeting days', id: 'meetingDays', type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] };
+const talksFolder = {
+  kind: 'group',
+  title: 'Presentations',
+  icon: PresentationIcon,
+  id: 'presentations',
+  add: ['newPresentation'],
+  entries: [
+    { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently, add: ['newPresentation'] },
+    { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
+  ],
+};
+export const announcementChild = 'announcement:';
+
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
-  { kind: 'divider', title: 'SCREEN' },
   { kind: 'component', title: 'Rotation', id: 'rotation', icon: PlayIcon, component: RotationView },
-  { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
-  { kind: 'component', title: 'Themes and backgrounds', id: 'themes', icon: HighlightIcon, component: ThemesView },
-  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
-  { kind: 'list', title: 'Announcements', icon: BellIcon, type: 'announcement', sort: latestStart, add: ['newAnnouncement'] },
-  { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
-  { kind: 'divider', title: 'TASKS' },
+  { kind: 'component', title: 'Today', id: 'today', icon: BellIcon, component: TodayView, children: todayChildren },
+  { kind: 'list', title: 'Ticker', id: 'tipOrNews', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
   {
     kind: 'group',
-    title: 'Daily Agenda',
+    title: 'Events',
     icon: CalendarIcon,
-    id: 'dailyAgenda',
-    add: ['plan', 'presentation'],
+    id: 'events',
     entries: [
-      { kind: 'list', title: 'Agenda items', icon: TimelineIcon, type: 'plan', sort: newestDateFirst, add: ['newPlan'] },
-      {
-        kind: 'group',
-        title: 'Presentations',
-        icon: PresentationIcon,
-        id: 'presentations',
-        add: ['newPresentation'],
-        entries: [
-          { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently, add: ['newPresentation'] },
-          { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
-        ],
-      },
-      { kind: 'list', title: 'Meeting days', icon: ClockIcon, type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] },
+      { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
+      { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
     ],
   },
+  {
+    kind: 'group',
+    title: 'People',
+    icon: UserIcon,
+    id: 'people',
+    entries: [
+      { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
+      { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
+      { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
+    ],
+  },
+  { kind: 'list', title: 'Photos', icon: ImagesIcon, type: 'photo', sort: newestUploadFirst, add: ['newPhoto'] },
   {
     kind: 'group',
     title: 'Monday Tasks',
@@ -178,19 +190,14 @@ export const sidebarEntries = [
     ],
   },
   { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsTabs, children: tasksOfBoard },
-  { kind: 'list', title: 'Tips and News', icon: BulbOutlineIcon, type: 'tipOrNews', sort: byOrder, add: ['newTip'] },
-  { kind: 'divider', title: 'EVENTS' },
-  { kind: 'component', title: 'Calendars', id: 'calendars', icon: SyncIcon, component: CalendarsView },
-  { kind: 'list', title: 'Calendar filters', icon: FilterIcon, type: 'calendarFilter', sort: byName, add: ['newCalendarFilter'] },
-  { kind: 'divider', title: 'PEOPLE' },
-  { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
-  { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
-  { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
-  { kind: 'list', title: 'Photos', icon: ImagesIcon, type: 'photo', sort: newestUploadFirst, add: ['newPhoto'] },
+  { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
+  { kind: 'component', title: 'Themes and backgrounds', id: 'themes', icon: HighlightIcon, component: ThemesView },
+  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
   { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
   { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
+  { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
   {
     kind: 'group',
     title: 'Old screens (not used)',
@@ -244,16 +251,33 @@ function tasksOfBoard(S, times) {
   };
 }
 
+// What a link on the Today page opens: the agenda, the booked talks, the meeting days, or one announcement in its
+// full form. The function it gives back is handed the id of the link.
+function todayChildren(S, times) {
+  return childId => {
+    if (childId.indexOf(announcementChild) === 0) {
+      return S.document().title('Announcement').schemaType('announcement').documentId(childId.slice(announcementChild.length));
+    }
+    if (childId === 'agenda') return paneOf(S, agendaList, times);
+    if (childId === 'meetingDays') return paneOf(S, meetingDaysList, times);
+    return groupList(S, talksFolder, times);
+  };
+}
+
 // A sidebar entry that opens a list of the lines under it. The plus button of a
 // folder with add offers a new document of each of those types, the way the
 // plus button of a list of one type does, or the new document of a template in add-templates.js.
-function groupOf(S, entry, times) {
+function groupList(S, entry, times) {
   let list = S.list()
     .title(entry.title)
     .id(entry.id)
     .items(entry.entries.map(inner => itemFor(S, inner, times)));
   if (entry.add) list = list.menuItems(S.menuItemsFromInitialValueTemplateItems(entry.add.map(type => S.initialValueTemplateItem(type).serialize())));
-  return S.listItem().title(entry.title).id(entry.id).icon(entry.icon).child(list);
+  return list;
+}
+
+function groupOf(S, entry, times) {
+  return S.listItem().title(entry.title).id(entry.id).icon(entry.icon).child(groupList(S, entry, times));
 }
 
 // A sidebar entry that opens the one document of its type
