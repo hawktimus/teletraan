@@ -44,6 +44,12 @@ installing anything on the computer, and whenever a step needs a login or a key.
   minutes old, the page is missing or the browser is gone. At most one restart
   in 10 minutes, and a third in an hour stops it until the next boot. Its count
   is the file `watchdog-state` in the data folder (`docs/coaches-guide.md`).
+- The Live preview on the control page can show the TV moving. `mirror.py` (python3, standard library only) reads the
+  kiosk browser's page list on 127.0.0.1:9222, opens the page's DevTools socket and writes the newest screencast frame
+  to `mirror/frame.jpg` in the data folder, with a counter in `mirror/frame.n`. It runs as `teletraan-mirror.service`, which
+  has no install section and is started only by the helper word `mirror-watch` while the tab is open. It stops when
+  `mirror/watch` is older than 2 minutes, when the browser closes, or after 30 minutes. nginx serves the two frame files
+  on port 3229, read only, with no PIN: they are a picture of the TV and nothing else (`docs/control-page.md`).
 - A timer runs `backup-dataset.sh` at 03:15 every night. It downloads every
   document of the Sanity dataset to `/var/backups/teletraan/production-<date>.ndjson.gz`
   and keeps the newest 14 (`docs/coaches-guide.md`, Backups).
@@ -97,6 +103,7 @@ to attach the data folder to.
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/install-frc.sh` | Copies the two FRC unit files into place and turns on the FRC timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/mirror.py` | The picture of the screen for the Live preview (see above). Needs python3 only. Run by `systemd/teletraan-mirror.service`; `MIRROR_PORT`, `MIRROR_DATA`, `MIRROR_IDLE` and `MIRROR_MAX` change its port, folder and limits |
 | `scripts/watchdog.sh` | Restarts the kiosk service when the screen has frozen (see above). Runs as root. Needs `curl`, `pgrep` and `awk`. Keeps its count in `watchdog-state` in the data folder |
 | `scripts/install-watchdog.sh` | Copies the two watchdog unit files into place and turns on the watchdog timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/nightly.sh` | Restarts the kiosk service at 04:00 and reboots the computer at 04:10 on Sundays. Runs as root from `teletraan-nightly.timer`. Skips either when a presentation is booked within the next hour or is running |
