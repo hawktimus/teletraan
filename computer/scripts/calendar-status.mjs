@@ -9,14 +9,14 @@
 //       prints the calendar status document as one line of JSON: for each calendar
 //       its code, when it was last downloaded, why the last download failed, how
 //       many events it has in the next 30 days, how many of those the filters
-//       hide, and the next 40 with their title, date, day and time, whether the
+//       hide, and the next 40 with their title, date, day and time (and their start and end moments), whether the
 //       screen shows each one, and the name of the rule that hides it
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { sanity } from '../../dashboard/config.js';
 import { expandEvents, parseIcs } from '../../dashboard/core/calendar.js';
-import { eventDate, firstDayOf, hidingRule, timeText } from '../../dashboard/core/events.js';
+import { eventDate, firstDayOf, hidingRule, listedTitle, timeText } from '../../dashboard/core/events.js';
 import { normalizeContent, queryUrl } from '../../dashboard/core/sanity.js';
 
 const daysAhead = 30;
@@ -38,16 +38,11 @@ const timePattern = /^\d{4}-\d{2}-\d{2}T[0-9:]+Z$/;
 // file is not one of them and is not passed on to the dataset.
 const reasonPattern = /^[A-Za-z0-9 ,.:/()_'-]{1,120}$/;
 
-// A title or a rule name on one line, cut at 60 characters
+// A title or a rule name on one line, cut at 60 characters. A title is cut as the dashboard cuts it
+// (listedTitle), because a one event rule from the Calendars page keeps the title that way.
 function plainText(text, empty) {
-  const line = String(text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (line === '') return empty;
-  if (line.length <= longestText) return line;
-
-  // The cut stops before half of an emoji, which the document would carry as a broken character
-  const last = line.charCodeAt(longestText - 1);
-  const end = last >= 0xd800 && last <= 0xdbff ? longestText - 1 : longestText;
-  return line.slice(0, end).trim() + '...';
+  const blank = String(text || '').replace(/[\s\u0000-\u001f\u007f]/g, '') === '';
+  return blank ? empty : listedTitle(text);
 }
 
 // calendar-sync.txt has a line for each calendar: its code, the time of its last
@@ -90,6 +85,8 @@ function occurrencesOf(content, code, text, now) {
         time: timeText(event),
         shown: rule === null,
         rule: rule ? plainText(rule.name, 'a rule with no name') : '',
+        start: event.start.toISOString(),
+        end: event.end.toISOString(),
       };
       // The day the filters judge by, so a rule made on the Calendars page matches this event
       if (listing.day === '') delete listing.day;

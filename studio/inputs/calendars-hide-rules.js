@@ -61,7 +61,7 @@ function weekdayOf(day) {
 
 // Sixteen letters and digits that depend on every character of the text. Two sums are made, so that
 // two different rules do not get the same id.
-function shortHash(text) {
+export function shortHash(text) {
   let first = 2166136261;
   let second = 5381;
   for (let index = 0; index < text.length; index++) {

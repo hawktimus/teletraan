@@ -1,5 +1,6 @@
-// The Monday tab of Dashboard Settings: how the Teletraan computer reads the two boards of the Monday
-// workspace and how an item becomes a task or a milestone (docs/monday.md). It has:
+// The Monday tab of Dashboard Settings and, under Advanced, the two board blocks: how the Teletraan computer reads
+// the two boards of the Monday workspace and how an item becomes a task or a milestone (docs/monday.md). The
+// two board numbers are chosen on the Monday page (inputs/monday-page.js), which writes the same fields. It has:
 //
 //   mondayConnection       a read only block that says who the token belongs to, when the Teletraan computer last
 //                          read Monday, how often it reads and how many tasks it made
@@ -7,8 +8,8 @@
 //   mondayTokenTest        the Test the token button (../monday-token-input.js). It stores nothing
 //   mondayEveryMinutes     how often the Teletraan computer reads, 5 to 120 minutes
 //   mondayTaskBoard        the task board: its number, the column of each field, the tables that say
-//                          what each label index means, and the text of the Hide label
-//   mondayMilestoneBoard   the milestones board, the same way
+//                          what each label index means, and the text of the Hide label (Advanced tab)
+//   mondayMilestoneBoard   the milestones board, the same way (Advanced tab)
 //   mondayShowOwners       whether the first names of the people in Assigned are kept, off to start with
 //   mondayBoards           not used any more: the rows of the older tab, hidden and kept so that nothing
 //                          typed is lost. The Teletraan computer ignores them
@@ -197,9 +198,9 @@ const taskBoardBlock = defineField({
   name: 'mondayTaskBoard',
   title: 'Task board',
   type: 'object',
-  group: 'monday',
-  description: 'The board with the tasks: its number, the column of each field, and what each label means. The starting values are the rebuilt workspace.',
-  options: { collapsible: true, collapsed: false },
+  group: 'advanced',
+  description: 'The board with the tasks, the column of each field and what each label means. Choose the board itself on the Monday page.',
+  options: { collapsible: true, collapsed: true },
   initialValue: taskBoardStart,
   fields: [
     defineField({
@@ -250,8 +251,8 @@ const milestoneBoardBlock = defineField({
   name: 'mondayMilestoneBoard',
   title: 'Milestones board',
   type: 'object',
-  group: 'monday',
-  description: 'The board with the milestones. A milestone with no target date, or a name that starts with EXAMPLE, is skipped.',
+  group: 'advanced',
+  description: 'The board with the milestones and its columns. Choose the board itself on the Monday page. A milestone with no target date is skipped.',
   options: { collapsible: true, collapsed: true },
   initialValue: milestoneBoardStart,
   fields: [

@@ -588,18 +588,17 @@ test('a long title is never cut through the middle of an emoji, so the document 
 
 const docs =['docs/calendars-page.md', 'docs/hide-a-repeating-meeting.md', 'docs/calendar-filters.md', 'docs/rebuilding-the-computer.md'];
 
-test('the docs start with the button and give the rule form second, and name the rules the page makes', () => {
+test('the docs start with the switch and give the rule form second, and name the one event rules the page makes', () => {
   const hide = fs.readFileSync(path.join(root, 'docs/hide-a-repeating-meeting.md'), 'utf8');
-  assert.ok(hide.indexOf('Hide this one') !== -1 && hide.indexOf('Hide this one') < hide.indexOf('Calendar filters, then the plus button'), 'the button comes before the rule form');
-  ['Hide all like this', 'Show again', 'Hide:', 'Hide all:', 'Calendar filters'].forEach(words => assert.ok(hide.includes(words), 'docs/hide-a-repeating-meeting.md should say: ' + words));
+  assert.ok(hide.indexOf('The switch') !== -1 && hide.indexOf('The switch') < hide.indexOf('Calendar filters, then the plus button'), 'the switch comes before the rule form');
+  ['Publish all', 'Calendar filters'].forEach(words => assert.ok(hide.includes(words), 'docs/hide-a-repeating-meeting.md should say: ' + words));
 
   const filters = fs.readFileSync(path.join(root, 'docs/calendar-filters.md'), 'utf8').replace(/\s+/g, ' ');
-  assert.ok(filters.includes('Hide:') && filters.includes('Hide all:') && /Calendars page/.test(filters), 'docs/calendar-filters.md should say that rules whose name starts with Hide: or Hide all: come from the Calendars page');
+  assert.ok(filters.includes('Hide:') && filters.includes('Hide all:') && filters.includes('calendarFilter-one-') && /Calendars page/.test(filters), 'docs/calendar-filters.md should name the one event rules and the older Hide: and Hide all: rules of the Calendars page');
 
   const page = fs.readFileSync(path.join(root, 'docs/calendars-page.md'), 'utf8').replace(/\s+/g, ' ');
-  ['next 40 events', 'Kind', 'no kind', 'Dashboard Settings', 'Hide this one', 'Show again', 'calendarFilter-hide-'].forEach(words => assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words));
+  ['next 40 events', 'No kind, no chip', 'Dashboard Settings', 'Click Publish all to apply', 'calendarFilter-one-', 'Keys tab', 'Earlier today', 'Hidden by you'].forEach(words => assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words));
   assert.ok(!/next 12|up to 12/.test(page), 'docs/calendars-page.md should not still say 12');
-  assert.ok(page.includes(parts.helpLine), 'docs/calendars-page.md should quote the help line of the page as it is written');
 });
 
 test('the docs are plain: no dash, no exclamation mark, no emoji and no filler word', () => {

@@ -5,7 +5,7 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. COACHES ONLY is a divider with a title, not a folder. Events, People,
-Monday Tasks and Teams and views are folders, and Views is a folder inside Teams and views. The lines go
+Teams and views is a folder, and Views is a folder inside Teams and views. The lines go
 by what is on the screen (docs/studio-map.md):
 
     Start here
@@ -20,10 +20,7 @@ by what is on the screen (docs/studio-map.md):
       Team leads
       Sponsors
     Photos
-    Monday Tasks
-      On the TV
-      Hidden
-    Monday Boards
+    Monday
     Teams and views
       Hawktimus Prime
       Hawktimus Nova
@@ -68,17 +65,17 @@ by what is on the screen (docs/studio-map.md):
 - `group` is a folder. It opens a list of the lines under `entries`, one line
   each. A folder holds lists and pages, and one more folder, which holds lists
   or pages. Events holds Calendars and Calendar filters. People holds Leadership, Team leads and
-  Sponsors. Monday Tasks holds On the TV and Hidden. Teams and views holds the two teams and the Views
+  Sponsors. Teams and views holds the two teams and the Views
   folder, and Views holds Robotics, Prime and Nova. A divider may sit inside a folder for that line only.
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/inputs/start-here.js`
   and Calendars is `CalendarsView` in `studio/inputs/calendars-view.js`. A component
-  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-view.js`, Today is `TodayView`
+  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-board-view.js`, Today is `TodayView`
   in `studio/inputs/today-view.js`, Look is `LookView` in `studio/inputs/look-view.js`, Competition is
   `CompetitionView` in `studio/inputs/competition-view.js` and Kept data is `KeptDataView` in
-  `studio/inputs/kept-data-view.js`. Monday Boards is `MondayBoardsView` in
-  `studio/inputs/monday-boards-view.js`. A component line can have `children`, a function that builds the
-  pane a link on the page opens: the two lists of the tasks of a board (Monday Boards), the agenda, the
+  `studio/inputs/kept-data-view.js`. Monday is `MondayPage` in
+  `studio/inputs/monday-page.js`. A component line can have `children`, a function that builds the
+  pane a link on the page opens: the two lists of the tasks of a board (Monday), the agenda, the
   talks, the meeting days or one announcement (Today), the dated rules or the subthemes (Look), and the
   old Screens (Kept data).
 - `divider` is a thin line between groups. Give it a `title` and it is a

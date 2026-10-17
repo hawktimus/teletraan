@@ -92,7 +92,7 @@ Your task shows on the TV when it has a department, a team or General, Show on T
 - **Timeline** and **Estimated Hours** feed the due date, the overdue mark and the
   progress numbers. A task with no hours counts as one hour.
 
-In the Studio, Monday Tasks lists the tasks in two lists, On the TV and Hidden.
+In the Studio, the Items tab of Monday lists the tasks, with a switch for each.
 Each task opens read only. The one thing you can change is **Show on TV**. Monday
 Boards shows every board the Teletraan computer can see, with when it was last read. If a Monday
 panel shows a STALE chip, the computer has not read the boards for a while. Tell a coach.

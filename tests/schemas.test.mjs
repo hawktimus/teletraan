@@ -103,6 +103,10 @@ const contract = {
     toDate: 'date',
     show: 'boolean',
     expires: 'datetime',
+    scope: 'string',
+    eventCalendar: text(20),
+    eventTitle: text(63),
+    eventStart: 'datetime',
   },
   subtheme: {
     name: text(40),
@@ -479,13 +483,14 @@ const notInSidebar = {
   calendarStatus: 'the Teletraan computer writes it, and the Calendars page shows it',
   frcStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
   mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
-  milestone: 'the Teletraan computer writes it, and the Monday Boards page opens it as its second list, Milestones',
   plan: 'the Today page links to the list of agenda items and opens it in the next pane',
   presentation: 'the Today page links to the talks, Upcoming and Past, and opens them in the next pane',
   presentationDay: 'the Today page links to the meeting days and opens them in the next pane',
   theme: 'the Look page links to it, as the dated rules, the default theme and the time zone',
   subtheme: 'the Look page links to the list of subthemes and opens it in the next pane',
   announcement: 'the Today page lists the announcements and edits them in place, and each card opens the full form in the next pane',
+  milestone: 'the Teletraan computer writes it, and the Milestones tab of the Monday page lists it',
+  task: 'the Teletraan computer writes it, and the Items tab of the Monday page lists it with the Show on TV switch. The old lists open from its Old manual tasks link',
 };
 
 // The sidebar titles that people look for by name
@@ -514,7 +519,7 @@ const typeTitles = {
 // The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Look, Competition',
+  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition',
   'COACHES ONLY: Dashboard Settings, Extra panels, Kept data',
 ];
 
@@ -522,7 +527,6 @@ const sidebarGroups = [
 const folderLines = {
   'Events': 'Calendars, Calendar filters',
   'People': 'Leadership, Team leads, Sponsors',
-  'Monday Tasks': 'On the TV, Hidden',
   'Teams and views': 'Hawktimus Prime, Hawktimus Nova, Views (Robotics, Prime, Nova)',
   'Views': 'Robotics, Prime, Nova',
 };
@@ -2497,7 +2501,7 @@ function checkSidebarGroups(problems) {
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Events, People, Monday Tasks and Teams and views are the folders, and Views is the one folder inside a folder.
+  // Events, People and Teams and views are the folders, and Views is the one folder inside a folder.
   // A heading is a divider, not a folder.
   const folders = allLines(entries).filter(entry => entry.kind === 'group').sort((a, b) => Object.keys(folderLines).indexOf(a.title) - Object.keys(folderLines).indexOf(b.title));
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
@@ -2506,7 +2510,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Events, People, Monday Tasks, Teams and views, and Views inside it');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Events, People, Teams and views, and Views inside it');
 
   ['Start here', 'Calendars', 'Today'].forEach(title => {
     const entry = allLines(entries).filter(item => item.title === title)[0];
@@ -4263,10 +4267,10 @@ const settingsTabs = {
   screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
   countdown: ['countdown'],
-  monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'],
+  monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, nightNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus']),
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, nightNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {
@@ -4876,10 +4880,12 @@ function checkBoardTasks() {
   need(problems, input.ShowOnTvInput({ value: true, readOnly: true, onChange: () => {} }).children[0].props.disabled === true, 'the box should be disabled when the field is read only');
 
   // Monday Tasks: two lists in order, no plus button, no template, and no New menu offers a task
-  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Tasks')[0];
-  if (!folder || folder.kind !== 'group') return problems.concat('the Monday Tasks line of the sidebar should be a folder');
-  need(problems, folder.entries.map(entry => entry.title).join() === 'On the TV,Hidden', 'the Monday Tasks folder should hold On the TV and Hidden, in that order');
-  need(problems, folder.add === undefined, 'the Monday Tasks folder should have no plus button');
+  // The folder is no line of the sidebar now: the Old manual tasks link on the Items tab of the Monday page opens it
+  const folder = world.structure.oldTasksFolder;
+  if (!folder || folder.kind !== 'group') return problems.concat('structure.js should export oldTasksFolder, the folder of the two old lists of tasks');
+  need(problems, folder.entries.map(entry => entry.title).join() === 'On the TV,Hidden', 'the old tasks folder should hold On the TV and Hidden, in that order');
+  need(problems, folder.add === undefined, 'the old tasks folder should have no plus button');
+  need(problems, !world.structure.sidebarEntries.some(entry => entry.title === 'Monday Tasks' || entry.title === 'Monday Boards'), 'the sidebar should have no Monday Tasks or Monday Boards line: the Monday line replaces both');
   folder.entries.forEach(entry => {
     need(problems, entry.type === 'task' && entry.sort.field === 'mondayBoardName' && entry.sort.direction === 'asc' && entry.thenBy && entry.thenBy.field === '_createdAt' && entry.thenBy.direction === 'asc', entry.title + ' should list tasks by the name of their board, then the oldest first');
     need(problems, Array.isArray(entry.add) && entry.add.length === 0, entry.title + ' should have no plus button: its add should be an empty list');
@@ -4938,8 +4944,6 @@ const listAdds = {
   'Team leads': 'newSubteam',
   Sponsors: 'newSponsor',
   Photos: 'newPhoto',
-  'On the TV': '',
-  Hidden: '',
   'Extra panels': null,
 }; // null is the plain plus button of the type
 
@@ -5060,7 +5064,7 @@ function checkListAdds() {
 // words and rows in calendars-view-parts.js).
 const calendarStatusFields = ['updatedAt', 'eventsNote', 'calendars'];
 const calendarEntryFields = ['code', 'fetchedAt', 'error', 'eventCount', 'hiddenCount', 'occurrences'];
-const calendarEventFields = ['title', 'date', 'day', 'time', 'shown', 'rule'];
+const calendarEventFields = ['title', 'date', 'day', 'time', 'shown', 'rule', 'start', 'end'];
 
 function checkCalendarStatusType() {
   const problems = [];
@@ -5074,7 +5078,7 @@ function checkCalendarStatusType() {
   need(problems, names(entry) === calendarEntryFields.join(), 'a calendar of calendarStatus should have these fields, in this order: ' + calendarEntryFields.join(', '));
   need(problems, names(events) === calendarEventFields.join(), 'an event of calendarStatus should have these fields, in this order: ' + calendarEventFields.join(', '));
 
-  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.day': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string' };
+  const kinds = { 'updatedAt': 'datetime', 'eventsNote': 'string', 'calendars': 'array', 'calendars.code': 'string', 'calendars.fetchedAt': 'datetime', 'calendars.error': 'string', 'calendars.eventCount': 'number', 'calendars.hiddenCount': 'number', 'calendars.occurrences': 'array', 'calendars.occurrences.title': 'string', 'calendars.occurrences.date': 'string', 'calendars.occurrences.day': 'string', 'calendars.occurrences.time': 'string', 'calendars.occurrences.shown': 'boolean', 'calendars.occurrences.rule': 'string', 'calendars.occurrences.start': 'string', 'calendars.occurrences.end': 'string' };
   Object.keys(kinds).forEach(name => {
     const field = fieldAt('calendarStatus.' + name);
     need(problems, field && field.type === kinds[name], 'calendarStatus.' + name + ' should be a ' + kinds[name]);
@@ -5103,86 +5107,89 @@ function checkCalendarStatusType() {
 
 function checkCalendarsPage() {
   const problems = [];
-  const parts = world.calendarsParts;
+  const parts = world.calendarsList;
   const view = world.calendarsView;
   const line = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Calendars')[0];
   const now = new Date('2026-10-09T15:00:00.000Z');
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
-  const entries = [{ id: 'team', name: 'Team calendar', show: true }, { id: 'outreach', name: 'Outreach', show: false }];
+  const entries = [{ id: 'team', name: 'Team calendar', show: true, kind: 'meetings' }, { id: 'outreach', name: 'Outreach', show: false }];
+  const event = (key, title, start, end, shown, rule) => ({ _key: key, title: title, date: 'X', day: start.slice(0, 10), time: '6:00 PM', start: start, end: end, shown: shown, rule: rule });
   const status = {
     _id: 'calendar-status',
     updatedAt: ago(1),
     calendars: [
-      {
-        code: 'team',
-        fetchedAt: ago(5),
-        eventCount: 14,
-        hiddenCount: 3,
-        occurrences: [
-          { _key: 'o1', title: 'Team meeting', date: 'MON OCT 12', time: '6:00 PM', shown: true, rule: '' },
-          { _key: 'o2', title: 'Pre-Season', date: 'TUE OCT 13', time: '', shown: false, rule: 'Hide Pre-Season' },
-        ],
-      },
+      { code: 'team', fetchedAt: ago(4), eventCount: 3, hiddenCount: 1, occurrences: [
+        event('o1', 'Team meeting', '2026-10-09T22:00:00.000Z', '2026-10-09T23:00:00.000Z', true, ''),
+        event('o2', 'Pre-Season', '2026-10-12T22:00:00.000Z', '2026-10-12T23:00:00.000Z', false, 'Hide Pre-Season'),
+      ] },
       { code: 'old', error: 'download failed, the server said no, so the address may be wrong or expired' },
     ],
   };
+  const filters = { calendar: '', search: '', hiddenOnly: false };
+  const preSeason = { _id: 'calendarFilter-1', name: 'Hide Pre-Season', action: 'hide', words: ['Pre-Season'], show: true };
+  const model = changes => Object.assign({ read: { entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false, zone: 'America/New_York' }, groups: [{ id: preSeason._id, published: preSeason, draft: null }], now: now, filters: filters, busy: false, problem: '' }, changes);
+  const toggles = [];
+  const actions = changes => Object.assign({ busy: false, groups: [], toggle: row => toggles.push(row.title), setFilter: () => {} }, changes);
 
-  // The line in the sidebar opens this page, under Events, and is no longer a placeholder
+  // The line in the sidebar opens this page, under Events
   need(problems, line && line.kind === 'component' && line.component === view.CalendarsView, 'the Calendars line of the sidebar should open CalendarsView from calendars-view.js');
-  need(problems, typeof view.calendarsPage === 'function' && typeof view.readCalendars === 'function', 'calendars-view.js should export calendarsPage and readCalendars');
+  need(problems, typeof view.calendarsPage === 'function' && typeof view.readCalendars === 'function' && typeof view.readZone === 'function', 'calendars-view.js should export calendarsPage, readCalendars and readZone');
 
-  // The page: the heading, the one line of help, and then the two sides
-  const page = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'outreach', () => {}, now);
+  const page = view.calendarsPage(model(), actions());
   need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Calendars', 'the page should open with the heading Calendars');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
-  need(problems, paragraphs[0] === parts.helpLine, 'the first line under the heading should be the help line');
-  need(problems, parts.helpLine.indexOf(parts.hideOneLabel) !== -1 && parts.helpLine.indexOf(parts.hideAllLabel) !== -1 && /same title/.test(parts.helpLine) && /rules are listed under Calendar filters/.test(parts.helpLine) && /ask a coach/.test(parts.helpLine) && /address on the Teletraan computer/.test(parts.helpLine), 'the help line should name the two Hide buttons, say what each one hides, say that the rules are listed under Calendar filters and say to ask a coach to add the address on the computer');
-  need(problems, !/repeating meeting/.test(parts.helpLine), 'the help line should not send people to Calendar filters to hide a repeating meeting now that the events have Hide buttons');
-  const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
-  const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
-  need(problems, left && right, 'the page should have a left side with the calendars and a right side with the events');
+  need(problems, paragraphs[0] === parts.words.help && paragraphs[1] === parts.words.linksNote && /control page, Keys tab/.test(parts.words.linksNote), 'under the heading come the help line and the note that the links live on the control page, Keys tab');
+  need(problems, !/Hide all like this|Hide this one/.test(wordsIn(page)), 'the old buttons are gone');
 
-  // The left side: a button for each calendar of Dashboard Settings and then the one only the Teletraan computer knows, the second picked
-  const picks = [];
-  const buttons = left ? nodesWhere(left, node => node.type === 'button') : [];
-  need(problems, buttons.length === 3 && buttons.every(button => button.props.type === 'button' && typeof button.props.onClick === 'function'), 'the left side should have a button for each calendar: the two of Dashboard Settings and the one only the Teletraan computer has');
-  need(problems, buttons.map(button => button.props['aria-pressed']).join() === 'false,true,false', 'the picked calendar should be marked pressed');
-  const first = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', code => picks.push(code), now);
-  nodesWhere(first, node => node.type === 'button').forEach(button => button.props.onClick());
-  need(problems, picks.join() === 'team,outreach,old', 'a button should pick the calendar of its row');
-  need(problems, buttons[0] && /Team calendar/.test(wordsIn(buttons[0])) && /14 events, 3 hidden/.test(wordsIn(buttons[0])) && /Downloaded 5 minutes ago/.test(wordsIn(buttons[0])), 'a row should say the name, the number of events and when it was downloaded');
-  need(problems, buttons[1] && /Switched off on the screen/.test(wordsIn(buttons[1])) && /Nothing yet/.test(wordsIn(buttons[1])), 'a row for a calendar the Teletraan computer has not described should say Nothing yet');
+  // One row for each coming event, grouped by day, with the state and a switch
+  const items = nodesWhere(page, node => node.type === 'li' && node.props && node.props['data-state']);
+  need(problems, items.length === 2, 'the page should list the two coming events, not the failed calendar');
+  need(problems, nodesWhere(page, node => node.type === 'h2').map(wordsIn).join() === 'Today,Mon Oct 12', 'the days should be Today and then the date');
+  need(problems, items[0] && /6:00 PM/.test(wordsIn(items[0])) && /Team meeting/.test(wordsIn(items[0])) && /Team calendar/.test(wordsIn(items[0])) && /Meetings/.test(wordsIn(items[0])) && /Shows on the TV/.test(wordsIn(items[0])), 'a row should say the time, title, calendar, kind and that it shows on the TV');
+  need(problems, items[1] && /Hidden by the rule Hide Pre-Season\./.test(wordsIn(items[1])), 'a hidden row should name its rule');
+  const noKind = view.calendarsPage(model({ read: Object.assign({}, model().read, { entries: [{ id: 'team', name: 'Team calendar', show: true }] }) }), actions());
+  need(problems, !/Meetings/.test(wordsIn(noKind)), 'a calendar with no kind has no chip');
+  const switches = nodesWhere(page, node => node.type === 'button' && node.props.role === 'switch');
+  need(problems, switches.length === 2 && switches.every(item => item.props.type === 'button' && typeof item.props.onClick === 'function' && item.props['aria-label']), 'every row should have a switch that is a button with a label');
+  need(problems, switches[0].props['aria-checked'] === true && switches[1].props['aria-checked'] === false, 'the switch should be on for an event the TV shows and off for a hidden one');
+  switches[0].props.onClick();
+  need(problems, toggles.join() === 'Team meeting', 'a click on the switch should hand over the event');
+  need(problems, nodesWhere(view.calendarsPage(model(), actions({ busy: true })), node => node.props && node.props.role === 'switch').every(item => item.props.disabled === true) && nodesWhere(view.calendarsPage(model({ groups: null }), actions({ groups: null })), node => node.props && node.props.role === 'switch').every(item => item.props.disabled === true), 'the switches should be off while a change is saved and when the rules cannot be read');
 
-  // The right side: the 12 events with a badge, and the rule for a hidden one
-  const tab = view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
-  const events = nodesWhere(tab, node => node.type === 'li').map(wordsIn);
-  need(problems, events.length === 2 && /MON OCT 12 6:00 PM Team meeting SHOWN/.test(events[0]), 'an event should say its date, time, title and SHOWN');
-  need(problems, /TUE OCT 13 All day Pre-Season HIDDEN Hidden by Hide Pre-Season/.test(events[1]), 'a hidden event should say HIDDEN and the name of the rule');
-  const failed = wordsIn(view.calendarsPage({ entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false }, 'old', () => {}, now));
-  need(problems, /Download failed, the server said no, so the address may be wrong or expired\./.test(failed), 'a calendar that failed to download should say why in a sentence');
+  // The header lines
+  need(problems, paragraphs.indexOf('Last downloaded 4 minutes ago from 1 calendar.') !== -1, 'the page should say when and from how many calendars it was downloaded');
+  const statusList = nodesWhere(page, node => node.props && node.props['data-block'] === 'status')[0];
+  need(problems, statusList && /Team calendar: Works\./.test(wordsIn(statusList)) && /old: Failed\. Download failed, the server said no/.test(wordsIn(statusList)), 'each calendar should say that it works, or that it failed and why');
 
-  // The line that says how old the document is
-  need(problems, /The Teletraan computer wrote this 1 minute ago\./.test(wordsIn(first)), 'the page should say when the computer wrote the document');
-  need(problems, wordsIn(view.calendarsPage({ entries: entries, status: Object.assign({}, status, { updatedAt: undefined }), entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now)).indexOf('The Teletraan computer wrote this') === -1, 'the page should say nothing about when the document was written when it has no time');
+  // Filters and the rules section
+  const bar = nodesWhere(page, node => node.props && node.props['data-block'] === 'filters')[0];
+  need(problems, bar && nodesWhere(bar, node => node.type === 'select').length === 1 && nodesWhere(bar, node => node.type === 'input' && node.props.type === 'search').length === 1 && /Hidden only/.test(wordsIn(bar)), 'the page should have a calendar filter, a search box and Hidden only');
+  const hiddenOnly = view.calendarsPage(model({ filters: { calendar: '', search: '', hiddenOnly: true } }), actions());
+  need(problems, nodesWhere(hiddenOnly, node => node.type === 'li' && node.props && node.props['data-state']).length === 1, 'Hidden only should list only the hidden events');
+  const rules = nodesWhere(page, node => node.props && node.props['data-block'] === 'rules')[0];
+  need(problems, rules && rules.type === 'details' && nodesWhere(rules, node => node.props && node.props.href === '/structure/calendarFilter').length === 1, 'the rules should sit in a section that opens and has a link to Calendar filters');
 
-  // Nothing yet, reading, and a document that cannot be read
-  const nothing = wordsIn(view.calendarsPage({ entries: [], status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now));
-  need(problems, nothing.indexOf(parts.nothingYet) !== -1 && nothing.indexOf(parts.noCalendarsLine) !== -1, 'with no status and no calendars the page should say Nothing yet and that Dashboard Settings has no calendars');
-  const waiting = wordsIn(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now));
-  need(problems, nodesWhere(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: false }, '', () => {}, now), node => node.type === 'button').length === 2 && waiting.indexOf(parts.nothingYet) !== -1, 'before the Teletraan computer has synced the page should list the calendars of Dashboard Settings and say Nothing yet');
-  need(problems, wordsIn(view.calendarsPage(null, '', () => {}, now)).indexOf('Reading the calendars') !== -1, 'the page should say it is reading while it waits');
-  need(problems, wordsIn(view.calendarsPage({ entries: entries, status: null, entriesUnreadable: false, statusUnreadable: true }, '', () => {}, now)).indexOf('could not be read') !== -1, 'the page should say so when the status cannot be read');
-  need(problems, wordsIn(view.calendarsPage({ entries: [], status: status, entriesUnreadable: true, statusUnreadable: false }, '', () => {}, now)).indexOf('Dashboard Settings could not be read') !== -1, 'the page should say so when Dashboard Settings cannot be read, and still list the calendars of the Teletraan computer');
+  // A change that is waiting says to click Publish all
+  const draft = parts.oneEventRule(parts.eventRows(status, entries, now, 'America/New_York')[0], 'hide');
+  const waiting = view.calendarsPage(model({ groups: [{ id: draft._id, published: null, draft: Object.assign({}, draft, { _id: 'drafts.' + draft._id }) }] }), actions());
+  need(problems, /Click Publish all to apply\./.test(wordsIn(waiting)) && /Hidden by you/.test(wordsIn(waiting)) && nodesWhere(waiting, node => node.type === 'button' && wordsIn(node) === 'Undo').length === 1, 'a hide that is a draft should say Hidden by you, give an Undo and say to click Publish all');
+
+  // Nothing yet, reading, and documents that cannot be read
+  need(problems, wordsIn(view.calendarsPage(model({ read: null }), actions())).indexOf('Reading the calendars') !== -1, 'the page should say it is reading while it waits');
+  need(problems, wordsIn(view.calendarsPage(model({ read: { entries: [], status: null, entriesUnreadable: false, statusUnreadable: false, zone: '' } }), actions())).indexOf(parts.words.nothingYet) !== -1, 'with no document the page should say Nothing yet');
+  need(problems, wordsIn(view.calendarsPage(model({ read: { entries: [], status: { calendars: [] }, entriesUnreadable: false, statusUnreadable: false, zone: '' } }), actions())).indexOf(parts.words.noCalendars) !== -1, 'with no calendars on the computer the page should say so and point to the control page');
+  need(problems, wordsIn(view.calendarsPage(model({ read: { entries: [], status: null, entriesUnreadable: true, statusUnreadable: true, zone: '' } }), actions())).indexOf('could not be read') !== -1, 'the page should say so when a document cannot be read');
   need(problems, typeof view.CalendarsView === 'function' && JSON.stringify(view.CalendarsView()).indexOf('Reading the calendars') !== -1, 'CalendarsView should start by saying it is reading');
+  const failed = view.calendarsPage(model({ problem: 'The change was not saved.' }), actions());
+  const redLine = nodesWhere(failed, node => node.type === 'p' && wordsIn(node) === 'The change was not saved.')[0];
+  need(problems, redLine && /critical/.test(redLine.props.style.color) && redLine.props.style.position === 'sticky', 'a failed change should show one red line that stays in view');
 
-  // The page draws and never writes itself. The Hide buttons write through calendars-view-parts.js, which
-  // makes a rule with createIfNotExists and deletes it with delete, and does nothing else to a document.
-  need(problems, !/onChange|\.patch\(|\.create\(|\.createIfNotExists\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsViewSource), 'calendars-view.js should not write itself: its buttons call hideEvent and showAgain in calendars-view-parts.js');
-  need(problems, !/onChange|\.patch\(|\.create\(|\.createOrReplace\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsPartsSource), 'calendars-view-parts.js should write only with createIfNotExists and delete');
+  // The page writes only through calendars-list-parts.js, and only to drafts
+  need(problems, !/\.patch\(|\.create\(|\.createIfNotExists\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsViewSource), 'calendars-view.js should not write itself: its switch calls applySwitch in calendars-list-parts.js');
+  need(problems, !/\.patch\(|\.create\(|\.createIfNotExists\(|\.mutate\(|\.transaction\(|useDocumentOperation/.test(world.calendarsListSource) && /'drafts\.' \+/.test(world.calendarsListSource), 'calendars-list-parts.js should write only drafts, with createOrReplace and delete');
 
   // What a student reads is short plain sentences
-  [parts.helpLine, parts.nothingYet, parts.settingsLine, parts.publicLine, parts.noCalendarsLine].forEach(text => checkPlainSentences(problems, 'the Calendars page ("' + text.slice(0, 30) + '")', text));
-  need(problems, /dataset/.test(parts.publicLine) && /anyone can read/.test(parts.publicLine) && /hides/.test(parts.publicLine), 'the page should say the titles are in the dataset that anyone can read, even the ones a rule hides');
+  Object.values(parts.words).concat([parts.failureText({ statusCode: 403, message: 'Insufficient permissions' }), parts.failureText(new Error('offline'))]).forEach(text => checkPlainSentences(problems, 'the Calendars page ("' + text.slice(0, 30) + '")', text));
   return problems;
 }
 
@@ -5251,7 +5258,6 @@ function refusalsOf(rule) {
 function checkCalendarsHide() {
   const problems = [];
   const parts = world.calendarsParts;
-  const view = world.calendarsView;
   const config = world.dashboard;
   const now = new Date('2026-10-09T15:00:00.000Z');
 
@@ -5259,146 +5265,35 @@ function checkCalendarsHide() {
   const offered = choicesOf('dashboardSettings.calendars.kind');
   need(problems, sameData(parts.calendarKinds, offered), 'calendars-view-parts.js should list the kinds of dashboardSettings.calendars.kind, with the same titles and values, in the same order');
   need(problems, parts.calendarKinds.map(kind => kind.value).join() === config.calendarKinds.join(), 'calendars-view-parts.js should list the kinds in calendarKinds of config.js');
+  const listed = world.calendarsList;
+  const kindWords = { meetings: 'Meetings', competitions: 'Competitions', outreach: 'Outreach', deadlines: 'Deadlines' };
+  need(problems, config.calendarKinds.filter(kind => kind !== 'other').every(kind => offered.some(item => item.value === kind && item.title === kindWords[kind])), 'the page names the kinds Meetings, Competitions, Outreach and Deadlines, as the schema does');
 
-  const events = [
-    { _key: 'o1', title: 'Team meeting', date: 'MON OCT 12', day: '2026-10-12', time: '6:00 PM', shown: true, rule: '' },
-    { _key: 'o2', title: 'Pre-Season Meeting', date: 'TUE OCT 13', day: '2026-10-13', time: '6:30 PM', shown: false, rule: 'Hide Pre-Season' },
-    { _key: 'o3', title: 'Food drive', date: 'WED OCT 14', day: '2026-10-14', time: '', shown: false, rule: '' },
-    { _key: 'o4', title: 'No title', date: 'THU OCT 15', day: '2026-10-15', time: '', shown: true, rule: '' },
-    { _key: 'o5', title: 'Old list event', date: 'FRI OCT 16', time: '5:00 PM', shown: true, rule: '' },
-  ];
-  const madeRule = parts.hideRuleFor('team', events[2], false);
-  events[2].rule = madeRule ? madeRule.name : '';
-  const status = { _id: 'calendar-status', updatedAt: now.toISOString(), calendars: [{ code: 'team', fetchedAt: now.toISOString(), eventCount: 5, hiddenCount: 2, occurrences: events }] };
-  const entries = [{ id: 'team', name: 'Team calendar', show: true, kind: 'meetings' }, { id: 'outreach', name: 'Outreach', show: true }];
-  const read = { entries: entries, status: status, entriesUnreadable: false, statusUnreadable: false };
-
-  const calls = [];
-  const hiding = (changes) => Object.assign({
-    rules: [madeRule],
-    unreadable: false,
-    gone: [],
-    asking: '',
-    busy: false,
-    problem: '',
-    ask: row => calls.push('ask ' + row),
-    cancel: () => calls.push('cancel'),
-    hide: rule => calls.push('hide ' + rule._id),
-    show: rule => calls.push('show ' + rule._id),
-  }, changes);
-  const buttonsOf = node => nodesWhere(node, item => item.type === 'button');
-  const labels = node => buttonsOf(node).map(wordsIn).join(' | ');
-  const itemsOf = page => nodesWhere(page, node => node.type === 'li');
-
-  // The kind: a line in each row and a fact on the right, and a note under the help line while a calendar has none
-  const page = view.calendarsPage(read, 'team', () => {}, now, hiding());
-  const left = nodesWhere(page, node => node.props && node.props['data-side'] === 'calendars')[0];
-  const rowButtons = left ? buttonsOf(left) : [];
-  need(problems, rowButtons.length === 2 && /Kind: Meetings/.test(wordsIn(rowButtons[0])), 'a row of the left side should say the kind: Kind: Meetings');
-  need(problems, rowButtons[1] && /Kind: no chip/.test(wordsIn(rowButtons[1])), 'a calendar with no kind should say Kind: no chip');
-  const right = nodesWhere(page, node => node.props && node.props['data-side'] === 'events')[0];
-  need(problems, right && /Kind Meetings/.test(wordsIn(nodesWhere(right, node => node.type === 'p').slice(0, 5))), 'the facts of the right side should say Kind and the kind');
-  const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
-  need(problems, paragraphs[1] === parts.kindLine && /Leave it blank for no chip/.test(parts.kindLine) && /Dashboard Settings/.test(parts.kindLine) && /Calendars tab/.test(parts.kindLine), 'a muted note under the help line should say that a kind left blank has no chip and where to set it');
-  const allKinds = view.calendarsPage({ entries: [entries[0], Object.assign({}, entries[1], { kind: 'outreach' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now, hiding());
-  need(problems, nodesWhere(allKinds, node => node.type === 'p').map(wordsIn).indexOf(parts.kindLine) === -1, 'the note about the kind should go when every calendar has one');
-  const unknown = view.calendarsPage({ entries: [Object.assign({}, entries[0], { kind: 'party' })], status: status, entriesUnreadable: false, statusUnreadable: false }, 'team', () => {}, now);
-  need(problems, /Kind: no chip/.test(wordsIn(nodesWhere(unknown, node => node.type === 'button'))), 'a kind that is not in the list should read as no chip, as it does on the screen');
-
-  // The events: the buttons each one has
-  const items = itemsOf(page);
-  need(problems, items.length === 5, 'the right side should list the five events');
-  need(problems, items[0] && labels(items[0]) === 'Hide this one | Hide all like this', 'a shown event should have Hide this one and Hide all like this');
-  need(problems, items[1] && labels(items[1]) === '' && /Hidden by Hide Pre-Season\. Change it under Calendar filters\./.test(wordsIn(items[1])), 'an event that another rule hides should name the rule and say to change it under Calendar filters, with no button');
-  need(problems, items[2] && labels(items[2]) === 'Show again' && /Hidden by Hide: Food drive, 2026-10-14/.test(wordsIn(items[2])), 'an event that a rule made here hides should say so and have Show again');
-  need(problems, items[3] && labels(items[3]) === '' && !/Change it under/.test(wordsIn(items[3])), 'an event with the title No title should have no button');
-  need(problems, items[4] && labels(items[4]) === 'Hide all like this' && wordsIn(items[4]).indexOf(parts.noDayLine) !== -1, 'an event from an older list, with no day, should have only Hide all like this, and a note');
-  need(problems, items.every(item => buttonsOf(item).every(button => button.props.type === 'button' && button.props.disabled === false && typeof button.props.onClick === 'function')), 'every button should be a plain button that works while nothing is being saved');
-
-  // What each button does
-  const clicks = (item, label) => buttonsOf(item).filter(button => wordsIn(button) === label).forEach(button => button.props.onClick());
-  clicks(items[0], 'Hide this one');
-  clicks(items[0], 'Hide all like this');
-  clicks(items[2], 'Show again');
-  clicks(items[4], 'Hide all like this');
-  const one = parts.hideRuleFor('team', events[0], false);
-  need(problems, calls.join() === 'hide ' + one._id + ',ask team:o1,show ' + madeRule._id + ',ask team:o5', 'Hide this one should make its rule, Hide all like this should ask first, and Show again should delete the rule of the event. The buttons did: ' + calls.join());
-
-  // Hide all like this says what it does, and only Hide makes the rule
-  calls.length = 0;
-  const asking = view.calendarsPage(read, 'team', () => {}, now, hiding({ asking: 'team:o1' }));
-  const asked = itemsOf(asking)[0];
-  need(problems, asked && wordsIn(asked).indexOf(parts.askText('Team calendar', 'Team meeting')) !== -1 && parts.askText('Team calendar', 'Team meeting') === 'This hides every event in Team calendar with Team meeting in its title, on every day.', 'the question should say: This hides every event in Team calendar with Team meeting in its title, on every day.');
-  need(problems, asked && labels(asked) === 'Hide | Cancel', 'the question should have Hide and Cancel');
-  clicks(asked, 'Cancel');
-  clicks(asked, 'Hide');
-  const all = parts.hideRuleFor('team', events[0], true);
-  need(problems, calls.join() === 'cancel,hide ' + all._id, 'Cancel should only close the question and Hide should make the rule for every day. The buttons did: ' + calls.join());
-  need(problems, labels(itemsOf(asking)[2]) === 'Show again' && labels(itemsOf(asking)[4]) === 'Hide all like this', 'the question belongs to one event, and the other events keep their buttons');
-
-  // Nothing can be pressed while a change is saved, and a failed change shows one red line
-  const busy = view.calendarsPage(read, 'team', () => {}, now, hiding({ busy: true }));
-  need(problems, buttonsOf(itemsOf(busy)).length === 4 && buttonsOf(itemsOf(busy)).every(button => button.props.disabled === true), 'every button should be off while a change is being saved');
-  const failed = view.calendarsPage(read, 'team', () => {}, now, hiding({ problem: 'The change was not saved.' }));
-  need(problems, nodesWhere(failed, node => node.type === 'p').map(wordsIn).filter(text => text === 'The change was not saved.').length === 1, 'a failed change should show its line once');
-  const redLine = nodesWhere(failed, node => node.type === 'p' && wordsIn(node) === 'The change was not saved.')[0];
-  need(problems, redLine && /critical/.test(redLine.props.style.color), 'the line about a failed change should be red');
-  need(problems, redLine && redLine.props.style.position === 'sticky' && redLine.props.style.bottom === 0 && Boolean(redLine.props.style.background), 'the line about a failed change should stay in view at the bottom of the window, on a background, because the list has up to 40 events');
-
-  // The muted line under the list, and a page that only shows
-  need(problems, nodesWhere(page, node => node.type === 'p').map(wordsIn).indexOf(parts.hideLine) !== -1 && /at once/.test(parts.hideLine) && /Calendar filters/.test(parts.hideLine) && /edit or delete/.test(parts.hideLine), 'a muted line under the list should say that a rule made here is on the screen at once, and that Calendar filters lists it');
-  const plain = view.calendarsPage(read, 'team', () => {}, now);
-  need(problems, buttonsOf(itemsOf(plain)).length === 0 && nodesWhere(plain, node => node.type === 'p').map(wordsIn).indexOf(parts.hideLine) === -1, 'a page that is given no rules should only show: no button and no line about the buttons');
-  const waiting = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: null }));
-  need(problems, buttonsOf(itemsOf(waiting)).length === 0, 'there should be no button while the rules made here are being read');
-  const unreadable = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: null, unreadable: true }));
-  need(problems, buttonsOf(itemsOf(unreadable)).length === 0 && nodesWhere(unreadable, node => node.type === 'p').map(wordsIn).indexOf(parts.rulesUnreadableLine) !== -1, 'rules that cannot be read should turn the buttons off, and the page should say so');
-  const stale = view.calendarsPage(read, 'team', () => {}, now, hiding({ gone: [madeRule.name], rules: [] }));
-  need(problems, itemsOf(stale)[2] && labels(itemsOf(stale)[2]) === 'Hide this one | Hide all like this' && /SHOWN/.test(wordsIn(itemsOf(stale)[2])), 'an event that the list says a deleted rule hides should read as shown, with the Hide buttons');
-  const hidAtOnce = view.calendarsPage(read, 'team', () => {}, now, hiding({ rules: [madeRule, one] }));
-  need(problems, itemsOf(hidAtOnce)[0] && labels(itemsOf(hidAtOnce)[0]) === 'Show again' && /HIDDEN/.test(wordsIn(itemsOf(hidAtOnce)[0])), 'an event that a new rule hides should read as hidden at once, before the Teletraan computer lists it again');
-
-  // The sentences a student reads
-  [parts.kindLine, parts.hideLine, parts.changeLine, parts.noDayLine, parts.longCodeLine, parts.rulesUnreadableLine, parts.askText('Team calendar', 'Team meeting'), parts.failureText({ statusCode: 403, message: 'Insufficient permissions' }), parts.failureText(new Error('offline')), parts.restingText('Hide all: Team meeting')].forEach(text => checkPlainSentences(problems, 'the Hide buttons ("' + text.slice(0, 30) + '")', text));
-  ['Hide this one', 'Hide all like this', 'Show again', 'Hide', 'Cancel'].forEach(label => need(problems, [parts.hideOneLabel, parts.hideAllLabel, parts.showAgainLabel, parts.confirmLabel, parts.cancelLabel].indexOf(label) !== -1, 'the buttons should be called ' + label));
-
-  // Every rule the buttons can make is accepted by the schema, and the limits are the ones the schema has
-  const titles = ['Team meeting', 'Pre-Season Meeting...', 'A'.repeat(100), 'A'.repeat(60) + '...', 'x'.repeat(29) + '\u{1F600}\u{1F600}', 'Say "hello" \\ now', '会議'.repeat(40), ' ', '...', 'Food drive: 5k', 'a'];
+  // Every rule the switch can make is accepted by the schema, and the limits are the ones the schema has
+  const titles = ['Team meeting', 'A'.repeat(60) + '...', 'x'.repeat(29) + '\u{1F600}\u{1F600}', 'Say "hello" \\ now', '会議'.repeat(40), 'No title', 'a'];
   const codes = ['team', 'a'.repeat(20), 'build_season', 'g1'];
-  const days = ['2026-10-12', '2020-01-01', '2099-12-31', '2028-02-29'];
   let made = 0;
-  titles.forEach(title => codes.forEach(code => days.forEach(day => [true, false].forEach(whole => {
-    const rule = parts.hideRuleFor(code, { title: title, day: day }, whole);
-    if (rule === null) return;
+  titles.forEach(title => codes.forEach(code => ['hide', 'show'].forEach(action => {
+    const row = { code: code, title: title.length > 60 ? title.slice(0, 60) : title, start: '2026-10-12T22:00:00.000Z', end: '2026-10-12T23:00:00.000Z', day: '2026-10-12' };
+    const rule = listed.oneEventRule(row, action);
     made += 1;
     const refused = refusalsOf(rule);
-    need(problems, refused.length === 0, 'Studio would refuse the rule for "' + title + '" in ' + code + ' on ' + day + ' (all ' + whole + '): ' + refused.join('; '));
-    need(problems, rule._id.indexOf('calendarFilter-hide-') === 0 && /^[A-Za-z0-9_-]+$/.test(rule._id), 'the id of a rule should be letters, digits, hyphens and underscores that start calendarFilter-hide-');
-    need(problems, rule.action === 'hide' && rule.show === true && rule.calendar === code && rule.words.length === 1 && rule.words[0].length <= 30, 'a rule should hide, be on, name its calendar and have one word of up to 30 characters');
-  }))));
-  need(problems, made > 100, 'the grid of titles, calendars and days should make many rules, not ' + made);
+    need(problems, refused.length === 0, 'Studio would refuse the one event rule for "' + title + '" in ' + code + ' (' + action + '): ' + refused.join('; '));
+    need(problems, rule._id.indexOf('calendarFilter-one-') === 0 && /^[A-Za-z0-9_-]+$/.test(rule._id) && rule.scope === 'one' && rule.show === true && rule.name.length <= 40, 'a one event rule should have an id that starts calendarFilter-one-, scope one, be on and have a name of up to 40 characters');
+  })));
+  need(problems, made > 50, 'the grid of titles and calendars should make many rules');
 
-  const longTitle = { title: 'A'.repeat(100), day: '2026-10-12' };
-  need(problems, parts.hideRuleFor('team', longTitle, false).name === 'Hide: ' + 'A'.repeat(19) + '..., 2026-10-12' && parts.hideRuleFor('team', longTitle, false).name.length === 40, 'a long title should be cut so that the name of the rule is 40 characters and keeps the day');
-  need(problems, parts.hideRuleFor('team', longTitle, true).name === 'Hide all: ' + 'A'.repeat(30), 'the name of a rule for every day should be Hide all: and the title cut to 30 characters');
-  need(problems, sameData(parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, false), { _id: parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, false)._id, _type: 'calendarFilter', name: 'Hide: Team meeting, 2026-10-12', action: 'hide', words: ['Team meeting'], calendar: 'team', fromDate: '2026-10-12', toDate: '2026-10-12', show: true }), 'Hide this one should make a published calendarFilter with the name, action, words, calendar, from date, to date and show');
-  need(problems, sameData(parts.hideRuleFor('team', { title: 'Team meeting', day: '2026-10-12' }, true), { _id: parts.hideRuleFor('team', { title: 'Team meeting' }, true)._id, _type: 'calendarFilter', name: 'Hide all: Team meeting', action: 'hide', words: ['Team meeting'], calendar: 'team', show: true }), 'Hide all like this should make the same rule with no dates');
-
-  // No rule where Studio would refuse one
-  [['Team', { title: 'x', day: '2026-10-12' }], ['a'.repeat(21), { title: 'x', day: '2026-10-12' }], ['bad-code', { title: 'x', day: '2026-10-12' }], ['team', { title: 'No title', day: '2026-10-12' }], ['team', { title: '', day: '2026-10-12' }], ['team', { title: '...' }]].forEach(item => {
-    need(problems, parts.hideRuleFor(item[0], item[1], false) === null && parts.hideRuleFor(item[0], item[1], true) === null, 'no rule should be made for the calendar "' + item[0] + '" and the title "' + item[1].title + '"');
-  });
-  ['2019-12-31', '2100-01-01', '2026-02-30', '', undefined, 5].forEach(day => {
-    need(problems, parts.hideRuleFor('team', { title: 'x', day: day }, false) === null && parts.hideRuleFor('team', { title: 'x', day: day }, true) !== null, 'a rule for one day should not be made for the day "' + day + '", and a rule for every day still can be');
-  });
-
-  // The limits of the schema, which the page keeps to
   const filter = name => fieldAt('calendarFilter.' + name);
   const maxOf = field => (constraintNamed(constraintsOf(field), 'max') || { args: [] }).args[0];
   need(problems, maxOf(filter('name')) === 40, 'the rule name of the schema should allow 40 characters, which is what the page keeps to');
-  need(problems, maxOf(filter('words')) === 5 && maxOf(filter('words').of[0]) === 30, 'the schema should allow up to 5 words of 30 characters, which is what the page keeps to');
-  need(problems, maxOf(filter('calendar')) === 20, 'the calendar code of the schema should allow 20 characters, which is what the page keeps to');
-  need(problems, constraintNamed(constraintsOf(filter('fromDate')), 'min').args[0] === '2020-01-01' && constraintNamed(constraintsOf(filter('toDate')), 'max').args[0] === '2099-12-31', 'the dates of the schema should run from 2020-01-01 to 2099-12-31, which is what the page keeps to');
+  need(problems, maxOf(filter('eventTitle')) === 63 && maxOf(filter('eventCalendar')) === 20, 'the schema should allow a one event title of 63 characters (60 and three dots) and a calendar code of 20');
+  const scope = filter('scope');
+  need(problems, scope && scope.initialValue === 'many' && scope.options.list.map(item => item.value).join() === 'many,one', 'calendarFilter.scope should offer many and one and start on many, so a rule typed in Studio is the usual rule');
+  ['eventCalendar', 'eventTitle', 'eventStart'].forEach(name => {
+    need(problems, filter(name) && typeof filter(name).hidden === 'function' && filter(name).hidden({ document: { scope: 'many' } }) === true && filter(name).hidden({ document: { scope: 'one' } }) === false, 'calendarFilter.' + name + ' should show only on a one event rule');
+  });
+  const whole = constraintNamed(constraintsOf(typeByName('calendarFilter')), 'custom');
+  need(problems, whole && typeof whole.args[0]({ scope: 'one', eventCalendar: 'team' }) === 'string' && whole.args[0]({ scope: 'one', eventCalendar: 'team', eventTitle: 'x', eventStart: '2026-10-12T22:00:00.000Z' }) === true, 'a one event rule needs its calendar, title and start, and a complete one is accepted');
   return problems;
 }
 
@@ -5692,7 +5587,7 @@ function checkTeamTrim() {
 // task board and the milestones board, the owner switch and the older board rows, which are hidden. The names and the
 // starting values are the ones in dashboard/config.js and at the top of computer/scripts/monday-sync.sh. The boards and the
 // columns are picked from lists that the Teletraan computer fills in (monday-pickers.js).
-const mondayTabNames = ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'];
+const mondayTabNames = ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'];
 const taskBlockNames = ['boardId', 'departmentColumn', 'statusColumn', 'teamColumn', 'priorityColumn', 'showColumn', 'assignedColumn', 'pocColumn', 'timelineColumn', 'hoursColumn', 'completedColumn', 'milestoneColumn', 'teamLabels', 'statusIndexes', 'priorityIndexes', 'hideLabel', 'departmentLabels'];
 const milestoneBlockNames = ['boardId', 'dateColumn', 'teamColumn', 'departmentColumn', 'statusColumn', 'teamLabels', 'statusIndexes', 'departmentLabels'];
 const mondayEntryNames = ['boardId', 'team', 'statusFrom', 'statusColumn', 'backlogLabel', 'progressLabel', 'doneLabel', 'priorityColumn', 'priorityHigh', 'priorityMedium', 'priorityLow', 'dueColumn', 'ownerColumn', 'teamColumn'];
@@ -5727,8 +5622,8 @@ function checkMondayTab() {
   // The two blocks: the fields, in order, and the starting values equal the ones in defaultSettings
   const task = at('mondayTaskBoard');
   const milestones = at('mondayMilestoneBoard');
-  need(problems, task && task.type === 'object' && task.group === 'monday' && task.title === 'Task board' && namesOf(task) === taskBlockNames.join(), 'mondayTaskBoard should be a block titled Task board with these fields, in this order: ' + taskBlockNames.join(', '));
-  need(problems, milestones && milestones.type === 'object' && milestones.group === 'monday' && milestones.title === 'Milestones board' && namesOf(milestones) === milestoneBlockNames.join(), 'mondayMilestoneBoard should be a block titled Milestones board with these fields, in this order: ' + milestoneBlockNames.join(', '));
+  need(problems, task && task.type === 'object' && task.group === 'advanced' && task.title === 'Task board' && namesOf(task) === taskBlockNames.join(), 'mondayTaskBoard should be a block titled Task board with these fields, in this order: ' + taskBlockNames.join(', '));
+  need(problems, milestones && milestones.type === 'object' && milestones.group === 'advanced' && milestones.title === 'Milestones board' && namesOf(milestones) === milestoneBlockNames.join(), 'mondayMilestoneBoard should be a block titled Milestones board with these fields, in this order: ' + milestoneBlockNames.join(', '));
   need(problems, task && sameData(task.initialValue, config.defaultSettings.mondayTaskBoard), 'the Task board block starts as ' + JSON.stringify(task && task.initialValue) + ' but config.js says ' + JSON.stringify(config.defaultSettings.mondayTaskBoard));
   need(problems, milestones && sameData(milestones.initialValue, config.defaultSettings.mondayMilestoneBoard), 'the Milestones board block starts as ' + JSON.stringify(milestones && milestones.initialValue) + ' but config.js says ' + JSON.stringify(config.defaultSettings.mondayMilestoneBoard));
   need(problems, task && !constraintNamed(rulesOf(task), 'required') && milestones && !constraintNamed(rulesOf(milestones), 'required'), 'the two blocks should not be required: a page saved before they existed must still publish');
@@ -6182,17 +6077,17 @@ function checkMondayBoardsPage() {
   const problems = [];
   const parts = world.mondayBoardsParts;
   const view = world.mondayBoardsView;
-  const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Boards')[0];
+  const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday')[0];
   const now = new Date('2026-10-09T15:00:00.000Z');
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
 
-  need(problems, line && line.kind === 'component' && line.component === world.previewPanelsView.MondayBoardsTabs && typeof line.children === 'function', 'the Monday Boards line of the sidebar should open MondayBoardsTabs (the Boards tab is MondayBoardsView) and give it the function that builds the tasks of a board');
+  need(problems, line && line.kind === 'component' && line.component === world.mondayPage.MondayPage && typeof line.children === 'function', 'the Monday line of the sidebar should open MondayPage (monday-page.js) and give it the function that builds what its links open');
   need(problems, typeof view.boardsPage === 'function' && typeof parts.readBoardsPage === 'function', 'the Monday Boards files should export boardsPage and readBoardsPage');
 
   // Choose boards goes to the board rows, which sit on the Monday tab
   const rows = fieldAt('dashboardSettings.mondayTaskBoard');
   need(problems, parts.chooseTarget.id === 'dashboardSettings' && parts.chooseTarget.type === 'dashboardSettings' && parts.chooseTarget.path === 'mondayTaskBoard', 'Choose boards should open the field mondayTaskBoard of the document dashboardSettings');
-  need(problems, rows && rows.group === 'monday', 'the field mondayTaskBoard should be on the Monday tab, because Choose boards opens it');
+  need(problems, rows && rows.group === 'advanced', 'the field mondayTaskBoard should be on the Advanced tab, because Choose boards opens it');
 
   const status = {
     lastSyncAt: ago(3),
@@ -6254,7 +6149,7 @@ function checkMondayBoardsPage() {
   [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine, parts.milestonesLine].forEach(text => checkPlainSentences(problems, 'the Monday Boards page ("' + text.slice(0, 30) + '")', text));
 
   // A board of the page opens its tasks in the same two lists as Monday Tasks, kept to that board
-  const built = world.structure.structure(fakeBuilder()).made.items.map(item => item.made).filter(item => item.title === 'Monday Boards')[0];
+  const built = world.structure.structure(fakeBuilder()).made.items.map(item => item.made).filter(item => item.title === 'Monday')[0];
   const resolver = built && built.child && built.child.made && built.child.made.child;
   if (typeof resolver !== 'function') return problems.concat('the Monday Boards page should be given a function that builds the tasks of a board');
 
@@ -6262,10 +6157,14 @@ function checkMondayBoardsPage() {
   const milestonePane = resolver(parts.milestonesChild, {}).made;
   need(problems, milestonePane.type === 'milestone' && milestonePane.title === 'Milestones' && sameData(milestonePane.defaultOrdering, [{ field: 'targetDate', direction: 'asc' }]) && Array.isArray(milestonePane.initialValueTemplates) && milestonePane.initialValueTemplates.length === 0, 'the second list under Monday Boards should list milestones by target date, with no plus button');
 
+  // the Old manual tasks link of the Monday page opens the two old lists of every task
+  const oldPane = resolver(world.mondayPage.oldTasksChild, {}).made;
+  need(problems, oldPane.id === 'mondayTasks' && (oldPane.items || []).map(item => item.made.title).join() === 'On the TV,Hidden', 'the Old manual tasks link should open the two old lists, On the TV and Hidden');
+
   const opened = resolver('111', {}).made;
   const lists = (opened.items || []).map(item => item.made);
   need(problems, lists.map(item => item.title).join() === 'On the TV,Hidden', 'a board should open two lists, On the TV and Hidden. It opens: ' + lists.map(item => item.title).join());
-  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Tasks')[0];
+  const folder = world.structure.oldTasksFolder;
   lists.forEach((item, index) => {
     const list = item.child && item.child.made;
     const want = folder.entries[index];
@@ -6951,83 +6850,29 @@ async function checkThemesPage() {
   return problems;
 }
 
-// The Rotation page (inputs/rotation-view.js): the one sentence at the top, a card for each row with big buttons, and a
-// save that sets rotationRows on the draft of Dashboard Settings and nothing else. Every value of a row the page does not
-// show is kept when the row changes.
+// The Rotation page (inputs/rotation-board-view.js): the one sentence at the top, a board of the rows, and a save that sets
+// rotationRows on the draft of Dashboard Settings and nothing else. The board itself is tested in tests/rotation-board.test.mjs.
 async function checkRotationPage() {
   const problems = [];
   const view = world.rotationView;
-  const rows = view.withKeys([
-    { _key: 'a', view: 'robotics', panel: 'events', part: 1, side: 'task-counts', seconds: 30, shown: true },
-    { _key: 'b', view: 'prime', panel: 'monday-tasks', department: 'build', seconds: 30, shown: true },
-    { view: 'nova', panel: 'photo', photoCount: 4, secondsPerPhoto: 10, shown: false },
-  ]);
-  need(problems, rows.length === 3 && rows.every(row => typeof row._key === 'string' && row._key !== '') && new Set(rows.map(row => row._key)).size === 3, 'every row should get its own key');
-
-  // the sentence the owner asked for, word for word
-  need(problems, view.words.intro === 'The wall plays this list top to bottom. Drag a row to move it. Turn Shown off to skip a row. Seconds is how long it stays.', 'the Rotation page should open with: The wall plays this list top to bottom. Drag a row to move it. Turn Shown off to skip a row. Seconds is how long it stays.');
-
-  // the pure changes keep what they do not touch
-  need(problems, view.moveRow(rows, 0, 1).map(row => row._key).join() === [rows[1]._key, 'a', rows[2]._key].join() && view.moveRow(rows, 0, -1) === rows && view.moveRow(rows, 2, 1) === rows, 'moving a row down should swap it with the next, and the first row cannot go up');
-  const edited = view.setRowValue(rows, 0, 'seconds', 45);
-  need(problems, edited[0].seconds === 45 && edited[0].part === 1 && edited[0].side === 'task-counts' && rows[0].seconds === 30, 'changing seconds should keep the part and the small panel, and not change the old rows');
-  need(problems, !('seconds' in view.setRowValue(rows, 0, 'seconds', '')[0]) && view.setRowValue(rows, 2, 'shown', true)[2].photoCount === 4, 'an empty value should take the field away, and the photo values stay');
-  const copied = view.copyRow(rows, 1);
-  need(problems, copied.length === 4 && copied[2].department === 'build' && copied[2]._key !== rows[1]._key, 'copy should put a row with the same values and a new key under the row');
-  need(problems, view.removeRow(rows, 1).length === 2 && view.addRow(rows, 'nova', 'events')[3].shown === true, 'remove takes a row out and add puts a shown row at the end');
-  need(problems, view.secondsFrom('') === '' && view.secondsFrom('45') === 45 && view.secondsFrom('5') === null && view.secondsFrom('121') === null && view.secondsFrom('4.5') === null && view.secondsFrom('abc') === null, 'seconds should be empty or a whole number from 6 to 120');
-  need(problems, view.detailsOf(rows[0]) === 'Page 1 · With Task counts' && view.detailsOf(rows[1]) === 'Department: build' && /4 photos/.test(view.detailsOf(rows[2])), 'the line under a row should name its department, page, small panel and photos');
-  need(problems, view.startingRows().length === world.defaultRotation.defaultRotationRows().length, 'Start from the standard rotation should give the standard list');
-
-  // what the page shows: the draft first, then the published one
-  const published = { _id: 'dashboardSettings', rotationRows: [{ _key: 'p', view: 'robotics', panel: 'tonight' }] };
-  const draft = { _id: 'drafts.dashboardSettings', rotationRows: [{ _key: 'd', view: 'prime', panel: 'events' }] };
-  need(problems, view.rowsFrom([published, draft])[0]._key === 'd' && view.rowsFrom([published])[0]._key === 'p' && view.rowsFrom([]) === null && view.rowsFrom('x') === null, 'the page should show the draft rows, then the published ones, and nothing without Dashboard Settings');
-
-  // the page: a card for each row with the buttons, big enough for a thumb
-  const noActions = { edit() {}, seconds() {}, move() {}, copy() {}, remove() {}, toggle() {}, pick() {}, add() {}, start() {} };
-  const state = { read: true, rows: rows, busy: false, text: '', failed: false, open: 'b', newView: 'robotics', newPanel: 'tasks' };
-  const page = view.pageOf(state, noActions);
-  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Rotation', 'the page should open with the heading Rotation');
-  const cards = nodesWhere(page, node => node.props && node.props['data-row'] !== undefined);
-  need(problems, cards.length === 3, 'the page should draw a card for each row');
-  const buttons = nodesWhere(page, node => node.type === 'button');
-  need(problems, buttons.length > 0 && buttons.every(node => node.props.style.minHeight >= 44), 'every button of the page should be at least 44 pixels high');
-  const controls = nodesWhere(page, node => ['select', 'input'].indexOf(node.type) !== -1 && node.props.type !== 'checkbox' && node.props.type !== 'radio');
-  need(problems, controls.length > 0 && controls.every(node => node.props.style.minHeight >= 44), 'every picker and box of the page should be at least 44 pixels high');
-  need(problems, nodesWhere(page, node => node.props && node.props['data-more'] === 'b').length === 1 && nodesWhere(page, node => node.props && node.props['data-more'] === 'a').length === 0, 'only the open row should show its details');
-  const upButtons = buttons.filter(node => node.props['aria-label'] === 'Move up');
-  need(problems, upButtons[0].props.disabled === true && upButtons[1].props.disabled === false, 'the first row cannot move up');
-  const calls = [];
-  const live = view.pageOf(state, Object.assign({}, noActions, { move: (index, delta) => calls.push('move' + index + ':' + delta), edit: (index, field, value) => calls.push(field + index + '=' + value), copy: index => calls.push('copy' + index) }));
-  const liveButtons = nodesWhere(live, node => node.type === 'button');
-  liveButtons.filter(node => node.props['aria-label'] === 'Move down')[0].props.onClick();
-  liveButtons.filter(node => node.children.join() === 'Copy')[1].props.onClick();
-  nodesWhere(live, node => node.type === 'input' && node.props['aria-label'] === 'Shown')[0].props.onChange({ target: { checked: false } });
-  need(problems, calls.join() === 'move0:1,copy1,shown0=false', 'the buttons should hand the row and the change to the page. They did: ' + calls.join());
-  need(problems, nodesWhere(view.pageOf(Object.assign({}, state, { busy: true }), noActions), node => node.type === 'button' && !node.props.disabled).length === 0, 'the buttons should wait while a change is being saved');
-  need(problems, wordsIn(view.pageOf({ read: false }, noActions)).indexOf(view.words.reading) !== -1 && wordsIn(view.pageOf({ read: true, rows: null }, noActions)).indexOf(view.words.notPublished) !== -1 && wordsIn(view.pageOf({ read: true, rows: [] }, noActions)).indexOf(view.words.start) !== -1, 'the page should say when it is reading, when Dashboard Settings was never published, and offer the standard rotation when the list is empty');
-  nodesWhere(page, node => ['h1', 'h2', 'p'].indexOf(node.type) !== -1).forEach(node => checkPlainSentences(problems, 'the Rotation page ("' + wordsIn(node).slice(0, 30) + '")', wordsIn(node)));
+  const rows = [{ _key: 'a', view: 'robotics', panel: 'events', part: 1, side: 'task-counts', seconds: 30, shown: true }];
+  need(problems, view.words.intro === 'The wall plays this list top to bottom. Drag a row to move it. Turn Show on screen off to skip a row. Seconds is how long it stays.', 'the Rotation page should open with: The wall plays this list top to bottom. Drag a row to move it. Turn Show on screen off to skip a row. Seconds is how long it stays.');
   Object.values(view.words).forEach(text => checkPlainSentences(problems, 'a line of the Rotation page', text));
-  need(problems, view.panelChoices.every(panel => world.screenPanels.panelTitle(panel.value) === panel.title), 'the panels the page offers should have the titles of screen-panels.js');
+  const page = view.pageOf({ read: true, rows: rows, settings: { pageSeconds: 20, partsLink: false }, busy: false, text: '', failed: false, open: '', collapsed: {}, selected: {}, history: [], newView: 'robotics', newPanel: 'tasks' }, {});
+  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Rotation', 'the page should open with the heading Rotation');
+  need(problems, wordsIn(view.pageOf({ read: false }, {})).indexOf(view.words.reading) !== -1, 'the page should say when it is reading');
 
   // saving: the rows go to the draft, which is made from the published document when it is not there, and nothing else is set
-  function client(documents) {
-    const written = [];
-    return {
-      calls: written,
-      getDocument: async id => documents[id] || null,
-      createIfNotExists: async doc => { written.push({ create: doc }); },
-      patch: id => ({ set: fields => ({ commit: async () => { written.push({ patch: id, set: fields }); return {}; } }) }),
-    };
-  }
-  const fresh = client({ dashboardSettings: Object.assign({ _rev: 'r1', motion: 'calm' }, published) });
-  await view.saveRows(fresh, rows);
-  need(problems, fresh.calls.length === 2 && fresh.calls[0].create._id === 'drafts.dashboardSettings' && fresh.calls[0].create.motion === 'calm' && fresh.calls[0].create._rev === undefined, 'with no draft the page should make one from the published Dashboard Settings');
-  need(problems, fresh.calls[1].patch === 'drafts.dashboardSettings' && Object.keys(fresh.calls[1].set).join() === 'rotationRows' && fresh.calls[1].set.rotationRows === rows, 'the page should set rotationRows on the draft and nothing else');
-  let refused = '';
-  await view.saveRows(client({}), rows).catch(error => { refused = error.message; });
-  need(problems, refused === view.words.notPublished, 'with no Dashboard Settings at all the page should say to publish it once');
+  const published = { _id: 'dashboardSettings', rotationRows: [] };
+  const written = [];
+  const client = {
+    getDocument: async id => (id === 'dashboardSettings' ? Object.assign({ _rev: 'r1', motion: 'calm' }, published) : null),
+    createIfNotExists: async doc => { written.push({ create: doc }); },
+    patch: id => ({ set: fields => ({ commit: async () => { written.push({ patch: id, set: fields }); return {}; } }) }),
+  };
+  await world.rotationBoard.saveRows(client, rows);
+  need(problems, written.length === 2 && written[0].create._id === 'drafts.dashboardSettings' && written[0].create.motion === 'calm' && written[0].create._rev === undefined, 'with no draft the page should make one from the published Dashboard Settings');
+  need(problems, written[1].patch === 'drafts.dashboardSettings' && Object.keys(written[1].set).join() === 'rotationRows' && written[1].set.rotationRows === rows, 'the page should set rotationRows on the draft and nothing else');
 
   // the field of Dashboard Settings is the full form, in the Advanced tab, and says to use the page
   const field = fieldAt('dashboardSettings.rotationRows');
@@ -7041,7 +6886,7 @@ async function checkRotationPage() {
 // at each side, no box fixed wider than the screen, and buttons and pickers at least 44 pixels high.
 function checkPhonePages() {
   const problems = [];
-  const pages = ['start-here.js', 'themes-view.js', 'rotation-view.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js', 'page-styles.js'];
+  const pages = ['start-here.js', 'themes-view.js', 'rotation-board-parts.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js', 'page-styles.js'];
   pages.forEach(file => {
     const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
     need(problems, /page: \{[^}]*padding: '24px 16px'/.test(text), file + ' should have a page with a 16 pixel gutter (padding: 24px 16px)');
@@ -7247,7 +7092,8 @@ async function main() {
     world.keptDataView = await load(path.join(folder, 'inputs', 'kept-data-view.js'));
     world.lookView = await load(path.join(folder, 'inputs', 'look-view.js'));
     world.competitionView = await load(path.join(folder, 'inputs', 'competition-view.js'));
-    world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));
+    world.rotationView = await load(path.join(folder, 'inputs', 'rotation-board-view.js'));
+    world.rotationBoard = await load(path.join(folder, 'tools', 'rotation-board.js'));
     world.screenPanels = await load(path.join(folder, 'inputs', 'screen-panels.js'));
     world.defaultRotation = await load(path.join(folder, 'tools', 'default-rotation.js'));
     world.mondayCheck = await load(path.join(folder, 'tools', 'monday-check.js'));
@@ -7288,11 +7134,14 @@ async function main() {
     world.timeText = await load(path.join(folder, 'inputs', 'time-text.js'));
     world.calendarsParts = await load(path.join(folder, 'inputs', 'calendars-view-parts.js'));
     world.calendarsView = await load(path.join(folder, 'inputs', 'calendars-view.js'));
+    world.calendarsList = await load(path.join(folder, 'inputs', 'calendars-list-parts.js'));
+    world.calendarsListSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-list-parts.js'), 'utf8');
     world.calendarsViewSource = fs.readFileSync(path.join(here, 'inputs', 'calendars-view.js'), 'utf8');
     world.calendarsPartsSource = ['calendars-view-parts.js', 'calendars-hide-rules.js'].map(name => fs.readFileSync(path.join(here, 'inputs', name), 'utf8')).join('\n');
     world.mondayBoardsParts = await load(path.join(folder, 'inputs', 'monday-boards-parts.js'));
     world.mondayBoardsView = await load(path.join(folder, 'inputs', 'monday-boards-view.js'));
     world.previewPanelsView = await load(path.join(folder, 'inputs', 'preview-panels-view.js'));
+    world.mondayPage = await load(path.join(folder, 'inputs', 'monday-page.js'));
     world.mondayBoardsViewSource = readModule(path.join(here, 'inputs', 'monday-boards-view.js'), 'utf8');
     world.mondayBoardsPartsSource = readModule(path.join(here, 'inputs', 'monday-boards-parts.js'), 'utf8');
     world.calendarStatusScript = readModule(path.join(here, '..', 'computer', 'scripts', 'calendar-status.sh'), 'utf8');
@@ -7372,9 +7221,9 @@ async function main() {
   check('a task has a source, a board, a priority and Show on TV, every task is read only except Show on TV, no New menu offers one, and Monday Tasks holds every task once', checkBoardTasks);
   check('each list under Tasks, Events and Roster has a plus button that makes its own type with the starting values of the group, and the New menus are as they were', checkListAdds);
   check('the calendar status document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, and the scripts on the computer write the same document', checkCalendarStatusType);
-  check('the Calendars page has the help line, the calendars of Dashboard Settings on the left and the next events with SHOWN or HIDDEN on the right, and writes nothing itself', checkCalendarsPage);
+  check('the Calendars page lists the coming events by day with their state and a switch, has filters and a Rules section, and writes nothing itself', checkCalendarsPage);
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
-  check('the Calendars page shows the kind of each calendar and the Hide buttons of each event, and every rule they make is accepted by the Calendar filters schema', checkCalendarsHide);
+  check('the one event rules the Calendars switch makes are accepted by the Calendar filters schema, and the kinds are the ones of Dashboard Settings', checkCalendarsHide);
   results.push({ name: 'the Hide buttons make a rule once with createIfNotExists, Show again deletes the rule and its draft, and the rules made on the page are read by their id', problems: await checkCalendarsHideWrite().catch(error => ['the check stopped: ' + error.message]) });
   check('the Monday tab has the connection block, up to 10 board entries with pickers and a choice of group names or a status column, the labels for in progress and done (the Backlog label is hidden and ignored) and the owner switch, as in dashboard/config.js', checkMondayTab);
   check('the Monday data document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
@@ -7392,7 +7241,7 @@ async function main() {
   results.push({ name: 'the form of a Screen has the Editing switch and the map, a click or a key on a letter opens its tab, an empty Screen is filled once from the Panel order, and the inputs of the sections work', problems: await checkScreenForm().catch(error => ['the check stopped: ' + error.message]) });
   check('a View has the five tabs of the map, a team on Prime and Nova, rows that are the rows of a Screen, Family locked, and starting values that agree with the order', checkViewType);
   check('the Look tab has the name, title and order of the views, the weekday themes start as in dashboard/config.js and are kept tidy, and no theme is a placeholder', checkViewSettings);
-  results.push({ name: 'the Rotation page has the owner\'s sentence, a card for each row with big buttons, keeps every value it does not show, and writes only rotationRows to the draft of Dashboard Settings', problems: await checkRotationPage().catch(error => ['the check stopped: ' + error.stack]) });
+  results.push({ name: 'the Rotation page has the owner\'s sentence and writes only rotationRows to the draft of Dashboard Settings', problems: await checkRotationPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'the pages of the Studio fit a phone: a 16 pixel gutter, nothing fixed wider than 390 pixels and buttons of 44 pixels', problems: checkPhonePages() });
   results.push({ name: 'the Themes page lists the themes, has a picker for each weekday, and writes only themeByWeekday to the draft of Dashboard Settings', problems: await checkThemesPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'a View is filled once from the Screens split by team, Family keeps its two panels, and the form has the picker and the map', problems: await checkViewSeed().catch(error => ['the check stopped: ' + error.stack]) });

@@ -86,12 +86,10 @@ The agenda, the talks and the meeting days open from the links at the foot of th
 
 ### Events
 
-- Calendars: the BAND calendars the Teletraan computer reads. Pick one on the left to see its
-  next 40 events on the right, each SHOWN or HIDDEN, and when the computer last
-  downloaded it (docs/calendars-page.md). Hide this one and Hide all like this on an
-  event make a rule under Calendar filters, and Show again deletes it
-  (docs/hide-a-repeating-meeting.md). Ask a coach to add the address of a new
-  calendar on the computer.
+- Calendars: the coming events the Teletraan computer downloaded from BAND, by day,
+  with whether the TV shows each one and a Show and Hide switch for that one event
+  (docs/calendars-page.md). A switch makes a draft, so click Publish all to apply it.
+  Ask a coach to add the link of a new calendar on the control page, Keys tab.
 - Calendar filters: rules that hide events from the BAND calendars, or keep them
   on the screen, such as a meeting that repeats every week
   (docs/calendar-filters.md). An Always show rule can also pin its events to

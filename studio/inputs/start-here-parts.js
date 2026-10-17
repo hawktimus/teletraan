@@ -20,7 +20,7 @@ export const areas = [
   {
     letter: 'B',
     name: 'Main panel',
-    feeds: [['Rotation', 'Today'], ['Monday Tasks', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
+    feeds: [['Rotation', 'Today'], ['Monday', 'Calendars'], ['Team leads', 'Leadership', 'Sponsors'], ['Photos', 'Extra panels']],
     x: 40,
     y: 256,
     width: 1152,
@@ -30,7 +30,7 @@ export const areas = [
   {
     letter: 'D',
     name: 'Side panel',
-    feeds: [['Views', 'Calendars'], ['Monday Tasks'], ['Sponsors']],
+    feeds: [['Views', 'Calendars'], ['Monday'], ['Sponsors']],
     x: 1224,
     y: 592,
     width: 656,
