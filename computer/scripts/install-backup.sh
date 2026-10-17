@@ -2,8 +2,8 @@
 # Usage: sudo install-backup.sh
 # Installs the nightly backup: copies its two systemd unit files, makes the
 # folder /var/backups/teletraan, and turns on the timer, which starts
-# backup-dataset.sh at 03:15. It checks that the Sanity tool is installed in
-# studio/ and that local.env has the write token. It does not install anything.
+# backup-dataset.sh at 03:15. It checks that curl and gzip are installed and that
+# local.env has the write token. It does not install anything.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
@@ -27,13 +27,6 @@ done
 
 if [ ! -x "$computer/scripts/backup-dataset.sh" ]; then
   echo "$computer/scripts/backup-dataset.sh is missing or cannot be run." >&2
-  exit 1
-fi
-
-if [ ! -x "$repo/studio/node_modules/.bin/sanity" ]; then
-  echo "The Sanity tool is not installed in $repo/studio." >&2
-  echo "Ask the team mentor, install it, and run this again:" >&2
-  echo "  cd $repo/studio && npm install" >&2
   exit 1
 fi
 
