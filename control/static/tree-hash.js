@@ -4,6 +4,8 @@
 // content, each followed by a line break. It is how the page tells whether the folder on this computer is
 // the one on the wall.
 
+import { sha256Hex as plainSha256Hex } from './sha256.js';
+
 const hashRoots = ['dashboard/', 'studio/schemas/', 'computer/', 'control/'];
 
 // Names left out at any depth, and the generated files left out by path. The same list decides what the page
@@ -39,8 +41,11 @@ function hex(buffer) {
   return Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+// crypto.subtle exists only on secure pages (https or localhost). The control page is plain http, so the plain
+// script version in sha256.js does the work there.
 async function sha256Hex(bytes) {
-  return hex(await globalThis.crypto.subtle.digest('SHA-256', bytes));
+  const subtle = globalThis.crypto && globalThis.crypto.subtle;
+  return subtle ? hex(await subtle.digest('SHA-256', bytes)) : plainSha256Hex(bytes);
 }
 
 // files: [{ path, read }] where read() gives the bytes of the file (a Uint8Array or ArrayBuffer). Paths are
