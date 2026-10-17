@@ -1,7 +1,7 @@
 // A View: what plays on the TV for a while, with its own arrangement, main panel rows and small panel
 // rows. There are four, General, Prime, Nova and Family, each a document that exists once with a fixed
 // id (view-general, view-prime, view-nova, view-family). The id says which view it is, and key stores
-// the same word. Robotics, Prime and Nova are under SCREEN, Views, in the sidebar, and Family is in Old screens (not used) (structure.js).
+// the same word. Robotics, Prime and Nova are under Teams and views, Views, in the sidebar, and Family is in Old screens (not used) (structure.js).
 //
 // The form opens on the map of the screen (view-input.js) with a picker of the four views above it. Its
 // five letters are the five tabs, as on a Screen:

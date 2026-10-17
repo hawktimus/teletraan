@@ -492,7 +492,6 @@ const sidebarTitles = {
   subteam: 'Team leads',
   customPanel: 'Extra panels',
   presentationDay: 'Meeting days',
-  team: 'Teams',
   theme: 'Look',
 };
 
@@ -512,8 +511,8 @@ const typeTitles = {
 // The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Views, Themes and backgrounds, Subthemes',
-  'COACHES ONLY: Dashboard Settings, Teams, Look, Extra panels, Old screens (not used)',
+  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Themes and backgrounds, Subthemes',
+  'COACHES ONLY: Dashboard Settings, Look, Extra panels, Old screens (not used)',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
@@ -521,6 +520,7 @@ const folderLines = {
   'Events': 'Calendars, Calendar filters',
   'People': 'Leadership, Team leads, Sponsors',
   'Monday Tasks': 'On the TV, Hidden',
+  'Teams and views': 'Hawktimus Prime, Hawktimus Nova, Views (Robotics, Prime, Nova)',
   'Views': 'Robotics, Prime, Nova',
   'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Condensed',
 };
@@ -2407,9 +2407,10 @@ function checkSidebarLines(problems) {
     named.push(entry.type);
 
     if (entry.kind === 'page') {
-      need(problems, pageTypes.indexOf(entry.type) !== -1, where + ' is a page, but "' + entry.type + '" is not one of the pages that exist once: ' + pageTypes.join(', '));
+      need(problems, pageTypes.indexOf(entry.type) !== -1 || entry.type === 'team', where + ' is a page, but "' + entry.type + '" is not one of the pages that exist once: ' + pageTypes.join(', '));
       if (entry.type === 'screen') need(problems, screenPageIds.indexOf(entry.id) !== -1, where + ' should open one of the Screens: ' + screenPageIds.join(', ') + ', not ' + entry.id);
       else if (entry.type === 'view') need(problems, viewPageIds.indexOf(entry.id) !== -1, where + ' should open one of the Views: ' + viewPageIds.join(', ') + ', not ' + entry.id);
+      else if (entry.type === 'team') need(problems, ['team-prime', 'team-nova'].indexOf(entry.id) !== -1, where + ' should open one of the starting teams: team-prime, team-nova, not ' + entry.id);
       else need(problems, entry.id === entry.type, where + ' should open the document with id ' + entry.type + ', not ' + entry.id);
       return;
     }
@@ -2494,14 +2495,14 @@ function checkSidebarGroups(problems) {
 
   // Views, Daily Agenda, Monday Tasks and Old screens are the folders, and Presentations is the one folder inside a folder.
   // A heading is a divider, not a folder.
-  const folders = entries.filter(entry => entry.kind === 'group').sort((a, b) => Object.keys(folderLines).indexOf(a.title) - Object.keys(folderLines).indexOf(b.title));
+  const folders = allLines(entries).filter(entry => entry.kind === 'group').sort((a, b) => Object.keys(folderLines).indexOf(a.title) - Object.keys(folderLines).indexOf(b.title));
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
   folders.forEach(folder => {
     const want = folderLines[folder.title];
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Events, People, Monday Tasks, Views and Old screens (not used)');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 6, 'the sidebar should have six folders in all: Events, People, Monday Tasks, Teams and views, Views inside it, and Old screens (not used)');
 
   ['Start here', 'Calendars', 'Today'].forEach(title => {
     const entry = allLines(entries).filter(item => item.title === title)[0];
@@ -3921,7 +3922,7 @@ function checkTeams() {
 
   need(problems, type.title === 'Teams', 'the team type should have the title Teams');
   const titles = {
-    name: 'Team name', shortName: 'Short name', number: 'Team number', code: 'Team code', logo: 'Logo', colors: 'Colors', metal: 'Metal', palette: 'Palette', glow: 'Glow', mirror: 'Mirror the layout',
+    name: 'Team name', number: 'Team number', logo: 'Logo', metal: 'Metal', colors: 'Colors', shortName: 'Short name', code: 'Team code', palette: 'Palette', glow: 'Glow', mirror: 'Mirror the layout',
     bolts: 'Bolts', cornerCut: 'Cut corners', headerNotch: 'Header end', grid: 'Page grid', logoPose: 'Bird pose', nameStyle: 'Team name look', outlinedName: 'Outlined name', tickerLabel: 'Ticker label', countAccent: 'Countdown color',
     active: 'Active', order: 'Order',
   };
@@ -3999,13 +4000,22 @@ function checkTeams() {
     [line({ number: undefined }).title, 'Team Name'],
     [type.preview.prepare({}).title, 'Team with no name'],
   ].forEach(entry => need(problems, entry[0] === entry[1], 'the team list should read "' + entry[1] + '", it reads "' + entry[0] + '"'));
-  need(problems, /Change the name, number or colors here and the screen follows\. The Monday board is not connected to this name; a rename there is done by hand\./.test(type.description || ''), 'the team document should open with its description about the name and number');
+  need(problems, /Change the name, number, logo or metal here and the screen follows\. The Monday board is not connected to this name; a rename there is done by hand\./.test(type.description || '') && /Use the standard colors for this team under Colors/.test(type.description || ''), 'the team document should open with its description about the name and number, and point to the button under Colors');
+  // a coach sees the name, number, logo, metal and colors first; the rest is under Advanced, folded
+  const advanced = (type.fieldsets || []).filter(set => set.name === 'advanced')[0];
+  need(problems, advanced && advanced.title === 'Advanced' && advanced.options && advanced.options.collapsible === true && advanced.options.collapsed === true, 'the team should have a folded Advanced box (a fieldset called advanced, collapsible and collapsed)');
+  const onTop = fieldsIn(type).filter(field => !field.fieldset && !field.hidden).map(field => field.name).join();
+  need(problems, onTop === 'name,number,logo,metal,colors', 'a team should open with only name, number, logo, metal and colors on top. It has: ' + onTop);
+  const inAdvanced = fieldsIn(type).filter(field => field.fieldset === 'advanced').map(field => field.name).join();
+  need(problems, inAdvanced === 'shortName,code,glow,mirror,bolts,cornerCut,headerNotch,grid,logoPose,nameStyle,outlinedName,tickerLabel,countAccent,active,order', 'Advanced should hold the rest of the fields. It holds: ' + inAdvanced);
+  const colorsField = at('colors');
+  need(problems, colorsField && colorsField.components && colorsField.components.input === world.teamColorsInput.TeamColorsInput && colorsField.options && colorsField.options.collapsed === true, 'the Colors field should draw the swatches and the standard colors button (team-colors-input.js) and fold the twelve colors');
   need(problems, type.preview.select && type.preview.select.media === 'logo', 'the team list should show each logo (select media: logo)');
 
-  // The Teams line is right after Dashboard Settings, under COACHES ONLY, and is a list sorted by order
-  const entries = world.structure.sidebarEntries;
-  const after = entries[entries.map(entry => entry.title).indexOf('Dashboard Settings') + 1];
-  need(problems, after && after.kind === 'list' && after.type === 'team' && after.title === 'Teams', 'the Teams line should come right after Dashboard Settings under COACHES ONLY in structure.js');
+  // Teams and views is a folder: the two teams as pages, then the Views folder
+  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Teams and views')[0];
+  need(problems, folder && folder.kind === 'group' && folder.entries.map(entry => entry.title + '=' + (entry.id || '')).join() === 'Hawktimus Prime=team-prime,Hawktimus Nova=team-nova,Views=views', 'Teams and views should hold the pages Hawktimus Prime (team-prime) and Hawktimus Nova (team-nova), then the Views folder');
+  need(problems, folder && folder.entries.slice(0, 2).every(entry => entry.kind === 'page' && entry.type === 'team'), 'the two teams should be pages of the type team');
 
   return problems.concat(checkTeamSeed(type));
 }
@@ -4929,7 +4939,6 @@ const listAdds = {
   'On the TV': '',
   Hidden: '',
   Subthemes: 'newSubtheme',
-  Teams: null,
   'Extra panels': null,
 }; // null is the plain plus button of the type
 
@@ -5528,7 +5537,7 @@ function checkLookRotation() {
 
   // The notes say what the tab does
   const cycle = at('cycleNote');
-  need(problems, cycle && /Rotation page/.test(cycle.description || '') && /Views, under SCREEN/.test(cycle.description || ''), 'the second note on the Logo and motion tab should say that what plays is the Rotation page and that a view holds its arrangement in Views, under SCREEN');
+  need(problems, cycle && /Rotation page/.test(cycle.description || '') && /Views, under Teams and views/.test(cycle.description || ''), 'the second note on the Logo and motion tab should say that what plays is the Rotation page and that a view holds its arrangement in Views, under Teams and views');
   need(problems, at('lookNote') && /The theme of each day and the Original background are on the Themes and backgrounds page/.test(at('lookNote').description || ''), 'the first note on the Logo and motion tab should say that the Themes and backgrounds page sets the theme of each day');
   need(problems, at('screenSchedule') && at('screenSchedule').hidden === true && /^Not used any more/.test(at('screenSchedule').description || ''), 'screenSchedule should be hidden, kept in the schema, and say Not used any more');
 
@@ -5609,7 +5618,7 @@ function checkTeamTrim() {
   const classes = [];
 
   need(problems, names.join() === Object.keys(trimOfNova).join(), 'teamTrim in config.js should have these fields, in this order: ' + Object.keys(trimOfNova).join(', '));
-  need(problems, type && (type.fieldsets || []).some(set => set.name === 'trim' && set.title === 'Trim'), 'the team should have a Trim box (a fieldset called trim)');
+  need(problems, type && (type.fieldsets || []).some(set => set.name === 'advanced' && set.title === 'Advanced'), 'the team should have an Advanced box (a fieldset called advanced)');
 
   names.forEach(name => {
     const field = fieldAt('team.' + name);
@@ -5621,7 +5630,7 @@ function checkTeamTrim() {
     need(problems, field && field.type === 'string' && field.options && field.options.layout === 'radio', where + ' should be a radio list');
     need(problems, choicesOf(where).map(item => item.value).join() === values.join(), where + ' should offer the values in teamTrim in config.js, in the same order: ' + values.join(', '));
     need(problems, field && field.initialValue === values[0] && config.primeTeam[name] === values[0], where + ' should start as ' + values[0] + ', and so should primeTeam in config.js: it is the Prime value');
-    need(problems, field && field.fieldset === 'trim', where + ' should be in the Trim box');
+    need(problems, field && field.fieldset === 'advanced', where + ' should be in the Advanced box');
     need(problems, field && !constraintNamed(rules, 'required'), where + ' should not be required: a team saved before the trim existed has none');
     need(problems, allowed && allowed.args[0].join() === values.join(), where + ' should only allow: ' + values.join(', '));
     need(problems, rules.some(rule => rule.name === 'error' && rule.args[0]), where + ' has rules and no error message in plain words');
@@ -5668,7 +5677,7 @@ function checkTeamTrim() {
   const look = fieldAt('team.nameStyle');
   need(problems, look && look.hidden === true && /^Not used any more\./.test(look.description || ''), 'team.nameStyle should be hidden but stay in the schema, with a description that begins Not used any more');
   const outlined = fieldAt('team.outlinedName');
-  need(problems, outlined && outlined.type === 'boolean' && outlined.initialValue === false && outlined.fieldset === 'trim' && !outlined.hidden, 'team.outlinedName should be a switch in the Trim box that starts off');
+  need(problems, outlined && outlined.type === 'boolean' && outlined.initialValue === false && outlined.fieldset === 'advanced' && !outlined.hidden, 'team.outlinedName should be a switch in the Advanced box that starts off');
   need(problems, outlined && outlined.description === 'Off draws the name solid' && !constraintNamed(outlined ? constraintsOf(outlined) : [], 'required'), 'the team.outlinedName description should be: Off draws the name solid. It is optional');
   need(problems, world.dashboard.primeTeam.outlinedName === undefined || world.dashboard.primeTeam.outlinedName === false, 'the built-in Prime team should draw its name solid');
   return problems;
@@ -6322,7 +6331,7 @@ const screenGroupFields = {
   side: ['sideRows'],
   ticker: ['tickerLink'],
 };
-const mainRowTip = 'Not used any more. The rows of each View (Views, under SCREEN) replace this list. It stays so that a saved list is kept.';
+const mainRowTip = 'Not used any more. The rows of each View (Views, under Teams and views) replace this list. It stays so that a saved list is kept.';
 const weekdayStarts = { monday: 'original', tuesday: 'cybertron', wednesday: 'original', thursday: 'cybertron', friday: 'original', saturday: 'cybertron', sunday: 'original' };
 
 function checkScreenType() {
@@ -6794,9 +6803,9 @@ function checkViewType() {
   if (config.defaultViews) need(problems, sameData(JSON.parse(JSON.stringify(config.defaultViews)), JSON.parse(JSON.stringify(defaults))), 'defaultViews in config.js should be the same as defaultViews in studio/tools/view-defaults.js');
 
   // the pages: four, in a folder under Settings, each of the type view with an id of its own
-  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Views')[0];
+  const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Views' && entry.kind === 'group')[0];
   const old = world.structure.sidebarEntries.filter(entry => entry.title === 'Old screens (not used)')[0];
-  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view', 'Views, under SCREEN, should list the pages Robotics (id view-general), Prime and Nova, each of the type view with the id view- and its key');
+  need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view', 'Views, under Teams and views, should list the pages Robotics (id view-general), Prime and Nova, each of the type view with the id view- and its key');
   need(problems, old && old.entries.filter(entry => entry.type === 'view').map(entry => entry.title + '=' + entry.id).join() === 'Condensed=view-family', 'Family, which the rotation does not play, should be a page in Old screens (not used)');
   need(problems, world.structure.viewIds.join() === viewPageIds.join(), 'the ids of the Views in structure.js should be ' + viewPageIds.join(', '));
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
@@ -7225,6 +7234,7 @@ async function main() {
     world.themeIds = await load(path.join(folder, 'inputs', 'theme-ids.js'));
     world.backgroundIds = await load(path.join(folder, 'inputs', 'background-ids.js'));
     world.themesView = await load(path.join(folder, 'inputs', 'themes-view.js'));
+    world.teamColorsInput = await load(path.join(folder, 'inputs', 'team-colors-input.js'));
     world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));
     world.screenPanels = await load(path.join(folder, 'inputs', 'screen-panels.js'));
     world.defaultRotation = await load(path.join(folder, 'tools', 'default-rotation.js'));

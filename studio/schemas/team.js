@@ -8,7 +8,7 @@
 // a new team are the Prime ones, so a team that is typed in by hand has
 // colors that work until they are changed, and so do the metal and the glow, which come
 // right after the Colors box. The trim starts the same way: eight choices in the
-// Trim box that make a team look like itself beyond its colors and the mirror (teamTrim in
+// Advanced box that make a team look like itself beyond its colors and the mirror (teamTrim in
 // dashboard/config.js, and "Team trim" in docs/layouts.md). The first choice of each is the one
 // Prime has, and a team made before the trim existed has none stored and reads as Prime.
 // Team name look, one of the eight, is hidden and the screen ignores it: Outlined name, a switch in the
@@ -17,6 +17,7 @@
 
 import { defineType, defineField } from 'sanity';
 import { tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
+import { TeamColorsInput } from '../inputs/team-colors-input.js';
 
 // A hex color: # and six characters from 0 to 9 and A to F
 const hexColor = /^#[0-9A-Fa-f]{6}$/;
@@ -46,7 +47,7 @@ function trimField(name, title, description, hidden) {
     name: name,
     title: title,
     type: 'string',
-    fieldset: 'trim',
+    fieldset: 'advanced',
     description: description,
     options: { list: list, layout: 'radio', direction: 'horizontal' },
     initialValue: list[0].value,
@@ -74,13 +75,13 @@ export default defineType({
   name: 'team',
   title: 'Teams',
   type: 'document',
-  description: 'Change the name, number or colors here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand. Each team keeps its own colors: a new default never reaches a team already saved. To reset one, open it, click the menu beside Publish, choose Use the standard colors for this team, then Publish.',
+  description: 'Change the name, number, logo or metal here and the screen follows. The Monday board is not connected to this name; a rename there is done by hand. Each team keeps its own colors: a new default never reaches a team already saved. To reset one, click Use the standard colors for this team under Colors, then Publish.',
   fieldsets: [
     {
-      name: 'trim',
-      title: 'Trim',
-      description: 'How the team looks on the screen beyond its colors. The first choice of each is how the first team looks.',
-      options: { collapsible: true, collapsed: false },
+      name: 'advanced',
+      title: 'Advanced',
+      description: 'The short name, the code, the glow, the mirror and the trim: how the team looks beyond its colors. The first choice of each trim is how the first team looks. A coach rarely changes these.',
+      options: { collapsible: true, collapsed: true },
     },
   ],
   fields: [
@@ -92,29 +93,11 @@ export default defineType({
       validation: Rule => [Rule.required().error('Give the team a name.'), tooLong(Rule, 20)],
     }),
     defineField({
-      name: 'shortName',
-      title: 'Short name',
-      type: 'string',
-      description: 'A short name for the panel headers, for example NAME. Up to 8 characters fit.',
-      validation: Rule => [Rule.required().error('Give the team a short name.'), tooLong(Rule, 8)],
-    }),
-    defineField({
       name: 'number',
       title: 'Team number',
       type: 'string',
       description: 'Optional. The FRC team number, for example 1234. Up to 6 characters fit.',
       validation: Rule => tooLong(Rule, 6),
-    }),
-    defineField({
-      name: 'code',
-      title: 'Team code',
-      type: 'string',
-      description: 'Lowercase letters and digits, such as prime. The data uses it, so do not change it later. Up to 10 characters fit.',
-      validation: Rule => [
-        Rule.required().error('Give the team a code.'),
-        tooLong(Rule, 10),
-        Rule.regex(teamCode, { name: 'lowercase code' }).error('Use lowercase letters and digits only, with no spaces, such as prime.'),
-      ],
     }),
     defineField({
       name: 'logo',
@@ -124,10 +107,21 @@ export default defineType({
       options: { hotspot: true, accept: 'image/*' },
     }),
     defineField({
+      name: 'metal',
+      title: 'Metal',
+      type: 'string',
+      description: 'The metal of the frame edges and bolts. Purple is the inverse of gold. In Original, steel takes the place of gold and silver.',
+      options: { list: metalChoices, layout: 'radio', direction: 'horizontal' },
+      initialValue: 'gold',
+      validation: Rule => Rule.valid(metalChoices.map(item => item.value)).error('Pick gold, steel or purple.'),
+    }),
+    defineField({
       name: 'colors',
       title: 'Colors',
       type: 'object',
       description: 'The colors of the team on the screen. Each is # and six characters from 0 to 9 and A to F, such as #6C18B6.',
+      options: { collapsible: true, collapsed: true },
+      components: { input: TeamColorsInput },
       fields: [
         colorField('primary', 'Main color', 'The main color of the team, for header tabs and the bird.', '#6C18B6'),
         colorField('plate', 'Plate color', 'The color of the team plate, the header inset and the cards.', '#3B2A7A'),
@@ -144,13 +138,24 @@ export default defineType({
       ],
     }),
     defineField({
-      name: 'metal',
-      title: 'Metal',
+      name: 'shortName',
+      title: 'Short name',
       type: 'string',
-      description: 'The metal of the frame edges and bolts. Purple is the inverse of gold. In Original, steel takes the place of gold and silver.',
-      options: { list: metalChoices, layout: 'radio', direction: 'horizontal' },
-      initialValue: 'gold',
-      validation: Rule => Rule.valid(metalChoices.map(item => item.value)).error('Pick gold, steel or purple.'),
+      fieldset: 'advanced',
+      description: 'A short name for the panel headers, for example NAME. Up to 8 characters fit.',
+      validation: Rule => [Rule.required().error('Give the team a short name.'), tooLong(Rule, 8)],
+    }),
+    defineField({
+      name: 'code',
+      title: 'Team code',
+      type: 'string',
+      fieldset: 'advanced',
+      description: 'Lowercase letters and digits, such as prime. The data uses it, so do not change it later. Up to 10 characters fit.',
+      validation: Rule => [
+        Rule.required().error('Give the team a code.'),
+        tooLong(Rule, 10),
+        Rule.regex(teamCode, { name: 'lowercase code' }).error('Use lowercase letters and digits only, with no spaces, such as prime.'),
+      ],
     }),
     defineField({
       name: 'palette',
@@ -165,6 +170,7 @@ export default defineType({
       name: 'glow',
       title: 'Glow',
       type: 'boolean',
+      fieldset: 'advanced',
       description: 'Turn this on to put a soft glow round the neon lines of the frames in Cybertron and Minimal.',
       initialValue: false,
     }),
@@ -172,6 +178,7 @@ export default defineType({
       name: 'mirror',
       title: 'Mirror the layout',
       type: 'boolean',
+      fieldset: 'advanced',
       description: 'Turn this on to flip the whole screen left to right while this team is showing.',
       initialValue: false,
     }),
@@ -185,7 +192,7 @@ export default defineType({
       name: 'outlinedName',
       title: 'Outlined name',
       type: 'boolean',
-      fieldset: 'trim',
+      fieldset: 'advanced',
       description: 'Off draws the name solid',
       initialValue: false,
     }),
@@ -195,6 +202,7 @@ export default defineType({
       name: 'active',
       title: 'Active',
       type: 'boolean',
+      fieldset: 'advanced',
       description: 'Turn this off to leave the team out of the Team choice and out of Alternate mode.',
       initialValue: true,
     }),
@@ -202,6 +210,7 @@ export default defineType({
       name: 'order',
       title: 'Order',
       type: 'number',
+      fieldset: 'advanced',
       description: 'A lower number comes first, in this list and in the Team choice. It starts at 10.',
       initialValue: 10,
       validation: Rule => Rule.integer().error('Use a whole number such as 1, 2 or 3.'),

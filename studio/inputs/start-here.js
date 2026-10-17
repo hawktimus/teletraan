@@ -155,7 +155,7 @@ function forCoaches() {
     'div',
     { 'data-block': 'coaches' },
     h('p', { style: styles.muted }, 'Anything under Coaches only is for a coach, so ask a coach.'),
-    h('p', { style: styles.muted }, 'Each team keeps its own colors. To put the standard ones back, open the team under Teams. Click the menu beside Publish. Choose Use the standard colors for this team. Then click Publish.')
+    h('p', { style: styles.muted }, 'Each team keeps its own colors. To put the standard ones back, open the team under Teams and views. Click Use the standard colors for this team under Colors. Then click Publish.')
   );
 }
 

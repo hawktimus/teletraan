@@ -76,7 +76,8 @@ const teamField = defineField({
   title: 'Team',
   type: 'object',
   group: 'screen',
-  description: 'The school line in the banner. The name and number here are used only while no team is saved under Teams.',
+  hidden: true,
+  description: 'Used only while no team is saved. The name, number and colors of each team are on its page under Teams and views.',
   fields: [
     defineField({
       name: 'name',
@@ -356,7 +357,7 @@ const safetyDaysField = defineField({
 
 // The note on the Look tab points to the Look page, which points back (theme.js). The second says where the rows are.
 const lookNoteField = noteField('lookNote', 'The theme of each day and the Original background are on the Themes and backgrounds page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
-const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation page in the sidebar. A view holds its small panels and its arrangement in Views, under SCREEN.', 'look');
+const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation page in the sidebar. A view holds its small panels and its arrangement in Views, under Teams and views.', 'look');
 
 export default defineType({
   name: 'dashboardSettings',

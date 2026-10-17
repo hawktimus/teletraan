@@ -103,7 +103,7 @@ export function rotationField() {
         title: 'Panel order',
         type: 'array',
         hidden: true,
-        description: 'Not used any more. The rows of each View (Views, under SCREEN) replace this list. It stays so that a saved list is kept.',
+        description: 'Not used any more. The rows of each View (Views, under Teams and views) replace this list. It stays so that a saved list is kept.',
         of: [stepMember(allPanels, true)],
         initialValue: startingList(allPanels),
         components: { input: PanelOrderInput },

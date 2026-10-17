@@ -40,6 +40,7 @@ import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
+import { CubeIcon } from '@sanity/icons/Cube';
 import { DashboardIcon } from '@sanity/icons/Dashboard';
 import { DesktopIcon } from '@sanity/icons/Desktop';
 import { DiamondIcon } from '@sanity/icons/Diamond';
@@ -52,6 +53,7 @@ import { HighlightIcon } from '@sanity/icons/Highlight';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
+import { MoonIcon } from '@sanity/icons/Moon';
 import { PanelLeftIcon } from '@sanity/icons/PanelLeft';
 import { PlayIcon } from '@sanity/icons/Play';
 import { PresentationIcon } from '@sanity/icons/Presentation';
@@ -94,6 +96,10 @@ export { screenType };
 export const screenIds = screenStyles.map(screenIdOf);
 const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
 const screenPages = screenStyles.map(style => ({ kind: 'page', title: screenTitles[style], icon: screenIcons[style], type: screenType, id: screenIdOf(style) }));
+
+// The two teams are pages too, with the ids of the starting teams (docs/seed/teams.ndjson). Another team is still
+// added from the New menu, and still appears in the Team choice of every item.
+export const teamPageIds = { prime: 'team-prime', nova: 'team-nova' };
 
 // The four Views, Robotics, Prime, Nova and Family, are pages of one type with an id each. The rotation plays
 // Robotics, Prime and Nova, so those three sit in the folder Views under SCREEN. Family is not in the rotation
@@ -190,12 +196,21 @@ export const sidebarEntries = [
     ],
   },
   { kind: 'component', title: 'Monday Boards', id: 'mondayBoards', icon: ThListIcon, component: MondayBoardsTabs, children: tasksOfBoard },
-  { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
+  {
+    kind: 'group',
+    title: 'Teams and views',
+    icon: TokenIcon,
+    id: 'teamsAndViews',
+    entries: [
+      { kind: 'page', title: 'Hawktimus Prime', icon: CubeIcon, type: 'team', id: teamPageIds.prime },
+      { kind: 'page', title: 'Hawktimus Nova', icon: MoonIcon, type: 'team', id: teamPageIds.nova },
+      { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
+    ],
+  },
   { kind: 'component', title: 'Themes and backgrounds', id: 'themes', icon: HighlightIcon, component: ThemesView },
   { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
-  { kind: 'list', title: 'Teams', icon: TokenIcon, type: 'team', sort: byOrder },
   { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
   {

@@ -16,7 +16,7 @@ import { controlAddress } from './control-address.js';
 export const screen = { width: 1920, height: 1080 };
 
 export const areas = [
-  { letter: 'A', name: 'Banner', feeds: [['Teams', 'Dashboard Settings']], x: 40, y: 24, width: 1840, height: 212 },
+  { letter: 'A', name: 'Banner', feeds: [['Teams and views', 'Dashboard Settings']], x: 40, y: 24, width: 1840, height: 212 },
   {
     letter: 'B',
     name: 'Main panel',
