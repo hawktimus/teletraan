@@ -261,7 +261,7 @@ editors can sign in from anywhere.
                               for each entry, so changing the order means moving a line,
                               docs/reordering-the-sidebar.md, docs/studio-map.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons;
                               tools/team-actions.js: Use the standard colors for this team, with its table in tools/team-standard.js),
-                              its pages that are not documents (inputs/start-here.js, inputs/rotation-view.js, inputs/themes-view.js, inputs/calendars-view.js and
+                              its pages that are not documents (inputs/start-here.js, inputs/rotation-board-view.js, inputs/themes-view.js, inputs/calendars-view.js and
                               inputs/monday-boards-view.js, whose rows and words are in inputs/calendars-view-parts.js,
                               docs/calendars-page.md, and inputs/monday-boards-parts.js),
                               the words and picture of Start here (inputs/start-here-parts.js), what its request

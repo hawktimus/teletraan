@@ -75,7 +75,7 @@ import { milestonesChild } from './inputs/monday-boards-parts.js';
 import { MondayPage, oldTasksChild } from './inputs/monday-page.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
 import { ThemesView } from './inputs/themes-view.js';
-import { RotationView } from './inputs/rotation-view.js';
+import { RotationView } from './inputs/rotation-board-view.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
 
 // Pages that exist once. Each is a single document with a fixed id.

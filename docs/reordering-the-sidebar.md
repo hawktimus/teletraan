@@ -86,7 +86,7 @@ the roster and the photos, and COACHES ONLY is for coaches (docs/studio-map.md):
 - `component` opens a page that is not a document. `component` is a plain
   function that draws it. Start here is `StartHere` in `studio/inputs/start-here.js`
   and Calendars is `CalendarsView` in `studio/inputs/calendars-view.js`. A component
-  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-view.js` and
+  line needs an `id`. Rotation is `RotationView` in `studio/inputs/rotation-board-view.js` and
   Themes and backgrounds is `ThemesView` in `studio/inputs/themes-view.js`. Monday Boards is `MondayBoardsView` in
   `studio/inputs/monday-boards-view.js`, and its line has `children`, a function that builds
   the two lists of the tasks of a board, which the name of a board on the page opens.

@@ -1,4 +1,4 @@
-// The one ordered rotation list of Dashboard Settings (docs/views.md, "The rotation"). Editors change it on the Rotation page (inputs/rotation-view.js);
+// The one ordered rotation list of Dashboard Settings (docs/views.md, "The rotation"). Editors change it on the Rotation page (inputs/rotation-board-view.js);
 // the field is in the Advanced tab as the full form.
 //
 //   transitionSeconds  how long a whole panel or view transition takes, 2 to 4 seconds, 3 to start with (dashboard/config.js)
