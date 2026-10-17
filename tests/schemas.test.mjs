@@ -6931,83 +6931,29 @@ async function checkThemesPage() {
   return problems;
 }
 
-// The Rotation page (inputs/rotation-view.js): the one sentence at the top, a card for each row with big buttons, and a
-// save that sets rotationRows on the draft of Dashboard Settings and nothing else. Every value of a row the page does not
-// show is kept when the row changes.
+// The Rotation page (inputs/rotation-board-view.js): the one sentence at the top, a board of the rows, and a save that sets
+// rotationRows on the draft of Dashboard Settings and nothing else. The board itself is tested in tests/rotation-board.test.mjs.
 async function checkRotationPage() {
   const problems = [];
   const view = world.rotationView;
-  const rows = view.withKeys([
-    { _key: 'a', view: 'robotics', panel: 'events', part: 1, side: 'task-counts', seconds: 30, shown: true },
-    { _key: 'b', view: 'prime', panel: 'monday-tasks', department: 'build', seconds: 30, shown: true },
-    { view: 'nova', panel: 'photo', photoCount: 4, secondsPerPhoto: 10, shown: false },
-  ]);
-  need(problems, rows.length === 3 && rows.every(row => typeof row._key === 'string' && row._key !== '') && new Set(rows.map(row => row._key)).size === 3, 'every row should get its own key');
-
-  // the sentence the owner asked for, word for word
-  need(problems, view.words.intro === 'The wall plays this list top to bottom. Drag a row to move it. Turn Shown off to skip a row. Seconds is how long it stays.', 'the Rotation page should open with: The wall plays this list top to bottom. Drag a row to move it. Turn Shown off to skip a row. Seconds is how long it stays.');
-
-  // the pure changes keep what they do not touch
-  need(problems, view.moveRow(rows, 0, 1).map(row => row._key).join() === [rows[1]._key, 'a', rows[2]._key].join() && view.moveRow(rows, 0, -1) === rows && view.moveRow(rows, 2, 1) === rows, 'moving a row down should swap it with the next, and the first row cannot go up');
-  const edited = view.setRowValue(rows, 0, 'seconds', 45);
-  need(problems, edited[0].seconds === 45 && edited[0].part === 1 && edited[0].side === 'task-counts' && rows[0].seconds === 30, 'changing seconds should keep the part and the small panel, and not change the old rows');
-  need(problems, !('seconds' in view.setRowValue(rows, 0, 'seconds', '')[0]) && view.setRowValue(rows, 2, 'shown', true)[2].photoCount === 4, 'an empty value should take the field away, and the photo values stay');
-  const copied = view.copyRow(rows, 1);
-  need(problems, copied.length === 4 && copied[2].department === 'build' && copied[2]._key !== rows[1]._key, 'copy should put a row with the same values and a new key under the row');
-  need(problems, view.removeRow(rows, 1).length === 2 && view.addRow(rows, 'nova', 'events')[3].shown === true, 'remove takes a row out and add puts a shown row at the end');
-  need(problems, view.secondsFrom('') === '' && view.secondsFrom('45') === 45 && view.secondsFrom('5') === null && view.secondsFrom('121') === null && view.secondsFrom('4.5') === null && view.secondsFrom('abc') === null, 'seconds should be empty or a whole number from 6 to 120');
-  need(problems, view.detailsOf(rows[0]) === 'Page 1 · With Task counts' && view.detailsOf(rows[1]) === 'Department: build' && /4 photos/.test(view.detailsOf(rows[2])), 'the line under a row should name its department, page, small panel and photos');
-  need(problems, view.startingRows().length === world.defaultRotation.defaultRotationRows().length, 'Start from the standard rotation should give the standard list');
-
-  // what the page shows: the draft first, then the published one
-  const published = { _id: 'dashboardSettings', rotationRows: [{ _key: 'p', view: 'robotics', panel: 'tonight' }] };
-  const draft = { _id: 'drafts.dashboardSettings', rotationRows: [{ _key: 'd', view: 'prime', panel: 'events' }] };
-  need(problems, view.rowsFrom([published, draft])[0]._key === 'd' && view.rowsFrom([published])[0]._key === 'p' && view.rowsFrom([]) === null && view.rowsFrom('x') === null, 'the page should show the draft rows, then the published ones, and nothing without Dashboard Settings');
-
-  // the page: a card for each row with the buttons, big enough for a thumb
-  const noActions = { edit() {}, seconds() {}, move() {}, copy() {}, remove() {}, toggle() {}, pick() {}, add() {}, start() {} };
-  const state = { read: true, rows: rows, busy: false, text: '', failed: false, open: 'b', newView: 'robotics', newPanel: 'tasks' };
-  const page = view.pageOf(state, noActions);
-  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Rotation', 'the page should open with the heading Rotation');
-  const cards = nodesWhere(page, node => node.props && node.props['data-row'] !== undefined);
-  need(problems, cards.length === 3, 'the page should draw a card for each row');
-  const buttons = nodesWhere(page, node => node.type === 'button');
-  need(problems, buttons.length > 0 && buttons.every(node => node.props.style.minHeight >= 44), 'every button of the page should be at least 44 pixels high');
-  const controls = nodesWhere(page, node => ['select', 'input'].indexOf(node.type) !== -1 && node.props.type !== 'checkbox' && node.props.type !== 'radio');
-  need(problems, controls.length > 0 && controls.every(node => node.props.style.minHeight >= 44), 'every picker and box of the page should be at least 44 pixels high');
-  need(problems, nodesWhere(page, node => node.props && node.props['data-more'] === 'b').length === 1 && nodesWhere(page, node => node.props && node.props['data-more'] === 'a').length === 0, 'only the open row should show its details');
-  const upButtons = buttons.filter(node => node.props['aria-label'] === 'Move up');
-  need(problems, upButtons[0].props.disabled === true && upButtons[1].props.disabled === false, 'the first row cannot move up');
-  const calls = [];
-  const live = view.pageOf(state, Object.assign({}, noActions, { move: (index, delta) => calls.push('move' + index + ':' + delta), edit: (index, field, value) => calls.push(field + index + '=' + value), copy: index => calls.push('copy' + index) }));
-  const liveButtons = nodesWhere(live, node => node.type === 'button');
-  liveButtons.filter(node => node.props['aria-label'] === 'Move down')[0].props.onClick();
-  liveButtons.filter(node => node.children.join() === 'Copy')[1].props.onClick();
-  nodesWhere(live, node => node.type === 'input' && node.props['aria-label'] === 'Shown')[0].props.onChange({ target: { checked: false } });
-  need(problems, calls.join() === 'move0:1,copy1,shown0=false', 'the buttons should hand the row and the change to the page. They did: ' + calls.join());
-  need(problems, nodesWhere(view.pageOf(Object.assign({}, state, { busy: true }), noActions), node => node.type === 'button' && !node.props.disabled).length === 0, 'the buttons should wait while a change is being saved');
-  need(problems, wordsIn(view.pageOf({ read: false }, noActions)).indexOf(view.words.reading) !== -1 && wordsIn(view.pageOf({ read: true, rows: null }, noActions)).indexOf(view.words.notPublished) !== -1 && wordsIn(view.pageOf({ read: true, rows: [] }, noActions)).indexOf(view.words.start) !== -1, 'the page should say when it is reading, when Dashboard Settings was never published, and offer the standard rotation when the list is empty');
-  nodesWhere(page, node => ['h1', 'h2', 'p'].indexOf(node.type) !== -1).forEach(node => checkPlainSentences(problems, 'the Rotation page ("' + wordsIn(node).slice(0, 30) + '")', wordsIn(node)));
+  const rows = [{ _key: 'a', view: 'robotics', panel: 'events', part: 1, side: 'task-counts', seconds: 30, shown: true }];
+  need(problems, view.words.intro === 'The wall plays this list top to bottom. Drag a row to move it. Turn Show on screen off to skip a row. Seconds is how long it stays.', 'the Rotation page should open with: The wall plays this list top to bottom. Drag a row to move it. Turn Show on screen off to skip a row. Seconds is how long it stays.');
   Object.values(view.words).forEach(text => checkPlainSentences(problems, 'a line of the Rotation page', text));
-  need(problems, view.panelChoices.every(panel => world.screenPanels.panelTitle(panel.value) === panel.title), 'the panels the page offers should have the titles of screen-panels.js');
+  const page = view.pageOf({ read: true, rows: rows, settings: { pageSeconds: 20, partsLink: false }, busy: false, text: '', failed: false, open: '', collapsed: {}, selected: {}, history: [], newView: 'robotics', newPanel: 'tasks' }, {});
+  need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Rotation', 'the page should open with the heading Rotation');
+  need(problems, wordsIn(view.pageOf({ read: false }, {})).indexOf(view.words.reading) !== -1, 'the page should say when it is reading');
 
   // saving: the rows go to the draft, which is made from the published document when it is not there, and nothing else is set
-  function client(documents) {
-    const written = [];
-    return {
-      calls: written,
-      getDocument: async id => documents[id] || null,
-      createIfNotExists: async doc => { written.push({ create: doc }); },
-      patch: id => ({ set: fields => ({ commit: async () => { written.push({ patch: id, set: fields }); return {}; } }) }),
-    };
-  }
-  const fresh = client({ dashboardSettings: Object.assign({ _rev: 'r1', motion: 'calm' }, published) });
-  await view.saveRows(fresh, rows);
-  need(problems, fresh.calls.length === 2 && fresh.calls[0].create._id === 'drafts.dashboardSettings' && fresh.calls[0].create.motion === 'calm' && fresh.calls[0].create._rev === undefined, 'with no draft the page should make one from the published Dashboard Settings');
-  need(problems, fresh.calls[1].patch === 'drafts.dashboardSettings' && Object.keys(fresh.calls[1].set).join() === 'rotationRows' && fresh.calls[1].set.rotationRows === rows, 'the page should set rotationRows on the draft and nothing else');
-  let refused = '';
-  await view.saveRows(client({}), rows).catch(error => { refused = error.message; });
-  need(problems, refused === view.words.notPublished, 'with no Dashboard Settings at all the page should say to publish it once');
+  const published = { _id: 'dashboardSettings', rotationRows: [] };
+  const written = [];
+  const client = {
+    getDocument: async id => (id === 'dashboardSettings' ? Object.assign({ _rev: 'r1', motion: 'calm' }, published) : null),
+    createIfNotExists: async doc => { written.push({ create: doc }); },
+    patch: id => ({ set: fields => ({ commit: async () => { written.push({ patch: id, set: fields }); return {}; } }) }),
+  };
+  await world.rotationBoard.saveRows(client, rows);
+  need(problems, written.length === 2 && written[0].create._id === 'drafts.dashboardSettings' && written[0].create.motion === 'calm' && written[0].create._rev === undefined, 'with no draft the page should make one from the published Dashboard Settings');
+  need(problems, written[1].patch === 'drafts.dashboardSettings' && Object.keys(written[1].set).join() === 'rotationRows' && written[1].set.rotationRows === rows, 'the page should set rotationRows on the draft and nothing else');
 
   // the field of Dashboard Settings is the full form, in the Advanced tab, and says to use the page
   const field = fieldAt('dashboardSettings.rotationRows');
@@ -7021,7 +6967,7 @@ async function checkRotationPage() {
 // at each side, no box fixed wider than the screen, and buttons and pickers at least 44 pixels high.
 function checkPhonePages() {
   const problems = [];
-  const pages = ['start-here.js', 'themes-view.js', 'rotation-view.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js'];
+  const pages = ['start-here.js', 'themes-view.js', 'rotation-board-parts.js', 'calendars-view.js', 'monday-boards-view.js', 'preview-panels-view.js'];
   pages.forEach(file => {
     const text = fs.readFileSync(path.join(here, 'inputs', file), 'utf8');
     need(problems, /page: \{[^}]*padding: '24px 16px'/.test(text), file + ' should have a page with a 16 pixel gutter (padding: 24px 16px)');
@@ -7221,7 +7167,8 @@ async function main() {
     world.themeIds = await load(path.join(folder, 'inputs', 'theme-ids.js'));
     world.backgroundIds = await load(path.join(folder, 'inputs', 'background-ids.js'));
     world.themesView = await load(path.join(folder, 'inputs', 'themes-view.js'));
-    world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));
+    world.rotationView = await load(path.join(folder, 'inputs', 'rotation-board-view.js'));
+    world.rotationBoard = await load(path.join(folder, 'tools', 'rotation-board.js'));
     world.screenPanels = await load(path.join(folder, 'inputs', 'screen-panels.js'));
     world.defaultRotation = await load(path.join(folder, 'tools', 'default-rotation.js'));
     world.mondayCheck = await load(path.join(folder, 'tools', 'monday-check.js'));
@@ -7366,7 +7313,7 @@ async function main() {
   results.push({ name: 'the form of a Screen has the Editing switch and the map, a click or a key on a letter opens its tab, an empty Screen is filled once from the Panel order, and the inputs of the sections work', problems: await checkScreenForm().catch(error => ['the check stopped: ' + error.message]) });
   check('a View has the five tabs of the map, a team on Prime and Nova, rows that are the rows of a Screen, Family locked, and starting values that agree with the order', checkViewType);
   check('the Look tab has the name, title and order of the views, the weekday themes start as in dashboard/config.js and are kept tidy, and no theme is a placeholder', checkViewSettings);
-  results.push({ name: 'the Rotation page has the owner\'s sentence, a card for each row with big buttons, keeps every value it does not show, and writes only rotationRows to the draft of Dashboard Settings', problems: await checkRotationPage().catch(error => ['the check stopped: ' + error.stack]) });
+  results.push({ name: 'the Rotation page has the owner\'s sentence and writes only rotationRows to the draft of Dashboard Settings', problems: await checkRotationPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'the pages of the Studio fit a phone: a 16 pixel gutter, nothing fixed wider than 390 pixels and buttons of 44 pixels', problems: checkPhonePages() });
   results.push({ name: 'the Themes page lists the themes, has a picker for each weekday, and writes only themeByWeekday to the draft of Dashboard Settings', problems: await checkThemesPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'a View is filled once from the Screens split by team, Family keeps its two panels, and the form has the picker and the map', problems: await checkViewSeed().catch(error => ['the check stopped: ' + error.stack]) });
