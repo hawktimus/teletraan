@@ -49,7 +49,6 @@ import { EyeClosedIcon } from '@sanity/icons/EyeClosed';
 import { FaceHappyIcon } from '@sanity/icons/FaceHappy';
 import { FilterIcon } from '@sanity/icons/Filter';
 import { HeartIcon } from '@sanity/icons/Heart';
-import { HighlightIcon } from '@sanity/icons/Highlight';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
@@ -62,7 +61,6 @@ import { SparkleIcon } from '@sanity/icons/Sparkle';
 import { SquareIcon } from '@sanity/icons/Square';
 import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
-import { SunIcon } from '@sanity/icons/Sun';
 import { SyncIcon } from '@sanity/icons/Sync';
 import { TaskIcon } from '@sanity/icons/Task';
 import { ThLargeIcon } from '@sanity/icons/ThLarge';
@@ -75,7 +73,7 @@ import { CalendarsView } from './inputs/calendars-view.js';
 import { milestonesChild } from './inputs/monday-boards-parts.js';
 import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
 import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
-import { ThemesView } from './inputs/themes-view.js';
+import { LookView } from './inputs/look-view.js';
 import { RotationView } from './inputs/rotation-view.js';
 import { TodayView } from './inputs/today-view.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
@@ -157,6 +155,7 @@ const talksFolder = {
   ],
 };
 export const announcementChild = 'announcement:';
+const subthemesList = { kind: 'list', title: 'Subthemes', id: 'subthemes', type: 'subtheme', sort: byName, add: ['newSubtheme'] };
 
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
@@ -207,11 +206,9 @@ export const sidebarEntries = [
       { kind: 'group', title: 'Views', icon: ProjectsIcon, id: 'views', entries: viewPages },
     ],
   },
-  { kind: 'component', title: 'Themes and backgrounds', id: 'themes', icon: HighlightIcon, component: ThemesView },
-  { kind: 'list', title: 'Subthemes', icon: SunIcon, type: 'subtheme', sort: byName, add: ['newSubtheme'] },
+  { kind: 'component', title: 'Look', id: 'look', icon: ColorWheelIcon, component: LookView, children: lookChildren },
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
-  { kind: 'page', title: 'Look', icon: ColorWheelIcon, type: themeType, id: themeId },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
   {
     kind: 'group',
@@ -276,6 +273,14 @@ function todayChildren(S, times) {
     if (childId === 'agenda') return paneOf(S, agendaList, times);
     if (childId === 'meetingDays') return paneOf(S, meetingDaysList, times);
     return groupList(S, talksFolder, times);
+  };
+}
+
+// What a link on the Look page opens: the dated rules, the default theme and the time zone (the Look document), or the subthemes
+function lookChildren(S, times) {
+  return childId => {
+    if (childId === 'subthemes') return paneOf(S, subthemesList, times);
+    return S.document().title('Dated rules, default theme and time zone').schemaType(themeType).documentId(themeId);
   };
 }
 

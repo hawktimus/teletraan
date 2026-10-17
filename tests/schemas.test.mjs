@@ -482,6 +482,8 @@ const notInSidebar = {
   plan: 'the Today page links to the list of agenda items and opens it in the next pane',
   presentation: 'the Today page links to the talks, Upcoming and Past, and opens them in the next pane',
   presentationDay: 'the Today page links to the meeting days and opens them in the next pane',
+  theme: 'the Look page links to it, as the dated rules, the default theme and the time zone',
+  subtheme: 'the Look page links to the list of subthemes and opens it in the next pane',
   announcement: 'the Today page lists the announcements and edits them in place, and each card opens the full form in the next pane',
 };
 
@@ -511,8 +513,8 @@ const typeTitles = {
 // The sidebar as agreed. A heading is the first thing before
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
-  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Themes and backgrounds, Subthemes',
-  'COACHES ONLY: Dashboard Settings, Look, Extra panels, Old screens (not used)',
+  'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Look',
+  'COACHES ONLY: Dashboard Settings, Extra panels, Old screens (not used)',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
@@ -1297,7 +1299,8 @@ function checkLookAndTiming() {
     const shortest = entry[2];
 
     need(problems, limit && limit.min === 0 && limit.shortest === shortest, 'limits.' + entry[1] + ' in config.js should have min 0 and shortest ' + shortest);
-    const notUsed = field && field.hidden === true;
+    // a field the Look page shows is hidden in Dashboard Settings and still in use
+    const notUsed = field && field.hidden === true && world.lookParts.settingsNames.indexOf(entry[0].split('.')[0]) === -1;
     need(problems, field && (notUsed ? /^Not used any more\./.test(field.description || '') : /0 to never|never/.test(field.description || '')), entry[0] + (notUsed ? ' is hidden, so its description should begin Not used any more' : ' description should say that 0 means never'));
     need(problems, entry[0] !== 'nameEvery' && entry[0] !== 'logoHawkEvery' ? !notUsed : notUsed, entry[0] + (entry[0] === 'nameEvery' || entry[0] === 'logoHawkEvery' ? ' should be hidden: each Screen sets how often the effect plays' : ' should not be hidden'));
     if (!custom) return problems.push(entry[0] + ' should refuse 1 to ' + (shortest - 1) + ' with a custom rule (0 or at least ' + shortest + ')');
@@ -4308,7 +4311,7 @@ function checkSettingsTabs() {
   const lookNote = fieldAt('dashboardSettings.lookNote');
   const themeNote = fieldAt('theme.settingsNote');
   need(problems, lookNote && /Look/.test(lookNote.description || '') && /sidebar/.test(lookNote.description || ''), 'the note on the Look tab should point to Look in the sidebar');
-  need(problems, themeNote && /Themes and backgrounds page/.test(themeNote.description || ''), 'the note on the Look page should point to the Themes and backgrounds page');
+  need(problems, themeNote && /on the Look page/.test(themeNote.description || ''), 'the note on the Look document should point to the Look page');
   need(problems, fieldsIn(typeByName('theme'))[0].name === 'settingsNote', 'the note should be the first field of the Look page');
   need(problems, world.noteField.NoteField({ schemaType: { description: 'A line.' } }).children[0] === 'A line.' && world.noteField.NoteField({ schemaType: {} }) === null, 'NoteField should draw the description, and nothing without one');
 
@@ -4938,7 +4941,6 @@ const listAdds = {
   Photos: 'newPhoto',
   'On the TV': '',
   Hidden: '',
-  Subthemes: 'newSubtheme',
   'Extra panels': null,
 }; // null is the plain plus button of the type
 
@@ -5027,6 +5029,10 @@ function checkListAdds() {
   need(problems, behind && templatesOf(opened('agenda')) === 'newPlan' && templatesOf(opened('meetingDays')) === 'newPresentationDay', 'the Today page should open the agenda with a plus button that makes an agenda item and the meeting days with one that makes a meeting day');
   const talks = behind && opened('presentations');
   need(problems, talks && talks.id === 'presentations' && talks.items.map(item => item.made.title).join() === 'Upcoming,Past' && talks.menuItems.map(menu => menu.intent.params.template).join() === 'newPresentation', 'the Today page should open the talks as Upcoming and Past, with a plus button that makes a presentation');
+  const look = entries.filter(entry => entry.title === 'Look')[0];
+  const lookBehind = look && typeof look.children === 'function' ? look.children(fakeBuilder(), { since: new Date().toISOString(), now: new Date().toISOString() }) : null;
+  need(problems, lookBehind && lookBehind('subthemes').made.type === 'subtheme' && templatesOf(lookBehind('subthemes').made) === 'newSubtheme', 'the Look page should open the subthemes with a plus button that makes a subtheme');
+  need(problems, lookBehind && lookBehind('rules').made.documentId === 'theme' && lookBehind('rules').made.schemaType === 'theme', 'the Look page should open the dated rules as the one Look document');
   need(problems, behind && opened('announcement:abc').documentId === 'abc' && opened('announcement:abc').schemaType === 'announcement', 'a card of the Today page should open its announcement in the full form');
 
   // the Studio's own templates and New menus are as they were: the plain templates first and in order,
@@ -7235,6 +7241,8 @@ async function main() {
     world.backgroundIds = await load(path.join(folder, 'inputs', 'background-ids.js'));
     world.themesView = await load(path.join(folder, 'inputs', 'themes-view.js'));
     world.teamColorsInput = await load(path.join(folder, 'inputs', 'team-colors-input.js'));
+    world.lookParts = await load(path.join(folder, 'inputs', 'look-parts.js'));
+    world.lookView = await load(path.join(folder, 'inputs', 'look-view.js'));
     world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));
     world.screenPanels = await load(path.join(folder, 'inputs', 'screen-panels.js'));
     world.defaultRotation = await load(path.join(folder, 'tools', 'default-rotation.js'));

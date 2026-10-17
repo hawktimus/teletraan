@@ -98,7 +98,7 @@ async function saveFields(client, fields) {
   return client.patch(draftId).set(fields).commit();
 }
 
-function themeList() {
+export function themeList() {
   return h(
     'ul',
     { style: styles.list, 'data-list': 'themes' },
@@ -106,7 +106,7 @@ function themeList() {
   );
 }
 
-function dayRow(day, schedule, change, busy) {
+export function dayRow(day, schedule, change, busy) {
   return h(
     'label',
     { key: day.name, style: styles.day },
@@ -128,7 +128,7 @@ function backgroundChoice(choice, state, changeBackground) {
   );
 }
 
-function backgroundBlock(state, changeBackground) {
+export function backgroundBlock(state, changeBackground) {
   if (!state.background || typeof changeBackground !== 'function') return null;
   return h(
     'div',

@@ -74,6 +74,7 @@ const defaultThemeField = defineField({
   name: 'defaultTheme',
   title: 'Default color theme',
   type: 'string',
+  fieldset: 'advanced',
   description: 'The colors when Use a color theme now and the schedule say nothing. Not the same as the theme of each day. Neon Prime has a sidebar.',
   options: { list: themeChoices },
   initialValue: 'hawktimus',
@@ -87,6 +88,7 @@ const useNowField = defineField({
   name: 'useNow',
   title: 'Use a color theme now',
   type: 'object',
+  fieldset: 'advanced',
   description: 'Show a color theme or a seasonal pack at once. This wins over the schedule. Leave a part empty to let the schedule decide it.',
   fields: [
     defineField({
@@ -268,12 +270,20 @@ const seasonOverPanelsField = defineField({
   initialValue: true,
 });
 
-// Points to the Look tab of Dashboard Settings, which points back
-const settingsNoteField = noteField('settingsNote', 'Color themes, seasonal packs and the time zone are set here. The theme of each day, such as Original or Cybertron, is on the Themes and backgrounds page.');
+// Points to the Look page, which links to this form
+const settingsNoteField = noteField('settingsNote', 'Dated rules for themes and seasonal packs, and the time zone. The theme of each weekday and the rest of the look are on the Look page.');
 
 export default defineType({
   name: 'theme',
   title: 'Look',
   type: 'document',
-  fields: [settingsNoteField, defaultThemeField, useNowField, scheduleField, timeZoneField, seasonOverPanelsField],
+  fieldsets: [
+    {
+      name: 'advanced',
+      title: 'Advanced',
+      description: 'The default theme, and showing a theme or a pack at once. A coach rarely needs these.',
+      options: { collapsible: true, collapsed: true },
+    },
+  ],
+  fields: [settingsNoteField, scheduleField, timeZoneField, seasonOverPanelsField, defaultThemeField, useNowField],
 });

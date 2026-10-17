@@ -23,6 +23,7 @@ import { competitionFields } from './settingsCompetition.js';
 import { mondayFields } from './settingsMonday.js';
 import { calendarsField, groupEventsByKindField } from './settingsCalendars.js';
 import { countdownField } from './settingsCountdown.js';
+import { settingsNames as shownOnLookPage } from '../inputs/look-parts.js';
 
 // The tabs, in order. Screen opens first. Studio has no folded tab, so Advanced,
 // for the things only a coach debugging the screen would touch, is the last one.
@@ -192,7 +193,7 @@ const frameMetalField = defineField({
   title: 'Frame metal',
   type: 'string',
   group: 'screen',
-  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish (Logo and motion tab).',
+  description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish, in the same section.',
   options: { list: metals, layout: 'radio', direction: 'horizontal' },
   initialValue: 'gold',
   validation: Rule => [
@@ -359,6 +360,14 @@ const safetyDaysField = defineField({
 const lookNoteField = noteField('lookNote', 'The theme of each day and the Original background are on the Themes and backgrounds page. Colors, seasonal packs and the time zone are in Look, in the sidebar.', 'look');
 const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, is the Rotation page in the sidebar. A view holds its small panels and its arrangement in Views, under Teams and views.', 'look');
 
+// The Look page (inputs/look-view.js) shows these fields, so the form does not: hidden, with the stored values kept.
+// The two notes only pointed at the pages that the Look page replaced.
+const movedToLook = shownOnLookPage.concat(['lookNote', 'cycleNote']);
+
+function moved(field) {
+  return movedToLook.indexOf(field.name) === -1 ? field : Object.assign({}, field, { hidden: true });
+}
+
 export default defineType({
   name: 'dashboardSettings',
   title: 'Dashboard Settings',
@@ -408,7 +417,7 @@ export default defineType({
     ...competitionFields(),
     contentSourceField,
     showConnectionStatusField,
-  ],
+  ].map(moved),
   preview: {
     prepare: () => ({ title: 'Dashboard Settings' }),
   },
