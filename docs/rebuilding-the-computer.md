@@ -112,6 +112,8 @@ Step 6 below is the older way to get the repository onto the Teletraan computer:
        sudo mkdir -p /var/lib/teletraan/data
        sudo chown hawktimus:hawktimus /var/lib/teletraan/data
 
+   The installer makes this folder again, with `calendars` and `slides` inside, and gives all of it to the login user, so a folder that root made does not stop the timers.
+
 8. **Make local.env.** Lock the file before the addresses go in.
 
        cd /opt/teletraan/computer

@@ -14,7 +14,7 @@
 #   6. make the bare git repository for the optional git path
 # It installs no package. The Node image and git have to be there already (the lines say what to run).
 #
-# Settings for tests: TELETRAAN_ROOT, TELETRAAN_SYSTEMD, TELETRAAN_SUDOERS, TELETRAAN_GIT, TELETRAAN_ACCOUNT.
+# Settings for tests: TELETRAAN_ROOT, TELETRAAN_SYSTEMD, TELETRAAN_SUDOERS, TELETRAAN_GIT, TELETRAAN_ACCOUNT, TELETRAAN_DATA_DIR.
 
 set -eu
 
@@ -24,6 +24,8 @@ root=${TELETRAAN_ROOT:-/opt/teletraan}
 systemd_dir=${TELETRAAN_SYSTEMD:-/etc/systemd/system}
 sudoers_dir=${TELETRAAN_SUDOERS:-/etc/sudoers.d}
 git_repo=${TELETRAAN_GIT:-/srv/teletraan.git}
+sbin_dir=${TELETRAAN_SBIN:-/usr/local/sbin}
+conf_dir=${TELETRAAN_CONF:-/usr/local/etc}
 node_image=node:22-alpine
 web_image=nginx:1.28-alpine
 commit=''
@@ -207,6 +209,14 @@ docker run --rm -u "$account_uid:$account_gid" \
   -v "$root:/opt/teletraan" -v "$tree:/staging:ro" -w /staging "$node_image" \
   node control/bin/install-tree.js /staging "${install_args[@]}"
 
+# The data folder is mounted by the compose file, which does not create it. Root may own it from an older install, so
+# it is given to the login user, with the folders the calendar and slides timers write into.
+data_dir=${TELETRAAN_DATA_DIR:-$(sed -n "s/^TELETRAAN_DATA=['\"]\{0,1\}\([^'\"]*\)['\"]\{0,1\}$/\1/p" "$root/local.env" | tail -n 1)}
+data_dir=${data_dir:-/var/lib/teletraan/data}
+step "Make the data folder $data_dir"
+install -d -m 755 "$data_dir" "$data_dir/calendars" "$data_dir/slides"
+chown -R "$account:$group" "$data_dir"
+
 # 5. The containers read through current, so they are made again, and the screen starts on the new build
 step "Start the containers and the screen"
 # Root runs docker. The compose file sets user: for the control container, so the files it makes belong to the login user.
@@ -228,8 +238,18 @@ if command -v git > /dev/null 2>&1; then
     git init --bare --initial-branch=main "$git_repo" > /dev/null
   fi
   hook="$git_repo/hooks/post-receive"
-  sed "s|^root=ROOT|root=$root|; s|^ids=UID_GID|ids=$account_uid:$account_gid|; s|^image=IMAGE|image=$node_image|" "$tree/computer/git/post-receive" > "$hook"
+  cp "$tree/computer/git/post-receive" "$hook"
   chmod 755 "$hook"
+  # The hook cannot use docker as the login user. This root-owned wrapper does, for a checked staging folder and commit,
+  # with the root, the ids and the image taken from the root-owned file beside it.
+  mkdir -p "$sbin_dir" "$conf_dir"
+  install -m 755 "$tree/computer/git/install-tree-as-root.sh" "$sbin_dir/teletraan-install-tree"
+  chown root:root "$sbin_dir/teletraan-install-tree"
+  conf_new=$(mktemp)
+  printf "ROOT='%s'\nUID_GID='%s'\nIMAGE='%s'\n" "$root" "$account_uid:$account_gid" "$node_image" > "$conf_new"
+  install -m 644 "$conf_new" "$conf_dir/teletraan-install.conf"
+  chown root:root "$conf_dir/teletraan-install.conf"
+  rm -f "$conf_new"
   chown -R "$account:$group" "$git_repo"
   say "A push to $git_repo installs main as the next release."
 else

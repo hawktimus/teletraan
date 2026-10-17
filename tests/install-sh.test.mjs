@@ -27,7 +27,7 @@ function put(file, text, mode) {
 // A staging tree: the files of this repository the installer reads
 function staging(base, options = {}) {
   const tree = path.join(base, 'staging');
-  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/sudoers/teletraan-control', 'computer/git/post-receive']) {
+  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh']) {
     put(path.join(tree, name), fs.readFileSync(path.join(repo, name)));
   }
   put(path.join(tree, 'dashboard/index.html'), '<html></html>');
@@ -51,13 +51,13 @@ function setup(options = {}) {
   put(path.join(bin, 'id'), '#!/bin/sh\n[ "$1" = -u ] && [ -z "${2:-}" ] && { echo 0; exit 0; }\nexec /usr/bin/id "$@"\n', 0o755);
   const root = path.join(base, 'opt-teletraan');
   const tree = staging(base, options);
-  const places = { root: root, systemd: path.join(base, 'systemd'), sudoers: path.join(base, 'sudoers'), git: path.join(base, 'teletraan.git') };
+  const places = { root: root, systemd: path.join(base, 'systemd'), sudoers: path.join(base, 'sudoers'), git: path.join(base, 'teletraan.git'), sbin: path.join(base, 'sbin'), conf: path.join(base, 'etc') };
   return {
     base: base, root: root, tree: tree, places: places,
     run(args = ['--yes'], input = '') {
       const result = spawnSync('bash', [path.join(tree, 'computer/install.sh'), ...args], {
         input: input, encoding: 'utf8',
-        env: { PATH: bin + ':/usr/bin:/bin:/usr/local/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMD: places.systemd, TELETRAAN_SUDOERS: places.sudoers, TELETRAAN_GIT: places.git, TELETRAAN_ACCOUNT: account, HOME: base },
+        env: { PATH: bin + ':/usr/bin:/bin:/usr/local/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMD: places.systemd, TELETRAAN_SUDOERS: places.sudoers, TELETRAAN_GIT: places.git, TELETRAAN_SBIN: places.sbin, TELETRAAN_CONF: places.conf, TELETRAAN_ACCOUNT: account, HOME: base, ...(options.dataFromFile ? {} : { TELETRAAN_DATA_DIR: path.join(base, 'data') }) },
       });
       return { status: result.status, text: result.stdout, errors: result.stderr, calls: fs.existsSync(log) ? fs.readFileSync(log, 'utf8') : '' };
     },
@@ -198,14 +198,53 @@ test('the release is installed by the Node image with the root and the tree moun
   assert.ok(lines.some(line => line === 'systemctl restart teletraan-kiosk.service'), 'the screen starts again');
 });
 
-test('the bare repository gets a post-receive hook that names the root and the image', () => {
+test('the bare repository gets the hook as it is, and the hook has no root or image to fill in', () => {
   const s = setup();
   assert.equal(s.run().status, 0);
   const hook = path.join(s.places.git, 'hooks/post-receive');
-  const text = fs.readFileSync(hook, 'utf8');
-  assert.ok(text.includes('root=' + s.root) && text.includes('image=node:22-alpine'), text);
-  assert.ok(!/ROOT$|UID_GID$|IMAGE$/m.test(text));
+  assert.equal(fs.readFileSync(hook, 'utf8'), fs.readFileSync(path.join(repo, 'computer/git/post-receive'), 'utf8'));
   assert.ok(fs.statSync(hook).mode & 0o100);
+});
+
+test('the root wrapper and its config are installed on every install, and the sudoers file names the wrapper', () => {
+  const s = setup();
+  const first = s.run();
+  assert.equal(first.status, 0, first.errors);
+  const wrapper = path.join(s.places.sbin, 'teletraan-install-tree');
+  assert.equal(fs.readFileSync(wrapper, 'utf8'), fs.readFileSync(path.join(repo, 'computer/git/install-tree-as-root.sh'), 'utf8'));
+  assert.equal(fs.statSync(wrapper).mode & 0o777, 0o755);
+  const conf = path.join(s.places.conf, 'teletraan-install.conf');
+  assert.equal(fs.statSync(conf).mode & 0o777, 0o644);
+  const text = fs.readFileSync(conf, 'utf8');
+  assert.ok(text.includes("ROOT='" + s.root + "'") && text.includes("IMAGE='node:22-alpine'") && text.includes("UID_GID='" + os.userInfo().uid + ':'), text);
+  assert.ok(first.calls.includes('chown root:root ' + wrapper) && first.calls.includes('chown root:root ' + conf), first.calls);
+  fs.writeFileSync(wrapper, 'old');
+  assert.equal(s.run().status, 0);
+  assert.notEqual(fs.readFileSync(wrapper, 'utf8'), 'old', 'a second install writes it again');
+  const sudoers = fs.readFileSync(path.join(s.places.sudoers, 'teletraan-control'), 'utf8');
+  const lines = sudoers.split('\n').filter(line => line.includes('install-tree'));
+  assert.deepEqual(lines.filter(line => !line.startsWith('#')), [account + ' ALL=(root) NOPASSWD: /usr/local/sbin/teletraan-install-tree']);
+});
+
+test('the data folder from local.env is made and given to the login user, also when root owns it', () => {
+  const s = setup({ dataFromFile: true });
+  const data = path.join(s.base, 'data-folder');
+  fs.mkdirSync(data, { recursive: true });
+  fs.chmodSync(data, 0o700);
+  put(path.join(s.root, 'local.env'), "TELETRAAN_DATA='" + data + "'\n", 0o600);
+  const r = s.run();
+  assert.equal(r.status, 0, r.errors);
+  assert.ok(fs.statSync(data).isDirectory() && (fs.statSync(data).mode & 0o777) === 0o755);
+  assert.ok(fs.statSync(path.join(data, 'calendars')).isDirectory() && fs.statSync(path.join(data, 'slides')).isDirectory());
+  const group = spawnSync('id', ['-gn'], { encoding: 'utf8' }).stdout.trim();
+  const lines = r.calls.split('\n');
+  const own = lines.findIndex(line => line === 'chown -R ' + account + ':' + group + ' ' + data);
+  const up = lines.findIndex(line => line.includes('up -d --force-recreate'));
+  assert.ok(own >= 0 && up > own, r.calls);
+});
+
+test('without TELETRAAN_DATA the installer uses /var/lib/teletraan/data by name', () => {
+  assert.match(fs.readFileSync(path.join(repo, 'computer/install.sh'), 'utf8'), /data_dir=\$\{data_dir:-\/var\/lib\/teletraan\/data\}/);
 });
 
 fs.rmSync(work, { recursive: true, force: true });
