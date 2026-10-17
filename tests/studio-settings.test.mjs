@@ -1,5 +1,5 @@
-// Tests for the cleaned Dashboard Settings and the Competition page (studio/schemas/dashboardSettings.js,
-// studio/inputs/competition-view.js): five tabs at most, plain sections with a one line description, every field the
+// Tests for the cleaned Dashboard Settings, the Competition page and the Kept data page (studio/schemas/dashboardSettings.js,
+// studio/inputs/competition-view.js, kept-data-view.js): five tabs at most, plain sections with a one line description, every field the
 // pages took over hidden but kept, nothing renamed, and the Competition page writing only the field it shows.
 //
 //   node tests/studio-settings.test.mjs
@@ -17,6 +17,8 @@ const settings = (await studio.load('schemas/dashboardSettings.js')).default;
 const view = await studio.load('inputs/competition-view.js');
 const parts = await studio.load('inputs/competition-parts.js');
 const structure = await studio.load('structure.js');
+const kept = await studio.load('inputs/kept-data-view.js');
+const keptParts = await studio.load('inputs/kept-data-parts.js');
 
 // The 102 names Dashboard Settings had before it was cleaned up. None may be renamed or removed.
 const storedNames = ['miniStatus', 'team', 'lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule', 'dailyStyles', 'mondayStyle', 'teamOrder', 'lookSwap', 'style', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'teamMode', 'alternateMinutes', 'logoAnimations', 'logoEntrance', 'logoSpin', 'logoSpinEvery', 'logoSpinDuration', 'logoHawk', 'logoHawkEvery', 'logoHawkDuration', 'nameTransform', 'nameEvery', 'nameDuration', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance', 'rotationRows', 'transitionSeconds', 'countdown', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince', 'photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame', 'announcements', 'announceRequest', 'nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest', 'presentationsEnabled', 'noShowMinutes', 'graceMinutes', 'presentationTestRequest', 'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards', 'frcConnection', 'competitionMode', 'competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'contentSource', 'showConnectionStatus'];
@@ -125,6 +127,47 @@ test('the sidebar has the Competition line and the pages keep the phone rules', 
     (text.match(/minHeight: \d+/g) || []).forEach(found => assert.ok(Number(found.replace(/\D/g, '')) >= 44, file + ' ' + found));
     assert.ok(!/\bwidth: [3-9]\d\d\b/.test(text), file + ' has a fixed width');
   });
+});
+
+test('Kept data is the last line of the sidebar and the old Screens and the Condensed view are no lines of their own', () => {
+  const entries = structure.sidebarEntries;
+  assert.equal(entries[entries.length - 1].title, 'Kept data');
+  assert.equal(entries[entries.length - 1].kind, 'component');
+  const titles = [];
+  const walk = list => list.forEach(entry => { titles.push(entry.title); if (entry.entries) walk(entry.entries); });
+  walk(entries);
+  ['Old screens (not used)', 'Original', 'Cybertron', 'Minimal', 'Condensed'].forEach(title => assert.ok(titles.indexOf(title) === -1, title + ' should not be a line of the sidebar'));
+});
+
+test('the Kept data page says the wall does not use them and not to delete them, and links to each', () => {
+  const tree = kept.pageOf('ChildLink');
+  const text = wordsIn(tree);
+  assert.match(text, /The wall does not use these\./);
+  assert.match(text, /Do not delete: some old values are read when a new list is empty\./);
+  const links = nodesWhere(tree, node => node.type === 'ChildLink').map(node => node.props.childId);
+  assert.deepEqual(links, ['kept:screen-original', 'kept:screen-cybertron', 'kept:screen-minimal', 'kept:view-family', 'kept:extraEvent']);
+  ['Old screens', 'The Condensed view', 'The old events calendar type'].forEach(title => assert.ok(text.indexOf(title) !== -1, title));
+  assert.ok(!/[\u2014\u2013!]/.test(text));
+  assert.equal(nodesWhere(tree, node => node.type === 'button' || node.type === 'input').length, 0, 'the page changes nothing');
+});
+
+test('each link opens its document in the next pane, and the old events list has no plus button', () => {
+  const line = structure.sidebarEntries.filter(entry => entry.title === 'Kept data')[0];
+  const made = {};
+  const builder = {
+    document: () => { const node = {}; ['title', 'schemaType', 'documentId'].forEach(name => { node[name] = value => { made[name] = value; return node; }; }); return node; },
+    documentTypeList: type => { const node = { type: type }; ['title', 'defaultOrdering', 'initialValueTemplates'].forEach(name => { node[name] = value => { node[name + 'Value'] = value; return node; }; }); return node; },
+  };
+  const open = line.children(builder, { since: '', now: '' });
+  open('kept:screen-minimal');
+  assert.deepEqual([made.title, made.schemaType, made.documentId], ['Minimal', 'screen', 'screen-minimal']);
+  open('kept:view-family');
+  assert.deepEqual([made.title, made.schemaType, made.documentId], ['Condensed', 'view', 'view-family']);
+  const list = open('kept:extraEvent');
+  assert.equal(list.type, 'extraEvent');
+  assert.deepEqual(list.initialValueTemplatesValue, []);
+  assert.throws(() => open('somewhere'), /not a link of the Kept data page/);
+  assert.equal(keptParts.targetOf('somewhere'), null);
 });
 
 let failed = 0;

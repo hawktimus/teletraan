@@ -471,7 +471,8 @@ const viewPageIds = ['view-general', 'view-prime', 'view-nova', 'view-family'];
 // Types that are only objects inside another document are not documents and
 // are left out of the check without being listed here.
 const notInSidebar = {
-  extraEvent: 'events come from the calendars now, and the screen no longer reads these entries. The type stays, so the entries already typed still open',
+  extraEvent: 'events come from the calendars now, and the screen no longer reads these entries. The type stays, and the Kept data page opens the list, so the entries already typed still open',
+  screen: 'the wall does not play the old Screens. The Kept data page links to each of the three, so nothing already typed is lost',
   place: 'a task\'s Location field adds a place with Create new and opens it from there',
   demo: 'its buttons are on Start here',
   status: 'the Teletraan computer writes it, and Dashboard Settings shows it in the status block at the top of the Screen tab',
@@ -514,7 +515,7 @@ const typeTitles = {
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday Tasks, Monday Boards, Teams and views, Look, Competition',
-  'COACHES ONLY: Dashboard Settings, Extra panels, Old screens (not used)',
+  'COACHES ONLY: Dashboard Settings, Extra panels, Kept data',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
@@ -524,7 +525,6 @@ const folderLines = {
   'Monday Tasks': 'On the TV, Hidden',
   'Teams and views': 'Hawktimus Prime, Hawktimus Nova, Views (Robotics, Prime, Nova)',
   'Views': 'Robotics, Prime, Nova',
-  'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Condensed',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -2497,7 +2497,7 @@ function checkSidebarGroups(problems) {
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Views, Daily Agenda, Monday Tasks and Old screens are the folders, and Presentations is the one folder inside a folder.
+  // Events, People, Monday Tasks and Teams and views are the folders, and Views is the one folder inside a folder.
   // A heading is a divider, not a folder.
   const folders = allLines(entries).filter(entry => entry.kind === 'group').sort((a, b) => Object.keys(folderLines).indexOf(a.title) - Object.keys(folderLines).indexOf(b.title));
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
@@ -2506,7 +2506,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 6, 'the sidebar should have six folders in all: Events, People, Monday Tasks, Teams and views, Views inside it, and Old screens (not used)');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Events, People, Monday Tasks, Teams and views, and Views inside it');
 
   ['Start here', 'Calendars', 'Today'].forEach(title => {
     const entry = allLines(entries).filter(item => item.title === title)[0];
@@ -6440,9 +6440,10 @@ function checkScreenType() {
   const draft = world.publishAll.chooseDrafts([{ _id: 'drafts.screen-cybertron', _type: 'screen' }], schema, world.publishAllTool.singletonIds)[0];
   need(problems, draft && draft.problem === '' && draft.publishedId === 'screen-cybertron' && draft.title === 'Cybertron' && world.publishAll.labelOf(draft) === 'Screen: Cybertron', 'Publish all should publish a draft of each Screen under its own id and call it Screen: Cybertron');
 
-  // the three pages in the sidebar, and what a page of a Screen can and cannot do
-  const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Old screens (not used)' && entry.kind === 'group')[0];
-  need(problems, folder && folder.entries.filter(entry => entry.kind === 'page' && entry.type === 'screen').map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Original=screen-original=screen,Cybertron=screen-cybertron=screen,Minimal=screen-minimal=screen', 'Old screens (not used), under COACHES ONLY, should list the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
+  // the three pages are behind the Kept data line of the sidebar (the last line of Coaches only), and what a page of a Screen can and cannot do
+  const kept = world.structure.sidebarEntries.filter(entry => entry.title === 'Kept data')[0];
+  const keptPane = id => kept.children(fakeBuilder(), { since: '', now: '' })(id).made;
+  need(problems, kept && kept.kind === 'component' && world.structure.sidebarEntries[world.structure.sidebarEntries.length - 1] === kept && ['screen-original', 'screen-cybertron', 'screen-minimal'].every((id, index) => keptPane('kept:' + id).schemaType === 'screen' && keptPane('kept:' + id).documentId === id && keptPane('kept:' + id).title === ['Original', 'Cybertron', 'Minimal'][index]), 'Kept data, the last line of Coaches only, should link to the pages Original, Cybertron and Minimal, each of the type screen with the id screen- and its style');
   need(problems, world.structure.screenIds.join() === screenPageIds.join() && world.screenIds.screenStyles.join() === config.styles.join() && Object.keys(config.screenIds).join() === config.styles.join() && config.styles.every(style => config.screenIds[style] === 'screen-' + style && world.screenIds.screenIdOf(style) === 'screen-' + style), 'the ids of the Screens should be screen-original, screen-cybertron and screen-minimal in the Studio and in config.js');
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'screen' }).map(item => item.action).join() === 'publish,discardChanges', 'a Screen should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -6809,9 +6810,10 @@ function checkViewType() {
 
   // the pages: four, in a folder under Settings, each of the type view with an id of its own
   const folder = allLines(world.structure.sidebarEntries).filter(entry => entry.title === 'Views' && entry.kind === 'group')[0];
-  const old = world.structure.sidebarEntries.filter(entry => entry.title === 'Old screens (not used)')[0];
+  const kept = world.structure.sidebarEntries.filter(entry => entry.title === 'Kept data')[0];
   need(problems, folder && folder.entries.map(entry => entry.title + '=' + entry.id + '=' + entry.type).join() === 'Robotics=view-general=view,Prime=view-prime=view,Nova=view-nova=view', 'Views, under Teams and views, should list the pages Robotics (id view-general), Prime and Nova, each of the type view with the id view- and its key');
-  need(problems, old && old.entries.filter(entry => entry.type === 'view').map(entry => entry.title + '=' + entry.id).join() === 'Condensed=view-family', 'Family, which the rotation does not play, should be a page in Old screens (not used)');
+  const familyPane = kept && kept.children(fakeBuilder(), { since: '', now: '' })('kept:view-family').made;
+  need(problems, familyPane && familyPane.schemaType === 'view' && familyPane.documentId === 'view-family' && familyPane.title === 'Condensed', 'Family, which the rotation does not play, should be linked from Kept data as Condensed');
   need(problems, world.structure.viewIds.join() === viewPageIds.join(), 'the ids of the Views in structure.js should be ' + viewPageIds.join(', '));
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   need(problems, world.config.document.actions(actions, { schemaType: 'view' }).map(item => item.action).join() === 'publish,discardChanges', 'a View should have these actions: publish,discardChanges. Nothing copies it or takes it away');
@@ -7241,6 +7243,8 @@ async function main() {
     world.themesView = await load(path.join(folder, 'inputs', 'themes-view.js'));
     world.teamColorsInput = await load(path.join(folder, 'inputs', 'team-colors-input.js'));
     world.lookParts = await load(path.join(folder, 'inputs', 'look-parts.js'));
+    world.keptDataParts = await load(path.join(folder, 'inputs', 'kept-data-parts.js'));
+    world.keptDataView = await load(path.join(folder, 'inputs', 'kept-data-view.js'));
     world.lookView = await load(path.join(folder, 'inputs', 'look-view.js'));
     world.competitionView = await load(path.join(folder, 'inputs', 'competition-view.js'));
     world.rotationView = await load(path.join(folder, 'inputs', 'rotation-view.js'));

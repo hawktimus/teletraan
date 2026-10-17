@@ -36,7 +36,6 @@
 
 import { ArchiveIcon } from '@sanity/icons/Archive';
 import { BellIcon } from '@sanity/icons/Bell';
-import { BoltIcon } from '@sanity/icons/Bolt';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
@@ -46,19 +45,16 @@ import { DesktopIcon } from '@sanity/icons/Desktop';
 import { DiamondIcon } from '@sanity/icons/Diamond';
 import { EarthGlobeIcon } from '@sanity/icons/EarthGlobe';
 import { EyeClosedIcon } from '@sanity/icons/EyeClosed';
-import { FaceHappyIcon } from '@sanity/icons/FaceHappy';
 import { FilterIcon } from '@sanity/icons/Filter';
 import { HeartIcon } from '@sanity/icons/Heart';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
 import { MoonIcon } from '@sanity/icons/Moon';
-import { PanelLeftIcon } from '@sanity/icons/PanelLeft';
 import { PlayIcon } from '@sanity/icons/Play';
 import { PresentationIcon } from '@sanity/icons/Presentation';
 import { ProjectsIcon } from '@sanity/icons/Projects';
 import { SparkleIcon } from '@sanity/icons/Sparkle';
-import { SquareIcon } from '@sanity/icons/Square';
 import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
 import { SyncIcon } from '@sanity/icons/Sync';
@@ -73,9 +69,11 @@ import { StartHere } from './inputs/start-here.js';
 import { CalendarsView } from './inputs/calendars-view.js';
 import { milestonesChild } from './inputs/monday-boards-parts.js';
 import { MondayBoardsTabs } from './inputs/preview-panels-view.js';
-import { screenType, screenStyles, screenTitles, screenIdOf } from './inputs/screen-ids.js';
+import { screenType, screenStyles, screenIdOf } from './inputs/screen-ids.js';
 import { LookView } from './inputs/look-view.js';
 import { CompetitionView } from './inputs/competition-view.js';
+import { KeptDataView } from './inputs/kept-data-view.js';
+import { targetOf as keptTargetOf } from './inputs/kept-data-parts.js';
 import { RotationView } from './inputs/rotation-view.js';
 import { TodayView } from './inputs/today-view.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
@@ -90,24 +88,21 @@ export const demoId = 'demo';
 export const singletonTypes = [settingsType, themeType, demoType];
 
 // The three old Screens, Original, Cybertron and Minimal, are pages of one type with an id each. The wall
-// does not play them any more (the Rotation page and the Views replaced them). They sit in the folder Old
-// screens (not used) under COACHES ONLY, so nothing already typed is lost.
+// does not play them any more (the Rotation page and the Views replaced them). The Kept data page, the last line
+// of COACHES ONLY, links to them, so nothing already typed is lost.
 export { screenType };
 export const screenIds = screenStyles.map(screenIdOf);
-const screenIcons = { original: SquareIcon, cybertron: BoltIcon, minimal: PanelLeftIcon };
-const screenPages = screenStyles.map(style => ({ kind: 'page', title: screenTitles[style], icon: screenIcons[style], type: screenType, id: screenIdOf(style) }));
 
 // The two teams are pages too, with the ids of the starting teams (docs/seed/teams.ndjson). Another team is still
 // added from the New menu, and still appears in the Team choice of every item.
 export const teamPageIds = { prime: 'team-prime', nova: 'team-nova' };
 
 // The four Views, Robotics, Prime, Nova and Family, are pages of one type with an id each. The rotation plays
-// Robotics, Prime and Nova, so those three sit in the folder Views under SCREEN. Family is not in the rotation
-// and sits with the old screens.
+// Robotics, Prime and Nova, so those three sit in the folder Views under Teams and views. Family is not in the
+// rotation and is linked from the Kept data page.
 export { viewType };
 export const viewIds = viewKeys.map(viewIdOf);
-const familyPage = { kind: 'page', title: viewTitles.family, icon: FaceHappyIcon, type: viewType, id: viewIdOf('family') };
-const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIcon, family: FaceHappyIcon };
+const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIcon };
 const viewPages = viewKeys.filter(key => key !== 'family').map(key => ({ kind: 'page', title: viewTitles[key], icon: viewIcons[key], type: viewType, id: viewIdOf(key) }));
 
 // The same version as the screen's own questions to Sanity
@@ -213,13 +208,7 @@ export const sidebarEntries = [
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
-  {
-    kind: 'group',
-    title: 'Old screens (not used)',
-    icon: StackIcon,
-    id: 'oldScreens',
-    entries: [{ kind: 'divider', title: 'The wall does not play these. They are kept so nothing is lost.' }].concat(screenPages, [familyPage]),
-  },
+  { kind: 'component', title: 'Kept data', id: 'keptData', icon: StackIcon, component: KeptDataView, children: keptChildren },
 ];
 
 // The list of one kind of document that a sidebar entry opens. times is { since, now }.
@@ -284,6 +273,19 @@ function lookChildren(S, times) {
   return childId => {
     if (childId === 'subthemes') return paneOf(S, subthemesList, times);
     return S.document().title('Dated rules, default theme and time zone').schemaType(themeType).documentId(themeId);
+  };
+}
+
+// What a link on the Kept data page opens: an old Screen or the Condensed view in its form, or the list of the old
+// events calendar. Nothing here can be added to: the plus button of the list is taken away.
+const extraEventList = { kind: 'list', title: 'Events Calendar', id: 'extraEvent', type: 'extraEvent', sort: { field: 'startDate', direction: 'asc' }, add: [] };
+
+function keptChildren(S, times) {
+  return childId => {
+    const target = keptTargetOf(childId);
+    if (!target) throw new Error('structure.js: "' + childId + '" is not a link of the Kept data page.');
+    if (target.list) return paneOf(S, extraEventList, times);
+    return S.document().title(target.title).schemaType(target.type).documentId(target.id);
   };
 }
 
