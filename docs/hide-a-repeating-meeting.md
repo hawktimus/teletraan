@@ -2,32 +2,25 @@
 
 For the students who edit the Studio. BAND sends every meeting that repeats, and
 a meeting that repeats twice a week can fill the Events panel until nothing else
-fits. You can take a meeting off the TV with a button on the Calendars page, or
-with a rule under Calendar filters. The button is quicker. The rule can do more.
+fits. You can take one meeting off the TV with the switch on the Calendars page, or
+every meeting like it with a rule under Calendar filters. The rule can do more.
 The example is the Pre-Season meeting that is on BAND every Monday and Thursday.
 
-## The button
+## The switch, for one meeting
 
-1. In the Studio sidebar click Calendars, under Events. Click the calendar on the
-   left that has the meeting.
-2. Find the meeting in the list on the right. The list shows the next 40 events.
-3. Click Hide all like this. The page asks: "This hides every event in Team
-   calendar with Pre-Season Meeting in its title, on every day." Click Hide.
-4. The meeting says HIDDEN at once, and the TV leaves it out within a few seconds.
+The Calendars page has a switch on every coming event. It hides that one meeting
+and leaves the others. Use it for the one Pre-Season meeting that was cancelled.
 
-Hide this one is for a single day. It hides the events with this title in this
-calendar on that day only, and leaves the Monday and Thursday after it. Use it for
-the one Pre-Season meeting that was cancelled.
+1. In the Studio sidebar click Calendars, under Events.
+2. Find the meeting in the list. Use the search box if the list is long.
+3. Click its switch. The meeting says Hidden by you, and the page says: Click
+   Publish all to apply.
+4. Click Publish all in the top bar. The TV leaves the meeting out within a few
+   seconds.
 
-To bring a meeting back, click Show again on it. That deletes the rule the button
-made. A meeting that a rule from Calendar filters hides has no button. It says
-which rule hides it and "Change it under Calendar filters."
-
-Every button makes a rule in Calendar filters. The rule is published already, so
-there is nothing to publish. Its name starts with Hide: for one day or Hide all:
-for every day, and you can edit, switch off or delete it there like any other
-rule. The word it looks for is the first 30 characters of the title. The button
-needs a title, so an event called No title has none.
+To bring the meeting back, click its switch again or click Undo, then click Publish
+all. The switch works on one meeting only, so it cannot hide every Monday. For that
+use the rule form below.
 
 ## The rule form
 
@@ -71,8 +64,7 @@ the rules").
 ## Afterwards
 
 - To bring the meetings back, turn off Rule on and click Publish. Turn a rule off
-  rather than deleting it, so you can use it again. Or click Show again on the
-  Calendars page, if a button made the rule.
+  rather than deleting it, so you can use it again. Or delete the rule.
 - To keep one meeting that the rule would hide, make a second rule with the
   Action Always show and a word from that meeting's title. Always show wins over
   Hide.

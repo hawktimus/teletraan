@@ -54,9 +54,28 @@ function squeezed(text) {
   return String(text || '').replace(/[\s\u0000-\u001f\u007f]+/g, ' ').trim().toLowerCase();
 }
 
+// A title on one line, cut at 60 characters, the way the Teletraan computer lists it for the
+// Calendars page. A one event rule keeps the title in that form, so both sides write it alike.
+export function listedTitle(text) {
+  const line = String(text || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (line === '') return 'No title';
+  if (line.length <= 60) return line;
+
+  // The cut stops before half of an emoji
+  const last = line.charCodeAt(59);
+  return line.slice(0, last >= 0xd800 && last <= 0xdbff ? 59 : 60).trim() + '...';
+}
+
+// A one event rule matches the event of its calendar with its title and its exact start
+function oneEventMatches(rule, event) {
+  return rule.eventCalendar === event.calendarId && rule.eventTitle === listedTitle(event.title) && Date.parse(rule.eventStart) === asDate(event.start).getTime();
+}
+
 // A rule matches when every condition it has matches. A rule with no condition
 // matches nothing, so a slip in the Studio cannot hide every event.
 function ruleMatches(rule, event) {
+  if (rule.scope === 'one') return oneEventMatches(rule, event);
+
   const typed = rule.words || [];
   const days = rule.days || [];
   if (typed.length === 0 && days.length === 0 && !rule.calendar && !rule.fromDate && !rule.toDate) return false;

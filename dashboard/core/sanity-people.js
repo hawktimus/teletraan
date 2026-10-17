@@ -127,7 +127,8 @@ export function presentationsFrom(list) {
 // A rule from the Calendar filters list becomes { name, action, words, days,
 // calendar, fromDate, toDate }, with the show switch and the Hide after time kept
 // as they are, and force kept when it is on (an Always show rule pins its events
-// to page one of the Events panel). The words lose the spaces at their ends and
+// to page one of the Events panel). A rule of scope one (one event, made on the Calendars
+// page) keeps its calendar, title and start and no other condition. The words lose the spaces at their ends and
 // the empty ones go.
 // The days are a set of the numbers 0 to 6, Sunday first, in order. The calendar
 // and the two dates are text, empty when there is none, and a date that is not
@@ -155,6 +156,15 @@ function normalizeFilter(raw) {
   if (raw.show === false) rule.show = false;
   if (raw.expires) rule.expires = raw.expires;
   if (raw.force === true) rule.force = true;
+
+  // A one event rule is judged by its own three fields and nothing else. One with a field
+  // missing could match the wrong event, so it is dropped.
+  if (raw.scope === 'one') {
+    const eventTitle = trimText(raw.eventTitle);
+    const eventCalendar = trimText(raw.eventCalendar);
+    if (eventTitle === '' || eventCalendar === '' || isNaN(Date.parse(raw.eventStart))) return null;
+    return Object.assign(rule, { scope: 'one', eventCalendar: eventCalendar, eventTitle: eventTitle, eventStart: raw.eventStart });
+  }
 
   const hasCondition = words.length > 0 || days.length > 0 || rule.calendar !== '' || rule.fromDate !== '' || rule.toDate !== '';
   return hasCondition ? rule : null;

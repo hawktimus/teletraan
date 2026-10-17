@@ -200,17 +200,14 @@ the board has no Monday rows (docs/monday.md, "The eleven panels").
 
 ## The Calendars page
 
-Calendars, under Events, shows each calendar the Teletraan computer downloads: its kind, when it
-last worked, why it failed, and the next 40 events with SHOWN or HIDDEN. A hidden
-event names the Calendar filter that hides it. Each event has Hide this one and
-Hide all like this, which make a rule under Calendar filters, and Show again, which
-deletes a rule the page made.
+Calendars, under Events, lists the coming events the Teletraan computer downloaded
+from BAND, grouped by day. Each says whether the TV shows it and why not when it
+does not, and has a Show and Hide switch for that one event. Past events are not
+listed. A switch makes a draft, so click Publish all to apply it. The page also
+says when the calendars were last downloaded, whether each one works, and lists the
+Calendar filters in plain sentences under Rules. The calendar links are not here:
+they live on the control page, Keys tab.
 
-- Left: a button for each row of Dashboard Settings, Calendars, with its kind, the
-  number of events in the next 30 days and how many a rule hides. A calendar with no
-  kind has no chip on its events. The page says Kind: no chip, and the kind is set in
-  Dashboard Settings, on the Calendars tab.
-- Right: the facts of the calendar you picked, then up to 40 events in date order.
 - A red line is a problem. "Download failed, the server said no" usually means BAND
   gave the calendar a new link (docs/calendar-links.md, "Change a link"). The TV
   keeps the events of the last good download.
@@ -220,10 +217,10 @@ deletes a rule the page made.
   (docs/calendars-page.md, "Node on the computer").
 
 The dataset is public, and so is the document behind this page. It holds the
-titles, dates and times of the next 40 events of every calendar, and that includes
-the events that a Calendar filter hides from the TV. Anyone who asks the dataset
-for it can read those titles. It holds no calendar address, no token and no
-location. Do not put anything private in the title of a BAND event. The status
+titles, places, dates and times of the next 40 events of every calendar, and that
+includes the events that a Calendar filter hides from the TV. Anyone who asks the
+dataset for it can read those titles. It holds no calendar address and no token.
+Do not put anything private in the title or the place of a BAND event. The status
 documents of the Teletraan computer, Monday and the competition feed are public in the same way.
 
 ## The Events panel

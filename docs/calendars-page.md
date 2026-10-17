@@ -1,90 +1,85 @@
 # The Calendars page
 
 For the coaches and students who want to know what the calendars bring in. The
-Calendars page in Studio, under Events, shows each BAND calendar the Teletraan computer
-downloads: its kind, when it last worked, why it failed, and the next 40 events
-with whether the TV shows each one. Each event has buttons that hide it from the
-TV or bring it back.
+Calendars page in Studio, under Events, lists the coming events that the Teletraan
+computer downloaded from BAND. It is a list to look at. The only thing you change
+here is whether one event shows on the TV.
 
 ## Reading the page
 
-- Top: one line of help under the heading. It reads: Hide this one, beside an
-  event, takes that one event off the screen. Hide all like this hides every
-  event with the same title in the same calendar. Both make a rule, and the
-  rules are listed under Calendar filters. To add a calendar, ask a coach to
-  add its address on the Teletraan computer.
-- Left: a button for each row of Dashboard Settings, Calendars. It says the
-  calendar's name and code, its kind, whether the TV shows it, how many events it
-  has in the next 30 days and how many of those a rule hides, and when the computer
-  last downloaded it. A calendar that the computer has and Dashboard Settings has not
-  comes last. The TV shows none of it, so its kind says Not set.
-- Right: the calendar you picked. First the facts, then up to 40 events in date
-  order. Each event has its date, time and title as the TV writes them, and
-  SHOWN or HIDDEN. A hidden event also names the Calendar filter that hides it.
-  An event that lasts all day says All day. A calendar with more than 40 events
-  in the next 30 days says how many the list shows.
-- A red line is a problem. "Download failed, the server said no" usually means
-  BAND gave the calendar a new link: see docs/calendar-links.md, "Change a
-  link". The TV keeps the events of the last good download.
-- Nothing yet means the computer has not written the page's document. It writes it
-  after every calendar run, which is every 15 minutes, once it has a write
-  token (docs/rebuilding-the-computer.md, "Showing what the computer did in Studio").
-- Events not listed means the computer downloaded the calendar but did not list its
-  events. The right side says why. The usual reason is that Node is not
-  installed on the computer, see below.
+- Top: a line of help, and a note that the calendar links are secret and live on
+  the control page, Keys tab. They are not kept in Studio.
+- Below it: when the calendars were last downloaded ("Last downloaded 4 minutes
+  ago from 6 calendars"), and one line for each calendar. A calendar either works
+  or failed, and a failed one gives the reason in plain words. "Download failed,
+  the server said no" usually means BAND gave the calendar a new link: see
+  docs/calendar-links.md, "Change a link". The TV keeps the events of the last good
+  download.
+- If the Teletraan computer has no calendar links, a notice says: No calendars are
+  set up on the Teletraan computer. Add the links on the control page, Keys tab.
+  Nothing yet means the computer has not written the list. It writes it after every
+  calendar run, which is every 15 minutes. Events not listed means the computer
+  downloaded a calendar but did not list its events. The usual reason is that Node
+  is not installed on it, see below.
+- Filters: pick one calendar, type a word to search the title, the place or the
+  calendar, or turn on Hidden only to see what the TV does not show.
+- The events: grouped by day, with Today and Tomorrow first and then the date.
+  Each one has its time, title, place, calendar and, when the calendar has a kind,
+  a chip. No kind, no chip. The kind is set in Dashboard Settings, on the
+  Calendars tab. An event that lasts all day says All day.
+- Past events are never listed. An event that already ended earlier today is
+  listed in grey as Earlier today. An event that began on an earlier day and is
+  still on is listed under Today.
+- Rules: a section at the bottom that opens. It tells each Calendar filter in a
+  plain sentence, and has a link to Calendar filters, where the rules are edited.
 
-To rename a calendar, switch it off or set its kind, use Dashboard Settings,
-Calendars. To add a calendar, ask a coach to add its address on the Teletraan computer
-(docs/calendar-links.md).
+The list holds the next 40 events of each calendar, in the next 30 days.
 
-## The kind of a calendar
+## What an event says
 
-Each row and the facts say Kind: Meetings, Competitions, Outreach or Deadlines.
-The Events panel writes the kind as a small chip before each title. Dashboard
-Settings stores no kind until someone picks one, and the events of a calendar with
-no kind have no chip. The page says Kind: no chip for it, and so for a calendar
-that was saved as Other, the choice every calendar used to start with. A note
-under the heading says: Pick a kind to show a chip on each event from a calendar.
-Leave it blank for no chip. It also says to set the kind in Dashboard Settings, on
-the Calendars tab. The page never guesses a kind from the name of a calendar.
+- Shows on the TV: the TV shows it.
+- Hidden by you: you switched it off here.
+- Hidden, with "Hidden by the rule" and its name: a Calendar filter hides it. Open
+  Rules to read the rule.
+- The calendar is hidden: the calendar is switched off in Dashboard Settings, so
+  the TV shows none of it. Switch the calendar on there.
+- Earlier today: it is over. There is nothing to change.
 
-## Hide an event from the page
+## The Show and Hide switch
 
-Each event that the TV shows has two buttons:
+Each event has a switch. On means the TV shows it. Click it to hide that one event.
+Click it again, or click Undo, to show it again.
 
-- Hide this one hides events with this title in this calendar on this day. A
-  second meeting with the same title on the same day goes with it.
-- Hide all like this hides every event in this calendar with this title, on every
-  day. It asks first, in words, and has Hide and Cancel.
-
-A button makes a rule under Calendar filters, and the TV reads it within a few
-seconds. The event says HIDDEN at once, before the Teletraan computer lists it again. A hidden
-event that a button hid has Show again, which deletes the rule. An event that a
-rule from Calendar filters hides names that rule and says to change it there,
-because the page does not touch rules it did not make.
+- A click does not reach the TV at once. It makes a draft. The page then says:
+  Click Publish all to apply. The TV changes when you click Publish all in the
+  top bar, like every other change in Studio.
+- The switch works on one event only. A meeting that repeats every week keeps its
+  other days. To hide every Monday, make a rule under Calendar filters
+  (docs/hide-a-repeating-meeting.md).
+- To show an event that a rule hides, switch it on. The page makes a rule that
+  shows that one event, and the Always show rule wins as always.
+- A hidden calendar and an event that is over have a switch that is off.
 
 How the rule is made:
 
-- Its id starts with `calendarFilter-hide-` and ends with a short code made from
-  the calendar, the title words and the day, or the word all. Pressing a button
-  twice therefore makes one rule.
-- Its name is `Hide: ` with the title and the day, or `Hide all: ` with the
-  title, cut to 40 characters. The word it looks for is the first 30 characters of
-  the title.
-- It is published, so Publish all has nothing to do for it. It is listed under
-  Calendar filters, where it can be edited, switched off or deleted
-  (docs/calendar-filters.md).
+- It is a Calendar filter with Applies to set to One event. It holds the calendar
+  code, the exact title and the exact start of the event, and nothing else.
+- Its id starts with `calendarFilter-one-` and its name starts with `One event`.
+  The same event always makes the same id, so a second click makes no second rule.
+- It stops by itself a day after the event ends (Hide after). It then does nothing
+  but stays in the list under Calendar filters until someone deletes it.
+- Undo withdraws it. A rule that was never published is deleted. A rule that was
+  published is turned off by a draft, which also needs Publish all.
 
-Some events have no button. An event with the title No title has none, because
-there is nothing to look for. An event from a list that was written before the
-computer listed days only has Hide all like this, and says so. A calendar whose code is
-longer than 20 characters has none, because Calendar filters refuses such a code.
+Some events have a switch that is off. An older list, written before the computer
+added the start of each event, cannot be switched until the computer runs again.
+If the switch does nothing at all, a red line at the bottom of the window gives the
+reason. "Studio refused the change" means the account may not edit Calendar
+filters. Ask a coach.
 
-When the TV still shows an event, check the rule under Calendar filters: an Always
-show rule wins over a Hide rule. If a button fails, the page shows one red line
-with the reason at the bottom of the window and changes nothing. "Studio
-refused the change" means the account may not edit Calendar filters. Ask a
-coach.
+To rename a calendar, switch it off or set its kind, use Dashboard Settings,
+Calendars. To add a calendar, ask a coach to add its link on the control page, Keys
+tab (docs/calendar-links.md).
 
 ## What the Teletraan computer does
 
@@ -100,7 +95,8 @@ the page is for.
    filters from Sanity the way the TV does and works out repeating events with
    the dashboard's own calendar code, so the list is what the TV does. Each event
    has its day like 2026-10-12, the first day of the event in the time zone of the
-   TV. The Hide this one button uses it.
+   TV, its place, and its exact start and end. The switch matches an event by its
+   start.
 3. `status-write.sh calendar-status` sends the file to Sanity as the document
    `calendar-status`. It needs `SANITY_WRITE_TOKEN` in `local.env` and does
    nothing without it.
@@ -138,14 +134,14 @@ these on the Teletraan computer and open the page again:
 ## Who can read it
 
 The dataset is public. The TV reads it without a login, and so can anyone who
-knows the project ID. The document `calendar-status` holds the titles, dates and
-times of the next 40 events of every calendar, and that includes the events that
+knows the project ID. The document `calendar-status` holds the titles, places, dates
+and times of the next 40 events of every calendar, and that includes the events that
 a Calendar filter hides from the TV. Anyone who asks the dataset for it can read
-them. It holds no calendar address, no token and no event location. Do not put
-anything in the title of a BAND event that must stay private.
+them. It holds no calendar address and no token. Do not put anything in the title
+or the place of a BAND event that must stay private.
 
-A rule that a button makes holds the first 30 characters of the title, and it is
-in the same public dataset.
+A one event rule holds the title and the start of its event, and it is in the same
+public dataset.
 
 The document is kept below 90000 bytes. If the titles are so long that 40 events
 of each calendar do not fit, the Teletraan computer lists fewer events of each calendar, and the
@@ -164,8 +160,13 @@ and ask a coach to delete the document `calendar-status` from the dataset.
 - `dashboard/package.json`: tells Node that the dashboard files are modules.
 - `studio/schemas/calendarStatus.js`: the document, kept out of the sidebar and
   the New menu.
-- `studio/inputs/calendars-view.js` draws the page. `studio/inputs/calendars-view-parts.js` has
-  its words, its rows, and the functions that make, read and delete the rules.
-- `tests/calendar-status.test.mjs`, `tests/calendars-view.test.mjs`,
-  `tests/calendars-hide.test.mjs`, `tests/calendar-node.test.mjs` and
-  `tests/schemas.test.mjs`: the tests.
+- `studio/inputs/calendars-view.js` draws the page. `studio/inputs/calendars-list-parts.js`
+  has its words, the rows, the states and the functions that make and withdraw the
+  draft rules.
+- `studio/schemas/calendarFilter.js`: the fields of a one event rule (scope,
+  eventCalendar, eventTitle, eventStart). `dashboard/core/events.js` reads them.
+- `tests/calendars-list.test.mjs`, `tests/calendar-one-event.test.mjs`,
+  `tests/calendar-status.test.mjs`, `tests/calendar-node.test.mjs` and
+  `tests/schemas.test.mjs`: the tests. `studio/inputs/calendars-view-parts.js` and
+  `calendars-hide-rules.js` hold the older Hide buttons, which the page no longer
+  uses. Rules they made, named Hide: or Hide all:, still work and show under Rules.

@@ -343,6 +343,18 @@ test('with Node the document lists the next events of each calendar, SHOWN or HI
   assert.equal(outreach.occurrences.find(event => event.title === 'Open house').time, '', 'an event that lasts all day has no time');
 });
 
+test('each listed event has the exact start and end, which a one event rule on the Calendars page matches', () => {
+  const place = setup('moments', { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|\n' });
+  assert.equal(place.run('calendar-status.sh').status, 0);
+
+  const [group] = place.document().calendars;
+  group.occurrences.forEach(event => {
+    assert.match(event.start, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    assert.match(event.end, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    assert.ok(Date.parse(event.end) >= Date.parse(event.start));
+  });
+});
+
 test('the document has only fields the Studio schema has, and a key on every calendar and every event', () => {
   const place = setup('schema', { localEnv: secretEnv, files: goodFiles, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|download failed, the server took too long to answer\nnew||no address set yet\n' });
   assert.equal(place.run('calendar-status.sh').status, 0);
@@ -399,7 +411,7 @@ test('each listed event has its day like 2026-10-09, the first day in the time z
   const [group] = place.document().calendars;
   group.occurrences.forEach(event => {
     assert.match(event.day, /^\d{4}-\d{2}-\d{2}$/);
-    assert.deepEqual(Object.keys(event), ['_key', 'title', 'date', 'day', 'time', 'shown', 'rule']);
+    assert.deepEqual(Object.keys(event), ['_key', 'title', 'date', 'day', 'time', 'shown', 'rule', 'start', 'end']);
   });
   const kickoff = group.occurrences.find(event => event.title === 'Pre-Season Kickoff');
   assert.equal(kickoff.day, noon(1).toISOString().slice(0, 10), 'noon in UTC is the early morning in New York, on the same date');
@@ -679,7 +691,7 @@ test('the installers say when Node is missing, and the note does not stop them',
 
 test('the docs say the titles are readable by anyone who asks the dataset, even the ones a rule hides, and how to turn the event lists on', () => {
   const page = fs.readFileSync(path.join(repo, 'docs/calendars-page.md'), 'utf8').replace(/\s+/g, ' ');
-  ['The dataset is public', 'anyone who knows the project ID', 'titles, dates and times', 'a Calendar filter hides', 'Anyone who asks the dataset', 'no calendar address, no token', 'sudo apt install nodejs', 'ExecStopPost', 'Nothing yet', 'Events not listed'].forEach(words => {
+  ['The dataset is public', 'anyone who knows the project ID', 'titles, places, dates and times', 'a Calendar filter hides', 'Anyone who asks the dataset', 'no calendar address and no token', 'sudo apt install nodejs', 'ExecStopPost', 'Nothing yet', 'Events not listed'].forEach(words => {
     assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words);
   });
 
