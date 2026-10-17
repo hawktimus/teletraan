@@ -478,7 +478,8 @@ const notInSidebar = {
   calendarStatus: 'the Teletraan computer writes it, and the Calendars page shows it',
   frcStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
   mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
-  milestone: 'the Teletraan computer writes it, and the Monday Boards page opens it as its second list, Milestones',
+  milestone: 'the Teletraan computer writes it, and the Milestones tab of the Monday page lists it',
+  task: 'the Teletraan computer writes it, and the Items tab of the Monday page lists it with the Show on TV switch. The old lists open from its Old manual tasks link',
 };
 
 // The sidebar titles that people look for by name
@@ -510,7 +511,7 @@ const typeTitles = {
 const sidebarGroups = [
   'Start here',
   'SCREEN: Rotation, Views, Themes and backgrounds, Subthemes, Announcements, Extra panels',
-  'TASKS: Daily Agenda, Monday Tasks, Monday Boards, Tips and News',
+  'TASKS: Daily Agenda, Monday, Tips and News',
   'EVENTS: Calendars, Calendar filters',
   'PEOPLE: Leadership, Team leads, Sponsors, Photos',
   'COACHES ONLY: Dashboard Settings, Teams, Look, Old screens (not used)',
@@ -520,7 +521,6 @@ const sidebarGroups = [
 const folderLines = {
   'Views': 'Robotics, Prime, Nova',
   'Daily Agenda': 'Agenda items, Presentations (Upcoming, Past), Meeting days',
-  'Monday Tasks': 'On the TV, Hidden',
   'Old screens (not used)': 'The wall does not play these. They are kept so nothing is lost., Original, Cybertron, Minimal, Condensed',
 };
 
@@ -1981,7 +1981,7 @@ function checkStartHere() {
   const what = wordsIn(block('what'));
   need(problems, /Teletraan I/.test(what) && /Publish all is the last step/.test(what), 'the first block should say what Teletraan I is and that Publish all is the last step of every change');
   const steps = block('steps') ? nodesWhere(block('steps'), node => node.type === 'li').map(wordsIn) : [];
-  need(problems, steps.length === 3 && /Daily Agenda/.test(steps[0]) && /Tasks/.test(steps[0]) && /Publish all/.test(steps[2]), 'the steps should be three lines: open Daily Agenda or Tasks, make the change, click Publish all');
+  need(problems, steps.length === 3 && /Daily Agenda/.test(steps[0]) && /Tasks/i.test(steps[0]) && /Publish all/.test(steps[2]), 'the steps should be three lines: open Daily Agenda or Tasks, make the change, click Publish all');
   need(problems, /Draft/.test(wordsIn(block('steps'))) && /Published/.test(wordsIn(block('steps'))), 'the steps block should have the sentence about Draft and Published');
   need(problems, /Coaches only/.test(wordsIn(block('coaches'))) && /coach/.test(wordsIn(block('coaches'))), 'the last block should say that anything under Coaches only is for a coach');
 
@@ -2491,7 +2491,7 @@ function checkSidebarGroups(problems) {
   const shape = sidebarShape(entries);
   need(problems, shape.join('\n') === sidebarGroups.join('\n'), 'the sidebar should read, with a heading and then its lines:\n    ' + sidebarGroups.join('\n    ') + '\nstructure.js has:\n    ' + shape.join('\n    '));
 
-  // Views, Daily Agenda, Monday Tasks and Old screens are the folders, and Presentations is the one folder inside a folder.
+  // Views, Daily Agenda and Old screens are the folders, and Presentations is the one folder inside a folder.
   // A heading is a divider, not a folder.
   const folders = entries.filter(entry => entry.kind === 'group');
   need(problems, folders.map(entry => entry.title).join() === Object.keys(folderLines).join(), 'The only folders in the sidebar should be ' + Object.keys(folderLines).join(' and ') + ', and the headings should be dividers with a title. The folders are: ' + (folders.map(entry => entry.title).join() || 'none'));
@@ -2500,7 +2500,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Views, Daily Agenda, Presentations inside it, Monday Tasks and Old screens (not used)');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Views, Daily Agenda, Presentations inside it and Old screens (not used)');
 
   ['Start here', 'Calendars'].forEach(title => {
     const entry = entries.filter(item => item.title === title)[0];
@@ -4249,9 +4249,9 @@ const settingsTabs = {
   countdown: ['countdown'],
   calendars: ['calendars', 'groupEventsByKind'],
   presentations: presentationNames.concat('presentationTestRequest'),
-  monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'],
+  monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   competition: ['frcConnection', 'competitionMode'].concat(competitionNames),
-  advanced: nightNames.concat(hiddenNames, ['contentSource', 'showConnectionStatus', 'rotationRows']),
+  advanced: nightNames.concat(hiddenNames, ['contentSource', 'showConnectionStatus', 'rotationRows', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {
@@ -4863,10 +4863,12 @@ function checkBoardTasks() {
   need(problems, input.ShowOnTvInput({ value: true, readOnly: true, onChange: () => {} }).children[0].props.disabled === true, 'the box should be disabled when the field is read only');
 
   // Monday Tasks: two lists in order, no plus button, no template, and no New menu offers a task
-  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Tasks')[0];
-  if (!folder || folder.kind !== 'group') return problems.concat('the Monday Tasks line of the sidebar should be a folder');
-  need(problems, folder.entries.map(entry => entry.title).join() === 'On the TV,Hidden', 'the Monday Tasks folder should hold On the TV and Hidden, in that order');
-  need(problems, folder.add === undefined, 'the Monday Tasks folder should have no plus button');
+  // The folder is no line of the sidebar now: the Old manual tasks link on the Items tab of the Monday page opens it
+  const folder = world.structure.oldTasksFolder;
+  if (!folder || folder.kind !== 'group') return problems.concat('structure.js should export oldTasksFolder, the folder of the two old lists of tasks');
+  need(problems, folder.entries.map(entry => entry.title).join() === 'On the TV,Hidden', 'the old tasks folder should hold On the TV and Hidden, in that order');
+  need(problems, folder.add === undefined, 'the old tasks folder should have no plus button');
+  need(problems, !world.structure.sidebarEntries.some(entry => entry.title === 'Monday Tasks' || entry.title === 'Monday Boards'), 'the sidebar should have no Monday Tasks or Monday Boards line: the Monday line replaces both');
   folder.entries.forEach(entry => {
     need(problems, entry.type === 'task' && entry.sort.field === 'mondayBoardName' && entry.sort.direction === 'asc' && entry.thenBy && entry.thenBy.field === '_createdAt' && entry.thenBy.direction === 'asc', entry.title + ' should list tasks by the name of their board, then the oldest first');
     need(problems, Array.isArray(entry.add) && entry.add.length === 0, entry.title + ' should have no plus button: its add should be an empty list');
@@ -4926,8 +4928,6 @@ const listAdds = {
   Upcoming: 'newPresentation',
   Past: 'newPresentation',
   'Meeting days': 'newPresentationDay',
-  'On the TV': '',
-  Hidden: '',
   'Tips and News': 'newTip',
   'Calendar filters': 'newCalendarFilter',
   Leadership: 'newPerson',
@@ -5674,7 +5674,7 @@ function checkTeamTrim() {
 // task board and the milestones board, the owner switch and the older board rows, which are hidden. The names and the
 // starting values are the ones in dashboard/config.js and at the top of computer/scripts/monday-sync.sh. The boards and the
 // columns are picked from lists that the Teletraan computer fills in (monday-pickers.js).
-const mondayTabNames = ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'];
+const mondayTabNames = ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'];
 const taskBlockNames = ['boardId', 'departmentColumn', 'statusColumn', 'teamColumn', 'priorityColumn', 'showColumn', 'assignedColumn', 'pocColumn', 'timelineColumn', 'hoursColumn', 'completedColumn', 'milestoneColumn', 'teamLabels', 'statusIndexes', 'priorityIndexes', 'hideLabel', 'departmentLabels'];
 const milestoneBlockNames = ['boardId', 'dateColumn', 'teamColumn', 'departmentColumn', 'statusColumn', 'teamLabels', 'statusIndexes', 'departmentLabels'];
 const mondayEntryNames = ['boardId', 'team', 'statusFrom', 'statusColumn', 'backlogLabel', 'progressLabel', 'doneLabel', 'priorityColumn', 'priorityHigh', 'priorityMedium', 'priorityLow', 'dueColumn', 'ownerColumn', 'teamColumn'];
@@ -5709,8 +5709,8 @@ function checkMondayTab() {
   // The two blocks: the fields, in order, and the starting values equal the ones in defaultSettings
   const task = at('mondayTaskBoard');
   const milestones = at('mondayMilestoneBoard');
-  need(problems, task && task.type === 'object' && task.group === 'monday' && task.title === 'Task board' && namesOf(task) === taskBlockNames.join(), 'mondayTaskBoard should be a block titled Task board with these fields, in this order: ' + taskBlockNames.join(', '));
-  need(problems, milestones && milestones.type === 'object' && milestones.group === 'monday' && milestones.title === 'Milestones board' && namesOf(milestones) === milestoneBlockNames.join(), 'mondayMilestoneBoard should be a block titled Milestones board with these fields, in this order: ' + milestoneBlockNames.join(', '));
+  need(problems, task && task.type === 'object' && task.group === 'advanced' && task.title === 'Task board' && namesOf(task) === taskBlockNames.join(), 'mondayTaskBoard should be a block titled Task board with these fields, in this order: ' + taskBlockNames.join(', '));
+  need(problems, milestones && milestones.type === 'object' && milestones.group === 'advanced' && milestones.title === 'Milestones board' && namesOf(milestones) === milestoneBlockNames.join(), 'mondayMilestoneBoard should be a block titled Milestones board with these fields, in this order: ' + milestoneBlockNames.join(', '));
   need(problems, task && sameData(task.initialValue, config.defaultSettings.mondayTaskBoard), 'the Task board block starts as ' + JSON.stringify(task && task.initialValue) + ' but config.js says ' + JSON.stringify(config.defaultSettings.mondayTaskBoard));
   need(problems, milestones && sameData(milestones.initialValue, config.defaultSettings.mondayMilestoneBoard), 'the Milestones board block starts as ' + JSON.stringify(milestones && milestones.initialValue) + ' but config.js says ' + JSON.stringify(config.defaultSettings.mondayMilestoneBoard));
   need(problems, task && !constraintNamed(rulesOf(task), 'required') && milestones && !constraintNamed(rulesOf(milestones), 'required'), 'the two blocks should not be required: a page saved before they existed must still publish');
@@ -6164,17 +6164,17 @@ function checkMondayBoardsPage() {
   const problems = [];
   const parts = world.mondayBoardsParts;
   const view = world.mondayBoardsView;
-  const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Boards')[0];
+  const line = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday')[0];
   const now = new Date('2026-10-09T15:00:00.000Z');
   const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
 
-  need(problems, line && line.kind === 'component' && line.component === world.previewPanelsView.MondayBoardsTabs && typeof line.children === 'function', 'the Monday Boards line of the sidebar should open MondayBoardsTabs (the Boards tab is MondayBoardsView) and give it the function that builds the tasks of a board');
+  need(problems, line && line.kind === 'component' && line.component === world.mondayPage.MondayPage && typeof line.children === 'function', 'the Monday line of the sidebar should open MondayPage (monday-page.js) and give it the function that builds what its links open');
   need(problems, typeof view.boardsPage === 'function' && typeof parts.readBoardsPage === 'function', 'the Monday Boards files should export boardsPage and readBoardsPage');
 
   // Choose boards goes to the board rows, which sit on the Monday tab
   const rows = fieldAt('dashboardSettings.mondayTaskBoard');
   need(problems, parts.chooseTarget.id === 'dashboardSettings' && parts.chooseTarget.type === 'dashboardSettings' && parts.chooseTarget.path === 'mondayTaskBoard', 'Choose boards should open the field mondayTaskBoard of the document dashboardSettings');
-  need(problems, rows && rows.group === 'monday', 'the field mondayTaskBoard should be on the Monday tab, because Choose boards opens it');
+  need(problems, rows && rows.group === 'advanced', 'the field mondayTaskBoard should be on the Advanced tab, because Choose boards opens it');
 
   const status = {
     lastSyncAt: ago(3),
@@ -6236,7 +6236,7 @@ function checkMondayBoardsPage() {
   [parts.helpLine, parts.nothingYet, parts.noBoardsLine, parts.openLine, parts.publicLine, parts.unreadableLine, parts.settingsUnreadableLine, parts.milestonesLine].forEach(text => checkPlainSentences(problems, 'the Monday Boards page ("' + text.slice(0, 30) + '")', text));
 
   // A board of the page opens its tasks in the same two lists as Monday Tasks, kept to that board
-  const built = world.structure.structure(fakeBuilder()).made.items.map(item => item.made).filter(item => item.title === 'Monday Boards')[0];
+  const built = world.structure.structure(fakeBuilder()).made.items.map(item => item.made).filter(item => item.title === 'Monday')[0];
   const resolver = built && built.child && built.child.made && built.child.made.child;
   if (typeof resolver !== 'function') return problems.concat('the Monday Boards page should be given a function that builds the tasks of a board');
 
@@ -6244,10 +6244,14 @@ function checkMondayBoardsPage() {
   const milestonePane = resolver(parts.milestonesChild, {}).made;
   need(problems, milestonePane.type === 'milestone' && milestonePane.title === 'Milestones' && sameData(milestonePane.defaultOrdering, [{ field: 'targetDate', direction: 'asc' }]) && Array.isArray(milestonePane.initialValueTemplates) && milestonePane.initialValueTemplates.length === 0, 'the second list under Monday Boards should list milestones by target date, with no plus button');
 
+  // the Old manual tasks link of the Monday page opens the two old lists of every task
+  const oldPane = resolver(world.mondayPage.oldTasksChild, {}).made;
+  need(problems, oldPane.id === 'mondayTasks' && (oldPane.items || []).map(item => item.made.title).join() === 'On the TV,Hidden', 'the Old manual tasks link should open the two old lists, On the TV and Hidden');
+
   const opened = resolver('111', {}).made;
   const lists = (opened.items || []).map(item => item.made);
   need(problems, lists.map(item => item.title).join() === 'On the TV,Hidden', 'a board should open two lists, On the TV and Hidden. It opens: ' + lists.map(item => item.title).join());
-  const folder = world.structure.sidebarEntries.filter(entry => entry.title === 'Monday Tasks')[0];
+  const folder = world.structure.oldTasksFolder;
   lists.forEach((item, index) => {
     const list = item.child && item.child.made;
     const want = folder.entries[index];
@@ -7267,6 +7271,7 @@ async function main() {
     world.mondayBoardsParts = await load(path.join(folder, 'inputs', 'monday-boards-parts.js'));
     world.mondayBoardsView = await load(path.join(folder, 'inputs', 'monday-boards-view.js'));
     world.previewPanelsView = await load(path.join(folder, 'inputs', 'preview-panels-view.js'));
+    world.mondayPage = await load(path.join(folder, 'inputs', 'monday-page.js'));
     world.mondayBoardsViewSource = readModule(path.join(here, 'inputs', 'monday-boards-view.js'), 'utf8');
     world.mondayBoardsPartsSource = readModule(path.join(here, 'inputs', 'monday-boards-parts.js'), 'utf8');
     world.calendarStatusScript = readModule(path.join(here, '..', 'computer', 'scripts', 'calendar-status.sh'), 'utf8');

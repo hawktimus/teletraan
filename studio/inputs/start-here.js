@@ -122,7 +122,7 @@ function threeSteps() {
     h(
       'ol',
       { style: styles.steps },
-      h('li', null, 'Open Daily Agenda or Monday Tasks.'),
+      h('li', null, 'Open Daily Agenda or Monday, both under TASKS.'),
       h('li', null, 'Make the change.'),
       h('li', null, 'Click Publish all in the top bar.')
     ),
