@@ -7,7 +7,7 @@
 
 import { api, confirmed, showResult } from './api.js';
 import {
-  followFor, framesPerSecond, mirrorFrameWait, mirrorLive, mirrorPictureAddress, mirrorWords,
+  followFor, framesPerSecond, mirrorFrameWait, mirrorLive, mirrorPictureAddress, mirrorWords, pictureErrorLine, pictureFacts,
   previewAutoLoads, previewHeight, previewScale, previewWidth, wallReport,
 } from './render.js';
 
@@ -28,6 +28,9 @@ export function wirePreview(root) {
   const line = root.querySelector('[data-preview-line]');
   const followNote = root.querySelector('[data-preview-follow-note]');
   const modeLine = root.querySelector('[data-preview-mode]');
+  const factsLine = root.querySelector('[data-preview-facts]');
+  const errorLine = root.querySelector('[data-preview-error]');
+  const openLink = root.querySelector('[data-preview-open]');
   const blackBox = root.querySelector('[data-preview-black]');
   const restart = root.querySelector('[data-preview-restart]');
   // screen.width keeps a phone narrow even when a wide page makes the browser widen its layout
@@ -42,7 +45,6 @@ export function wirePreview(root) {
   let held = '';
   // The mirror
   let picture = null;
-  let pictureUrl = '';
   let renew = null;
   let drawn = [];
   let pictureMode = 'screencast';
@@ -105,13 +107,41 @@ export function wirePreview(root) {
     follow(mine);
   }
 
-  // The mirror: one request in flight at a time. The counter is read, and when it moved the new picture is fetched and
-  // swapped in. Before the first picture the loop gives up after the wait and the still copy takes over.
+  // Loads one picture the way the page shows it, and gives the image when the browser could draw it
+  function loadPicture(address) {
+    return new Promise(resolve => {
+      const test = new Image();
+      test.onload = () => resolve(test.naturalWidth > 0 ? test : null);
+      test.onerror = () => resolve(null);
+      test.src = address;
+    });
+  }
+  function sizeOf(address) {
+    try {
+      const found = performance.getEntriesByName(new URL(address, window.location.href).href);
+      const last = found[found.length - 1];
+      return last ? (last.encodedBodySize || last.decodedBodySize || 0) : 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+  async function showError(address) {
+    let status = 0;
+    try { status = (await fetch(address, { method: 'HEAD', cache: 'no-store' })).status; } catch (error) { status = 0; }
+    errorLine.textContent = pictureErrorLine(status);
+    errorLine.hidden = false;
+    openLink.hidden = false;
+  }
+
+  // The mirror: one request in flight at a time. The counter is read, and when it moved the new picture is loaded and
+  // swapped in. Only a picture that the browser loaded counts as a frame shown. Before the first picture the loop gives
+  // up after the wait and the still copy takes over, unless the pictures fail to load, which is told in red.
   async function mirrorLoop(mine) {
     const began = Date.now();
     let seen = '';
     let first = false;
     let lastGood = began;
+    let failing = false;
     while (mine === run) {
       let counter = '';
       try {
@@ -122,38 +152,32 @@ export function wirePreview(root) {
       }
       if (mine !== run) return;
       if (counter !== '' && counter !== seen) {
-        try {
-          const answer = await fetch(mirrorPictureAddress(counter), { cache: 'no-store' });
-          if (answer.ok) {
-            const blob = await answer.blob();
-            if (mine !== run) return;
-            seen = counter;
-            lastGood = Date.now();
-            if (!picture) {
-              picture = document.createElement('img');
-              picture.alt = 'The TV, live';
-              picture.draggable = false;
-              box.append(picture);
-              first = true;
-              mirrorLine(0);
-              draw();
-            }
-            const url = URL.createObjectURL(blob);
-            picture.src = url;
-            if (pictureUrl) URL.revokeObjectURL(pictureUrl);
-            pictureUrl = url;
-            const now = Date.now();
-            drawn.push(now);
-            drawn = drawn.filter(time => now - time <= 3000);
-            mirrorLine(framesPerSecond(drawn, now));
-            continue;
-          }
-        } catch (error) {
-          // a picture that did not arrive is tried again with the next counter
+        const address = mirrorPictureAddress(counter);
+        const loaded = await loadPicture(address);
+        if (mine !== run) return;
+        seen = counter;
+        if (loaded) {
+          failing = false;
+          errorLine.hidden = true;
+          openLink.hidden = true;
+          lastGood = Date.now();
+          loaded.alt = 'The TV, live';
+          loaded.draggable = false;
+          box.append(loaded);
+          if (picture) picture.remove();
+          picture = loaded;
+          if (!first) { first = true; mirrorLine(0); draw(); }
+          factsLine.textContent = pictureFacts(sizeOf(address), loaded.naturalWidth, loaded.naturalHeight);
+          const now = Date.now();
+          drawn.push(now);
+          drawn = drawn.filter(time => now - time <= 3000);
+          mirrorLine(framesPerSecond(drawn, now));
+          continue;
         }
+        if (!failing) { failing = true; await showError(address); if (mine !== run) return; }
       }
       // No picture at the start, or the counter gone after the service stopped: the still copy takes over
-      if (Date.now() - lastGood > mirrorFrameWait && (counter === '' || !first)) {
+      if (!failing && Date.now() - lastGood > mirrorFrameWait && (counter === '' || !first)) {
         startCopy(mirrorWords.failed, mine);
         return;
       }
@@ -168,8 +192,10 @@ export function wirePreview(root) {
     black = false;
     pictureMode = 'screencast';
     blackBox.hidden = true;
+    errorLine.hidden = true;
+    openLink.hidden = true;
+    factsLine.textContent = '';
     if (picture) { picture.removeAttribute('src'); picture.remove(); picture = null; }
-    if (pictureUrl) { URL.revokeObjectURL(pictureUrl); pictureUrl = ''; }
     drawn = [];
   }
 

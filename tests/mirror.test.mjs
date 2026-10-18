@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
 import * as route from '../control/routes/mirror.js';
 import { makeWorld } from './helpers/control-world.mjs';
-import { framesPerSecond, mirrorLive, mirrorPictureAddress, mirrorWords, previewCardHtml } from '../control/static/tabs/render.js';
+import { framesPerSecond, mirrorLive, mirrorPictureAddress, mirrorWords, pictureErrorLine, pictureFacts, previewCardHtml } from '../control/static/tabs/render.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(repo + name, 'utf8');
@@ -418,6 +418,13 @@ test('the card words: live with a rate, the two fallbacks, the picture address a
   assert.equal(framesPerSecond([1000, 1100, 1200, 1300, 1400], 1500), 10);
   assert.equal(framesPerSecond([1000], 1500), 0);
   assert.equal(framesPerSecond([100, 200], 9000), 0, 'old draws do not count');
+  assert.equal(pictureFacts(39321, 960, 540), 'Last picture: 38.4 KB, 960 by 540 pixels');
+  assert.equal(pictureFacts(0, 960, 540), 'Last picture: 960 by 540 pixels');
+  assert.equal(pictureFacts(100, 0, 0), '');
+  assert.equal(pictureErrorLine(403), 'The picture could not be loaded: the server answered 403. See the Log tab.');
+  assert.equal(pictureErrorLine(0), 'The picture could not be loaded: the server did not answer. See the Log tab.');
+  const card = previewCardHtml();
+  assert.ok(card.includes('data-preview-error') && card.includes('Open the picture in a new tab') && card.includes('href="/mirror/frame.jpg"') && card.includes('data-preview-facts'));
   assert.ok(previewCardHtml().includes('data-preview-mode') && !previewCardHtml().includes('<img'));
 });
 
@@ -425,7 +432,9 @@ test('the page: one request in flight, renews every 30 seconds, gives up after 1
   const text = read('control/static/tabs/preview.js');
   assert.ok(text.includes('const watchSeconds = 30') && text.includes("api('POST', '/mirror/watch', {})"));
   assert.ok(text.includes("fetch('/mirror/frame.n', { cache: 'no-store' })") && text.includes('mirrorPictureAddress(counter)'));
-  assert.equal(text.split("await fetch(").length - 1, 2, 'a counter read and a picture read, each awaited before the next');
+  assert.equal(text.split("await fetch(").length - 1, 2, 'a counter read and the HEAD after a failed picture, each awaited');
+  assert.ok(text.includes('await loadPicture(address)') && text.includes('test.naturalWidth > 0') && text.includes('test.onerror'), 'a frame counts only when the image loaded');
+  assert.ok(text.includes("method: 'HEAD'") && text.includes('pictureErrorLine(status)') && !text.includes('createObjectURL'));
   assert.ok(text.includes('mirrorFrameWait') && read('control/static/tabs/render.js').includes('export const mirrorFrameWait = 10000'));
   assert.ok(text.includes('if (!document.hidden)') && text.includes('document.addEventListener(\'visibilitychange\''));
   assert.ok(text.includes('URL.revokeObjectURL'));

@@ -133,6 +133,9 @@ export function previewCardHtml() {
     '<div class="preview" data-preview-box data-src="/dashboard/"><p class="preview-off" data-preview-off>The preview is off.</p></div>' +
     '<div class="buttons"><button type="button" class="act" data-preview-toggle aria-pressed="false">Show live preview</button></div>' +
     '<p class="note" data-preview-mode></p>' +
+    '<p class="note" data-preview-facts></p>' +
+    '<p class="note bad" data-preview-error hidden></p>' +
+    '<p class="note" data-preview-open hidden><a href="/mirror/frame.jpg" target="_blank" rel="noopener">Open the picture in a new tab</a></p>' +
     '<div class="buttons" data-preview-black hidden><button type="button" class="act" data-preview-restart>Restart screen</button></div>' +
     '<p class="note" data-preview-line hidden></p>' +
     '<p class="note" data-preview-follow-note hidden>' + esc(followNote) + '</p>');
@@ -161,6 +164,19 @@ export function framesPerSecond(times, now, windowMs = 3000) {
   if (recent.length < 2) return 0;
   const span = (recent[recent.length - 1] - recent[0]) / 1000;
   return span > 0 ? (recent.length - 1) / span : 0;
+}
+
+// The words under the picture, from what the browser really loaded
+export function pictureFacts(bytes, width, height) {
+  const size = Number.isFinite(bytes) && bytes > 0 ? (Math.round((bytes / 1024) * 10) / 10) + ' KB, ' : '';
+  if (!(width > 0) || !(height > 0)) return '';
+  return 'Last picture: ' + size + width + ' by ' + height + ' pixels';
+}
+
+// status is the number a HEAD of the same address answered, or 0 when nothing answered
+export function pictureErrorLine(status) {
+  const answer = Number(status) > 0 ? 'the server answered ' + Number(status) : 'the server did not answer';
+  return 'The picture could not be loaded: ' + answer + '. See the Log tab.';
 }
 
 export function mirrorPictureAddress(counter) {
