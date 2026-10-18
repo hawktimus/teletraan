@@ -28,11 +28,20 @@ What is exposed: the browser's debug port stays on 127.0.0.1 and nothing serves 
 
 The mirror is made at 960 by 540, JPEG quality 45, about 30 frames a second at most. The page shows fewer when the network is slow.
 
-A screencast can come out black on a kiosk browser that has no window manager. So after it connects, `mirror.py` asks the page to be active and in front (`Page.enable`, `Page.bringToFront`, focus emulation and an active lifecycle state) and then watches the frames. Three frames in a row under 3 KB (a black 960 by 540 picture is about 2 KB, a real dashboard frame tens of KB), or no frame at all in 5 seconds, switch it to screenshots, about 4 a second, and the journal gets one line: `mirror: screencast was black, using screenshots`. It writes `mirror/state.json` with `{"state": "ok", "mode": "screencast" or "screenshots", "fps": n}`, or `{"state": "black", ...}` when the screenshots are black too. `GET /control/api/mirror/status` gives it as `picture`, and the page asks every 5 seconds.
+A screencast can come out black on a kiosk browser that has no window manager, and the size of a frame cannot tell that for sure. So `mirror.py` asks the page to be active and in front (`Page.enable`, `Page.bringToFront`, focus emulation and an active lifecycle state) and then looks at the picture itself. At the start and every 30 seconds, never more often, it takes one small PNG of the page (a quarter of the size), decodes it with zlib and the PNG filters in plain Python, and checks about 400 pixels on a grid. If more than 99 percent of them are near black (every colour channel under 12) the picture is black. Then it tries the other way of making pictures (screencast or screenshots) and writes down which one gave a picture. Three frames in a row under 3 KB, or no frame at all in 5 seconds, still switch a screencast to screenshots, about 4 a second, and the journal gets one line: `mirror: screencast was black, using screenshots`.
 
-The line under the picture says which way it is made: `Live from the TV (screencast, 12 frames a second)` or `Live from the TV (screenshots, 4 a second)`. When the picture is black it says `The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.` and shows a Restart screen button, which asks first, like the one on the Status tab.
+It writes `mirror/state.json` with `state` (`ok` or `black`), `mode` (`screencast` or `screenshots`), `fps`, `bytes` and the pixel size of the last picture, `sampled` (true when a PNG was read) and `tried` (what each way gave). `GET /control/api/mirror/status` gives it as `picture`, and the page asks every 5 seconds.
 
-If the picture is black or missing, look at it without the page: open `http://<address>:3229/mirror/frame.jpg` while the Live preview is open, and run `journalctl -u teletraan-mirror` on the Teletraan computer.
+The page counts a frame only when the browser loaded the picture (the image fires load and has a width). The line under the picture says which way it is made: `Live from the TV (screencast, 12 frames a second)` or `Live from the TV (screenshots, 4 a second)`, and under it the size of the last picture, for example `Last picture: 38.4 KB, 960 by 540 pixels`.
+
+Two different things can go wrong, and the card says which:
+
+- Black: the picture loads but the browser on the TV draws nothing. The card says `The TV picture is black. The picture loads, but the browser on the TV is drawing nothing. Restart the screen.` and shows a Restart screen button, which asks first, like the one on the Status tab.
+- Cannot load: the picture does not arrive at all. The card shows a red line with the answer of the web server, for example `The picture could not be loaded: the server answered 403. See the Log tab.`, and a link `Open the picture in a new tab`. A 404 means the picture is not written, a 403 means the web server may not read the file.
+
+The mirror folder is made by the login user with mode 755 and its files are set to 644 after each write, so the web server (another user) can read them whatever the umask of the service is.
+
+If the picture is black or missing, look at it without the page. On the Teletraan computer run `ls -la /var/lib/teletraan/data/mirror/` and `curl -sI http://localhost:3229/mirror/frame.jpg`, and `journalctl -u teletraan-mirror`.
 
 ### The copy that follows the screen
 

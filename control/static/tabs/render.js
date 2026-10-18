@@ -146,7 +146,7 @@ export function previewCardHtml() {
 export const mirrorWords = {
   waiting: 'Starting the mirror.',
   failed: 'The mirror could not start. Showing the copy that follows the screen.',
-  black: 'The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.',
+  black: 'The TV picture is black. The picture loads, but the browser on the TV is drawing nothing. Restart the screen.',
   noPython: 'The mirror needs python3 on the computer. Showing the copy that follows the screen.',
 };
 

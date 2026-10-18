@@ -16,7 +16,8 @@ export function mirrorState(output) {
   return 'unknown';
 }
 
-// What mirror.py says about the pictures it writes (mirror/state.json): { state, mode, fps }, or null when there is no
+// What mirror.py says about the pictures it writes (mirror/state.json): { state, mode, fps, bytes, width, height,
+// sampled, tried }, where sampled means a PNG of the page was read for black, or null when there is no
 // file, it is not a plain answer, or it is older than 15 seconds (the script rewrites it every 2 seconds).
 export function pictureState(ctx, now = Date.now()) {
   const file = path.join(ctx.dataDir || '', 'mirror', 'state.json');
@@ -24,7 +25,15 @@ export function pictureState(ctx, now = Date.now()) {
     if (now - fs.statSync(file).mtimeMs > 15000) return null;
     const found = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (!['ok', 'black'].includes(found.state) || !['screencast', 'screenshots'].includes(found.mode)) return null;
-    return { state: found.state, mode: found.mode, fps: Number.isFinite(found.fps) ? found.fps : 0 };
+    const number = value => (Number.isFinite(value) && value >= 0 ? value : 0);
+    const tried = {};
+    for (const way of ['screencast', 'screenshots']) {
+      if (found.tried && ['ok', 'black'].includes(found.tried[way])) tried[way] = found.tried[way];
+    }
+    return {
+      state: found.state, mode: found.mode, fps: number(found.fps), bytes: number(found.bytes),
+      width: number(found.width), height: number(found.height), sampled: found.sampled === true, tried,
+    };
   } catch (error) {
     return null;
   }

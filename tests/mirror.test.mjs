@@ -584,7 +584,9 @@ test('GET /mirror/status adds what the script says about its pictures, and ignor
   fs.mkdirSync(folder, { recursive: true });
   assert.equal((await world.router.call('GET', '/mirror/status')).json.picture, null);
   fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'ok', mode: 'screenshots', fps: 4 }));
-  assert.deepEqual((await world.router.call('GET', '/mirror/status')).json.picture, { state: 'ok', mode: 'screenshots', fps: 4 });
+  assert.deepEqual((await world.router.call('GET', '/mirror/status')).json.picture, { state: 'ok', mode: 'screenshots', fps: 4, bytes: 0, width: 0, height: 0, sampled: false, tried: {} });
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'black', mode: 'screenshots', fps: 4, bytes: 5120, width: 960, height: 540, sampled: true, tried: { screencast: 'black', screenshots: 'black', other: 'x' } }));
+  assert.deepEqual((await world.router.call('GET', '/mirror/status')).json.picture, { state: 'black', mode: 'screenshots', fps: 4, bytes: 5120, width: 960, height: 540, sampled: true, tried: { screencast: 'black', screenshots: 'black' } });
   fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'black', mode: 'screenshots' }));
   assert.equal((await world.router.call('GET', '/mirror/status')).json.picture.state, 'black');
   fs.writeFileSync(path.join(folder, 'state.json'), '{"state": "wild"}');
@@ -598,7 +600,7 @@ test('GET /mirror/status adds what the script says about its pictures, and ignor
 test('the card words: live with a rate, the two fallbacks, the picture address and the rate from the draw times', () => {
   assert.equal(mirrorLive(14.26), 'Live from the TV (screencast, 14.3 frames a second)');
   assert.equal(mirrorLive(4, 'screenshots'), 'Live from the TV (screenshots, 4 a second)');
-  assert.equal(mirrorWords.black, 'The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.');
+  assert.equal(mirrorWords.black, 'The TV picture is black. The picture loads, but the browser on the TV is drawing nothing. Restart the screen.');
   assert.equal(mirrorLive(NaN), 'Live from the TV (screencast, 0 frames a second)');
   assert.equal(mirrorWords.failed, 'The mirror could not start. Showing the copy that follows the screen.');
   assert.ok(mirrorWords.noPython.startsWith('The mirror needs python3 on the computer.'));
