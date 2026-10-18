@@ -601,7 +601,8 @@ const standIns = {
   react: {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
     'index.js': [
-      'export const useState = value => [value, () => {}];',
+      // the preview buttons put their sentence in state, for their dialog: it is kept where the old toast was kept
+      "export const useState = value => [value, next => { if (typeof next === 'string' && next !== '') (globalThis.studioToasts = globalThis.studioToasts || []).push({ title: next }); }];",
       // a context holds its starting value, and a check can put the value a field should see in globalThis.studioContextValue
       "export const createContext = value => ({ current: value, Provider: 'ContextProvider' });",
       'export const useContext = context => (globalThis.studioContextValue === undefined ? context.current : globalThis.studioContextValue);',
@@ -1904,7 +1905,7 @@ function checkPreviewButtons() {
   const stampOf = (text, minutes, earlier, later) => /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(text) && Date.parse(text) >= Math.floor(earlier / 1000) * 1000 + minutes * 60000 && Date.parse(text) <= later + minutes * 60000;
   const names = buttons.map(button => button.action);
 
-  // A theme preview and a view preview write the shape the control page writes, 10 minutes ahead, then publish, and say so in a toast
+  // A theme preview and a view preview write the shape the control page writes, 10 minutes ahead, then publish, and say so in a dialog
   const lookButtons = [];
   looks.themePreviews.forEach(theme => lookButtons.push({ action: 'previewTheme' + theme.id.charAt(0).toUpperCase() + theme.id.slice(1), label: 'Preview theme: ' + theme.name, field: 'previewTheme', value: { theme: theme.id }, toast: 'The wall shows ' + theme.name + ' for 10 minutes' }));
   looks.viewPreviews.forEach(view => lookButtons.push({ action: 'previewView' + view.key.charAt(0).toUpperCase() + view.key.slice(1), label: 'Preview view: ' + view.name, field: 'showView', value: { key: view.key }, toast: 'The wall shows ' + view.name + ' for 10 minutes' }));

@@ -18,7 +18,7 @@
 // preview writes previewTheme or showView with an end time 10 minutes ahead, the same fields in the same shape
 // as the Now showing tab of the control page, so the screen has one way to read both
 // (dashboard/core/screen-requests.js). Back to the schedule clears them. The pack preview writes previewRequest
-// and the screen holds the pack for 2 minutes (docs/hidden-transitions.md). Each button says in a toast what
+// and the screen holds the pack for 2 minutes (docs/hidden-transitions.md). Each button says in a dialog what
 // the wall shows and for how long. The old Preview Prime, Nova, Cybertron and Minimal buttons are gone, because
 // a team or a style is not something the screen holds any more. Their fields stay in the document.
 //
@@ -31,7 +31,7 @@
 // It gives back a label and what to do when it is clicked.
 
 import { useDocumentOperation } from 'sanity';
-import { useToast } from '@sanity/ui';
+import { useState } from 'react';
 import { hiddenTransitions } from '../inputs/hidden-transitions.js';
 import { previews } from '../inputs/previews.js';
 import { previewMinutes, themePreviews, viewPreviews } from '../inputs/look-previews.js';
@@ -104,6 +104,16 @@ export function useRunPresentationTestAction(props) {
 // Studio and tests/schemas.test.mjs tell actions apart by this name
 useRunPresentationTestAction.action = 'runPresentationTest';
 
+// What each button tells the editor once it has sent its request: a plain dialog, so no extra package is needed.
+// The dialog is part of the action; closing it ends the action.
+function useNote(onComplete) {
+  const [text, setText] = useState('');
+  return {
+    show: setText,
+    dialog: text === '' ? null : { type: 'dialog', header: 'Sent', content: text, onClose: () => { setText(''); onComplete(); } },
+  };
+}
+
 // The pack preview, from previews.js. It is always allowed, so a second click starts it again. The screen only
 // starts a request that is a minute old at most and that it has not started before. Nothing is written to the
 // settings: the screen holds the pack in memory for 2 minutes.
@@ -112,16 +122,16 @@ function makePreviewAction(kind) {
 
   function usePreviewAction(props) {
     const { patch, publish } = useDocumentOperation(props.id, props.type);
-    const toast = useToast();
+    const note = useNote(props.onComplete);
 
     return {
       label: label,
       title: 'Show ' + kind.shows + ' on the screen for 2 minutes, then go back to the saved settings. No setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over.',
       disabled: Boolean(patch.disabled),
+      dialog: note.dialog,
       onHandle: () => {
         sendWithOperations(patch, publish, previewRequest(kind.id));
-        toast.push({ status: 'success', title: 'The wall shows ' + kind.shows + ' for 2 minutes' });
-        props.onComplete();
+        note.show('The wall shows ' + kind.shows + ' for 2 minutes');
       },
     };
   }
@@ -140,16 +150,16 @@ function makeLookAction(kind, noun, id, name, fields) {
 
   function useLookAction(props) {
     const { patch, publish } = useDocumentOperation(props.id, props.type);
-    const toast = useToast();
+    const note = useNote(props.onComplete);
 
     return {
       label: label,
       title: 'Show the ' + name + ' ' + noun + ' on the screen for ' + previewMinutes + ' minutes, then go back to the schedule. No saved setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over. Back to the schedule ends it at once.',
       disabled: Boolean(patch.disabled),
+      dialog: note.dialog,
       onHandle: () => {
         sendWithOperations(patch, publish, fields());
-        toast.push({ status: 'success', title: 'The wall shows ' + name + ' for ' + previewMinutes + ' minutes' });
-        props.onComplete();
+        note.show('The wall shows ' + name + ' for ' + previewMinutes + ' minutes');
       },
     };
   }
@@ -163,16 +173,16 @@ export const previewViewActions = viewPreviews.map(view => makeLookAction(view, 
 
 export function useBackToScheduleAction(props) {
   const { patch, publish } = useDocumentOperation(props.id, props.type);
-  const toast = useToast();
+  const note = useNote(props.onComplete);
 
   return {
     label: 'Back to the schedule',
     title: 'End every theme and view preview, and every hold from the control page, now. The screen goes back to its schedule within about 20 seconds.',
     disabled: Boolean(patch.disabled),
+    dialog: note.dialog,
     onHandle: () => {
       sendWithOperations(patch, publish, backToScheduleRequest());
-      toast.push({ status: 'success', title: 'The wall goes back to its schedule' });
-      props.onComplete();
+      note.show('The wall goes back to its schedule');
     },
   };
 }

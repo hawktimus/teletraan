@@ -326,7 +326,7 @@ The last buttons on Dashboard Settings are "Preview theme: Original", "Cybertron
 (`previewThemeActions`), "Preview view: Robotics", "Prime", "Nova" and "Condensed" (`previewViewActions`),
 "Preview next season pack" and "Back to the schedule" (`tools/actions.js`, from the lists in
 `inputs/look-previews.js` and `inputs/previews.js`). A theme or view button writes `previewTheme` or `showView`
-with an end time 10 minutes ahead, the same shape as the control page, and each shows a toast with the words
+with an end time 10 minutes ahead, the same shape as the control page, and each shows a dialog with the words
 "The wall shows Cybertron for 10 minutes". The pack button works as follows. Each sets `previewRequest` to its kind and the time now, and publishes. `previewRequest`
 is a hidden field in the Screen tab (`previewRequestField` in `schemas/settingsPreview.js`). The screen
 holds that team, style or seasonal pack for 2 minutes, for a request that is under a minute old, and then
