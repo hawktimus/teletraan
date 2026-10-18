@@ -476,7 +476,7 @@ test('the logic file imports nothing, so node can run it, and the tool file is p
 
   const toolSource = fs.readFileSync(path.join(studioFolder, 'tools', 'publish-all-tool.js'), 'utf8');
   const imported = (toolSource.match(/^import[\s\S]*?from '([^']+)';$/gm) || []).map(line => line.match(/from '([^']+)'/)[1]);
-  assert.deepEqual(imported.sort(), ['../structure.js', './publish-all.js', 'react', 'sanity']);
+  assert.deepEqual(imported.sort(), ['../structure.js', './publish-all.js', 'react', 'sanity', 'sanity/router']);
   const code = toolSource.replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
   assert.equal(/<\/?[A-Za-z][A-Za-z0-9.]*(\s[^<>]*)?\/?>/.test(code), false, 'publish-all-tool.js should have no JSX');
 });
@@ -486,6 +486,19 @@ test('the tool uses the Studio validation and one call for each document, and de
   assert.ok(toolSource.includes('validateDocument('), 'it should call the Studio validation');
   assert.ok(toolSource.includes('client.mutate(mutations)'), 'it should send each list of changes as one transaction');
   assert.equal(/\.delete\(|\.createOrReplace\(|\.transaction\(/.test(toolSource), false, 'writes are built in publish-all.js');
+});
+
+test('a summary with documents left over says so first and gives each one a link to open it', () => {
+  const item = { id: 'drafts.dashboardSettings', publishedId: 'dashboardSettings', typeName: 'dashboardSettings', typeTitle: 'Dashboard Settings', title: 'Dashboard Settings' };
+  const other = Object.assign({}, item, { id: 'drafts.screen-original', publishedId: 'screen-original', typeName: 'screen' });
+  const two = logic.buildSummary([{ item: item, status: 'skipped', reasons: ['a'] }, { item: other, status: 'skipped', reasons: ['b'] }]);
+  assert.equal(two.notice, '2 documents were not published. Open each one, fix the line shown, then try again.');
+  assert.deepEqual(two.skipped.map(line => [line.openId, line.typeName]), [['dashboardSettings', 'dashboardSettings'], ['screen-original', 'screen']]);
+  const one = logic.buildSummary([{ item: item, status: 'skipped', reasons: ['a'] }]);
+  assert.equal(one.notice, '1 document was not published. Open it, fix the line shown, then try again.');
+  assert.equal(logic.buildSummary([{ item: item, status: 'published' }]).notice, '');
+  const toolSource = fs.readFileSync(path.join(studioFolder, 'tools', 'publish-all-tool.js'), 'utf8');
+  assert.ok(toolSource.includes('IntentLink') && toolSource.includes('summary.notice'), 'the screen should show the notice and the links');
 });
 
 // Run them

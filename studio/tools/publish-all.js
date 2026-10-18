@@ -326,10 +326,10 @@ function countOf(number, word) {
 
 // The summary the tool shows at the end: three lists and one sentence
 export function buildSummary(results) {
-  const summary = { published: [], skipped: [], failed: [], headline: '' };
+  const summary = { published: [], skipped: [], failed: [], headline: '', notice: '' };
 
   results.forEach(result => {
-    const line = { id: result.item.id, label: labelOf(result.item) };
+    const line = { id: result.item.id, label: labelOf(result.item), openId: result.item.publishedId, typeName: result.item.typeName };
     if (result.status === 'published') {
       summary.published.push(line);
     } else if (result.status === 'skipped') {
@@ -348,5 +348,12 @@ export function buildSummary(results) {
   if (summary.skipped.length > 0) parts.push(summary.skipped.length + ' skipped.');
   if (summary.failed.length > 0) parts.push(summary.failed.length + ' failed.');
   summary.headline = parts.join(' ');
+
+  const left = summary.skipped.length + summary.failed.length;
+  if (left > 0) {
+    summary.notice = left === 1
+      ? '1 document was not published. Open it, fix the line shown, then try again.'
+      : left + ' documents were not published. Open each one, fix the line shown, then try again.';
+  }
   return summary;
 }

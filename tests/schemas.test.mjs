@@ -228,10 +228,10 @@ const contract = {
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
     competitionPreviewRequest: object({ requestedAt: 'datetime' }),
-    holdPanel: object({ panel: text(60), until: 'datetime' }),
-    showView: object({ key: 'string', until: 'datetime' }),
-    previewTheme: object({ theme: 'string', until: 'datetime' }),
-    pauseRotation: object({ until: 'datetime' }),
+    holdPanel: object({ panel: text(60), until: 'plainString' }),
+    showView: object({ key: 'plainString', until: 'plainString' }),
+    previewTheme: object({ theme: 'plainString', until: 'plainString' }),
+    pauseRotation: object({ until: 'plainString' }),
     countdown: object({ kickoffLabel: titleOfClock, kickoff: 'datetime', rolloutLabel: titleOfClock, rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ order: rows(panelStep), grid1: rows(olderStep), grid2: rows(olderStep), tickerSeconds: number(6, 120) }),
@@ -6295,7 +6295,7 @@ function checkScreenType() {
   const departmentField = fieldAt('screen.mainRows.department');
   need(problems, departmentField && departmentField.type === 'string' && departmentField.components && departmentField.components.input === world.screenFields.RowDepartmentInput && typeof departmentField.hidden === 'function' && departmentField.hidden({ parent: { panel: 'monday-tasks' } }) === false && departmentField.hidden({ parent: { panel: 'monday-board' } }) === true && departmentField.hidden({ parent: { panel: 'photo' } }) === true, 'the department of a row should be drawn by RowDepartmentInput and shown for the Monday tasks panel only');
   const panelRules = rulesOf(fieldAt('screen.mainRows.panel'));
-  need(problems, constraintNamed(panelRules, 'required') && messageAfter(panelRules, 'required') === 'Pick a panel.', 'the panel of a row should be required, with the message Pick a panel.');
+  need(problems, !constraintNamed(panelRules, 'required'), 'the panel of a row of an old Screen should not be required: a row with no panel is ignored, and a rule would stop Publish all');
   need(problems, fieldAt('screen.mainRows.team') && fieldAt('screen.mainRows.team').components && fieldAt('screen.mainRows.team').components.input === world.screenFields.RowTeamInput, 'the team of a row should be drawn by RowTeamInput (screen-fields.js)');
   const secondsRules = rulesOf(fieldAt('screen.mainRows.seconds'));
   need(problems, constraintNamed(secondsRules, 'integer') && constraintNamed(secondsRules, 'min').args[0] === 6 && constraintNamed(secondsRules, 'max').args[0] === 120 && !constraintNamed(secondsRules, 'required'), 'the seconds of a row should be a whole number from 6 to 120, and optional');
