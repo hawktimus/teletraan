@@ -22,6 +22,8 @@ export const looks = {
   retro: { theme: 'retro', view: 'general' },
   bar: { theme: 'original', view: 'prime' },
   retroBar: { theme: 'retro', view: 'prime' },
+  foundry: { theme: 'foundry', view: 'general' },
+  'foundry-bar': { theme: 'foundry', view: 'prime' },
 };
 
 function holdLook(content, look) {

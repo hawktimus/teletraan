@@ -32,6 +32,18 @@ The numbers are in core/reform-plan.js (`reformTimes`) and nothing else writes t
 
 Every part moves by transform or opacity, on one clock: all of them are started with the same start time, so a part that is made late starts part way through and a test that sets the time sets it everywhere. The squares are made while they are hidden and are shown shortly before the turn, a few in a frame, so that no frame has to draw them all at once. The flat copies are the only parts that fade, and each fades for a moment only.
 
+## The Foundry kit
+
+styles/foundry/transitions.js is the Original kit with pieces added to every region, and styles/foundry/reform-kit.css draws them. The straps are blued steel with a hazard stripe, whatever the metal of the team is, and the chassis behind the squares is a steel floor with hazard stripes.
+
+- Deadbolts: three on the top edge, three on the bottom, two on each side. They pop in, are drawn back along the edge (0.10 to 0.41, the top and bottom one way and the sides the other, so the four edges turn like a pinwheel) before anything folds, wait, and are slammed home at the end (2.48 to 2.83). They are gone by 3.00.
+- Hand wheel at the top right of the region: spins open by one and a half turns (to 0.40) and shut again (2.50 to 3.00).
+- Rams on the corner diagonals, outside the corners: the rods push out 26 pixels while the frame is open (0.30 to 1.06 out, back by 2.61).
+- Two gauges at the bottom corners: the face stays and the needle sweeps across and back while the mechanism runs.
+- A jolt of the stage (a few pixels, translate only) when the bolts first break (0.10) and again when they lock (2.83).
+
+A thin strip (the banner and the ticker) keeps the deadbolts and the wheel and has no rams or gauges. The kit uses two optional hooks of core/reform-draw.js: `kit.extras(region, tracks, strip)` gives the element with its parts and their tracks, and `kit.jolt()` returns the stops of a transform that shakes the layers. The deadbolts and the wheel are not on the Foundry frame at rest (core/theme-art.js draws a bolt flange, gears and pistons), so they appear with the transition. The panel transition has about 265 elements with an animation of their own in Foundry (245 in Original) and the view transition about 606 (545).
+
 ## The hawk
 
 The view transition draws the hawk on its own, at the size of the logo on the screen, as the four plates of core/logo.js (`hawkPieces`), each with the colors of the team it was on the front and the colors of the team it becomes on the back. It uses the robot of the logo: the wings swing down into legs and the body and the head lift (0.80 to 1.15), every plate turns over on its own hinge (to 1.45), the robot rides across to the new place of the logo, and stands up as the other hawk (by 2.05). A back face turns on the same point as its plate.

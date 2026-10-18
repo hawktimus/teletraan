@@ -189,6 +189,8 @@ export function drawRun(regions, cover, kit) {
   });
 
   const covers = make('reform-covers');
+  // a kit may shake the stage (kit.jolt(), the stops of a transform)
+  if (kit.jolt) [back, covers, front].forEach(layer => tracks.add(layer, 'transform', kit.jolt()));
   const coverOld = make('reform-cover reform-old', box(cover.from));
   const coverNew = make('reform-cover reform-new', box(cover.to));
   // the old frames, until the edges that fold have covered them (the view transition, whose old page is a copy)

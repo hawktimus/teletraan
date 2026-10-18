@@ -27,7 +27,7 @@ const allowedProperties = ['transform', 'opacity'];
 // ms and none over 100 ms (tests/motion/README.md, "Where a rule is looser than the order").
 // Each theme has one scene of each kind, and the name of every rule says the theme. A theme that has its own kit
 // (styles/<theme>/transitions.js) is drawn in its own look: the bar look of a theme is the Prime view of that theme.
-const looksOf = { original: { panel: 'original', view: 'bar' }, cybertron: { panel: 'cybertron', view: 'cybertronBar' }, retro: { panel: 'retro', view: 'retroBar' } };
+const looksOf = { original: { panel: 'original', view: 'bar' }, cybertron: { panel: 'cybertron', view: 'cybertronBar' }, retro: { panel: 'retro', view: 'retroBar' }, foundry: { panel: 'foundry', view: 'foundry-bar' } };
 const scenes = {};
 Object.keys(looksOf).forEach(theme => {
   scenes[theme + ' panel'] = { play: 'reform-panel', options: {}, look: looksOf[theme].panel, name: 'the ' + theme + ' panel transition', late: 0, longest: frameLimitMs };
