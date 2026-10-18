@@ -56,7 +56,8 @@ function burstMarkup() {
   return '<svg viewBox="-40 -40 80 80">' + rays + '</svg>';
 }
 
-const sparkleMarkup = '<svg viewBox="-20 -20 40 40"><polygon class="rr-ink rr-line" points="0,-18 4,-4 18,0 4,4 0,18 -4,4 -18,0 -4,-4"/><polygon class="rr-pop" points="0,-18 4,-4 18,0 4,4 0,18 -4,4 -18,0 -4,-4"/></svg>';
+const sparklePoints = '0,-18 4,-4 18,0 4,4 0,18 -4,4 -18,0 -4,-4';
+const sparkleMarkup = '<svg viewBox="-20 -20 40 40"><polygon class="rr-ink rr-line" points="' + sparklePoints + '"/><polygon class="rr-pop" points="' + sparklePoints + '"/></svg>';
 
 function part(className, rect, markup = '') {
   const element = document.createElement('div');

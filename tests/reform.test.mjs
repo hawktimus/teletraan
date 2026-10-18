@@ -237,11 +237,12 @@ await test('every theme has a kit that draws the hardware, the Original kit draw
   const original = await import(pathToFileURL(path.join(dashboard, 'styles', 'original', 'transitions.js')).href);
   ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth'].forEach(role => assert.ok(original.kit.draw(role).includes('<svg'), role));
   assert.equal(original.kit.draw('chassis'), '', 'the chassis is drawn by the stylesheet');
-  for (const id of ['retro', 'foundry']) {
+  for (const id of ['foundry']) {
     const text = read('styles/' + id + '/transitions.js');
     assert.ok(text.includes("from '../original/transitions.js'") && text.includes("id: '" + id + "'"), id);
   }
-  // Cybertron has a kit of its own (tests/reform-cybertron.test.mjs)
+  // Cybertron and Retro have a kit of their own (tests/reform-cybertron.test.mjs, tests/reform-retro.test.mjs)
+  assert.ok(!read('styles/retro/transitions.js').includes("from '../original/transitions.js'"), 'retro');
   assert.ok(!read('styles/cybertron/transitions.js').includes("from '../original/transitions.js'"), 'cybertron');
 });
 
