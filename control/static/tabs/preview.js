@@ -5,7 +5,7 @@
 // Nothing loads by itself under 900 px wide: a phone taps Show live preview. Everything stops when the tab changes or
 // the page goes to the background.
 
-import { api } from './api.js';
+import { api, confirmed, showResult } from './api.js';
 import {
   followFor, framesPerSecond, mirrorFrameWait, mirrorLive, mirrorPictureAddress, mirrorWords,
   previewAutoLoads, previewHeight, previewScale, previewWidth, wallReport,
@@ -17,6 +17,8 @@ const followSeconds = 5;
 const watchSeconds = 30;
 // The wait between two looks at the counter when no new picture is there
 const counterMilliseconds = 100;
+// How often the page asks the computer how the pictures are made (screencast, screenshots or black)
+const stateSeconds = 5;
 
 // Returns a function that removes it and its listeners.
 export function wirePreview(root) {
@@ -26,6 +28,8 @@ export function wirePreview(root) {
   const line = root.querySelector('[data-preview-line]');
   const followNote = root.querySelector('[data-preview-follow-note]');
   const modeLine = root.querySelector('[data-preview-mode]');
+  const blackBox = root.querySelector('[data-preview-black]');
+  const restart = root.querySelector('[data-preview-restart]');
   // screen.width keeps a phone narrow even when a wide page makes the browser widen its layout
   const wide = () => previewAutoLoads(Math.min(window.innerWidth, window.screen && window.screen.width ? window.screen.width : window.innerWidth));
   let wanted = wide();
@@ -41,11 +45,27 @@ export function wirePreview(root) {
   let pictureUrl = '';
   let renew = null;
   let drawn = [];
+  let pictureMode = 'screencast';
+  let black = false;
+  let stateTimer = null;
 
   const fit = () => { if (frame) frame.style.transform = 'scale(' + previewScale(box.clientWidth) + ')'; };
   let watcher = null;
   if (typeof ResizeObserver === 'function') { watcher = new ResizeObserver(fit); watcher.observe(box); }
   else window.addEventListener('resize', fit);
+
+  // The line under the box for the mirror: the way the pictures are made and the rate, or the black message
+  function mirrorLine(fps) {
+    blackBox.hidden = !black;
+    modeLine.textContent = black ? mirrorWords.black : mirrorLive(fps, pictureMode);
+  }
+  async function askState(mine) {
+    const answer = await api('GET', '/mirror/status');
+    if (mine !== run || !answer.ok || !answer.data || !answer.data.picture) return;
+    pictureMode = answer.data.picture.mode;
+    black = answer.data.picture.state === 'black';
+    mirrorLine(framesPerSecond(drawn, Date.now()));
+  }
 
   function draw() {
     off.hidden = Boolean(frame || picture);
@@ -115,7 +135,7 @@ export function wirePreview(root) {
               picture.draggable = false;
               box.append(picture);
               first = true;
-              modeLine.textContent = mirrorLive(0);
+              mirrorLine(0);
               draw();
             }
             const url = URL.createObjectURL(blob);
@@ -125,7 +145,7 @@ export function wirePreview(root) {
             const now = Date.now();
             drawn.push(now);
             drawn = drawn.filter(time => now - time <= 3000);
-            modeLine.textContent = mirrorLive(framesPerSecond(drawn, now));
+            mirrorLine(framesPerSecond(drawn, now));
             continue;
           }
         } catch (error) {
@@ -144,6 +164,10 @@ export function wirePreview(root) {
     line.hidden = true;
     followNote.hidden = true;
     if (renew !== null) { clearInterval(renew); renew = null; }
+    if (stateTimer !== null) { clearInterval(stateTimer); stateTimer = null; }
+    black = false;
+    pictureMode = 'screencast';
+    blackBox.hidden = true;
     if (picture) { picture.removeAttribute('src'); picture.remove(); picture = null; }
     if (pictureUrl) { URL.revokeObjectURL(pictureUrl); pictureUrl = ''; }
     drawn = [];
@@ -157,6 +181,7 @@ export function wirePreview(root) {
     if (state === 'no-python3') { startCopy(mirrorWords.noPython, mine); return; }
     if (!answer.ok) { startCopy(mirrorWords.failed, mine); return; }
     renew = setInterval(() => { if (!document.hidden) api('POST', '/mirror/watch', {}); }, watchSeconds * 1000);
+    stateTimer = setInterval(() => { if (!document.hidden) askState(mine); }, stateSeconds * 1000);
     mirrorLoop(mine);
   }
 
@@ -178,6 +203,12 @@ export function wirePreview(root) {
     off.textContent = 'The preview is off.';
     draw();
   }
+
+  confirmed(restart, 10, 'Restarting the screen', async () => {
+    showResult(restart, 'working', 'Restarting the screen.');
+    const result = await api('POST', '/helper/restart-kiosk', { confirmed: true });
+    showResult(restart, result.ok ? 'done' : 'bad', result.ok ? 'The screen is restarting.' : (result.error || 'The restart did not start.'));
+  });
 
   toggle.addEventListener('click', () => {
     wanted = !active;

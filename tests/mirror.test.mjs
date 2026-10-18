@@ -389,9 +389,29 @@ test('the route gives no-python3 and stopped, and a plain sentence when the help
   assert.equal(route.mirrorState('nonsense'), 'unknown');
 });
 
+test('GET /mirror/status adds what the script says about its pictures, and ignores a stale or odd file', async () => {
+  const world = await makeWorld([route]);
+  world.ctx.helper = async () => 'mirror: running';
+  const folder = path.join(world.dataDir, 'mirror');
+  fs.mkdirSync(folder, { recursive: true });
+  assert.equal((await world.router.call('GET', '/mirror/status')).json.picture, null);
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'ok', mode: 'screenshots', fps: 4 }));
+  assert.deepEqual((await world.router.call('GET', '/mirror/status')).json.picture, { state: 'ok', mode: 'screenshots', fps: 4 });
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'black', mode: 'screenshots' }));
+  assert.equal((await world.router.call('GET', '/mirror/status')).json.picture.state, 'black');
+  fs.writeFileSync(path.join(folder, 'state.json'), '{"state": "wild"}');
+  assert.equal((await world.router.call('GET', '/mirror/status')).json.picture, null);
+  const old = new Date(Date.now() - 60000);
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'ok', mode: 'screencast', fps: 12 }));
+  fs.utimesSync(path.join(folder, 'state.json'), old, old);
+  assert.equal(route.pictureState(world.ctx), null, 'older than 15 seconds');
+});
+
 test('the card words: live with a rate, the two fallbacks, the picture address and the rate from the draw times', () => {
-  assert.equal(mirrorLive(14.26), 'Live from the TV, 14.3 frames a second');
-  assert.equal(mirrorLive(NaN), 'Live from the TV, 0 frames a second');
+  assert.equal(mirrorLive(14.26), 'Live from the TV (screencast, 14.3 frames a second)');
+  assert.equal(mirrorLive(4, 'screenshots'), 'Live from the TV (screenshots, 4 a second)');
+  assert.equal(mirrorWords.black, 'The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.');
+  assert.equal(mirrorLive(NaN), 'Live from the TV (screencast, 0 frames a second)');
   assert.equal(mirrorWords.failed, 'The mirror could not start. Showing the copy that follows the screen.');
   assert.ok(mirrorWords.noPython.startsWith('The mirror needs python3 on the computer.'));
   assert.equal(mirrorPictureAddress(' 42 '), '/mirror/frame.jpg?n=42');
@@ -409,6 +429,7 @@ test('the page: one request in flight, renews every 30 seconds, gives up after 1
   assert.ok(text.includes('mirrorFrameWait') && read('control/static/tabs/render.js').includes('export const mirrorFrameWait = 10000'));
   assert.ok(text.includes('if (!document.hidden)') && text.includes('document.addEventListener(\'visibilitychange\''));
   assert.ok(text.includes('URL.revokeObjectURL'));
+  assert.ok(text.includes("api('GET', '/mirror/status')") && text.includes("'/helper/restart-kiosk'") && text.includes('mirrorWords.black'), 'the black message has a Restart screen button');
   assert.ok(text.includes('let wanted = wide();') && text.includes('if (wanted) load(); else unload();'), 'a phone loads only on the tap');
 });
 

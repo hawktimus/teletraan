@@ -133,6 +133,7 @@ export function previewCardHtml() {
     '<div class="preview" data-preview-box data-src="/dashboard/"><p class="preview-off" data-preview-off>The preview is off.</p></div>' +
     '<div class="buttons"><button type="button" class="act" data-preview-toggle aria-pressed="false">Show live preview</button></div>' +
     '<p class="note" data-preview-mode></p>' +
+    '<div class="buttons" data-preview-black hidden><button type="button" class="act" data-preview-restart>Restart screen</button></div>' +
     '<p class="note" data-preview-line hidden></p>' +
     '<p class="note" data-preview-follow-note hidden>' + esc(followNote) + '</p>');
 }
@@ -142,14 +143,16 @@ export function previewCardHtml() {
 export const mirrorWords = {
   waiting: 'Starting the mirror.',
   failed: 'The mirror could not start. Showing the copy that follows the screen.',
+  black: 'The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.',
   noPython: 'The mirror needs python3 on the computer. Showing the copy that follows the screen.',
 };
 
 export const mirrorFrameWait = 10000;
 
-export function mirrorLive(fps) {
+export function mirrorLive(fps, mode = 'screencast') {
   const number = Number.isFinite(fps) && fps > 0 ? Math.round(fps * 10) / 10 : 0;
-  return 'Live from the TV, ' + number + ' frames a second';
+  if (mode === 'screenshots') return 'Live from the TV (screenshots, ' + number + ' a second)';
+  return 'Live from the TV (screencast, ' + number + ' frames a second)';
 }
 
 // times are the millisecond clock readings of the frames drawn; only the last windowMs count
