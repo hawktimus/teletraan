@@ -179,6 +179,9 @@ export function drawRun(regions, cover, kit) {
     drawn.push({ region: region, squares: squares });
   });
 
+  // a kit may add parts of its own and change the tracks above (styles/retro/transitions.js)
+  if (typeof kit.extras === 'function') kit.extras({ tracks: tracks, back: back, front: front, regions: regions });
+
   const covers = make('reform-covers');
   const coverOld = make('reform-cover reform-old', box(cover.from));
   const coverNew = make('reform-cover reform-new', box(cover.to));

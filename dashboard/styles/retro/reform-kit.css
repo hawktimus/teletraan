@@ -1,0 +1,81 @@
+/* The Retro kit of the reform transitions (styles/retro/transitions.js, core/reform-draw.js): comic hardware with a thick ink
+   line, a halftone chassis, speed lines, a star flash, action lines and sparkles. Every rule starts with the theme, so no other
+   theme sees it. Colors are the --retro-* tokens. Nothing here moves: the moves are animations of transform and opacity. */
+
+/* a part is nothing until its animation starts, so the layer never shows hardware at rest while the page is being copied */
+html[data-style="retro"] .reform-part,
+html[data-style="retro"] .reform-chain {
+  transform: scale(0);
+}
+
+/* the chassis: a sheet of dots over a dark ground (a halftone) */
+html[data-style="retro"] .reform-chassis {
+  background-color: var(--retro-ground);
+  background-image: radial-gradient(circle at 10px 10px, var(--retro-dots) 0 6px, transparent 6.5px);
+  background-size: 20px 20px;
+}
+
+/* the folding edges: flat color with an ink line, and a pop colored pin at the knuckle */
+html[data-style="retro"] .reform-seg {
+  background-color: var(--retro-pop);
+  background-image: radial-gradient(circle at calc(100% - 7px) 50%, var(--retro-ink) 0 3px, var(--retro-paper) 3px 6px, transparent 6px);
+  box-shadow: inset 0 0 0 3px var(--retro-ink);
+}
+html[data-style="retro"] .reform-chain-h .reform-seg[style*="right:"] {
+  background-image: radial-gradient(circle at 7px 50%, var(--retro-ink) 0 3px, var(--retro-paper) 3px 6px, transparent 6px);
+}
+html[data-style="retro"] .reform-chain-v .reform-seg {
+  background-image: radial-gradient(circle at 50% calc(100% - 7px), var(--retro-ink) 0 3px, var(--retro-paper) 3px 6px, transparent 6px);
+}
+html[data-style="retro"] .reform-chain-v .reform-seg[style*="bottom:"] {
+  background-image: radial-gradient(circle at 50% 7px, var(--retro-ink) 0 3px, var(--retro-paper) 3px 6px, transparent 6px);
+}
+
+/* the drawing of the hardware */
+html[data-style="retro"] .rr-ink { fill: var(--retro-ink); }
+html[data-style="retro"] .rr-pop { fill: var(--retro-pop); }
+html[data-style="retro"] .rr-paper { fill: var(--retro-paper); }
+html[data-style="retro"] .rr-line {
+  stroke: var(--retro-ink);
+  stroke-width: 10px;
+  stroke-linejoin: round;
+}
+html[data-style="retro"] .rr-ray-ink {
+  fill: none;
+  stroke: var(--retro-ink);
+  stroke-width: 7px;
+  stroke-linecap: round;
+}
+html[data-style="retro"] .rr-ray-paper {
+  fill: none;
+  stroke: var(--retro-paper);
+  stroke-width: 3px;
+  stroke-linecap: round;
+}
+
+/* the parts that only this kit has */
+.rr-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+html[data-style="retro"] .rr-part {
+  position: absolute;
+  transform: scale(0);
+  transform-origin: 50% 50%;
+}
+html[data-style="retro"] .rr-part > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+html[data-style="retro"] .rr-speed {
+  box-sizing: border-box;
+  background: var(--retro-paper);
+  border: 3px solid var(--retro-ink);
+  border-radius: 6px;
+  transform: scaleX(0);
+}

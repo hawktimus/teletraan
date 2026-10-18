@@ -1,4 +1,4 @@
-// The panel transition (reform) and the view transition (reformView), in the Original theme (docs/transitions.md). One scene of
+// The panel transition (reform) and the view transition (reformView), in the Original theme and in Retro (docs/transitions.md). One scene of
 // each kind is played at 1920 x 1080 and the rules read it:
 //
 //   - the frames: requestAnimationFrame is recorded over the whole run with the CPU at normal speed, and a frame longer than
@@ -28,6 +28,8 @@ const allowedProperties = ['transform', 'opacity'];
 const scenes = {
   panel: { play: 'reform-panel', options: {}, look: 'original', name: 'the panel transition', late: 0, longest: frameLimitMs },
   view: { play: 'reform-view', options: { view: 'nova' }, look: 'bar', name: 'the view transition', late: 1 / 7, longest: 100 },
+  'retro-panel': { play: 'reform-panel', options: {}, look: 'retro', name: 'the Retro panel transition', late: 0, longest: frameLimitMs },
+  'retro-view': { play: 'reform-view', options: { view: 'nova' }, look: 'retro-bar', name: 'the Retro view transition', late: 1 / 7, longest: 100 },
 };
 
 // In the page: the recorder of frames and the way to ask whether the run is on the screen
@@ -321,4 +323,4 @@ const hawkRule = {
   },
 };
 
-export const tests = rules('panel').concat(rules('view'), [hawkRule]);
+export const tests = rules('panel').concat(rules('view'), [hawkRule], rules('retro-panel'), rules('retro-view'));

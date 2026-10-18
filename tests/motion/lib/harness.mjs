@@ -19,6 +19,7 @@ export const looks = {
   cybertron: { theme: 'cybertron', view: 'general' },
   retro: { theme: 'retro', view: 'general' },
   bar: { theme: 'original', view: 'prime' },
+  'retro-bar': { theme: 'retro', view: 'prime' },
 };
 
 function holdLook(content, look) {

@@ -12,4 +12,11 @@ html[data-style="retro"] {
   --style-star: #ffffff;
   --style-burst-opacity: .035;
   --style-header-ink: var(--team-header-ink, #ffffff);
+
+  /* the transitions (reform-kit.css): the comic ink line, the pop color of the hardware and the dots of the halftone */
+  --retro-ink: #0a0a12;
+  --retro-pop: var(--team-accent, #faca2a);
+  --retro-paper: #ffffff;
+  --retro-dots: var(--team-plate, #3b2a7a);
+  --retro-ground: #120c33;
 }
