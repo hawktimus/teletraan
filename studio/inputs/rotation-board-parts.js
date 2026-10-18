@@ -6,7 +6,7 @@
 
 import { createElement } from 'react';
 import {
-  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, secondsOf, stripOf,
+  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
 
@@ -29,6 +29,7 @@ export const words = {
   stripHelp: 'The rows in order. A grey tile is a row that is switched off and is skipped. A view change is where the wall swaps view.',
   skipped: 'skipped',
   viewChange: 'view change',
+  skipHint: skipHint,
   small: 'Small panel',
   smallHelp: 'The small panel beside a Robotics row in the split layout. Empty follows the small panels of the view.',
 };
@@ -190,7 +191,8 @@ export function dataRow(item, count, state, actions) {
       h('div', { className: 'rb-cell', role: 'cell' }, h('input', { type: 'checkbox', checked: Boolean(state.selected[row._key]), style: styles.check, 'aria-label': 'Select row ' + (index + 1), onChange: event => actions.select(row._key, event.target.checked) })),
       cell('Position', 'number', String(index + 1)),
       cell('View', 'view', h('select', { value: row.view || '', style: styles.select, 'aria-label': 'View', onChange: event => actions.edit(index, 'view', event.target.value) }, viewOptions(row.view))),
-      cell('Panel', 'panel', h('select', { value: row.panel || '', style: styles.select, 'aria-label': 'Panel', onChange: event => actions.panel(index, event.target.value) }, groupedOptions(panelGroups, row.panel))),
+      cell('Panel', 'panel', h('select', { value: row.panel || '', style: styles.select, 'aria-label': 'Panel', onChange: event => actions.panel(index, event.target.value) }, groupedOptions(panelGroups, row.panel)),
+        state.skips && state.skips[row._key] ? h('span', { className: 'rb-help', 'data-skip': row._key }, state.skips[row._key]) : null),
       small
         ? cell(words.small, 'small', h('select', { value: row.side || '', style: styles.select, 'aria-label': words.small, onChange: event => actions.edit(index, 'side', event.target.value) }, groupedOptions(sidePanelGroups, row.side, 'Follows the view')))
         : h('div', { className: 'rb-cell', role: 'cell', 'data-cell': 'small' }),

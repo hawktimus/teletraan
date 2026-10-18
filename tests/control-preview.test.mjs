@@ -22,9 +22,16 @@ test('the card names /dashboard/ with no added parameter, holds no frame yet, an
   assert.ok(/<button[^>]*data-preview-toggle[^>]*>Show live preview<\/button>/.test(html));
   assert.ok(read('control/static/tabs/preview.js').includes('frame.width = previewWidth') && read('control/static/tabs/preview.js').includes('frame.height = previewHeight'));
   assert.ok(html.includes('A copy that follows the screen. It shows the same panel, team and theme as the TV, and changes when the TV changes, within about ten seconds. Animations and the exact moment can differ.'));
-  assert.ok(html.includes('The TV has not reported yet'));
+  assert.ok(!html.includes('The TV has not reported yet'), 'the sentence is written by the page, only in the copy mode');
   assert.ok(!html.includes('!'));
   assert.equal(previewWidth / previewHeight, 16 / 9);
+});
+
+test('the box fills the card at 16 by 9, black, with the picture contained', () => {
+  const css = read('control/static/tabs/tabs.css');
+  const box = css.split('\n').find(line => line.startsWith('.tab .preview {'));
+  assert.ok(box.includes('width: 100%') && box.includes('aspect-ratio: 16 / 9') && box.includes('background: #000') && !box.includes('max-width'));
+  assert.ok(css.split('\n').find(line => line.startsWith('.tab .preview img {')).includes('object-fit: contain'));
 });
 
 test('the scale is the width of the box over 1920, and a box with no width still gives a number', () => {

@@ -228,10 +228,10 @@ const contract = {
     previewRequest: object({ kind: 'string', requestedAt: 'datetime' }),
     nextLookRequest: object({ requestedAt: 'datetime' }),
     competitionPreviewRequest: object({ requestedAt: 'datetime' }),
-    holdPanel: object({ panel: text(60), until: 'datetime' }),
-    showView: object({ key: 'string', until: 'datetime' }),
-    previewTheme: object({ theme: 'string', until: 'datetime' }),
-    pauseRotation: object({ until: 'datetime' }),
+    holdPanel: object({ panel: text(60), until: 'plainString' }),
+    showView: object({ key: 'plainString', until: 'plainString' }),
+    previewTheme: object({ theme: 'plainString', until: 'plainString' }),
+    pauseRotation: object({ until: 'plainString' }),
     countdown: object({ kickoffLabel: titleOfClock, kickoff: 'datetime', rolloutLabel: titleOfClock, rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ order: rows(panelStep), grid1: rows(olderStep), grid2: rows(olderStep), tickerSeconds: number(6, 120) }),
@@ -4393,6 +4393,8 @@ function checkStatusBlock() {
 
   // The build on the wall: a hash and a date, or not yet
   need(problems, input.buildLine({ buildCommit: 'abc1234', buildDate: '2026-10-14' }) === 'On the wall: abc1234 · 2026-10-14', 'the build line should read On the wall: <hash> · <date>');
+  need(problems, input.buildLine({ buildVersion: 3, buildCommit: 'c387c90', buildDate: '2026-10-17' }) === 'On the wall: v3 · c387c90 · 2026-10-17', 'the build line should read On the wall: v<number> · <hash> · <date> when the build is a release');
+  need(problems, input.buildLine({ buildVersion: 'x', buildCommit: 'abc1234' }) === 'On the wall: abc1234' && fieldsIn(type || {}).some(field => field.name === 'buildVersion' && field.type === 'number' && !constraintNamed(constraintsOf(field), 'required')), 'the release number should be an optional number, and a bad one is left out of the line');
   need(problems, input.buildLine({ buildCommit: 'abc1234' }) === 'On the wall: abc1234' && input.buildLine(null) === 'On the wall: not yet' && input.buildLine({ buildCommit: 5 }) === 'On the wall: not yet', 'the build line should survive a missing date, a missing document and a bad value');
   need(problems, JSON.stringify(input.statusView({ doc: { buildCommit: 'abc1234', buildDate: '2026-10-14' }, unreadable: false }, new Date())).indexOf('On the wall: abc1234') !== -1, 'the block should show the build on the wall');
 
@@ -6295,7 +6297,7 @@ function checkScreenType() {
   const departmentField = fieldAt('screen.mainRows.department');
   need(problems, departmentField && departmentField.type === 'string' && departmentField.components && departmentField.components.input === world.screenFields.RowDepartmentInput && typeof departmentField.hidden === 'function' && departmentField.hidden({ parent: { panel: 'monday-tasks' } }) === false && departmentField.hidden({ parent: { panel: 'monday-board' } }) === true && departmentField.hidden({ parent: { panel: 'photo' } }) === true, 'the department of a row should be drawn by RowDepartmentInput and shown for the Monday tasks panel only');
   const panelRules = rulesOf(fieldAt('screen.mainRows.panel'));
-  need(problems, constraintNamed(panelRules, 'required') && messageAfter(panelRules, 'required') === 'Pick a panel.', 'the panel of a row should be required, with the message Pick a panel.');
+  need(problems, !constraintNamed(panelRules, 'required'), 'the panel of a row of an old Screen should not be required: a row with no panel is ignored, and a rule would stop Publish all');
   need(problems, fieldAt('screen.mainRows.team') && fieldAt('screen.mainRows.team').components && fieldAt('screen.mainRows.team').components.input === world.screenFields.RowTeamInput, 'the team of a row should be drawn by RowTeamInput (screen-fields.js)');
   const secondsRules = rulesOf(fieldAt('screen.mainRows.seconds'));
   need(problems, constraintNamed(secondsRules, 'integer') && constraintNamed(secondsRules, 'min').args[0] === 6 && constraintNamed(secondsRules, 'max').args[0] === 120 && !constraintNamed(secondsRules, 'required'), 'the seconds of a row should be a whole number from 6 to 120, and optional');

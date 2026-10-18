@@ -112,20 +112,19 @@ function grown(stops) {
   return [[0, 'scale(0) ' + first, easePop], [growMs, 'scale(1) ' + first]].concat(middle, [[reformTimes.totalMs - growMs, 'scale(1) ' + last, easePop], [reformTimes.totalMs, 'scale(0) ' + last]]);
 }
 
-// A kit may add pieces of its own to every region (kit.extras(rect, strip), the same shape as hardwareList). A piece with own set
-// has its own stops from nothing to nothing and is not grown here.
 function hardwareOf(from, to, tracks, kit, strip) {
   const layer = make('reform-hardware');
-  const extras = kit.extras ? kit.extras : () => [];
-  const there = hardwareList(to, strip).concat(extras(to, strip));
+  const there = hardwareList(to, strip);
 
-  hardwareList(from, strip).concat(extras(from, strip)).forEach((item, index) => {
+  hardwareList(from, strip).forEach((item, index) => {
     const target = there[index];
+    // a kit may move a piece its own way (stops), or leave it out (null)
+    const own = kit.hardware ? kit.hardware(item) : undefined;
+    if (own === null) return;
     const element = make('reform-part reform-' + item.role, box({ x: item.x - item.w / 2, y: item.y - item.h / 2, w: item.w, h: item.h }), kit.draw(item.role));
     if (item.axis) element.dataset.axis = item.axis;
     layer.appendChild(element);
-    const moved = movedStops(item.stops, { dx: round(target.x - item.x), dy: round(target.y - item.y) });
-    tracks.add(element, 'transform', item.own === true ? moved : grown(moved));
+    tracks.add(element, 'transform', grown(movedStops(own || item.stops, { dx: round(target.x - item.x), dy: round(target.y - item.y) })));
   });
   return layer;
 }
@@ -133,7 +132,7 @@ function hardwareOf(from, to, tracks, kit, strip) {
 
 // A run
 
-function squaresFor(region, tracks) {
+function squaresFor(region, tracks, kit) {
   const to = squaresOf(region.to, region.grid, region.seed);
   const from = squaresOf(region.from, region.grid, region.seed);
 
@@ -148,8 +147,10 @@ function squaresFor(region, tracks) {
 
     element.append(face, back, shade);
     element.hidden = true; // it is shown when it has its content (fillSquares), a few at a time
-    tracks.add(element, 'transform', squareStops(square, move));
-    tracks.add(shade, 'opacity', squareShadeStops(square));
+    // a kit may turn its squares its own way: { transform, shade } (styles/cybertron/transitions.js)
+    const own = kit.squares ? kit.squares(square, move) : null;
+    tracks.add(element, 'transform', own ? own.transform : squareStops(square, move));
+    tracks.add(shade, 'opacity', own ? own.shade : squareShadeStops(square));
     return { square: square, before: before, element: element, face: face, back: back };
   });
 }
@@ -172,7 +173,7 @@ export function drawRun(regions, cover, kit) {
     // behind the squares, and larger by the depth, so that it covers the window as the squares do
     const chassis = make('reform-chassis', box(wide) + 'transform-origin:' + px(cameraOrigin.x - wide.x) + ' ' + px(cameraOrigin.y - wide.y) + ';transform:translateZ(' + -chassisDepth + 'px) scale(' + round((1600 + chassisDepth) / 1600) + ');', kit.draw('chassis'));
     tracks.add(chassis, 'opacity', chassisStops());
-    const squares = squaresFor(region, tracks);
+    const squares = squaresFor(region, tracks, kit);
     const grid = make('reform-grid');
 
     squares.forEach(item => grid.appendChild(item.element));
@@ -180,6 +181,9 @@ export function drawRun(regions, cover, kit) {
     // a strip in the old place or in the new is a strip in both, so that the pieces of the two places match one by one
     const strip = isStrip(region.from) || isStrip(region.to);
     front.append(strapsOf(region.from, region.to, tracks, strip), hardwareOf(region.from, region.to, tracks, kit, strip));
+    // a kit may add parts of its own to a region: extras(region, tracks, strip) gives an element or null
+    const extra = kit.extras ? kit.extras(region, tracks, strip) : null;
+    if (extra) front.append(extra);
     drawn.push({ region: region, squares: squares });
   });
 

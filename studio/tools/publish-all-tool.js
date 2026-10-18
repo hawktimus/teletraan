@@ -10,6 +10,7 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { useClient, useCurrentUser, useSchema, useWorkspace, validateDocument } from 'sanity';
+import { IntentLink } from 'sanity/router';
 import { settingsType, settingsId, themeType, themeId, demoType, demoId } from '../structure.js';
 import {
   draftQuery,
@@ -118,10 +119,17 @@ function listOf(entries, show) {
   return h('ul', { style: styles.summaryList }, entries.map(entry => h('li', { key: entry.id }, show(entry))));
 }
 
+// The name of a document that was not published, as a link that opens it
+function openLink(entry) {
+  if (!entry.openId || !entry.typeName) return entry.label;
+  return h(IntentLink, { intent: 'edit', params: { id: entry.openId, type: entry.typeName } }, entry.label);
+}
+
 function summarySection(summary) {
   return h(
     'div',
     null,
+    summary.notice ? h('p', { role: 'alert', style: styles.error }, summary.notice) : null,
     h('h2', { style: styles.subheading }, summary.headline),
     summary.published.length > 0
       ? h('div', null, h('h3', { style: styles.subheading }, 'Published (' + summary.published.length + ')'), listOf(summary.published, entry => entry.label))
@@ -132,7 +140,7 @@ function summarySection(summary) {
           null,
           h('h3', { style: styles.subheading }, 'Skipped, still drafts (' + summary.skipped.length + ')'),
           listOf(summary.skipped, entry => [
-            entry.label,
+            openLink(entry),
             h('ul', { key: 'reasons', style: styles.reasons }, entry.reasons.map((reason, number) => h('li', { key: number }, reason))),
           ])
         )
@@ -142,7 +150,7 @@ function summarySection(summary) {
           'div',
           null,
           h('h3', { style: styles.subheading }, 'Failed, still drafts (' + summary.failed.length + ')'),
-          listOf(summary.failed, entry => [entry.label, h('div', { key: 'error', style: styles.reasons }, entry.error)])
+          listOf(summary.failed, entry => [openLink(entry), h('div', { key: 'error', style: styles.reasons }, entry.error)])
         )
       : null
   );

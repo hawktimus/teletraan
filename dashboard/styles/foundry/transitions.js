@@ -3,7 +3,7 @@
 // id of the theme.
 
 import { swapReform, swapShape, swapTimes } from '../../core/swap-plan.js';
-import { easePop } from '../../core/reform-plan.js';
+import { easePop, movedStops, reformTimes } from '../../core/reform-plan.js';
 import { kit as originalKit } from '../original/transitions.js';
 
 export const swapVariant = { name: 'pull-apart', times: swapTimes, reform: swapReform, shape: swapShape };
@@ -91,9 +91,40 @@ export function gaugesOf(rect) {
 
 // What a region gets that the Original kit does not give it. A thin strip (the banner and the ticker) has no room for the rams and
 // the gauges and keeps the deadbolts and the wheel.
-function extras(rect, strip) {
+export function partsOf(rect, strip) {
   const list = deadbolts(rect).concat([wheelOf(rect, strip)]);
   return strip ? list : list.concat(ramsOf(rect), gaugesOf(rect));
+}
+
+// The pieces that are not bolts come out of nothing as the transition starts and go back into nothing at the end, as the pieces of
+// the Original kit do (every transform gets scale(1) in front, so the track has the same functions all through)
+const growMs = 260;
+function grown(stops) {
+  const first = stops[0][1];
+  const last = stops[stops.length - 1][1];
+  const middle = stops.filter(stop => stop[0] > growMs && stop[0] < reformTimes.totalMs - growMs).map(stop => [stop[0], 'scale(1) ' + stop[1], stop[2]]);
+
+  return [[0, 'scale(0) ' + first, easePop], [growMs, 'scale(1) ' + first]].concat(middle, [[reformTimes.totalMs - growMs, 'scale(1) ' + last, easePop], [reformTimes.totalMs, 'scale(0) ' + last]]);
+}
+
+// The hook of core/reform-draw.js: one element with the parts of a region, and their tracks. A region that changes place (a view
+// transition) takes its parts along while its edges are folded.
+function extras(region, tracks, strip) {
+  const layer = document.createElement('div');
+  const there = partsOf(region.to, strip);
+  const round = value => Math.round(value * 100) / 100;
+
+  layer.className = 'reform-hardware';
+  partsOf(region.from, strip).forEach((item, index) => {
+    const element = document.createElement('div');
+    element.className = 'reform-part reform-' + item.role;
+    element.style.cssText = 'left:' + round(item.x - item.w / 2) + 'px;top:' + round(item.y - item.h / 2) + 'px;width:' + round(item.w) + 'px;height:' + round(item.h) + 'px;';
+    element.innerHTML = pieces[item.role];
+    layer.appendChild(element);
+    const moved = movedStops(item.stops, { dx: round(there[index].x - item.x), dy: round(there[index].y - item.y) });
+    tracks.add(element, 'transform', item.own === true ? moved : grown(moved));
+  });
+  return layer;
 }
 
 // The stage is shaken when the bolts first break and again when they lock: a few pixels, transform only
@@ -110,5 +141,6 @@ export const kit = Object.assign({}, originalKit, {
   id: 'foundry',
   draw: role => pieces[role] === undefined ? originalKit.draw(role) : pieces[role],
   extras: extras,
+  partsOf: partsOf,
   jolt: jolt,
 });

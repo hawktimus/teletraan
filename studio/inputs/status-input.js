@@ -35,13 +35,14 @@ export const statusLines = [
   { field: 'kioskStartedAt', label: 'Screen started' },
 ];
 
-// The build on the wall, from buildCommit and buildDate (the job version of status-write.sh)
+// The build on the wall, from buildVersion, buildCommit and buildDate (the job version of status-write.sh)
 export function buildLine(doc) {
   const source = doc && typeof doc === 'object' ? doc : {};
   const commit = typeof source.buildCommit === 'string' ? source.buildCommit.trim() : '';
   const built = typeof source.buildDate === 'string' ? source.buildDate.trim() : '';
   if (commit === '') return 'On the wall: not yet';
-  return 'On the wall: ' + commit + (built === '' ? '' : ' · ' + built);
+  const number = Number.isInteger(source.buildVersion) && source.buildVersion > 0 ? 'v' + source.buildVersion + ' · ' : '';
+  return 'On the wall: ' + number + commit + (built === '' ? '' : ' · ' + built);
 }
 
 // The watchdog and backup lines (computer/scripts/watchdog.sh, backup-dataset.sh). They are kept apart from

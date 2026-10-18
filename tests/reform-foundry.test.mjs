@@ -45,11 +45,11 @@ await test('the foundry kit is its own object with its own id, and keeps the Ori
 
 await test('the kit draws the extra roles as svg, and the extras only use roles the kit draws', () => {
   ['deadbolt', 'wheel', 'ram', 'gauge', 'needle'].forEach(role => assert.ok(kit.draw(role).startsWith('<svg'), role));
-  roles(kit.extras(main, false).concat(kit.extras(banner, true))).forEach(role => assert.ok(kit.draw(role) !== '', role));
+  roles(kit.partsOf(main, false).concat(kit.partsOf(banner, true))).forEach(role => assert.ok(kit.draw(role) !== '', role));
 });
 
 await test('a large region gets three deadbolts on the top and bottom, two on each side, a wheel, four rams and two gauges', () => {
-  const list = kit.extras(main, false);
+  const list = kit.partsOf(main, false);
   assert.equal(count(list, 'deadbolt'), 10);
   assert.equal(list.filter(item => item.edge === 'top').length, 3);
   assert.equal(list.filter(item => item.edge === 'bottom').length, 3);
@@ -64,15 +64,15 @@ await test('a large region gets three deadbolts on the top and bottom, two on ea
 });
 
 await test('a thin strip keeps the deadbolts and the wheel and has no rams or gauges, and a region that moves has the same pieces in the same order', () => {
-  const list = kit.extras(banner, true);
+  const list = kit.partsOf(banner, true);
   assert.equal(count(list, 'deadbolt'), 10);
   assert.equal(count(list, 'wheel'), 1);
   assert.equal(count(list, 'ram') + count(list, 'gauge') + count(list, 'needle'), 0);
-  assert.deepEqual(roles(kit.extras(main, false)), roles(kit.extras({ x: 40, y: 256, w: 1152, h: 708 }, false)));
+  assert.deepEqual(roles(kit.partsOf(main, false)), roles(kit.partsOf({ x: 40, y: 256, w: 1152, h: 708 }, false)));
 });
 
 await test('every deadbolt is drawn back before the folding starts and is home after the last screw begins to turn in, and every track runs the whole skeleton', () => {
-  const bolts = kit.extras(main, false).filter(item => item.role === 'deadbolt');
+  const bolts = kit.partsOf(main, false).filter(item => item.role === 'deadbolt');
   bolts.forEach(bolt => {
     assert.equal(bolt.own, true, 'the bolt has its own stops');
     const times = bolt.stops.map(stop => stop[0]);
@@ -89,7 +89,7 @@ await test('every deadbolt is drawn back before the folding starts and is home a
 });
 
 await test('the wheel spins open and shut, the rams push out while the frame is open and the needles sweep over a span of the run', () => {
-  const list = kit.extras(main, false);
+  const list = kit.partsOf(main, false);
   const wheel = list.find(item => item.role === 'wheel');
   assert.ok(wheel.stops.some(stop => stop[1] === 'rotate(-540deg)'));
   assert.equal(wheel.stops[wheel.stops.length - 1][1], 'rotate(0deg)');
@@ -123,7 +123,7 @@ await test('the stylesheet of the kit moves nothing by itself, has no filter or 
   assert.equal(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/.test(css), false, 'colors are tokens');
   assert.equal(/perspective/.test(css), false);
   const code = read('styles/foundry/transitions.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1');
-  assert.equal(/#[0-9a-fA-F]{3,8}\b|rgba?\(|filter|blur|perspective\(/.test(code), false, 'the kit code writes no color and no filter');
+  assert.equal(/#[0-9a-fA-F]{3,8}\b|rgba?\(|filter\s*:|blur|perspective\(/.test(code), false, 'the kit code writes no color and no filter');
   assert.equal(/\bid="/.test(code), false, 'no id in the markup, they must be unique');
   ['--style-steel-dark', '--style-hazard'].forEach(token => assert.ok(css.includes(token), token));
 });

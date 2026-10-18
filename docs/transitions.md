@@ -27,7 +27,7 @@ The numbers are in core/reform-plan.js (`reformTimes`) and nothing else writes t
 2. The copy covers the panel (or the whole stage, in a view transition) and the real page is out of sight. The page changes underneath, and the new content is copied the same way. This all happens before the three seconds start, in turns of a few milliseconds, so no frame is long while it is made (the screen shows the old page meanwhile, which takes about a tenth of a second for a panel and two thirds for a view). A view transition also copies the old frames, which stay until the edges that fold have covered them.
 3. The content is cut into squares: 12 by 6 on the main panel, 3 by 8 on the side column, 16 by 1 on the banner and the ticker. Each square holds the old content on its face and the new content on its back, each cut to the square's window, so text splits across squares and joins again exactly. A box that lies wholly outside a window is kept empty, with its size, so what is left lays out as it did.
 4. The grid exists only during the turn. A flat copy of the old content covers the squares until the turn starts, and a flat copy of the new content covers them from the moment the last square has seated. At rest there is one plate and no seams.
-5. Each edge is two chains of four segments, hinged at knuckle pins. The edges, the screws, latches, braces, rivets, corner gears, pistons and teeth are the kit of the theme (styles/<theme>/transitions.js, `kit`). The Original kit draws them in the metal of the team. Cybertron and Retro play the Original kit under their own id until they have their own. Foundry has its own (the Foundry section below). They come out of the corners as the transition starts and go back into them at the end (they grow from nothing, because a group that fades is drawn into a surface of its own every frame, which the 2011 computer cannot afford). The banner and the ticker are thin strips: they keep their long edges, the screws, the latches and the rivets of the long edges, and not the pieces that sit inside a frame.
+5. Each edge is two chains of four segments, hinged at knuckle pins. The edges, the screws, latches, braces, rivets, corner gears, pistons and teeth are the kit of the theme (styles/<theme>/transitions.js, `kit`). The Original kit draws them in the metal of the team. Each theme that has its own kit draws its own pieces; one that has none plays the Original kit under its own id. They come out of the corners as the transition starts and go back into them at the end (they grow from nothing, because a group that fades is drawn into a surface of its own every frame, which the 2011 computer cannot afford). The banner and the ticker are thin strips: they keep their long edges, the screws, the latches and the rivets of the long edges, and not the pieces that sit inside a frame.
 6. There is one camera: `#reform` has the only perspective (1600px, origin 50% 45%). It leans in about 5 degrees down and 3 to the side while the frame is open, drifts to the other side during the turn and settles as the screws go in.
 
 Every part moves by transform or opacity, on one clock: all of them are started with the same start time, so a part that is made late starts part way through and a test that sets the time sets it everywhere. The squares are made while they are hidden and are shown shortly before the turn, a few in a frame, so that no frame has to draw them all at once. The flat copies are the only parts that fade, and each fades for a moment only.
@@ -42,7 +42,7 @@ styles/foundry/transitions.js is the Original kit with pieces added to every reg
 - Two gauges at the bottom corners: the face stays and the needle sweeps across and back while the mechanism runs.
 - A jolt of the stage (a few pixels, translate only) when the bolts first break (0.10) and again when they lock (2.83).
 
-A thin strip (the banner and the ticker) keeps the deadbolts and the wheel and has no rams or gauges. The kit asks for no new thing of the engine except two optional hooks in core/reform-draw.js: `kit.extras(rect, strip)` returns more pieces of hardware in the shape of `hardwareList` (a piece with `own` set has its own stops from nothing to nothing and is not grown), and `kit.jolt()` returns the stops of a transform that shakes the layers. The deadbolts and the wheel are not on the Foundry frame at rest (core/theme-art.js draws a bolt flange, gears and pistons), so they appear with the transition. The panel transition has about 265 elements with an animation of their own in Foundry (245 in Original) and the view transition about 606 (545).
+A thin strip (the banner and the ticker) keeps the deadbolts and the wheel and has no rams or gauges. The kit uses two optional hooks of core/reform-draw.js: `kit.extras(region, tracks, strip)` gives the element with its parts and their tracks, and `kit.jolt()` returns the stops of a transform that shakes the layers. The deadbolts and the wheel are not on the Foundry frame at rest (core/theme-art.js draws a bolt flange, gears and pistons), so they appear with the transition. The panel transition has about 265 elements with an animation of their own in Foundry (245 in Original) and the view transition about 606 (545).
 
 ## The hawk
 
@@ -59,3 +59,28 @@ A screen that is already drawing slowly (the median of the last sixty frames ove
 ## Try it
 
 `?reform=off` on the address turns both transitions off for that page, so the older page change and swap play instead. With `?sample=1&clock=fixed` the page has `window.teletraanTest`. `play('reform-panel')` goes to the next row, `play('reform-view')` changes the view.
+
+## The Cybertron kit
+
+The Cybertron theme has a kit of its own (styles/cybertron/transitions.js for the pieces and their moves, styles/cybertron/reform-kit.css for how they look). It runs on the same skeleton and the same times as Original.
+
+| Part | What it does |
+|------|--------------|
+| Power cores | Sit at the corners in place of the screws. They spin up and swell in loosen, stay large while the frame is open and settle as the frame closes. |
+| Brackets | The corner braces retract to nothing in loosen and come back in tighten. |
+| Bolts of light | Two short bars run along every edge out from the corners during loosen, and back to the corners during tighten. |
+| Conduits | Thin lines charge from each corner to the middle of the edge in loosen and drain in tighten. |
+| Scan bar | A neon bar sweeps down the window while the squares turn. It is cut to the window, so it never lies over a neighbor. |
+| Squares | Each square collapses to a line of light, flips as a line and opens back out. The shade of the square is the light. |
+| Chassis | A neon grid on the dark ground, in the neon of the team (gold for Prime, ice for Nova). |
+
+The latches, rivets, gears, pistons and teeth of the Original kit are left out. All colors are tokens (styles/cybertron/tokens.css and the team tokens), and only transform and opacity move. The panel transition holds about 238 animated elements and the view transition about 538.
+
+### What a kit may add
+
+core/reform-draw.js asks a kit for four things, and each of the last three is optional:
+
+- `draw(role)`: the drawing of a piece of hardware, or the chassis.
+- `hardware(item)`: the stops of a piece (a different move), or `null` to leave that piece out.
+- `squares(square, move)`: `{ transform, shade }`, the stops of a square and of its shade.
+- `extras(region, tracks, strip)`: an element with parts of the kit's own for a region. A part gets its move by `tracks.add(element, 'transform', stops)`, and the stops are in milliseconds of the skeleton.

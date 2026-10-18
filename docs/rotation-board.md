@@ -55,10 +55,17 @@ wall, so a real loop can be shorter.
 The board writes only the field rotationRows, to the draft of Dashboard Settings. It never publishes. A value of a row that the
 board does not show stays on the row. The same list is in Dashboard Settings, Advanced, as the full form.
 
+## Why the wall may not play a row
+
+A row on the board is a plan. The wall skips a row that has nothing to show, and the board says so under the panel, for
+example Skipped now: no Monday task is on the TV. It reads the published tasks and photos once when the page opens. The rules
+are in skipNotes in studio/tools/rotation-board.js. A change is on the wall only after Publish all, so a draft that did not
+publish (Publish all names it) is the other reason the wall differs from the board.
+
 ## Where the code is
 
 - studio/inputs/rotation-board-view.js: the page and its actions.
 - studio/inputs/rotation-board-parts.js: the drawing and the style sheet.
 - studio/tools/rotation-board.js: the plain functions (groups, loop time, changes, save).
 - studio/tools/rotation-titles.js: the one table of view and panel titles.
-- tests/rotation-board.test.mjs: the tests.
+- tests/rotation-board.test.mjs and tests/rotation-wall-path.test.mjs: the tests.

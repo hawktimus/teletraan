@@ -2835,7 +2835,7 @@ function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);
   const rules = rulesOf(style, sheets);
   assert.ok(style === 'minimal' ? sheets.some(sheet => sheet.file === 'layouts/bar-minimal.css') : sheets.some(sheet => sheet.file === 'styles/' + style + '/theme.css'), 'the style\'s own file is loaded');
-  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, style === 'minimal' ? 0 : 3, 'and the files of the other themes are not');
+  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, style === 'minimal' ? 0 : style === 'cybertron' ? 4 : 3, 'and the files of the other themes are not (Cybertron has its transition kit stylesheet as a fourth)');
   assert.ok(sheets.length >= 30 && sheets.some(sheet => sheet.file === 'base.css') && sheets.some(sheet => sheet.file === 'themes/hawktimus.css'), 'the css it overrides is loaded');
 
   const scripted = Object.assign({}, layout.barCssVariables(), layout.cssVariables());

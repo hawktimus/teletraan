@@ -28,6 +28,8 @@ For each ticked document, one at a time:
    apply. A warning does not stop a publish, just as it does not stop the button.
 2. If the check finds an error, the document is skipped. Nothing is written, it
    stays a draft, and the summary says which field and what is wrong.
+   The summary starts with how many documents were not published, and each
+   one is a link that opens it. Fix the line shown, then try again.
 3. If it passes, one transaction runs in Sanity: check that the draft is still
    the one that was listed, write the published copy over the old one, and delete
    the draft. The copy has the draft's content. It does not carry the draft's
