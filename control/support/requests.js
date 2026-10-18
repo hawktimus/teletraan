@@ -8,8 +8,13 @@ import { Refusal } from './http.js';
 export const settingsId = 'dashboardSettings';
 
 export const holdMinutes = { least: 1, most: 60 };
-export const viewKeys = ['general', 'prime', 'nova', 'family'];
-export const themeIds = ['original', 'cybertron', 'retro', 'foundry'];
+// The themes and the views come from the one list the screen reads them with, so the page, the service and the wall
+// cannot disagree about them. The words are the names on the buttons: Robotics is general and Condensed is family.
+import { themeIds, viewKeys } from '../../dashboard/core/screen-requests.js';
+
+export { themeIds, viewKeys };
+export const themeNames = { original: 'Original', cybertron: 'Cybertron', retro: 'Retro', foundry: 'Foundry' };
+export const viewNames = { general: 'Robotics', prime: 'Prime', nova: 'Nova', family: 'Condensed' };
 const previewMinutes = 10;
 export const viewMinutes = { least: 10, most: 120, usual: 30 };
 const pauseMinutes = { least: 5, most: 120, usual: 60 };

@@ -13,6 +13,7 @@ import { copyModule } from './helpers/copy-module.mjs';
 import { readModule } from './helpers/read-module.mjs';
 
 const dashboardFolder = fileURLToPath(new URL('../dashboard/', import.meta.url));
+const repoFolder = fileURLToPath(new URL('../', import.meta.url));
 
 const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-requests-'));
 const root = path.join(workFolder, 'dashboard');
@@ -193,6 +194,14 @@ test('the screen asks for the request fields every 10 seconds, and the Studio re
   assert.equal('other' in asked, false);
   assert.equal(poll.sameRequests(asked, { previewTheme: asked.previewTheme }), true);
   assert.equal(poll.sameRequests(asked, {}), false);
+});
+
+test('the docs name the theme and view previews', () => {
+  const control = readModule(path.join(repoFolder, 'docs', 'control-page.md'), 'utf8').replace(/\s+/g, ' ');
+  const look = readModule(path.join(repoFolder, 'docs', 'switch-the-look.md'), 'utf8').replace(/\s+/g, ' ');
+  ['Preview this theme for 10 minutes', 'Back to schedule', 'The wall has not changed yet', 'Robotics, Prime, Nova or Condensed'].forEach(words => assert.ok(control.includes(words), 'control-page.md says ' + words));
+  ['Preview theme', 'Preview view', 'Back to the schedule'].forEach(words => assert.ok(look.includes(words), 'switch-the-look.md says ' + words));
+  [control, look].forEach(text => assert.ok(!/[\u2014\u2013!]/.test(text), 'written plainly'));
 });
 
 let failures = 0;

@@ -35,6 +35,9 @@
 .tab .keyform { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .tab .countdown { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; flex-basis: 100%; }
 .tab .note { min-height: 24px; margin: 12px 0 0; }
+.tab .note:empty { display: none; }
+.tab .note[data-state="done"] { color: #2fd27a; font-weight: 700; }
+.tab .note[data-state="wait"] { color: #ffb300; font-weight: 700; }
 .tab .result { margin: 8px 0 0; font-weight: 700; color: #b9afcf; overflow-wrap: anywhere; }
 .tab .result[data-state="done"] { color: #2fd27a; }
 .tab .result[data-state="bad"] { color: #ff8a8a; }
