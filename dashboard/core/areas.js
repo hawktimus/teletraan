@@ -263,28 +263,12 @@ export async function changePage(region, next) {
     return changePage(region, next);
   }
 
-  // The page change of the large panel may become a swap, or a hidden transition. A panel transition (docs/transitions.md) gives way to a
-  // hidden transition that is due, which is asked once.
-  let hidden;
-  const hiddenDue = () => {
-    if (hidden === undefined) hidden = old && next && region === hiddenRegion && hiddenOffer ? hiddenOffer() : null;
-    return hidden;
-  };
-
-  if (old && next && region === hiddenRegion && swapOffer) {
-    const offered = swapOffer(old, next);
-    if (offered && !(offered.yields === true && hiddenDue())) {
-      let swapped = false;
-      const took = await offered.play(() => {
-        swapped = true;
-        swapUnseen(region, next);
-      });
-      // If the screen was needed by something else before the pages swapped, change page as usual below
-      if (swapped) return took;
-    }
-  }
-  if (old && next && region === hiddenRegion && hiddenOffer) {
-    const offered = hidden === undefined ? hiddenOffer() : hidden;
+  // The page change of the large panel may become a hidden transition, a swap or a panel or view transition. A hidden
+  // transition that is due goes first, whatever else wants this change: a push from the Studio lasts a minute, and the
+  // swaps and the panel transitions would use up every change in that time. A look that is waiting goes on at a later change.
+  const eligible = old && next && region === hiddenRegion;
+  if (eligible && hiddenOffer) {
+    const offered = hiddenOffer();
     if (offered) {
       let swapped = false;
       const took = await offered.play(() => {
@@ -292,6 +276,19 @@ export async function changePage(region, next) {
         swapUnseen(region, next);
       });
       // If the screen was stopped before the pages swapped, change page as usual below
+      if (swapped) return took;
+    }
+  }
+
+  if (eligible && swapOffer) {
+    const offered = swapOffer(old, next);
+    if (offered) {
+      let swapped = false;
+      const took = await offered.play(() => {
+        swapped = true;
+        swapUnseen(region, next);
+      });
+      // If the screen was needed by something else before the pages swapped, change page as usual below
       if (swapped) return took;
     }
   }
