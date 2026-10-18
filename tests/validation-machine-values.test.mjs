@@ -7,39 +7,20 @@
 //   node tests/validation-machine-values.test.mjs
 
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { buildRequest } from '../control/support/requests.js';
+import { openValidation } from './helpers/studio-validation.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const modules = [path.join(root, 'studio', 'node_modules'), path.join(root, '..', 'teletraan', 'studio', 'node_modules')].find(folder => fs.existsSync(path.join(folder, '@sanity', 'validation')));
+const validation = await openValidation(root);
 
-if (!modules) {
+if (!validation) {
   console.log('SKIP  the Sanity packages are not installed, so the real validation cannot run');
   console.log('0 of 0 checks passed.');
   process.exit(0);
 }
-
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-validate-'));
-fs.cpSync(path.join(root, 'studio'), path.join(scratch, 'studio'), { recursive: true, filter: source => !source.includes('node_modules') });
-fs.symlinkSync(modules, path.join(scratch, 'studio', 'node_modules'));
-const studio = path.join(scratch, 'studio');
-const { createRequire } = await import('node:module');
-const need = createRequire(path.join(studio, 'x.js'));
-const { Schema } = await import(pathToFileURL(need.resolve('@sanity/schema')).href);
-const { validateDocument } = await import(pathToFileURL(need.resolve('@sanity/validation')).href);
-const schemas = await import(pathToFileURL(path.join(studio, 'schemas', 'index.js')).href);
-const schema = Schema.compile({ name: 'teletraan', types: schemas.schemaTypes || schemas.default });
-
-// The problems of one document, as 'path: message', only for the paths that start with one of the named fields
-async function problems(document, only) {
-  const result = await validateDocument({ document: document, schema: schema, client: {}, getDocumentExists: async () => true });
-  return result.markers
-    .filter(marker => marker.level === 'error' && (!only || only.includes(marker.path[0])))
-    .map(marker => marker.path.join('.') + ': ' + marker.message);
-}
+const problems = (document, only) => validation.problems(document, only);
 
 let passed = 0;
 async function check(name, test) {
@@ -101,5 +82,5 @@ await check('the status documents of the computer pass', async () => {
   assert.deepEqual(await problems({ _id: 'status-mini', _type: 'status' }), []);
 });
 
-fs.rmSync(scratch, { recursive: true, force: true });
+validation.close();
 console.log(passed + ' of ' + passed + ' checks passed.');

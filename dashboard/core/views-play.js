@@ -315,7 +315,9 @@ function tickBlocks(content, now, options) {
 
   cycle.ticks += 1;
   cycle.seconds += 1;
-  const known = cycle.block >= 0 && cycle.block < blocks.length;
+  // A block counts as known only while the block at that place is still of the view the clock is on: a list published while
+  // the wall runs can put another view at the same place, and the large panel would then have no step to play.
+  const known = cycle.block >= 0 && cycle.block < blocks.length && blocks[cycle.block].key === cycle.key;
   const over = known && cycle.seconds >= blockSeconds(content, cycle.block, now, options.canShow);
 
   if (!known || over || cycle.ticks % checkEvery === 0) {
@@ -323,7 +325,8 @@ function tickBlocks(content, now, options) {
 
     if (playable.length > 0) {
       const go = at => startView(blocks[at].key, at);
-      if (!playable.includes(cycle.block)) go(nextBlock(blocks.length, cycle.block, playable));
+      if (!known && playable.includes(cycle.block)) go(cycle.block);
+      else if (!playable.includes(cycle.block)) go(nextBlock(blocks.length, cycle.block, playable));
       else if (over && playable.length > 1) go(nextBlock(blocks.length, cycle.block, playable));
       else if (over) cycle.seconds = 0;
     } else if (over) {
