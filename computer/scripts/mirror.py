@@ -11,6 +11,12 @@ It runs only on demand (teletraan-mirror.service) and stops by itself when
   - the browser closes the socket, or
   - 30 minutes have passed.
 
+A screencast can come out black on a kiosk browser that has no window manager. Three frames in a row under
+MIRROR_BLACK_BYTES bytes (a black 960 by 540 JPEG is about 2 KB, a dashboard frame tens of KB) switch it to
+Page.captureScreenshot about 4 times a second. If those are black too the pictures keep coming and
+<data>/mirror/state.json says {"state": "black"}, so the control page can say so. Otherwise it says
+{"state": "ok", "fps": n, "mode": "screencast" or "screenshots"}.
+
 Standard library only. The debug port is on 127.0.0.1 and nothing here exposes it.
 
 Settings from the environment, all optional:
@@ -18,6 +24,7 @@ Settings from the environment, all optional:
   MIRROR_DATA   the data folder (default: TELETRAAN_DATA from local.env, else /var/lib/teletraan/data)
   MIRROR_IDLE   seconds without a touch of the watch file before it stops (default 120)
   MIRROR_MAX    seconds it may run at most (default 1800)
+  MIRROR_BLACK_BYTES  a frame under this many bytes counts as black (default 3000)
 """
 
 import base64
@@ -34,6 +41,11 @@ import urllib.request
 PORT = int(os.environ.get('MIRROR_PORT', '9222'))
 IDLE_SECONDS = float(os.environ.get('MIRROR_IDLE', '120'))
 MAX_SECONDS = float(os.environ.get('MIRROR_MAX', '1800'))
+BLACK_BYTES = int(os.environ.get('MIRROR_BLACK_BYTES', '3000'))
+BLACK_RUN = 3
+SHOT_SECONDS = 0.25
+# A screencast that sends nothing at all for this long is treated like a black one
+SILENT_SECONDS = 5.0
 GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 ENV_FILE = os.environ.get('MIRROR_ENV', '/opt/teletraan/local.env')
 
@@ -193,19 +205,24 @@ def replace_file(path, content):
     os.replace(temporary, path)
 
 
+def remove_all(paths):
+    for old in paths:
+        try:
+            os.remove(old)
+        except OSError:
+            pass
+
+
 def main():
     folder = os.path.join(data_folder(), 'mirror')
     os.makedirs(folder, exist_ok=True)
     watch = os.path.join(folder, 'watch')
     jpeg = os.path.join(folder, 'frame.jpg')
     counter = os.path.join(folder, 'frame.n')
+    state_file = os.path.join(folder, 'state.json')
 
     # A picture left by an earlier run must not look live
-    for old in (jpeg, counter):
-        try:
-            os.remove(old)
-        except OSError:
-            pass
+    remove_all((jpeg, counter, state_file))
     # Started with no one watching: give it the usual idle time instead of stopping at once
     if not os.path.exists(watch):
         open(watch, 'a').close()
@@ -214,11 +231,67 @@ def main():
     link = Socket(page['webSocketDebuggerUrl'])
     started = time.time()
     frames = 0
-    next_id = 1
-    link.send_json({'id': next_id, 'method': 'Page.startScreencast',
-                    'params': {'format': 'jpeg', 'quality': 45, 'maxWidth': 960, 'maxHeight': 540, 'everyNthFrame': 2}})
+    drawn = []
+    next_id = 0
+    mode = 'screencast'
+    state = 'ok'
+    small_run = 0
+    written = (None, None)
+    written_at = 0.0
+
+    def ask(method, params=None):
+        nonlocal next_id
+        next_id += 1
+        link.send_json({'id': next_id, 'method': method, 'params': params or {}})
+        return next_id
+
+    def write_state(force=False):
+        nonlocal written, written_at
+        now = time.time()
+        drawn[:] = [t for t in drawn if now - t <= 3.0]
+        fps = round(len(drawn) / 3.0, 1) if now - started >= 3.0 else round(len(drawn) / max(now - started, 0.5), 1)
+        if not force and written == (state, mode) and now - written_at < 2.0:
+            return
+        written, written_at = (state, mode), now
+        body = {'state': state, 'mode': mode}
+        if state == 'ok':
+            body['fps'] = fps
+        replace_file(state_file, json.dumps(body).encode('utf-8'))
+
+    def keep(picture):
+        nonlocal frames
+        frames += 1
+        drawn.append(time.time())
+        replace_file(jpeg, picture)
+        replace_file(counter, str(frames).encode('ascii'))
+
+    def result_of(wanted, seconds=5.0):
+        """The result of one command, or None when it fails or does not answer. Other messages are skipped."""
+        end = time.time() + seconds
+        while time.time() < end:
+            message = link.receive()
+            if message is None or isinstance(message, bytes):
+                continue
+            try:
+                event = json.loads(message)
+            except ValueError:
+                continue
+            if event.get('id') == wanted:
+                return event.get('result')
+        return None
+
+    # A browser that lacks one of these methods answers with an error, which is not read
+    for method, params in (
+        ('Page.enable', {}),
+        ('Page.bringToFront', {}),
+        ('Emulation.setFocusEmulationEnabled', {'enabled': True}),
+        ('Page.setWebLifecycleState', {'state': 'active'}),
+    ):
+        ask(method, params)
+    ask('Page.startScreencast', {'format': 'jpeg', 'quality': 45, 'maxWidth': 960, 'maxHeight': 540, 'everyNthFrame': 2})
     say('copying %s' % page.get('url', '')[:80])
     reason = 'stopped'
+    next_shot = 0.0
 
     try:
         while True:
@@ -234,6 +307,27 @@ def main():
                 reason = 'nobody is watching'
                 break
 
+            if mode == 'screenshots':
+                if now < next_shot:
+                    time.sleep(min(0.05, next_shot - now))
+                    continue
+                next_shot = now + SHOT_SECONDS
+                answer = result_of(ask('Page.captureScreenshot', {'format': 'jpeg', 'quality': 50, 'fromSurface': True, 'captureBeyondViewport': False}))
+                picture = base64.b64decode(answer.get('data', '')) if answer else b''
+                if picture:
+                    keep(picture)
+                    small_run = small_run + 1 if len(picture) < BLACK_BYTES else 0
+                    state = 'black' if small_run >= BLACK_RUN else 'ok'
+                write_state()
+                continue
+
+            if frames == 0 and now - started > SILENT_SECONDS:
+                say('screencast gave no frames, using screenshots')
+                ask('Page.stopScreencast')
+                mode = 'screenshots'
+                write_state(True)
+                continue
+
             message = link.receive()
             if message is None or isinstance(message, bytes):
                 continue
@@ -246,20 +340,22 @@ def main():
             params = event.get('params', {})
             picture = base64.b64decode(params.get('data', ''))
             if picture:
-                frames += 1
-                replace_file(jpeg, picture)
-                replace_file(counter, str(frames).encode('ascii'))
-            next_id += 1
-            link.send_json({'id': next_id, 'method': 'Page.screencastFrameAck', 'params': {'sessionId': params.get('sessionId', 0)}})
+                keep(picture)
+                small_run = small_run + 1 if len(picture) < BLACK_BYTES else 0
+            ask('Page.screencastFrameAck', {'sessionId': params.get('sessionId', 0)})
+            if small_run >= BLACK_RUN:
+                say('screencast was black, using screenshots')
+                ask('Page.stopScreencast')
+                mode = 'screenshots'
+                small_run = 0
+                write_state(True)
+            else:
+                write_state()
     except EOFError as error:
         reason = str(error)
     finally:
         link.close()
-        for old in (jpeg, counter):
-            try:
-                os.remove(old)
-            except OSError:
-                pass
+        remove_all((jpeg, counter, state_file))
         spent = time.time() - started
         used = resource.getrusage(resource.RUSAGE_SELF)
         say('%s after %.1f s, %d frames, %.1f frames a second, cpu %.2f s' % (reason, spent, frames, frames / spent if spent else 0, used.ru_utime + used.ru_stime))
