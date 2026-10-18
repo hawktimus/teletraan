@@ -11,9 +11,10 @@
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh kiosk      the screen started
-#   status-write.sh version    the build on the wall: the short hash, the date and the branch
-#                              of the repository on the Teletraan computer (buildCommit, buildDate, buildBranch),
-#                              from computer/build.txt when the Mac tool copied the files, else from git
+#   status-write.sh version    the build on the wall: the version, the short hash, the date and the branch
+#                              (buildVersion, buildCommit, buildDate, buildBranch). From RELEASE.json of the
+#                              release when there is one, else computer/build.txt when the Mac tool copied
+#                              the files, else from git
 #   status-write.sh backup     the nightly dataset backup finished (backup-dataset.sh)
 #   status-write.sh restart N  the watchdog restarted the screen, N times today (watchdog.sh)
 #   status-write.sh calendar-status
@@ -240,28 +241,51 @@ elif [ "$field" = lastContentSeenAt ]; then
     exit 1
   fi
 elif [ "$field" = version ]; then
-  # The Mac tool copies the files without the .git folder, so it leaves computer/build.txt with the
-  # hash, the date and the branch of the repository it copied. A computer that pulls has no such file
-  # (pull.sh removes it) and git is asked. Each answer is checked, because it goes into a JSON body.
+  # A release made by the control page has RELEASE.json next to its computer/ folder (the same file
+  # kiosk.sh reads), so it is asked first: it has the version, the short hash and the time. The
+  # Mac tool copies the files without the .git folder and leaves computer/build.txt with the hash,
+  # the date and the branch. A computer that pulls has neither file and git is asked. Each answer
+  # is checked, because it goes into a JSON body.
   stamp="$computer/build.txt"
-  if [ -f "$stamp" ]; then
+  release="$(cd "$computer" && pwd -P)/../RELEASE.json"
+  number=""
+  commit=""
+  if [ -f "$release" ]; then
+    number=$(sed -n 's/^ *"version": *\([0-9][0-9]*\).*/\1/p' "$release" | head -n 1)
+    commit=$(sed -n 's/^ *"commit": *"\([0-9a-f]*\)".*/\1/p' "$release" | head -n 1)
+    built=$(sed -n 's/^ *"date": *"\([0-9-]*\)T.*/\1/p' "$release" | head -n 1)
+    # A release with no hash (made from a folder, not from git) has no build to show
+    if printf '%s' "$number" | grep -Eq '^[1-9][0-9]{0,5}$' && printf '%s' "$commit" | grep -Eq '^[0-9a-f]{4,40}$'; then
+      branch=""
+    else
+      number=""
+      commit=""
+    fi
+  fi
+  if [ -z "$commit" ] && [ -f "$stamp" ]; then
     commit=$(sed -n 's/^commit=//p' "$stamp" | head -n 1)
     built=$(sed -n 's/^date=//p' "$stamp" | head -n 1)
     branch=$(sed -n 's/^branch=//p' "$stamp" | head -n 1)
-  else
+  elif [ -z "$commit" ]; then
     commit=$(git -C "$repo" rev-parse --short HEAD 2> /dev/null) || exit 0
     built=$(git -C "$repo" log -1 --format=%cs 2> /dev/null) || exit 0
     branch=$(git -C "$repo" rev-parse --abbrev-ref HEAD 2> /dev/null) || exit 0
   fi
   if ! printf '%s' "$commit" | grep -Eq '^[0-9a-f]{4,40}$' ||
     ! printf '%s' "$built" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' ||
-    ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; then
-    echo "status: git did not give a hash, a date and a branch, so nothing was written." >&2
+    { [ -n "$branch" ] && ! printf '%s' "$branch" | grep -Eq '^[A-Za-z0-9._/-]{1,100}$'; }; then
+    echo "status: the release file, the stamp or git did not give a hash, a date and a branch, so nothing was written." >&2
     exit 1
   fi
   field=buildCommit
-  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"buildCommit":"%s","buildDate":"%s","buildBranch":"%s"}}}]}' \
-    "$document" "$document" "$commit" "$built" "$branch")
+  # The version number is set for a release and removed for the other two, so an old one is not kept
+  if [ -n "$number" ]; then
+    body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"buildCommit":"%s","buildDate":"%s","buildBranch":"%s","buildVersion":%s}}}]}' \
+      "$document" "$document" "$commit" "$built" "$branch" "$number")
+  else
+    body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"buildCommit":"%s","buildDate":"%s","buildBranch":"%s"},"unset":["buildVersion"]}}]}' \
+      "$document" "$document" "$commit" "$built" "$branch")
+  fi
 else
   value=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 fi

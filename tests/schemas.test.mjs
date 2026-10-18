@@ -4393,6 +4393,8 @@ function checkStatusBlock() {
 
   // The build on the wall: a hash and a date, or not yet
   need(problems, input.buildLine({ buildCommit: 'abc1234', buildDate: '2026-10-14' }) === 'On the wall: abc1234 · 2026-10-14', 'the build line should read On the wall: <hash> · <date>');
+  need(problems, input.buildLine({ buildVersion: 3, buildCommit: 'c387c90', buildDate: '2026-10-17' }) === 'On the wall: v3 · c387c90 · 2026-10-17', 'the build line should read On the wall: v<number> · <hash> · <date> when the build is a release');
+  need(problems, input.buildLine({ buildVersion: 'x', buildCommit: 'abc1234' }) === 'On the wall: abc1234' && fieldsIn(type || {}).some(field => field.name === 'buildVersion' && field.type === 'number' && !constraintNamed(constraintsOf(field), 'required')), 'the release number should be an optional number, and a bad one is left out of the line');
   need(problems, input.buildLine({ buildCommit: 'abc1234' }) === 'On the wall: abc1234' && input.buildLine(null) === 'On the wall: not yet' && input.buildLine({ buildCommit: 5 }) === 'On the wall: not yet', 'the build line should survive a missing date, a missing document and a bad value');
   need(problems, JSON.stringify(input.statusView({ doc: { buildCommit: 'abc1234', buildDate: '2026-10-14' }, unreadable: false }, new Date())).indexOf('On the wall: abc1234') !== -1, 'the block should show the build on the wall');
 
