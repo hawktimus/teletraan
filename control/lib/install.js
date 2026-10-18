@@ -20,7 +20,8 @@ function copyFolder(from, to) {
     const target = path.join(to, relative);
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.copyFileSync(path.join(from, relative), target);
-    fs.chmodSync(target, fs.statSync(path.join(from, relative)).mode & 0o777);
+    // The web server runs as another user, so every file must be readable by anyone: a folder copied from a Mac can hold files only the owner may read
+    fs.chmodSync(target, fs.statSync(path.join(from, relative)).mode & 0o777 | 0o444);
   }
 }
 
