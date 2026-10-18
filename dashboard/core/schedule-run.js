@@ -6,7 +6,7 @@ import { buildPage, canShow, moduleOf, regionOf, topicOf } from './panels.js';
 import { ownSeconds } from './photos.js';
 import { changePage, clearRegion } from './areas.js';
 import { hasRegion, layoutNow } from './layout.js';
-import { changeCount, clockHeld, holdLeft, listResets, lookHooks, notePageNumber, onScreen, restarts, rotationPaused, rowSkips, shortestHold, shortestStay } from './schedule-hold.js';
+import { changeCount, clockHeld, holdLeft, listResets, lookHooks, notePageNumber, onScreen, restarts, moveOn, rotationPaused, rowSkips, shortestHold, shortestStay } from './schedule-hold.js';
 
 // Waits, but the clock stands still while paused. A time of zero or less (a
 // mistake in the settings) still waits a second, so a loop can never spin
@@ -214,6 +214,12 @@ function runRotation(region, getPlaylist, getContent) {
     while (position + 1 < playlist.length && playlist[position + 1].row === current.row) position += 1;
   }
 
+  // The same page drawn again from the newest content, for page-refresh.js
+  function rebuildFor(step) {
+    const make = () => buildPage(step.panel, getContent(), step.page, step);
+    return region === 'grid1' && lookHooks ? lookHooks.viewAs(step, make) : make();
+  }
+
   // The next page, built and ready, or null when nothing can be shown. A
   // panel that fails to draw is skipped and the one after it is tried, so
   // one bad panel can neither stop the region nor spin it.
@@ -229,6 +235,7 @@ function runRotation(region, getPlaylist, getContent) {
       askScreens('begin', step);
       try {
         const page = buildPage(step.panel, getContent(), step.page, step);
+        page.rebuild = () => rebuildFor(step);
         const topic = topicOf(step.panel);
         if (topic) onScreen[region].push(topic); // at once, so the other region sees it
         return { page: page, step: step, topic: topic, pages: pagesOfCard(step.panel, getContent(), step.page) };
@@ -285,6 +292,7 @@ function runRotation(region, getPlaylist, getContent) {
           // a card with more rows than fit moves its list up and is held again, for the same time. A
           // page that was ended early (changeCount moved) does not go on.
           for (let shown = 1; shown < next.pages && changeCount(region) === since; shown++) {
+            next.page.scrolled = shown;
             frame.scrollCard(next.page.element, shown);
             notePageNumber(region, shown + 1);
             await hold(held, since, region);
@@ -309,6 +317,31 @@ function runRotation(region, getPlaylist, getContent) {
 export function startTicker(getContent) {
   let position = -1;
   let seenRestarts = restarts;
+  let lastLines = null;
+
+  // A line that is new or changed shows within a second of the publish, not after the lines before it
+  function watchLines() {
+    const module = moduleOf('ticker');
+    if (!module || !module.items) return;
+
+    const lines = module.items(getContent()).map(line => JSON.stringify(line));
+    const before = lastLines;
+    lastLines = lines;
+    if (before === null || JSON.stringify(before) === JSON.stringify(lines)) return;
+
+    const fresh = lines.findIndex(line => !before.includes(line));
+    if (fresh < 0 || rotationPaused()) return;
+
+    position = fresh - 1;
+    moveOn(['ticker']);
+  }
+  frame.onSecond(() => {
+    try {
+      watchLines();
+    } catch (error) {
+      console.error('The ticker could not look for new lines', error);
+    }
+  });
 
   async function loop() {
     while (true) {

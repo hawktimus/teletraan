@@ -202,7 +202,7 @@ function makeWorld() {
   world.onChange = change => world.changes.push(change);
 
   world.fetch = async (url, options) => {
-    if (String(url).includes('.apicdn.sanity.io')) {
+    if (decodeURIComponent(String(url)).includes('[0] { announceRequest')) {
       world.polls.push({ url: String(url), options: options || {} });
       return world.pollHandler(String(url), options || {});
     }
@@ -2025,7 +2025,7 @@ test('sanity: the request fields alone are read every 10 seconds, and a new requ
     await world.advance(10 * second);
     assert.equal(world.polls.length, 1);
     assert.equal(world.fetches.length, 1, 'the full read is still every 5 minutes');
-    assert.ok(world.polls[0].url.startsWith('https://' + live.config.sanity.projectId + '.apicdn.sanity.io/'), 'the cached host');
+    assert.ok(world.polls[0].url.startsWith('https://' + live.config.sanity.projectId + '.api.sanity.io/'), 'the live host, never the cached one');
     assert.ok(decodeURIComponent(world.polls[0].url).includes('presentationTestRequest') && !decodeURIComponent(world.polls[0].url).includes('"tasks"'), 'only the request fields');
     assert.equal(world.changes.length, 0, 'no answer, nothing changes');
 
@@ -2285,7 +2285,7 @@ test('sanity: stopping the reader cancels the 2 minutes', async () => {
   });
 });
 
-test('sanity: edits that arrive together cause one read, 1.5 seconds after the first', async () => {
+test('sanity: edits that arrive together cause one read, 0.3 seconds after the first', async () => {
   await inWorld(async world => {
     const fixture = sanityFixture();
     world.handler = async () => sanityReply(copyOf(fixture));
@@ -2299,11 +2299,11 @@ test('sanity: edits that arrive together cause one read, 1.5 seconds after the f
 
     fixture.tasks[0].title = '[Edited task]';
     stream.emit('message');
-    await world.advance(500);
+    await world.advance(100);
     stream.emit('message');
-    await world.advance(500);
+    await world.advance(100);
     stream.emit('message');
-    await world.advance(499);
+    await world.advance(99);
     assert.equal(world.fetches.length, 1);
     await world.advance(1);
     assert.equal(world.fetches.length, 2);
@@ -2313,7 +2313,7 @@ test('sanity: edits that arrive together cause one read, 1.5 seconds after the f
     assert.equal(world.fetches.length, 2);
 
     stream.emit('message');
-    await world.advance(1500);
+    await world.advance(300);
     assert.equal(world.fetches.length, 3);
     assert.equal(world.changes.length, 1);
   });
@@ -2331,11 +2331,11 @@ test('sanity: reads never overlap, a change that comes during a read gets a read
       release = () => resolve(sanityReply(copyOf(fixture)));
     });
     stream.emit('message');
-    await world.advance(1500);
+    await world.advance(300);
     assert.equal(world.fetches.length, 2);
 
     stream.emit('message');
-    await world.advance(1500);
+    await world.advance(300);
     assert.equal(world.fetches.length, 2);
 
     world.handler = async () => sanityReply(copyOf(fixture));

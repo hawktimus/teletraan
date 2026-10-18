@@ -173,13 +173,11 @@ function addressOf(sanity, query) {
     '&perspective=published';
 }
 
-// Only the request fields of Dashboard Settings (core/request-poll.js), asked every 10 seconds. This one goes
-// to the cached host, so the 8,640 reads a day are counted as cached requests, which the plan has far more of.
+// Only the request fields of Dashboard Settings (core/request-poll.js), asked every 10 seconds. It goes to the same
+// uncached host as the full read: the cached host may hand back an answer up to a minute old, which made a button
+// press in the Studio wait. It is one small document, so the reads cost little.
 export function requestsUrl(sanity) {
-  return 'https://' + sanity.projectId + '.apicdn.sanity.io/v' + sanity.apiVersion +
-    '/data/query/' + sanity.dataset +
-    '?query=' + encodeURIComponent(requestsQuery) +
-    '&perspective=published';
+  return addressOf(sanity, requestsQuery);
 }
 
 export function queryUrl(sanity) {
