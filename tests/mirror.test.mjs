@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
@@ -73,8 +74,9 @@ function fakeBrowser(pictures, options = {}) {
       const message = JSON.parse(data.toString());
       seen.messages.push(message);
       if (message.method === 'Page.screencastFrameAck') seen.acks.push(message.params.sessionId);
-      if (message.method === 'Page.captureScreenshot' && options.shot) {
-        socket.write(wsFrame(1, JSON.stringify({ id: message.id, result: { data: options.shot.toString('base64') } })));
+      if (message.method === 'Page.captureScreenshot') {
+        const shot = message.params.format === 'png' ? options.png : options.shot;
+        socket.write(wsFrame(1, JSON.stringify(shot ? { id: message.id, result: { data: shot.toString('base64') } } : { id: message.id, error: { message: 'no picture' } })));
         return;
       }
       if (message.method !== 'Page.startScreencast') return;
@@ -162,7 +164,7 @@ if (!havePython) {
     ['Page.enable', 'Page.bringToFront', 'Emulation.setFocusEmulationEnabled', 'Page.setWebLifecycleState'].forEach(name => assert.ok(methods.includes(name), name));
     assert.ok(methods.indexOf('Page.enable') < methods.indexOf('Page.startScreencast'));
     assert.deepEqual(browser.seen.messages.find(message => message.method === 'Page.setWebLifecycleState').params, { state: 'active' });
-    assert.ok(!methods.includes('Page.captureScreenshot') && !methods.includes('Page.stopScreencast'), 'no fallback');
+    assert.ok(!browser.seen.messages.some(message => message.method === 'Page.captureScreenshot' && message.params.format === 'jpeg') && !methods.includes('Page.stopScreencast'), 'no fallback');
     const ended = await run.done;
     assert.ok(!/was black/.test(ended.said));
     assert.ok(!fs.existsSync(path.join(folder, 'state.json')), 'a stopped mirror leaves no state');
@@ -179,7 +181,7 @@ if (!havePython) {
     assert.ok(state, 'a state file in screenshot mode');
     assert.equal(state.state, 'ok');
     assert.ok(await until(() => fs.existsSync(path.join(folder, 'frame.jpg')) && fs.readFileSync(path.join(folder, 'frame.jpg')).length === big.length), 'the screenshot is the picture');
-    const shot = browser.seen.messages.find(message => message.method === 'Page.captureScreenshot');
+    const shot = browser.seen.messages.find(message => message.method === 'Page.captureScreenshot' && message.params.format === 'jpeg');
     assert.deepEqual(shot.params, { format: 'jpeg', quality: 50, fromSurface: true, captureBeyondViewport: false });
     assert.ok(browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
     const ended = await run.done;
@@ -198,6 +200,152 @@ if (!havePython) {
     assert.equal(state.mode, 'screenshots');
     assert.ok(fs.existsSync(path.join(folder, 'frame.jpg')), 'the pictures keep coming');
     await run.done;
+    browser.server.close();
+  });
+
+  // A real PNG made here: pixel(x, y) gives [r, g, b] and filterOf(y) one of the five filter types
+  function makePng(width, height, channels, pixel, filterOf = () => 0) {
+    const stride = width * channels;
+    const rows = [];
+    for (let y = 0; y < height; y++) {
+      const row = Buffer.alloc(stride);
+      for (let x = 0; x < width; x++) {
+        const [r, g, b] = pixel(x, y);
+        row[x * channels] = r; row[x * channels + 1] = g; row[x * channels + 2] = b;
+        if (channels === 4) row[x * channels + 3] = 255;
+      }
+      rows.push(row);
+    }
+    const lines = [];
+    rows.forEach((row, y) => {
+      const kind = filterOf(y);
+      const before = y ? rows[y - 1] : Buffer.alloc(stride);
+      const out = Buffer.alloc(stride + 1);
+      out[0] = kind;
+      for (let i = 0; i < stride; i++) {
+        const a = i >= channels ? row[i - channels] : 0;
+        const b = before[i];
+        const c = i >= channels ? before[i - channels] : 0;
+        let predicted = 0;
+        if (kind === 1) predicted = a;
+        else if (kind === 2) predicted = b;
+        else if (kind === 3) predicted = (a + b) >> 1;
+        else if (kind === 4) {
+          const p = a + b - c;
+          const pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+          predicted = pa <= pb && pa <= pc ? a : (pb <= pc ? b : c);
+        }
+        out[i + 1] = (row[i] - predicted) & 255;
+      }
+      lines.push(out);
+    });
+    const chunk = (type, body) => {
+      const head = Buffer.alloc(8);
+      head.writeUInt32BE(body.length, 0);
+      head.write(type, 4, 'latin1');
+      const crc = Buffer.alloc(4);
+      crc.writeUInt32BE(zlib.crc32 ? zlib.crc32(Buffer.concat([head.subarray(4), body])) : 0, 0);
+      return Buffer.concat([head, body, crc]);
+    };
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4);
+    ihdr[8] = 8; ihdr[9] = channels === 4 ? 6 : 2;
+    return {
+      png: Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(Buffer.concat(lines))), chunk('IEND', Buffer.alloc(0))]),
+      sum: rows.reduce((total, row) => total + row.reduce((a, b) => a + b, 0), 0),
+    };
+  }
+  const blackPng = makePng(48, 27, 3, () => [0, 0, 0], y => y % 5).png;
+  const colourPng = makePng(48, 27, 3, (x, y) => [(x * 5) & 255, 90, (y * 9) & 255], y => y % 5).png;
+
+  // The decoder of the script, run on its own: the checksum of every decoded byte must equal the one made here
+  function decodeWithScript(png) {
+    const file = path.join(work, 'probe' + count++ + '.png');
+    fs.writeFileSync(file, png);
+    const code = [
+      'import importlib.util, sys',
+      "spec = importlib.util.spec_from_file_location('mirror', sys.argv[1])",
+      'mirror = importlib.util.module_from_spec(spec)',
+      'spec.loader.exec_module(mirror)',
+      "data = open(sys.argv[2], 'rb').read()",
+      'width, height, channels, rows = mirror.decode_png(data)',
+      'black, w, h = mirror.sample_black(data)',
+      "print(width, height, channels, sum(sum(r) for r in rows), black)",
+    ].join('\n');
+    const result = spawnSync('python3', ['-I', '-c', code, path.join(repo, 'computer/scripts/mirror.py'), file], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim().split(' ');
+  }
+
+  test('mirror.py reads PNG data with all five filters, RGB and RGBA, and finds black by sampling', () => {
+    const mixed = makePng(60, 40, 3, (x, y) => [(x * 4) & 255, (y * 6) & 255, (x * y) & 255], y => y % 5);
+    assert.deepEqual(decodeWithScript(mixed.png), ['60', '40', '3', String(mixed.sum), 'False']);
+    const alpha = makePng(37, 23, 4, (x, y) => [(x * 7) & 255, 200, (y * 3) & 255], y => (y + 2) % 5);
+    assert.deepEqual(decodeWithScript(alpha.png).slice(0, 3), ['37', '23', '4']);
+    assert.equal(decodeWithScript(alpha.png)[3], String(alpha.sum));
+    const dark = makePng(100, 100, 3, () => [3, 11, 0], y => y % 5);
+    assert.equal(decodeWithScript(dark.png)[4], 'True', 'every channel under 12 is near black');
+    const grey = makePng(100, 100, 3, () => [3, 12, 0]);
+    assert.equal(decodeWithScript(grey.png)[4], 'False', 'a channel of 12 is not');
+    // under 1 percent lit still counts as black; a bright block over a few percent does not
+    const spot = makePng(200, 200, 3, (x, y) => (x < 4 && y < 4 ? [255, 255, 255] : [0, 0, 0]));
+    assert.equal(decodeWithScript(spot.png)[4], 'True');
+    const panel = makePng(200, 200, 3, (x, y) => (x > 60 && x < 140 && y > 60 && y < 140 ? [200, 200, 200] : [0, 0, 0]), y => y % 5);
+    assert.equal(decodeWithScript(panel.png)[4], 'False');
+  });
+
+  test('mirror.py with a black PNG says black, tries the screenshots, and writes what it knows of the picture', async () => {
+    const browser = await fakeBrowser([big, big, big], { png: blackPng, shot: big });
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
+    const folder = path.join(data, 'mirror');
+    const state = await until(() => { const found = readState(folder); return found && found.mode === 'screenshots' && found.sampled ? found : null; });
+    assert.ok(state, 'a sampled state in the other mode');
+    assert.equal(state.state, 'black');
+    assert.equal(state.sampled, true);
+    assert.equal(typeof state.bytes, 'number');
+    assert.equal(state.tried.screencast, 'ok', 'the screencast frames were big');
+    assert.ok(browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
+    const png = browser.seen.messages.find(message => message.method === 'Page.captureScreenshot' && message.params.format === 'png');
+    assert.equal(png.params.clip.scale, 0.25);
+    const ended = await run.done;
+    assert.match(ended.said, /the page is black in the screencast, trying screenshots/);
+    browser.server.close();
+  });
+
+  test('mirror.py with a coloured PNG says ok, stays on the screencast and takes one PNG in the first 30 seconds', async () => {
+    const browser = await fakeBrowser([big, big, big], { png: colourPng });
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
+    const folder = path.join(data, 'mirror');
+    const state = await until(() => { const found = readState(folder); return found && found.sampled ? found : null; });
+    assert.ok(state);
+    assert.equal(state.state, 'ok');
+    assert.equal(state.mode, 'screencast');
+    assert.equal(state.width, 48, 'the size of the probe when a frame has no size of its own');
+    await run.done;
+    const pngs = browser.seen.messages.filter(message => message.method === 'Page.captureScreenshot' && message.params.format === 'png');
+    assert.equal(pngs.length, 1);
+    assert.ok(!browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
+    browser.server.close();
+  });
+
+  test('mirror.py makes its folder 755 and its files 644 whatever the umask', async () => {
+    const browser = await fakeBrowser([big]);
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const child = spawn('sh', ['-c', 'umask 077; exec python3 -I "$0"', path.join(repo, 'computer/scripts/mirror.py')], {
+      env: { PATH: process.env.PATH, MIRROR_PORT: String(browser.port), MIRROR_DATA: data, MIRROR_ENV: path.join(data, 'none.env'), MIRROR_IDLE: '3' },
+    });
+    const folder = path.join(data, 'mirror');
+    assert.ok(await until(() => fs.existsSync(path.join(folder, 'frame.n'))));
+    await until(() => fs.existsSync(path.join(folder, 'state.json')));
+    const mode = name => (fs.statSync(path.join(folder, name)).mode & 0o777).toString(8);
+    assert.equal((fs.statSync(folder).mode & 0o777).toString(8), '755');
+    ['frame.jpg', 'frame.n', 'state.json', 'watch'].forEach(name => assert.equal(mode(name), '644', name));
+    await new Promise(resolve => child.on('close', resolve));
     browser.server.close();
   });
 
@@ -251,10 +399,16 @@ if (!havePython) {
 test('the script uses the standard library only and keeps the debug port on 127.0.0.1', () => {
   const text = read('computer/scripts/mirror.py');
   const imports = [...text.matchAll(/^(?:import|from) (\w+)/gm)].map(match => match[1]);
-  assert.deepEqual(imports.sort(), ['base64', 'hashlib', 'json', 'os', 'resource', 'socket', 'struct', 'sys', 'time', 'urllib'].sort());
+  assert.deepEqual(imports.sort(), ['base64', 'hashlib', 'json', 'os', 'resource', 'socket', 'struct', 'sys', 'time', 'urllib', 'zlib'].sort());
   assert.ok(text.includes("'http://127.0.0.1:%d/json'") && !text.includes('0.0.0.0'));
   assert.ok(text.includes("'quality': 45, 'maxWidth': 960, 'maxHeight': 540, 'everyNthFrame': 2"));
   assert.ok(text.includes('os.replace(temporary, path)'));
+});
+
+test('the script probes with a PNG at most once in 30 seconds', () => {
+  const text = read('computer/scripts/mirror.py');
+  assert.ok(text.includes("os.environ.get('MIRROR_PROBE', '30')") && text.includes("'format': 'png'") && text.includes('zlib.decompress'));
+  assert.equal(text.split("'format': 'png'").length - 1, 1, 'one place makes a PNG');
 });
 
 test('the unit starts only on demand, as the login user', () => {
