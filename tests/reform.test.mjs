@@ -233,14 +233,16 @@ await test('only the parts that have a back face or a folding chain keep their 3
   assert.equal(/\.reform-cover[^{]*\{[^}]*preserve-3d/.test(css), false, 'the covers are flat');
 });
 
-await test('every theme has a kit that draws the hardware, the Original kit draws all of it, and the others fall back to it', async () => {
+await test('every theme has a kit that draws the hardware, the Original kit draws all of it, and a theme without a kit of its own falls back to it', async () => {
   const original = await import(pathToFileURL(path.join(dashboard, 'styles', 'original', 'transitions.js')).href);
   ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth'].forEach(role => assert.ok(original.kit.draw(role).includes('<svg'), role));
   assert.equal(original.kit.draw('chassis'), '', 'the chassis is drawn by the stylesheet');
-  for (const id of ['cybertron', 'retro', 'foundry']) {
+  for (const id of ['retro', 'foundry']) {
     const text = read('styles/' + id + '/transitions.js');
     assert.ok(text.includes("from '../original/transitions.js'") && text.includes("id: '" + id + "'"), id);
   }
+  // Cybertron has a kit of its own (tests/reform-cybertron.test.mjs)
+  assert.ok(!read('styles/cybertron/transitions.js').includes("from '../original/transitions.js'"), 'cybertron');
 });
 
 await test('the transition code is in the order the docs say, and the docs name the skeleton', () => {
