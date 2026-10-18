@@ -110,8 +110,8 @@ changes in the middle of a panel.
 ## 4. Check the TV
 
 Open the menu next to Publish on Dashboard Settings (the three dots) and click
-Preview Nova. The TV shows Nova for 2 minutes whatever the views say, then goes
-back. Look at the name, the number, the colors and which side the columns are on. Then look at the
+Preview view: Nova. The TV shows the Nova view for 10 minutes, then goes
+back. Back to the schedule ends it at once. Look at the name, the number, the colors and which side the columns are on. Then look at the
 trim: the round bolts, the corners cut at the top right and the bottom left of every panel, the
 slanted end of each header tab, the solid name, the bar at the start of the ticker and the
 neon countdown. The bird has its wings up. Cybertron and the bar arrangement have dots on the page, in place

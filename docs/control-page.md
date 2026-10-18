@@ -12,6 +12,14 @@ The page has five tabs: Update, Now showing, Status, Keys and Log. This page cov
 
 On the Now showing tab, Hold this panel has a button, Hold 1 minute, and a field for whole minutes from 1 to 60 (it starts at 10) with the button Hold for that many minutes. The service refuses anything else with a plain sentence, and the hold ends by itself at that time. Show a view has the same kind of field, from 10 to 120 minutes. No other button has one.
 
+## Previewing a theme or a view
+
+The Now showing tab has two cards for this. Show a view picks Robotics, Prime, Nova or Condensed. Preview a theme picks Original, Cybertron, Retro or Foundry, and its button says Preview this theme for 10 minutes. Both cards have a Back to schedule button that ends the preview at once. The same four themes and four views are in the menu beside Publish on Dashboard Settings in the Studio (docs/switch-the-look.md), and both write the same fields in the same shape (`previewTheme { theme, until }` and `showView { key, until }`), so the screen reads them in one place (`activeRequests` in `dashboard/core/screen-requests.js`). The lists come from that file, so the page, the service and the screen cannot disagree. A view button is for 30 minutes unless the minutes field says otherwise.
+
+After a press the card shows a line, Previewing Cybertron until 14:32 with the minutes and seconds left. The page then asks what the wall reports every 3 seconds for a minute. When the report shows the theme or the view it asked for, the page says The wall shows Cybertron now. If the report still shows another one after 20 seconds, the page says The wall has not changed yet. It checks every 10 seconds. The TV reports every 10 seconds, and it asks for requests every 10 seconds, so a change normally shows within about 20 seconds. A change waits while an alert, a talk or the night screen has the screen.
+
+On the wall a theme request has its own place in `dashboard/core/style.js` (`requestStyle`), so it wins over the theme of the day, over the rotation and over an older Preview button. A view request plays all the blocks of that view in the rotation list, one after the other. Condensed has no block in the list, so it plays the rows of its own document. When the request ends the screen goes back to the schedule in a swap.
+
 ## The Live preview
 
 The Now showing tab has a Live preview card under the card of the wall. It shows the TV moving, as a picture the Teletraan computer makes of the TV's own browser (the mirror, below). When the mirror cannot start, it shows a copy of the dashboard in a frame that follows the TV, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
@@ -163,7 +171,7 @@ Two commands on the Teletraan computer show what happened:
 
 The first has one line for each word the helper was asked, and a `failed` line with the reason from `sudo` when a command did not run. The second has what the helper printed to the journal.
 
-The screen sees a request from the control page or the Studio (Run presentation test, Play announcement, Next look now, Hold, Show a view) within about 10 seconds: it reads only those fields of Dashboard Settings every 10 seconds, besides the full read every 5 minutes and the live change stream. A test request counts for one minute, so a screen that only read every 5 minutes would usually miss it.
+The screen sees a request from the control page or the Studio (Run presentation test, Play announcement, Next look now, Hold, Show a view, Preview a theme) within about 10 seconds: it reads only those fields of Dashboard Settings every 10 seconds, besides the full read every 5 minutes and the live change stream. A test request counts for one minute, so a screen that only read every 5 minutes would usually miss it.
 
 ## The PIN
 

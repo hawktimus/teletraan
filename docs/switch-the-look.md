@@ -41,7 +41,7 @@ A subtheme is a different thing: a dated layer of pictures on the frames (docs/s
 
 Click Publish. A change of view, row or pack does not happen in front of people. It waits for the next page change of the large panel, which takes up to a minute.
 
-To see a look first, open the menu next to Publish on Dashboard Settings (the three dots) and click Preview Prime, Preview Nova, Preview Cybertron, Preview Minimal (the bar arrangement) or Preview next pack. The TV shows that look for 2 minutes and then goes back to the saved settings. No setting is changed, so there is nothing to put back. The Now showing tab of the control page can also show a view or try a theme for a few minutes (docs/control-page.md).
+To see a look first, open the menu next to Publish on Dashboard Settings (the three dots) and click Preview theme (Original, Cybertron, Retro or Foundry), Preview view (Robotics, Prime, Nova or Condensed) or Preview next season pack. A note says what the TV shows and for how long. A theme or a view stays for 10 minutes and a pack for 2 minutes, and then the TV goes back to the saved settings. Back to the schedule, in the same menu, ends a preview at once. The TV changes within about 20 seconds. No setting is changed, so there is nothing to put back. The Now showing tab of the control page can also show a view or try a theme for a few minutes (docs/control-page.md).
 
 On a computer, `?style=cybertron`, `?team=nova` and `?overlay=christmas` on the end of the address show a look for that one page, with the sample content, which has both teams (docs/try-it-on-the-computer.md lists every switch).
 

@@ -594,6 +594,10 @@ const standIns = {
     // the link of the Ticker section (screen-fields.js) and the link that posts an announcement (start-here.js)
     'router.js': "export const Link = 'a'; export const IntentLink = 'a';",
   },
+  '@sanity/ui': {
+    'package.json': JSON.stringify({ name: '@sanity/ui', type: 'module', exports: { '.': './index.js' } }),
+    'index.js': 'export const useToast = () => ({ push: toast => (globalThis.studioToasts = globalThis.studioToasts || []).push(toast) });',
+  },
   react: {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
     'index.js': [
@@ -1743,7 +1747,7 @@ function checkPlayAnnouncements() {
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
   const button = buttons[played];
-  if (buttons.length !== 2 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
+  if (buttons.length !== 2 + played + previewButtonCount() || typeof button !== 'function') {
     return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then Run presentation test and the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'playAnnouncements'), 'only the settings page should get the Play announcements button');
@@ -1798,7 +1802,7 @@ function checkRunPresentationTest() {
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
   const button = buttons[1 + played];
-  if (buttons.length !== 2 + played + world.studioPreviews.previews.length || typeof button !== 'function') {
+  if (buttons.length !== 2 + played + previewButtonCount() || typeof button !== 'function') {
     return problems.concat('the settings page should have the Run presentation test button, a plain function, after Play announcements and before the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'runPresentationTest'), 'only the settings page should get the Run presentation test button');
@@ -1877,41 +1881,77 @@ function checkPreviewButtons() {
   const offered = choicesOf('dashboardSettings.previewRequest.kind');
   need(problems, offered.map(item => item.title).join() === ids.map(id => 'Preview ' + registry[id].name).join(), 'previewRequest.kind should show the names in the dashboard registry, each after the word Preview');
 
-  // The buttons come last, one for each preview, as plain functions, and are on no other page
+  // The buttons come last: a preview for each theme, one for each view, the pack preview and Back to the schedule, as plain
+  // functions, and are on no other page. The old team and style previews have no button but keep their kinds above.
   const before = 2 + Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(before);
-  if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
-    return problems.concat('the settings page should end with one Preview button for each preview, written as plain functions');
+  const looks = world.studioLookPreviews;
+  const wanted = looks.themePreviews.length + looks.viewPreviews.length + 2;
+  if (buttons.length !== wanted || !buttons.every(button => typeof button === 'function')) {
+    return problems.concat('the settings page should end with ' + wanted + ' preview buttons, written as plain functions');
   }
-  need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => !/^preview/.test(item.action)), 'only the settings page should get the Preview buttons');
+  need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => !/^preview/.test(item.action) && item.action !== 'backToSchedule'), 'only the settings page should get the Preview buttons');
 
   function press(button, published, draft) {
     globalThis.studioCalls = [];
+    globalThis.studioToasts = [];
     const props = { id: 'dashboardSettings', type: 'dashboardSettings', published: published, draft: draft || null, onComplete: () => {} };
     const state = button(props);
     if (!state.disabled) state.onHandle();
-    return { state: state, calls: globalThis.studioCalls };
+    return { state: state, calls: globalThis.studioCalls, toasts: globalThis.studioToasts };
   }
+  const setOf = pressed => pressed.calls[0] && pressed.calls[0].patch && pressed.calls[0].patch[0] && pressed.calls[0].patch[0].set;
+  const stampOf = (text, minutes, earlier, later) => /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(text) && Date.parse(text) >= Math.floor(earlier / 1000) * 1000 + minutes * 60000 && Date.parse(text) <= later + minutes * 60000;
+  const names = buttons.map(button => button.action);
 
-  // Each writes its kind and the time now, only that, and publishes
-  const pascal = id => id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
-  ids.forEach((id, index) => {
-    const button = buttons[index];
-    const label = 'Preview ' + registry[id].name;
+  // A theme preview and a view preview write the shape the control page writes, 10 minutes ahead, then publish, and say so in a toast
+  const lookButtons = [];
+  looks.themePreviews.forEach(theme => lookButtons.push({ action: 'previewTheme' + theme.id.charAt(0).toUpperCase() + theme.id.slice(1), label: 'Preview theme: ' + theme.name, field: 'previewTheme', value: { theme: theme.id }, toast: 'The wall shows ' + theme.name + ' for 10 minutes' }));
+  looks.viewPreviews.forEach(view => lookButtons.push({ action: 'previewView' + view.key.charAt(0).toUpperCase() + view.key.slice(1), label: 'Preview view: ' + view.name, field: 'showView', value: { key: view.key }, toast: 'The wall shows ' + view.name + ' for 10 minutes' }));
+  lookButtons.forEach(item => {
+    const button = buttons.filter(candidate => candidate.action === item.action)[0];
+    if (!button) return problems.push('the settings page should have the button ' + item.action);
     const earlier = Date.now();
     const pressed = press(button, null);
     const later = Date.now();
-    const set = pressed.calls[0] && pressed.calls[0].patch && pressed.calls[0].patch[0] && pressed.calls[0].patch[0].set;
-    const written = set && set.previewRequest;
-
-    need(problems, pressed.state.label === label, 'the button for ' + id + ' should be labelled ' + label);
-    need(problems, button.action === 'preview' + pascal(id), 'the button for ' + id + ' should be called preview' + pascal(id));
-    need(problems, /2 minutes/.test(pressed.state.title || '') && /No setting is changed/.test(pressed.state.title || ''), label + ' should say in its hover text that it lasts 2 minutes and changes no setting');
-    need(problems, pressed.calls.length === 2 && pressed.calls[0].patch.length === 1 && Object.keys(set).join() === 'previewRequest' && pressed.calls[1].publish === true, label + ' should set previewRequest and then publish');
-    need(problems, written && Object.keys(written).join() === 'kind,requestedAt' && written.kind === id, label + ' should write the kind ' + id);
-    need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= earlier && Date.parse(written.requestedAt) <= later, label + ' should write the time now, as new Date().toISOString() writes it');
-    need(problems, press(button, { previewRequest: { kind: id, requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, label + ' should be on when a request is already published, so it can be clicked again');
+    const set = setOf(pressed);
+    const written = set && set[item.field];
+    need(problems, pressed.state.label === item.label, item.action + ' should be labelled ' + item.label);
+    need(problems, /10 minutes/.test(pressed.state.title || '') && /No saved setting is changed/.test(pressed.state.title || ''), item.label + ' should say in its hover text that it lasts 10 minutes and changes no saved setting');
+    need(problems, pressed.calls.length === 2 && pressed.calls[0].patch.length === 1 && Object.keys(set).join() === item.field && pressed.calls[1].publish === true, item.label + ' should set ' + item.field + ' and then publish');
+    const valueKey = Object.keys(item.value)[0];
+    need(problems, written && Object.keys(written).join() === valueKey + ',until' && written[valueKey] === item.value[valueKey], item.label + ' should write ' + valueKey + ' ' + item.value[valueKey] + ' and an end time');
+    need(problems, written && stampOf(written.until, 10, earlier, later), item.label + ' should write an end time 10 minutes ahead, in the form the control page writes');
+    need(problems, pressed.toasts.length === 1 && pressed.toasts[0].title === item.toast, item.label + ' should show the toast: ' + item.toast);
   });
+  need(problems, names.join() === lookButtons.map(item => item.action).concat(['previewNextPack', 'backToSchedule']).join(), 'the preview buttons should be the themes, the views, the next season pack and Back to the schedule, in that order. They are: ' + names.join());
+
+  // Next season pack keeps the old request: its kind and the time now
+  const pack = buttons.filter(candidate => candidate.action === 'previewNextPack')[0];
+  const packEarlier = Date.now();
+  const packed = press(pack, null);
+  const packSet = setOf(packed);
+  need(problems, packed.state.label === 'Preview next season pack' && /2 minutes/.test(packed.state.title || ''), 'the pack preview should be labelled Preview next season pack and say it lasts 2 minutes');
+  need(problems, packSet && packSet.previewRequest && packSet.previewRequest.kind === 'next-pack' && Date.parse(packSet.previewRequest.requestedAt) >= packEarlier && packed.calls[1].publish === true, 'the pack preview should write the kind next-pack and the time now, and publish');
+  need(problems, packed.toasts.length === 1 && /2 minutes/.test(packed.toasts[0].title), 'the pack preview should say in a toast how long it lasts');
+
+  // Back to the schedule clears the four fields of the control page
+  const back = buttons.filter(candidate => candidate.action === 'backToSchedule')[0];
+  const cleared = press(back, null);
+  need(problems, cleared.state.label === 'Back to the schedule' && JSON.stringify(setOf(cleared)) === JSON.stringify({ holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } }), 'Back to the schedule should clear holdPanel, showView, previewTheme and pauseRotation');
+  need(problems, cleared.calls.length === 2 && cleared.calls[1].publish === true && cleared.toasts.length === 1, 'Back to the schedule should publish and show a toast');
+
+  // The Studio lists are the same as the dashboard's and the control page's
+  need(problems, looks.themePreviews.map(theme => theme.id).join() === world.dashboard.themeIds.join(), 'studio/inputs/look-previews.js should have the themes of themeIds in config.js, in the same order');
+  need(problems, looks.viewPreviews.map(view => view.key).join() === world.dashboard.viewKeys.join(), 'studio/inputs/look-previews.js should have the views of viewKeys in config.js, in the same order');
+  need(problems, looks.viewPreviews.map(view => view.name).join() === 'Robotics,Prime,Nova,Condensed', 'the views should be named Robotics, Prime, Nova and Condensed');
+  need(problems, looks.previewMinutes === 10, 'a theme or view preview should last 10 minutes');
+  const control = world.controlRequests;
+  need(problems, control.themeIds.join() === looks.themePreviews.map(theme => theme.id).join() && control.viewKeys.join() === looks.viewPreviews.map(view => view.key).join(), 'the control page and the Studio should list the same themes and views');
+  const atTime = new Date('2026-10-18T10:00:00Z');
+  looks.themePreviews.forEach(theme => need(problems, JSON.stringify(world.screenRequests.previewThemeRequest(theme.id, 10, atTime)) === JSON.stringify(control.buildRequest('theme', { theme: theme.id }, atTime).set), 'the Studio and the control page should write the same previewTheme for ' + theme.id));
+  looks.viewPreviews.forEach(view => need(problems, JSON.stringify(world.screenRequests.showViewRequest(view.key, 10, atTime)) === JSON.stringify(control.buildRequest('view', { key: view.key, minutes: 10 }, atTime).set), 'the Studio and the control page should write the same showView for ' + view.key));
+  need(problems, JSON.stringify(world.screenRequests.backToScheduleRequest()) === JSON.stringify(control.buildRequest('schedule', {}, atTime).set), 'the Studio and the control page should clear the same fields');
   return problems;
 }
 
@@ -2147,8 +2187,9 @@ async function checkScreenRequests() {
   world.studioHidden.hiddenTransitions.forEach(kind => {
     cases.push({ action: 'play' + pascal(kind.id), fields: () => requests.hiddenRequest(kind.id), shape: { hiddenRequest: { kind: kind.id, requestedAt: 'TIME' } } });
   });
+  // Only the pack preview still has a button. The other kinds are written by the Start here page's helpers only.
   world.studioPreviews.previews.forEach(kind => {
-    cases.push({ action: 'preview' + pascal(kind.id), fields: () => requests.previewRequest(kind.id), shape: { previewRequest: { kind: kind.id, requestedAt: 'TIME' } } });
+    cases.push({ action: kind.id === 'next-pack' ? 'preview' + pascal(kind.id) : '', where: 'preview ' + kind.id, fields: () => requests.previewRequest(kind.id), shape: { previewRequest: { kind: kind.id, requestedAt: 'TIME' } } });
   });
 
   for (const item of cases) {
@@ -2661,13 +2702,19 @@ function checkOldTitles() {
   return problems;
 }
 
+// The buttons after Run presentation test: a theme preview for each theme, a view preview for each view, the pack
+// preview and Back to the schedule
+function previewButtonCount() {
+  return world.studioLookPreviews.themePreviews.length + world.studioLookPreviews.viewPreviews.length + 2;
+}
+
 function checkSettingsPage() {
   const problems = [];
   // The buttons are added to the settings page after the ones Studio keeps
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   const kept = world.config.document.actions(actions, { schemaType: 'dashboardSettings' }).map(item => item.action).join();
   const others = world.config.document.actions(actions, { schemaType: 'task' }).length;
-  const wanted = 'publish,discardChanges,playDesktop,playRedEyes,playAnnouncements,runPresentationTest,previewPrime,previewNova,previewCybertron,previewMinimal,previewNextPack';
+  const wanted = 'publish,discardChanges,playDesktop,playRedEyes,playAnnouncements,runPresentationTest,previewThemeOriginal,previewThemeCybertron,previewThemeRetro,previewThemeFoundry,previewViewGeneral,previewViewPrime,previewViewNova,previewViewFamily,previewNextPack,backToSchedule';
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
@@ -7075,6 +7122,8 @@ async function main() {
     world.studioHidden = await load(path.join(folder, 'inputs', 'hidden-transitions.js'));
     world.previewModule = await load(path.join(dashboardFolder, 'core', 'preview.js'));
     world.studioPreviews = await load(path.join(folder, 'inputs', 'previews.js'));
+    world.controlRequests = await load(path.join(here, '..', 'control', 'support', 'requests.js'));
+    world.studioLookPreviews = await load(path.join(folder, 'inputs', 'look-previews.js'));
     world.publishAll = await load(path.join(folder, 'tools', 'publish-all.js'));
     world.publishAllTool = await load(path.join(folder, 'tools', 'publish-all-tool.js'));
     world.teamInput = await load(path.join(folder, 'inputs', 'team-input.js'));

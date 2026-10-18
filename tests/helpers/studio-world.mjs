@@ -49,6 +49,10 @@ const stubs = {
     'cli.js': 'export const defineCliConfig = config => config;',
     'router.js': "export const Link = 'a'; export const IntentLink = 'a';",
   },
+  '@sanity/ui': {
+    'package.json': JSON.stringify({ name: '@sanity/ui', type: 'module', exports: { '.': './index.js' } }),
+    'index.js': 'export const useToast = () => ({ push: toast => (globalThis.studioToasts = globalThis.studioToasts || []).push(toast) });',
+  },
   react: {
     'package.json': JSON.stringify({ name: 'react', type: 'module', exports: { '.': './index.js' } }),
     'index.js': [

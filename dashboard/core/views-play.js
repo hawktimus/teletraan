@@ -62,6 +62,8 @@ function rowsOfView(content, key, block) {
   if (blocks === null) return resolveView(content, key).panels;
 
   const wanted = blocks.filter((item, at) => item.key === key && (block < 0 || at === block));
+  // A view the list has no block for, Condensed, plays the rows of its own document when the control page shows it
+  if (wanted.length === 0 && block < 0) return resolveView(content, key).panels;
   return [].concat(...wanted.map(item => item.rows.map(row => tidyMainRow(mainRowOf(row, content), item.key === 'general', true)).filter(row => row !== null)));
 }
 
@@ -307,8 +309,8 @@ function tickBlocks(content, now, options) {
   const forced = viewKeys.includes(options.forced) ? options.forced : '';
 
   if (forced !== '') {
-    const at = blocks.findIndex(item => item.key === forced);
-    if (cycle.key !== forced && at >= 0) startView(forced, at);
+    // Every block of the view play, one after the other, as the rows of one view: no block is named
+    if (cycle.key !== forced || cycle.block !== -1) startView(forced);
     return moved();
   }
   if (options.frozen === true && cycle.key !== '') return moved();

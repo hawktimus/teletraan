@@ -6,7 +6,7 @@
 
 import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
-import { actions, buildRequest, mutationsFor, themeIds, viewKeys } from '../support/requests.js';
+import { actions, buildRequest, mutationsFor, themeIds, themeNames, viewKeys, viewNames as plainViewNames } from '../support/requests.js';
 import { gridPanels, registryText } from '../support/now-rows.js';
 
 const optionsQuery = '{ "teams": *[_type == "team"] | order(order asc) { code, name, shortName, number }, ' +
@@ -15,12 +15,12 @@ const optionsQuery = '{ "teams": *[_type == "team"] | order(order asc) { code, n
   '"requests": *[_id == "dashboardSettings"][0] { holdPanel, showView, previewTheme, pauseRotation } }';
 
 // The names of the four views. The two team views take the name of their Team document.
-function viewNames(teams, generalName) {
+function viewNames(teams) {
   const named = {};
   (Array.isArray(teams) ? teams : []).forEach(team => {
     if (team && typeof team.code === 'string') named[team.code] = team.shortName || team.name || team.code;
   });
-  return viewKeys.map(key => ({ key: key, name: key === 'general' ? (generalName || 'General') : key === 'family' ? 'Condensed' : named[key] || (key.charAt(0).toUpperCase() + key.slice(1)) }));
+  return viewKeys.map(key => ({ key: key, name: named[key] || plainViewNames[key] }));
 }
 
 // The screen ignores the test while Run presentations is off, so the page says so instead of reporting a send that does nothing.
@@ -51,6 +51,7 @@ export function register(router, ctx) {
       actions: actions,
       views: viewNames(found.teams),
       themes: themeIds,
+      themeNames: themeNames,
       panels: gridPanels(registryText(ctx)),
       liveAnnouncements: typeof found.live === 'number' ? found.live : null,
       talks: Array.isArray(found.talks) ? found.talks : [],
@@ -64,6 +65,7 @@ export function register(router, ctx) {
     const built = buildRequest(body.action, body, new Date());
     if (body.action === 'presentation-test') await checkPresentationsOn(ctx);
     await makeSanity(ctx).mutate(mutationsFor(built));
-    send(res, 200, { ok: true, action: body.action });
+    const until = (built.set && ((built.set.previewTheme && built.set.previewTheme.until) || (built.set.showView && built.set.showView.until))) || '';
+    send(res, 200, { ok: true, action: body.action, until: until });
   });
 }

@@ -247,10 +247,67 @@ function minuteField(name, label, usual, least, most) {
   return '<label class="pick"><span>' + esc(label) + '</span><input name="' + esc(name) + '" type="number" inputmode="numeric" min="' + least + '" max="' + most + '" step="1" value="' + usual + '"></label>';
 }
 
+// The theme and view previews. A preview has an end time, and the page shows what is left of it, and what the wall
+// reports after a button is pressed (the report of the wall comes every 10 seconds, so a change can take that long to
+// show). These are plain functions with no page in them.
+
+export const previewMinutes = 10;
+export const wallChecks = { answerSeconds: 15, notChangedSeconds: 20, stopSeconds: 60 };
+export const notChangedWords = 'The wall has not changed yet. It checks every 10 seconds.';
+
+const kindWords = { theme: 'theme', view: 'view' };
+
+function clockText(date) {
+  const two = number => (number < 10 ? '0' : '') + number;
+  return two(date.getHours()) + ':' + two(date.getMinutes());
+}
+
+export function previewLeft(until, now = new Date()) {
+  const end = Date.parse(until);
+  if (!until || isNaN(end) || end <= now.getTime()) return { running: false, seconds: 0, endsAt: '', text: '' };
+
+  const seconds = Math.ceil((end - now.getTime()) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return { running: true, seconds: seconds, endsAt: clockText(new Date(end)), text: minutes + ':' + (rest < 10 ? '0' : '') + rest };
+}
+
+export function nameOfTheme(id) {
+  return words(id);
+}
+
+// The line under a theme or view card while its request runs: "Previewing Cybertron until 14:32 (9:41 left)". The
+// request is { theme, until } or { key, until }, as the service stores it. Empty when no request runs.
+export function previewLine(kind, request, names, now = new Date()) {
+  const id = request && (kind === 'theme' ? request.theme : request.key);
+  const left = previewLeft(request && request.until, now);
+  if (!id || !left.running) return '';
+
+  const name = (names && names[id]) || words(id);
+  return 'Previewing ' + name + ' until ' + left.endsAt + ' (' + left.text + ' left).';
+}
+
+// What the page says about the wall after a press. wanted is the id asked for, report is the wall's last report (or
+// null), after is the seconds since the press. It says Done as soon as the wall shows it, and after 20 seconds with no
+// change it says the wall has not changed yet.
+export function wallCheck(kind, wanted, report, after, names) {
+  const shown = report && typeof report === 'object' ? String(report[kind] || '') : '';
+  const name = (names && names[wanted]) || words(wanted);
+
+  if (shown === wanted) return { state: 'done', words: 'The wall shows ' + name + ' now.' };
+  if (after >= wallChecks.notChangedSeconds) return { state: 'wait', words: notChangedWords };
+  return { state: 'wait', words: 'Waiting for the wall. It reports every 10 seconds' + (shown ? ' and now shows ' + (names && names[shown] || words(shown)) : '') + '.' };
+}
+
+function previewBlock(kind) {
+  return '<p class="note" data-left="' + kind + '" role="status"></p><p class="note" data-wall="' + kind + '" role="status"></p>';
+}
+
 export function nowControlsHtml(options) {
   const o = options || {};
   const views = (o.views || []).map(view => ({ value: view.key, label: view.name }));
-  const themes = (o.themes || []).map(theme => ({ value: theme, label: theme }));
+  const themeWordsOf = o.themeNames || {};
+  const themes = (o.themes || []).map(theme => ({ value: theme, label: themeWordsOf[theme] || words(theme) }));
   const panels = (o.panels || []).map(panel => ({ value: panel, label: panel }));
   const talks = (o.talks || []).map(talk => '<li>' + esc(talk.name || talk.topic || 'Talk') + ', ' + esc(talk.start) + '</li>').join('');
   const live = o.liveAnnouncements === null || o.liveAnnouncements === undefined ? 'not known' : o.liveAnnouncements;
@@ -260,9 +317,10 @@ export function nowControlsHtml(options) {
     card('Move on', '<div class="buttons">' + button('next', 'Next') + button('pause', 'Pause rotation') + button('resume', 'Resume rotation') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>') +
     card('Hold this panel', choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
       minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>') +
-    card('Show a view', choice('view', views, 'View') + '<div class="buttons">' + button('view', 'Show this view') + '</div>' +
+    card('Show a view', choice('view', views, 'View') + '<div class="buttons">' + button('view', 'Show this view') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' + previewBlock('view') +
       minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for that many minutes', ' data-minutes-from="view-minutes"') + '</div>') +
-    card('Preview a theme', choice('theme', themes, 'Theme') + '<div class="buttons">' + button('theme', 'Preview for 10 minutes') + '</div>') +
+    card('Preview a theme', choice('theme', themes, 'Theme') + '<div class="buttons">' + button('theme', 'Preview this theme for ' + previewMinutes + ' minutes') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' + previewBlock('theme') +
+      '<p class="note">The theme goes on the wall in a swap within about 20 seconds. After ' + previewMinutes + ' minutes the wall goes back to its schedule.</p>') +
     card('Announcements', '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
       '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
       '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>') +
@@ -309,8 +367,8 @@ export function doneWords(action, body = {}) {
     resume: 'The rotation runs again.',
     schedule: 'The screen goes back to its schedule.',
     hold: 'The panel is held' + minutes + '. The screen takes it in within about 10 seconds.',
-    view: 'The view is shown' + minutes + '. The screen takes it in within about 10 seconds.',
-    theme: 'The theme is previewed for 10 minutes.',
+    view: 'The view is shown' + minutes + '. The wall takes it in within about 20 seconds.',
+    theme: 'The theme is previewed for ' + previewMinutes + ' minutes. The wall takes it in within about 20 seconds.',
     announce: 'The announcements play within about 10 seconds. They wait if something else has the screen.',
     'post-announcement': 'The announcement is posted for two hours.',
     'presentation-test': 'The test talk starts within about 10 seconds. It waits if something else has the screen.',

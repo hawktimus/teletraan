@@ -879,8 +879,8 @@ now on the page that took them.
   comes at every change of view, and never happens while an alert, an announcement or a talk has the
   screen. A change to or from the bar arrangement changes the layout in the same move, and the screen
   does not reload (docs/layouts.md, "The swap"). To see a theme or a team for 2 minutes without saving
-  anything, open the menu next to Publish (the three dots) and click Preview Prime, Preview Nova or
-  Preview Cybertron, or add `?style=cybertron` or `?team=nova` to the address, which stops the views on
+  anything, open the menu next to Publish (the three dots) and click Preview theme: Cybertron or
+  Preview view: Nova, or add `?style=cybertron` or `?team=nova` to the address, which stops the views on
   that page (docs/switch-the-look.md, docs/hidden-transitions.md, "Preview a look").
 - Logo: everything the logo and the team name do. "Logo
   animations" is the master switch, and comes first. Turn it off and nothing in

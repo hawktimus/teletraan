@@ -50,12 +50,12 @@ await check('Pause has a limit that can be set and a default of an hour, and Res
   assert.deepEqual(buildRequest('resume', {}, at).set, { pauseRotation: { until: '' } });
 });
 
-await check('Show view takes the four views for 30 minutes unless told, and Preview theme takes the three themes for 10 minutes', () => {
+await check('Show view takes the four views for 30 minutes unless told, and Preview theme takes the four themes for 10 minutes', () => {
   ['general', 'prime', 'nova', 'family'].forEach(key => assert.equal(buildRequest('view', { key: key }, at).set.showView.key, key));
   assert.equal(buildRequest('view', { key: 'nova' }, at).set.showView.until, plus(30));
   assert.equal(buildRequest('view', { key: 'nova', minutes: 90 }, at).set.showView.until, plus(90));
   assert.throws(() => buildRequest('view', { key: 'minimal' }, at), error => error.status === 400);
-  ['original', 'cybertron', 'retro'].forEach(theme => assert.deepEqual(buildRequest('theme', { theme: theme }, at).set.previewTheme, { theme: theme, until: plus(10) }));
+  ['original', 'cybertron', 'retro', 'foundry'].forEach(theme => assert.deepEqual(buildRequest('theme', { theme: theme }, at).set.previewTheme, { theme: theme, until: plus(10) }));
   assert.throws(() => buildRequest('theme', { theme: 'neon-prime' }, at), error => error.status === 400);
 });
 
@@ -94,6 +94,31 @@ await check('POST request writes one patch of the published Dashboard Settings w
   assert.ok(!world.logged.join('\n').includes('skFAKE'));
 });
 
+await check('a theme or view request answers with the time it ends, so the page can count down', async () => {
+  const world = await makeWorld([request]);
+  const theme = await world.router.call('POST', '/request', { body: { action: 'theme', theme: 'foundry' } });
+  assert.equal(theme.status, 200);
+  assert.match(theme.json.until, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
+  const written = JSON.parse(world.fetched[0].init.body).mutations[0].patch.set.previewTheme;
+  assert.deepEqual(written, { theme: 'foundry', until: theme.json.until });
+  assert.ok(Math.abs(Date.parse(theme.json.until) - Date.now() - 10 * 60000) < 5000);
+  const view = await world.router.call('POST', '/request', { body: { action: 'view', key: 'family', minutes: 10 } });
+  assert.equal(JSON.parse(world.fetched[1].init.body).mutations[0].patch.set.showView.until, view.json.until);
+  const next = await world.router.call('POST', '/request', { body: { action: 'next' } });
+  assert.equal(next.json.until, '');
+});
+
+await check('the service lists the same themes and views as the screen reads, each with a name', async () => {
+  const screen = await import('../dashboard/core/screen-requests.js');
+  const table = await import('../control/support/requests.js');
+  assert.deepEqual(table.themeIds, screen.themeIds);
+  assert.deepEqual(table.viewKeys, screen.viewKeys);
+  assert.deepEqual(Object.keys(table.themeNames), table.themeIds);
+  assert.deepEqual(Object.keys(table.viewNames), table.viewKeys);
+  assert.deepEqual(table.themeIds, ['original', 'cybertron', 'retro', 'foundry']);
+  assert.deepEqual(table.viewKeys, ['general', 'prime', 'nova', 'family']);
+});
+
 await check('without SANITY_WRITE_TOKEN a request is refused with a plain sentence and nothing is sent', async () => {
   const world = await makeWorld([request], { env: "CONTROL_PIN='123456'\n" });
   const answer = await world.router.call('POST', '/request', { body: { action: 'next' } });
@@ -125,7 +150,9 @@ await check('GET request gives the views with the names of the Team documents, t
   const options = (await world.router.call('GET', '/request')).json;
   assert.deepEqual(options.views.map(view => view.key), ['general', 'prime', 'nova', 'family']);
   assert.equal(options.views[1].name, 'Prime');
+  assert.equal(options.views[0].name, 'Robotics');
   assert.equal(options.views[3].name, 'Condensed');
+  assert.deepEqual(options.themeNames, { original: 'Original', cybertron: 'Cybertron', retro: 'Retro', foundry: 'Foundry' });
   assert.deepEqual(options.themes, ['original', 'cybertron', 'retro', 'foundry']);
   assert.ok(options.panels.includes('tasks') && options.panels.includes('monday-board'));
   assert.ok(!options.panels.includes('banner'));

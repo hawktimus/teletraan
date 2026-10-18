@@ -75,6 +75,15 @@ export function previewStyle(style, until) {
   previewed = isStyle(style) && typeof until === 'number' && isFinite(until) ? { style: style, until: until } : null;
 }
 
+// The theme that the control page or the Studio menu asks for (previewTheme in core/screen-requests.js) has a slot of its
+// own, and wins over a preview of core/preview.js. When the two shared one slot, the end of the 2 minutes of an older
+// Preview button took the theme of the request away. views-run.js sets it and lets go when the request ends.
+let requested = '';
+
+export function requestStyle(style) {
+  requested = isStyle(style) ? style : '';
+}
+
 // The Screens (core/screens.js) hold the style of the row that plays, the way a preview
 // holds one, but weaker: a preview and ?style= win over it, and it wins over Style in Dashboard
 // Settings. A name that is not a style lets go, and the setting decides again.
@@ -86,9 +95,10 @@ export function rotateStyle(style) {
 
 // saved is Style from Dashboard Settings, and asked is ?style= in the address. The
 // address wins, for this page only, like the other switches. Anything that is not a
-// style is ignored. A preview that has time left wins over both, and the style the
+// style is ignored. The theme of a request of the control page wins over everything, and a preview that has time left wins over both, and the style the
 // Screens hold comes after the address and before the setting. now is a Date.
 export function chooseStyle(saved, asked, now = new Date()) {
+  if (requested !== '') return requested;
   if (previewed && now.getTime() < previewed.until) return previewed.style;
   if (isStyle(asked)) return asked;
   if (rotated !== '') return rotated;

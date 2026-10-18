@@ -21,7 +21,7 @@ import { canShow } from './panels.js';
 import { moveOn, pauseRotation, resumeRotation, setLookHooks, skipRow, startListsOver } from './schedule.js';
 import { changesBetween, currentScreen, heldLook, holdScreenLook, makeNextLookRunner, styleCanGoOn, swapScaleOf } from './screens.js';
 import { activeRequests } from './screen-requests.js';
-import { layoutFor, previewStyle, rotateLayout, shapesFor, shapesNow } from './style.js';
+import { layoutFor, requestStyle, rotateLayout, shapesFor, shapesNow } from './style.js';
 import { queueSwap, startSwaps, swapRunning } from './swap-run.js';
 import { noteWantedTeam } from './team-run.js';
 import { takeoverRunning } from './takeover.js';
@@ -184,8 +184,9 @@ function actOnRequests(content, now) {
   }
   if (asked.previewTheme !== wasPreviewing) {
     wasPreviewing = asked.previewTheme;
-    previewStyle(asked.previewTheme, asked.previewTheme === '' ? 0 : now.getTime() + 24 * 3600 * 1000);
+    requestStyle(asked.previewTheme);
     checkTheme();
+    moveOn(['grid1']); // the theme goes on in the swap of the next page change, so that comes now and not at the end of this page
   }
   if (asked.holdPanel !== wasHolding) {
     wasHolding = asked.holdPanel;

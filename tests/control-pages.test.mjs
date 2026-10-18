@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, statusHtml } from '../control/static/tabs/render.js';
+import { agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, statusHtml, wallCheck } from '../control/static/tabs/render.js';
 
 let passed = 0;
 function check(name, test) {
@@ -92,6 +92,45 @@ check('buttons and fields are 44px high or more, and the tabs are one column unt
   assert.match(css, /select, \.tab input \{[^}]*min-height: 44px/);
   assert.match(css, /\.tab \.grid \{ display: grid; grid-template-columns: minmax\(0, 1fr\);/);
   assert.match(css, /@media \(min-width: 900px\)[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/);
+});
+
+check('the theme card says what a press does, and the lists come from the service in one table', () => {
+  const html = nowControlsHtml({ views: [{ key: 'general', name: 'Robotics' }, { key: 'family', name: 'Condensed' }], themes: ['original', 'cybertron', 'retro', 'foundry'], themeNames: { cybertron: 'Cybertron' }, panels: [], talks: [], canWrite: true });
+  assert.ok(html.includes('Preview this theme for 10 minutes'));
+  assert.ok(html.includes('<option value="cybertron">Cybertron</option>') && html.includes('<option value="foundry">Foundry</option>'));
+  assert.ok(html.includes('<option value="general">Robotics</option>') && html.includes('<option value="family">Condensed</option>'));
+  assert.ok(html.includes('data-left="theme"') && html.includes('data-wall="theme"') && html.includes('data-wall="view"'));
+  const themeCard = html.slice(html.indexOf('Preview a theme'));
+  assert.ok(themeCard.includes('Back to schedule') && themeCard.includes('data-action="schedule"'), 'the theme card has Back to schedule');
+  const viewCard = html.slice(html.indexOf('Show a view'), html.indexOf('Preview a theme'));
+  assert.ok(viewCard.includes('Back to schedule'), 'the view card has Back to schedule');
+});
+
+check('a preview shows its end time and what is left, and says nothing when it has run out', () => {
+  const at = new Date('2026-10-18T10:00:00Z');
+  const until = new Date(at.getTime() + 10 * 60000).toISOString();
+  const left = previewLeft(until, new Date(at.getTime() + 20 * 1000));
+  assert.equal(left.running, true);
+  assert.equal(left.text, '9:40');
+  assert.match(left.endsAt, /^\d\d:\d\d$/);
+  const line = previewLine('theme', { theme: 'cybertron', until: until }, { cybertron: 'Cybertron' }, at);
+  assert.ok(line.startsWith('Previewing Cybertron until ' + left.endsAt) && line.endsWith('(10:00 left).'), line);
+  assert.equal(previewLine('theme', { theme: 'cybertron', until: until }, {}, new Date(at.getTime() + 11 * 60000)), '');
+  assert.equal(previewLine('view', { key: '', until: until }, {}, at), '');
+  assert.ok(previewLine('view', { key: 'family', until: until }, { family: 'Condensed' }, at).includes('Condensed'));
+});
+
+check('after a press the page says what the wall reports, and after 20 seconds without a change it says so', () => {
+  const names = { cybertron: 'Cybertron', original: 'Original' };
+  assert.deepEqual(wallCheck('theme', 'cybertron', { theme: 'cybertron' }, 6, names), { state: 'done', words: 'The wall shows Cybertron now.' });
+  const waiting = wallCheck('theme', 'cybertron', { theme: 'original' }, 8, names);
+  assert.equal(waiting.state, 'wait');
+  assert.ok(waiting.words.includes('now shows Original'));
+  assert.equal(wallCheck('theme', 'cybertron', null, 3, names).words, 'Waiting for the wall. It reports every 10 seconds.');
+  assert.equal(wallCheck('theme', 'cybertron', { theme: 'original' }, 20, names).words, 'The wall has not changed yet. It checks every 10 seconds.');
+  assert.equal(notChangedWords, 'The wall has not changed yet. It checks every 10 seconds.');
+  assert.equal(wallCheck('theme', 'cybertron', { theme: 'cybertron' }, 40, names).state, 'done', 'a late change is still reported');
+  assert.equal(wallCheck('view', 'nova', { view: 'nova' }, 4, {}).words, 'The wall shows Nova now.');
 });
 
 console.log(passed + ' of ' + passed + ' checks passed.');

@@ -2,7 +2,7 @@
 
 This page also covers the Play announcements button, which sits beside the two Play
 buttons for the transitions. See "Play announcements" below. The Run presentation test
-button, and the five Preview buttons that end the menu, are covered after it.
+button, and the Preview buttons that end the menu, are covered after it.
 
 A hidden transition is a rare surprise. Now and then, instead of an ordinary page
 change, the whole screen does something else. There are two:
@@ -231,30 +231,36 @@ does nothing. Open the screen without `?sample=1` first.
 
 ## Preview a look
 
-The last five buttons in the menu next to Publish on Dashboard Settings are **Preview Prime**,
-**Preview Nova**, **Preview Cybertron**, **Preview Minimal** and **Preview next pack**. Each one
-shows a look on the TV for 2 minutes, and then the screen goes back to the saved settings. Use
-them to show visitors a style, to check a team's colors and its mirror, or to see a seasonal pack
-on a day it is not scheduled.
+The last ten buttons in the menu next to Publish on Dashboard Settings are **Preview theme: Original**,
+**Cybertron**, **Retro** and **Foundry**, **Preview view: Robotics**, **Prime**, **Nova** and **Condensed**,
+**Preview next season pack** and **Back to the schedule**. A theme or view preview shows on the TV for
+10 minutes, and the pack for 2 minutes. Then the screen goes back to the saved settings. Use them to show
+visitors a theme, to check a team's colors and its mirror in its view, or to see a season pack on a day it is
+not scheduled. Each button shows a note when you click it, for example "The wall shows Cybertron for
+10 minutes". The TV changes within about 20 seconds. Back to the schedule ends every preview and every hold
+from the control page at once.
 
 1. Open Dashboard Settings in Studio.
 2. Open the menu next to Publish (the three dots) and click a Preview button.
 3. Look at the TV.
 
-The button writes its kind and the time now into `previewRequest` and publishes the page for you.
-`previewRequest` has two fields, `kind` and `requestedAt`, and editors never see it in Studio: it is
-hidden, but its value stays in the page. Nothing else in Dashboard Settings or on the Look page is
-changed, so there is nothing to put back.
+A theme or view button writes `previewTheme` or `showView`, with the id and an end time 10 minutes ahead, and
+publishes the page for you. These are the same fields in the same shape as the Now showing tab of the control
+page writes (docs/control-page.md), so the screen has one way to read both
+(`activeRequests` in `dashboard/core/screen-requests.js`). The fields are hidden in Studio, but their values stay
+in the page. The pack button writes the kind and the time now into `previewRequest`, which has two fields, `kind`
+and `requestedAt`. Nothing else in Dashboard Settings or on the Look page is changed, so there is nothing to put
+back. The old buttons Preview Prime, Nova, Cybertron and Minimal are gone: a team and a style are no longer held
+by themselves. A team is the team of a view, so use Preview view.
 
-What each button holds for 2 minutes:
+What each button holds:
 
 | Button | What the screen shows |
 |--------|-----------------------|
-| Preview Prime | the Prime team, whatever the views say |
-| Preview Nova | the Nova team, whatever the views say. With no Nova team document in Studio it stays on Prime |
-| Preview Cybertron | the Cybertron theme, whatever the Themes page says and whatever `?style=` says |
-| Preview Minimal | the bar layout, in the same way |
-| Preview next pack | the seasonal pack after the one on the screen, in the order of the list in `dashboard/themes/overlays/registry.js` |
+| Preview theme: Original, Cybertron, Retro, Foundry | that theme, in the view that plays, whatever the weekday schedule says and whatever `?style=` says |
+| Preview view: Robotics, Prime, Nova, Condensed | that view (Robotics is General, Condensed is Family), with its team and layout, in the theme of the day |
+| Preview next season pack | the seasonal pack after the one on the screen, in the order of the list in `dashboard/themes/overlays/registry.js` |
+| Back to the schedule | nothing: it clears the theme preview, the view preview, a held panel and a pause |
 
 What the screen does with it:
 
