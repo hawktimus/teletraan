@@ -73,6 +73,10 @@ function fakeBrowser(pictures, options = {}) {
       const message = JSON.parse(data.toString());
       seen.messages.push(message);
       if (message.method === 'Page.screencastFrameAck') seen.acks.push(message.params.sessionId);
+      if (message.method === 'Page.captureScreenshot' && options.shot) {
+        socket.write(wsFrame(1, JSON.stringify({ id: message.id, result: { data: options.shot.toString('base64') } })));
+        return;
+      }
       if (message.method !== 'Page.startScreencast') return;
       socket.write(wsFrame(9, 'hi'));
       pictures.forEach((bytes, index) => {
@@ -136,6 +140,64 @@ if (!havePython) {
     assert.equal(ended.code, 0);
     assert.match(ended.said, /nobody is watching after [\d.]+ s, 2 frames/);
     assert.ok(!fs.existsSync(path.join(folder, 'frame.jpg')) && !fs.existsSync(path.join(folder, 'frame.n')), 'a stopped mirror leaves no old picture');
+    browser.server.close();
+  });
+
+  const tiny = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(1500, 1), Buffer.from([0xff, 0xd9])]);
+  const big = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(40000, 7), Buffer.from([0xff, 0xd9])]);
+  const readState = folder => { try { return JSON.parse(fs.readFileSync(path.join(folder, 'state.json'), 'utf8')); } catch (error) { return null; } };
+
+  test('mirror.py prepares the page, and with good frames it stays on the screencast', async () => {
+    const browser = await fakeBrowser([big, big, big, big, big]);
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
+    const folder = path.join(data, 'mirror');
+    assert.ok(await until(() => fs.existsSync(path.join(folder, 'frame.n')) && fs.readFileSync(path.join(folder, 'frame.n'), 'utf8') === '5'));
+    const state = await until(() => { const found = readState(folder); return found && found.mode === 'screencast' ? found : null; });
+    assert.ok(state, 'a state file');
+    assert.equal(state.state, 'ok');
+    assert.equal(typeof state.fps, 'number');
+    const methods = browser.seen.messages.map(message => message.method);
+    ['Page.enable', 'Page.bringToFront', 'Emulation.setFocusEmulationEnabled', 'Page.setWebLifecycleState'].forEach(name => assert.ok(methods.includes(name), name));
+    assert.ok(methods.indexOf('Page.enable') < methods.indexOf('Page.startScreencast'));
+    assert.deepEqual(browser.seen.messages.find(message => message.method === 'Page.setWebLifecycleState').params, { state: 'active' });
+    assert.ok(!methods.includes('Page.captureScreenshot') && !methods.includes('Page.stopScreencast'), 'no fallback');
+    const ended = await run.done;
+    assert.ok(!/was black/.test(ended.said));
+    assert.ok(!fs.existsSync(path.join(folder, 'state.json')), 'a stopped mirror leaves no state');
+    browser.server.close();
+  });
+
+  test('mirror.py falls back to screenshots when three frames in a row are black, and says ok when those are good', async () => {
+    const browser = await fakeBrowser([tiny, tiny, tiny, tiny], { shot: big });
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
+    const folder = path.join(data, 'mirror');
+    const state = await until(() => { const found = readState(folder); return found && found.mode === 'screenshots' ? found : null; });
+    assert.ok(state, 'a state file in screenshot mode');
+    assert.equal(state.state, 'ok');
+    assert.ok(await until(() => fs.existsSync(path.join(folder, 'frame.jpg')) && fs.readFileSync(path.join(folder, 'frame.jpg')).length === big.length), 'the screenshot is the picture');
+    const shot = browser.seen.messages.find(message => message.method === 'Page.captureScreenshot');
+    assert.deepEqual(shot.params, { format: 'jpeg', quality: 50, fromSurface: true, captureBeyondViewport: false });
+    assert.ok(browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
+    const ended = await run.done;
+    assert.match(ended.said, /mirror: screencast was black, using screenshots/);
+    browser.server.close();
+  });
+
+  test('mirror.py keeps writing and says black when the screenshots are black too', async () => {
+    const browser = await fakeBrowser([tiny, tiny, tiny], { shot: tiny });
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
+    const folder = path.join(data, 'mirror');
+    const state = await until(() => { const found = readState(folder); return found && found.state === 'black' ? found : null; });
+    assert.ok(state, 'the state says black');
+    assert.equal(state.mode, 'screenshots');
+    assert.ok(fs.existsSync(path.join(folder, 'frame.jpg')), 'the pictures keep coming');
+    await run.done;
     browser.server.close();
   });
 
@@ -327,9 +389,29 @@ test('the route gives no-python3 and stopped, and a plain sentence when the help
   assert.equal(route.mirrorState('nonsense'), 'unknown');
 });
 
+test('GET /mirror/status adds what the script says about its pictures, and ignores a stale or odd file', async () => {
+  const world = await makeWorld([route]);
+  world.ctx.helper = async () => 'mirror: running';
+  const folder = path.join(world.dataDir, 'mirror');
+  fs.mkdirSync(folder, { recursive: true });
+  assert.equal((await world.router.call('GET', '/mirror/status')).json.picture, null);
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'ok', mode: 'screenshots', fps: 4 }));
+  assert.deepEqual((await world.router.call('GET', '/mirror/status')).json.picture, { state: 'ok', mode: 'screenshots', fps: 4 });
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'black', mode: 'screenshots' }));
+  assert.equal((await world.router.call('GET', '/mirror/status')).json.picture.state, 'black');
+  fs.writeFileSync(path.join(folder, 'state.json'), '{"state": "wild"}');
+  assert.equal((await world.router.call('GET', '/mirror/status')).json.picture, null);
+  const old = new Date(Date.now() - 60000);
+  fs.writeFileSync(path.join(folder, 'state.json'), JSON.stringify({ state: 'ok', mode: 'screencast', fps: 12 }));
+  fs.utimesSync(path.join(folder, 'state.json'), old, old);
+  assert.equal(route.pictureState(world.ctx), null, 'older than 15 seconds');
+});
+
 test('the card words: live with a rate, the two fallbacks, the picture address and the rate from the draw times', () => {
-  assert.equal(mirrorLive(14.26), 'Live from the TV, 14.3 frames a second');
-  assert.equal(mirrorLive(NaN), 'Live from the TV, 0 frames a second');
+  assert.equal(mirrorLive(14.26), 'Live from the TV (screencast, 14.3 frames a second)');
+  assert.equal(mirrorLive(4, 'screenshots'), 'Live from the TV (screenshots, 4 a second)');
+  assert.equal(mirrorWords.black, 'The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.');
+  assert.equal(mirrorLive(NaN), 'Live from the TV (screencast, 0 frames a second)');
   assert.equal(mirrorWords.failed, 'The mirror could not start. Showing the copy that follows the screen.');
   assert.ok(mirrorWords.noPython.startsWith('The mirror needs python3 on the computer.'));
   assert.equal(mirrorPictureAddress(' 42 '), '/mirror/frame.jpg?n=42');
@@ -347,6 +429,7 @@ test('the page: one request in flight, renews every 30 seconds, gives up after 1
   assert.ok(text.includes('mirrorFrameWait') && read('control/static/tabs/render.js').includes('export const mirrorFrameWait = 10000'));
   assert.ok(text.includes('if (!document.hidden)') && text.includes('document.addEventListener(\'visibilitychange\''));
   assert.ok(text.includes('URL.revokeObjectURL'));
+  assert.ok(text.includes("api('GET', '/mirror/status')") && text.includes("'/helper/restart-kiosk'") && text.includes('mirrorWords.black'), 'the black message has a Restart screen button');
   assert.ok(text.includes('let wanted = wide();') && text.includes('if (wanted) load(); else unload();'), 'a phone loads only on the tap');
 });
 

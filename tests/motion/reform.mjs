@@ -1,5 +1,5 @@
-// The panel transition (reform) and the view transition (reformView), in the Original theme and in Retro (docs/transitions.md). One scene of
-// each kind is played at 1920 x 1080 and the rules read it:
+// The panel transition (reform) and the view transition (reformView), in each theme that has a kit (docs/transitions.md). One scene of
+// each kind and theme is played at 1920 x 1080 and the rules read it:
 //
 //   - the frames: requestAnimationFrame is recorded over the whole run with the CPU at normal speed, and a frame longer than
 //     33 ms fails the rule (the view is let have a few, see scenes below). The number of elements the run holds and the number that have an animation of their own are
@@ -25,12 +25,14 @@ const allowedProperties = ['transform', 'opacity'];
 // late is the share of the frames that may be over the limit. The panel has none, as the order says. The view draws four regions, a
 // hundred and twenty eight squares and a hawk, and the headless browser draws with software, so it is let have one frame in seven over 34
 // ms and none over 100 ms (tests/motion/README.md, "Where a rule is looser than the order").
-const scenes = {
-  panel: { play: 'reform-panel', options: {}, look: 'original', name: 'the panel transition', late: 0, longest: frameLimitMs },
-  view: { play: 'reform-view', options: { view: 'nova' }, look: 'bar', name: 'the view transition', late: 1 / 7, longest: 100 },
-  'retro-panel': { play: 'reform-panel', options: {}, look: 'retro', name: 'the Retro panel transition', late: 0, longest: frameLimitMs },
-  'retro-view': { play: 'reform-view', options: { view: 'nova' }, look: 'retro-bar', name: 'the Retro view transition', late: 1 / 7, longest: 100 },
-};
+// Each theme has one scene of each kind, and the name of every rule says the theme. A theme that has its own kit
+// (styles/<theme>/transitions.js) is drawn in its own look: the bar look of a theme is the Prime view of that theme.
+const looksOf = { original: { panel: 'original', view: 'bar' }, cybertron: { panel: 'cybertron', view: 'cybertronBar' }, retro: { panel: 'retro', view: 'retroBar' } };
+const scenes = {};
+Object.keys(looksOf).forEach(theme => {
+  scenes[theme + ' panel'] = { play: 'reform-panel', options: {}, look: looksOf[theme].panel, name: 'the ' + theme + ' panel transition', late: 0, longest: frameLimitMs };
+  scenes[theme + ' view'] = { play: 'reform-view', options: { view: 'nova' }, look: looksOf[theme].view, name: 'the ' + theme + ' view transition', late: 1 / 7, longest: 100 };
+});
 
 // In the page: the recorder of frames and the way to ask whether the run is on the screen
 function installRecorder() {
@@ -244,13 +246,14 @@ function hawkBoxes(found, ms) {
 
 const round = value => Math.round(value * 1000) / 1000;
 
-function rules(kind) {
-  const scene = scenes[kind];
-  const key = 'reform ' + kind;
+function rules(theme, kind) {
+  const scene = scenes[theme + ' ' + kind];
+  const key = 'reform ' + theme + ' ' + kind;
+  const prefix = 'reform/' + theme + '/' + kind + '/';
 
   return [
     {
-      name: 'reform/' + kind + '/no-frame-over-33ms',
+      name: prefix + 'no-frame-over-33ms',
       async run(ctx) {
         const found = await ctx.scenario(key + ' frames', () => playForFrames(ctx, scene));
         if (found.error) return [found.error];
@@ -263,7 +266,7 @@ function rules(kind) {
       },
     },
     {
-      name: 'reform/' + kind + '/only-transform-and-opacity',
+      name: prefix + 'only-transform-and-opacity',
       async run(ctx) {
         const found = await ctx.scenario(key + ' looks', () => playForLooks(ctx, scene));
         if (found.error) return [found.error];
@@ -278,25 +281,25 @@ function rules(kind) {
       },
     },
     {
-      name: 'reform/' + kind + '/at-0-ms-the-page-is-the-old-page',
+      name: prefix + 'at-0-ms-the-page-is-the-old-page',
       async run(ctx) {
         const found = await ctx.scenario(key + ' looks', () => playForLooks(ctx, scene));
         if (found.error) return [found.error];
 
         const result = await difference(ctx, found.before, found.atZero, found.held.regions.map(region => windowOf(region.from)), hawkBoxes(found, 0));
-        if (result.share >= looksLike) ctx.keep('reform/' + kind + '/at-0-ms-the-page-is-the-old-page', { name: 'at-0ms', png: found.atZero });
-        if (result.share >= looksLike) ctx.keep('reform/' + kind + '/at-0-ms-the-page-is-the-old-page', { name: 'before', png: found.before });
+        if (result.share >= looksLike) ctx.keep(prefix + 'at-0-ms-the-page-is-the-old-page', { name: 'at-0ms', png: found.atZero });
+        if (result.share >= looksLike) ctx.keep(prefix + 'at-0-ms-the-page-is-the-old-page', { name: 'before', png: found.before });
         return result.share < looksLike ? [] : [scene.name + ' at 0 ms: ' + round(result.share * 100) + ' percent of the pixels inside the frames differ from the page before it (limit ' + looksLike * 100 + ' percent)'];
       },
     },
     {
-      name: 'reform/' + kind + '/at-3-s-the-page-is-the-new-page-with-no-seam',
+      name: prefix + 'at-3-s-the-page-is-the-new-page-with-no-seam',
       async run(ctx) {
         const found = await ctx.scenario(key + ' looks', () => playForLooks(ctx, scene));
         if (found.error) return [found.error];
 
         const result = await difference(ctx, found.atEnd, found.after, found.held.regions.map(region => windowOf(region.to)), hawkBoxes(found, found.held.duration));
-        const name = 'reform/' + kind + '/at-3-s-the-page-is-the-new-page-with-no-seam';
+        const name = prefix + 'at-3-s-the-page-is-the-new-page-with-no-seam';
         if (result.share >= looksLike) {
           ctx.keep(name, { name: 'at-3s', png: found.atEnd });
           ctx.keep(name, { name: 'the-page-after', png: found.after });
@@ -307,20 +310,22 @@ function rules(kind) {
   ];
 }
 
-const hawkRule = {
-  name: 'reform/view/the-hawk-stays-on-the-canvas',
-  async run(ctx) {
-    const found = await ctx.scenario('reform view looks', () => playForLooks(ctx, scenes.view));
-    if (found.error) return [found.error];
+function hawkRule(theme) {
+  return {
+    name: 'reform/' + theme + '/view/the-hawk-stays-on-the-canvas',
+    async run(ctx) {
+      const found = await ctx.scenario('reform ' + theme + ' view looks', () => playForLooks(ctx, scenes[theme + ' view']));
+      if (found.error) return [found.error];
 
-    const lines = [];
-    if (!found.hawk.some(sample => sample.plates === 4)) lines.push('the view transition drew no hawk of four plates');
-    found.hawk.filter(sample => sample.plates > 0).forEach(sample => {
-      const out = Math.max(0, -sample.left, -sample.top, sample.right - canvas.width, sample.bottom - canvas.height);
-      if (out > 0) lines.push('the hawk at ' + sample.ms + ' ms: ' + Math.round(out) + 'px outside the canvas');
-    });
-    return lines;
-  },
-};
+      const lines = [];
+      if (!found.hawk.some(sample => sample.plates === 4)) lines.push('the ' + theme + ' view transition drew no hawk of four plates');
+      found.hawk.filter(sample => sample.plates > 0).forEach(sample => {
+        const out = Math.max(0, -sample.left, -sample.top, sample.right - canvas.width, sample.bottom - canvas.height);
+        if (out > 0) lines.push('the hawk at ' + sample.ms + ' ms: ' + Math.round(out) + 'px outside the canvas');
+      });
+      return lines;
+    },
+  };
+}
 
-export const tests = rules('panel').concat(rules('view'), [hawkRule], rules('retro-panel'), rules('retro-view'));
+export const tests = Object.keys(looksOf).reduce((all, theme) => all.concat(rules(theme, 'panel'), rules(theme, 'view'), [hawkRule(theme)]), []);

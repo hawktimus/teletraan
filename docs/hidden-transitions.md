@@ -104,6 +104,8 @@ announcement, a demo, a talk and calm motion do not count, because nothing is ro
 then. A row with seconds of its own in the Screen tab changes the time for that one page,
 so the hours are about right and not exact.
 
+A hidden transition that is due goes before every other change of the large panel: the swap into a new look or team, and the panel and view transitions. A look that was waiting goes on at the next page change. Without this a push from the Studio, which lasts one minute, could miss every page change in that minute.
+
 After any hidden transition has played, none comes about by chance for 4 hours. The 4 is
 `hiddenGapHours` in `dashboard/config.js`. The time it played is kept in the browser's
 storage (`localStorage`, under `teletraan-hidden-last-fired`), so a computer that restarts

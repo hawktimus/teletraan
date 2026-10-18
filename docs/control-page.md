@@ -28,6 +28,12 @@ What is exposed: the browser's debug port stays on 127.0.0.1 and nothing serves 
 
 The mirror is made at 960 by 540, JPEG quality 45, about 30 frames a second at most. The page shows fewer when the network is slow.
 
+A screencast can come out black on a kiosk browser that has no window manager. So after it connects, `mirror.py` asks the page to be active and in front (`Page.enable`, `Page.bringToFront`, focus emulation and an active lifecycle state) and then watches the frames. Three frames in a row under 3 KB (a black 960 by 540 picture is about 2 KB, a real dashboard frame tens of KB), or no frame at all in 5 seconds, switch it to screenshots, about 4 a second, and the journal gets one line: `mirror: screencast was black, using screenshots`. It writes `mirror/state.json` with `{"state": "ok", "mode": "screencast" or "screenshots", "fps": n}`, or `{"state": "black", ...}` when the screenshots are black too. `GET /control/api/mirror/status` gives it as `picture`, and the page asks every 5 seconds.
+
+The line under the picture says which way it is made: `Live from the TV (screencast, 12 frames a second)` or `Live from the TV (screenshots, 4 a second)`. When the picture is black it says `The TV picture is black. The kiosk browser may not be drawing to the screen. Restart the screen.` and shows a Restart screen button, which asks first, like the one on the Status tab.
+
+If the picture is black or missing, look at it without the page: open `http://<address>:3229/mirror/frame.jpg` while the Live preview is open, and run `journalctl -u teletraan-mirror` on the Teletraan computer.
+
 ### The copy that follows the screen
 
 The copy follows the TV. A page cannot join the session of another browser, so the copy is built from the report the TV posts every 10 seconds (view, theme, layout, team, panel, page). The tab asks for the report every 5 seconds. It builds the address of the frame from it, for example `/dashboard/?panel=events&team=prime&screen=cybertron&view=prime&still=1`, and changes the frame only when that address is not the one it holds. A report that did not change never reloads the frame. The line under the card says `Showing: <panel>, <team>, <theme>`, or `The TV has not reported yet` when there is no report.

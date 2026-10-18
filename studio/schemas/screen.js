@@ -99,7 +99,8 @@ function panelField(panels, description) {
     type: 'string',
     description: description,
     options: { list: panels },
-    validation: Rule => [Rule.required().error('Pick a panel.'), Rule.valid(panels.map(panel => panel.value)).error('Pick a panel from the list.')],
+    // Not required: the Screens are kept only as stored data, and a row with no panel is ignored when it is read.
+    // A required rule would hold back Publish all for a document nobody edits any more.
   });
 }
 

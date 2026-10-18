@@ -116,6 +116,41 @@ test('version reads computer/build.txt when the Mac tool left one, because a cop
   assert.deepEqual(setOf(place.body()), { buildCommit: 'abc1234', buildDate: '2026-10-13', buildBranch: 'main' });
 });
 
+test('version reads RELEASE.json of the release first and writes the number, the hash and the day', () => {
+  const place = computerPlace('release', { git: true });
+  fs.writeFileSync(path.join(place.root, 'RELEASE.json'), JSON.stringify({ version: 3, commit: 'c387c90', date: '2026-10-17T09:30:00Z', from: 'github', note: '', treeHash: 'x' }, null, 2) + '\n');
+  fs.writeFileSync(path.join(place.root, 'computer/build.txt'), 'commit=abc1234\ndate=2026-10-13\nbranch=main\n');
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.deepEqual(setOf(place.body()), { buildCommit: 'c387c90', buildDate: '2026-10-17', buildBranch: '', buildVersion: 3 });
+  assert.equal(place.body().mutations[1].patch.unset, undefined);
+});
+
+test('version removes an old release number when the build is from the stamp or from git', () => {
+  const place = computerPlace('no-number', { git: true });
+  assert.equal(place.run().status, 0);
+  assert.deepEqual(place.body().mutations[1].patch.unset, ['buildVersion']);
+});
+
+test('a RELEASE.json with no hash or a bad number falls back to the stamp, then to git', () => {
+  const place = computerPlace('release-bare', { git: true });
+  fs.writeFileSync(path.join(place.root, 'RELEASE.json'), '{\n  "version": 1,\n  "commit": "",\n  "date": "2026-10-17T09:30:00Z"\n}\n');
+  assert.equal(place.run().status, 0);
+  assert.deepEqual(setOf(place.body()), { buildCommit: place.commit, buildDate: '2026-10-14', buildBranch: 'work' });
+
+  const odd = computerPlace('release-odd', { git: true });
+  fs.writeFileSync(path.join(odd.root, 'RELEASE.json'), '{\n  "version": "x",\n  "commit": "c387c90",\n  "date": "2026-10-17T09:30:00Z"\n}\n');
+  fs.writeFileSync(path.join(odd.root, 'computer/build.txt'), 'commit=abc1234\ndate=2026-10-13\nbranch=main\n');
+  assert.equal(odd.run().status, 0);
+  assert.deepEqual(setOf(odd.body()), { buildCommit: 'abc1234', buildDate: '2026-10-13', buildBranch: 'main' });
+});
+
+test('the release step of install.sh and the control page restart the screen, and the screen start writes the build line', () => {
+  assert.ok(read('computer/install.sh').includes('systemctl restart teletraan-kiosk.service'));
+  assert.ok(read('control/lib/install.js').includes("ctx.helper('restart-kiosk')"));
+  assert.ok(read('computer/scripts/kiosk.sh').includes('status-write.sh" version'));
+});
+
 test('version refuses a stamp that does not look like a hash, a date and a branch, and writes nothing', () => {
   ['commit=abc"1234\ndate=2026-10-13\nbranch=main\n', 'commit=abc1234\ndate=yesterday\nbranch=main\n', 'commit=abc1234\ndate=2026-10-13\nbranch=a b;c\n', ''].forEach((text, index) => {
     const place = computerPlace('bad-' + index);

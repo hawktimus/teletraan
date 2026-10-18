@@ -20,6 +20,6 @@ export function reformOffer(context) {
   const kind = kindToPlay(reformKind(), Object.assign({ running: reformRunning(), slow: screenIsSlow(), off: reformOff() }, context));
   const found = transitionKinds[kind];
 
-  // a panel transition gives way to a hidden transition that is due (core/areas.js)
-  return found ? { play: swapPage => found.play(swapPage, context), yields: found.name === 'panel' } : null;
+  // a hidden transition that is due goes before it (core/areas.js)
+  return found ? { play: swapPage => found.play(swapPage, context) } : null;
 }

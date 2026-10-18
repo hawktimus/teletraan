@@ -305,10 +305,10 @@ test('there is one swap: lookSwap stays in config.js and the Studio, and nothing
   assert.deepEqual(readers, ['core/content-tidy.js'], 'only the tidying of the saved settings names the field');
 });
 
-test('the swap is the page change of the large panel: areas.js asks for it first, then for a hidden transition, and a look goes on at the moment the screen is apart', () => {
+test('the swap is the page change of the large panel: areas.js asks for a hidden transition first, then for it, and a look goes on at the moment the screen is apart', () => {
   const areas = read('core/areas.js');
   const asked = areas.indexOf('swapOffer(old, next)');
-  assert.ok(asked !== -1 && asked < areas.indexOf('const offered = hidden === undefined ? hiddenOffer() : hidden;'), 'a swap is asked for before a hidden transition');
+  assert.ok(asked !== -1 && asked > areas.indexOf('const offered = hiddenOffer();'), 'a hidden transition that is due is asked for before a swap, so a push is not used up by swaps');
   assert.ok(/export function setSwapOffer\(offer\) \{\s*swapOffer = offer;\s*\}/.test(areas));
   assert.ok(/export function startWholeScreen\(keepLook = false\) \{\s*const mine = \{ state: 'before', keepLook: keepLook \};/.test(areas), 'a hidden transition keeps the look, a swap does not');
   assert.ok(/if \(region === themeRegion && !\(gate && gate\.keepLook\)\) \{\s*changeThemeNow\(\);\s*changeTeamNow\(\);\s*\}/.test(areas), 'the style and the team go on together, when the screen is apart');

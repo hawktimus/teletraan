@@ -17,9 +17,11 @@ export const canvas = { width: 1920, height: 1080 };
 export const looks = {
   original: { theme: 'original', view: 'general' },
   cybertron: { theme: 'cybertron', view: 'general' },
+  cybertronBar: { theme: 'cybertron', view: 'prime' },
+  cybertronNova: { theme: 'cybertron', view: 'nova' },
   retro: { theme: 'retro', view: 'general' },
   bar: { theme: 'original', view: 'prime' },
-  'retro-bar': { theme: 'retro', view: 'prime' },
+  retroBar: { theme: 'retro', view: 'prime' },
 };
 
 function holdLook(content, look) {

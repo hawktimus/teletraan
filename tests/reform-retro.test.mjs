@@ -30,6 +30,7 @@ await test('the Retro kit is its own and not the Original kit', () => {
   assert.equal(kit.id, 'retro');
   assert.equal(typeof kit.draw, 'function');
   assert.equal(typeof kit.extras, 'function');
+  assert.equal(typeof kit.squares, 'function');
   assert.equal(original.extras, undefined);
 });
 
@@ -86,7 +87,7 @@ await test('every joint swings past its fold and springs back, folding and unfol
   const second = Object.assign(fake('reform-seg', first), { closest: () => chain });
   first.closest = () => chain;
   const tracks = { list: [{ element: second, property: 'transform', stops: plan.jointStops('h', 1) }] };
-  kit.extras({ tracks: tracks, back: {}, front: {}, regions: [] });
+  assert.equal(kit.extras({ role: 'side' }, tracks, false, { chassis: {} }), null);
 
   const values = tracks.list[0].stops.map(stop => stop[1]);
   assert.ok(values.includes('rotateY(206deg)'), 'no overshoot of the fold');
@@ -102,10 +103,7 @@ await test('a square squashes before its flip and stretches after it, and keeps 
   const square = { axis: 'y', startMs: 1300 };
   const move = { dx: 40, dy: -12, sx: 1.5, sy: 0.8 };
   const original = plan.squareStops(square, move);
-  const tracks = { list: [{ element: fake('reform-square'), property: 'transform', stops: original }] };
-  kit.extras({ tracks: tracks, back: {}, front: {}, regions: [] });
-
-  const stops = tracks.list[0].stops;
+  const stops = kit.squares(square, move).transform;
   const values = stops.map(stop => stop[1]);
   assert.ok(values.some(value => value.includes('rotateY(0deg)') && value.endsWith('scale(1.12,0.84)')), 'no squash before the flip');
   assert.ok(values.some(value => value.includes('rotateY(180deg)') && value.endsWith('scale(0.84,1.14)')), 'no stretch after the flip');

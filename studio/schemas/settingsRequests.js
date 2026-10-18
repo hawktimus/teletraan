@@ -45,13 +45,24 @@ export function competitionPreviewRequestField() {
 
 // The requests of the control page (dashboard/core/screen-requests.js). The page writes them and
 // each ends at its until time, so a forgotten one does nothing after that.
+// A string and not a datetime: the control page clears a request by writing an empty text, and
+// a datetime field refuses an empty text. A text that is not empty must still be a date and time.
+export function untilProblem(value) {
+  if (value === undefined || value === null || value === '') return true;
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(value) || Number.isNaN(Date.parse(value))) {
+    return 'Must be a valid ISO-8601 formatted date string';
+  }
+  return true;
+}
+
 function untilField() {
   return defineField({
     name: 'until',
     title: 'Until',
-    type: 'datetime',
+    type: 'string',
     readOnly: true,
-    description: 'When the request ends.',
+    description: 'When the request ends. Empty when there is no request.',
+    validation: rule => rule.custom(untilProblem),
   });
 }
 
@@ -67,15 +78,24 @@ function controlField(name, title, what, extra) {
   });
 }
 
+// The words are checked here and not by a list on the field, because a list refuses the empty
+// text that the control page writes when a request is cleared.
+export function wordProblem(list) {
+  return value => {
+    if (value === undefined || value === null || value === '') return true;
+    if (list) return list.includes(value) ? true : 'Value did not match any allowed values';
+    return typeof value === 'string' && value.length <= 60 ? true : 'Use 60 characters or fewer.';
+  };
+}
+
 function wordField(name, title, list) {
   return defineField({
     name: name,
     title: title,
     type: 'string',
     readOnly: true,
-    description: list ? 'What the request names.' : 'What the request names, up to 60 characters.',
-    options: list ? { list: list } : undefined,
-    validation: list ? undefined : rule => rule.max(60).error('Use 60 characters or fewer.'),
+    description: list ? 'What the request names. Empty when there is no request.' : 'What the request names, up to 60 characters.',
+    validation: rule => (list ? rule.custom(wordProblem(list)) : [rule.max(60).error('Use 60 characters or fewer.'), rule.custom(wordProblem(list))]),
   });
 }
 

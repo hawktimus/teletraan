@@ -13,7 +13,7 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { useClient } from 'sanity';
 import {
   addRow, copyRow, moveRow, moveTo, notPublished, pushUndo, removeRow, removeRows, rowsFrom, saveRows, secondsFrom, setPhotoValue, setRowValue,
-  setShown, settingsFrom, standardRows, startingPhotos, wholeFrom, defaultPageSeconds,
+  setShown, settingsFrom, skipNotes, skipQuestion, standardRows, startingPhotos, wholeFrom, defaultPageSeconds,
 } from '../tools/rotation-board.js';
 import { panelChoices, boardCss, stripOfPage, styles, tableOf, toolsOf, words } from './rotation-board-parts.js';
 
@@ -55,6 +55,7 @@ export function pageOf(state, actions) {
       h('h1', { style: styles.heading }, words.title),
       h('p', { style: styles.text }, words.intro),
       h('p', { style: styles.muted }, words.phone),
+      h('p', { style: styles.muted, 'data-block': 'skip-hint' }, words.skipHint),
       body,
       state.text ? h('p', { role: state.failed ? 'alert' : undefined, 'aria-live': 'polite', style: state.failed ? styles.failed : styles.muted }, state.text) : null
     )
@@ -66,7 +67,7 @@ export function RotationView(props) {
   const ask = props && typeof props.confirm === 'function' ? props.confirm : text => (typeof window !== 'undefined' ? window.confirm(text) : true);
   const [state, setState] = useState({
     read: false, rows: null, settings: { pageSeconds: defaultPageSeconds, partsLink: false }, busy: false, text: '', failed: false, open: '', collapsed: {}, selected: {}, history: [],
-    newView: 'robotics', newPanel: panelChoices[0].value, dragging: -1,
+    newView: 'robotics', newPanel: panelChoices[0].value, dragging: -1, data: null,
   });
   const latest = useRef(state);
   latest.current = state;
@@ -82,6 +83,14 @@ export function RotationView(props) {
       .catch(() => {
         if (!stopped) setState(Object.assign({}, latest.current, { read: true, rows: null }));
       });
+    // What the wall can show, for the notes under skipped rows. It is read once, from what is published, and a failure only
+    // means there are no notes.
+    Promise.resolve()
+      .then(() => client.fetch(skipQuestion, {}, { perspective: 'published' }))
+      .then(data => {
+        if (!stopped) setState(Object.assign({}, latest.current, { data: data }));
+      })
+      .catch(() => {});
     return () => {
       stopped = true;
     };
@@ -157,5 +166,5 @@ export function RotationView(props) {
     },
   };
 
-  return pageOf(state, actions);
+  return pageOf(Object.assign({}, state, { skips: state.rows ? skipNotes(state.rows, state.data) : {} }), actions);
 }

@@ -3,7 +3,7 @@
 // id of the theme.
 
 import { swapReform, swapShape, swapTimes } from '../../core/swap-plan.js';
-import { cornersOf, jointTimes, movedStops, reformTimes, squareTurnMs } from '../../core/reform-plan.js';
+import { cornersOf, jointTimes, movedStops, reformTimes, squareShadeStops, squareStops, squareTurnMs } from '../../core/reform-plan.js';
 
 export const swapVariant = { name: 'pull-apart', times: swapTimes, reform: swapReform, shape: swapShape };
 
@@ -74,7 +74,8 @@ function overshootJoints(tracks) {
   const turnFor = axis => (axis === 'h' ? 'rotateY' : 'rotateX');
 
   tracks.list.forEach(item => {
-    if (item.property !== 'transform' || !item.element.classList.contains('reform-seg')) return;
+    if (item.property !== 'transform' || item.retro || !item.element.classList.contains('reform-seg')) return;
+    item.retro = true;
 
     let joint = 0;
     for (let up = item.element.parentElement; up && up.classList.contains('reform-seg'); up = up.parentElement) joint += 1;
@@ -99,35 +100,33 @@ function overshootJoints(tracks) {
 
 // A square squashes flat, turns over on a spring and ends stretched, then settles. The stops of the plan give where it is (it
 // may be on its way to a new place), and this keeps that and changes the turn.
-function squashSquares(tracks) {
-  const shape = /^(translate3d\([^,]*,[^,]*,)[^)]*\) (rotate[XY])\(([-\d.]+)deg\) scale\(([^)]*)\) scale\(([-\d.]+)\)$/;
+const squareShape = /^(translate3d\([^,]*,[^,]*,)[^)]*\) (rotate[XY])\(([-\d.]+)deg\) scale\(([^)]*)\) scale\(([-\d.]+)\)$/;
+
+function squashed(stops) {
+  const start = stops[1][0];
   const make = (stop, angle, sx, sy) => {
-    const found = shape.exec(stop[1]);
-    return found ? found[1] + '0px) ' + found[2] + '(' + angle + 'deg) scale(' + found[4] + ') scale(' + sx + ',' + sy + ')' : stop[1];
+    const found = squareShape.exec(stop[1]);
+    return found[1] + '0px) ' + found[2] + '(' + angle + 'deg) scale(' + found[4] + ') scale(' + sx + ',' + sy + ')';
   };
 
-  tracks.list.forEach(item => {
-    if (item.property !== 'transform' || !item.element.classList.contains('reform-square')) return;
+  return [
+    [0, make(stops[1], 0, 1, 1)],
+    [start, make(stops[1], 0, 1, 1), 'ease-out'],
+    [start + 90, make(stops[1], 0, 1.12, 0.84), spring],
+    [start + squareTurnMs - 100, make(stops[2], 180, 0.84, 1.14), 'ease-out'],
+    [start + squareTurnMs, make(stops[3], 180, 1, 1)],
+    [stops[4][0], make(stops[4], 180, 1, 1)],
+  ];
+}
 
-    const stops = item.stops;
-    const start = stops[1][0];
-    if (!shape.test(stops[1][1])) return;
-
-    item.stops = [
-      [0, make(stops[1], 0, 1, 1)],
-      [start, make(stops[1], 0, 1, 1), 'ease-out'],
-      [start + 90, make(stops[1], 0, 1.12, 0.84), spring],
-      [start + squareTurnMs - 100, make(stops[2], 180, 0.84, 1.14), 'ease-out'],
-      [start + squareTurnMs, make(stops[3], 180, 1, 1)],
-      [stops[4][0], make(stops[4], 180, 1, 1)],
-    ];
-  });
+function squares(square, move) {
+  return { transform: squashed(squareStops(square, move)), shade: squareShadeStops(square) };
 }
 
 
 // The parts that only this kit has, for the large panel of a page
 
-function mainParts(region, back, front, tracks, chassis) {
+function mainParts(region, tracks, chassis) {
   const from = region.from;
   const to = region.to;
   const delta = { dx: Math.round(to.x + to.w / 2 - from.x - from.w / 2), dy: Math.round(to.y + to.h / 2 - from.y - from.h / 2) };
@@ -172,21 +171,18 @@ function mainParts(region, back, front, tracks, chassis) {
     tracks.add(sparkle, 'transform', movedStops([[0, 'scale(0) rotate(0deg)'], [sparkleMs[0] + late, 'scale(0) rotate(0deg)', spring], [sparkleMs[1] + late, 'scale(1.3) rotate(45deg)', 'ease-in'], [sparkleMs[2] + late, 'scale(0) rotate(90deg)'], [reformTimes.totalMs, 'scale(0) rotate(90deg)']], delta));
   });
 
-  front.appendChild(layer);
+  return layer;
 }
 
-function extras({ tracks, back, front, regions }) {
+// Called for each region after its chains are made, so the joints of this region are in the list
+function extras(region, tracks, strip, behind) {
   overshootJoints(tracks);
-  squashSquares(tracks);
-
-  regions.forEach((region, index) => {
-    if (region.role !== 'main') return;
-    mainParts(region, back, front, tracks, back.children[index * 2]);
-  });
+  return region.role === 'main' ? mainParts(region, tracks, behind.chassis) : null;
 }
 
 export const kit = {
   id: 'retro',
   draw: role => (pieces[role] === undefined ? '' : pieces[role]),
+  squares: squares,
   extras: extras,
 };

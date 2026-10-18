@@ -27,7 +27,7 @@ The numbers are in core/reform-plan.js (`reformTimes`) and nothing else writes t
 2. The copy covers the panel (or the whole stage, in a view transition) and the real page is out of sight. The page changes underneath, and the new content is copied the same way. This all happens before the three seconds start, in turns of a few milliseconds, so no frame is long while it is made (the screen shows the old page meanwhile, which takes about a tenth of a second for a panel and two thirds for a view). A view transition also copies the old frames, which stay until the edges that fold have covered them.
 3. The content is cut into squares: 12 by 6 on the main panel, 3 by 8 on the side column, 16 by 1 on the banner and the ticker. Each square holds the old content on its face and the new content on its back, each cut to the square's window, so text splits across squares and joins again exactly. A box that lies wholly outside a window is kept empty, with its size, so what is left lays out as it did.
 4. The grid exists only during the turn. A flat copy of the old content covers the squares until the turn starts, and a flat copy of the new content covers them from the moment the last square has seated. At rest there is one plate and no seams.
-5. Each edge is two chains of four segments, hinged at knuckle pins. The edges, the screws, latches, braces, rivets, corner gears, pistons and teeth are the kit of the theme (styles/<theme>/transitions.js, `kit`). The Original kit draws them in the metal of the team. Cybertron and Foundry play the Original kit under their own id until they have their own. Retro has its own (below). They come out of the corners as the transition starts and go back into them at the end (they grow from nothing, because a group that fades is drawn into a surface of its own every frame, which the 2011 computer cannot afford). The banner and the ticker are thin strips: they keep their long edges, the screws, the latches and the rivets of the long edges, and not the pieces that sit inside a frame.
+5. Each edge is two chains of four segments, hinged at knuckle pins. The edges, the screws, latches, braces, rivets, corner gears, pistons and teeth are the kit of the theme (styles/<theme>/transitions.js, `kit`). The Original kit draws them in the metal of the team. Each theme that has its own kit draws its own pieces; one that has none plays the Original kit under its own id. They come out of the corners as the transition starts and go back into them at the end (they grow from nothing, because a group that fades is drawn into a surface of its own every frame, which the 2011 computer cannot afford). The banner and the ticker are thin strips: they keep their long edges, the screws, the latches and the rivets of the long edges, and not the pieces that sit inside a frame.
 6. There is one camera: `#reform` has the only perspective (1600px, origin 50% 45%). It leans in about 5 degrees down and 3 to the side while the frame is open, drifts to the other side during the turn and settles as the screws go in.
 
 Every part moves by transform or opacity, on one clock: all of them are started with the same start time, so a part that is made late starts part way through and a test that sets the time sets it everywhere. The squares are made while they are hidden and are shown shortly before the turn, a few in a frame, so that no frame has to draw them all at once. The flat copies are the only parts that fade, and each fades for a moment only.
@@ -48,6 +48,31 @@ A screen that is already drawing slowly (the median of the last sixty frames ove
 
 `?reform=off` on the address turns both transitions off for that page, so the older page change and swap play instead. With `?sample=1&clock=fixed` the page has `window.teletraanTest`. `play('reform-panel')` goes to the next row, `play('reform-view')` changes the view.
 
+## The Cybertron kit
+
+The Cybertron theme has a kit of its own (styles/cybertron/transitions.js for the pieces and their moves, styles/cybertron/reform-kit.css for how they look). It runs on the same skeleton and the same times as Original.
+
+| Part | What it does |
+|------|--------------|
+| Power cores | Sit at the corners in place of the screws. They spin up and swell in loosen, stay large while the frame is open and settle as the frame closes. |
+| Brackets | The corner braces retract to nothing in loosen and come back in tighten. |
+| Bolts of light | Two short bars run along every edge out from the corners during loosen, and back to the corners during tighten. |
+| Conduits | Thin lines charge from each corner to the middle of the edge in loosen and drain in tighten. |
+| Scan bar | A neon bar sweeps down the window while the squares turn. It is cut to the window, so it never lies over a neighbor. |
+| Squares | Each square collapses to a line of light, flips as a line and opens back out. The shade of the square is the light. |
+| Chassis | A neon grid on the dark ground, in the neon of the team (gold for Prime, ice for Nova). |
+
+The latches, rivets, gears, pistons and teeth of the Original kit are left out. All colors are tokens (styles/cybertron/tokens.css and the team tokens), and only transform and opacity move. The panel transition holds about 238 animated elements and the view transition about 538.
+
+### What a kit may add
+
+core/reform-draw.js asks a kit for four things, and each of the last three is optional:
+
+- `draw(role)`: the drawing of a piece of hardware, or the chassis.
+- `hardware(item)`: the stops of a piece (a different move), or `null` to leave that piece out.
+- `squares(square, move)`: `{ transform, shade }`, the stops of a square and of its shade.
+- `extras(region, tracks, strip)`: an element with parts of the kit's own for a region. A part gets its move by `tracks.add(element, 'transform', stops)`, and the stops are in milliseconds of the skeleton.
+
 ## The Retro kit
 
 Retro runs on the same skeleton and the same times as Original. Only the kit differs (styles/retro/transitions.js and styles/retro/reform-kit.css, colors in styles/retro/tokens.css as --retro-*).
@@ -55,11 +80,11 @@ Retro runs on the same skeleton and the same times as Original. Only the kit dif
 - Every joint of a folding edge swings 26 degrees past its fold and springs back, folding and unfolding.
 - Bolts pop with a burst of action lines at the corners as the screws come out (0.12 to 0.30) and again as they go in (2.70 to 3.00).
 - Speed lines streak out of both sides of the frame while the edges fold (0.35 to 1.06) and while they unfold (1.95 to 2.71).
-- A spiky star flashes behind the squares as they flip (1.05 to 1.70). It sits above the chassis and under the squares.
-- Each square squashes flat before its flip, turns on a spring and ends stretched, then settles.
+- A spiky star flashes behind the squares as they flip (1.05 to 1.70).
+- Each square squashes flat before its flip, turns on a spring and ends stretched, then settles (`squares`).
 - Four sparkles pop around the frame as it locks (2.50 to 2.90).
 - The chassis is a halftone, a sheet of dots, instead of the strut lattice. The hardware is flat color with a thick ink line, in the accent color of the team.
 
-A kit can add parts and change tracks through one optional function, `extras({ tracks, back, front, regions })`, which core/reform-draw.js calls once after it has made the common parts. Retro uses it to change the tracks of the joints and the squares and to add the star, bursts, speed lines and sparkles (the large panel only). Kits without it play as before.
+The bolts, speed lines, star and sparkles are the `extras` of the large panel. The star has to lie behind the squares, so `extras` gets a fourth argument, `behind`, with the chassis element, and the star is put after it. The joints are changed in the tracks list that `extras` gets (each is changed once).
 
-The Retro panel transition has about 260 animated elements (Original about 245) and the view transition about 565 (Original about 545). tests/motion/reform.mjs has a scene for each kind in Retro (`reform/retro-panel` and `reform/retro-view`). The Retro page itself costs more to draw than the Original page (its background moves), so check `?perf` on the Mini.
+The Retro panel transition has about 260 animated elements (Original about 245) and the view transition about 565 (Original about 545). The Retro page itself costs more to draw than the Original page (its background moves), so check `?perf` on the Mini.

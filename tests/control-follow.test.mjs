@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
-import { followFor, followLine, previewCardHtml, previewAutoLoads } from '../control/static/tabs/render.js';
+import { followFor, followLine, previewCardHtml, previewAutoLoads, wallReport, nowCardHtml } from '../control/static/tabs/render.js';
 import { readStill, useStillSwitches } from '../dashboard/core/still.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -71,6 +71,20 @@ test('no report means no address and the plain sentence', () => {
     assert.equal(found.line, 'The TV has not reported yet');
   });
   assert.equal(followLine(null), 'The TV has not reported yet');
+});
+
+test('the card and the preview agree on the real answer of GET /now', () => {
+  const report = { view: 'general', theme: 'cybertron', panel: 'competition-timeline', team: 'prime', page: 1, build: '10-7932f57', at: '2026-10-17T21:23:00Z' };
+  const answer = { report, receivedAt: new Date().toISOString(), ageSeconds: 2, quiet: false, message: '', rows: [] };
+  assert.equal(wallReport(answer), report);
+  assert.ok(followFor(wallReport(answer)).src.startsWith('/dashboard/?panel=competition-timeline&team=prime&screen=cybertron&view=general'));
+  assert.ok(nowCardHtml(answer).includes('competition-timeline'));
+  const quiet = { ...answer, quiet: true, message: 'No report for 90 s' };
+  assert.equal(wallReport(quiet), null);
+  assert.equal(followFor(wallReport(quiet)).src, '');
+  assert.ok(nowCardHtml(quiet).includes('No report for 90 s'));
+  assert.equal(wallReport({ report: null, quiet: true }), null);
+  assert.equal(wallReport(null), null);
 });
 
 test('a panel or team with odd characters cannot break out of the address', () => {

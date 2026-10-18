@@ -295,3 +295,74 @@ export async function saveRows(client, rows) {
 export function pushUndo(history, rows) {
   return history.concat([rows]).slice(-20);
 }
+
+// Why a row is skipped on the wall right now. The wall leaves out a row that has nothing to show: a Monday row with no task for
+// its team and department, and a Photo row with no photo. The board asks for the tasks and photos the wall would read and
+// writes a note under each such row. These rules are the ones of visibleTasks and forTeam in dashboard/core/monday-tasks.js,
+// kept short: a note says there is nothing, and never says there is something.
+export const skipQuestion = `{
+  "tasks": *[_type == "task" && source == "monday" && show != false && showOnTv != false && showOnBoard != false && hiddenReason != "unassigned" && isSubitem != true && !defined(parentId) && defined(subteam)] {
+    "team": team->code,
+    "department": subteam->name,
+    expires
+  },
+  "photos": *[_type == "photo" && show != false] { expires }
+}`;
+
+const mondayPanelIds = [
+  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie',
+  'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both',
+];
+const teamOfView = { robotics: '', prime: 'prime', nova: 'nova' };
+
+function notExpired(item, now) {
+  return !item || !item.expires || Date.parse(item.expires) > now.getTime();
+}
+
+function nameOf(text) {
+  return String(text || '').trim().toLowerCase();
+}
+
+// Design and CNC are one department on the screen
+function sameDepartment(wanted, name) {
+  const design = text => text === 'design' || text === 'cnc';
+  return nameOf(name) === wanted || (design(wanted) && design(nameOf(name)));
+}
+
+// { rowKey: 'Skipped now: ...' } for the shown rows that have nothing to show. data is what skipQuestion found, or null when it
+// could not be read, and then there are no notes (the page says so in general words).
+export function skipNotes(rows, data, now = new Date()) {
+  const notes = {};
+  if (!data || !Array.isArray(data.tasks) || !Array.isArray(data.photos)) return notes;
+
+  const tasks = data.tasks.filter(task => notExpired(task, now));
+  const photos = data.photos.filter(photo => notExpired(photo, now));
+
+  (Array.isArray(rows) ? rows : []).forEach(row => {
+    if (!row || !isShown(row)) return;
+
+    if (row.panel === 'photo' && photos.length === 0) {
+      notes[row._key] = 'Skipped now: no photos (every photo is hidden or past its expiry).';
+      return;
+    }
+    if (mondayPanelIds.indexOf(row.panel) === -1) return;
+
+    if (tasks.length === 0) {
+      notes[row._key] = 'Skipped now: no Monday task is on the TV. A task needs a department that matches a Team lead, and Show on TV on.';
+      return;
+    }
+    const team = teamOfView[row.view] === undefined ? '' : teamOfView[row.view];
+    const ofTeam = tasks.filter(task => !task.team || team === '' || task.team === team);
+    const departments = String(row.department || '').split(',').map(nameOf).filter(Boolean);
+    const forRow = departments.length === 0 ? ofTeam : ofTeam.filter(task => departments.some(name => sameDepartment(name, task.department)));
+    if (forRow.length > 0) return;
+
+    const who = team === '' ? 'the team' : 'the ' + team.charAt(0).toUpperCase() + team.slice(1) + ' team';
+    notes[row._key] = departments.length === 0
+      ? 'Skipped now: no Monday tasks for ' + who + '.'
+      : 'Skipped now: no Monday tasks for ' + row.department.trim().split(',').join(' or ') + ' in ' + who + '.';
+  });
+  return notes;
+}
+
+export const skipHint = 'The wall skips a row with nothing to show. An example is a Monday row with no tasks for its department. A skipped row is marked under its panel.';
