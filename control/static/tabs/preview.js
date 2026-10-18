@@ -118,7 +118,7 @@ export function wirePreview(root) {
   }
   function sizeOf(address) {
     try {
-      const found = performance.getEntriesByName(new URL(address, window.location.href).href);
+      const found = performance.getEntriesByName(new URL(address, document.baseURI).href);
       const last = found[found.length - 1];
       return last ? (last.encodedBodySize || last.decodedBodySize || 0) : 0;
     } catch (error) {
