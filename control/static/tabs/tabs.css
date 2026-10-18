@@ -44,9 +44,9 @@
 .tab .log { max-height: 70vh; margin: 0; padding: 12px; overflow: auto; font: 16px/1.4 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; background: #0b0714; }
 /* The copy of the dashboard. The box keeps 16:9; the 1920 by 1080 frame inside is scaled by tabs/now.js. */
 .tab [data-preview-card] { margin: 16px 0; }
-.tab .preview { position: relative; width: 100%; max-width: 720px; aspect-ratio: 16 / 9; overflow: hidden; background: #000; border: 2px solid var(--card-edge, #3a2c55); }
+.tab .preview { position: relative; box-sizing: border-box; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; border: 2px solid var(--card-edge, #3a2c55); }
 .tab .preview iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
-.tab .preview img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.tab .preview img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; background: #000; pointer-events: none; }
 .tab .preview-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; padding: 12px; text-align: center; color: #b9afcf; }
 .tab .preview-off[hidden] { display: none; }
 @media (min-width: 900px) {
@@ -57,3 +57,4 @@
   .tab .row { flex-direction: column; align-items: flex-start; gap: 2px; }
   .tab dd { text-align: left; }
 }
+.tab [hidden] { display: none; }
