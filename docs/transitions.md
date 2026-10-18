@@ -71,7 +71,7 @@ core/reform-draw.js asks a kit for four things, and each of the last three is op
 - `draw(role)`: the drawing of a piece of hardware, or the chassis.
 - `hardware(item)`: the stops of a piece (a different move), or `null` to leave that piece out.
 - `squares(square, move)`: `{ transform, shade }`, the stops of a square and of its shade.
-- `extras(region, tracks, strip)`: an element with parts of the kit's own for a region. A part gets its move by `tracks.add(element, 'transform', stops)`, and the stops are in milliseconds of the skeleton.
+- `extras(region, tracks, strip, behind)`: an element with parts of the kit's own for a region. A part gets its move by `tracks.add(element, 'transform', stops)`, and the stops are in milliseconds of the skeleton.
 
 ## The Retro kit
 
