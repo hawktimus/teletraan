@@ -22,6 +22,7 @@ import { mountPanel, updatePanel } from './core/panels.js';
 import { withPages, withStandIns } from './core/panel-order.js';
 import { withCompetition } from './core/competition.js';
 import { currentTeam, frameTrim, recordTrim, trimNow, useTeams } from './core/teams.js';
+import { refreshPagesInPlace } from './core/page-refresh.js';
 import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
 import { startOptional, usePackExtras, useSeasonSwitch, writeViewLabels } from './shell-extras.js';
 import { params, stillAsk, stress, onlyTasks, screen, extras, shellState } from './shell-state.js';
@@ -72,6 +73,7 @@ export function setBase(newBase, newStatus) {
   checkTheme(); // a changed theme waits for the next page change
 
   if (switched) showPagesNow();
+  else refreshPagesInPlace();
 }
 
 // The BAND events with the Calendar filters applied and the finished ones left

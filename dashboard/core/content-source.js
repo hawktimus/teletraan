@@ -13,7 +13,8 @@ import { withDefaults } from './content-tidy.js';
 const storageKey = 'teletraan-last-content';
 const olderStorageKey = 'teletraan-content';
 const sampleRecheck = 30 * 1000;
-const waitForMoreEdits = 1500;
+// Short: a publish should show within a second or two. Edits that come together still join one read.
+const waitForMoreEdits = 300;
 const pollEvery = 5 * 60 * 1000;
 const retryAfterFailure = 30 * 1000;
 const reopenStreamAfter = 60 * 1000;

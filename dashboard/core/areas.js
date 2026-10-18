@@ -198,6 +198,25 @@ function planFor(area) {
   return hasSteel(styleNow(), layoutNow()) ? { style: change.style, finish: null } : change;
 }
 
+// The page on screen in a region when it is at rest (not arriving, leaving or under a transition), or null
+export function restingPage(region) {
+  const area = areaOf[region];
+  if (gate || !area || !showing[region] || area.dataset.state !== 'shown') return null;
+  return showing[region];
+}
+
+// Puts a rebuilt copy of the page on screen in its place, with the same frame. For new content that arrives while the page stays.
+export function replaceRestingPage(region, page) {
+  const area = areaOf[region];
+  if (!area || !showing[region]) return;
+
+  showing[region] = page;
+  markPage(area, page);
+  const host = area.querySelector('.page-host');
+  host.innerHTML = '';
+  host.appendChild(page.element);
+}
+
 // Puts the next page in a region at once, with nothing to see: for a screen that
 // is apart. The frame's metal is chosen as in a page change, so it still varies.
 function swapUnseen(region, next) {
