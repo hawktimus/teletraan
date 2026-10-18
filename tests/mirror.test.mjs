@@ -439,6 +439,26 @@ test('port 3229 serves the picture and its counter, read only, with no store, an
   assert.ok(read('computer/docker-compose.yml').includes('read_only: true'));
 });
 
+test('the serving path on paper: exact matches on 3229, the data mount, no-store, read only mount of the same folder', () => {
+  const nginx = read('computer/nginx/nginx.conf');
+  const start = nginx.indexOf('listen 3229;');
+  const block = nginx.slice(nginx.lastIndexOf('server {', start), nginx.indexOf('\n  server {', start));
+  for (const [name, type] of [['frame.jpg', 'image/jpeg'], ['frame.n', 'text/plain']]) {
+    const found = block.match(new RegExp('location (=?) /mirror/' + name.replace('.', '\\.') + ' \\{([^}]*)\\}'));
+    assert.ok(found, name + ' has a location');
+    assert.equal(found[1], '=', name + ' is an exact match');
+    assert.ok(found[2].includes('alias /srv/web/dashboard/data/live/mirror/' + name + ';'), name + ' aliases the data mount');
+    assert.ok(found[2].includes('default_type ' + type + ';'));
+    assert.ok(!/add_header|expires/.test(found[2]), name + ' keeps the Cache-Control of the map, which would be dropped by its own add_header');
+  }
+  assert.ok(nginx.includes('add_header Cache-Control $cache_control always;') && nginx.includes('~^/mirror/ "no-store";'));
+  const compose = read('computer/docker-compose.yml');
+  const web = compose.slice(compose.indexOf('image: nginx'), compose.indexOf('image: node'));
+  const mount = web.match(/source: \$\{TELETRAAN_DATA[^}]*\}\s+target: \/srv\/web\/dashboard\/data\/live\s+read_only: true/);
+  assert.ok(mount, 'the web server mounts the data folder at the alias path, read only');
+  assert.ok(compose.includes('${TELETRAAN_DATA:-/var/lib/teletraan/data}'));
+});
+
 // The helper with fakes for sudo and systemctl. withPython false leaves python3 off the path.
 function helperWorld({ python = true, active = true } = {}) {
   const root = path.join(work, 'h' + count++);
@@ -455,7 +475,7 @@ function helperWorld({ python = true, active = true } = {}) {
   fs.writeFileSync(path.join(bin, 'systemctl'), `#!/bin/sh\necho "systemctl $*" >> "${log}"\n[ "$1" = is-active ] && exit ${active ? 0 : 3}\nexit 0\n`, { mode: 0o755 });
   if (python) fs.writeFileSync(path.join(bin, 'python3'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
   // a path with the plain tools the helper uses and no python3
-  for (const tool of ['sh', 'bash', 'date', 'tr', 'cut', 'mkdir', 'touch', 'sed', 'tail', 'head', 'cat', 'dirname', 'basename', 'id', 'hostname', 'printf']) {
+  for (const tool of ['sh', 'bash', 'date', 'tr', 'cut', 'mkdir', 'chmod', 'touch', 'sed', 'tail', 'head', 'cat', 'dirname', 'basename', 'id', 'hostname', 'printf']) {
     for (const folder of ['/bin', '/usr/bin']) {
       if (fs.existsSync(path.join(folder, tool))) { try { fs.symlinkSync(path.join(folder, tool), path.join(tools, tool)); } catch (error) { /* already linked */ } break; }
     }
@@ -485,13 +505,14 @@ test('mirror-watch touches the watch file as the login user and starts the unit;
   assert.equal(again.status, 'ok');
 });
 
-test('mirror-start starts the unit and touches nothing; mirror-status only asks', () => {
+test('mirror-start starts the unit and makes the folder 755; mirror-status only asks', () => {
   const h = helperWorld({ active: false });
   const start = h.ask('mirror-start');
   assert.equal(start.status, 'ok');
   assert.equal(start.output, 'mirror: stopped');
   assert.ok(start.calls.includes('start teletraan-mirror.service'));
-  assert.ok(!fs.existsSync(path.join(h.data, 'mirror')));
+  assert.ok(fs.existsSync(path.join(h.data, 'mirror')) && !fs.existsSync(path.join(h.data, 'mirror', 'watch')), 'the folder is made, the watch file is not');
+  assert.equal((fs.statSync(path.join(h.data, 'mirror')).mode & 0o777).toString(8), '755');
   const status = helperWorld({ active: false }).ask('mirror-status');
   assert.equal(status.output, 'mirror: stopped');
   assert.ok(!status.calls.includes('start teletraan-mirror'), 'status never starts it');
@@ -506,6 +527,19 @@ test('without python3 every mirror word says so and starts nothing', () => {
     assert.equal(answer.output, 'mirror: no python3', word);
     assert.ok(!answer.calls.includes('start'), word);
   });
+});
+
+test('mirror-status makes nothing, and mirror-watch leaves the folder 755 and the watch file 644', () => {
+  const h = helperWorld();
+  h.ask('mirror-status');
+  assert.ok(!fs.existsSync(path.join(h.data, 'mirror')));
+  h.ask('mirror-watch');
+  assert.equal((fs.statSync(path.join(h.data, 'mirror')).mode & 0o777).toString(8), '755');
+  assert.equal((fs.statSync(path.join(h.data, 'mirror', 'watch')).mode & 0o777).toString(8), '644');
+});
+
+test('the installer makes the mirror folder with the others', () => {
+  assert.ok(read('computer/install.sh').includes('"$data_dir/slides" "$data_dir/mirror"'));
 });
 
 test('the mirror words take no argument, and the client and the route know them', () => {

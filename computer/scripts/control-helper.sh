@@ -145,8 +145,12 @@ case $word in
     mirror_data=${TELETRAAN_DATA_DIR:-$(setting TELETRAAN_DATA)}
     mirror_data=${mirror_data:-/var/lib/teletraan/data}
     code=0
-    if [ "$word" = mirror-watch ]; then
-      { mkdir -p "$mirror_data/mirror" && touch "$mirror_data/mirror/watch"; } || code=$?
+    # The web server reads this folder as another user, so it is made by the login user and open to read
+    if [ "$word" != mirror-status ]; then
+      { mkdir -p "$mirror_data/mirror" && chmod 755 "$mirror_data/mirror"; } || code=$?
+    fi
+    if [ "$word" = mirror-watch ] && [ "$code" -eq 0 ]; then
+      { touch "$mirror_data/mirror/watch" && chmod 644 "$mirror_data/mirror/watch"; } || code=$?
     fi
     if [ "$word" != mirror-status ] && [ "$code" -eq 0 ]; then
       as_root "$systemctl_bin" start teletraan-mirror.service || code=$?
