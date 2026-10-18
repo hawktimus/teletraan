@@ -27,6 +27,13 @@ test('the card names /dashboard/ with no added parameter, holds no frame yet, an
   assert.equal(previewWidth / previewHeight, 16 / 9);
 });
 
+test('the box fills the card at 16 by 9, black, with the picture contained', () => {
+  const css = read('control/static/tabs/tabs.css');
+  const box = css.split('\n').find(line => line.startsWith('.tab .preview {'));
+  assert.ok(box.includes('width: 100%') && box.includes('aspect-ratio: 16 / 9') && box.includes('background: #000') && !box.includes('max-width'));
+  assert.ok(css.split('\n').find(line => line.startsWith('.tab .preview img {')).includes('object-fit: contain'));
+});
+
 test('the scale is the width of the box over 1920, and a box with no width still gives a number', () => {
   assert.equal(previewScale(960), 0.5);
   assert.equal(previewScale(360), 0.1875);
