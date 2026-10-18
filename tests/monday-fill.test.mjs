@@ -421,7 +421,7 @@ test('the area says which panel is in it, at a page change and at a swap, so tha
 test('core/areas.js writes the panel in one place that both ways of putting a page in use, and the stylesheet reads it', () => {
   const areas = read('core/areas.js');
 
-  assert.equal(countOf(areas, 'markPage('), 3, 'the function and the two places that put a page in');
+  assert.equal(countOf(areas, 'markPage('), 4, 'the function and the three places that put a page in: a page change, a swap and the redraw of the page at rest');
   assert.ok(/markPage\(made, next\);\n  const host = made\.querySelector\('\.page-host'\);/.test(areas), 'the swap');
   assert.ok(/markPage\(areaOf\[region\], next\);\n  host\.innerHTML = '';/.test(areas), 'the page change');
   assert.ok(/data-page is the id of the panel/.test(areas), 'the comment at the top says what data-page is');

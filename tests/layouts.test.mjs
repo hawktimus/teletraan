@@ -725,7 +725,7 @@ test('hidden-run.js waits for the areas of the layout, and areas.js and schedule
 const schedulerTree = makeTree('scheduler', ['dashboard/config.js', 'dashboard/registry.js', 'dashboard/core/schedule.js', 'dashboard/core/layout.js', 'dashboard/core/theme.js', 'dashboard/core/style.js',
   'dashboard/core/corner-art.js', 'dashboard/core/pack-extras.js', 'dashboard/themes/registry.js', 'dashboard/themes/overlays/registry.js']);
 const standIns = {
-  'dashboard/frame.js': 'export const wait = () => new Promise(() => {});\nexport const pace = () => 1;\nexport const turnMs = () => 1000;\nexport const isPaused = () => false;\n',
+  'dashboard/frame.js': 'export const wait = () => new Promise(() => {});\nexport const pace = () => 1;\nexport const turnMs = () => 1000;\nexport const isPaused = () => false;\nexport const onSecond = () => {};\n',
   'dashboard/core/photos.js': 'export const ownSeconds = () => 0;\n',
   'dashboard/core/areas.js': 'export async function changePage(region, next) { globalThis.schedulerCalls.push(["changePage", region, next && next.id]); return 0; }\nexport function clearRegion(region) { globalThis.schedulerCalls.push(["clearRegion", region]); }\n',
   'dashboard/core/panels.js': [

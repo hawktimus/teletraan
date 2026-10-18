@@ -399,6 +399,7 @@ fs.writeFileSync(path.join(scheduleTree, 'dashboard/frame.js'), [
   'export const pace = () => 1;',
   'export const turnMs = () => 0;',
   'export const isPaused = () => globalThis.scheduleWorld.paused;',
+  'export const onSecond = () => {};',
   'export const wait = () => new Promise(resolve => globalThis.scheduleWorld.waits.push(resolve));',
 ].join('\n') + '\n');
 fs.writeFileSync(path.join(scheduleTree, 'dashboard/core/panels.js'), [
