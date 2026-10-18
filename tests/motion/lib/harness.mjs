@@ -19,6 +19,8 @@ export const looks = {
   cybertron: { theme: 'cybertron', view: 'general' },
   retro: { theme: 'retro', view: 'general' },
   bar: { theme: 'original', view: 'prime' },
+  foundry: { theme: 'foundry', view: 'general' },
+  'foundry-bar': { theme: 'foundry', view: 'prime' },
 };
 
 function holdLook(content, look) {

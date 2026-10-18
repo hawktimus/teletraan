@@ -112,16 +112,20 @@ function grown(stops) {
   return [[0, 'scale(0) ' + first, easePop], [growMs, 'scale(1) ' + first]].concat(middle, [[reformTimes.totalMs - growMs, 'scale(1) ' + last, easePop], [reformTimes.totalMs, 'scale(0) ' + last]]);
 }
 
+// A kit may add pieces of its own to every region (kit.extras(rect, strip), the same shape as hardwareList). A piece with own set
+// has its own stops from nothing to nothing and is not grown here.
 function hardwareOf(from, to, tracks, kit, strip) {
   const layer = make('reform-hardware');
-  const there = hardwareList(to, strip);
+  const extras = kit.extras ? kit.extras : () => [];
+  const there = hardwareList(to, strip).concat(extras(to, strip));
 
-  hardwareList(from, strip).forEach((item, index) => {
+  hardwareList(from, strip).concat(extras(from, strip)).forEach((item, index) => {
     const target = there[index];
     const element = make('reform-part reform-' + item.role, box({ x: item.x - item.w / 2, y: item.y - item.h / 2, w: item.w, h: item.h }), kit.draw(item.role));
     if (item.axis) element.dataset.axis = item.axis;
     layer.appendChild(element);
-    tracks.add(element, 'transform', grown(movedStops(item.stops, { dx: round(target.x - item.x), dy: round(target.y - item.y) })));
+    const moved = movedStops(item.stops, { dx: round(target.x - item.x), dy: round(target.y - item.y) });
+    tracks.add(element, 'transform', item.own === true ? moved : grown(moved));
   });
   return layer;
 }
@@ -180,6 +184,8 @@ export function drawRun(regions, cover, kit) {
   });
 
   const covers = make('reform-covers');
+  // a kit may shake the stage (kit.jolt(), the stops of a transform)
+  if (kit.jolt) [back, covers, front].forEach(layer => tracks.add(layer, 'transform', kit.jolt()));
   const coverOld = make('reform-cover reform-old', box(cover.from));
   const coverNew = make('reform-cover reform-new', box(cover.to));
   // the old frames, until the edges that fold have covered them (the view transition, whose old page is a copy)

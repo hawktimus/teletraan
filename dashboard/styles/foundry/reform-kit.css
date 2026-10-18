@@ -1,0 +1,96 @@
+/* The Foundry kit of the reform transitions (styles/foundry/transitions.js, core/reform-draw.js). The folding straps and the
+   hardware of the Original kit are drawn in the blued steel of this theme whatever the metal of the team is, the chassis behind the
+   squares is a steel floor with hazard stripes, and the pieces the kit adds (deadbolts, hand wheel, rams, gauges) are classes
+   here. Every color is a token of tokens.css in this folder. Only transform and opacity are ever animated. */
+
+html[data-style="foundry"] #reform {
+  --metal-1: var(--style-steel-hi);
+  --metal-2: var(--style-steel-1);
+  --metal-3: var(--style-steel-6);
+  --metal-4: var(--style-steel-5);
+  --metal-5: var(--style-steel-3);
+  --metal-rim: var(--style-steel-dark);
+}
+
+/* the chassis: a dark steel floor, hazard stripes at a slant and a seam every 150 pixels */
+html[data-style="foundry"] .reform-chassis {
+  background-color: var(--style-steel-4);
+  background-image:
+    repeating-linear-gradient(135deg, transparent 0 34px, var(--style-hazard-dim) 34px 44px),
+    repeating-linear-gradient(0deg, transparent 0 150px, var(--style-steel-dark) 150px 158px);
+}
+
+/* the straps carry a stripe of hazard along their middle */
+html[data-style="foundry"] .reform-chain-h .reform-seg {
+  box-shadow: inset 0 0 0 2px var(--metal-rim), inset 0 -4px 0 var(--style-hazard-dim);
+}
+html[data-style="foundry"] .reform-chain-v .reform-seg {
+  box-shadow: inset 0 0 0 2px var(--metal-rim), inset -4px 0 0 var(--style-hazard-dim);
+}
+
+/* the deadbolt: a steel bar with a hazard cap at the end it is held by */
+.fk-bolt-rim { fill: var(--style-steel-dark); }
+.fk-bolt-body { fill: var(--style-steel-hi); }
+.fk-bolt-cap {
+  fill: var(--style-hazard);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+
+/* the hand wheel */
+.reform-wheel { transform-origin: 50% 50%; }
+.fk-wheel-rim {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-width: 9px;
+}
+.fk-wheel-ring {
+  fill: none;
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fk-wheel-inner {
+  fill: none;
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fk-wheel-spoke {
+  fill: none;
+  stroke: var(--style-steel-6);
+  stroke-width: 7px;
+}
+.fk-wheel-hub {
+  fill: var(--style-hazard);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+
+/* a ram turns about the point where its body meets the corner */
+.reform-ram { transform-origin: 23px 24px; }
+.fk-ram-body {
+  fill: var(--style-steel-1);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fk-ram-rod {
+  fill: var(--style-steel-hi);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+
+/* a gauge: a face that stays and a needle that sweeps over it */
+.fk-gauge-rim {
+  fill: var(--style-steel-dark);
+}
+.fk-gauge-face { fill: var(--style-steel-hi); }
+.fk-gauge-ticks {
+  fill: none;
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fk-needle {
+  fill: none;
+  stroke: var(--style-hazard);
+  stroke-width: 3px;
+}
+.fk-needle-hub { fill: var(--style-steel-dark); }

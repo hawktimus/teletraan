@@ -28,6 +28,8 @@ const allowedProperties = ['transform', 'opacity'];
 const scenes = {
   panel: { play: 'reform-panel', options: {}, look: 'original', name: 'the panel transition', late: 0, longest: frameLimitMs },
   view: { play: 'reform-view', options: { view: 'nova' }, look: 'bar', name: 'the view transition', late: 1 / 7, longest: 100 },
+  'foundry-panel': { play: 'reform-panel', options: {}, look: 'foundry', name: 'the panel transition in Foundry', late: 0, longest: frameLimitMs },
+  'foundry-view': { play: 'reform-view', options: { view: 'nova' }, look: 'foundry-bar', name: 'the view transition in Foundry', late: 1 / 7, longest: 100 },
 };
 
 // In the page: the recorder of frames and the way to ask whether the run is on the screen
@@ -321,4 +323,4 @@ const hawkRule = {
   },
 };
 
-export const tests = rules('panel').concat(rules('view'), [hawkRule]);
+export const tests = rules('panel').concat(rules('view'), [hawkRule], rules('foundry-panel'), rules('foundry-view'));
