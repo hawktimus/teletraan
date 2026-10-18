@@ -755,10 +755,10 @@ alone.
   `dashboard/config.js`. `core/announce.js` decides and `core/announce-run.js` plays it. A Demo step
   can use it too: All announcements in `demoScreens`. The Start here page has this button too, and
   both write what `announceRequest` in `studio/tools/screen-requests.js` gives.
-- **Preview buttons.** The last five buttons in the same menu (docs/hidden-transitions.md, "Preview a look"):
-  Preview Prime, Preview Nova, Preview Cybertron, Preview Minimal and Preview next pack. Each shows its look on
-  the screen for `previewSeconds` (2 minutes) in `dashboard/config.js` and then the saved settings come back,
-  and none writes a setting. They write the hidden `previewRequest` field (`previewRequestField` in
+- **Preview buttons.** The last buttons in the same menu (docs/hidden-transitions.md, "Preview a look"):
+  Preview theme for each of the four themes, Preview view for each of the four views, Preview next season pack and
+  Back to the schedule. A theme or view preview lasts 10 minutes and the pack 2 minutes (`previewSeconds` in
+  `dashboard/config.js`), then the saved settings come back, and none writes a setting. They write the hidden `previewRequest` field (`previewRequestField` in
   `studio/schemas/settingsPreview.js`, the buttons are `previewActions` in `studio/tools/actions.js`, made from the
   list in `studio/inputs/previews.js`, a copy of `previewKinds` in `dashboard/core/preview.js`). The starting value is
   `previewRequest` in `defaultSettings` in `dashboard/config.js`. `core/preview.js` decides and

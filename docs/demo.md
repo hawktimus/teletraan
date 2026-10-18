@@ -16,8 +16,8 @@ that try the screen now (docs/editing-content.md, "The Start here page"):
 - Next look now, Preview competition and Preview the screen are explained on that
   page too.
 
-The five Preview buttons in the menu beside Publish on Dashboard Settings show a
-team, a style or the next seasonal pack for 2 minutes ("Preview a look" in
+The Preview buttons in the menu beside Publish on Dashboard Settings show a
+theme or a view for 10 minutes, or the next season pack for 2 minutes ("Preview a look" in
 docs/hidden-transitions.md).
 
 What is left of the demo is the Demo document, its steps, and the code

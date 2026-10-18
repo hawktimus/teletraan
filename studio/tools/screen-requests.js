@@ -41,6 +41,26 @@ export function previewRequest(kind) {
   return { previewRequest: { kind: kind, requestedAt: new Date().toISOString() } };
 }
 
+// The previews of a theme or a view are the same fields, in the same shape, as the control page writes
+// (control/support/requests.js): an id and the time it ends, which a request that is forgotten ends on its own.
+// The screen reads them through one function (dashboard/core/screen-requests.js, activeRequests).
+function endsAt(now, minutes) {
+  return new Date(now.getTime() + minutes * 60000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+export function previewThemeRequest(theme, minutes, now = new Date()) {
+  return { previewTheme: { theme: theme, until: endsAt(now, minutes) } };
+}
+
+export function showViewRequest(key, minutes, now = new Date()) {
+  return { showView: { key: key, until: endsAt(now, minutes) } };
+}
+
+// Back to the schedule: every hold and preview of the control page is cleared
+export function backToScheduleRequest() {
+  return { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
+}
+
 // For an action. patch and publish are the document operations Studio gives it
 // (useDocumentOperation). The fields go on the page, then the page is published, which
 // also publishes anything else on it that was not published yet.
