@@ -8,7 +8,7 @@
 import { api } from './api.js';
 import {
   followFor, framesPerSecond, mirrorFrameWait, mirrorLive, mirrorPictureAddress, mirrorWords,
-  previewAutoLoads, previewHeight, previewScale, previewWidth,
+  previewAutoLoads, previewHeight, previewScale, previewWidth, wallReport,
 } from './render.js';
 
 // How often the still copy asks what the TV shows
@@ -24,6 +24,7 @@ export function wirePreview(root) {
   const toggle = root.querySelector('[data-preview-toggle]');
   const off = root.querySelector('[data-preview-off]');
   const line = root.querySelector('[data-preview-line]');
+  const followNote = root.querySelector('[data-preview-follow-note]');
   const modeLine = root.querySelector('[data-preview-mode]');
   // screen.width keeps a phone narrow even when a wide page makes the browser widen its layout
   const wide = () => previewAutoLoads(Math.min(window.innerWidth, window.screen && window.screen.width ? window.screen.width : window.innerWidth));
@@ -56,7 +57,9 @@ export function wirePreview(root) {
   async function follow(mine) {
     const answer = await api('GET', '/now');
     if (mine !== run) return;
-    const next = followFor(answer.ok && answer.data ? answer.data.report : null);
+    const next = followFor(wallReport(answer.ok ? answer.data : null));
+    line.hidden = false;
+    followNote.hidden = false;
     line.textContent = next.line;
     off.textContent = next.src === '' ? 'The TV has not reported yet' : 'The preview is off.';
     if (next.src === '' || next.src === held) return;
@@ -138,6 +141,8 @@ export function wirePreview(root) {
     }
   }
   function stopMirror() {
+    line.hidden = true;
+    followNote.hidden = true;
     if (renew !== null) { clearInterval(renew); renew = null; }
     if (picture) { picture.removeAttribute('src'); picture.remove(); picture = null; }
     if (pictureUrl) { URL.revokeObjectURL(pictureUrl); pictureUrl = ''; }

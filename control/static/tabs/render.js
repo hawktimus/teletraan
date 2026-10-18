@@ -84,8 +84,14 @@ export function statusHtml(data, now = new Date()) {
 }
 
 // The Now showing tab: the card of the wall, then the buttons. options is GET request.
+// The report of the wall from the answer of GET /now, or null when there is none or the wall has gone quiet. The
+// card and the Live preview both ask this, so they never disagree about whether the TV has reported.
+export function wallReport(now) {
+  return now && now.report && typeof now.report === 'object' && !now.quiet ? now.report : null;
+}
+
 export function nowCardHtml(now, at = new Date()) {
-  if (!now || !now.report || now.quiet) {
+  if (!wallReport(now)) {
     const words = now && now.message ? now.message : 'No report from the wall yet';
     const last = now && now.report ? '<p>Last seen: ' + esc(now.report.panel || 'no panel') + ', view ' + esc(now.report.view || 'not known') + '.</p>' : '';
     return card('Now on the wall', '<p class="quiet">' + esc(words) + '</p>' + last, 'grey');
@@ -127,8 +133,8 @@ export function previewCardHtml() {
     '<div class="preview" data-preview-box data-src="/dashboard/"><p class="preview-off" data-preview-off>The preview is off.</p></div>' +
     '<div class="buttons"><button type="button" class="act" data-preview-toggle aria-pressed="false">Show live preview</button></div>' +
     '<p class="note" data-preview-mode></p>' +
-    '<p class="note" data-preview-line>' + esc(followLine(null)) + '</p>' +
-    '<p class="note">' + esc(followNote) + '</p>');
+    '<p class="note" data-preview-line hidden></p>' +
+    '<p class="note" data-preview-follow-note hidden>' + esc(followNote) + '</p>');
 }
 
 // The mirror: a moving picture of the TV that the Teletraan computer makes (computer/scripts/mirror.py). The words of

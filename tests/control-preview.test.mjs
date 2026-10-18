@@ -22,7 +22,7 @@ test('the card names /dashboard/ with no added parameter, holds no frame yet, an
   assert.ok(/<button[^>]*data-preview-toggle[^>]*>Show live preview<\/button>/.test(html));
   assert.ok(read('control/static/tabs/preview.js').includes('frame.width = previewWidth') && read('control/static/tabs/preview.js').includes('frame.height = previewHeight'));
   assert.ok(html.includes('A copy that follows the screen. It shows the same panel, team and theme as the TV, and changes when the TV changes, within about ten seconds. Animations and the exact moment can differ.'));
-  assert.ok(html.includes('The TV has not reported yet'));
+  assert.ok(!html.includes('The TV has not reported yet'), 'the sentence is written by the page, only in the copy mode');
   assert.ok(!html.includes('!'));
   assert.equal(previewWidth / previewHeight, 16 / 9);
 });
