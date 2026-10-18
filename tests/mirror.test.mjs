@@ -437,7 +437,6 @@ test('the page: one request in flight, renews every 30 seconds, gives up after 1
   assert.ok(text.includes("method: 'HEAD'") && text.includes('pictureErrorLine(status)') && !text.includes('createObjectURL'));
   assert.ok(text.includes('mirrorFrameWait') && read('control/static/tabs/render.js').includes('export const mirrorFrameWait = 10000'));
   assert.ok(text.includes('if (!document.hidden)') && text.includes('document.addEventListener(\'visibilitychange\''));
-  assert.ok(text.includes('URL.revokeObjectURL'));
   assert.ok(text.includes("api('GET', '/mirror/status')") && text.includes("'/helper/restart-kiosk'") && text.includes('mirrorWords.black'), 'the black message has a Restart screen button');
   assert.ok(text.includes('let wanted = wide();') && text.includes('if (wanted) load(); else unload();'), 'a phone loads only on the tap');
 });
