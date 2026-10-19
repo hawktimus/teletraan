@@ -180,7 +180,7 @@ test('a wrong PIN is 401, the right one sets the cookie, and the pages and calls
     assert.equal(releases.current, 1);
     assert.equal(releases.releases[0].commit, 'abc1234');
     const tabs = await (await fetch(s.base + '/control/api/tabs', { headers: headers })).json();
-    assert.deepEqual(tabs.tabs.sort(), ['tabs/settings.js', 'tabs/status.js'], 'two tabs, Status and Settings');
+    assert.deepEqual(tabs.tabs.sort(), ['tabs/display.js', 'tabs/settings.js', 'tabs/status.js'], 'three tabs, Status, Display and Settings');
     assert.equal((await fetch(s.base + '/control/..%2f..%2fserver.js', { headers: headers })).status, 404);
     assert.equal((await fetch(s.base + '/control/.hidden', { headers: headers })).status, 404);
   } finally { s.server.close(); }

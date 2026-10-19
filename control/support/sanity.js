@@ -49,6 +49,34 @@ export function makeSanity(ctx) {
       return body.result;
     },
 
+    // The same question with the drafts in the answer. A draft is not public, so this needs the write key; without
+    // one it gives the published documents only and the caller is told so by hasToken().
+    async queryRaw(groq) {
+      const token = envValue(envPath(ctx), 'SANITY_WRITE_TOKEN');
+      if (token === '') return this.query(groq);
+      const url = host + '/data/query/' + config.dataset + '?perspective=raw&query=' + encodeURIComponent(groq);
+      let response;
+      try {
+        response = await doFetch(url, { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(timeout) });
+      } catch (error) {
+        throw new Error('Sanity could not be reached');
+      }
+      if (!response.ok) throw new Error('Sanity answered ' + response.status);
+      return (await response.json()).result;
+    },
+
+    // A long question (the whole content query is over 11 KB) goes in the body, as Sanity asks
+    async queryLong(groq) {
+      const response = await doFetch(host + '/data/query/' + config.dataset + '?perspective=published', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: groq }),
+        signal: AbortSignal.timeout(timeout),
+      });
+      if (!response.ok) throw new Error('Sanity answered ' + response.status);
+      return (await response.json()).result;
+    },
+
     hasToken() {
       return envValue(envPath(ctx), 'SANITY_WRITE_TOKEN') !== '';
     },
@@ -70,6 +98,7 @@ export function makeSanity(ctx) {
         throw new Refusal(502, 'The Teletraan computer could not reach Sanity. Check its internet connection, then press the button again.');
       }
       if (response.status === 401 || response.status === 403) throw new Refusal(502, 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.');
+      if (response.status === 409) throw new Refusal(409, 'The document changed in Sanity while it was being saved.');
       if (!response.ok) throw new Refusal(502, 'Sanity could not take the change (' + response.status + ').');
       const body = await response.json();
       // Sanity answers 200 with a result for each mutation. An empty list means nothing was written.

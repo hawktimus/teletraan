@@ -125,3 +125,31 @@
 .settings-page .fold-body.tab .result[data-state="bad"] { color: #b3261e; }
 .settings-page .fold-body.tab .result[data-state="wait"] { color: #8a5a00; }
 .settings-page .fold-body.tab .card { color: var(--page-text, #f3eefc); }
+
+/* The Display tab: one card for each row, grouped by view. Phone first: one column, 16px gutter from the page, 44px targets. */
+.display-page { display: grid; gap: 16px; }
+.display-page .word, .display-page .note, .display-page .reason, .display-page .items li { overflow-wrap: anywhere; }
+.display-page .fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 16px; }
+.display-page .dgroup { margin: 16px 0 0; padding: 0 0 0 12px; border-left: 6px solid #6b7280; }
+.display-page .dgroup[data-view="prime"] { border-left-color: #7c3aed; }
+.display-page .dgroup[data-view="nova"] { border-left-color: #d69e2e; }
+.display-page .dgroup > h3 { margin: 0 0 8px; font-size: 18px; color: var(--page-text, #f3eefc); overflow-wrap: anywhere; }
+.display-page .drow { margin: 0 0 12px; padding: 12px; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.display-page .drow[data-shown="no"] { opacity: .75; }
+.display-page .dhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.display-page .drow h3 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.display-page .num { display: inline-block; min-width: 28px; color: #b9afcf; }
+.display-page .chip { flex: none; padding: 4px 10px; border-radius: 12px; font-size: 16px; font-weight: 700; color: #1a1228; background: #9a9a9a; }
+.display-page .chip[data-state="show"] { background: #2fd27a; }
+.display-page .chip[data-state="skip"] { background: #ffb300; }
+.display-page .chip[data-state="off"] { background: #9a9a9a; }
+.display-page .reason { margin: 8px 0 0; }
+.display-page .reason[data-state="skip"] { color: #ffb300; }
+.display-page .items { margin: 4px 0 0; padding-left: 20px; color: #b9afcf; }
+.display-page .drow .check { display: flex; margin-top: 4px; }
+.display-page [data-flash]:empty { display: none; }
+.display-page h3 { font-size: 18px; }
+.display-page h4 { margin: 8px 0 0; font-size: 16px; }
+@media (min-width: 900px) {
+  .display-page .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

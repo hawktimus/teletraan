@@ -35,7 +35,8 @@ export async function makeWorld(registers, options = {}) {
     fetch: async (url, init) => {
       world.fetched.push({ url: String(url), init: init || {} });
       if (options.offline) throw new Error('the network is down');
-      const text = decodeURIComponent(String(url));
+      // A long question goes in the body (support/sanity.js queryLong), so a query is matched on its body too
+      const text = decodeURIComponent(String(url)) + (String(url).includes('/data/query/') && init && init.body ? ' ' + String(init.body) : '');
       const key = Object.keys(options.answers || {}).find(word => text.includes(word));
       const body = key ? options.answers[key] : { result: null };
       return { ok: true, status: 200, json: async () => body };
