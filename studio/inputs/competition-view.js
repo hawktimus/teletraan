@@ -1,6 +1,6 @@
 // The Competition page, in the sidebar. It is a page of its own, not a document. It shows when the Teletraan computer
 // last read the competition data, the mode of the competition cards (Auto, Always or Off) and one switch for each card.
-// Dashboard Settings hides these fields. The page writes only the field that is changed, to the draft of Dashboard
+// Below them is the FRC news section (news-section.js). Dashboard Settings hides these fields. The page writes only the field that is changed, to the draft of Dashboard
 // Settings. Publish all in the top bar puts a change on the screen. No stored name changes.
 //
 // The words that need no Studio are in competition-parts.js. It is written without JSX:
@@ -15,12 +15,13 @@ import { fieldRows, saveLine } from './field-editor.js';
 import { specsOf, problemWith, changeFor } from './field-editor-parts.js';
 import { FrcStatusInput } from './frc-status-input.js';
 import { words, fieldNames, settingsId } from './competition-parts.js';
+import { newsBlock, useNewsSection } from './news-section.js';
 
 const h = createElement;
 
 const specs = specsOf(dashboardSettings.fields, fieldNames);
 
-export function pageOf(model, handlers) {
+export function pageOf(model, handlers, newsHandlers) {
   const settings = model.settings;
   let cards;
 
@@ -38,6 +39,7 @@ export function pageOf(model, handlers) {
       h('p', { style: styles.text }, words.intro),
       h('div', { 'data-block': 'connection' }, h('h2', { style: styles.subheading }, words.connection), h('p', { style: styles.muted }, words.connectionSays), h(FrcStatusInput, null)),
       h('div', { 'data-block': 'cards' }, h('h2', { style: styles.subheading }, words.cards), h('p', { style: styles.muted }, words.cardsSays), cards),
+      model.news && newsHandlers ? newsBlock(Object.assign({ settings: settings }, model.news), newsHandlers) : null,
       saveLine(settings)
     )
   );
@@ -47,6 +49,7 @@ export function CompetitionView() {
   const client = useClient({ apiVersion: apiVersion });
   const settings = useDraftDocument(client, settingsId);
   const [problems, setProblems] = useState({});
+  const newsSection = useNewsSection(client, settings);
 
   const handlers = {
     save(spec, value) {
@@ -58,5 +61,5 @@ export function CompetitionView() {
     },
   };
 
-  return pageOf({ settings: settings.state, problems: problems }, handlers);
+  return pageOf({ settings: settings.state, problems: problems, news: newsSection.model }, handlers, newsSection.handlers);
 }

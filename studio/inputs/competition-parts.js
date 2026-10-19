@@ -21,3 +21,4 @@ export const fieldNames = ['competitionMode'].concat(cardNames);
 
 // Every field of Dashboard Settings that the page shows. Dashboard Settings hides each of them (dashboardSettings.js).
 export const settingsNames = ['frcConnection'].concat(fieldNames);
+// The four fields of the FRC news section (news-parts.js) are hidden in Dashboard Settings the same way
