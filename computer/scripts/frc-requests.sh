@@ -84,6 +84,7 @@ get() {
   service=$1
   name=$2
   where=$3
+  kind=${4:-}
   file="$cache/$name.json"
   outcome=stopped
   printf '%s\n' "$name" >> "$work/seen.txt"
@@ -98,11 +99,21 @@ get() {
   if [ "$service" = statbotics ] && [ "$statbotics_off" = yes ]; then
     return 0
   fi
-  if [ "$requests" -ge "$max_requests" ]; then
-    stopped=capped
-    return 0
+  # The ratings and chances for the field strength and the schedule have a limit of their own, so they cannot use up the
+  # requests the rest of the status needs
+  if [ "$kind" = field ]; then
+    if [ "$field_requests" -ge "$field_max" ]; then
+      field_capped=yes
+      return 0
+    fi
+    field_requests=$((field_requests + 1))
+  else
+    if [ "$requests" -ge "$max_requests" ]; then
+      stopped=capped
+      return 0
+    fi
+    requests=$((requests + 1))
   fi
-  requests=$((requests + 1))
 
   if [ "$service" = tba ]; then
     address="$tba_host$where"

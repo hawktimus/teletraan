@@ -7,6 +7,73 @@ is_match_key() {
   printf '%s' "$1" | grep -Eq '^[0-9]{4}[a-z0-9]{1,20}_[a-z0-9]{1,12}$'
 }
 
+# The rating of one team for the field strength: kept field_keep_hours, then asked for again. field-times.json says when each
+# was read. A team Statbotics does not know gets an empty answer, so it is not asked for again in every run.
+read_rating() {
+  rating_number=$1
+  rating_name="statbotics-team-$year-$rating_number"
+  rating_file="$cache/$rating_name.json"
+
+  rating_time=$(jq -r --arg name "$rating_name" '.[$name] // 0' "$field_times" 2> /dev/null || echo 0)
+  case $rating_time in
+    ''|*[!0-9]*) rating_time=0 ;;
+  esac
+  if [ -f "$rating_file" ] && [ $((now - rating_time)) -ge 0 ] && [ $((now - rating_time)) -lt $((field_keep_hours * 3600)) ]; then
+    printf '%s\n' "$rating_name" >> "$work/seen.txt"
+    return 0
+  fi
+
+  team_number=$rating_number
+  get statbotics "$rating_name" "$(fill "$statbotics_team_year")" field
+  if [ "$outcome" = missing ]; then
+    echo '{}' > "$rating_file"
+  fi
+  if [ -f "$rating_file" ] && { [ "$outcome" = changed ] || [ "$outcome" = same ] || [ "$outcome" = missing ]; }; then
+    jq --arg name "$rating_name" --argjson time "$now" '.[$name] = $time' "$field_times" > "$field_times.new" && mv -f "$field_times.new" "$field_times"
+  fi
+}
+
+# The 14 days before an event: the rating of every team that comes, and the win chance of the matches of the team. $1 is the
+# event, $2 the key of the team being read. Does nothing outside those days, when the roster is not there or when Statbotics
+# is switched off for the run.
+read_field() {
+  field_event_key=$1
+  field_team_key=$2
+  roster_file="$cache/tba-teams-$field_event_key.json"
+  [ -f "$roster_file" ] || return 0
+
+  in_window=$(jq -r --arg today "$today" --arg key "$field_event_key" --argjson days "$preview_days" "$paths"'
+    def day: strptime("%Y-%m-%d") | mktime / 86400 | floor;
+    [.[]? | objects | select(event_key == $key)][0]
+    | if . == null then "no"
+      else (((event_start | day) - ($today | day)) as $left | if $left >= 1 and $left <= $days then "yes" else "no" end) end' "$events_file" 2> /dev/null || echo no)
+  [ "$in_window" = yes ] || return 0
+
+  printf '%s\n' "$field_event_key" >> "$work/field-events.txt"
+  jq -r "$paths"'
+    [.[]? | objects | team_key | strings | select(test("\\Afrc[1-9][0-9]{0,4}\\z")) | ltrimstr("frc")] | unique[]' "$roster_file" > "$work/field-teams.txt"
+
+  # The matches of the team that are still to play, in the order they are played
+  matches_file="$cache/tba-matches-$field_team_key-$field_event_key.json"
+  : > "$work/field-matches.txt"
+  if [ -f "$matches_file" ]; then
+    jq -r --argjson count "$scheduled_kept" "$paths$helpers"'
+      [.[]? | objects
+        | select((match_key | type) == "string" and (match_key | test("\\A[0-9]{4}[a-z0-9]{1,20}_qm[0-9]{1,3}\\z")))
+        | select(played | not)]
+      | sort_by(match_order)[0:$count][] | match_key' "$matches_file" > "$work/field-matches.txt"
+  fi
+
+  while read -r number; do
+    read_rating "$number"
+  done < "$work/field-teams.txt"
+
+  while read -r match_key; do
+    is_match_key "$match_key" || continue
+    get statbotics "statbotics-match-$match_key" "$(fill "$statbotics_match")" field
+  done < "$work/field-matches.txt"
+}
+
 read_everything() {
   jq -r '.[] | "\(.code) \(.number)"' "$work/teams.json" > "$work/team-list.txt"
   echo "frc: reading $(jq length "$work/teams.json") team(s) for the $year season"
@@ -81,6 +148,8 @@ read_everything() {
         done < "$work/others.txt"
         team_number=$own_number
       fi
+
+      read_field "$focus" "$team_key"
     fi
   done < "$work/team-list.txt"
 

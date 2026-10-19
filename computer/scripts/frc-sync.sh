@@ -224,12 +224,19 @@ fi
 if ! jq -e 'objects' "$etags" > /dev/null 2>&1; then
   echo '{}' > "$etags"
 fi
+field_times="$frc/field-times.json"
+if ! jq -e 'objects' "$field_times" > /dev/null 2>&1; then
+  echo '{}' > "$field_times"
+fi
 
 : > "$work/notes.txt"
 : > "$work/errors.txt"
 : > "$work/seen.txt"
+: > "$work/field-events.txt"
 
 requests=0
+field_requests=0
+field_capped=no
 failures=0
 stopped=""
 statbotics_off=no
@@ -248,6 +255,12 @@ read_everything
 case $stopped in
   capped) note "This run stopped after $max_requests requests and goes on at the next run." ;;
 esac
+if [ "$field_capped" = yes ]; then
+  note "Field strength: this run read $field_requests ratings from Statbotics, which is the limit. The rest are read at the next run."
+fi
+if [ "$statbotics_off" = yes ] && [ -s "$work/field-events.txt" ]; then
+  note "Field strength and the chances of our matches were skipped, because Statbotics refused the request."
+fi
 
 # Everything read so far, by the name it is kept under, in one file for the
 # filters below
@@ -273,6 +286,8 @@ if ! jq -n \
   --slurpfile bundle "$work/bundle.json" --slurpfile teams "$work/teams.json" --slurpfile answer "$work/sanity.json" \
   --arg year "$year" --arg today "$today" --arg now "$now_iso" --argjson slots "$slots" \
   --argjson results_kept "$results_kept" --argjson snapshots_kept "$snapshots_kept" --argjson awards_kept "$awards_kept" \
+  --argjson scheduled_kept "$scheduled_kept" --argjson field_kept "$field_kept" --argjson trend_points "$trend_points" \
+  --rawfile field_events "$work/field-events.txt" \
   --rawfile notes "$work/notes.txt" --rawfile errors "$work/errors.txt" \
   "$paths$helpers$build" > "$work/status.json"; then
   echo "Could not build the status from what was read. The next run tries again." >&2
@@ -333,13 +348,16 @@ unfinished=false
 case $stopped in
   capped|limit) unfinished=true ;;
 esac
+if [ "$field_capped" = yes ]; then
+  unfinished=true
+fi
 
 jq -n --arg zone "$zone" --argjson run "$now" --argjson wrote "$last_write" --argjson unfinished "$unfinished" \
   --slurpfile windows "$work/windows.json" \
   '{zone: $zone, lastRunAt: $run, lastWriteAt: $wrote, unfinished: $unfinished, windows: $windows[0]}' > "$state.new"
 mv -f "$state.new" "$state"
 
-echo "frc: $requests request(s) to the two services"
+echo "frc: $requests request(s) to the two services, and $field_requests to Statbotics for the field strength"
 
 # The time of this run goes to status-mini, unless the services turned the run
 # away or the status could not be written. status-write.sh never stops this script.

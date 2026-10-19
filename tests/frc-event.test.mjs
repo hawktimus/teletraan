@@ -74,6 +74,24 @@ test('a file that is not from frc-sync.sh is refused in plain words', () => {
   assert.throws(() => buildFixture({ event: { key: '2026ncdemo' }, teams: [{ team_number: 1 }] }), /fewer than two teams/);
 });
 
+test('the fixture has the schedule and the field of the event with nobody rated, and they go through the cleaning of core/frc.js', () => {
+  const fixture = buildFixture(answer);
+  const entry = tidyFrc(fixture.frc).teams[0];
+
+  assert.equal(entry.schedule.event, fixture.event);
+  assert.ok(entry.schedule.matches.length > 0, 'the qualification matches of the team');
+  entry.schedule.matches.forEach(match => {
+    assert.equal(match.alliance !== '', true);
+    assert.equal(match.partners.length, 2);
+    assert.equal(match.opponents.length, 3);
+    assert.equal(match.winProbability, null, 'the answer holds no chances');
+    match.partners.concat(match.opponents).forEach(person => assert.equal(person.epa, null, 'and no ratings'));
+  });
+  assert.equal(entry.field.event, fixture.event);
+  assert.ok(entry.field.teams.length > 2 && entry.field.teams.every(team => team.epa === null));
+  assert.ok(!JSON.stringify(fixture.frc.teams[0].field).includes('"name"'), 'the long names of the teams are not kept');
+});
+
 test('the fixture goes through the cleaning of core/frc.js unchanged, and every card has data', () => {
   const fixture = buildFixture(answer);
   const frc = tidyFrc(fixture.frc);

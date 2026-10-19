@@ -8,6 +8,10 @@
 // and without them the two best ranked teams at the event are used. The answer holds no ratings, so the
 // ratings and the win chance stay empty, as they do on the Teletraan computer before Statbotics answers.
 //
+// The answer holds no ratings, so the field and the schedule come with their ratings empty. The cards show a dash for
+// each, and the chance of winning is empty. Real ratings come from the Teletraan computer (docs/frc-feed.md). The phase
+// of the event a card is shown in is chosen on the address, with ?competition=1&phase= (core/competition-phase.js).
+//
 // The shape is the one core/frc.js reads, with { placeholder, event, source, frc } around it.
 
 import fs from 'node:fs';
@@ -98,6 +102,37 @@ function eventShape(event, ranking) {
   return shape;
 }
 
+// The team's qualification matches as the schedule that was posted before the event, with nobody rated
+function scheduleFor(key, answer, nicknames) {
+  const mine = list(answer.matches).filter(match => match.comp_level === 'qm' && match.alliances && sideOf(match, key)).sort(byOrder);
+
+  return {
+    event: answer.event.key,
+    matches: mine.map(match => {
+      const side = sideOf(match, key);
+      const other = side === 'red' ? 'blue' : 'red';
+      return {
+        match: match.key,
+        label: matchLabel(match),
+        number: match.match_number,
+        time: isoTime(match.time || match.predicted_time),
+        alliance: side,
+        partners: match.alliances[side].team_keys.filter(item => item !== key).map(item => personOf(item, nicknames)),
+        opponents: match.alliances[other].team_keys.map(item => personOf(item, nicknames)),
+        winProbability: null,
+      };
+    }),
+  };
+}
+
+// Every team at the event, rated with nothing
+function fieldFor(answer, nicknames) {
+  return {
+    event: answer.event.key,
+    teams: list(answer.teams).filter(team => team.team_number).map(team => ({ number: team.team_number, nickname: nicknames[team.team_number] || '', epa: null })),
+  };
+}
+
 function entryFor(role, number, answer, nicknames) {
   const key = 'frc' + number;
   const event = answer.event;
@@ -159,6 +194,8 @@ function entryFor(role, number, answer, nicknames) {
     epa: null,
     districtPoints: districtPoints,
     snapshots: [],
+    schedule: scheduleFor(key, answer, nicknames),
+    field: fieldFor(answer, nicknames),
     // The same event is last season for a fixture of a past year, so that card has something to draw
     lastSeason: { season: Number(String(event.key).slice(0, 4)), events: [entry] },
   };

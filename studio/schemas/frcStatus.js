@@ -43,6 +43,12 @@ const personFields = [
   numberField('epa', 'EPA', 'The expected points added of this team, when it was read. Most are empty.'),
 ];
 
+// A team in the schedule: the same as a person, with its record this season and which way its rating is going
+const scoutFields = personFields.concat([
+  objectOf('record', 'Record', 'Wins, losses and ties of the team this season, when it was read.', recordFields),
+  textField('trend', 'Trend', 'Rising or falling: where the rating of the team is against the start of the season. Empty when not known.'),
+]);
+
 const eventFields = [
   textField('key', 'Event key', 'The code of the event, such as 2027ncwak.'),
   textField('name', 'Event name', 'The name of the event.'),
@@ -114,6 +120,23 @@ const teamFields = [
   objectOf('lastSeason', 'Last season', 'The events of the season before, kept when the year changes.', [
     numberField('season', 'Season', 'The year of that season.'),
     listOf('events', 'Events', 'The events of that season.', eventFields),
+  ]),
+  objectOf('schedule', 'Schedule', 'The qualification matches the team has still to play at the event now. No matches means the schedule is not posted yet.', [
+    textField('event', 'Event key', 'The event the schedule is from.'),
+    listOf('matches', 'Matches', 'The matches, in the order of their numbers.', [
+      textField('match', 'Match key', 'The code of the match.'),
+      textField('label', 'Match label', 'The short name of the match, such as Q12.'),
+      numberField('number', 'Match number', 'The number of the match.'),
+      defineField({ name: 'time', title: 'Time', type: 'datetime', description: 'When the match is planned to start.' }),
+      textField('alliance', 'Alliance colour', 'Red or blue: the colour of the team in this match.'),
+      listOf('partners', 'Partners', 'The other teams on the alliance of the team.', scoutFields),
+      listOf('opponents', 'Opponents', 'The three teams on the other alliance.', scoutFields),
+      numberField('winProbability', 'Win chance', 'The chance that the alliance of the team wins, from 0 to 1, from Statbotics. Empty when it is not known.'),
+    ]),
+  ]),
+  objectOf('field', 'Field', 'The teams that come to the event, with the EPA of each when it was read.', [
+    textField('event', 'Event key', 'The event the teams come to.'),
+    listOf('teams', 'Teams', 'The teams, best EPA first.', personFields),
   ]),
 ];
 

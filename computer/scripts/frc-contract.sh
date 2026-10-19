@@ -3,7 +3,7 @@
 # block: the addresses, and where each value sits in an answer. If a service
 # changes something, correct the line here and nowhere else. They were written
 # from the public documentation of both services and have not been tried against
-# the live services (docs/frc-feed.md, "If an answer looks different").
+# the live services (the same is true of the Statbotics places that give a record and the start of the season) (docs/frc-feed.md, "If an answer looks different").
 #
 # An address has {team} (frc3229), {number} (3229), {year}, {event}
 # (2027ncwak), {match} (2027ncwak_qm12) or {district} (2027nc) in it.
@@ -67,7 +67,12 @@ def award_event: .event_key;
 def district_ranking_team: .team_key;
 def district_rank: .rank;
 def district_points_total: .point_total;
+def team_number: .team_number;
 def statbotics_epa: .epa.total_points.mean;
+def statbotics_epa_start: .epa.stats.start;
+def statbotics_wins: .record.total.wins;
+def statbotics_losses: .record.total.losses;
+def statbotics_ties: .record.total.ties;
 def statbotics_red_win: .pred.red_win_prob;
 '
 
@@ -82,6 +87,18 @@ max_requests=60
 quiet_gap=$((50 * 60))
 event_gap=$((4 * 60))
 refresh_gap=$((45 * 60))
+
+# The field strength and the schedule of the preview (docs/frc-feed.md, "Field strength and our matches"). They are read
+# only in the 14 days before an event starts. At most field_max requests to Statbotics for them in one run, and an answer
+# is kept field_keep_hours before it is asked for again. A run that reaches the limit goes on at the next run.
+preview_days=14
+field_max=60
+field_keep_hours=12
+# The qualification matches of the team that are kept in the status, and the teams kept in the field
+scheduled_kept=16
+field_kept=80
+# A rating this many points over or under its start of the season is rising or falling
+trend_points=2
 
 # The next matches that get a win chance from Statbotics, the results and the
 # daily snapshots kept in the status, and the awards listed

@@ -496,7 +496,7 @@ test('the status document has the fixed id, the team numbers and nicknames, the 
   assert.equal(document.teams.length, 1);
 
   const team = document.teams[0];
-  assert.deepEqual(Object.keys(team), ['team', 'number', 'key', 'events', 'focusEvent', 'nextMatch', 'results', 'ranking', 'alliance', 'awards', 'epa', 'districtPoints', 'snapshots', 'lastSeason', '_key']);
+  assert.deepEqual(Object.keys(team), ['team', 'number', 'key', 'events', 'focusEvent', 'nextMatch', 'results', 'ranking', 'alliance', 'awards', 'schedule', 'field', 'epa', 'districtPoints', 'snapshots', 'lastSeason', '_key']);
   assert.equal(team.team, 'prime');
   assert.equal(team.number, 3229);
   assert.equal(team.key, 'frc3229');
@@ -1474,7 +1474,7 @@ test('the work folder is removed after every run, and one a stopped run left beh
   world(place);
   fs.mkdirSync(path.join(place.frc, '.work.interrupted'), { recursive: true });
   place.run();
-  assert.deepEqual(fs.readdirSync(place.frc).sort(), ['.lock', 'cache', 'cycle.txt', 'etags.json', 'state.json', 'written.json']);
+  assert.deepEqual(fs.readdirSync(place.frc).sort(), ['.lock', 'cache', 'cycle.txt', 'etags.json', 'field-times.json', 'state.json', 'written.json']);
   assert.deepEqual(fs.readdirSync(place.temp), []);
 });
 

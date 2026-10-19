@@ -122,6 +122,59 @@ def alliance_of($event; $key; $roster):
         }
     end;
 
+# A team in the schedule or the field: the number, the nickname, the rating, and from Statbotics the record of the
+# season and which way the rating is going. A trend is only told when the start of the season is known.
+def trend_of($stats):
+  if ($stats | type) != "object" then ""
+  else
+    ($stats | statbotics_epa | numeric) as $now
+    | ($stats | statbotics_epa_start | numeric) as $start
+    | if $now == null or $start == null then ""
+      elif $now - $start >= $trend_points then "rising"
+      elif $start - $now >= $trend_points then "falling"
+      else "" end
+  end;
+
+def record_of($stats):
+  if ($stats | type) != "object" then null
+  else ($stats | {wins: (statbotics_wins | numeric), losses: (statbotics_losses | numeric), ties: (statbotics_ties | numeric)}) end;
+
+def scout($roster; $key):
+  stored("statbotics-team-" + $year + "-" + ($key | ltrimstr("frc"))) as $stats
+  | person($roster; $key) + {record: record_of($stats), trend: trend_of($stats)};
+
+def scouts($roster; $keys; $skip): [($keys // [])[] | strings | select(. != $skip) | scout($roster; .)];
+
+# The qualification matches the team has still to play at the event, with the win chance of the alliance of the team when
+# Statbotics has one. No matches is the schedule that is not posted yet.
+def schedule_of($focus_key; $key; $roster; $to_play):
+  {
+    event: $focus_key,
+    matches: [$to_play[] | select(match_level == "qm")][0:$scheduled_kept] | map(
+      color_of($key) as $color
+      | (stored("statbotics-match-" + match_key) | if type == "object" then statbotics_red_win | numeric else null end) as $odds
+      | {
+          match: match_key,
+          label: match_label,
+          number: match_number,
+          time: (match_time | iso),
+          alliance: $color,
+          partners: (if $color == "red" then scouts($roster; match_red_teams; $key) elif $color == "blue" then scouts($roster; match_blue_teams; $key) else [] end),
+          opponents: (if $color == "red" then scouts($roster; match_blue_teams; "") elif $color == "blue" then scouts($roster; match_red_teams; "") else [] end),
+          winProbability: (if $odds == null or $color == null then null elif $color == "red" then $odds else (1 - $odds) end)
+        })
+  };
+
+# The teams that come to the event with their rating, best first. Only for an event whose ratings were read in the window of this run
+# window (field-events.txt), and only when at least two teams have one.
+def field_of($focus_key; $roster):
+  if (lines($field_events) | index($focus_key)) == null then null
+  else
+    ([$roster | listing[] | team_key | strings | select(test("\\Afrc[1-9][0-9]{0,4}\\z")) | person($roster; .)]) as $teams
+    | if ($teams | map(select(.epa != null)) | length) < 2 then null
+      else {event: $focus_key, teams: ($teams | sort_by(-(.epa // -1000000))[0:$field_kept])} end
+  end;
+
 def awards_of($key):
   [stored("tba-awards-" + $year + "-" + $key) | listing[] | {name: award_name, event: award_event}] | .[0:$awards_kept];
 
@@ -188,6 +241,8 @@ def team_doc($team):
         else {event: $focus_key} + ($focus_event | {rank, teamsRanked, matchesPlayed, record, rankingPoints}) end),
       alliance: (if $focus == null then null else alliance_of($focus; $key; $roster) end),
       awards: awards_of($key),
+      schedule: (if $focus == null then null else schedule_of($focus_key; $key; $roster; $to_play) end),
+      field: (if $focus == null then null else field_of($focus_key; $roster) end),
       epa: epa_of($team.number),
       districtPoints: district_of($key)
     } as $doc
