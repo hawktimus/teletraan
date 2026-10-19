@@ -12,6 +12,7 @@ export const holdMinutes = { least: 1, most: 60 };
 // cannot disagree about them. The words are the names on the buttons: Robotics is general and Condensed is family.
 import { longestMinutes, themeIds, viewKeys } from '../../dashboard/core/screen-requests.js';
 import { defaultThemeByWeekday, scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
+import { hiddenTransitions } from '../../dashboard/core/hidden-transitions.js';
 
 export { themeIds, viewKeys };
 export const themeNames = { original: 'Original', cybertron: 'Cybertron', retro: 'Retro', foundry: 'Foundry' };
@@ -25,7 +26,10 @@ const noticeMinutes = 120;
 export const stayHours = longestMinutes / 60;
 export const noticeLongest = 90;
 
-export const actions = ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'presentation-test', 'post-announcement', 'schedule'];
+export const actions = ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'presentation-test', 'post-announcement', 'schedule', 'hidden'];
+
+// The kinds of hidden transition the wall has: the ids of dashboard/core/hidden-transitions.js
+export const hiddenKinds = Object.keys(hiddenTransitions);
 
 function stamp(now) {
   return new Date(now).toISOString().replace(/\.\d{3}Z$/, 'Z');
@@ -113,6 +117,11 @@ export function buildRequest(action, input, now = new Date()) {
 
     case 'schedule':
       return { set: nothing };
+
+    // The same field the Studio menu writes (studio/tools/screen-requests.js)
+    case 'hidden':
+      if (!hiddenKinds.includes(body.kind)) throw new Refusal(400, 'Pick one of the hidden transitions: ' + hiddenKinds.join(', ') + '.');
+      return { set: { hiddenRequest: { kind: body.kind, requestedAt: new Date(now).toISOString() } } };
 
     case 'post-announcement': {
       const text = typeof body.text === 'string' ? body.text.trim().replace(/\s+/g, ' ') : '';
