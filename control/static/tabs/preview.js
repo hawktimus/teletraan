@@ -142,6 +142,7 @@ export function wirePreview(root) {
     let first = false;
     let lastGood = began;
     let failing = false;
+    let lastError = 0;
     while (mine === run) {
       let counter = '';
       try {
@@ -174,7 +175,15 @@ export function wirePreview(root) {
           mirrorLine(framesPerSecond(drawn, now));
           continue;
         }
-        if (!failing) { failing = true; await showError(address); if (mine !== run) return; }
+        // Asked again every 5 seconds, so the sentence follows a change (403 after 404) and the rate falls to 0
+        if (!failing || Date.now() - lastError > 5000) {
+          failing = true;
+          lastError = Date.now();
+          drawn = [];
+          mirrorLine(0);
+          await showError(address);
+          if (mine !== run) return;
+        }
       }
       // No picture at the start, or the counter gone after the service stopped: the still copy takes over
       if (!failing && Date.now() - lastGood > mirrorFrameWait && (counter === '' || !first)) {

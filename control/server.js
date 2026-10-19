@@ -52,6 +52,13 @@ function readProject(rootDir) {
   return { projectId: pick('projectId') || 'ybfqe345', dataset: pick('dataset') || 'production', apiVersion: pick('apiVersion') || '2025-02-19' };
 }
 
+// The folder that holds dashboard/ and computer/: the live release when there is one, else the folder this
+// service itself runs from. rootDir holds releases, local.env and the cache, and has no dashboard/ of its own.
+function releaseRoot(rootDir) {
+  const live = path.join(rootDir, 'current');
+  return fs.existsSync(path.join(live, 'dashboard', 'config.js')) ? live : path.resolve(here, '..');
+}
+
 export async function createService(config, overrides = {}) {
   const router = createRouter();
   const releases = createReleases(config.releasesDir);
@@ -83,7 +90,7 @@ export async function createService(config, overrides = {}) {
     log: log,
     run: run,
     helper: createHelper(config.socket),
-    root: config.rootDir,
+    root: releaseRoot(config.rootDir),
     logLines: async count => {
       const lines = readText(config.logFile).split('\n').filter(Boolean);
       return lines.slice(-count);
