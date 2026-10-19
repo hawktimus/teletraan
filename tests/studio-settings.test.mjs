@@ -32,8 +32,8 @@ test('no stored name of Dashboard Settings changed: all of them are still fields
   const now = settings.fields.map(field => field.name);
   assert.deepEqual(storedNames.filter(name => now.indexOf(name) === -1), []);
   assert.equal(settings.name, 'dashboardSettings');
-  // The Photos page added these two, and hides them here
-  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder'], 'no other field was added');
+  // The Photos page added the first two, and the FRC news section of the Competition page the other four. Each is hidden here
+  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added');
 });
 
 test('there are five tabs at most, in the order of the content map, and Timing opens first', () => {

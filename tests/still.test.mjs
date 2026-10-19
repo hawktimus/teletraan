@@ -83,9 +83,9 @@ test('the Studio address names the panel, the team, the department, the Screen a
   assert.equal(preview.previewAddress('monday-overall', '', '', 'nope'), '/dashboard/index.html?panel=monday-overall&screen=original&still=1');
 });
 
-test('the Studio lists sixteen panels, each id once, at half size', () => {
-  assert.equal(preview.previewPanels.length, 16);
-  assert.equal(new Set(preview.previewPanels.map(item => item.id)).size, 16);
+test('the Studio lists seventeen panels, each id once, at half size', () => {
+  assert.equal(preview.previewPanels.length, 17);
+  assert.equal(new Set(preview.previewPanels.map(item => item.id)).size, 17);
   assert.equal(preview.frameSize.width * 2, preview.frameSize.canvasWidth);
   assert.equal(preview.frameSize.height * 2, preview.frameSize.canvasHeight);
 });

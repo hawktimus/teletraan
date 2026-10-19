@@ -4,6 +4,7 @@ import { withDefaults } from './content.js';
 import { fromBoardOnly } from './task-source.js';
 import { tidyFrc } from './frc.js';
 import { tidyMondayStatus } from './monday.js';
+import { tidyNews, tidySampleNews } from './news.js';
 import { tidyScreens } from './screens.js';
 import { tidyViews } from './views.js';
 import { tidySubthemes } from './subthemes.js';
@@ -47,6 +48,7 @@ export function normalizeContent(result, now = new Date()) {
     calendarFilters: filtersFrom(data.calendarFilters),
     customPanels: customPanelsFrom(data.customPanels),
     frc: tidyFrc(data.frc),
+    news: tidyNews(data.news),
     monday: tidyMondayStatus(data.monday),
     mini: tidyMini(data.mini),
     screens: tidyScreens(data.screens, settings.mondayStyle),
@@ -80,6 +82,7 @@ export function normalizeSample(raw) {
   content.presentations = presentationsFrom(data.presentations);
   content.calendarFilters = filtersFrom(data.calendarFilters);
   content.frc = tidyFrc(data.frc);
+  content.news = tidySampleNews(data.news);
   content.monday = tidyMondayStatus(data.monday);
   content.screens = tidyScreens(data.screens, content.settings.mondayStyle);
   content.views = tidyViews(data.views);

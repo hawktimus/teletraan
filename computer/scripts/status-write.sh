@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|photos-drive|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|photos-drive|news|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -10,6 +10,8 @@
 #   status-write.sh slides     the slides were downloaded
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
+#   status-write.sh news       the FIRST news headlines were read: sends when and how many (newsAt, newsCount),
+#                              from news/status.json, which news-sync.sh made in the data folder
 #   status-write.sh kiosk      the screen started
 #   status-write.sh version    the build on the wall: the version, the short hash, the date and the branch
 #                              (buildVersion, buildCommit, buildDate, buildBranch). From RELEASE.json of the
@@ -39,7 +41,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|photos-drive|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|photos-drive|news|restart N" >&2
   exit 2
 }
 
@@ -58,6 +60,7 @@ case $1 in
   slides) field=lastSlidesFetchAt ;;
   monday) field=lastMondaySyncAt ;;
   frc) field=lastFrcSyncAt ;;
+  news) field=newsAt ;;
   kiosk) field=kioskStartedAt ;;
   version) field=version ;;
   backup) field=lastBackupAt ;;
@@ -116,7 +119,7 @@ host="https://$project.api.sanity.io"
 # write would be the newest change. The dataset is public, so no token is sent.
 # Gives nothing when Sanity cannot be asked or has no such document.
 newest_update() {
-  query='*[!(_type in ["status", "calendarStatus", "mondayStatus", "frcStatus"]) && !(_id match "task-monday-*") && !(_id match "milestone-monday-*")] | order(_updatedAt desc)[0]._updatedAt'
+  query='*[!(_type in ["status", "calendarStatus", "mondayStatus", "frcStatus", "frcNews"]) && !(_id match "task-monday-*") && !(_id match "milestone-monday-*")] | order(_updatedAt desc)[0]._updatedAt'
   status=0
   answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
@@ -160,7 +163,7 @@ time_line() {
 }
 
 if [ "$field" = print ]; then
-  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, kioskStartedAt}"
+  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, newsAt, kioskStartedAt}"
   status=0
   answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
@@ -187,6 +190,7 @@ if [ "$field" = print ]; then
   time_line lastSlidesFetchAt 'Last slides fetch'
   time_line lastMondaySyncAt 'Last Monday sync'
   time_line lastFrcSyncAt 'Last FRC data sync'
+  time_line newsAt 'Last news read'
   time_line kioskStartedAt 'Screen started'
   exit 0
 fi
@@ -234,6 +238,22 @@ elif [ "$field" = photosDriveAt ]; then
   fi
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"photosDriveAt":"%s","photosDriveState":"%s","photosDriveCount":%s}}}]}' \
     "$document" "$document" "$at" "$state" "$count")
+elif [ "$field" = newsAt ]; then
+  # The line news-sync.sh wrote after a good run. Nothing is sent when it is not there. Each part is
+  # checked, because it goes into a JSON body.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/news/status.json"
+  [ -f "$file" ] || exit 0
+  text=$(head -c 300 "$file")
+  at=$(printf '%s' "$text" | sed -n 's/.*"at":"\([^"]*\)".*/\1/p')
+  count=$(printf '%s' "$text" | sed -n 's/.*"count":\([0-9]*\).*/\1/p')
+  if ! printf '%s' "$at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$' ||
+    ! printf '%s' "$count" | grep -Eq '^[0-9]{1,3}$'; then
+    echo "status: news/status.json is not the line news-sync.sh writes, so nothing was written." >&2
+    exit 1
+  fi
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"newsAt":"%s","newsCount":%s}}}]}' \
+    "$document" "$document" "$at" "$count")
 elif [ "$field" = lastContentSeenAt ]; then
   value=$(newest_update)
   if ! printf '%s' "$value" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$'; then

@@ -6,7 +6,7 @@
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
 
 export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'mirror-start', 'mirror-watch', 'mirror-status'];
-const syncTargets = ['calendars', 'monday', 'frc', 'photos-drive'];
+const syncTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive'];
 
 // These stop or restart something people are watching, so the request must say it was confirmed
 const needsConfirm = ['restart-kiosk', 'restart-services', 'reboot'];

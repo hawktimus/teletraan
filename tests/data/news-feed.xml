@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+  <channel>
+    <title>Sample community blog</title>
+    <link>https://news.example.test</link>
+    <description>A made-up feed for the news tests.</description>
+    <pubDate>Fri, 09 Oct 2026 14:00:02 GMT</pubDate>
+    <item>
+      <title>Sample feed item one</title>
+      <link>https://news.example.test/one</link>
+      <description>&lt;p&gt;DESCRIPTION-MARKER one&lt;/p&gt;</description>
+      <content:encoded>&lt;p&gt;ARTICLE-MARKER one&lt;/p&gt;</content:encoded>
+      <category>Featured</category>
+      <category>Team Stories</category>
+      <pubDate>Fri, 09 Oct 2026 14:00:02 GMT</pubDate>
+      <dc:date>2026-10-09T14:00:02Z</dc:date>
+    </item>
+    <item>
+      <title>Sample Systemcore item two</title>
+      <link>https://news.example.test/two</link>
+      <description>DESCRIPTION-MARKER two</description>
+      <category>FTC</category>
+      <category>FRC</category>
+      <category>Control System</category>
+      <pubDate>Wed, 23 Sep 2026 19:17:55 GMT</pubDate>
+      <dc:date>2026-09-23T19:17:55Z</dc:date>
+    </item>
+    <item>
+      <title>Sample feed item three</title>
+      <link>https://news.example.test/three</link>
+      <description>DESCRIPTION-MARKER three</description>
+      <category>FRC</category>
+      <pubDate>Tue, 22 Sep 2026 20:20:25 GMT</pubDate>
+      <dc:date>2026-09-22T20:20:25Z</dc:date>
+    </item>
+    <item>
+      <title>Sample feed item four</title>
+      <link>https://news.example.test/four</link>
+      <description>DESCRIPTION-MARKER four</description>
+      <category>FTC</category>
+      <category>Kickoff</category>
+      <pubDate>Fri, 18 Sep 2026 14:47:07 GMT</pubDate>
+      <dc:date>2026-09-18T14:47:07Z</dc:date>
+    </item>
+  </channel>
+</rss>

@@ -34,13 +34,13 @@ function actionsFor(actions, context) {
 
 // Types with no line in the sidebar are left out of the New menu in the top bar. The screen no
 // longer reads Events Calendar entries, so they are not offered anywhere. The Teletraan computer writes the
-// status documents (schemas/status.js, calendarStatus.js, frcStatus.js and mondayStatus.js), so nobody adds one by hand.
+// status documents (schemas/status.js, calendarStatus.js, frcStatus.js, frcNews.js and mondayStatus.js), so nobody adds one by hand.
 // Nobody adds a task by hand either: the Teletraan computer makes them from the team's Monday boards, and the
 // task documents that exist stay in the dataset under Monday, Items, Old manual tasks.
 // A place is offered only while a document is open, which is where the Location field of a task
 // offers Create new, and that is how a place is added now. A template of add-templates.js, such
 // as Agenda item, is offered by the folder or list that names it, and by nothing else.
-const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task', 'milestone'].concat(addTemplates.map(template => template.id));
+const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone'].concat(addTemplates.map(template => template.id));
 const offeredInDocuments = ['place'];
 
 function newDocumentChoices(templates, context) {

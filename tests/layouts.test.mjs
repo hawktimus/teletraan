@@ -2827,6 +2827,7 @@ const orderSmall = [
   mondaySmall('panels/monday-status-depts/panel.css', { '.monday-status-depts .share': 40 }),
   mondaySmall('panels/monday-overall/panel.css', { '.monday-overall .hours-of': 32, '.monday-overall .milestone-name': 40, '.monday-overall .milestone-date': 32, '.monday-overall .milestone-days': 36, '.monday-overall .milestones-head': 36, '.monday-overall .hours': 40 }),
   mondaySmall('panels/monday-timeline/panel.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
+  mondaySmall('panels/frc-news/panel.css', { '.frc-news .chip': 30, '.frc-news .stale-chip': 30 }),
   mondaySmall('panels/monday-board/panel.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
 );
 Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });
