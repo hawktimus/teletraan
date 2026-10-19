@@ -79,7 +79,7 @@ ask() {
   if [ "$requests" -ge "$max_requests" ]; then
     stopped=capped
     outcome=capped
-    problem "This run stopped after $max_requests requests to Monday and goes on at the next run."
+    problem "This run stopped after $max_requests requests to Monday and deleted nothing; the next run reads again."
     return 0
   fi
   requests=$((requests + 1))
@@ -91,19 +91,19 @@ ask() {
       --request POST --data-binary "@$1" --output "$2" --write-out '%{http_code}' --config - "$monday_address" 2> /dev/null) || curl_status=$?
 
   if [ "$curl_status" -ne 0 ]; then
-    problem "Monday did not answer, $(explain "$curl_status")."
+    problem "Monday did not answer ($(explain "$curl_status")); check that the Teletraan computer is online, and the next run tries again."
     return 0
   fi
 
   case $answer_code in
     200)
       if ! jq empty "$2" > /dev/null 2>&1; then
-        problem "Monday sent an answer that is not data."
+        problem "Monday sent an answer that is not data; the next run tries again, and if it keeps happening press Monday debug on the control page."
         return 0
       fi
       said=$(jq -r "$paths$helpers"'error_messages | map(safe_text) | unique | .[0:2] | join("; ")' "$2" 2> /dev/null || true)
       if [ -n "$said" ]; then
-        problem "Monday said: $said"
+        problem "Monday said: $said. Press Monday debug on the control page and send the answer to a coach."
         return 0
       fi
       outcome=ok
@@ -111,15 +111,15 @@ ask() {
     401|403)
       stopped=refused
       outcome=refused
-      problem "Monday refused the token. Check MONDAY_API_TOKEN in local.env."
+      problem "Monday refused the token; paste a new MONDAY_API_TOKEN in Settings, Keys on the control page."
       ;;
     429)
       stopped=limit
       outcome=limit
-      problem "Monday says there were too many requests, so this run stopped. It goes on at the next run."
+      problem "Monday says there were too many requests, so this run stopped; the next run tries again."
       ;;
     *)
-      problem "Monday answered with code $answer_code."
+      problem "Monday answered with code $answer_code; the next run tries again."
       ;;
   esac
 }
@@ -134,30 +134,15 @@ write_to_sanity() {
       --output /dev/null "$host/v$version/data/mutate/$dataset" 2> /dev/null || status=$?
 
   if [ "$status" -ne 0 ]; then
-    problem "Could not write to Sanity, $(explain "$status")."
+    problem "Could not write to Sanity ($(explain "$status")); check SANITY_WRITE_TOKEN in Settings, Keys on the control page."
     return 1
   fi
 }
 
-# The kind of a board, classic or multi_level, from the list of this run when it was asked for, and else
-# from the list the last run wrote. A board that is in neither is read as classic.
-hierarchy_of() {
-  said=""
-  if [ -s "$work/boards-answer.json" ]; then
-    said=$(jq -r --arg board "$1" "$paths"'[board_list | arrays | .[] | objects | select((board_id | tostring) == $board) | board_hierarchy][0] // empty' "$work/boards-answer.json" 2> /dev/null || true)
-  fi
-  if [ -z "$said" ]; then
-    said=$(jq -r --arg board "$1" '[.result.listed | arrays | .[] | objects | select(.id == $board) | .hierarchy][0] // empty' "$work/sanity.json" 2> /dev/null || true)
-  fi
-  case $said in
-    multi_level) echo multi_level ;;
-    *) echo classic ;;
-  esac
-}
-
-# Reads every page of one board. $1 is tasks or milestones, $2 the board number and $3 the columns
-# as a list. The parent items are left in $work/<kind>-items.ndjson. Leaves read_all (yes when the
-# board was read to its end) and board_title. A problem is written for a page that did not come.
+# Reads every page of one board. $1 is a short name for the files (tasks or done), $2 the board number and
+# $3 the columns as a list. The items are left in $work/<name>-items.ndjson, subitems included (the rows
+# leave them out). Leaves read_all (yes when the board was read to its end) and board_title. A problem is
+# written for a page that did not come.
 read_board() {
   kind=$1
   board=$2
@@ -167,49 +152,45 @@ read_board() {
   cursor=""
   read_all=no
   board_title=""
-  seen=yes
-  query_first=$monday_query_items
-  query_more=$monday_query_more
-  if [ "$(hierarchy_of "$board")" = multi_level ]; then
-    query_first=$monday_query_items_multi
-    query_more=$monday_query_more_multi
-  fi
-  echo '{}' > "$work/labels.json"
 
   while :; do
     if [ -z "$cursor" ]; then
       page='first_page'
-      jq -n --arg query "$query_first" --arg board "$board" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
+      jq -n --arg query "$monday_query_items" --arg board "$board" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
         '{query: $query, variables: {board: [$board], columns: $columns[0], limit: $limit}}' > "$work/body.json"
     else
       page='more_page'
-      jq -n --arg query "$query_more" --arg cursor "$cursor" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
+      jq -n --arg query "$monday_query_more" --arg cursor "$cursor" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
         '{query: $query, variables: {cursor: $cursor, columns: $columns[0], limit: $limit}}' > "$work/body.json"
     fi
     ask "$work/body.json" "$work/page.json"
     [ "$outcome" = ok ] || break
 
     if ! jq -e "$paths$page"' | page_items | arrays' "$work/page.json" > /dev/null 2>&1; then
-      problem "Monday gave no items for board $board, so the account of the token may not be able to see it."
-      seen=no
+      problem "Monday gave no items for board $board. Share the board with the account of the Monday token, then press Sync Monday now."
       break
     fi
 
     if [ -z "$cursor" ]; then
       board_title=$(jq -r "$paths$helpers"'first_board_name | whole_text(60)' "$work/page.json" 2> /dev/null || true)
-      jq -c "$paths"'board_labels' "$work/page.json" > "$work/labels.json" 2> /dev/null || echo '{}' > "$work/labels.json"
     fi
 
-    jq -c --slurpfile labels "$work/labels.json" "$paths$page"'
-      | def with_battery: value_battery as $key | ((value_column | tostring) as $column | $labels[0][$column][($key // "")] // null) as $named
-          | {index: (value_index // ($key | if . == null then null else tonumber end)), label: (value_label // $named)};
-        page_items | .[] | objects
+    jq -c "$paths$page"'
+      | page_items | .[] | objects
       | {
           id: (item_id | tostring),
           name: item_name,
           parent: (item_parent | if . == null then null else tostring end),
           group: (item_group // ""),
-          values: (((item_values | arrays) // []) | map(select(type == "object") | {key: (value_column | tostring), value: ({text: (value_text // "")} + with_battery + {linked: value_linked, date: value_date, from: value_from, to: value_to})}) | from_entries)
+          values: (((item_values | arrays) // []) | map(select(type == "object") | {
+            key: (value_column | tostring),
+            value: {
+              text: (value_text // ""),
+              index: ((value_index | if type == "number" then tostring elif type == "string" then . else null end) // value_battery),
+              date: value_date, from: value_from, to: value_to,
+              people: value_people
+            }
+          }) | from_entries)
         }' "$work/page.json" >> "$work/$kind-items.ndjson"
 
     cursor=$(jq -r "$paths$page"' | page_cursor | strings' "$work/page.json")
@@ -219,12 +200,12 @@ read_board() {
     fi
     case $cursor in
       *[!A-Za-z0-9_=+/.-]*)
-        problem "Monday sent a place to carry on from that cannot be used, for board $board."
+        problem "Monday sent a place to carry on from that cannot be used, for board $board. The next run tries again."
         break
         ;;
     esac
     if [ "${#cursor}" -gt 2000 ]; then
-      problem "Monday sent a place to carry on from that is too long, for board $board."
+      problem "Monday sent a place to carry on from that is too long, for board $board. The next run tries again."
       break
     fi
   done
@@ -234,14 +215,6 @@ read_board() {
   if [ "$(wc -l < "$work/errors.txt" | tr -d ' ')" -gt "$errors_before" ]; then
     board_note=$(tail -n 1 "$work/errors.txt")
   fi
-  board_ok=false
-  if [ "$read_all" = yes ] || [ "$seen" = no ]; then
-    board_ok=true
-  elif [ -z "$board_note" ]; then
-    board_note="This run stopped before it read this board, and goes on at the next run."
-  fi
-  # What this run read from the board, for the Monday Boards page and the connection block. A board
-  # that stopped half way keeps the reading of the run before, and only gets the reason.
-  jq -n -c --arg board "$board" --arg name "$board_title" --argjson items "$board_items" --argjson ok "$board_ok" --arg note "$board_note" \
-    '{board: $board, name: $name, items: $items, ok: $ok, note: $note}' >> "$work/readings.ndjson"
+  jq -n -c --arg board "$board" --arg name "$board_title" --argjson items "$board_items" --arg ok "$read_all" --arg note "$board_note" \
+    '{board: $board, name: $name, items: $items, ok: ($ok == "yes"), note: $note}' >> "$work/readings.ndjson"
 }

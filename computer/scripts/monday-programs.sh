@@ -1,44 +1,86 @@
-# Read by monday-sync.sh, never run. The jq programs that decide what is sent to Sanity.
-# What to send to Sanity, in groups of mutations. A document that is new is made and filled in by
-# the same group, so it is never left empty. One that exists is only touched when it differs from
-# what the item says, and the script never sends Show on TV, so an editor choice stays. A task or a
-# milestone whose item has gone is switched off, never deleted.
+# Read by monday-sync.sh, never run. The jq programs that turn the items into tasks and decide what is
+# sent to Sanity. tests/monday-sync.test.mjs runs them on made-up answers.
+
+# One row for each parent item of a board: what the screen shows of it. It is run once for each board with
+#   $items     the items of the board (read_board in monday-requests.sh)
+#   $board     the board number, and $done "yes" for Completed Tasks
+#   $names     the first names of the people, by id
+#   $labels    the label tables of monday-contract.sh, and the column ids as $columns
+# The department is the group when the group is one of the nine departments, and the Department column
+# otherwise (the Done group, a group with another name). An item with no department is left out.
+task_rows='
+def value_of($column): (.values[$column] // {});
+def meaning($table; $column): ($labels[$table][(value_of($column).index // "") | tostring] // null);
+def department_named: (if type == "string" then plain | ascii_downcase else "" end) as $text | if ($labels.departments | index([$text])) != null then $text else null end;
+$items[]
+| select(.parent == null)
+| (.group | department_named) as $from_group
+| ($from_group // meaning("department"; $columns.department)) as $department
+| (meaning("status"; $columns.status) // "up-next") as $status
+| (value_of($columns.timeline)) as $timeline
+| ([($timeline.text // "") | scan("(?<![0-9])(?:19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}(?![0-9])") | select(real_day)]) as $text_days
+| (value_of($columns.hours).text | if type == "string" then (gsub(","; "") | try tonumber catch null) else null end) as $hours
+| (value_of($columns.assigned)) as $assigned
+| (($assigned.people // [])[0]) as $first
+| ((value_of($columns.show).index // "") | tostring) as $show
+| {
+    id: (.id | if test("\\A[0-9]{1,20}\\z") then . else null end),
+    title: (.name | whole_text($title_limit)),
+    department: $department,
+    list: (if $status == "done" or ((.group | if type == "string" then plain | ascii_downcase else "" end) == "done") or $done == "yes" then "done" else "open" end),
+    status: $status,
+    team: (meaning("team"; $columns.team) // ""),
+    contact: ((if $first == null then null else $names[$first] end) // ($assigned.text | first_name($contact_limit))),
+    priority: meaning("priority"; $columns.priority),
+    startDate: (($timeline.from | day_of) // $text_days[0]),
+    dueDate: (($timeline.to | day_of) // $text_days[-1:][0]),
+    completedOn: (value_of($columns.completed) | (.date | day_of) // (.text | day_of)),
+    estHours: (if ($hours | type) == "number" and $hours >= 0 and $hours < 100000 then ($hours * 100 | round / 100) else null end),
+    showOnBoard: (($labels.hide | index([$show])) == null),
+    board: $board
+  }
+| select(.id != null and .title != "" and .department != null)
+'
+
+# What to send to Sanity, in groups of mutations. A task that is new is made and filled in by the same
+# group, so it is never left empty. One that exists is only touched when it differs from what the item
+# says. The script never sends Show on TV (showOnTv), so an editor choice stays. When both boards were read
+# to the end, a task whose item has gone is deleted, and its draft with it.
 plan='
 def reference($id): {_type: "reference", _ref: $id};
-def none_if_empty: if . == "" or . == [] then null else . end;
 
-# What a task should be, with a null for each value it should not have
-def wanted_task($row; $board; $board_name):
+# The team document of a team code, and the Team lead with the name of the department
+def team_id($code): if $code == "" then null else ([$found.teams[]? | objects | select(.code == $code) | ._id][0] // null) end;
+def subteam_id($department): ([$found.subteams[]? | objects | select((.name | if type == "string" then plain | ascii_downcase else "" end) == $department) | ._id][0] // null);
+def board_name($id): ([$readings[] | select(.board == $id) | .name][0] // "" | if . == "" then null else . end);
+
+# What a task should be, with a null for each value it should not have. The last three are fields of the
+# older sync, which the screen no longer reads.
+def wanted_task($row):
   {
     title: $row.title,
-    subteam: ($row.subteam | none_if_empty),
-    team: ($row.team | none_if_empty),
+    department: $row.department,
+    list: $row.list,
     status: $row.status,
-    priority: $row.priority,
-    showOnBoard: $row.showOnBoard,
+    team: team_id($row.team),
+    subteam: subteam_id($row.department),
     contact: $row.contact,
-    owners: ($row.owners | none_if_empty),
+    priority: $row.priority,
     startDate: $row.startDate,
     dueDate: $row.dueDate,
-    estHours: $row.estHours,
     completedOn: $row.completedOn,
-    milestoneIds: ($row.milestones | none_if_empty),
-    hiddenReason: ($row.hidden | none_if_empty),
-    show: ($row.hidden == ""),
-    mondayBoardId: $board,
-    mondayBoardName: ($board_name | none_if_empty)
+    estHours: $row.estHours,
+    showOnBoard: $row.showOnBoard,
+    show: true,
+    mondayBoardId: $row.board,
+    mondayBoardName: board_name($row.board)
   };
 
-# What a task is now, in the same shape. A task with no Show on screen is on.
 def stored_task:
-  {title, subteam, team, status, priority, showOnBoard, contact, owners, startDate, dueDate, estHours, completedOn, milestoneIds, hiddenReason,
+  {title, department, list, status, team, subteam, contact, priority, startDate, dueDate, completedOn, estHours, showOnBoard,
    show: (if .show == false then false else true end), mondayBoardId, mondayBoardName};
 
-def wanted_milestone($row):
-  {name: $row.name, targetDate: $row.targetDate, team: ($row.team | none_if_empty), subteam: ($row.subteam | none_if_empty), status: $row.status, show: true};
-
-def stored_milestone:
-  {name, targetDate, team, subteam, status, show: (if .show == false then false else true end)};
+def older_fields: {owners: null, milestoneIds: null, hiddenReason: null};
 
 # The patch that brings a document to what it should be. A value it should not have is unset.
 def patch_of($id; $doc):
@@ -47,44 +89,31 @@ def patch_of($id; $doc):
       set: ($doc | with_entries(select(.value != null)) | if has("subteam") then .subteam |= reference(.) else . end | if has("team") then .team |= reference(.) else . end)
     } + ([$doc | to_entries[] | select(.value == null) | .key] as $absent | if ($absent | length) == 0 then {} else {unset: $absent} end))};
 
-$sanity[0].result as $found
-| ($found.tasks | arrays | map(select(._id | type == "string")) | map({key: ._id, value: .}) | from_entries) as $earlier
-| ($found.milestones | arrays | map(select(._id | type == "string")) | map({key: ._id, value: .}) | from_entries) as $earlier_milestones
-| ($task_rows | unique_by(.id) | map(. as $row | ("task-monday-" + $row.id) as $id | {id: $id, row: $row, task: wanted_task($row; $board; $board_name), before: ($earlier[$id] // null)})) as $pairs
-| ($milestone_rows | unique_by(.id) | map(. as $row | ("milestone-monday-" + $row.id) as $id | {id: $id, row: $row, task: wanted_milestone($row), before: ($earlier_milestones[$id] // null)})) as $milestone_pairs
+($found.tasks | arrays | map(select(._id | type == "string")) | map({key: ._id, value: .}) | from_entries) as $earlier
+| ($rows | unique_by(.id) | map(. as $row | ("task-monday-" + $row.id) as $id | {id: $id, row: $row, task: wanted_task($row), before: ($earlier[$id] // null)})) as $pairs
 | ($pairs | map(select(.before == null))) as $created
-| ($pairs | map(select(.before != null and (.before | stored_task) != .task))) as $changed
-| ($milestone_pairs | map(select(.before == null))) as $milestones_created
-| ($milestone_pairs | map(select(.before != null and (.before | stored_milestone) != .task))) as $milestones_changed
-| (if $tasks_complete == "yes"
+| ($pairs | map(select(.before != null and ((.before | stored_task) != .task or .before.old == true)))) as $changed
+| (if $complete == "yes"
     then ($pairs | map({key: .id, value: true}) | from_entries) as $kept
-      | [$earlier | to_entries[] | .value | select(.show != false) | select($kept[._id] | not)]
+      | [$earlier | keys[] | select(startswith("task-monday-")) | select($kept[.] | not)]
     else [] end) as $gone
-| (if $milestones_complete == "yes"
-    then ($milestone_pairs | map({key: .id, value: true}) | from_entries) as $kept
-      | [$earlier_milestones | to_entries[] | .value | select(.show != false) | select($kept[._id] | not)]
-    else [] end) as $milestones_gone
 | {
     groups: (
       ($created | map([{createIfNotExists: {_id: .id, _type: "task", source: "monday", mondayId: .row.id}}, patch_of(.id; .task)]))
-      + ($changed | map([patch_of(.id; .task)]))
-      + ($gone | map([{patch: {id: ._id, set: {show: false}}}]))
-      + ($milestones_created | map([{createIfNotExists: {_id: .id, _type: "milestone"}}, patch_of(.id; .task)]))
-      + ($milestones_changed | map([patch_of(.id; .task)]))
-      + ($milestones_gone | map([{patch: {id: ._id, set: {show: false}}}]))
+      + ($changed | map([patch_of(.id; .task + older_fields)]))
+      + ($gone | map([{delete: {id: .}}, {delete: {id: ("drafts." + .)}}]))
     ),
     tasks: ($pairs | length),
     created: ($created | length),
     changed: ($changed | length),
-    hidden: ($gone | length),
-    milestones: ($milestone_pairs | length)
+    deleted: ($gone | length)
   }
 '
 
-# The patch of the document that Studio reads to offer the boards and columns, and to say when
-# the Teletraan computer last looked and how many reads it has used today. The daily count is added only when
-# the task board was read to its end, so a run that missed it cannot write a count that is too low.
-# A reading that failed keeps the figures of the run before.
+# The patch of monday-status: when the boards were last read, what went wrong in plain words, the reads
+# used today, what was read from each board, the open and done tasks of each department and one count of
+# open tasks a day. A board that stopped half way keeps the reading of the run before, with the reason.
+# The board list of the older sync is taken out, because the dataset is public.
 status_patch='
 def snapshot_list($old):
   [$old | arrays | .[] | objects
@@ -92,20 +121,10 @@ def snapshot_list($old):
     | select((.open | type) == "number")
     | {_key: .date, date, open: (.open | floor)}];
 
-def with_today($snapshots):
+def with_today($snapshots; $open):
   ($snapshots | map(select(.date != $today))) + [{_key: $today, date: $today, open: $open}]
   | sort_by(.date) | .[(0 - $snapshots_kept):];
 
-def kept_columns:
-  [board_columns | arrays | .[] | objects
-    | select((column_id | type) == "string" and (column_id | test("\\A[A-Za-z0-9_-]{1,50}\\z")))
-    | {_key: column_id, id: column_id, title: (column_title | whole_text(60))}
-      + (column_type | if type == "string" and test("\\A[a-z_]{1,40}\\z") then {type: .} else {} end)]
-  | first_of_each("id") | .[0:$columns_kept];
-
-# What the run read from each board. A board that was read keeps the number of items and the time
-# of this run. A board that stopped half way keeps the number and the time of the run before it, and only
-# gets the reason. The reason of a board that gave no items is kept, and is left out when there is none.
 def reading_list($old):
   [$readings[] | . as $r
     | ([$old | arrays | .[] | objects | select(.boardId == $r.board)][0] // {}) as $before
@@ -119,24 +138,28 @@ def reading_list($old):
       }
     | with_entries(select(.value != null))];
 
-def kept_boards:
-  [board_list | arrays | .[] | objects | select(board_is_offered)
-    | select((board_id | tostring) | test("\\A[0-9]{1,20}\\z"))
-    | (board_id | tostring) as $id
-    | {_key: $id, id: $id, name: (board_name | whole_text(60)), hierarchy: board_hierarchy, itemCount: (board_items | if type == "number" and . >= 0 then floor else 0 end), columns: kept_columns}]
-  | first_of_each("id") | .[0:$boards_kept];
+def department_counts:
+  ($rows | unique_by(.id) | map(select(.showOnBoard))) as $shown
+  | [$labels.departments[] as $name
+      | {_key: $name, name: $name,
+         open: ($shown | map(select(.department == $name and .list == "open")) | length),
+         done: ($shown | map(select(.department == $name and .list == "done")) | length)}];
 
-([$errors | split("\n")[] | select(. != "")] | unique | if length == 0 then null else (.[0:3] | join("; ") | .[0:300]) end) as $error
+([$errors | split("\n")[] | select(. != "")] | unique | if length == 0 then null else (.[0:3] | join(" ") | .[0:300]) end) as $error
+| ($rows | unique_by(.id) | map(select(.showOnBoard and .list == "open")) | length) as $open
 | {
     set: ({
         callsToday: $calls,
         callsDate: $today,
         readings: reading_list($sanity[0].result.readings)
       }
-      + (if $tasks_read == "yes" then {lastSyncAt: $now, taskCount: ($rows | unique_by(.id) | length), hiddenUnassigned: ($rows | unique_by(.id) | map(select(.hidden != "")) | length)} else {} end)
-      + (if $boards_listed == "yes" then {boards: ($answer[0] | kept_boards)} + ($answer[0] | me_name | first_name(12) | if . == null then {} else {connectedAs: .} end) else {} end)
-      + (if $tasks_read == "yes" then {snapshots: with_today(snapshot_list($sanity[0].result.snapshots))} else {} end)
+      + (if $complete == "yes" then {
+          lastSyncAt: $now,
+          taskCount: ($rows | unique_by(.id) | length),
+          departments: department_counts,
+          snapshots: with_today(snapshot_list($sanity[0].result.snapshots); $open)
+        } else {} end)
       + (if $error == null then {} else {lastError: $error} end)),
-    unset: (if $error == null then ["lastError"] else [] end)
+    unset: (["boards", "hiddenUnassigned", "connectedAs"] + (if $error == null then ["lastError"] else [] end))
   }
 '

@@ -71,7 +71,7 @@ run_debug() {
     first_board as $board
     | if $board == null then "No board came back. The account of the token may not be able to see this board."
       else
-        ("Board: \($board | board_name | whole_text(60))",
+        ("Board: \($board | .name | whole_text(60))",
          "Hierarchy: \($board | board_kind // "not given")",
          (first_items[]
           | "Item: \(item_name | safe_text)\(if item_parent == null then "" else " (subitem)" end)",
