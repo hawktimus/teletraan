@@ -37,6 +37,7 @@ const board = defineArrayMember({
   fields: [
     textField('id', 'Board number', 'The number of the board, which a board entry stores.'),
     textField('name', 'Board name', 'The name of the board as Monday shows it.'),
+    textField('hierarchy', 'Kind of board', 'classic, or multi_level when the board has parent items with subitems. The Teletraan computer reads a multi-level board in another way.'),
     numberField('itemCount', 'Items', 'How many items the board has.'),
     defineField({ name: 'columns', title: 'Columns', type: 'array', of: [column], description: 'The columns of the board.' }),
   ],
