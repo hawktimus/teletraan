@@ -159,7 +159,7 @@ function makeLookAction(kind, noun, id, name, fields) {
       dialog: note.dialog,
       onHandle: () => {
         sendWithOperations(patch, publish, fields());
-        note.show('The wall shows ' + name + ' for ' + previewMinutes + ' minutes');
+        note.show('The wall shows ' + name + ' for ' + previewMinutes + ' minutes.' + (noun === 'view' ? ' A view with no data cannot show: Condensed has only Monday cards, so it stays on the schedule while no Monday task is on the TV.' : ''));
       },
     };
   }
