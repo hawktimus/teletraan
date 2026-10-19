@@ -17,6 +17,7 @@
 import * as frame from '../frame.js';
 import { drawnFor, layoutNow, layoutOf, reloadKey } from './layout.js';
 import { layoutsChangeLive } from './layout-apply.js';
+import { panels } from '../registry.js';
 import { canShow } from './panels.js';
 import { moveOn, pauseRotation, resumeRotation, setLookHooks, skipRow, startListsOver } from './schedule.js';
 import { changesBetween, currentScreen, heldLook, holdScreenLook, makeNextLookRunner, styleCanGoOn, swapScaleOf } from './screens.js';
@@ -202,6 +203,19 @@ function actOnRequests(content, now) {
   return { view: view, paused: asked.pauseRotation || asked.holdPanel !== '' };
 }
 
+// The competition cards come into the large panel's list on their own, and the clock of a block does not know them. While one
+// is on screen the clock stands still, so the cards do not take the seconds of the rows after them
+const cardIds = panels.filter(item => item.competition).map(item => item.id);
+
+function competitionCardOnScreen() {
+  try {
+    const area = document.querySelector('#region-grid1 .area');
+    return Boolean(area && area.dataset && cardIds.includes(area.dataset.page));
+  } catch (error) {
+    return false;
+  }
+}
+
 // Once a second: the clock of the minutes, and when the view changes, both lists begin again at the first step of the
 // view that comes, and the pages on screen leave at their next chance. The look of that first step is held when it is
 // chosen (begin), and the swap plays at its page change.
@@ -211,7 +225,7 @@ function second(now) {
 
   try {
     const asked = actOnRequests(content, now);
-    const moved = tickView(content, now, { frozen: busyElsewhere() || asked.paused, forced: asked.view, canShow: canShowStep });
+    const moved = tickView(content, now, { frozen: busyElsewhere() || asked.paused || competitionCardOnScreen(), forced: asked.view, canShow: canShowStep });
     if (!moved.changed) return;
 
     startListsOver();
