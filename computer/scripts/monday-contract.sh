@@ -16,7 +16,7 @@ monday_query_me='query { me { name } }'
 
 # Who the token belongs to, and the boards it can see with their columns. It is asked for on the
 # first read of a day, and when the Teletraan computer has no list yet, so the pickers of the Monday tab have it.
-monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at) { id name type hierarchy_type items_count columns { id title type } } }'
+monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at, hierarchy_types: [classic, multi_level]) { id name type hierarchy_type items_count columns { id title type } } }'
 
 # The first page of the parent items of one board, and the pages after it. $columns lists the
 # columns that are read. Subitems are not asked for, and an item with a parent is left out.
