@@ -72,10 +72,11 @@ test('the swaps have a frame at 200, 400 and 800 ms and the announcement plate i
   assert.deepEqual(names(shots).filter(name => name.startsWith('photos-row-')), ['photos-row-original', 'photos-row-cybertron', 'photos-row-minimal']);
 });
 
-test('each of the four views is taken in each of the three themes with each team', () => {
+test('each of the four views is taken in each of the four themes with each team', () => {
   const shots = tool.planShots(small).filter(shot => shot.kind === 'view');
-  assert.equal(shots.length, 4 * 3 * 2);
+  assert.equal(shots.length, 4 * 4 * 2);
   assert.ok(names(shots).includes('view-family-retro-nova'));
+  assert.ok(names(shots).includes('view-nova-foundry-nova'));
   assert.ok(names(shots).includes('view-general-original-prime'));
   shots.forEach(shot => {
     assert.ok(!shot.url.includes('team=') && !shot.url.includes('style='), 'the address must not stop the views');

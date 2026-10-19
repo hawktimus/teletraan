@@ -33,7 +33,7 @@ export const screens = ['original', 'cybertron', 'minimal'];
 export const teams = ['prime', 'nova'];
 export const swapTimes = [200, 400, 800];
 export const views = ['general', 'prime', 'nova', 'family'];
-export const themes = ['original', 'cybertron', 'retro'];
+export const themes = ['original', 'cybertron', 'retro', 'foundry'];
 
 // A Monday panel that is for both teams has no team in its address
 const mondayWithoutTeam = ['monday-status-depts', 'monday-overall'];

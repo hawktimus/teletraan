@@ -260,3 +260,7 @@ html[data-style="foundry"] #screen::before { display: none; }
 /* Calm and no motion: the gears, the pistons and the background stand still */
 html:not([data-motion="full"]) .art-foundry .fa-gear,
 html:not([data-motion="full"]) .art-foundry .fa-piston-rod { animation: none; }
+
+/* The header plate of Foundry is steel, not the main color of the team, so the title keeps the team's text color:
+   the header ink of a team (dark on Nova's gold) is for the plates that are drawn in the main color. */
+html[data-style="foundry"] .area .header .title { color: var(--team-text); }
