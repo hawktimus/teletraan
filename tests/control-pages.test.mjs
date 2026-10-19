@@ -84,7 +84,7 @@ check('the Keys section of Settings never holds a value, only the mask, and has 
 
 check('each tab file registers itself with an id and a title, and parses', () => {
   const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
-  const sections = ['now.js', 'health.js', 'keys.js', 'log.js'];
+  const sections = ['now.js', 'health.js', 'keys.js', 'log.js', 'monday.js'];
   sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
   [...Object.keys(expected), ...sections].forEach(file => {
     const text = fs.readFileSync(path.join(folder, file), 'utf8');
@@ -167,12 +167,23 @@ check('after a press the page says what the wall reports, and after 20 seconds w
   assert.equal(wallCheck('view', 'nova', { view: 'nova' }, 4, {}).words, 'The wall shows Nova now.');
 });
 
+check('the Monday section of Settings has Check the token and Monday debug, sends a board number of digits only, and holds no key', () => {
+  const text = fs.readFileSync(path.join(folder, 'monday.js'), 'utf8');
+  const settings = fs.readFileSync(path.join(folder, 'settings.js'), 'utf8');
+  assert.ok(settings.includes("id: 'monday', title: 'Monday'") && settings.includes('mountMonday'));
+  assert.ok(text.includes('>Check the token<') && text.includes('>Monday debug<'));
+  assert.ok(text.includes("'/helper/monday-check'") && text.includes("'/helper/monday-debug', { board: number }"));
+  assert.ok(text.includes('[0-9]{1,20}'), 'the board number is checked before it is sent');
+  assert.ok(!/MONDAY_API_TOKEN|local\.env|Authorization/.test(text), 'the page names no key');
+});
+
 check('the old addresses land on Status or on a section of Settings', async () => {
   const { resolveAddress } = await import('../control/static/tabs.js');
   assert.deepEqual(resolveAddress('now'), { id: 'status', section: '' });
   assert.deepEqual(resolveAddress('status'), { id: 'status', section: '' });
   ['update', 'keys', 'log'].forEach(name => assert.deepEqual(resolveAddress(name), { id: 'settings', section: name }));
   assert.deepEqual(resolveAddress('settings/log'), { id: 'settings', section: 'log' });
+  assert.deepEqual(resolveAddress('settings/monday'), { id: 'settings', section: 'monday' });
   assert.deepEqual(resolveAddress(''), { id: '', section: '' });
 });
 

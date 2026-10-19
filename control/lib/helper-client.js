@@ -5,12 +5,12 @@
 
 import net from 'node:net';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle'];
 
 export function createHelper(socketPath, timeout = 30000, connect = net.createConnection) {
   return function helper(word, args = [], body = '') {
     return new Promise((resolve, reject) => {
-      if (!words.includes(word) || !args.every(arg => /^[a-z]{1,20}$/.test(arg))) {
+      if (!words.includes(word) || !args.every(arg => /^[a-z0-9]{1,20}$/.test(arg))) {
         reject(new Error('That is not a word the helper knows.'));
         return;
       }

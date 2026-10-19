@@ -111,8 +111,13 @@ await check('the helper route passes only its word list, asks for a confirm on r
   assert.equal((await call('status')).status, 200);
   assert.equal((await call('monday-check')).status, 200);
   assert.equal((await call('sync-now', { target: 'monday' })).status, 200);
+  assert.equal((await call('monday-debug')).status, 400, 'the board number is needed');
+  assert.equal((await call('monday-debug', { board: 'abc' })).status, 400);
+  assert.equal((await call('monday-debug', { board: '1; reboot' })).status, 400);
+  assert.equal((await call('monday-debug', { board: 18435126893 })).status, 400, 'a number is not a string of digits');
+  assert.equal((await call('monday-debug', { board: '18435126893' })).status, 200);
   assert.deepEqual(world.helped.map(item => [item.word, ...item.args]), [
-    ['restart-kiosk'], ['restart-services'], ['reboot'], ['status'], ['monday-check'], ['sync-now', 'monday'],
+    ['restart-kiosk'], ['restart-services'], ['reboot'], ['status'], ['monday-check'], ['sync-now', 'monday'], ['monday-debug', '18435126893'],
   ]);
 });
 

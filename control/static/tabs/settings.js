@@ -1,14 +1,16 @@
-// The Settings tab: three folding sections, Update, Keys and Log. A section is drawn the first time it is opened.
+// The Settings tab: four folding sections, Update, Keys, Monday and Log. A section is drawn the first time it is opened.
 // A link such as #settings/keys (or the old #keys) opens that section.
 
 import { registerTab } from '../tabs.js';
 import { mountUpdate } from '../tab-update.js';
 import { mountKeys } from './keys.js';
 import { mountLog } from './log.js';
+import { mountMonday } from './monday.js';
 
 const sections = [
   { id: 'update', title: 'Update', mount: mountUpdate, light: true },
   { id: 'keys', title: 'Keys', mount: mountKeys },
+  { id: 'monday', title: 'Monday', mount: mountMonday, light: true },
   { id: 'log', title: 'Log', mount: mountLog },
 ];
 
