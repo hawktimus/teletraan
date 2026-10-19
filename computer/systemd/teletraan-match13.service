@@ -1,0 +1,15 @@
+[Unit]
+Description=Read the Match13 forecasts for Teletraan I now
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-match13.sh with the account that owns the
+# repository, so this file does not depend on what the Teletraan computer's user is called.
+User=ACCOUNT
+# The Sync Match13 now button of the control page starts this unit, so it reads whatever the time.
+# The script tells Studio when it finished (status-write.sh match13) after a run that read something.
+ExecStart=/opt/teletraan/computer/scripts/match13-sync.sh --now
+# Each request gives up after 30 seconds and a run makes at most 20
+TimeoutStartSec=15min
