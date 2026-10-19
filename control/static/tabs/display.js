@@ -5,8 +5,8 @@
 
 import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
-import { addRow, copyRow, moveRow, photoRange, removeRow, sameRows, secondsFrom, setPhotoValue, setRowValue, wholeFrom, withKeys } from '../display-rows.js';
-import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, extrasHtml, rowsHtml, sourceHtml, summaryWords, themeHtml } from './display-parts.js';
+import { addRow, copyRow, countWhere, isNovaRow, isPanelRow, moveRow, photoRange, quickAction, removeRow, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
+import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, extrasHtml, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml } from './display-parts.js';
 
 const undoLimit = 20;
 const checkDelay = 600;
@@ -40,10 +40,10 @@ export async function mountDisplay(container) {
     '<p class="word">The rows the wall plays, top to bottom, and the theme of each weekday. The Studio is the source of truth: this reads from it and saves to the same draft the Studio Rotation board uses.</p>' +
     '<div data-source></div><div data-controls></div><p class="result" role="status" data-flash></p></section>' +
     '<div data-conflict></div>' +
-    '<section class="card"><h2>Rows</h2><p class="word" data-summary></p><div data-rows></div></section>' +
+    '<div data-quick-box></div><section class="card"><h2>Rows</h2><p class="word" data-summary></p><div data-rows></div></section>' +
     '<div data-add></div><div data-theme></div><div data-extras></div></div>';
   const find = name => container.querySelector('[' + name + ']');
-  const boxes = { source: find('data-source'), controls: find('data-controls'), flash: find('data-flash'), conflict: find('data-conflict'), summary: find('data-summary'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), extras: find('data-extras') };
+  const boxes = { source: find('data-source'), controls: find('data-controls'), flash: find('data-flash'), conflict: find('data-conflict'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), extras: find('data-extras') };
 
   let page = kept;
   let checkTimer = null;
@@ -67,6 +67,7 @@ export async function mountDisplay(container) {
 
   function paintRows() {
     boxes.rows.innerHTML = rowsHtml(page.rows, page);
+    boxes.quick.innerHTML = quickHtml(page.rows, page.choices);
     paintTop();
   }
 
@@ -219,6 +220,11 @@ export async function mountDisplay(container) {
       page.conflict = null;
       paintRows();
       askCheck(false);
+    } else if (action === 'quick-nova' || action === 'quick-panel') {
+      const test = action === 'quick-nova' ? isNovaRow : isPanelRow(button.dataset.panel);
+      const what = quickAction(countWhere(page.rows, test));
+      change(setShownWhere(page.rows, test, !what.hide), true);
+      flash('done', (what.hide ? 'Hidden ' : 'Shown ') + what.rows + (what.rows === 1 ? ' row' : ' rows') + ' on this page. Press Save to draft to keep it.');
     } else if (action === 'up') change(moveRow(page.rows, index, -1), false);
     else if (action === 'down') change(moveRow(page.rows, index, 1), false);
     else if (action === 'copy') change(copyRow(page.rows, index), true);
