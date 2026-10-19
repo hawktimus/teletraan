@@ -42,7 +42,7 @@ function test_each() {
     const team = nova[where];
 
     assert.equal(team.number, '3426', where + ': the number');
-    assert.equal(team.metal, 'gold', where + ': the metal is gold');
+    assert.equal(team.metal, 'purple', where + ': the metal is purple');
     assert.equal(team.glow, true, where + ': the glow is on');
     Object.keys(wanted).forEach(name => assert.equal(team.colors[name].toUpperCase(), wanted[name], where + ': ' + name));
   });
