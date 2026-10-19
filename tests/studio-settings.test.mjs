@@ -48,7 +48,7 @@ test('what a coach can still see is short and has no field the pages took over',
   assert.deepEqual(visible, [
     'miniStatus', 'generalViewTitle', 'countdown', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince', 'photoOrder', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame',
     'nightEnabled', 'nightStyle', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'hiddenEnabled', 'desktopEveryHours', 'redEyesEveryHours', 'hiddenRequest', 'presentationsEnabled',
-    'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'showConnectionStatus',
+    'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayEveryMinutes', 'showConnectionStatus',
   ].sort());
 });
 

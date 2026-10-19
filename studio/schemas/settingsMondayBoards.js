@@ -1,10 +1,9 @@
 // The rows of the older Monday tab. The field that holds them is hidden in Dashboard Settings
 // and kept so that nothing typed is lost; the Teletraan computer ignores it. settingsMonday.js uses board
-// and mostBoards for that field.
+// and mostBoards for that field. The fields are plain boxes: nobody edits them any more.
 
 import { defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
-import { BoardInput, StatusColumnInput, PriorityColumnInput, DueColumnInput, OwnerColumnInput, TeamColumnInput } from '../inputs/monday-pickers.js';
 
 // Monday gives a column an id of letters, digits, hyphens and underscores
 export const columnId = /^[A-Za-z0-9_-]+$/;
@@ -30,12 +29,12 @@ export const mostBoards = 10;
 
 // The status column is needed only when the status comes from a column, so its rule is a custom one
 // and the field is hidden under Group names. required is true for that column.
-function columnField(name, title, description, input, required) {
+function columnField(name, title, description, required) {
   const rules = Rule => {
     const list = [tooLong(Rule, 50), Rule.regex(columnId, { name: 'column id' }).error('Use letters, digits, hyphens and underscores only.')];
     return required ? [Rule.custom((value, context) => (fromColumn(context) && !value ? 'Pick the status column.' : true))].concat(list) : list;
   };
-  const field = { name: name, title: title, type: 'string', description: description, components: { input: input }, validation: rules };
+  const field = { name: name, title: title, type: 'string', description: description, validation: rules };
   if (required) field.hidden = fromGroups;
   return defineField(field);
 }
@@ -64,7 +63,6 @@ export const board = defineArrayMember({
       title: 'Board',
       type: 'string',
       description: 'Pick the board by name. If the list cannot be read, type the board number instead, up to 20 digits.',
-      components: { input: BoardInput },
       validation: Rule => [
         Rule.required().error('Pick the board.'),
         tooLong(Rule, 20),
@@ -87,7 +85,7 @@ export const board = defineArrayMember({
       options: { list: statusSources, layout: 'radio' },
       initialValue: 'groups',
     }),
-    columnField('statusColumn', 'Status column', 'The column with the status of each item, needed when the status comes from a column. If the list cannot be read, type the column id, up to 50 characters.', StatusColumnInput, true),
+    columnField('statusColumn', 'Status column', 'The column with the status of each item, needed when the status comes from a column. If the list cannot be read, type the column id, up to 50 characters.', true),
     // Kept, and hidden, so that a value saved earlier still opens and publishes. The Teletraan computer no longer reads it.
     defineField({
       name: 'backlogLabel',
@@ -100,13 +98,13 @@ export const board = defineArrayMember({
     }),
     labelField('progressLabel', 'In progress label', 'Items with this status are In progress. Every status that is not this label or the Done label is Backlog. Up to 30 characters.', 'Working on it', true),
     labelField('doneLabel', 'Done label', 'Items with this status are Done. Every status that is not this label or the In progress label is Backlog. Up to 30 characters.', 'Done', true),
-    columnField('priorityColumn', 'Priority column', 'Optional. The column with the priority. If the list cannot be read, type the column id, up to 50 characters.', PriorityColumnInput, false),
+    columnField('priorityColumn', 'Priority column', 'Optional. The column with the priority. If the list cannot be read, type the column id, up to 50 characters.', false),
     labelField('priorityHigh', 'High label', 'Optional. The priority label that means high. Up to 30 characters.', 'High'),
     labelField('priorityMedium', 'Medium label', 'Optional. The priority label that means medium. Up to 30 characters.', 'Medium'),
     labelField('priorityLow', 'Low label', 'Optional. The priority label that means low. Up to 30 characters.', 'Low'),
-    columnField('dueColumn', 'Due date column', 'Optional. A date column gives its day and a timeline column gives its end date. If the list cannot be read, type the column id, up to 50 characters.', DueColumnInput, false),
-    columnField('ownerColumn', 'Owner column', 'Optional. The column with the owner, used when owner names are on. If the list cannot be read, type the column id, up to 50 characters.', OwnerColumnInput, false),
-    columnField('teamColumn', 'Subteam column', 'Optional. The column that names the Team lead. Empty uses the group names. If the list cannot be read, type the column id, up to 50 characters.', TeamColumnInput, false),
+    columnField('dueColumn', 'Due date column', 'Optional. A date column gives its day and a timeline column gives its end date. If the list cannot be read, type the column id, up to 50 characters.', false),
+    columnField('ownerColumn', 'Owner column', 'Optional. The column with the owner, used when owner names are on. If the list cannot be read, type the column id, up to 50 characters.', false),
+    columnField('teamColumn', 'Subteam column', 'Optional. The column that names the Team lead. Empty uses the group names. If the list cannot be read, type the column id, up to 50 characters.', false),
   ],
   preview: {
     select: { board: 'boardId', team: 'team.name', from: 'statusFrom', progress: 'progressLabel', done: 'doneLabel' },

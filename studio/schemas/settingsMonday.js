@@ -1,43 +1,20 @@
-// The Monday tab of Dashboard Settings and, under Advanced, the two board blocks: how the Teletraan computer reads
-// the two boards of the Monday workspace and how an item becomes a task or a milestone (docs/monday.md). The
-// two board numbers are chosen on the Monday page (inputs/monday-page.js), which writes the same fields. It has:
+// The Monday tab of Dashboard Settings (docs/monday.md). The Teletraan computer reads the two boards of the team, Robotics
+// Tasks and Completed Tasks, by their numbers, which are in computer/scripts/monday-contract.sh with their columns and labels.
+// Nothing about a board is typed here any more. The tab has:
 //
-//   mondayConnection       a read only block that says who the token belongs to, when the Teletraan computer last
-//                          read Monday, how often it reads and how many tasks it made
-//                          (../monday-status-input.js). It stores nothing
-//   mondayTokenTest        a note and a link to the Monday check on the control page (../monday-token-input.js). It stores nothing
+//   mondayConnection       a note that says where the tasks are shown (the Monday page) and where the panels are chosen
+//                          (the Rotation board). It stores nothing
 //   mondayEveryMinutes     how often the Teletraan computer reads, 5 to 120 minutes
-//   mondayTaskBoard        the task board: its number, the column of each field, the tables that say
-//                          what each label index means, and the text of the Hide label (Advanced tab)
-//   mondayMilestoneBoard   the milestones board, the same way (Advanced tab)
-//   mondayShowOwners       whether the first names of the people in Assigned are kept, off to start with
-//   mondayBoards           not used any more: the rows of the older tab, hidden and kept so that nothing
-//                          typed is lost. The Teletraan computer ignores them
 //
-// The boards and the columns are picked from lists that the Teletraan computer fills in (../monday-pickers.js), so
-// nobody types a number. Each column list shows only the columns of the board picked in the same block.
-// The lists fall back to a plain box when they cannot be read.
-//
-// A label is read by its index and not by its text, because students rename labels. The tables are
-// rows of an index and what it means: a team (blank means both teams), a Team lead for a department
-// (blank means the Team lead with the name on the row), and Unassigned is marked as never shown.
-//
-// The names and the starting values are the same as mondayEveryMinutes, mondayTaskBoard, mondayMilestoneBoard
-// and mondayShowOwners in defaultSettings in dashboard/config.js, and the same as the values at the top of
-// computer/scripts/monday-sync.sh. tests/schemas.test.mjs and tests/monday-sync.test.mjs fail if they differ.
-//
-// None of the fields is required on the page: Dashboard Settings published before these fields existed has
-// none, and the Teletraan computer then reads the boards with the starting values.
-//
+// Kept, hidden, so that nothing typed before is lost and Dashboard Settings still publishes: mondayTokenTest (a link that
+// stored nothing), mondayTaskBoard and mondayMilestoneBoard (the board numbers, column ids and label tables the older sync
+// read), mondayShowOwners and mondayBoards. The Teletraan computer reads none of them.
 
 import { defineField, defineArrayMember } from 'sanity';
-import { tooLong } from './fields.js';
+import { noteField, tooLong } from './fields.js';
 import { board, mostBoards, columnId } from './settingsMondayBoards.js';
-import { MondayStatusInput } from '../inputs/monday-status-input.js';
-import { MondayTokenInput } from '../inputs/monday-token-input.js';
-import { BoardInput, StatusColumnInput, PriorityColumnInput, OwnerColumnInput, TimelineColumnInput, HoursColumnInput, DateColumnInput, RelationColumnInput } from '../inputs/monday-pickers.js';
 
-// The starting values of the two blocks. Whoever edits them edits defaultSettings in dashboard/config.js too.
+// The starting values of the two hidden blocks, as the older sync had them (defaultSettings in dashboard/config.js)
 const taskBoardStart = {
   boardId: '18435126893',
   departmentColumn: 'color_mm82nvea',
@@ -91,16 +68,15 @@ const milestoneBoardStart = {
   ],
 };
 
-const columnHelp = ' If the list cannot be read, type the column id, up to 50 characters.';
+const columnHelp = ' Not read any more. Up to 50 characters.';
 
 // A column of one of the two boards, picked from the columns of the board in the same block
-function blockColumn(name, title, description, input) {
+function blockColumn(name, title, description) {
   return defineField({
     name: name,
     title: title,
     type: 'string',
     description: description + columnHelp,
-    components: { input: input },
     validation: Rule => [tooLong(Rule, 50), Rule.regex(columnId, { name: 'column id' }).error('Use letters, digits, hyphens and underscores only.')],
   });
 }
@@ -199,7 +175,8 @@ const taskBoardBlock = defineField({
   title: 'Task board',
   type: 'object',
   group: 'advanced',
-  description: 'The board with the tasks, the column of each field and what each label means. Choose the board itself on the Monday page.',
+  hidden: true,
+  description: 'Not read any more: the board with the tasks, the column of each field and what each label means, as the older sync read them.',
   options: { collapsible: true, collapsed: true },
   initialValue: taskBoardStart,
   fields: [
@@ -208,20 +185,19 @@ const taskBoardBlock = defineField({
       title: 'Board',
       type: 'string',
       description: 'Pick the board by name. If the list cannot be read, type the board number instead, up to 20 digits.',
-      components: { input: BoardInput },
       validation: Rule => [tooLong(Rule, 20), Rule.regex(/^[0-9]+$/, { name: 'digits' }).error('Use digits only.')],
     }),
-    blockColumn('departmentColumn', 'Department column', 'The column with the department of each task. A task with no department is never shown.', StatusColumnInput),
-    blockColumn('statusColumn', 'Status column', 'The status of each task. The column decides, not the group.', StatusColumnInput),
-    blockColumn('teamColumn', 'Team column', 'The column that says which team a task is for.', StatusColumnInput),
-    blockColumn('priorityColumn', 'Priority column', 'The column with the priority.', PriorityColumnInput),
-    blockColumn('showColumn', 'Show on TV column', 'The column that hides a task from the TV when it holds the Hide label.', StatusColumnInput),
-    blockColumn('assignedColumn', 'Assigned column', 'The people working on a task. Their first names are kept only when owner names are on.', OwnerColumnInput),
-    blockColumn('pocColumn', 'POC column', 'The person to ask about a task. Only the first person and only the first name are kept.', OwnerColumnInput),
-    blockColumn('timelineColumn', 'Timeline column', 'The start and end day of a task. The end day is the due date.', TimelineColumnInput),
-    blockColumn('hoursColumn', 'Estimated Hours column', 'The hours a task needs, which weight the progress.', HoursColumnInput),
-    blockColumn('completedColumn', 'Date Completed column', 'The day a task was finished.', DateColumnInput),
-    blockColumn('milestoneColumn', 'Milestone column', 'The column that links a task to a milestone.', RelationColumnInput),
+    blockColumn('departmentColumn', 'Department column', 'The column with the department of each task. A task with no department is never shown.'),
+    blockColumn('statusColumn', 'Status column', 'The status of each task. The column decides, not the group.'),
+    blockColumn('teamColumn', 'Team column', 'The column that says which team a task is for.'),
+    blockColumn('priorityColumn', 'Priority column', 'The column with the priority.'),
+    blockColumn('showColumn', 'Show on TV column', 'The column that hides a task from the TV when it holds the Hide label.'),
+    blockColumn('assignedColumn', 'Assigned column', 'The people working on a task. Their first names are kept only when owner names are on.'),
+    blockColumn('pocColumn', 'POC column', 'The person to ask about a task. Only the first person and only the first name are kept.'),
+    blockColumn('timelineColumn', 'Timeline column', 'The start and end day of a task. The end day is the due date.'),
+    blockColumn('hoursColumn', 'Estimated Hours column', 'The hours a task needs, which weight the progress.'),
+    blockColumn('completedColumn', 'Date Completed column', 'The day a task was finished.'),
+    blockColumn('milestoneColumn', 'Milestone column', 'The column that links a task to a milestone.'),
     teamLabels('In the rebuilt workspace Prime is 1, Nova is 0 and General is 5.'),
     statusIndexes('statusIndexes', 'Status indexes', 'The index of each label of the Status column.', [
       ['todo', 'To Do', 'The index of To Do. A status that nobody set reports 5.'],
@@ -252,7 +228,8 @@ const milestoneBoardBlock = defineField({
   title: 'Milestones board',
   type: 'object',
   group: 'advanced',
-  description: 'The board with the milestones and its columns. Choose the board itself on the Monday page. A milestone with no target date is skipped.',
+  hidden: true,
+  description: 'Not read any more: the milestones board of the older sync and its columns.',
   options: { collapsible: true, collapsed: true },
   initialValue: milestoneBoardStart,
   fields: [
@@ -261,13 +238,12 @@ const milestoneBoardBlock = defineField({
       title: 'Board',
       type: 'string',
       description: 'Pick the board by name. If the list cannot be read, type the board number instead, up to 20 digits.',
-      components: { input: BoardInput },
       validation: Rule => [tooLong(Rule, 20), Rule.regex(/^[0-9]+$/, { name: 'digits' }).error('Use digits only.')],
     }),
-    blockColumn('dateColumn', 'Target Date column', 'The column with the target date of each milestone.', DateColumnInput),
-    blockColumn('teamColumn', 'Team column', 'The column that says which team a milestone is for.', StatusColumnInput),
-    blockColumn('departmentColumn', 'Department column', 'The column that says which department a milestone is for.', StatusColumnInput),
-    blockColumn('statusColumn', 'Status column', 'The column with the status of each milestone.', StatusColumnInput),
+    blockColumn('dateColumn', 'Target Date column', 'The column with the target date of each milestone.'),
+    blockColumn('teamColumn', 'Team column', 'The column that says which team a milestone is for.'),
+    blockColumn('departmentColumn', 'Department column', 'The column that says which department a milestone is for.'),
+    blockColumn('statusColumn', 'Status column', 'The column with the status of each milestone.'),
     teamLabels('In the rebuilt workspace Prime is 109, Nova is 8 and Both Teams is 5.'),
     statusIndexes('statusIndexes', 'Status indexes', 'The index of each label of the Status column.', [
       ['notStarted', 'Not Started', 'The index of Not Started. A status that nobody set reports 5.'],
@@ -281,25 +257,10 @@ const milestoneBoardBlock = defineField({
 
 export function mondayFields() {
   return [
-    defineField({
-      name: 'mondayConnection',
-      title: 'Monday connection from the Teletraan computer',
-      type: 'string',
-      group: 'monday',
-      readOnly: true,
-      description: 'Who the token belongs to, when the Teletraan computer last read, how often, the reads used today and the tasks made. There is nothing to type here.',
-      components: { input: MondayStatusInput },
-    }),
+    Object.assign(noteField('mondayConnection', 'Robotics Tasks and Completed Tasks are read by number. See the Monday page, the Rotation board, and the control page, Settings, Monday.', 'monday'), { title: 'Monday' }),
 
-    defineField({
-      name: 'mondayTokenTest',
-      title: 'Check the token',
-      type: 'string',
-      group: 'monday',
-      readOnly: true,
-      description: 'The check runs on the control page, Settings, Monday, which asks for the PIN. This is a link to it. It stores nothing.',
-      components: { input: MondayTokenInput },
-    }),
+    // Kept, and hidden: it was a link and stored nothing
+    defineField({ name: 'mondayTokenTest', title: 'Check the token', type: 'string', group: 'monday', readOnly: true, hidden: true, description: 'Not used any more. The token is checked on the control page, Settings, Monday.' }),
 
     defineField({
       name: 'mondayEveryMinutes',
@@ -319,7 +280,8 @@ export function mondayFields() {
       title: 'Show owner first names on the TV',
       type: 'boolean',
       group: 'monday',
-      description: 'On: the first names of the people in Assigned go with a task. Off: only the first name of the POC is kept.',
+      hidden: true,
+      description: 'Not read any more: the contact of a task is always the first name of the first person in Assigned.',
       initialValue: false,
     }),
 

@@ -99,7 +99,7 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
   const task = rowsOf(templates.task);
   // contact, location and team were added later, then priority and showOnTv, so those are the last five columns
   assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'order', 'show', 'expires', 'contact', 'location', 'team', 'priority', 'showOnTv']);
-  assert.equal(task[1][1], 'text; required; max 22; id 1');
+  assert.equal(task[1][1], 'text; required; max 40; id 1');
   assert.equal(task[1][2], 'name of subteam');
   assert.equal(task[1][3], 'one of blocked/in-progress/in-review/up-next/done; required');
   assert.equal(task[1][5], 'whole number');
@@ -252,10 +252,10 @@ test('the EXAMPLE row and empty rows are skipped, and a folder of untouched temp
 });
 
 test('a row that breaks a limit is named by file, row and column, and nothing is written', () => {
-  const result = runImporter({ 'task.csv': csvFor('task', [{ title: 'Fine', status: 'up-next' }, { title: 'This title is much too long', status: 'up-next' }]) });
+  const result = runImporter({ 'task.csv': csvFor('task', [{ title: 'Fine', status: 'up-next' }, { title: 'This title is much too long for the forty', status: 'up-next' }]) });
   assert.equal(result.status, 1);
   assert.equal(result.docs, null);
-  assert.ok(result.message.includes('task.csv, row 4, column title: 27 characters, up to 22 fit'), result.message);
+  assert.ok(result.message.includes('task.csv, row 4, column title: 41 characters, up to 40 fit'), result.message);
   assert.ok(!result.message.includes('row 3'));
 });
 
