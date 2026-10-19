@@ -2,7 +2,7 @@
 // button that installs it. The steps are shown the same way as for a folder.
 
 import { api } from './api.js';
-import { versionLabel } from './update-lib.js';
+import { versionLabel, restartWords, waitUntilBack } from './update-lib.js';
 
 function element(tag, text, className) {
   const made = document.createElement(tag);
@@ -28,6 +28,7 @@ export function githubCard(stepNames, reload) {
   card.append(element('h2', 'From GitHub'), github, wall, row, problem, steps);
 
   let found = null;
+  let switched = false;
   let busy = false;
 
   async function check() {
@@ -60,6 +61,7 @@ export function githubCard(stepNames, reload) {
     }
     line.className = event.state;
     line.textContent = event.state === 'start' ? stepNames[event.step] || event.message : event.message;
+    if (event.step === 'switch' && event.state === 'done') switched = true;
   }
 
   async function run() {
@@ -89,10 +91,20 @@ export function githubCard(stepNames, reload) {
     button.disabled = true;
     problem.textContent = '';
     steps.replaceChildren();
+    switched = false;
     try {
       await run();
     } catch (error) {
-      problem.textContent = error.message;
+      if (switched) {
+        // the wall is already on the new version: the stream broke because the service restarted
+        problem.textContent = restartWords;
+        problem.className = 'note';
+        const back = await waitUntilBack();
+        problem.className = 'bad';
+        problem.textContent = back ? '' : 'The control service has not answered for 90 seconds. Reload this page. If it stays down, use the Mac tool update.';
+      } else {
+        problem.textContent = error.message;
+      }
     }
     busy = false;
     await reload();

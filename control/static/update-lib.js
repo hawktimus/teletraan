@@ -77,3 +77,18 @@ export function describeFolder(releases, hash, commit) {
 export function zipCandidates(files) {
   return files.filter(item => item.path && !isExcluded(item.path));
 }
+
+// The service restarts itself after it switches the wall to a new version, which cuts the stream that was showing the
+// steps. That is expected, so the page waits for the service to answer again instead of calling it a failure.
+export const restartWords = 'The control service is restarting to run the new version. This is expected. Waiting for it to come back (up to 90 seconds)...';
+
+export async function waitUntilBack(fetcher = fetch, sleep = ms => new Promise(done => setTimeout(done, ms)), tries = 45) {
+  for (let attempt = 0; attempt < tries; attempt++) {
+    await sleep(2000);
+    try {
+      const answer = await fetcher('/control/api/status', { cache: 'no-store' });
+      if (answer.ok || answer.status === 401) return true;
+    } catch (error) { /* still down */ }
+  }
+  return false;
+}

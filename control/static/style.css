@@ -101,6 +101,7 @@ input[type="text"], input[type="password"], input[type="number"], select {
 .muted { color: #5d5670; font-size: 16px; }
 .good { color: var(--good); }
 .bad { color: var(--bad); }
+.note { color: var(--muted, #5a4b78); }
 .warn { color: var(--warn); }
 code, pre { font: 16px ui-monospace, Menlo, monospace; background: #f0ecf7; border-radius: 6px; }
 code { padding: 1px 5px; }

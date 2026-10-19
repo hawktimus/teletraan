@@ -4,7 +4,7 @@ import { registerTab } from './tabs.js';
 import { api, shortDate } from './api.js';
 import { treeHashOfFiles } from './tree-hash.js';
 import { githubCard } from './github-card.js';
-import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit } from './update-lib.js';
+import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit, restartWords, waitUntilBack } from './update-lib.js';
 
 const stepNames = {
   download: 'Download from GitHub',
@@ -185,12 +185,22 @@ registerTab({
         }
         line.className = event.state;
         line.textContent = event.state === 'start' ? stepNames[event.step] || event.message : event.message;
+        if (event.step === 'switch' && event.state === 'done') switched = true;
       };
+      let switched = false;
       try {
         const blob = await makeZip(files);
         await upload(blob, note.value, shortCommit(folderCommit), (loaded, total) => { bar.value = total ? loaded / total : 0; }, onEvent);
       } catch (error) {
-        problem.textContent = error.message;
+        if (switched) {
+          problem.textContent = restartWords;
+          problem.className = 'note';
+          const back = await waitUntilBack();
+          problem.className = 'bad';
+          problem.textContent = back ? '' : 'The control service has not answered for 90 seconds. Reload this page. If it stays down, use the Mac tool update.';
+        } else {
+          problem.textContent = error.message;
+        }
       }
       bar.hidden = true;
       await loadReleases();
