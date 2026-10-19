@@ -104,5 +104,10 @@
 .status-page[data-width="narrow"] .buttons .act { flex: 1 1 auto; }
 .tab .note { color: #b9afcf; }
 .status-page { max-width: 1560px; }
-.status-page[data-width="wide"] summary { list-style: none; }
-.status-page[data-width="wide"] summary::-webkit-details-marker { display: none; }
+.status-page[data-width="wide"] .group > summary, .status-page[data-width="wide"] .health > summary { list-style: none; }
+.status-page[data-width="wide"] .group > summary::-webkit-details-marker, .status-page[data-width="wide"] .health > summary::-webkit-details-marker { display: none; }
+.status-page .held { margin: 0; padding: 12px 16px; font-weight: 700; color: var(--page-text, #f3eefc); background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.status-page .held[data-held="yes"] { color: #1a1228; background: var(--accent, #faca2a); border-color: var(--accent, #faca2a); }
+.status-page .group .act[data-big] { width: 100%; min-height: 56px; font-size: 20px; font-weight: 700; }
+.status-page .more { margin-top: 8px; }
+.status-page .more > summary { min-height: 44px; padding: 10px 0; color: #b9afcf; cursor: pointer; }

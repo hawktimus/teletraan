@@ -2,7 +2,7 @@
 // 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
 import { api, showResult, useStyles } from './api.js';
-import { nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
+import { heldLine, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 import { wirePreview } from './preview.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
@@ -102,7 +102,7 @@ function pausedBy(requests, now = new Date()) {
   return Boolean(until) && Date.parse(until) > now.getTime();
 }
 
-function wire(root, watcher) {
+function wire(root, watcher, afterPress) {
   root.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
@@ -114,6 +114,7 @@ function wire(root, watcher) {
     // A fixed button has its minutes in data-minutes; the other one reads the field named in data-minutes-from
     if (action === 'hold') body.panel = value('panel');
     if (action === 'view') body.key = value('view');
+    if (button.dataset.hours) body.hours = Number(button.dataset.hours);
     if (button.dataset.minutes) body.minutes = Number(button.dataset.minutes);
     if (button.dataset.minutesFrom) {
       const field = root.querySelector('[name="' + button.dataset.minutesFrom + '"]');
@@ -130,6 +131,7 @@ function wire(root, watcher) {
     button.disabled = false;
     const shown = outcome(result, action, body);
     showResult(button, shown.state, shown.words);
+    if (result.ok) afterPress();
     if (result.ok && (action === 'theme' || action === 'view')) watcher.asked(action, body, result.data && result.data.until);
     if (result.ok && action === 'schedule') { watcher.cleared(); setPaused(root, false); pressed.at = Date.now(); }
     if (result.ok && (action === 'pause' || action === 'resume')) { setPaused(root, action === 'pause'); pressed.at = Date.now(); }
@@ -141,27 +143,50 @@ function wire(root, watcher) {
 // Puts the card, the live preview and the buttons into the three boxes it is given. Returns the function that stops it.
 export async function mountNow(boxes) {
   useStyles();
-  const { cardBox, previewBox, controls, root } = boxes;
+  const { cardBox, previewBox, controls, root, heldBox } = boxes;
   previewBox.innerHTML = previewCardHtml();
   let stopPreview = wirePreview(previewBox);
   let timer = null;
   let left = false;
   let ticker = null;
-  const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); if (stopPreview) stopPreview(); stopPreview = null; };
+  let heldTimer = null;
+  const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); clearInterval(heldTimer); if (stopPreview) stopPreview(); stopPreview = null; };
 
   const options = await api('GET', '/request');
   if (left) return leave;
   controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
   const watcher = makeWatcher(controls, options.ok && options.data ? options.data : {});
-  wire(root, watcher);
+  let askAgain = () => {};
+  wire(root, watcher, () => askAgain());
   setPaused(root, pausedBy(options.ok && options.data ? options.data.requests : null));
   watcher.tick(0);
   let ticks = 0;
   ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
 
+  // Who decides what the wall shows: the requests that run now, asked again with every report
+  const names = { theme: options.ok && options.data ? options.data.themeNames || {} : {}, view: {} };
+  ((options.ok && options.data && options.data.views) || []).forEach(view => { names.view[view.key] = view.name; });
+  let requests = options.ok && options.data ? options.data.requests : null;
+  const drawHeld = () => {
+    const words = heldLine(requests, names, new Date());
+    heldBox.textContent = words;
+    heldBox.dataset.held = words === 'Following the schedule.' ? 'no' : 'yes';
+  };
+  drawHeld();
+  heldTimer = setInterval(drawHeld, 5000);
+  askAgain = () => askRequests();
+  async function askRequests() {
+    const answer = await api('GET', '/request');
+    if (left || !answer.ok || !answer.data) return;
+    requests = answer.data.requests;
+    drawHeld();
+    if (Date.now() - pressed.at > 15000) setPaused(root, pausedBy(requests));
+  }
+
   // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
   let last = '';
   async function refresh() {
+    askRequests();
     const answer = await api('GET', '/now');
     if (left) return;
     if (answer.ok && wallReport(answer.data) && Date.now() - pressed.at > 15000) setPaused(root, wallReport(answer.data).pause === true);

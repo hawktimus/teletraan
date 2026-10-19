@@ -66,7 +66,7 @@ registerTab({
   async render(container) {
     container.innerHTML = '<div class="tab status-page">' +
       '<div class="cols">' +
-      '<div class="left"><div data-card></div><div data-preview-card></div></div>' +
+      '<div class="left"><p class="held" data-held-box data-held="no">Following the schedule.</p><div data-card></div><div data-preview-card></div></div>' +
       '<div class="right" data-controls></div>' +
       '</div>' +
       '<details class="health" data-fold><summary>Health</summary>' +
@@ -79,7 +79,7 @@ registerTab({
     const find = name => container.querySelector('[' + name + ']');
     const layout = arrange(root);
     const stops = await Promise.all([
-      mountNow({ root: root, cardBox: find('data-card'), previewBox: find('data-preview-card'), controls: find('data-controls') }),
+      mountNow({ root: root, cardBox: find('data-card'), previewBox: find('data-preview-card'), controls: find('data-controls'), heldBox: find('data-held-box') }),
       mountHealth(find('data-health-body'), find('data-health-buttons')),
     ]);
     layout.again();

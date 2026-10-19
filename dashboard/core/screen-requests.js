@@ -8,9 +8,9 @@ import { isRecord } from './text.js';
 export const viewKeys = ['general', 'prime', 'nova', 'family'];
 export const themeIds = ['original', 'cybertron', 'retro', 'foundry'];
 
-// The longest a request may run. The control page asks for 10 to 120 minutes, and a time further off
-// than this is a mistake, so it is not obeyed.
-export const longestMinutes = 120;
+// The longest a request may run. The timed buttons of the control page ask for up to 120 minutes and the buttons that
+// stay until a reset ask for 24 hours. A time further off than this is a mistake, so it is not obeyed.
+export const longestMinutes = 24 * 60;
 
 function timeOrEmpty(value) {
   return typeof value === 'string' && !isNaN(Date.parse(value)) ? value : '';
