@@ -20,11 +20,13 @@ import { backgroundFields } from './settingsBackground.js';
 import { previewRequestField } from './settingsPreview.js';
 import { nextLookRequestField, competitionPreviewRequestField, screenRequestFields } from './settingsRequests.js';
 import { competitionFields } from './settingsCompetition.js';
+import { newsFields } from './settingsNews.js';
 import { mondayFields } from './settingsMonday.js';
 import { calendarsField, groupEventsByKindField } from './settingsCalendars.js';
 import { countdownField } from './settingsCountdown.js';
 import { settingsNames as shownOnLookPage } from '../inputs/look-parts.js';
 import { settingsNames as shownOnCompetitionPage } from '../inputs/competition-parts.js';
+import { newsNames as shownOnNewsSection } from '../inputs/news-parts.js';
 
 // The five tabs, in order. Timing opens first. Studio has no folded tab, so Advanced, for the things that are set
 // once and never touched again, is the last one. The look of the screen is on the Look page, the alert and the
@@ -387,7 +389,7 @@ const cycleNoteField = noteField('cycleNote', 'What plays, and in which order, i
 // The Competition page shows the competition cards. The Rotation page is the only door to the rotation list (its full
 // form is kept, hidden). The Team section is hidden and kept as the fallback.
 // The Photos page picks the photo source and the Drive folder, so the form does not.
-const movedToPages = shownOnLookPage.concat(['lookNote', 'cycleNote'], shownOnCompetitionPage, ['rotationRows', 'photoSource', 'photoDriveFolder']);
+const movedToPages = shownOnLookPage.concat(['lookNote', 'cycleNote'], shownOnCompetitionPage, shownOnNewsSection, ['rotationRows', 'photoSource', 'photoDriveFolder']);
 
 function moved(field) {
   return movedToPages.indexOf(field.name) === -1 ? field : Object.assign({}, field, { hidden: true });
@@ -447,6 +449,7 @@ export default defineType({
     groupEventsByKindField,
     ...mondayFields(),
     ...competitionFields(),
+    ...newsFields(),
     ...rotationRowsFields(),
     contentSourceField,
     showConnectionStatusField,

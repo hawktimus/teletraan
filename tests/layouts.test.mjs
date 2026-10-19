@@ -2829,6 +2829,7 @@ const orderSmall = [
   mondaySmall('panels/monday-timeline/panel.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
   mondaySmall('panels/competition-forecast/panel.css', { '.competition-forecast .stale-chip': 30, '.competition-forecast .tick': 28 }),
   mondaySmall('panels/competition-qualify/panel.css', { '.competition-qualify .stale-chip': 30 }),
+  mondaySmall('panels/frc-news/panel.css', { '.frc-news .chip': 30, '.frc-news .stale-chip': 30 }),
   mondaySmall('panels/monday-board/panel.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
 );
 Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });

@@ -12,6 +12,7 @@ const syncs = [
   { target: 'calendars', label: 'Sync calendars now' },
   { target: 'monday', label: 'Sync Monday now' },
   { target: 'frc', label: 'Sync competition now' },
+  { target: 'news', label: 'Sync news now' },
   { target: 'photos-drive', label: 'Copy Drive photos now' },
   { target: 'match13', label: 'Sync Match13 now' },
 ];

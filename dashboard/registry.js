@@ -60,6 +60,7 @@ export const panels = [
   { id: 'team-leads', region: 'grid1', topic: 'subteams' },
   { id: 'roster', region: 'grid1', topic: 'subteams' },
   { id: 'driveHours', region: 'grid1', topic: 'subteams', rotationOnly: true },
+  { id: 'frc-news', region: 'grid1', topic: 'news', rotationOnly: true },
   { id: 'custom', region: 'grid1', topic: 'custom' },
   // placeholders: a title and a dashed frame, to be designed (core/placeholder.js)
   { id: 'robotStatus', region: 'grid1', topic: 'robot', placeholder: true },

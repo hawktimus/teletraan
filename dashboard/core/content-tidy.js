@@ -11,6 +11,7 @@ import { tidyPreviewRequest } from './preview.js';
 import { tidyNextLookRequest, tidySchedule } from './screens.js';
 import { showsForTeam } from './teams.js';
 import { tidyScreenRequests } from './screen-requests.js';
+import { tidyNewsSettings } from './news.js';
 
 // An item is shown unless it is switched off or its expiry time has passed. Only a task
 // has Show on TV, and every panel that draws tasks comes through here, so it is read here.
@@ -33,7 +34,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [], views: [], subthemes: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, news: { lastSyncAt: '', lastError: '', items: [] }, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [], views: [], subthemes: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   // The Teletraan computer reads the two Monday blocks and the screen has no use for them
@@ -124,6 +125,8 @@ export function fixSettingValues(settings, saved = settings) {
   tidyRotationSettings(settings);
   // The competition cards: the mode here, and a switch for each card in the list of booleans below
   if (!competitionModes.includes(settings.competitionMode)) settings.competitionMode = defaultSettings.competitionMode;
+  // The FRC news: two switches, the categories kept and the headlines an editor hid
+  tidyNewsSettings(settings, defaultSettings);
   // The night mode settings: two choices, a switch each way and the logo width. The times are fixed (constants.js)
   if (!nightStyles.includes(settings.nightStyle)) settings.nightStyle = defaultSettings.nightStyle;
   if (!Object.keys(nightSpeeds).includes(settings.nightSpeed)) settings.nightSpeed = defaultSettings.nightSpeed;

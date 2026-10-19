@@ -18,7 +18,7 @@ Every change has three steps: open a line in the sidebar, make the change, click
 | Monday | The Monday boards the computer can see, a preview of their items, and the Show on TV switch for each task (written by the Monday lane) |
 | Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
 | Look | The theme of each weekday, the background, the seasonal decorations, motion, frame polish, and the logo and name effects, on one page |
-| Competition | The competition cards: the mode, and one switch for each card |
+| Competition | The competition cards: the mode, and one switch for each card. Below them the FRC news section: the headlines from the FIRST blog with a Show switch each, the news switches and the categories |
 | Coaches only | A heading. Under it: Dashboard Settings, Extra panels and Kept data |
 
 Under Coaches only:
@@ -54,6 +54,7 @@ Under Coaches only:
 | Calm the screen | Look, Motion |
 | Change the logo and the name effect | Look, Logo and name effects |
 | Choose which competition cards show | Competition |
+| Hide an FRC news headline, or choose the news categories | Competition, FRC news |
 | Change the countdown dates | Dashboard Settings, Countdown tab |
 | Change how long a page stays | Dashboard Settings, Timing tab |
 | Find an old Screen | Coaches only, Kept data |

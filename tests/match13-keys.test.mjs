@@ -81,7 +81,7 @@ test('local.example.env has a commented Match13 line with a placeholder', () => 
 test('the helper word sync-now takes match13 in the route, the helper and the button', () => {
   assert.ok(helperWords.includes('sync-now'));
   assert.ok(read('control/routes/helper.js').includes("'match13']"));
-  assert.ok(read('computer/scripts/control-helper.sh').includes('calendars|monday|frc|photos-drive|match13)'));
+  assert.ok(read('computer/scripts/control-helper.sh').includes('calendars|monday|frc|news|photos-drive|match13)'));
   assert.ok(read('control/static/tabs/health.js').includes("{ target: 'match13', label: 'Sync Match13 now' }"));
   assert.ok(read('control/static/tabs/render.js').includes("match13: 'Match13'"));
 });

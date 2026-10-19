@@ -140,6 +140,12 @@ const panels = {
     const height = pixels(valueIn(style, panelCss('roster'), '.roster .body', 'height'));
     return { bottom: top + height, box: top + height, top: top };
   },
+  // FRC news has one window of headlines
+  'frc-news': style => {
+    const top = pixels(valueIn(style, panelCss('frc-news'), '.frc-news .rows', 'top'));
+    const height = pixels(valueIn(style, panelCss('frc-news'), '.frc-news .rows', 'height'));
+    return { bottom: top + height, box: top + height, top: top };
+  },
   custom: style => {
     const top = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'top'));
     const height = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'height'));

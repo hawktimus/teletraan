@@ -66,6 +66,8 @@ export function buildStatus(facts, now = new Date()) {
       monday: text(mini.lastMondaySyncAt),
       frc: text(mini.lastFrcSyncAt),
       match13: text(mini.match13At),
+      news: text(mini.newsAt),
+      newsCount: number(mini.newsCount),
       screenStarted: text(mini.kioskStartedAt),
     },
     mondayCallsToday: number(monday.callsToday),

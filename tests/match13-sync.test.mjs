@@ -429,7 +429,7 @@ test('the install script copies the three units with ACCOUNT filled in, needs su
 });
 
 test('the Mac tool and the installer notes list the Match13 timer', () => {
-  assert.ok(fs.readFileSync(path.join(repo, 'tools/teletraan/teletraan-tool-deploy.sh'), 'utf8').includes('frc match13 console'));
+  assert.ok(fs.readFileSync(path.join(repo, 'tools/teletraan/teletraan-tool-deploy.sh'), 'utf8').includes('frc news match13 console'));
   assert.ok(fs.readFileSync(path.join(repo, 'computer/README.md'), 'utf8').includes('install-match13.sh'));
   assert.ok(fs.readFileSync(path.join(repo, 'docs/updating-the-computer.md'), 'utf8').includes('install-match13.sh'));
 });

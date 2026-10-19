@@ -58,7 +58,7 @@ test('the Competition page has the Match13 block between the connection and the 
   const page = studio.mount(view.CompetitionView);
   await page.settle();
   const blocks = nodesWhere(page.tree(), node => node.props && node.props['data-block']).map(node => node.props['data-block']);
-  assert.deepEqual(blocks, ['connection', 'match13', 'cards']);
+  assert.deepEqual(blocks, ['connection', 'match13', 'cards', 'news']);
   assert.ok(wordsIn(page.tree()).includes('Match13'));
 });
 

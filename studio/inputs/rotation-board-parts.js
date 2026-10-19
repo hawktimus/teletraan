@@ -8,6 +8,7 @@ import { createElement } from 'react';
 import {
   blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
+import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge, playsNowWords } from '../tools/rotation-find.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
 
 const h = createElement;
@@ -31,6 +32,7 @@ export const words = {
   viewChange: 'view change',
   skipHint: skipHint,
   small: 'Small panel',
+  now: 'What the wall plays now.',
   smallHelp: 'The small panel beside a Robotics row in the split layout. Empty follows the small panels of the view.',
 };
 
@@ -66,6 +68,8 @@ export const boardCss = `
 .rb-tile b { display: block; overflow-wrap: anywhere; }
 .rb-change { align-self: center; font-size: 14px; font-weight: 600; padding: 4px 8px; border-radius: 4px; border: 1px dashed currentColor; }
 .rb-label { display: none; }
+.rb-badge { display: inline-block; align-self: flex-start; font-size: 14px; font-weight: 600; padding: 2px 8px; border-radius: 4px; border: 1px dashed currentColor; overflow-wrap: anywhere; }
+.rb-check { display: inline-flex; align-items: center; min-height: 44px; gap: 4px; }
 @media (max-width: 600px) {
   .rb-wrap { overflow-x: visible; }
   .rb-table { min-width: 0; border: 0; }
@@ -192,7 +196,8 @@ export function dataRow(item, count, state, actions) {
       cell('Position', 'number', String(index + 1)),
       cell('View', 'view', h('select', { value: row.view || '', style: styles.select, 'aria-label': 'View', onChange: event => actions.edit(index, 'view', event.target.value) }, viewOptions(row.view))),
       cell('Panel', 'panel', h('select', { value: row.panel || '', style: styles.select, 'aria-label': 'Panel', onChange: event => actions.panel(index, event.target.value) }, groupedOptions(panelGroups, row.panel)),
-        state.skips && state.skips[row._key] ? h('span', { className: 'rb-help', 'data-skip': row._key }, state.skips[row._key]) : null),
+        state.skips && state.skips[row._key] ? h('span', { className: 'rb-help', 'data-skip': row._key }, state.skips[row._key]) : null,
+        placeholderBadge(row) ? h('span', { className: 'rb-badge', 'data-placeholder': row._key }, placeholderBadge(row)) : null),
       small
         ? cell(words.small, 'small', h('select', { value: row.side || '', style: styles.select, 'aria-label': words.small, onChange: event => actions.edit(index, 'side', event.target.value) }, groupedOptions(sidePanelGroups, row.side, 'Follows the view')))
         : h('div', { className: 'rb-cell', role: 'cell', 'data-cell': 'small' }),
@@ -237,16 +242,43 @@ export function editorOf(row, index, state, actions) {
   return h('div', { className: 'rb-editor', role: 'group', 'aria-label': 'Details of row ' + (index + 1), 'data-editor': row._key }, ...entries, ...nothing);
 }
 
+// Above the table: a search over panel titles, two filters and a Jump to link for each block
+export function findBar(state, actions, blocks) {
+  return h(
+    'div',
+    { 'data-block': 'find' },
+    h(
+      'div',
+      { className: 'rb-tools' },
+      h('input', { type: 'search', value: state.search || '', style: Object.assign({}, styles.textBox, { width: 260 }), placeholder: 'Search panel titles', 'aria-label': 'Search panel titles', onChange: event => actions.pick('search', event.target.value) }),
+      h('label', { className: 'rb-check' }, h('input', { type: 'checkbox', checked: Boolean(state.onlySkipped), style: styles.check, onChange: event => actions.pick('onlySkipped', event.target.checked) }), 'Show only rows that are skipped now'),
+      h('label', { className: 'rb-check' }, h('input', { type: 'checkbox', checked: Boolean(state.onlyPlaceholders), style: styles.check, onChange: event => actions.pick('onlyPlaceholders', event.target.checked) }), 'Show only placeholders')
+    ),
+    h('p', { style: styles.muted, 'data-find': 'help' }, 'Skipped now means switched off, or on with nothing to show. A placeholder only draws a title until it is designed, such as Robot status.'),
+    h(
+      'div',
+      { className: 'rb-tools', 'data-find': 'jump', role: 'navigation', 'aria-label': 'Jump to a block' },
+      h('span', { style: { fontWeight: 600 } }, 'Jump to'),
+      jumpLinks(blocks).map(link => h('button', { key: link.key, type: 'button', style: styles.plain, onClick: () => actions.jump(link.key) }, link.label))
+    )
+  );
+}
+
 export function tableOf(state, actions) {
-  const blocks = blocksOf(state.rows, state.settings.pageSeconds);
+  const all = blocksOf(state.rows, state.settings.pageSeconds);
+  const filters = { onlySkipped: state.onlySkipped, onlyPlaceholders: state.onlyPlaceholders, search: state.search };
+  const blocks = filterBlocks(all, filters, state.skips);
   const body = [];
   blocks.forEach(block => {
-    body.push(h('div', { key: 'g' + block.key, role: 'presentation' }, groupRow(block, state, actions)));
+    body.push(h('div', { key: 'g' + block.key, id: blockId(block.key), role: 'presentation' }, groupRow(block, state, actions)));
     if (!state.collapsed[block.key]) block.rows.forEach(item => body.push(dataRow(item, state.rows.length, state, actions)));
   });
+  const shownCount = blocks.reduce((total, block) => total + block.rows.length, 0);
   return h(
     'div',
     { className: 'rb-wrap' },
+    findBar(state, actions, all),
+    hasFilter(filters) ? h('p', { style: styles.muted, 'data-finding': 'count' }, findingWords(shownCount, state.rows.length)) : null,
     h('div', { className: 'rb-table', role: 'table', 'aria-label': 'Rotation' }, headerRow(state, actions), ...body),
     h('datalist', { id: 'rb-departments' }, ['build', 'electrical', 'programming', 'design', 'strategy', 'business', 'operations', 'marketing'].map(name => h('option', { key: name, value: name })))
   );
@@ -291,3 +323,8 @@ export function toolsOf(state, actions) {
 }
 
 export { panelChoices, sideChoices };
+
+// The line at the top of the page, from the published tasks and photos the board has read
+export function nowLine(state) {
+  return h('p', { style: styles.text, 'data-block': 'plays-now' }, h('b', null, words.now + ' '), playsNowWords(state.rows, state.skips, Boolean(state.data)));
+}

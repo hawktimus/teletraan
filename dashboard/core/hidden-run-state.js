@@ -16,6 +16,9 @@ export const hiddenState = {
   pile: null, // the frames that collapse in this transition, or null
   plan: null, // what pile.release() planned: when each piece rises, and when the last one is home
   rotationHeld: false, // this transition has paused the rotation clock
+  pictureFacts: {}, // file name -> what loading it gave: { ok, ms, width, height, why }. A picture that failed is here too.
+  shownAt: 0, // when a picture went on the screen in this transition, in performance.now() milliseconds. 0 is none.
+  pending: { key: '', since: 0, why: '', retryAt: 0 }, // the push that waits to play, when it was first seen and what held it
 };
 
 // How long the frames take to collapse, at normal speed. frame.css has the same number as

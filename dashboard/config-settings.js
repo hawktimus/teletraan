@@ -261,6 +261,15 @@ export const defaultSettings = {
   competitionDistrict: true,
   competitionForecast: true,
   competitionQualify: true,
+  // The FRC news (the FRC news section of the Competition page in the Studio, core/news.js, docs/frc-news.md).
+  //   newsEnabled       the FRC news panel plays when a Rotation row names it, and the Teletraan computer reads the blog
+  //   newsCategories    the headlines kept: those with any of these categories of the FIRST blog (the computer applies it)
+  //   newsInTicker      the newest three headlines join the ticker as FIRST: <title>
+  //   newsHiddenLinks   the headlines an editor hid, by their address
+  newsEnabled: true,
+  newsCategories: ['FRC', 'Control System'],
+  newsInTicker: false,
+  newsHiddenLinks: [],
   // The Monday tab in the Studio (docs/monday.md). The Teletraan computer reads these (computer/scripts/monday-sync.sh) and writes the
   // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
   // chip) and mondayShowOwners.

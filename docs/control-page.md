@@ -21,9 +21,25 @@ The groups, in the order of the page:
 
 - Playlist: Next, one button that is Pause rotation or Resume rotation (it shows what a press does, and the line under it says what the rotation is doing now) and Back to schedule.
 - Theme and view: the line Today the schedule uses Cybertron (from the saved schedule and the time zone of the Look page), the big button Reset to today's schedule, then Theme and View.
-- Hold a panel, and Messages (Play announcement, Post an announcement and Run presentation test).
+- Hold a panel, and Messages (Play announcement, Post an announcement, Play desktop reveal, Play red eyes and Run presentation test).
 
 The line above the Now card says who decides what the wall shows: Following the schedule, or Held by you: theme Retro until reset, view Nova until 14:32.
+
+## Hidden transitions
+
+Messages has two buttons, Play desktop reveal and Play red eyes. A press writes the same request as the Studio menu
+(`hiddenRequest`, the kind and the time) and the button shows its result: Done in green with the time to expect, or the reason in red. If
+Allow hidden transitions is off the page says so and writes nothing. The wall sees the request within about 10 seconds and
+plays it within about 20.
+
+Under the buttons the block Last hidden transition comes from the Now report, so it is as fresh as the report (10 seconds):
+
+- `Desktop reveal at 10:42: picture loaded 700x394, played 9.4 s`: it worked.
+- `Desktop reveal at 10:42: picture FAILED to load (the TV browser could not read blue-screen-1.png: error 0, http 404)`: the effect ran over the plain backdrop. The words after the file say why: http 404 means the file is not on the web server, http 200 means the file is there and the browser could not read it.
+- `Red eyes at 10:42. Ignored: request older than 5 min.`: a request that did not play, and why.
+- `The TV browser can read: PNG yes, WebP yes`: what the browser of the wall can decode. WebP NO explains red eyes with no picture.
+
+The full list of steps is in docs/hidden-transitions.md, "What the wall reports".
 
 ## Holding a panel
 
@@ -173,7 +189,7 @@ The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the sam
 
 ## The helper and restarts
 
-The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`computer/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `sync-now photos-drive`, `sync-now match13`, `write-env` and `monday-check`. `status` prints `kiosk:`, `display:`, `tailscale:` and other `name: value` lines. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
+The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`computer/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `sync-now news` (the FRC news read), `sync-now photos-drive`, `sync-now match13`, `write-env` and `monday-check`. `status` prints `kiosk:`, `display:`, `tailscale:` and other `name: value` lines. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
 
 The sudoers file `/etc/sudoers.d/teletraan-control` lets the login user run `systemctl restart teletraan-*`, `docker restart teletraan-web`, `systemctl start teletraan-*.service` and `systemctl reboot` without a password, and nothing more. The helper runs each by its full path, `/usr/bin/systemctl` and `/usr/bin/docker`, and the file lists the same paths. The reboot is also listed as `/bin/systemctl reboot`, `/usr/sbin/reboot` and `/sbin/reboot`, in case `sudo` compares the path as typed.
 

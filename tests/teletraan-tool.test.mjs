@@ -111,7 +111,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-const installNames = ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'match13', 'console', 'watchdog', 'backup', 'nightly'];
+const installNames = ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'news', 'match13', 'console', 'watchdog', 'backup', 'nightly'];
 
 // Makes the Mac's home, the fake tools and the folder that stands for the Teletraan computer,
 // and returns how to run the tool in them.

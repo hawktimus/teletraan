@@ -72,6 +72,8 @@ export function statusHtml(data, now = new Date()) {
     row('Monday reads today', esc(data.mondayCallsToday === null || data.mondayCallsToday === undefined ? 'not known' : data.mondayCallsToday)) +
     row('Competition data', esc(agoText(mini.frc, now))) +
     row('Last Match13 read', esc(agoText(mini.match13, now))) +
+    row('FRC news', esc(agoText(mini.news, now) + (mini.news && typeof mini.newsCount === 'number' ? ', ' + mini.newsCount + (mini.newsCount === 1 ? ' headline' : ' headlines') : ''))) +
+    row('Last Match13 read', esc(agoText(mini.match13, now))) +
     row('Screen started', esc(agoText(mini.screenStarted, now))) +
     row('Last backup', esc(agoText(data.lastBackupAt, now))) + '</dl>');
 
@@ -89,6 +91,61 @@ export function statusHtml(data, now = new Date()) {
 // card and the Live preview both ask this, so they never disagree about whether the TV has reported.
 export function wallReport(now) {
   return now && now.report && typeof now.report === 'object' && !now.quiet ? now.report : null;
+}
+
+// What the wall reported about the last hidden transition (the steps are written by dashboard/core/hidden-run.js, and
+// tests/hidden-run-log.test.mjs keeps the two in step). Plain words for the page: { last, types }.
+const hiddenNames = { desktop: 'Desktop reveal', redEyes: 'Red eyes' };
+
+function hiddenClock(iso) {
+  const when = new Date(iso);
+  return isNaN(when.getTime()) ? '' : when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function stepsMatching(steps, pattern) {
+  return steps.map(step => pattern.exec(step)).filter(Boolean);
+}
+
+function pictureWords(steps) {
+  const loaded = stepsMatching(steps, /^picture (\S+) loaded (\d+x\d+)/)[0];
+  const failed = stepsMatching(steps, /^picture (\S+) FAILED: (.*)$/);
+
+  if (loaded && failed.length === 0) return 'picture loaded ' + loaded[2];
+  if (loaded) return 'picture ' + failed.map(match => match[1]).join(', ') + ' FAILED to load, ' + loaded[1] + ' loaded ' + loaded[2];
+  if (failed.length > 0) return 'picture FAILED to load (the TV browser could not read ' + failed.map(match => match[1] + ': ' + match[2]).join('; ') + ')';
+  return 'no picture was shown';
+}
+
+function endWords(steps) {
+  const total = stepsMatching(steps, /^total ([\d.]+)s/)[0];
+  const stopped = stepsMatching(steps, /^(stopped|failed): (.*)$/)[0];
+  if (stopped) return stopped[1] + ': ' + stopped[2];
+  return total ? 'played ' + total[1] + ' s' : 'still playing';
+}
+
+export function hiddenRunWords(run) {
+  const none = { last: 'No hidden transition has played since the wall started.', types: '' };
+  if (!run || typeof run !== 'object') return { last: 'The wall has not reported a hidden transition yet.', types: '' };
+
+  const kinds = run.imageTypes && typeof run.imageTypes === 'object' ? run.imageTypes : {};
+  const yesNo = value => (value === true ? 'yes' : value === false ? 'NO' : 'not tested');
+  const types = 'The TV browser can read: PNG ' + yesNo(kinds.png) + ', WebP ' + yesNo(kinds.webp) + (run.browser ? ' (' + run.browser + ')' : '') + '.';
+  if (!run.kind) return { last: none.last, types: types };
+
+  const name = hiddenNames[run.kind] || run.kind;
+  const when = hiddenClock(run.at);
+  const head = name + (when ? ' at ' + when : '');
+  if (run.ignored) return { last: head + '. Ignored: ' + run.ignored + '.', types: types };
+
+  const steps = Array.isArray(run.steps) ? run.steps : [];
+  const hidden = stepsMatching(steps, /^on screen .* NOT VISIBLE/).length > 0 ? ', but the picture was not visible on the screen' : '';
+  return { last: head + ': ' + pictureWords(steps) + hidden + ', ' + endWords(steps), types: types };
+}
+
+// The block under the Hidden transitions buttons. report is the report of the wall, or null when it has gone quiet.
+export function hiddenRunHtml(report) {
+  const words = hiddenRunWords(report ? report.hiddenRun : null);
+  return '<h3>Last hidden transition</h3><p data-hidden-last>' + esc(words.last) + '</p>' + (words.types ? '<p class="note" data-hidden-types>' + esc(words.types) + '</p>' : '');
 }
 
 export function nowCardHtml(now, at = new Date()) {
@@ -394,6 +451,8 @@ export function nowControlsHtml(options) {
   const messages = '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
     '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
     '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>' +
+    '<h3>Hidden transitions</h3><div class="buttons">' + button('hidden', 'Play desktop reveal', ' data-kind="desktop"') + button('hidden', 'Play red eyes', ' data-kind="redEyes"') + '</div>' +
+    '<div class="hidden-run" data-hidden-run>' + hiddenRunHtml(null) + '</div>' +
     (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>';
 
   return blocked + group('playlist', 'Playlist', playlist) + group('theme-view', 'Theme and view', themeAndView, true) +
@@ -431,7 +490,7 @@ export function logHtml(lines, title = 'Log') {
 
 // What a button says when it is done. Every button shows a result: Done in green, or the reason in red.
 // body is what was sent. A helper word has a name of its own in the first argument.
-const syncNames = { calendars: 'calendars', monday: 'Monday', frc: 'competition', 'photos-drive': 'Drive photos', match13: 'Match13' };
+const syncNames = { calendars: 'calendars', monday: 'Monday', frc: 'competition', news: 'FRC news', 'photos-drive': 'Drive photos', match13: 'Match13' };
 
 export function doneWords(action, body = {}) {
   const minutes = body.minutes ? ' for ' + body.minutes + (body.minutes === 1 ? ' minute' : ' minutes') : '';
@@ -445,6 +504,7 @@ export function doneWords(action, body = {}) {
     theme: (body.hours ? 'The theme stays until you reset it, or ' + body.hours + ' hours.' : 'The theme is previewed for ' + (body.minutes || previewMinutes) + ' minutes.') + ' The wall takes it in within about 20 seconds.',
     announce: 'The announcements play within about 10 seconds. They wait if something else has the screen.',
     'post-announcement': 'The announcement is posted for two hours.',
+    hidden: 'The wall plays ' + (body.kind === 'redEyes' ? 'red eyes' : 'the desktop reveal') + ' within about 20 seconds. It waits if something else has the screen. Last hidden transition below says what happened.',
     'presentation-test': 'The test talk starts within about 10 seconds. It waits if something else has the screen.',
     'restart-kiosk': 'The screen is restarting.',
     'restart-services': 'The services restarted.',

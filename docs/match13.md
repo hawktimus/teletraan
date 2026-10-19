@@ -29,7 +29,7 @@ The Sanity dataset is public: anyone who knows the project can read it. Match13 
 `match13.json` (under 200 KB), into the data folder of the Teletraan computer (`/var/lib/teletraan/data`). The web
 server shows that folder, read only, at `/dashboard/data/live/`, and the screen reads `data/live/match13.json` every
 10 minutes. The file holds team numbers and numbers, no names. The copy of the dashboard on port 3229 can read it too, so
-the file is as private as the team's own network.
+the file is as private as the team's own network. It is not on the internet and not in Sanity.
 
 The only thing sent to Sanity is a time, a state and a count (`match13At`, `match13State`, `match13Count` in the
 document `status-mini`), so Studio can say when the last read was.

@@ -44,6 +44,9 @@ export default defineType({
     // Match13 state and count (computer/scripts/match13-sync.sh, status-write.sh match13): no forecast is stored here
     textField('match13State', 'Match13 state', 'How the last read of Match13 went: ok, no-key, bad-key, limit or down. The Teletraan computer writes this.'),
     defineField({ name: 'match13Count', title: 'Match13 teams', type: 'number', description: 'How many teams the Match13 file held at the last read. The Teletraan computer writes this.' }),
+    // The FIRST news headlines (computer/scripts/news-sync.sh, status-write.sh news)
+    timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
+    defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Status of the Teletraan computer' }),

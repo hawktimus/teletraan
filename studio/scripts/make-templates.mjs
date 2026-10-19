@@ -33,7 +33,7 @@ const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates')
 // that a sheet does not hold, so the type screen has no template. Events Calendar
 // entries and places have no line in the sidebar, but they keep their templates,
 // since the importer still reads them.
-const skippedTypes = ['photo', 'presentationDay', 'presentation', 'announcement', 'calendarFilter', 'team', 'screen', 'view', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'milestone', 'subtheme'];
+const skippedTypes = ['photo', 'presentationDay', 'presentation', 'announcement', 'calendarFilter', 'team', 'screen', 'view', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'milestone', 'subtheme'];
 
 // Fields that are not columns. The board sync sets the source, the board item number, the board and
 // the due date of a task, and the two notes at the top of a task store nothing.

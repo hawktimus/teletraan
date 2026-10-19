@@ -169,7 +169,7 @@ stage=$1; commit=$2; dir=$3; kiosk=$4
 echo "== the installer"
 bash "$stage/computer/install.sh" --from "$stage" --yes --note "From the Mac tool" ${commit:+--commit "$commit"} || exit $?
 stopped=''
-for name in calendars slides photos-drive monday frc match13 console watchdog backup nightly; do
+for name in calendars slides photos-drive monday frc news match13 console watchdog backup nightly; do
   echo
   echo "== install-$name.sh"
   echo | "$dir/install-$name.sh" || { echo "install-$name.sh stopped (exit $?)."; stopped="$stopped $name"; }
