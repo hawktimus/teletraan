@@ -39,6 +39,8 @@ const cards = [
   { name: 'competitionResults', title: 'Results strip', description: 'The last 8 matches as red or blue chips with the score. In Auto it shows from two days before an event to its last day.' },
   { name: 'competitionAlliance', title: 'Alliance board', description: 'The alliance number and its partners. In Auto it shows during an event, once the selection is made.' },
   { name: 'competitionDistrict', title: 'District points', description: 'Points against the cutoff for the state championship. In Auto it shows all season once the first event has started.' },
+  { name: 'competitionForecast', title: 'Event forecast (Match13)', description: 'How Match13 expects the event to end for each team: the most likely rank and its range. Needs the Match13 key. In Auto it shows from two days before an event to its last day.' },
+  { name: 'competitionQualify', title: 'Championship chances (Match13)', description: 'The chance of the District and the World Championship for each team. Needs the Match13 key. In Auto it shows all season once the first event has started.' },
 ];
 
 export function competitionFields() {

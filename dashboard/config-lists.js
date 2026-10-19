@@ -123,6 +123,8 @@ export const competitionSwitches = [
   'competitionResults',
   'competitionAlliance',
   'competitionDistrict',
+  'competitionForecast',
+  'competitionQualify',
 ];
 
 // Auto brings the cards about an event this many days before its first day

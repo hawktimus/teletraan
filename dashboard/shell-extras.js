@@ -61,6 +61,9 @@ export async function startExtras() {
     }, 10 * 60 * 1000);
   }));
 
+  // The Match13 forecasts, written by the Teletraan computer into the data folder (docs/match13.md). Never stops the screen.
+  ready.push(startOptional('./core/match13.js', module => module.startMatch13(fetch.bind(window), shellState.showingSample)));
+
   // An event that has finished must leave the list even when nothing else
   // changes, and a new day starts at midnight in the Look time zone
   setInterval(() => {

@@ -16,7 +16,7 @@ export const words = {
 };
 
 // The mode, then one switch for each card, in the order of dashboard/core/competition.js
-export const cardNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
+export const cardNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionForecast', 'competitionQualify'];
 export const fieldNames = ['competitionMode'].concat(cardNames);
 
 // Every field of Dashboard Settings that the page shows. Dashboard Settings hides each of them (dashboardSettings.js).

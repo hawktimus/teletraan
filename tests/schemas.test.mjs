@@ -258,6 +258,8 @@ const contract = {
     competitionResults: 'boolean',
     competitionAlliance: 'boolean',
     competitionDistrict: 'boolean',
+    competitionForecast: 'boolean',
+    competitionQualify: 'boolean',
     mondayBoards: rows({
       boardId: text(20),
       team: teamRef,
@@ -4313,7 +4315,7 @@ function checkTeamsTab() {
 // fields they show stay in the schema, hidden. Presentations, Night mode and Hidden transitions are sections of Advanced.
 const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
-const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
+const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionForecast', 'competitionQualify'];
 const settingsTabs = {
   screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),

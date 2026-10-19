@@ -24,6 +24,7 @@
 
 import { competitionLeadDays, competitionModes, competitionPreviewSeconds, defaultSettings } from '../config.js';
 import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
+import { hasForecast, hasQualify, setMatch13Preview } from './match13.js';
 import { dateIn, timeZoneOf } from './theme.js';
 import { parseLocalDateTime } from './time.js';
 
@@ -41,6 +42,9 @@ export const cards = [
   { id: 'competition-timeline', setting: 'competitionTimeline', window: () => true, data: facts => facts.markers.length > 0 },
   { id: 'competition-district', setting: 'competitionDistrict', window: facts => facts.started, data: facts => facts.entry.districtPoints !== null },
   { id: 'competition-last-season', setting: 'competitionLastSeason', window: facts => !facts.started, data: facts => facts.entry.lastSeason !== null },
+  // The two Match13 cards take their numbers from core/match13.js and not from frc-status
+  { id: 'competition-forecast', setting: 'competitionForecast', window: facts => facts.near, data: () => hasForecast() },
+  { id: 'competition-qualify', setting: 'competitionQualify', window: facts => facts.started, data: () => hasQualify() },
 ];
 
 export function isCard(id) {
@@ -55,6 +59,7 @@ let previewed = null; // { frc, until }: a preview (core/competition-preview.js)
 // no data, or no time, ends it.
 export function previewCompetition(frc, until) {
   previewed = frc && typeof until === 'number' && isFinite(until) ? { frc: frc, until: until } : null;
+  setMatch13Preview(previewed !== null);
 }
 
 export function previewIsOn(now = new Date()) {

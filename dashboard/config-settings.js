@@ -259,6 +259,8 @@ export const defaultSettings = {
   competitionResults: true,
   competitionAlliance: true,
   competitionDistrict: true,
+  competitionForecast: true,
+  competitionQualify: true,
   // The Monday tab in the Studio (docs/monday.md). The Teletraan computer reads these (computer/scripts/monday-sync.sh) and writes the
   // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
   // chip) and mondayShowOwners.

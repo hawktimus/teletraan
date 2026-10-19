@@ -71,6 +71,8 @@ export const panels = [
   { id: 'competition-timeline', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-district', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-last-season', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-forecast', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-qualify', region: 'grid1', topic: 'competition', competition: true },
   { id: 'monday-tasks', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-done', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-status-depts', region: 'grid1', topic: 'monday', monday: true },

@@ -1,0 +1,449 @@
+{
+ "generatedAt": "2026-01-01T00:00:00Z",
+ "season": 2026,
+ "ours": [
+  {
+   "code": "prime",
+   "number": 3229
+  },
+  {
+   "code": "nova",
+   "number": 3426
+  }
+ ],
+ "teams": {
+  "3229": {
+   "xp": 61.17,
+   "xpFast": 64.43,
+   "xpSlow": 47.98,
+   "normXp": 1618,
+   "percentile": 68.22,
+   "rank": 1179,
+   "xAuto": 11.81,
+   "xTele": 48.88,
+   "xEnd": 0.49,
+   "epa": 57.71,
+   "opr": 78.05,
+   "dpr": 105.68,
+   "history": [
+    {
+     "eventKey": "2026ncwak",
+     "xpStart": 49.18,
+     "xpEnd": 20.79,
+     "xpMean": 27.08,
+     "xpMax": 37.76,
+     "sos": 0.33,
+     "districtPoints": 30
+    },
+    {
+     "eventKey": "2026ncash",
+     "xpStart": 20.79,
+     "xpEnd": 52.5,
+     "xpMean": 39.55,
+     "xpMax": 52.5,
+     "sos": 0.24,
+     "districtPoints": 50
+    },
+    {
+     "eventKey": "2026nccmp",
+     "xpStart": 52.5,
+     "xpEnd": 61.17,
+     "xpMean": 64.98,
+     "xpMax": 85.78,
+     "sos": 0.97,
+     "districtPoints": 60
+    }
+   ]
+  },
+  "3426": {
+   "xp": 44.2,
+   "xpFast": 45.0,
+   "xpSlow": 40.1,
+   "normXp": 1500,
+   "percentile": 55.0,
+   "rank": 1900,
+   "xAuto": 9.0,
+   "xTele": 35.0,
+   "xEnd": 0.2,
+   "epa": 44.0,
+   "opr": 40.0,
+   "dpr": 50.0,
+   "history": []
+  }
+ },
+ "events": {
+  "2026ncash": {
+   "sim": {
+    "iterations": 25000,
+    "simmedAt": 1792373031107,
+    "teamCount": 40,
+    "teams": [
+     {
+      "teamNumber": 1533,
+      "meanRank": 4,
+      "meanRps": 27,
+      "p5": 2,
+      "p50": 3,
+      "p95": 5
+     },
+     {
+      "teamNumber": 1225,
+      "meanRank": 7,
+      "meanRps": 24,
+      "p5": 5,
+      "p50": 6,
+      "p95": 8
+     },
+     {
+      "teamNumber": 3229,
+      "meanRank": 9,
+      "meanRps": 31.0,
+      "p5": 5,
+      "p50": 11,
+      "p95": 22
+     },
+     {
+      "teamNumber": 2682,
+      "meanRank": 11,
+      "meanRps": 20,
+      "p5": 8,
+      "p50": 10,
+      "p95": 15
+     },
+     {
+      "teamNumber": 3680,
+      "meanRank": 12,
+      "meanRps": 19,
+      "p5": 8,
+      "p50": 11,
+      "p95": 17
+     },
+     {
+      "teamNumber": 4828,
+      "meanRank": 14,
+      "meanRps": 17,
+      "p5": 10,
+      "p50": 13,
+      "p95": 20
+     },
+     {
+      "teamNumber": 9607,
+      "meanRank": 17,
+      "meanRps": 14,
+      "p5": 12,
+      "p50": 16,
+      "p95": 25
+     },
+     {
+      "teamNumber": 3426,
+      "meanRank": 22,
+      "meanRps": 20.5,
+      "p5": 14,
+      "p50": 27,
+      "p95": 36
+     },
+     {
+      "teamNumber": 6908,
+      "meanRank": 28,
+      "meanRps": 3,
+      "p5": 20,
+      "p50": 27,
+      "p95": 40
+     },
+     {
+      "teamNumber": 5518,
+      "meanRank": 29,
+      "meanRps": 2,
+      "p5": 20,
+      "p50": 28,
+      "p95": 40
+     },
+     {
+      "teamNumber": 10583,
+      "meanRank": 30,
+      "meanRps": 1,
+      "p5": 19,
+      "p50": 29,
+      "p95": 40
+     }
+    ]
+   },
+   "field": {
+    "teamCount": 16,
+    "average": 46.77,
+    "top": [
+     {
+      "teamNumber": 2724,
+      "xp": 165.49,
+      "xAuto": 39.88,
+      "xTele": 126.2,
+      "xEnd": -0.59,
+      "epa": 108.97,
+      "sos": 0.7,
+      "rank": 1
+     },
+     {
+      "teamNumber": 1533,
+      "xp": 104.84,
+      "xAuto": 23.72,
+      "xTele": 81.16,
+      "xEnd": -0.04,
+      "epa": 81.66,
+      "sos": 0.84,
+      "rank": 2
+     },
+     {
+      "teamNumber": 8727,
+      "xp": 86.57,
+      "xAuto": 9.99,
+      "xTele": 76.9,
+      "xEnd": -0.33,
+      "epa": 59.45,
+      "sos": 0.32,
+      "rank": 3
+     },
+     {
+      "teamNumber": 4828,
+      "xp": 63.27,
+      "xAuto": 15.31,
+      "xTele": 47.88,
+      "xEnd": 0.08,
+      "epa": 47.82,
+      "sos": 0.45,
+      "rank": 4
+     },
+     {
+      "teamNumber": 1225,
+      "xp": 60.69,
+      "xAuto": 8.5,
+      "xTele": 52.24,
+      "xEnd": -0.05,
+      "epa": 45.73,
+      "sos": 0.88,
+      "rank": 5
+     },
+     {
+      "teamNumber": 3229,
+      "xp": 52.5,
+      "xAuto": 9.1,
+      "xTele": 42.09,
+      "xEnd": 1.31,
+      "epa": 37.63,
+      "sos": 0.24,
+      "rank": 6
+     },
+     {
+      "teamNumber": 11377,
+      "xp": 51.42,
+      "xAuto": 17.97,
+      "xTele": 32.74,
+      "xEnd": 0.71,
+      "epa": 39.18,
+      "sos": 0.16,
+      "rank": 7
+     },
+     {
+      "teamNumber": 2682,
+      "xp": 41.21,
+      "xAuto": 9.71,
+      "xTele": 31.46,
+      "xEnd": 0.05,
+      "epa": 28.79,
+      "sos": 0.57,
+      "rank": 8
+     },
+     {
+      "teamNumber": 10704,
+      "xp": 25,
+      "xAuto": 4.67,
+      "xTele": 19.83,
+      "xEnd": 0.5,
+      "epa": 28.44,
+      "sos": 0.37,
+      "rank": 9
+     },
+     {
+      "teamNumber": 5727,
+      "xp": 23.3,
+      "xAuto": 3.99,
+      "xTele": 19.59,
+      "xEnd": -0.28,
+      "epa": 27.63,
+      "sos": 0.69,
+      "rank": 10
+     },
+     {
+      "teamNumber": 3680,
+      "xp": 15.85,
+      "xAuto": 2.84,
+      "xTele": 12.53,
+      "xEnd": 0.48,
+      "epa": 17.84,
+      "sos": 0.23,
+      "rank": 11
+     },
+     {
+      "teamNumber": 10583,
+      "xp": 15.75,
+      "xAuto": 4.03,
+      "xTele": 11.74,
+      "xEnd": -0.02,
+      "epa": 17.54,
+      "sos": 0.8,
+      "rank": 12
+     }
+    ]
+   },
+   "matches": [
+    {
+     "key": "2026ncash_qm4",
+     "unplayed": false,
+     "pred": {
+      "winProb": 0.8,
+      "redScore": 78.36,
+      "blueScore": 27.25,
+      "redRp1": 0.33,
+      "redRp2": 0,
+      "redRp3": 0,
+      "blueRp1": 0.06,
+      "blueRp2": 0,
+      "blueRp3": 0
+     },
+     "teams": {
+      "1533": 98.28,
+      "3229": 20.79,
+      "6639": 57.91,
+      "6932": -3.01,
+      "9605": 10.17,
+      "10077": 51.72
+     }
+    },
+    {
+     "key": "2026ncash_qm7",
+     "unplayed": false,
+     "pred": {
+      "winProb": 0.62,
+      "redScore": 60.24,
+      "blueScore": 37.42,
+      "redRp1": 0.23,
+      "redRp2": 0,
+      "redRp3": 0,
+      "blueRp1": 0.08,
+      "blueRp2": 0,
+      "blueRp3": 0
+     },
+     "teams": {
+      "3229": 22.96,
+      "3680": -2.27,
+      "5727": 24.11,
+      "9150": 28.89,
+      "10077": 48.45,
+      "11417": 48.27
+     }
+    },
+    {
+     "key": "2026ncash_qm12",
+     "unplayed": false,
+     "pred": {
+      "winProb": 0.4,
+      "redScore": 118.33,
+      "blueScore": 136.36,
+      "redRp1": 0.61,
+      "redRp2": 0,
+      "redRp3": 0,
+      "blueRp1": 0.78,
+      "blueRp2": 0,
+      "blueRp3": 0
+     },
+     "teams": {
+      "1225": 44.86,
+      "2724": 100.87,
+      "3229": 23.46,
+      "4828": 58.17,
+      "7890": 89.17,
+      "9150": 27.07
+     }
+    },
+    {
+     "key": "2026ncash_sf4m1",
+     "unplayed": false,
+     "pred": {
+      "winProb": 0.68,
+      "redScore": 98.36,
+      "blueScore": 70.19,
+      "redRp1": 0.46,
+      "redRp2": 0,
+      "redRp3": 0,
+      "blueRp1": 0.26,
+      "blueRp2": 0,
+      "blueRp3": 0
+     },
+     "teams": {
+      "3229": 48.52,
+      "6639": 45.06,
+      "6888": 41.42,
+      "6908": 13.04,
+      "7918": 50.71,
+      "11417": 28.89
+     }
+    }
+   ],
+   "notes": []
+  }
+ },
+ "district": {
+  "source": "engine",
+  "capacity": 50,
+  "cmpSlots": 15,
+  "cmpCutline": {
+   "q10": 200,
+   "q50": 231,
+   "q90": 260
+  },
+  "pools": [
+   {
+    "name": "fnc",
+    "capacity": 50,
+    "autos": 6,
+    "seatsByPoints": 44,
+    "cutline": {
+     "q10": 56,
+     "q50": 56,
+     "q90": 56
+    }
+   }
+  ],
+  "teamCount": 4,
+  "ourTeams": [
+   {
+    "teamNumber": 3229,
+    "rank": 25,
+    "total": 98,
+    "pCmp": 0.08,
+    "pDcmp": 0.62,
+    "q10": 80,
+    "q50": 120,
+    "q90": 160,
+    "mean": 121,
+    "cmpStatus": "in_range",
+    "dcmpStatus": "in_range"
+   },
+   {
+    "teamNumber": 3426,
+    "rank": 41,
+    "total": 64,
+    "pCmp": 0.02,
+    "pDcmp": 0.31,
+    "q10": 50,
+    "q50": 90,
+    "q90": 130,
+    "mean": 92,
+    "cmpStatus": "out_of_range",
+    "dcmpStatus": "in_range"
+   }
+  ],
+  "code": "fnc",
+  "notes": []
+ },
+ "sample": true
+}
