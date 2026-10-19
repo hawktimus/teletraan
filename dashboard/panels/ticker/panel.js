@@ -6,6 +6,7 @@ import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
 import { prefixFor } from '../../core/pack-extras.js';
 import { packExtras } from '../../core/theme.js';
+import { newsTickerLines } from '../../core/news.js';
 
 // Longer words need a wider tag. The word is centred on the tag, and the
 // slanted ends of the tag leave about 50px less room than its width.
@@ -20,7 +21,8 @@ const tags = {
 const noteKinds = ['tip', 'news', 'reminder'];
 
 // Tips, news and reminders in the order they are stored, then a thank you
-// from each sponsor that has one. An entry with no kind is shown as news.
+// from each sponsor that has one, then the newest FIRST headlines when Show news in the ticker is on
+// (core/news.js). An entry with no kind is shown as news.
 export function items(content) {
   const notes = visibleItems(content.tipsAndNews)
     .filter(note => hasText(note.text))
@@ -30,7 +32,7 @@ export function items(content) {
     .filter(sponsor => hasText(sponsor.thankYou))
     .map(sponsor => ({ kind: 'thanks', text: String(sponsor.thankYou).trim() }));
 
-  return notes.concat(thanks);
+  return notes.concat(thanks, newsTickerLines(content));
 }
 
 export function mount(host, content) {

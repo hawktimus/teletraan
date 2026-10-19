@@ -27,7 +27,7 @@ const otherChoices = rotationPanels.filter(item => item.value !== 'monday-pie').
 export const panelGroups = [
   { title: 'Wall panels', panels: largePanels },
   { title: 'Monday cards', panels: mondayChoices },
-  { title: 'Competition, drive and robot', panels: otherChoices },
+  { title: 'Competition, news, drive and robot', panels: otherChoices },
 ];
 
 // The small panels a split row can sit beside
