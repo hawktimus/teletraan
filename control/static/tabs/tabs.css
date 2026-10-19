@@ -61,3 +61,9 @@
   .tab dd { text-align: left; }
 }
 .tab [hidden] { display: none; }
+/* Settings: three folding sections */
+.settings-page { max-width: 1100px; margin: 0 auto; padding: 16px 0; }
+.settings-page .fold { margin: 0 0 16px; background: var(--card, #fff); border: 2px solid var(--line, #d9d2e6); border-radius: 8px; }
+.settings-page .fold > summary { min-height: 44px; padding: 10px 16px; font: 700 20px 'Tomorrow', system-ui, sans-serif; color: var(--purple-dark, #53048f); cursor: pointer; }
+.settings-page .fold-body { padding: 0 16px 16px; }
+.settings-page .fold-body.tab { padding-top: 0; }

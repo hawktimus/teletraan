@@ -1,8 +1,7 @@
-// The Keys tab: the keys and calendar links of local.env, masked. A value is typed once and sent once.
+// The Keys section of Settings: the keys and calendar links of local.env, masked. A value is typed once and sent once.
 // Saving goes through the helper, then the calendars run once. The Mac tool stays as the way in when this
 // page cannot be reached.
 
-import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
 import { keysHtml } from './render.js';
 
@@ -29,39 +28,34 @@ function collect(root) {
   return body;
 }
 
-registerTab({
-  id: 'keys',
-  title: 'Keys',
-  order: 40,
-  async render(container) {
-    useStyles();
-    container.innerHTML = '<div class="tab" data-root></div>';
-    const root = container.querySelector('[data-root]');
+export async function mountKeys(container) {
+  useStyles();
+  container.innerHTML = '<div class="tab" data-root></div>';
+  const root = container.querySelector('[data-root]');
 
-    async function load() {
-      const answer = await api('GET', '/env');
-      root.innerHTML = answer.ok ? keysHtml(answer.data) : '<section class="card"><h2>Keys</h2><p>' + answer.error + '</p></section>';
+  async function load() {
+    const answer = await api('GET', '/env');
+    root.innerHTML = answer.ok ? keysHtml(answer.data) : '<section class="card"><h2>Keys</h2><p>' + answer.error + '</p></section>';
+  }
+  await load();
+
+  root.addEventListener('click', async event => {
+    const note = root.querySelector('[data-note]');
+    const clear = event.target.closest('[data-clear],[data-clear-calendar]');
+    if (clear) {
+      const box = clear.closest('.key');
+      box.dataset.clear = box.dataset.clear === 'yes' ? 'no' : 'yes';
+      clear.textContent = box.dataset.clear === 'yes' ? 'Will be cleared' : 'Clear';
+      return;
     }
+    if (!event.target.closest('[data-save]')) return;
+
+    const body = collect(root);
+    note.textContent = 'Saving.';
+    const result = await api('POST', '/env', body);
+    if (!result.ok) { note.textContent = result.error; note.dataset.bad = 'yes'; return; }
+    note.dataset.bad = 'no';
     await load();
-
-    root.addEventListener('click', async event => {
-      const note = root.querySelector('[data-note]');
-      const clear = event.target.closest('[data-clear],[data-clear-calendar]');
-      if (clear) {
-        const box = clear.closest('.key');
-        box.dataset.clear = box.dataset.clear === 'yes' ? 'no' : 'yes';
-        clear.textContent = box.dataset.clear === 'yes' ? 'Will be cleared' : 'Clear';
-        return;
-      }
-      if (!event.target.closest('[data-save]')) return;
-
-      const body = collect(root);
-      note.textContent = 'Saving.';
-      const result = await api('POST', '/env', body);
-      if (!result.ok) { note.textContent = result.error; note.dataset.bad = 'yes'; return; }
-      note.dataset.bad = 'no';
-      await load();
-      root.querySelector('[data-note]').textContent = 'Saved. The calendars ' + (result.data.calendarsRun ? 'were read again.' : 'will be read at the next run.');
-    });
-  },
-});
+    root.querySelector('[data-note]').textContent = 'Saved. The calendars ' + (result.data.calendarsRun ? 'were read again.' : 'will be read at the next run.');
+  });
+}

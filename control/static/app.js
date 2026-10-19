@@ -1,6 +1,6 @@
 // The shell of the page: loads the tab files the service lists, draws the tab bar and shows the tab in the address.
 
-import { tabs } from './tabs.js';
+import { tabs, resolveAddress } from './tabs.js';
 import { api, shortDate } from './api.js';
 
 const bar = document.getElementById('tabs');
@@ -13,7 +13,8 @@ function leaver(result) {
   return () => pending.then(done => { if (typeof done === 'function') done(); });
 }
 
-function show(id) {
+function show(address) {
+  const { id, section } = resolveAddress(address);
   const tab = tabs.find(other => other.id === id) || tabs[0];
   if (!tab) return;
   if (leave) leave();
@@ -21,8 +22,8 @@ function show(id) {
   page.replaceChildren();
   const fresh = document.createElement('div');
   page.append(fresh);
-  leave = leaver(tab.render(fresh));
-  history.replaceState(null, '', '#' + tab.id);
+  leave = leaver(tab.render(fresh, section));
+  history.replaceState(null, '', '#' + tab.id + (section ? '/' + section : ''));
 }
 
 async function wallLine() {
@@ -33,7 +34,7 @@ async function wallLine() {
     const commit = live.commit ? ' · ' + live.commit : '';
     document.getElementById('on-wall').textContent = 'On the wall: v' + live.version + commit + (live.date ? ' · ' + shortDate(live.date) : '');
   } catch (error) {
-    // the Update tab shows the reason
+    // the Update section of Settings shows the reason
   }
 }
 

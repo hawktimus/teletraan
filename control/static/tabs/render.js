@@ -1,4 +1,4 @@
-// The text of the four tabs (Now showing, Status, Keys, Log) as HTML strings. They take the answers
+// The text of the Status and Settings tabs as HTML strings. They take the answers
 // of the control API and give markup, with every value from the Teletraan computer escaped. The tab files
 // (now.js, status.js, keys.js, log.js) put the markup in the page and wire the buttons. Nothing
 // here touches the page, so Node can try it.
@@ -176,7 +176,7 @@ export function pictureFacts(bytes, width, height) {
 // status is the number a HEAD of the same address answered, or 0 when nothing answered
 export function pictureErrorLine(status) {
   const answer = Number(status) > 0 ? 'the server answered ' + Number(status) : 'the server did not answer';
-  return 'The picture could not be loaded: ' + answer + '. See the Log tab.';
+  return 'The picture could not be loaded: ' + answer + '. See Settings, Log.';
 }
 
 export function mirrorPictureAddress(counter) {
@@ -311,7 +311,7 @@ export function nowControlsHtml(options) {
   const panels = (o.panels || []).map(panel => ({ value: panel, label: panel }));
   const talks = (o.talks || []).map(talk => '<li>' + esc(talk.name || talk.topic || 'Talk') + ', ' + esc(talk.start) + '</li>').join('');
   const live = o.liveAnnouncements === null || o.liveAnnouncements === undefined ? 'not known' : o.liveAnnouncements;
-  const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it on the Keys tab, then these buttons work.</p>' : '';
+  const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it in Settings, Keys, then these buttons work.</p>' : '';
 
   return '<div class="grid">' + blocked +
     card('Move on', '<div class="buttons">' + button('next', 'Next') + button('pause', 'Pause rotation') + button('resume', 'Resume rotation') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>') +
@@ -388,5 +388,5 @@ export function outcome(result, action, body = {}) {
   if (result && result.unreachable && ['reboot', 'restart-services'].includes(action)) {
     return { state: 'wait', words: 'Sent. The connection dropped, which is normal while the computer restarts. Wait about a minute, then reload this page.' };
   }
-  return { state: 'bad', words: (result && result.error) || 'That did not work, and the Teletraan computer gave no reason. The Log tab may have one.' };
+  return { state: 'bad', words: (result && result.error) || 'That did not work, and the Teletraan computer gave no reason. Settings, Log may have one.' };
 }

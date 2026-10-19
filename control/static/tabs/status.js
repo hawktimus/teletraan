@@ -1,76 +1,28 @@
-// The Status tab: the three dots with their reasons, what runs, and the restart and sync buttons.
+// The Status tab: what is on the wall, a live preview, the buttons that change it, and the health of the computer.
+// The pieces are in now.js (card, preview, controls) and health.js (dots, reads, restart and sync).
 
 import { registerTab } from '../tabs.js';
-import { api, confirmed, showResult, useStyles } from './api.js';
-import { esc, outcome, statusHtml } from './render.js';
-
-const restarts = [
-  { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
-  { word: 'restart-services', label: 'Restart services', doing: 'Restarting the services' },
-  { word: 'reboot', label: 'Reboot the computer', doing: 'Rebooting the Teletraan computer' },
-];
-const syncs = [
-  { target: 'calendars', label: 'Sync calendars now' },
-  { target: 'monday', label: 'Sync Monday now' },
-  { target: 'frc', label: 'Sync competition now' },
-  { target: 'photos-drive', label: 'Copy Drive photos now' },
-];
-
-function buttons(box) {
-  const run = async (button, word, body, doing) => {
-    showResult(button, 'working', doing + '.');
-    const result = await api('POST', '/helper/' + word, body);
-    const shown = outcome(result, word, body);
-    showResult(button, shown.state, shown.words);
-  };
-
-  const big = document.createElement('div');
-  big.className = 'buttons';
-  restarts.forEach(item => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'act';
-    button.textContent = item.label;
-    big.appendChild(button);
-    confirmed(button, 10, item.doing, () => run(button, item.word, { confirmed: true }, item.doing));
-  });
-
-  const small = document.createElement('div');
-  small.className = 'buttons small';
-  syncs.forEach(item => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'act quiet';
-    button.textContent = item.label;
-    button.addEventListener('click', () => run(button, 'sync-now', { target: item.target }, 'Syncing ' + item.target));
-    small.appendChild(button);
-  });
-  box.append(big, small);
-}
+import { mountNow } from './now.js';
+import { mountHealth } from './health.js';
 
 registerTab({
   id: 'status',
   title: 'Status',
-  order: 30,
+  order: 10,
   async render(container) {
-    useStyles();
-    container.innerHTML = '<div class="tab"><div data-body></div><section class="card"><h2>Restart and sync</h2><div data-buttons></div></section></div>';
-    const body = container.querySelector('[data-body]');
-    buttons(container.querySelector('[data-buttons]'));
-
-    // Only redrawn when the words changed, so the scroll position stays
-    let last = '';
-    let left = false;
-    async function refresh() {
-      const answer = await api('GET', '/status');
-      if (left) return;
-      const html = answer.ok ? statusHtml(answer.data) : '<section class="card"><h2>Status</h2><p>' + esc(answer.error) + '</p></section>';
-      if (html === last) return;
-      last = html;
-      body.innerHTML = html;
-    }
-    await refresh();
-    const timer = setInterval(refresh, 30000);
-    return () => { left = true; clearInterval(timer); };
+    container.innerHTML = '<div class="tab status-page">' +
+      '<div class="cols">' +
+      '<div class="left"><div data-card></div><div data-preview-card></div></div>' +
+      '<div class="right" data-controls></div>' +
+      '</div>' +
+      '<div data-health-body></div>' +
+      '<section class="card"><h2>Restart and sync</h2><div data-health-buttons></div></section>' +
+      '</div>';
+    const find = name => container.querySelector('[' + name + ']');
+    const stops = await Promise.all([
+      mountNow({ cardBox: find('data-card'), previewBox: find('data-preview-card'), controls: find('data-controls') }),
+      mountHealth(find('data-health-body'), find('data-health-buttons')),
+    ]);
+    return () => stops.forEach(stop => { if (typeof stop === 'function') stop(); });
   },
 });

@@ -1,4 +1,4 @@
-// Tests for the text of the four tabs (control/static/tabs/render.js) and that every tab file is
+// Tests for the text of the two tabs (control/static/tabs/render.js) and that every tab file is
 // well formed and registers itself. The tabs are phone first with 44px targets.
 //
 //   node tests/control-pages.test.mjs
@@ -74,11 +74,15 @@ check('the Keys tab never holds a value, only the mask, and has a field and a cl
 });
 
 check('each tab file registers itself with an id and a title, and parses', () => {
-  const expected = { 'now.js': 'Now showing', 'status.js': 'Status', 'keys.js': 'Keys', 'log.js': 'Log' };
-  Object.keys(expected).forEach(file => {
+  const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
+  const sections = ['now.js', 'health.js', 'keys.js', 'log.js'];
+  sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
+  [...Object.keys(expected), ...sections].forEach(file => {
     const text = fs.readFileSync(path.join(folder, file), 'utf8');
-    assert.match(text, /registerTab\(\{/);
-    assert.ok(text.includes("title: '" + expected[file] + "'"), file);
+    if (expected[file]) {
+      assert.match(text, /registerTab\(\{/);
+      assert.ok(text.includes("title: '" + expected[file] + "'"), file);
+    }
     const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-tab-')), file.replace('.js', '.mjs'));
     fs.writeFileSync(copy, text);
     const checked = spawnSync(process.execPath, ['--check', copy], { encoding: 'utf8' });
@@ -131,6 +135,15 @@ check('after a press the page says what the wall reports, and after 20 seconds w
   assert.equal(notChangedWords, 'The wall has not changed yet. It checks every 10 seconds.');
   assert.equal(wallCheck('theme', 'cybertron', { theme: 'cybertron' }, 40, names).state, 'done', 'a late change is still reported');
   assert.equal(wallCheck('view', 'nova', { view: 'nova' }, 4, {}).words, 'The wall shows Nova now.');
+});
+
+check('the old addresses land on Status or on a section of Settings', async () => {
+  const { resolveAddress } = await import('../control/static/tabs.js');
+  assert.deepEqual(resolveAddress('now'), { id: 'status', section: '' });
+  assert.deepEqual(resolveAddress('status'), { id: 'status', section: '' });
+  ['update', 'keys', 'log'].forEach(name => assert.deepEqual(resolveAddress(name), { id: 'settings', section: name }));
+  assert.deepEqual(resolveAddress('settings/log'), { id: 'settings', section: 'log' });
+  assert.deepEqual(resolveAddress(''), { id: '', section: '' });
 });
 
 console.log(passed + ' of ' + passed + ' checks passed.');

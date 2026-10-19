@@ -1,7 +1,6 @@
-// The Now showing tab: what is on the wall, and the buttons that change it. The card refreshes every
+// The Now on the wall card, the live preview and the controls of the Status tab: what is on the wall, and the buttons that change it. The card refreshes every
 // 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
-import { registerTab } from '../tabs.js';
 import { api, showResult, useStyles } from './api.js';
 import { nowCardHtml, nowControlsHtml, outcome, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 import { wirePreview } from './preview.js';
@@ -119,44 +118,37 @@ function wire(root, watcher) {
   });
 }
 
-registerTab({
-  id: 'now',
-  title: 'Now showing',
-  order: 20,
-  async render(container) {
-    useStyles();
-    container.innerHTML = '<div class="tab"><div data-card></div><div data-preview-card></div><div data-controls></div></div>';
-    const cardBox = container.querySelector('[data-card]');
-    const previewBox = container.querySelector('[data-preview-card]');
-    previewBox.innerHTML = previewCardHtml();
-    let stopPreview = wirePreview(previewBox);
-    let timer = null;
-    let left = false;
-    let ticker = null;
-    const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); if (stopPreview) stopPreview(); stopPreview = null; };
+// Puts the card, the live preview and the buttons into the three boxes it is given. Returns the function that stops it.
+export async function mountNow(boxes) {
+  useStyles();
+  const { cardBox, previewBox, controls } = boxes;
+  previewBox.innerHTML = previewCardHtml();
+  let stopPreview = wirePreview(previewBox);
+  let timer = null;
+  let left = false;
+  let ticker = null;
+  const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); if (stopPreview) stopPreview(); stopPreview = null; };
 
-    const controls = container.querySelector('[data-controls]');
-    const options = await api('GET', '/request');
-    if (left) return leave;
-    controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
-    const watcher = makeWatcher(controls, options.ok && options.data ? options.data : {});
-    wire(controls, watcher);
-    watcher.tick(0);
-    let ticks = 0;
-    ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
+  const options = await api('GET', '/request');
+  if (left) return leave;
+  controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
+  const watcher = makeWatcher(controls, options.ok && options.data ? options.data : {});
+  wire(controls, watcher);
+  watcher.tick(0);
+  let ticks = 0;
+  ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
 
-    // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
-    let last = '';
-    async function refresh() {
-      const answer = await api('GET', '/now');
-      if (left) return;
-      const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
-      if (html === last) return;
-      last = html;
-      cardBox.innerHTML = html;
-    }
-    await refresh();
-    if (!left) timer = setInterval(refresh, 10000);
-    return leave;
-  },
-});
+  // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
+  let last = '';
+  async function refresh() {
+    const answer = await api('GET', '/now');
+    if (left) return;
+    const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
+    if (html === last) return;
+    last = html;
+    cardBox.innerHTML = html;
+  }
+  await refresh();
+  if (!left) timer = setInterval(refresh, 10000);
+  return leave;
+}

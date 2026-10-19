@@ -1,4 +1,4 @@
-// The buttons of the Now showing tab. POST /control/api/request { action, ... } writes the request
+// The buttons of the Status tab. POST /control/api/request { action, ... } writes the request
 // into Dashboard Settings, where the screen reads it (support/requests.js lists the actions and
 // what each one writes). GET /control/api/request gives the tab its choices: the views with the
 // names of the Team documents, the themes, the panels that can be held, the announcements that are

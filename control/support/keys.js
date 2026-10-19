@@ -1,4 +1,4 @@
-// The Keys tab: what is shown of a key, how a form is checked, and how it is merged into local.env.
+// The Keys section of Settings: what is shown of a key, how a form is checked, and how it is merged into local.env.
 // The rules are those of tools/teletraan/merge-env.sh and the Mac tool's key menu, so the two ways in
 // treat the file alike. Nothing here logs or returns a value except the merged file that goes to
 // the helper.

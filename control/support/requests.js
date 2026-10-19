@@ -1,4 +1,4 @@
-// What each button of the Now showing tab writes. The screen reads these fields of Dashboard
+// What each button of the Status tab writes. The screen reads these fields of Dashboard
 // Settings (dashboard/core/screen-requests.js, announce.js, screens.js). Every request that holds
 // something has an until time, so a hold that is forgotten ends on its own. This file builds the
 // Sanity mutations and checks the input; routes/request.js sends them.

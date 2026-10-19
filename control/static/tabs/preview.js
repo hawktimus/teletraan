@@ -1,4 +1,4 @@
-// The Live preview card of the Now showing tab. It shows a moving picture of the TV when the mirror runs on the
+// The Live preview card of the Status tab. It shows a moving picture of the TV when the mirror runs on the
 // Teletraan computer (computer/scripts/mirror.py), and falls back to a still copy of the dashboard that follows the
 // TV's report when the mirror cannot start.
 //
