@@ -43,6 +43,26 @@ that is off and is skipped. The words view change mark where the wall swaps view
 full loop takes, counting only the rows that are on. A row whose panel has nothing to show at that moment is skipped by the
 wall, so a real loop can be shorter.
 
+## Automatic panels
+
+Under the loop preview, a section called Automatic panels lists what the wall adds by itself. None of it is a row, so none of
+it is in the table. It is open on a computer and closed on a phone. Each card says Added by the wall, not a row, when it comes
+in, and whether the same panel can also be a row.
+
+- The seven competition cards: Next match, Live rank, Results strip (the last matches, also called Match Statistics), Alliance
+  board, Season timeline, District points and Last season at a glance. In Auto they come in from 2 days before an event. Only
+  Live rank can also be a row (Competition: Rank).
+- Above them, the mode of Dashboard Settings (Auto, Always or Off) with a link to the Competition page, and one line from the
+  frc-status document the Mini writes, such as Next event: Wake on 12 March 2027: the cards start on 10 March 2027. With no
+  event ahead it says No event is coming up: the cards are off.
+- A Monday card row with no department: it expands to one step for each Team lead.
+- The announcement bar and alerts, which sit on top of everything.
+- Booked talks, which take the whole screen.
+- The small panel on the right, and the banner, countdown and ticker that stay on screen.
+- Season packs and subthemes. They are not panels.
+
+The code is studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.js.
+
 ## The buttons above the table
 
 - Add row: pick a View and a Panel, then Add row. The new row goes at the end.
@@ -68,4 +88,5 @@ publish (Publish all names it) is the other reason the wall differs from the boa
 - studio/inputs/rotation-board-parts.js: the drawing and the style sheet.
 - studio/tools/rotation-board.js: the plain functions (groups, loop time, changes, save).
 - studio/tools/rotation-titles.js: the one table of view and panel titles.
+- studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.js: the Automatic panels section.
 - tests/rotation-board.test.mjs and tests/rotation-wall-path.test.mjs: the tests.

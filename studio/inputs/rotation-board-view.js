@@ -16,6 +16,8 @@ import {
   setShown, settingsFrom, skipNotes, skipQuestion, standardRows, startingPhotos, wholeFrom, defaultPageSeconds,
 } from '../tools/rotation-board.js';
 import { panelChoices, boardCss, stripOfPage, styles, tableOf, toolsOf, words } from './rotation-board-parts.js';
+import { autoCss, autoSection } from './rotation-auto-parts.js';
+import { competitionModeFrom, frcQuestion } from '../tools/rotation-auto.js';
 
 const h = createElement;
 
@@ -25,7 +27,7 @@ const draftId = 'drafts.dashboardSettings';
 
 export { words };
 
-const question = '*[_id in [$draft, $published]]{ _id, _type, rotationRows, pageSeconds, partsRequestUrl }';
+const question = '*[_id in [$draft, $published]]{ _id, _type, rotationRows, pageSeconds, partsRequestUrl, competitionMode }';
 
 // The page for what it knows: rows is null while reading or when there is no Dashboard Settings
 export function pageOf(state, actions) {
@@ -41,14 +43,15 @@ export function pageOf(state, actions) {
       tools[0],
       tools[1],
       state.rows.length === 0 ? h('p', { style: styles.text, 'data-block': 'empty' }, words.empty) : tableOf(state, actions),
-      state.rows.length === 0 ? null : stripOfPage(state)
+      state.rows.length === 0 ? null : stripOfPage(state),
+      autoSection(state)
     );
   }
 
   return h(
     'div',
     { style: styles.page },
-    h('style', null, boardCss),
+    h('style', null, boardCss + autoCss),
     h(
       'div',
       { style: styles.column },
@@ -67,7 +70,7 @@ export function RotationView(props) {
   const ask = props && typeof props.confirm === 'function' ? props.confirm : text => (typeof window !== 'undefined' ? window.confirm(text) : true);
   const [state, setState] = useState({
     read: false, rows: null, settings: { pageSeconds: defaultPageSeconds, partsLink: false }, busy: false, text: '', failed: false, open: '', collapsed: {}, selected: {}, history: [],
-    newView: 'robotics', newPanel: panelChoices[0].value, dragging: -1, data: null,
+    newView: 'robotics', newPanel: panelChoices[0].value, dragging: -1, data: null, mode: 'auto', frc: { read: false, doc: null, unreadable: false },
   });
   const latest = useRef(state);
   latest.current = state;
@@ -78,7 +81,7 @@ export function RotationView(props) {
     Promise.resolve()
       .then(() => client.fetch(question, { draft: draftId, published: settingsId }, { perspective: 'raw' }))
       .then(found => {
-        if (!stopped) setState(Object.assign({}, latest.current, { read: true, rows: rowsFrom(found), settings: settingsFrom(found) }));
+        if (!stopped) setState(Object.assign({}, latest.current, { read: true, rows: rowsFrom(found), settings: settingsFrom(found), mode: competitionModeFrom(found) }));
       })
       .catch(() => {
         if (!stopped) setState(Object.assign({}, latest.current, { read: true, rows: null }));
@@ -91,6 +94,15 @@ export function RotationView(props) {
         if (!stopped) setState(Object.assign({}, latest.current, { data: data }));
       })
       .catch(() => {});
+    // The competition data the Mini wrote, for the status line of the Automatic panels. A failure only changes the line.
+    Promise.resolve()
+      .then(() => client.fetch(frcQuestion, {}, { perspective: 'published' }))
+      .then(doc => {
+        if (!stopped) setState(Object.assign({}, latest.current, { frc: { read: true, doc: doc || null, unreadable: false } }));
+      })
+      .catch(() => {
+        if (!stopped) setState(Object.assign({}, latest.current, { frc: { read: true, doc: null, unreadable: true } }));
+      });
     return () => {
       stopped = true;
     };

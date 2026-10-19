@@ -17,7 +17,7 @@ process.on('exit', () => fs.rmSync(work, { recursive: true, force: true }));
 
 fs.cpSync(path.join(root, 'studio', 'tools'), path.join(work, 'tools'), { recursive: true });
 fs.mkdirSync(path.join(work, 'inputs'));
-['screen-panels.js', 'rotation-board-parts.js', 'rotation-board-view.js'].forEach(file => fs.copyFileSync(path.join(root, 'studio', 'inputs', file), path.join(work, 'inputs', file)));
+['screen-panels.js', 'rotation-board-parts.js', 'rotation-board-view.js', 'rotation-auto-parts.js'].forEach(file => fs.copyFileSync(path.join(root, 'studio', 'inputs', file), path.join(work, 'inputs', file)));
 fs.writeFileSync(path.join(work, 'package.json'), '{ "type": "module" }\n');
 const stub = (name, files) => {
   fs.mkdirSync(path.join(work, 'node_modules', name), { recursive: true });
@@ -28,8 +28,9 @@ stub('react', {
   'index.js': 'export const createElement = (type, props, ...children) => ({ type, props: props || {}, children });\nexport const useState = v => [v, () => {}];\nexport const useRef = v => ({ current: v });\nexport const useEffect = () => {};',
 });
 stub('sanity', {
-  'package.json': JSON.stringify({ name: 'sanity', type: 'module', exports: { '.': './index.js' } }),
+  'package.json': JSON.stringify({ name: 'sanity', type: 'module', exports: { '.': './index.js', './router': './router.js' } }),
   'index.js': 'export const useClient = () => ({});',
+  'router.js': "export const Link = 'a';",
 });
 
 const load = file => import(pathToFileURL(path.join(work, file)).href);
