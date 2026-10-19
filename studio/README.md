@@ -32,6 +32,7 @@ TV. The dashboard reads what they publish.
     inputs/show-on-tv-input.js      the Show on TV switch of a task, which draws a task with no value as on
     inputs/status-input.js          the Status of the Teletraan computer block at the top of the Screen tab of Dashboard Settings
     inputs/frc-status-input.js      the block at the top of the Competition tab of Dashboard Settings: when the computer last read the competition data
+    inputs/news-section.js          the FRC news section of the Competition page: the headlines the computer read from the FIRST blog with a Show switch each, the news switches and the categories (news-parts.js has the words and the plain functions)
     inputs/monday-status-input.js   the block at the top of the Monday tab of Dashboard Settings: who the token belongs to, when the computer last read Monday, the boards chosen and the tasks made, and a line for each board entry
     inputs/monday-pickers.js        the board list and the column lists of a board entry on the Monday tab, which show names and store numbers and ids
     inputs/panel-order-input.js     the Panel order list in Dashboard Settings, which is hidden now and fills itself from the two older panel lists when it is empty
