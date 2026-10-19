@@ -121,6 +121,24 @@ export const defaultTeam = {
 // The header text color of a team with the inverted palette (Nova) that has none typed in the Studio yet
 export const invertedHeaderInk = '#1A1200';
 
+// The colors a team with the inverted palette falls back to for a color its document does not hold, so a Team that was only
+// partly updated is gold and purple all through and not gold with Prime's purple plates and body. They are the Nova values of
+// studio/tools/team-standard.js.
+export const invertedColors = {
+  primary: '#D4A017',
+  plate: '#6B4C08',
+  accent: '#C86BFF',
+  neon: '#B23CFF',
+  pink: '#D4A017',
+  background: '#17110A',
+  text: '#FFFFFF',
+  body: '#241A04',
+  label: '#D9A6FF',
+  headerInk: invertedHeaderInk,
+  dark: '#3D2A05',
+  retro: '#E0A400',
+};
+
 // The team the screen shows when the Studio has no Teams, and the colors that a team
 // document with a missing or mistyped color falls back to (core/sanity.js). It is Prime
 // with the colors the screen has always had in Original: teams.css starts at the same nine.

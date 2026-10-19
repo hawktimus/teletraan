@@ -78,11 +78,11 @@ function playOrder(content) {
 // The steps of the large panel of a view, in order, as { panel, show, team, seconds, row, view }. The team of a step is
 // the team of the view for a team view, and the team of the row otherwise. A step is left out when its row is for a team
 // that is not switched on or for another team than ?team= asks for, and a Monday row while it has nothing to show.
-export function viewSteps(content, key, now = new Date(), block = -1) {
+export function viewSteps(content, key, now = new Date(), block = -1, ownRows = null) {
   const view = resolveView(content, key);
   const teams = teamsOf(content).map(team => team.code);
   const only = addressTeam();
-  const rows = expandRows(rowsOfView(content, key, block), content, now);
+  const rows = expandRows(ownRows || rowsOfView(content, key, block), content, now);
   const steps = [];
 
   if (view.team !== '' && (!teams.includes(view.team) || (only !== '' && view.team !== only))) return steps;
@@ -239,8 +239,16 @@ export function findViewWithPanel(content, panel, now = new Date()) {
 
 // The steps of the large panel: the view the clock is on
 export function viewPlaylist(content, now = new Date()) {
-  const steps = viewSteps(content, listedView(content), now, cycle.block);
-  return heldPanel === '' ? steps : steps.filter(step => step.panel === heldPanel);
+  const key = listedView(content);
+  const steps = viewSteps(content, key, now, cycle.block);
+  if (heldPanel === '') return steps;
+
+  const held = steps.filter(step => step.panel === heldPanel);
+  if (held.length > 0) return held;
+
+  // A panel with no row in the list (Daily Agenda, Tasks) is still shown when the control page holds it, in the team of the view
+  const row = tidyMainRow({ panel: heldPanel, team: resolveView(content, key).team }, key === 'general');
+  return row === null ? [] : viewSteps(content, key, now, cycle.block, [row]);
 }
 
 // The small panel a row of the rotation pairs with the panel of the large frame (the side of the row), while that row is on

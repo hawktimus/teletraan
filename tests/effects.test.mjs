@@ -4920,7 +4920,7 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
   const schedule = code(read('core/schedule.js'));
   assert.ok(/function rotationPaused\(\) \{\s*return pauses > 0 \|\| frame\.isPaused\(\);\s*\}/.test(schedule));
   assert.ok(schedule.includes('if (!rotationPaused() && clockHeld === 0) left -= 250;'), 'and neither does it while a swap holds the clock');
-  assert.ok(schedule.includes('while (rotationPaused()) await frame.wait(250);'));
+  assert.ok(schedule.includes('while (rotationPaused() && hasPage()) await frame.wait(250);'));
   assert.equal((schedule.match(/frame\.isPaused\(\)/g) || []).length, 1, 'asked in one place');
 
   // the others ask this one, so a hold is a cover to all of them

@@ -26,8 +26,10 @@ async function hold(milliseconds, since, region) {
   }
 }
 
-async function waitWhilePaused() {
-  while (rotationPaused()) await frame.wait(250);
+// A region with no page yet is let draw its first one, so a pause asked for before the screen had anything (a restart during
+// a pause of the control page) never leaves the frame empty
+async function waitWhilePaused(hasPage) {
+  while (rotationPaused() && hasPage()) await frame.wait(250);
 }
 
 // Waits, but ends at once when the region is asked to move on (moveOn): a region with nothing to show must not make a swap
@@ -121,6 +123,7 @@ function runRotation(region, getPlaylist, getContent) {
   let seenRestarts = restarts;
   let seenSkips = rowSkips;
   let somePanelFailed = false; // set by pickPage when a panel could not be drawn
+  let pageShown = false; // true once a page is on screen in this region
 
   // The large panel asks the Screens about a step. A problem there leaves the step as it is.
   function askScreens(name, step, fallback) {
@@ -263,7 +266,7 @@ function runRotation(region, getPlaylist, getContent) {
     while (true) {
       try {
         await waitForLayout();
-        await waitWhilePaused();
+        await waitWhilePaused(() => pageShown);
         followRestarts();
         followListResets();
         followRowSkips();
@@ -278,6 +281,7 @@ function runRotation(region, getPlaylist, getContent) {
 
         // the old page leaves and the next arrives, or the region empties
         const arrivedAfter = await changePage(region, next ? next.page : null);
+        pageShown = Boolean(next);
         notePageNumber(region, 1);
         onScreen[region] = next && next.topic && hasRegion(layoutNow(), region) ? [next.topic] : [];
 
@@ -303,6 +307,7 @@ function runRotation(region, getPlaylist, getContent) {
       } catch (error) {
         console.error('The ' + region + ' rotation hit a problem and will try again', error);
         clearRegion(region);
+        pageShown = false;
         onScreen[region] = [];
         await frame.wait(5000);
       }
@@ -318,6 +323,7 @@ export function startTicker(getContent) {
   let position = -1;
   let seenRestarts = restarts;
   let lastLines = null;
+  let lineShown = false; // true once a line is on screen
 
   // A line that is new or changed shows within a second of the publish, not after the lines before it
   function watchLines() {
@@ -346,7 +352,7 @@ export function startTicker(getContent) {
   async function loop() {
     while (true) {
       try {
-        await waitWhilePaused();
+        await waitWhilePaused(() => lineShown);
         if (seenRestarts !== restarts) {
           seenRestarts = restarts;
           position = -1;
@@ -373,10 +379,12 @@ export function startTicker(getContent) {
           continue;
         }
         const arrivedAfter = await changePage('ticker', page);
+        lineShown = true;
         await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter), since, 'ticker');
       } catch (error) {
         console.error('The ticker hit a problem and will try again', error);
         clearRegion('ticker');
+        lineShown = false;
         await frame.wait(5000);
       }
     }

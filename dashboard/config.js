@@ -42,7 +42,7 @@ export {
   demoWindowSeconds, demoSkewSeconds, demoMaxSteps, demoDefaultSeconds, demoPlaceholderText, hiddenAdvanceSeconds,
   hiddenGapHours, previewSeconds, defaultDemo, defaultPerson, talkStatuses, defaultTalk, filterActions,
   defaultFilter, calendarKinds, noCalendarKind, teamTrim, teamMetals, teamPalettes, glowClass, defaultTeam,
-  primeTeam, invertedHeaderInk,
+  primeTeam, invertedHeaderInk, invertedColors,
 } from './config-more.js';
 export {
   defaultRotationRows, rotationViews, rotationAliases, rotationKeyOfView, roboticsTitle, olderGeneralTitle,
