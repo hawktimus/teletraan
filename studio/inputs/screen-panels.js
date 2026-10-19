@@ -1,8 +1,6 @@
-// The panels a row of a Screen can name, and what a row may say about the team. The values are
+// The panels a row of a Screen or of the Rotation can name, and what a row may say about the team. The values are
 // the ids in dashboard/registry.js: the large panels go in the main panel (B) and the small
-// panels in the side panel (D). The Monday cards are offered as three rows, and the cards of
-// both teams are the same rows with the team Both teams. tests/schemas.test.mjs fails if a list
-// differs from the registry.
+// panels in the side panel (D). tests/schemas.test.mjs fails if a list differs from the registry.
 //
 // Plain functions and numbers only, so that tests/screen-seed.test.mjs can run them with node.
 
@@ -27,8 +25,8 @@ export const placeholderPanels = [
 ];
 
 // The panels a row of the rotation can name that no older list holds: the competition rank card, which the row plays for the team
-// of its view, Drive hours, FRC news, the Monday status pie, and the two small panels that only a row can pair with a large one (rotationOnly in dashboard/registry.js)
-export const rotationPanels = [{ title: 'Competition: Rank', value: 'competition-rank' }, { title: 'Drive hours', value: 'driveHours' }, { title: 'FRC news', value: 'frc-news' }, { title: 'Monday: Status pie by team', value: 'monday-pie' }];
+// of its view, Drive hours, FRC news, and the two small panels that only a row can pair with a large one (rotationOnly in dashboard/registry.js)
+export const rotationPanels = [{ title: 'Competition: Rank', value: 'competition-rank' }, { title: 'Drive hours', value: 'driveHours' }, { title: 'FRC news', value: 'frc-news' }];
 export const pairedPanels = [
   { title: 'Mini panel idea 1', value: 'miniIdea1' },
   { title: 'Parts request (QR code)', value: 'qrParts' },
@@ -42,38 +40,34 @@ export const smallPanels = [
   { title: 'Sponsor logo', value: 'sponsor-logo' },
 ];
 
-// The panels of the one task board, in the order the Studio offers them. The ids are the ones of dashboard/config.js
-// (mondayKinds). The older Monday panels are not offered: a saved row that names one plays as the tasks panel.
+// The two Monday panels (docs/monday.md). The ids are the ones of dashboard/config.js (mondayKinds).
 export const mondayPanels = [
-  { title: 'Monday: Tasks by team and department', value: 'monday-tasks' },
-  { title: 'Monday: Done by team', value: 'monday-done' },
-  { title: 'Monday: Status by department', value: 'monday-status-depts' },
-  { title: 'Monday: Overall progress', value: 'monday-overall' },
-  { title: 'Monday: Timeline by team', value: 'monday-timeline' },
-  { title: 'Monday: Board by team', value: 'monday-board' },
+  { title: 'Monday: Department tasks', value: 'monday-department' },
+  { title: 'Monday: TV charts', value: 'monday-charts' },
 ];
 
-// The older Monday panels, only so that a saved row can still be named in a list line
+// The eleven Monday panels of the older sync (retiredMondayPanels in dashboard/config.js). They are offered nowhere. A stored
+// row that names one keeps its place, plays nothing, and says Retired, use Department tasks.
 export const olderMondayPanels = [
-  { title: 'Monday: Milestones (older)', value: 'monday-milestones' },
-  { title: 'Monday: Progress (older)', value: 'monday-progress' },
-  { title: 'Monday: Milestones, both teams (older)', value: 'monday-milestones-both' },
-  { title: 'Monday: Progress, both teams (older)', value: 'monday-progress-both' },
-];
+  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie',
+  'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both',
+].map(id => ({ title: 'Retired Monday panel (' + id + ')', value: id }));
 
 // The Monday rows an empty Screen is filled with for each team (mondayRows in dashboard/config.js)
-export const seededMondayPanels = ['monday-tasks', 'monday-done', 'monday-board'];
+export const seededMondayPanels = ['monday-charts'];
 
-// What a row of each Monday panel says about the team and the department (mondayKinds in dashboard/config.js)
-export const mondayKinds = {
-  'monday-tasks': 'department',
-  'monday-done': 'team',
-  'monday-status-depts': 'none',
-  'monday-overall': 'none',
-  'monday-timeline': 'team',
-  'monday-board': 'team',
-  'monday-pie': 'team',
-};
+// What a row of each Monday panel says (mondayKinds in dashboard/config.js)
+export const mondayKinds = { 'monday-department': 'department', 'monday-charts': 'chart' };
+
+// The nine departments, the lists and the charts the Rotation board offers for the two Monday panels (the same lists as
+// mondayDepartments, mondayLists and mondayCharts in dashboard/config-lists.js). The teams are in tools/rotation-board.js.
+export const mondayDepartmentChoices = [
+  { value: 'build', title: 'Build' }, { value: 'electrical', title: 'Electrical' }, { value: 'programming', title: 'Programming' },
+  { value: 'design', title: 'Design' }, { value: 'cnc', title: 'CNC' }, { value: 'strategy', title: 'Strategy' },
+  { value: 'operations', title: 'Operations' }, { value: 'business', title: 'Business' }, { value: 'marketing', title: 'Marketing' },
+];
+export const mondayListChoices = [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }];
+export const mondayChartChoices = [{ value: 'status', title: 'Status by department' }, { value: 'progress', title: 'Overall progress' }, { value: 'timeline', title: 'Timeline' }];
 
 // The large panels whose items carry a Team field and are filtered by the team on the screen
 // (visibleItems in dashboard/core/content.js). Photo and Upcoming events are for both teams:
@@ -95,41 +89,32 @@ export function panelTitle(panel) {
 
 // What a row of the main panel may say about the team:
 //   none       the panel is for both teams, so the row has no team
-//   optional   a team, or blank to keep the team that is on the screen
-//   one        a team (the Monday panels of one team)
+//   optional   a team, or blank: the team on the screen, or for a Monday panel the tasks of both teams
 export function teamKindOf(panel) {
-  if (mondayKinds[panel] === 'none') return 'none';
-  if (mondayKinds[panel]) return 'one';
-  if (olderMondayPanels.some(item => item.value === panel)) return 'one';
+  if (mondayKinds[panel]) return 'optional';
   return teamSpecificPanels.indexOf(panel) !== -1 ? 'optional' : 'none';
 }
 
-// Whether a row of this panel takes a department, a Team lead
+// Whether a row of this panel takes a department: Department tasks, one of the nine
 export function takesDepartment(panel) {
   return mondayKinds[panel] === 'department';
 }
 
 // The lines of the team picker of a row: { value, label }. teams is [{ code, label }], the active
-// teams in order. A panel that is for both teams offers nothing.
+// teams in order. A panel that is for both teams offers nothing. Blank on a Monday row is both teams.
 export function teamChoices(panel, teams) {
-  const kind = teamKindOf(panel);
-  const named = (teams || []).map(team => ({ value: team.code, label: team.label }));
-
-  if (kind === 'none') return [];
-  if (kind === 'optional') return [{ value: '', label: 'Keep the team on the screen' }].concat(named);
-  return named;
+  if (teamKindOf(panel) === 'none') return [];
+  const blank = mondayKinds[panel] ? 'Both' : 'Keep the team on the screen';
+  return [{ value: '', label: blank }].concat((teams || []).map(team => ({ value: team.code, label: team.label })));
 }
 
 // Why the team of a row is wrong, in plain words, or nothing when it is right
 export function teamProblem(panel, team) {
   const value = typeof team === 'string' ? team : '';
-  const kind = teamKindOf(panel);
 
   if (!panel) return '';
-  if (kind === 'none') return value ? 'This panel is for both teams. Clear the team.' : '';
-  if (kind === 'optional') return value === bothTeams ? 'Both teams is only for Monday rows. Pick a team or clear it.' : '';
-  if (value === '') return 'Pick the team for this Monday row.';
-  return value === bothTeams ? 'This Monday panel is for one team. Pick a team.' : '';
+  if (teamKindOf(panel) === 'none') return value ? 'This panel is for both teams. Clear the team.' : '';
+  return value === bothTeams ? 'Pick a team, or leave it blank.' : '';
 }
 
 // A team code in words, for the list line of a row

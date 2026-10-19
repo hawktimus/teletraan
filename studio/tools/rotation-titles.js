@@ -20,14 +20,12 @@ export function viewTitleOf(view) {
   return viewEntry(view).title;
 }
 
-// The large panels a row can name, in groups. Each group is { title, panels: [{ value, title }] }.
-const mondayChoices = mondayPanels.concat(rotationPanels.filter(item => item.value === 'monday-pie'));
-const otherChoices = rotationPanels.filter(item => item.value !== 'monday-pie').concat(placeholderPanels);
-
+// The large panels a row can name, in groups. Each group is { title, panels: [{ value, title }] }. The retired Monday panels
+// are in no group: a stored row that names one shows its title and plays nothing.
 export const panelGroups = [
   { title: 'Wall panels', panels: largePanels },
-  { title: 'Monday cards', panels: mondayChoices },
-  { title: 'Competition, news, drive and robot', panels: otherChoices },
+  { title: 'Monday', panels: mondayPanels },
+  { title: 'Competition, news, drive and robot', panels: rotationPanels.concat(placeholderPanels) },
 ];
 
 // The small panels a split row can sit beside
@@ -52,10 +50,6 @@ export const placeholderNote = 'Placeholder: draws only a title';
 // dashboard/registry.js must be offered in the board, explained in tools/rotation-auto.js or named here, or
 // tests/rotation-panels-explained.test.mjs fails with its id.
 export const internalPanels = [
-  { id: 'monday-milestones', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
-  { id: 'monday-progress', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
-  { id: 'monday-milestones-both', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
-  { id: 'monday-progress-both', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
   { id: 'stand-in-tile', reason: 'Only for the hardware test (?stress). It is never on the wall.' },
   { id: 'stand-in-ticker', reason: 'Only for the hardware test (?stress). It is never on the wall.' },
 ];

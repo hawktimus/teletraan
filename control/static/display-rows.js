@@ -14,6 +14,25 @@ export const mostRows = 300;
 
 export const viewWords = { robotics: 'Robotics', prime: 'Prime', nova: 'Nova' };
 
+// The settings of a row of the two Monday panels, the same as the Details of the Studio board (studio/tools/rotation-board.js)
+export const mondayFieldNames = ['department', 'list', 'chart', 'team'];
+
+// The dropdowns of a row: [{ field, label, value, choices }] for Department tasks (Department, List, Team) and the TV charts
+// (Chart, Team), none for any other panel. monday is the lists of choices the server sends (choices.monday).
+export function mondayFieldsOf(row, monday) {
+  if (!monday) return [];
+  const team = { field: 'team', label: 'Team', value: row.team || '', choices: monday.teams };
+  if (row.panel === 'monday-department') {
+    return [
+      { field: 'department', label: 'Department', value: row.department || '', choices: [{ value: '', title: 'Pick a department' }].concat(monday.departments) },
+      { field: 'list', label: 'List', value: row.list === 'done' ? 'done' : 'open', choices: monday.lists },
+      team,
+    ];
+  }
+  if (row.panel === 'monday-charts') return [{ field: 'chart', label: 'Chart', value: row.chart || 'status', choices: monday.charts }, team];
+  return [];
+}
+
 export function newKey() {
   return Math.random().toString(16).slice(2, 14).padEnd(12, '0');
 }

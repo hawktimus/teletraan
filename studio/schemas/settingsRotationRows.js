@@ -2,7 +2,8 @@
 // the field is in the Advanced tab as the full form.
 //
 //   transitionSeconds  how long a whole panel or view transition takes, 2 to 4 seconds, 3 to start with (dashboard/config.js)
-//   rotationRows  the rows the large panel plays, top to bottom, each { view, panel, seconds, shown }. Drag a row to move it.
+//   rotationRows  the rows the large panel plays, top to bottom, each { view, panel, seconds, shown }, and for the two Monday
+//                 panels department, list, chart and team. Drag a row to move it.
 //                 Shown off keeps the row in its place and plays nothing. Rows that follow each other in one view are a block,
 //                 and the screen changes view only between blocks.
 //
@@ -73,7 +74,10 @@ const rotationRow = defineArrayMember({
       validation: Rule => Rule.valid(sideChoices.map(panel => panel.value).concat([undefined, ''])).error('Pick a small panel from the list.'),
     }),
     defineField({ name: 'part', title: 'Part', type: 'number', hidden: true, description: 'For Events, Subteam roster and Team leads: 1 plays the first page and 2 the next pages. Empty plays all.', validation: Rule => Rule.integer().min(1).max(2).error('Use 1 or 2.') }),
-    defineField({ name: 'department', title: 'Department', type: 'string', hidden: true, description: 'The department a row plays: a Team lead name such as build, or two with a comma. Empty plays every one of a Monday tasks row.' }),
+    defineField({ name: 'department', title: 'Department', type: 'string', hidden: true, description: 'The department a row plays: one of the nine Monday departments for Department tasks, or a Team lead name such as build (two with a comma) for the roster.' }),
+    defineField({ name: 'list', title: 'List', type: 'string', hidden: true, description: 'For Department tasks: open (To Do, In Progress, In Review, Stuck) or done.', options: { list: ['open', 'done'] } }),
+    defineField({ name: 'chart', title: 'Chart', type: 'string', hidden: true, description: 'For the TV charts: status, progress or timeline.', options: { list: ['status', 'progress', 'timeline'] } }),
+    defineField({ name: 'team', title: 'Team', type: 'string', hidden: true, description: 'For the two Monday panels: the tasks of prime or nova. Empty shows both teams.', options: { list: ['prime', 'nova'] } }),
     defineField({ name: 'photoCount', title: 'Photos', type: 'number', hidden: true, description: 'How many photos a Photo row shows.', validation: Rule => Rule.integer().min(1).max(20).error('Use a whole number from 1 to 20.') }),
     defineField({ name: 'secondsPerPhoto', title: 'Seconds per photo', type: 'number', hidden: true, description: 'How long each photo stays.', validation: Rule => Rule.integer().min(5).max(60).error('Use a whole number from 5 to 60.') }),
   ],

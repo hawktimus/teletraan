@@ -73,32 +73,35 @@ test('transitionSeconds is kept from 2 to 4', () => {
 test('a row is read the way it is typed, general is robotics, and a row that cannot play is dropped', () => {
   const rows = rotation.tidyRotationRows([
     row('general', 'events', 30),
-    row('prime', 'monday-tasks', 400),
+    row('prime', 'monday-department', 400),
     { view: 'nova', panel: 'events' },
-    row('family', 'monday-overall', 20),
+    row('family', 'monday-charts', 20),
+    row('prime', 'monday-overall', 20),
     row('moon', 'events', 20),
     row('prime', 'no-such-panel', 20),
     row('prime', 'task-counts', 20),
     'text',
   ]);
   assert.deepEqual(rows.map(item => [item.view, item.panel, item.seconds, item.shown]), [
-    ['robotics', 'events', 30, true], ['prime', 'monday-tasks', 120, true], ['nova', 'events', undefined, true], ['robotics', 'monday-overall', 20, true],
+    ['robotics', 'events', 30, true], ['prime', 'monday-department', 120, true], ['nova', 'events', undefined, true], ['robotics', 'monday-charts', 20, true],
+    ['prime', 'monday-overall', undefined, true],
   ]);
+  assert.equal(rows[4].retired, true, 'a row of a retired panel is kept and marked');
 });
 
 test('a hidden row keeps its place and plays nothing, and rows of one view that follow each other are one block', () => {
-  const rows = rotation.tidyRotationRows([row('robotics', 'tonight', 45), row('robotics', 'events', 60, false), row('robotics', 'leadership', 20), row('prime', 'monday-tasks', 30), row('robotics', 'events', 30)]);
+  const rows = rotation.tidyRotationRows([row('robotics', 'tonight', 45), row('robotics', 'events', 60, false), row('robotics', 'leadership', 20), row('prime', 'monday-department', 30), row('robotics', 'events', 30)]);
   assert.equal(rows.length, 5);
   const blocks = rotation.rotationBlocks(rows);
   assert.deepEqual(blocks.map(block => [block.view, block.key, block.rows.map(item => item.panel)]), [
-    ['robotics', 'general', ['tonight', 'leadership']], ['prime', 'prime', ['monday-tasks']], ['robotics', 'general', ['events']],
+    ['robotics', 'general', ['tonight', 'leadership']], ['prime', 'prime', ['monday-department']], ['robotics', 'general', ['events']],
   ]);
 });
 
 test('transitionKindFor says reformView when the view changes and reform inside a view', () => {
   assert.equal(rotation.transitionKindFor(row('robotics', 'events', 20), row('robotics', 'leadership', 20)), 'reform');
-  assert.equal(rotation.transitionKindFor(row('robotics', 'events', 20), row('prime', 'monday-tasks', 20)), 'reformView');
-  assert.equal(rotation.transitionKindFor(row('prime', 'monday-tasks', 20), row('nova', 'monday-tasks', 20)), 'reformView');
+  assert.equal(rotation.transitionKindFor(row('robotics', 'events', 20), row('prime', 'monday-department', 20)), 'reformView');
+  assert.equal(rotation.transitionKindFor(row('prime', 'monday-department', 20), row('nova', 'monday-department', 20)), 'reformView');
   assert.equal(rotation.transitionKindFor(row('general', 'events', 20), row('robotics', 'tonight', 20)), 'reform', 'general is robotics');
   assert.equal(rotation.transitionKindFor(null, row('prime', 'events', 20)), 'reform');
 });
@@ -107,9 +110,9 @@ test('the older migration keeps the order of the views and of each list, puts th
   const content = contentWith();
   const rows = rotation.migrateRotationFromViews(content);
   assert.deepEqual(rows.slice(0, 5).map(item => [item.view, item.panel]), [['robotics', 'tonight'], ['robotics', 'events'], ['robotics', 'leadership'], ['robotics', 'photo'], ['robotics', 'sponsor-feature']]);
-  assert.deepEqual(rows.slice(5, 9).map(item => [item.view, item.panel]), [['prime', 'monday-tasks'], ['prime', 'monday-done'], ['prime', 'monday-timeline'], ['prime', 'monday-board']]);
-  assert.deepEqual(rows.slice(9, 13).map(item => item.view), ['nova', 'nova', 'nova', 'nova']);
-  assert.deepEqual(rows.slice(13).map(item => [item.view, item.panel]), [['robotics', 'tonight'], ['robotics', 'monday-overall'], ['robotics', 'monday-status-depts']]);
+  assert.deepEqual(rows.slice(5, 7).map(item => [item.view, item.panel, item.chart]), [['prime', 'monday-charts', 'status'], ['prime', 'monday-charts', 'progress']]);
+  assert.deepEqual(rows.slice(7, 9).map(item => item.view), ['nova', 'nova']);
+  assert.deepEqual(rows.slice(9).map(item => [item.view, item.panel]), [['robotics', 'tonight'], ['robotics', 'monday-charts']]);
   assert.ok(rows.every(item => item.shown));
   assert.equal(rows[3].seconds, 40, 'the photos keep their product');
 });
@@ -157,12 +160,12 @@ test('the clock plays each block for the seconds of its rows, then the next bloc
 
 test('a block with nothing to show is skipped, and with a hidden row between views nothing changes', () => {
   const content = contentWith(raw => {
-    raw.settings.rotationRows = [row('robotics', 'tonight', 20), row('prime', 'monday-tasks', 20), row('nova', 'tonight', 20, false)];
+    raw.settings.rotationRows = [row('robotics', 'tonight', 20), row('prime', 'monday-charts', 20), row('nova', 'tonight', 20, false)];
   });
   views.resetViews();
   const seen = [];
   for (let second = 1; second <= 100; second += 1) {
-    const moved = views.tickView(content, new Date(monday12.getTime() + second * 1000), { canShow: step => step.panel !== 'monday-tasks' });
+    const moved = views.tickView(content, new Date(monday12.getTime() + second * 1000), { canShow: step => step.panel !== 'monday-charts' });
     if (moved.changed) seen.push([second, moved.key]);
   }
   assert.deepEqual(seen, [[1, 'general']], 'one playable block stays and starts again');

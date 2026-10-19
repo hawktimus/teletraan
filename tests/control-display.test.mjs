@@ -98,6 +98,9 @@ await check('rows are checked with the row number, and an out of range value is 
   bad({ view: 'prime', panel: 'photo', secondsPerPhoto: 4 }, /from 5 to 60/);
   bad({ view: 'prime', panel: 'events', part: 3 }, /1 or 2/);
   bad({ view: 'prime', panel: 'tasks', side: 'tasks' }, /small panel/);
+  bad({ view: 'robotics', panel: 'monday-department', list: 'all' }, /open or done/);
+  bad({ view: 'robotics', panel: 'monday-charts', chart: 'pie' }, /status, progress or timeline/);
+  bad({ view: 'robotics', panel: 'monday-department', team: 'both' }, /Prime, Nova or empty/);
   bad('text', /not a row/);
   assert.throws(() => logic.cleanRows('no', []), error => error.status === 400);
   assert.throws(() => logic.cleanRows(new Array(301).fill({ view: 'prime', panel: 'tasks' }), []), error => error.status === 400 && /300/.test(error.message));
@@ -120,6 +123,15 @@ await check('a good list is stored with the Studio field names, a photo row keep
   assert.equal(out[2].department, 'build');
   assert.equal(out[2].extraField, undefined, 'a stored field is kept only for the row with that key, once');
   assert.deepEqual(logic.cleanRows([], stored), []);
+
+  const monday = logic.cleanRows([
+    { view: 'robotics', panel: 'monday-department', department: 'cnc', list: 'done', team: 'nova' },
+    { view: 'robotics', panel: 'monday-charts', chart: 'timeline' },
+    { view: 'prime', panel: 'monday-pie', seconds: 30 },
+  ], []);
+  assert.deepEqual([monday[0].department, monday[0].list, monday[0].team], ['cnc', 'done', 'nova']);
+  assert.equal(monday[1].chart, 'timeline');
+  assert.equal(monday[2].panel, 'monday-pie', 'a stored row of a retired panel is saved as it is, and plays nothing');
 });
 
 await check('the theme and view settings are checked and only the fields that were sent are written', () => {
@@ -189,7 +201,10 @@ await check('GET display gives the rows with keys, the theme, the choices and a 
   assert.match(answer.json.wall.rows.b2.reason, /Shown is off/);
   assert.deepEqual(answer.json.choices.views.map(view => view.value), ['robotics', 'prime', 'nova']);
   assert.deepEqual(answer.json.choices.themes.map(theme => theme.value), ['original', 'cybertron', 'retro', 'foundry']);
-  assert.ok(answer.json.choices.panelGroups.some(group => group.panels.some(panel => panel.value === 'monday-tasks')));
+  assert.ok(answer.json.choices.panelGroups.some(group => group.panels.some(panel => panel.value === 'monday-department')));
+  assert.ok(!answer.json.choices.panelGroups.some(group => group.panels.some(panel => panel.value === 'monday-tasks')), 'a retired panel is not offered');
+  assert.deepEqual(answer.json.choices.monday.lists.map(item => item.value), ['open', 'done']);
+  assert.equal(answer.json.choices.monday.departments.length, 9);
   assert.equal(answer.json.theme.themeByWeekday.monday, 'original');
   assert.equal(answer.json.standardRows.length, defaultRotationRows().length);
   assert.ok(!answer.text.includes('skFAKE'), 'the write key is never in an answer');
@@ -316,12 +331,18 @@ await check('the wall check asks the same functions the wall asks, row by row', 
   const off = await checkRow({ view: 'robotics', panel: 'photo', shown: false }, world);
   assert.deepEqual([off.state, off.items], ['off', []]);
 
-  const monday = await checkRow({ view: 'prime', panel: 'monday-tasks', department: 'build', shown: true }, world);
-  assert.equal(monday.state, 'skip');
-  assert.equal(monday.reason, 'Skipped now: no Monday task is on the TV for build in the Prime team.');
+  const older = await checkRow({ view: 'prime', panel: 'monday-tasks', department: 'build', shown: true }, world);
+  assert.equal(older.state, 'show', 'an older tasks row with a department plays as Department tasks');
 
-  const either = await checkRow({ view: 'robotics', panel: 'monday-done', department: 'business', shown: true }, world);
-  assert.match(either.reason, /for business in either team\.$/);
+  const retired = await checkRow({ view: 'robotics', panel: 'monday-done', department: 'business', shown: true }, world);
+  assert.deepEqual([retired.state, retired.reason], ['skip', 'Retired, use Department tasks.']);
+
+  const strategy = await checkRow({ view: 'robotics', panel: 'monday-department', department: 'strategy', list: 'open', shown: true }, world);
+  assert.deepEqual([strategy.state, strategy.reason], ['skip', 'Skipped now: no open Strategy task is on the TV for both teams.']);
+  const nova = await checkRow({ view: 'robotics', panel: 'monday-department', department: 'cnc', list: 'done', team: 'nova', shown: true }, world);
+  assert.match(nova.reason, /^Skipped now: no done CNC task is on the TV for the Nova team\.$|^Will show now\.$/);
+  const none = await checkRow({ view: 'robotics', panel: 'monday-department', shown: true }, world);
+  assert.equal(none.reason, 'Skipped now: pick a Department for this row.');
 
   const nothing = await checkRow({ view: 'robotics', panel: 'nowhere', shown: true }, world);
   assert.equal(nothing.state, 'skip');
@@ -335,13 +356,13 @@ await check('the items are the tasks, the FRC news posts, the events and the TBA
   const content = normalizeSample(sample);
   const now = new Date('2026-10-20T12:00:00Z');
   content.subteams = content.subteams.concat([{ id: 'build', name: 'Build', members: [] }]);
-  content.tasks = [{ id: 't1', title: 'Wire the pit', team: 'prime', subteam: 'Build', subteamId: 'build', status: 'in-progress', source: 'monday', mondayId: 'm1', showOnTv: true, priority: 'high', contact: 'Sam', dueDate: '2026-10-25' }].concat(content.tasks);
+  content.tasks = [{ id: 't1', title: 'Wire the pit', team: 'prime', department: 'electrical', list: 'open', status: 'in-progress', source: 'monday', mondayId: 'm1', showOnTv: true, priority: 'high', contact: 'Sam', dueDate: '2026-10-25' }].concat(content.tasks);
   content.news = { lastSyncAt: now.toISOString(), lastError: '', items: [{ title: 'Kickoff is set', link: 'https://example.test/a', date: '2026-10-19T00:00:00Z', categories: ['FRC'], systemcore: false, source: 'FIRST' }] };
   content.events = [{ title: 'Build night', start: new Date('2026-10-22T22:00:00Z'), end: new Date('2026-10-23T00:00:00Z'), allDay: false, location: 'Lab', uid: 'e1', calendar: 'Team', calendarId: 'team' }];
   const world = { content: content, now: now, match13: null, problem: '' };
 
-  const tasks = await checkRow({ view: 'prime', panel: 'monday-tasks', department: 'build', shown: true }, world);
-  assert.deepEqual([tasks.state, tasks.items], ['show', ['Wire the pit']]);
+  const tasks = await checkRow({ view: 'prime', panel: 'monday-department', department: 'electrical', list: 'open', team: 'prime', shown: true }, world);
+  assert.deepEqual([tasks.state, tasks.items[0]], ['show', 'Wire the pit, Sam']);
 
   const news = await checkRow({ view: 'robotics', panel: 'frc-news', shown: true }, world);
   assert.deepEqual([news.state, news.items], ['show', ['Kickoff is set']]);
@@ -374,7 +395,7 @@ await check('checkRows answers for each key, and the Match13 matches are read fr
 
 await check('POST check answers for the rows as they are on the page, without saving anything', async () => {
   const world = await worldWith([published]);
-  const answer = await world.router.call('POST', '/display/check', { body: { rows: [{ _key: 'z', view: 'prime', panel: 'monday-tasks', department: 'build', shown: true }] } });
+  const answer = await world.router.call('POST', '/display/check', { body: { rows: [{ _key: 'z', view: 'prime', panel: 'monday-pie', shown: true }] } });
   assert.equal(answer.status, 200);
   assert.equal(answer.json.rows.z.state, 'skip');
   assert.deepEqual(mutationsOf(world), []);

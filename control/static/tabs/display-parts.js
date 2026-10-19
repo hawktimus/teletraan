@@ -2,7 +2,7 @@
 // and give markup with every value escaped. display.js puts the markup in the page and wires the buttons. Nothing here
 // touches the page, so tests/control-display-page.test.mjs can try it with node.
 
-import { blocksOf, countWhere, durationWords, isNovaRow, isShown, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
+import { blocksOf, countWhere, durationWords, isNovaRow, isShown, mondayFieldsOf, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
 
 const stateWords = { show: 'Will show', skip: 'Skipped', off: 'Off', unknown: 'Not known' };
@@ -88,7 +88,7 @@ function field(label, inner) {
 
 function detailsWords(row, titles) {
   const words = [];
-  if (row.department) words.push('Department: ' + row.department);
+  if (row.department && row.panel !== 'monday-department') words.push('Department: ' + row.department);
   if (row.part) words.push('Page ' + row.part);
   if (row.side) words.push('Small panel: ' + (titles[row.side] || row.side));
   return words.join('. ');
@@ -127,6 +127,7 @@ export function rowHtml(row, index, last, page) {
     field('View', '<select data-field="view">' + options(choices.views, row.view) + '</select>') +
     field('Panel', '<select data-field="panel">' + panelOptions(choices, row.panel) + '</select>') +
     secondsField +
+    mondayFieldsOf(row, choices.monday).map(item => field(item.label, '<select data-field="' + esc(item.field) + '">' + options(item.choices, item.value) + '</select>')).join('') +
     '<label class="check"><input type="checkbox" data-field="shown"' + (isShown(row) ? ' checked' : '') + '> Show on screen</label>' +
     '</div>' +
     '<p class="word">Stays ' + seconds + ' seconds.' + (detailsWords(row, titles) ? ' ' + esc(detailsWords(row, titles)) + '.' : '') + '</p>' +

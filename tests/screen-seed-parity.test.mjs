@@ -71,16 +71,16 @@ test('the panels that follow the team are the same list on both sides', () => {
   assert.deepEqual(studioPanels.idsOf(studioPanels.mondayPanels), Object.keys(config.mondayKinds).filter(id => id !== 'monday-pie'), 'the Monday panels the Studio offers');
 });
 
-test('the Panel order the owner saved gives 16 main rows and 5 side rows on both sides', () => {
+test('the Panel order the owner saved gives 12 main rows and 5 side rows on both sides', () => {
   const made = compare({ order: ownersOrder }, [prime, nova]);
 
   [made.studio, made.dashboard].forEach(screen => {
-    assert.equal(screen.mainRows.length, 16);
+    assert.equal(screen.mainRows.length, 12);
     assert.equal(screen.sideRows.length, 5);
   });
   assert.deepEqual(words(made.dashboard.mainRows), [
-    'tonight:prime', 'leadership:prime', 'team-leads:prime', 'tasks:prime', 'monday-tasks:prime', 'monday-done:prime', 'monday-board:prime',
-    'tonight:nova', 'leadership:nova', 'team-leads:nova', 'tasks:nova', 'monday-tasks:nova', 'monday-done:nova', 'monday-board:nova',
+    'tonight:prime', 'leadership:prime', 'team-leads:prime', 'tasks:prime', 'monday-charts:prime',
+    'tonight:nova', 'leadership:nova', 'team-leads:nova', 'tasks:nova', 'monday-charts:nova',
     'photo', 'events',
   ]);
   assert.deepEqual(words(made.dashboard.sideRows), ['forecast', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts']);
@@ -93,7 +93,7 @@ test('an empty order is built from the older lists, the large panels and then th
     grid2: [{ panel: 'forecast', show: true }, { panel: 'tasks', show: true }, { panel: 'task-counts', show: true, seconds: 12 }, { panel: 'monday-tasks', show: true }],
   };
   const made = compare(lists, [prime, nova]);
-  assert.deepEqual(words(made.dashboard.mainRows).filter(row => row.indexOf('prime') !== -1), ['tasks:prime', 'monday-tasks:prime', 'monday-done:prime', 'monday-board:prime']);
+  assert.deepEqual(words(made.dashboard.mainRows).filter(row => row.indexOf('prime') !== -1), ['tasks:prime', 'monday-charts:prime']);
   assert.deepEqual(words(made.dashboard.sideRows), ['forecast', 'task-counts:12s']);
 });
 
@@ -101,7 +101,7 @@ test('only the older large list, only the older small list, and a saved order th
   compare({ order: [], grid1: shown(['photo', 'tasks']) }, [prime]);
   compare({ order: [], grid2: shown(['next-event', 'forecast']) }, [prime]);
   const made = compare({ order: shown(['photo']), grid1: shown(['tasks']), grid2: shown(['forecast']) }, [prime]);
-  assert.deepEqual(words(made.dashboard.mainRows), ['monday-tasks:prime', 'monday-done:prime', 'monday-board:prime', 'photo']);
+  assert.deepEqual(words(made.dashboard.mainRows), ['monday-charts:prime', 'photo']);
   assert.deepEqual(made.dashboard.sideRows, []);
 });
 
@@ -109,13 +109,13 @@ test('nothing saved gives every panel in the order of the pickers', () => {
   [undefined, {}, { order: [] }].forEach(rotation => {
     const made = compare(rotation, [prime, nova]);
     assert.equal(made.dashboard.sideRows.length, studioPanels.smallPanels.length);
-    assert.equal(made.dashboard.mainRows.length, 2 * (config.teamPanels.length + 3) + 2);
+    assert.equal(made.dashboard.mainRows.length, 2 * (config.teamPanels.length + 1) + 2);
   });
 });
 
 test('lists that were saved empty stay empty on both sides, and a list that was never saved is the starting list', () => {
   const empty = compare({ order: [], grid1: [], grid2: [] }, [prime]);
-  assert.deepEqual(words(empty.dashboard.mainRows), ['monday-tasks:prime', 'monday-done:prime', 'monday-board:prime']);
+  assert.deepEqual(words(empty.dashboard.mainRows), ['monday-charts:prime']);
   assert.deepEqual(empty.dashboard.sideRows, []);
 
   const largeOnly = compare({ order: [], grid1: shown(['photo']) }, [prime]);
@@ -125,19 +125,19 @@ test('lists that were saved empty stay empty on both sides, and a list that was 
 test('a row that is switched off is not seeded, in either list', () => {
   const order = [{ panel: 'tasks', show: false }, { panel: 'photo', show: true }, { panel: 'forecast', show: false }, { panel: 'next-event' }, { panel: 'leadership', show: false, seconds: 40 }];
   const made = compare({ order: order }, [prime, nova]);
-  assert.deepEqual(words(made.dashboard.mainRows), ['monday-tasks:prime', 'monday-done:prime', 'monday-board:prime', 'monday-tasks:nova', 'monday-done:nova', 'monday-board:nova', 'photo']);
+  assert.deepEqual(words(made.dashboard.mainRows), ['monday-charts:prime', 'monday-charts:nova', 'photo']);
   assert.deepEqual(words(made.dashboard.sideRows), ['next-event']);
 
   const oldLists = compare({ order: [], grid1: [{ panel: 'tasks', show: false }, { panel: 'events', show: true }], grid2: [{ panel: 'forecast', show: false }, { panel: 'task-counts', show: true }] }, [prime]);
-  assert.deepEqual(words(oldLists.dashboard.mainRows), ['monday-tasks:prime', 'monday-done:prime', 'monday-board:prime', 'events']);
+  assert.deepEqual(words(oldLists.dashboard.mainRows), ['monday-charts:prime', 'events']);
   assert.deepEqual(words(oldLists.dashboard.sideRows), ['task-counts']);
 });
 
 test('a panel that appears twice has a row in each place, for each team', () => {
   const made = compare({ order: shown(['tasks', 'events', 'tasks', 'task-counts', 'forecast', 'task-counts']) }, [prime, nova]);
   assert.deepEqual(words(made.dashboard.mainRows), [
-    'tasks:prime', 'tasks:prime', 'monday-tasks:prime', 'monday-done:prime', 'monday-board:prime',
-    'tasks:nova', 'tasks:nova', 'monday-tasks:nova', 'monday-done:nova', 'monday-board:nova',
+    'tasks:prime', 'tasks:prime', 'monday-charts:prime',
+    'tasks:nova', 'tasks:nova', 'monday-charts:nova',
     'events',
   ]);
   assert.deepEqual(words(made.dashboard.sideRows), ['task-counts', 'forecast', 'task-counts']);
@@ -147,7 +147,7 @@ test('no Team documents is the built-in Prime team, and the Monday rows are stil
   [[], undefined].forEach(none => {
     const made = compare({ order: ownersOrder }, none);
     assert.deepEqual(words(made.dashboard.mainRows), [
-      'tonight:prime', 'leadership:prime', 'team-leads:prime', 'tasks:prime', 'monday-tasks:prime', 'monday-done:prime', 'monday-board:prime',
+      'tonight:prime', 'leadership:prime', 'team-leads:prime', 'tasks:prime', 'monday-charts:prime',
       'photo', 'events',
     ]);
   });
@@ -155,23 +155,23 @@ test('no Team documents is the built-in Prime team, and the Monday rows are stil
 
 test('one team takes the rows once, and a team that is switched off has none', () => {
   const only = compare({ order: ownersOrder }, [nova]);
-  assert.equal(only.dashboard.mainRows.filter(row => row.team === 'nova').length, 7);
+  assert.equal(only.dashboard.mainRows.filter(row => row.team === 'nova').length, 5);
   assert.equal(only.dashboard.mainRows.filter(row => row.team === 'prime').length, 0);
 
   const off = compare({ order: ownersOrder }, [prime, Object.assign({}, nova, { active: false })]);
   assert.equal(off.dashboard.mainRows.filter(row => row.team === 'nova').length, 0);
-  assert.equal(off.dashboard.mainRows.length, 9);
+  assert.equal(off.dashboard.mainRows.length, 7);
 
   const allOff = compare({ order: ownersOrder }, [Object.assign({}, prime, { active: false }), Object.assign({}, nova, { active: false })]);
-  assert.equal(allOff.dashboard.mainRows.filter(row => row.team === 'prime').length, 7);
+  assert.equal(allOff.dashboard.mainRows.filter(row => row.team === 'prime').length, 5);
 });
 
 test('two teams take the rows in the order of the Team documents', () => {
   const primeFirst = compare({ order: shown(['tasks', 'photo']) }, [prime, nova]);
-  assert.deepEqual(primeFirst.dashboard.mainRows.map(row => row.team || ''), ['prime', 'prime', 'prime', 'prime', 'nova', 'nova', 'nova', 'nova', '']);
+  assert.deepEqual(primeFirst.dashboard.mainRows.map(row => row.team || ''), ['prime', 'prime', 'nova', 'nova', '']);
 
   const novaFirst = compare({ order: shown(['tasks', 'photo']) }, [nova, prime]);
-  assert.deepEqual(novaFirst.dashboard.mainRows.map(row => row.team || ''), ['nova', 'nova', 'nova', 'nova', 'prime', 'prime', 'prime', 'prime', '']);
+  assert.deepEqual(novaFirst.dashboard.mainRows.map(row => row.team || ''), ['nova', 'nova', 'prime', 'prime', '']);
 });
 
 test('seconds carry over, and a row with none, a zero or a word has none', () => {
@@ -186,7 +186,7 @@ test('seconds carry over, and a row with none, a zero or a word has none', () =>
     { panel: 'next-event', show: true, seconds: null },
   ];
   const made = compare({ order: order }, [prime, nova]);
-  assert.deepEqual(words(made.dashboard.mainRows).slice(0, 5), ['tasks:prime:30s', 'leadership:prime', 'team-leads:prime', 'roster:prime', 'monday-tasks:prime']);
+  assert.deepEqual(words(made.dashboard.mainRows).slice(0, 5), ['tasks:prime:30s', 'leadership:prime', 'team-leads:prime', 'roster:prime', 'monday-charts:prime']);
   assert.deepEqual(words(made.dashboard.mainRows).slice(-2), ['photo:12s', 'events']);
   assert.deepEqual(words(made.dashboard.sideRows), ['forecast:9s', 'next-event']);
 });
@@ -194,14 +194,14 @@ test('seconds carry over, and a row with none, a zero or a word has none', () =>
 test('a Monday card, a competition card, a spare, a test panel and an unknown panel are not seeded from the order', () => {
   const order = shown(['monday-tasks', 'monday-board-both', 'competition-rank', 'competition-next-match', 'nothing', 'stand-in-tile', 'team-tile', 'photo', 'forecast', 'alert', 'banner']);
   const made = compare({ order: order }, [prime]);
-  assert.deepEqual(words(made.dashboard.mainRows), ['monday-tasks:prime', 'monday-done:prime', 'monday-board:prime', 'photo']);
+  assert.deepEqual(words(made.dashboard.mainRows), ['monday-charts:prime', 'photo']);
   assert.deepEqual(words(made.dashboard.sideRows), ['forecast']);
 });
 
 test('a row that is not a row, and a panel in the wrong list, are left out', () => {
   const lists = { order: [], grid1: [null, 'tasks', { panel: 'tasks' }, { show: true }, { panel: 'next-event', show: true }], grid2: [undefined, { panel: 'photo', show: true }, { panel: 'safety-days', show: true }] };
   const made = compare(lists, [prime]);
-  assert.deepEqual(words(made.dashboard.mainRows), ['tasks:prime', 'monday-tasks:prime', 'monday-done:prime', 'monday-board:prime']);
+  assert.deepEqual(words(made.dashboard.mainRows), ['tasks:prime', 'monday-charts:prime']);
   assert.deepEqual(words(made.dashboard.sideRows), ['safety-days']);
 });
 

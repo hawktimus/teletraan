@@ -1,7 +1,8 @@
 // The one ordered rotation list (docs/views.md, "The rotation"). The plain functions: they know nothing about the page, so
 // tests/rotation.test.mjs can run them. core/views-play.js plays the list, and the transition code asks transitionKindFor.
 //
-// A row is { view, panel, seconds, shown } and, for the few panels that need it, department, photoCount and secondsPerPhoto.
+// A row is { view, panel, seconds, shown } and, for the few panels that need it, department, part, side, photoCount and
+// secondsPerPhoto, and for the two Monday panels list, chart and team.
 // The list is Dashboard Settings, rotationRows (the stored name rotation is the Ticker block of the same page, so the list
 // has this one). A hidden row keeps its place in the order and plays nothing. Rows that follow each other in the same view
 // are one block, and the view changes only between blocks.
@@ -10,7 +11,7 @@
 // list with it the first time Dashboard Settings is opened (migrateRotation here, and the same in
 // studio/tools/rotation-migrate.js). The lists of the views are kept for migrateRotationFromViews.
 
-import { defaultRotationRows, rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
+import { defaultRotationRows, mondayCharts, mondayDepartments, retiredMondayPanels, rotationAliases, rotationKeyOfView, rotationViews, transitionSecondsRange } from '../config.js';
 import { panels } from '../registry.js';
 import { keepInRange } from './content.js';
 import { isRecord } from './text.js';
@@ -43,17 +44,56 @@ function smallPanel(id) {
   return Boolean(found && found.region === 'grid2' && !found.testOnly && !found.lastResort);
 }
 
-// One row, tidy, or null when it cannot be played at all (no view, no known panel)
-export function tidyRotationRow(raw) {
-  if (!isRecord(raw)) return null;
+// One of the nine departments of the Monday boards in lowercase, or '' for anything else
+export function mondayDepartmentOf(value) {
+  const name = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return mondayDepartments.some(entry => entry.value === name) ? name : '';
+}
+
+export function isRetiredPanel(id) {
+  return retiredMondayPanels.includes(id);
+}
+
+// A row of the older Monday tasks panel with one of the nine departments plays as Department tasks, open, for that department
+// and the team of its view. Every other row is given back as it is.
+export function upgradeMondayRow(raw) {
+  if (!isRecord(raw) || raw.panel !== 'monday-tasks' || mondayDepartmentOf(raw.department) === '') return raw;
 
   const view = rotationViewOf(raw.view);
+  const row = Object.assign({}, raw, { panel: 'monday-department', department: mondayDepartmentOf(raw.department), list: 'open' });
+  if (view === 'prime' || view === 'nova') row.team = view;
+  else delete row.team;
+  return row;
+}
+
+// The settings of a row of the two Monday panels: the department and the list, or the chart, and the team
+function mondaySettings(raw, row) {
+  if (row.panel === 'monday-department') {
+    const department = mondayDepartmentOf(raw.department);
+    if (department !== '') row.department = department;
+    else delete row.department;
+    row.list = raw.list === 'done' ? 'done' : 'open';
+  }
+  if (row.panel === 'monday-charts') row.chart = mondayCharts.some(entry => entry.value === raw.chart) ? raw.chart : 'status';
+  if ((row.panel === 'monday-department' || row.panel === 'monday-charts') && (raw.team === 'prime' || raw.team === 'nova')) row.team = raw.team;
+}
+
+// One row, tidy, or null when it cannot be played at all (no view, no known panel). A row of one of the eleven older Monday
+// panels is kept, marked retired, and plays nothing.
+export function tidyRotationRow(given) {
+  if (!isRecord(given)) return null;
+
+  const raw = upgradeMondayRow(given);
+  const view = rotationViewOf(raw.view);
   const panel = typeof raw.panel === 'string' ? raw.panel.trim() : '';
-  if (view === '' || !knownPanel(panel)) return null;
+  if (view === '') return null;
+  if (isRetiredPanel(panel)) return { view: view, panel: panel, shown: raw.shown !== false, retired: true };
+  if (!knownPanel(panel)) return null;
 
   const row = { view: view, panel: panel, shown: raw.shown !== false };
   if (typeof raw.seconds === 'number' && isFinite(raw.seconds) && raw.seconds > 0) row.seconds = Math.round(keepInRange(raw.seconds, { min: 6, max: 120 }, 6));
   if (typeof raw.department === 'string' && raw.department.trim() !== '') row.department = raw.department.trim();
+  mondaySettings(raw, row);
   if (raw.part === 1 || raw.part === 2) row.part = raw.part;
   if (typeof raw.side === 'string' && smallPanel(raw.side.trim())) row.side = raw.side.trim();
   if (panel === 'photo') {
@@ -102,14 +142,16 @@ export function rotationBlocks(rows) {
   return blocks;
 }
 
-// A row as a row of the large panel of its view (core/screens.js, tidyMainRow). A team view gives its team to the row.
+// A row as a row of the large panel of its view (core/screens.js, tidyMainRow). A team view gives its team to the row. The
+// team a Monday row names is the team of its tasks (tasksTeam), not the team of the look.
 export function mainRowOf(row, content) {
   const team = row.view === 'robotics' ? '' : resolveView(content, viewKeyOfRotation(row.view)).team;
   const main = { panel: row.panel, team: team };
 
-  ['seconds', 'department', 'photoCount', 'secondsPerPhoto', 'side', 'part'].forEach(name => {
+  ['seconds', 'department', 'photoCount', 'secondsPerPhoto', 'side', 'part', 'list', 'chart'].forEach(name => {
     if (row[name] !== undefined) main[name] = row[name];
   });
+  if (row.team !== undefined) main.tasksTeam = row.team;
   return main;
 }
 
@@ -153,9 +195,10 @@ function rowsOfView(content, key) {
 
   return view.panels.map(panel => {
     const row = { view: name, panel: panel.panel, shown: true };
-    ['seconds', 'department', 'photoCount', 'secondsPerPhoto'].forEach(field => {
+    ['seconds', 'department', 'photoCount', 'secondsPerPhoto', 'list', 'chart'].forEach(field => {
       if (panel[field] !== undefined && panel[field] !== '') row[field] = panel[field];
     });
+    if (panel.tasksTeam) row.team = panel.tasksTeam;
     return row;
   });
 }

@@ -20,7 +20,8 @@ import { asTeam } from '../../dashboard/core/teams.js';
 import { newsIsStale, newsItems } from '../../dashboard/core/news.js';
 import { photosToShow } from '../../dashboard/core/photos.js';
 import { recordText, teamEntry } from '../../dashboard/core/frc.js';
-import { doneView, tasksView } from '../../dashboard/core/monday-views.js';
+import { chartsView, departmentTitle, departmentView } from '../../dashboard/core/monday-views.js';
+import { retiredWords } from '../../dashboard/config-lists.js';
 import { match13Stale, matchForecastFor, tidyMatch13 } from '../../dashboard/core/match13.js';
 import { timeZoneOf } from '../../dashboard/core/theme.js';
 import { panels } from '../../dashboard/registry.js';
@@ -142,15 +143,16 @@ const emptyReasons = {
 };
 
 function teamWords(team) {
-  return team === '' || team === undefined ? 'either team' : 'the ' + team.charAt(0).toUpperCase() + team.slice(1) + ' team';
+  return team === '' || team === undefined ? 'both teams' : 'the ' + team.charAt(0).toUpperCase() + team.slice(1) + ' team';
 }
 
+// row is a tidy row of the rotation, whose team is the team of the tasks
 function mondayReason(row) {
   const who = teamWords(row.team);
-  const department = String(row.department || '').trim();
-  return department === ''
-    ? 'no Monday task is on the TV for ' + who + '.'
-    : 'no Monday task is on the TV for ' + department.split(',').join(' or ') + ' in ' + who + '.';
+  if (row.panel === 'monday-charts') return 'no Monday task is on the TV for ' + who + ' to chart.';
+  const department = departmentTitle(row.department);
+  if (department === '') return 'pick a Department for this row.';
+  return 'no ' + (row.list === 'done' ? 'done' : 'open') + ' ' + department + ' task is on the TV for ' + who + '.';
 }
 
 function emptyReason(row) {
@@ -169,9 +171,12 @@ function eventLines(content, step, now) {
 }
 
 function mondayLines(content, step, now) {
-  const view = step.panel === 'monday-done' ? doneView(content, now, step.page) : step.panel === 'monday-tasks' ? tasksView(content, now, step.page) : null;
-  if (!view || !Array.isArray(view.rows)) return [];
-  return view.rows.map(row => cut(row.title || row.name || ''));
+  if (step.panel === 'monday-charts') {
+    const chart = chartsView(content, now, step.page);
+    return chart && chart.chart === 'status' ? chart.rows.map(row => row.name + ': ' + row.done + ' done, ' + row.progress + ' in progress, ' + row.todo + ' to do') : [];
+  }
+  const view = departmentView(content, now, step.page);
+  return view ? view.rows.map(row => row.project + ', ' + row.contact) : [];
 }
 
 // The TBA lines (the frc-status document) for a team, and the Match13 line of its next match when the file has one
@@ -200,7 +205,7 @@ function lineCount(count, noun) {
 async function itemsFor(step, content, now, match13) {
   let lines = [];
   if (step.panel === 'events') lines = eventLines(content, step, now);
-  else if (step.panel === 'monday-tasks' || step.panel === 'monday-done') lines = mondayLines(content, step, now);
+  else if (step.panel === 'monday-department' || step.panel === 'monday-charts') lines = mondayLines(content, step, now);
   else if (step.panel === 'frc-news') lines = newsItems(content, now).map(item => item.title);
   else if (step.panel === 'competition-rank') lines = rankLines(content, step, match13);
   else if (step.panel === 'photo') {
@@ -217,13 +222,13 @@ export async function checkRow(raw, world) {
   const row = tidyRotationRow(raw);
   if (!row) return { state: 'skip', reason: 'The wall cannot play this row. It needs a view and a panel it knows.', items: [] };
   if (!row.shown) return { state: 'off', reason: 'Shown is off, so the wall skips this row.', items: [] };
+  if (row.retired) return { state: 'skip', reason: retiredWords, items: [] };
   if (!world.content) return { state: 'unknown', reason: world.problem, items: [] };
 
   const content = world.content;
   const main = tidyMainRow(mainRowOf(row, content), row.view === 'robotics', true);
   const steps = main ? viewSteps(content, viewKeyOfRotation(row.view), world.now, -1, [main]) : [];
-  const team = main ? main.team : '';
-  const named = Object.assign({ team: team }, row);
+  const named = Object.assign({}, row, { team: row.team || '' });
 
   if (steps.length === 0) {
     const why = isMondayPanel(row.panel) ? emptyReason(named) : 'the team of this row is not switched on.';

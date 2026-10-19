@@ -19,7 +19,7 @@ export const draftId = 'drafts.dashboardSettings';
 export const settingsQuery = '*[_id in ["' + settingsId + '", "' + draftId + '"]]';
 
 // The fields of a row the tab changes. Any other field on a stored row (the Studio may add one) is kept as it is.
-const rowFields = ['view', 'panel', 'seconds', 'shown', 'department', 'part', 'side', 'photoCount', 'secondsPerPhoto'];
+const rowFields = ['view', 'panel', 'seconds', 'shown', 'department', 'part', 'side', 'photoCount', 'secondsPerPhoto', 'list', 'chart', 'team'];
 export const titleLongest = 28;
 export const transitionRange = { min: 2, max: 4 };
 
@@ -107,6 +107,18 @@ function cleanRow(input, number, stored, used) {
     const text = typeof input.department === 'string' ? input.department.trim() : '';
     if (text === '' || text.length > 60 || /[\u0000-\u001f<>]/.test(text)) throw new Refusal(400, where + 'Department should be plain words up to 60 characters, such as build or business,marketing.');
     clean.department = text;
+  }
+  if (present(input.list)) {
+    if (input.list !== 'open' && input.list !== 'done') throw new Refusal(400, where + 'List should be open or done.');
+    clean.list = input.list;
+  }
+  if (present(input.chart)) {
+    if (!['status', 'progress', 'timeline'].includes(input.chart)) throw new Refusal(400, where + 'Chart should be status, progress or timeline.');
+    clean.chart = input.chart;
+  }
+  if (present(input.team)) {
+    if (input.team !== 'prime' && input.team !== 'nova') throw new Refusal(400, where + 'Team should be Prime, Nova or empty for both.');
+    clean.team = input.team;
   }
   if (present(input.part)) {
     if (input.part !== 1 && input.part !== 2) throw new Refusal(400, where + 'Page should be 1 or 2.');

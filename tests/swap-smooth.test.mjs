@@ -490,8 +490,8 @@ test('a held look is offered a swap in calm motion and with no motion, and a Mon
 
   ['calm', 'none'].forEach(motion => {
     world.motion = motion;
-    assert.equal(offer(page('monday-tasks'), page('monday-milestones')), null, 'one Monday card to the next is the usual page change in ' + motion);
-    assert.equal(offer(page('events'), page('monday-tasks')), null, 'and so is going into the Monday block, unless a look was held');
+    assert.equal(offer(page('monday-department'), page('monday-charts')), null, 'one Monday card to the next is the usual page change in ' + motion);
+    assert.equal(offer(page('events'), page('monday-department')), null, 'and so is going into the Monday block, unless a look was held');
 
     swapRun.queueSwap();
     assert.ok(offer(page('tasks'), page('events')), 'a look was held, in ' + motion);
@@ -499,7 +499,7 @@ test('a held look is offered a swap in calm motion and with no motion, and a Mon
   });
 
   world.motion = 'full';
-  assert.ok(offer(page('monday-tasks'), page('monday-milestones')), 'in full motion the Monday card turn is a swap');
+  assert.ok(offer(page('monday-department'), page('monday-charts')), 'in full motion the Monday card turn is a swap');
   world.takeover = true;
   swapRun.queueSwap();
   assert.equal(offer(page('tasks'), page('events')), null, 'nothing is offered while an alert, an announcement or a talk has the screen');

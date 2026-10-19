@@ -30,7 +30,8 @@ export const threat = {
 
 export {
   speeds, metals, looks, themeIds, barStyle, styles, screenIds, weekdays, defaultSchedule, standardSwapSeconds,
-  defaultScreen, teamPanels, mondayRows, mondayKinds, mondayOldPanels, teamModes, lookSwaps, competitionModes,
+  defaultScreen, teamPanels, mondayRows, mondayKinds, mondayDepartments, mondayLists, mondayCharts, mondayTeams,
+  retiredMondayPanels, retiredWords, teamModes, lookSwaps, competitionModes,
   competitionSwitches, competitionLeadDays, competitionPreviewDays, competitionRecapDays, competitionEstimateSpread,
   competitionTrendPoints, competitionPreviewSeconds, pageChangeStyles, frameFinishes,
   photoOrders, photoSources, photoFits, portraitShapes, portraitFrames, nightStyles, nightSpeeds, nightFirstHit, limits,
@@ -48,5 +49,5 @@ export {
 } from './config-more.js';
 export {
   defaultRotationRows, rotationViews, rotationAliases, rotationKeyOfView, roboticsTitle, olderGeneralTitle,
-  transitionSecondsRange, placeholderPanels, designDepartment, bothTeamDepartments, rosterPageRows, roboticsWidePanels,
+  transitionSecondsRange, placeholderPanels, designDepartment, rosterPageRows, roboticsWidePanels,
 } from './config-rotation.js';

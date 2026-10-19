@@ -676,11 +676,11 @@ test('the swap is offered for a held look, and for a Monday card on either side,
   const offer = world.offer;
 
   assert.equal(offer(otherPage('tasks'), otherPage('events')), null, 'an ordinary page change is an ordinary page change');
-  assert.ok(offer(mondayPage('monday-tasks'), mondayPage('monday-milestones')), 'one Monday card to the next');
-  assert.ok(offer(mondayPage('monday-milestones'), mondayPage('monday-progress')));
-  assert.ok(offer(mondayPage('monday-tasks'), mondayPage('monday-tasks')), 'and the next page of the same card');
-  assert.ok(offer(otherPage('events'), mondayPage('monday-tasks')), 'into the Monday block');
-  assert.ok(offer(mondayPage('monday-progress'), otherPage('tasks')), 'and out of it');
+  assert.ok(offer(mondayPage('monday-department'), mondayPage('monday-charts')), 'one Monday card to the next');
+  assert.ok(offer(mondayPage('monday-charts'), mondayPage('monday-charts')));
+  assert.ok(offer(mondayPage('monday-department'), mondayPage('monday-department')), 'and the next page of the same card');
+  assert.ok(offer(otherPage('events'), mondayPage('monday-department')), 'into the Monday block');
+  assert.ok(offer(mondayPage('monday-charts'), otherPage('tasks')), 'and out of it');
 
   assert.equal(offer(otherPage('tasks'), otherPage('events')), null, 'asked again, still not');
   swapRun.queueSwap();
@@ -691,7 +691,7 @@ test('the swap is offered for a held look, and for a Monday card on either side,
 test('a swap is never offered for a Monday card turn in calm or no motion, nor while something else has the screen, or while one plays', async () => {
   const world = await loadRun();
   const offer = world.offer;
-  const monday = () => offer(mondayPage('monday-tasks'), mondayPage('monday-milestones'));
+  const monday = () => offer(mondayPage('monday-department'), mondayPage('monday-charts'));
 
   assert.ok(monday());
   ['calm', 'none'].forEach(motion => {
@@ -735,7 +735,7 @@ function newLook(world) {
 test('a swap pulls the pieces apart, puts the look on at 450 ms, re-forms them by 1250 ms and lands the icon at 1400 ms', async () => {
   const world = await loadRun();
   const busy = await import(busyModuleUrl);
-  const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(newLook(world));
+  const playing = world.offer(otherPage('events'), mondayPage('monday-department')).play(newLook(world));
 
   assert.equal(swapRun.swapRunning(), true);
   assert.equal(busy.isBusy(), true, 'the glitch of the team name holds');
@@ -762,7 +762,7 @@ test('a swap pulls the pieces apart, puts the look on at 450 ms, re-forms them b
 test('before 450 ms every piece pulls out, slowly at first and softly at the end, the content fades out, and the logo is copied and stays where it was', async () => {
   const world = await loadRun();
   const swapPage = newLook(world);
-  const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage);
+  const playing = world.offer(otherPage('events'), mondayPage('monday-department')).play(swapPage);
   for (let flush = 0; flush < 40; flush++) await new Promise(resolve => setImmediate(resolve));
 
   assert.equal(world.elements.world.dataset.pieces, '', 'the frames show as their pieces');
@@ -809,7 +809,7 @@ test('at 450 ms the old animations stop, the new pieces start where the old ones
   const realRandom = Math.random;
   Math.random = () => 0.25; // the seed of the run is then 1073741824
   try {
-    await drive(world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage));
+    await drive(world.offer(otherPage('events'), mondayPage('monday-department')).play(swapPage));
   } finally {
     Math.random = realRandom;
   }
@@ -883,7 +883,7 @@ async function runTo(world, milliseconds) {
 test('a carried icon goes to the new place with the pieces, in a straight line, changes color half way, and lands. It is never a hawk', async () => {
   const world = await loadRun();
   const swapPage = newLook(world);
-  const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage);
+  const playing = world.offer(otherPage('events'), mondayPage('monday-department')).play(swapPage);
 
   await runTo(world, 500);
   const hawk = world.elements.pile.children.find(child => child.classes.has('swap-hawk'));
@@ -960,18 +960,18 @@ test('a swap into the other team, or a style, is slight, and one with a Monday c
 
   assert.equal(await flutters(otherPage('events'), otherPage('tasks'), { team: true }), true, 'Nova to Prime');
   assert.equal(await flutters(otherPage('events'), otherPage('tasks'), { queued: true }), true, 'Original to Cybertron');
-  assert.equal(await flutters(mondayPage('monday-progress'), otherPage('tasks'), { team: true, queued: true }), true, 'Prime to Nova, out of the Monday cards');
-  assert.equal(await flutters(otherPage('events'), mondayPage('monday-tasks'), { queued: true }), false, 'into the Monday cards');
-  assert.equal(await flutters(mondayPage('monday-tasks'), mondayPage('monday-milestones'), {}), false, 'from one Monday card to the next');
-  assert.equal(await flutters(mondayPage('monday-progress'), otherPage('tasks'), { queued: true }), false, 'out of them, with the team staying');
-  assert.equal(await flutters(otherPage('events'), mondayPage('monday-tasks'), { team: true, queued: true }), false, 'into a Monday card of the other team');
+  assert.equal(await flutters(mondayPage('monday-charts'), otherPage('tasks'), { team: true, queued: true }), true, 'Prime to Nova, out of the Monday cards');
+  assert.equal(await flutters(otherPage('events'), mondayPage('monday-department'), { queued: true }), false, 'into the Monday cards');
+  assert.equal(await flutters(mondayPage('monday-department'), mondayPage('monday-charts'), {}), false, 'from one Monday card to the next');
+  assert.equal(await flutters(mondayPage('monday-charts'), otherPage('tasks'), { queued: true }), false, 'out of them, with the team staying');
+  assert.equal(await flutters(otherPage('events'), mondayPage('monday-department'), { team: true, queued: true }), false, 'into a Monday card of the other team');
 });
 
 test('a page that is about to reload stays apart until it is gone, and the Speed setting stretches every time', async () => {
   const world = await loadRun({ pace: 2 });
   world.reloading = true;
   const swapPage = newLook(world);
-  const playing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(swapPage);
+  const playing = world.offer(otherPage('events'), mondayPage('monday-department')).play(swapPage);
   await drive(playing);
 
   const log = world.log.filter(line => line.startsWith('swapPage'));
@@ -988,7 +988,7 @@ test('a swap that fails puts everything back, and one that finds the areas never
   console.error = () => {};
 
   try {
-    const failing = world.offer(otherPage('events'), mondayPage('monday-tasks')).play(() => { throw new Error('the page cannot swap'); });
+    const failing = world.offer(otherPage('events'), mondayPage('monday-department')).play(() => { throw new Error('the page cannot swap'); });
     const took = await drive(failing);
     assert.equal(took, 0);
     assert.equal(swapRun.swapRunning(), false);
@@ -1005,7 +1005,7 @@ test('a swap that fails puts everything back, and one that finds the areas never
   const second = await loadRun();
   second.areaState = 'changing';
   let swapped = false;
-  const took = await drive(second.offer(otherPage('events'), mondayPage('monday-tasks')).play(() => { swapped = true; }));
+  const took = await drive(second.offer(otherPage('events'), mondayPage('monday-department')).play(() => { swapped = true; }));
   assert.equal(took, 0);
   assert.equal(swapped, false, 'the usual page change runs instead');
   assert.equal(swapRun.swapRunning(), false);
@@ -1032,7 +1032,7 @@ test('frame.css shows the pieces while #world has data-pieces, and the swap has 
 test('the Monday panels are marked in the registry, the six of the task board and the four older ones, and nothing else is', () => {
   const registry = read('registry.js');
   const marked = [...registry.matchAll(/\{ id: '([^']+)'[^}]*monday: true(?:, older: true)? \}/g)].map(match => match[1]);
-  assert.deepEqual(marked, ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both', 'monday-pie']);
+  assert.deepEqual(marked, ['monday-department', 'monday-charts']);
 });
 
 
