@@ -18,7 +18,7 @@ const offered = titles.panelChoices.map(item => item.value).concat(titles.sideCh
 const explained = auto.explainedIds();
 const internal = titles.internalPanels.map(item => item.id);
 
-export function whereIs(id) {
+function whereIs(id) {
   return [offered.indexOf(id) !== -1 ? 'picker' : '', explained.indexOf(id) !== -1 ? 'automatic' : '', internal.indexOf(id) !== -1 ? 'internal' : ''].filter(Boolean);
 }
 
@@ -27,7 +27,7 @@ test('every registered panel is offered, explained as automatic, or named as old
   assert.deepEqual(missing, [], 'Not explained in the Studio: ' + missing.join(', ') + '. Offer it in studio/inputs/screen-panels.js, list it in studio/tools/rotation-auto.js or add it to internalPanels in studio/tools/rotation-titles.js.');
 });
 
-test('a panel is explained in one place, except the competition rank row that is also a card', () => {
+test('a panel is explained in one place only', () => {
   registry.panels.forEach(panel => {
     const places = whereIs(panel.id);
     assert.ok(places.length <= 1, panel.id + ' is in ' + places.join(' and '));

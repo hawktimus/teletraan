@@ -104,6 +104,13 @@ example Skipped now: no Monday task is on the TV. It reads the published tasks a
 are in skipNotes in studio/tools/rotation-board.js. A change is on the wall only after Publish all, so a draft that did not
 publish (Publish all names it) is the other reason the wall differs from the board.
 
+## Every panel is explained
+
+A panel in dashboard/registry.js is either offered in the pickers of the board, listed as an automatic panel (the cards above),
+or named as an old or internal panel with a reason (internalPanels in studio/tools/rotation-titles.js). The older Monday
+cards and the two stand-ins of the hardware test are the internal ones. tests/rotation-panels-explained.test.mjs fails with
+the id of a panel that is none of these, so a panel cannot reach the wall without the Studio saying what it is.
+
 ## Where the code is
 
 - studio/inputs/rotation-board-view.js: the page and its actions.
@@ -112,4 +119,5 @@ publish (Publish all names it) is the other reason the wall differs from the boa
 - studio/tools/rotation-find.js: the filters, the search, the Jump to links and the placeholder badge.
 - studio/tools/rotation-titles.js: the one table of view and panel titles.
 - studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.js: the Automatic panels section.
-- tests/rotation-board.test.mjs and tests/rotation-wall-path.test.mjs: the tests.
+- tests/rotation-board.test.mjs, tests/rotation-wall-path.test.mjs, tests/rotation-auto.test.mjs, tests/rotation-find.test.mjs,
+  tests/rotation-now-line.test.mjs and tests/rotation-panels-explained.test.mjs: the tests.
