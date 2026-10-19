@@ -204,7 +204,9 @@ editors can sign in from anywhere.
                               the clock and the Competition cards setting) and mixes them into the list of the
                               large panel, competition-draw.js is what the cards share, and competition-preview.js
                               decides when the Preview competition button shows the cards on sample data and
-                              competition-preview-run.js starts it (docs/frc-feed.md),
+                              competition-preview-run.js starts it (docs/frc-feed.md). competition-scouting.js has the sums
+                              of the preview, matches and recap cards (field strength, the chance of winning a match, the expected
+                              record, the change over an event) and competition-trend.js draws the season trend line,
                               monday.js picks and ranks the board tasks for the Monday cards and has the rules of the Monday
                               panels (visible, team, department, overdue, rank, hours, stale), monday-views.js works out
                               what each of the six panels of the task board draws and monday-draw.js draws their header
@@ -235,8 +237,8 @@ editors can sign in from anywhere.
         heartbeat.js          writes the time in the page title every 30 seconds, which the watchdog
                               on the computer reads
         still.js              the ?panel= preview address; still-run.js draws the one panel
-        competition-address.js  ?competition=1&event= puts the competition cards on with one event's
-                              data; competition-address-run.js gives it the page
+        competition-address.js  ?competition=1&event=&phase= puts the competition cards on with one event's
+                              data, and moves its dates into a phase of Before and after; competition-address-run.js gives it the page
         takeover.js           the alert and the announcements at set times, which cover the screen
         time.js               turns dates into the text on the screen and reads typed dates
         weather.js            the weather from Open-Meteo, kept for two hours; weather-icons.js draws
@@ -248,7 +250,7 @@ editors can sign in from anywhere.
                               layout"). The war clock in that banner is drawn by panels/countdown, as a
                               second rendering of the countdown (docs/layouts.md, "The war clock").
                               panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md).
-                              panels/competition-* are the seven competition cards, each plain SVG
+                              panels/competition-* are the ten competition cards, each plain SVG
                               (docs/frc-feed.md). panels/monday-tasks, monday-done, monday-status-depts, monday-overall,
                               monday-timeline and monday-board are the six panels of the task board, and the other
                               panels/monday-* the older cards (docs/layouts.md, "The Monday cards"). panels/team-tile is the small frame's last
@@ -421,6 +423,7 @@ editors can sign in from anywhere.
       small-foot.test.mjs     checks the last line of a page of the small frame in Cybertron against the slashes
       check-preview.test.mjs  checks that the panel preview list is in step with the registry
       frc-event.test.mjs      checks ?competition=1&event= and frc-sync.sh --event with a fake curl
+      frc-field.test.mjs      checks the field strength and the schedule that frc-sync.sh reads in the 14 days before an event
       calendar.test.mjs       checks for the calendar reader, and for the Calendar filters that take events
                               off the screen (core/events.js)
       weather.test.mjs        checks for the weather reader and its pictures
@@ -527,6 +530,9 @@ editors can sign in from anywhere.
                               panels/competition-*): the cards due on each day of the season in each mode, the mix into the
                               large panel's list, each card from the sample and with nothing to show, that no text is under
                               44px or runs out of its body, and the guard of Preview competition
+      competition-phases.test.mjs  checks Before and after and its three cards (competition-preview, competition-matches and
+                              competition-recap): the phases, the cards due in each mode, the field strength, the chances,
+                              the expected record, the recap and the trend
       monday-rules.test.mjs, monday-panels.test.mjs, monday-acceptance.test.mjs  check the rules of the Monday panels and the stale
                               chip, the six panels and the department picker of the Screens builder, and the acceptance cases of
                               the order (monday-world.mjs is what they share)
@@ -778,8 +784,8 @@ alone.
   `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/tools/screen-requests.js`.
   The starting values are in `defaultSettings` in `dashboard/config.js`, and `fixSettingValues` in
   `dashboard/core/content.js` keeps each one a time or empty.
-- **The competition cards.** Dashboard Settings, Competition tab (docs/frc-feed.md). The mode, Auto, Always or
-  Off, and a switch for each of the seven cards are in `studio/schemas/settingsCompetition.js`, with the
+- **The competition cards.** Dashboard Settings, Competition tab (docs/frc-feed.md). The mode, Before and after, Auto, Always or
+  Off, and a switch for each of the ten cards are in `studio/schemas/settingsCompetition.js`, with the
   starting values in `defaultSettings`, the lists in `competitionModes` and `competitionSwitches` and
   `competitionLeadDays` (2 days) and `competitionPreviewSeconds` (120) in `dashboard/config.js`. The cards
   are the panels `dashboard/panels/competition-*`, flagged `competition: true` in `registry.js`, and the

@@ -4,7 +4,7 @@ For the coaches and the students who look after the Teletraan computer. The comp
 public competition data of each team and keeps it in Sanity, so the screen can
 show the season, the next match, the last results, the rank and the ratings.
 This page says what it reads, what it writes, how often, what to do when it
-stops, and then what the screen does with it: the seven competition cards, the
+stops, and then what the screen does with it: the ten competition cards, the
 setting that says when they come, and the Preview competition button.
 
 None of it has been tried against the live services. The addresses and the
@@ -27,6 +27,14 @@ Statbotics:
 - the team's rating for the season (EPA)
 - the rating of the other teams in the next match
 - the chance of winning for the next 3 matches
+- in the 14 days before an event, the rating of every team that comes, the chance of
+  winning each of our qualification matches, and for each team its record this season
+  and its rating at the start of the season
+
+The two places for the record and for the start of the season (`statbotics_wins` and
+`statbotics_epa_start` in `frc-contract.sh`) were written from the documentation of Statbotics and not
+checked against a live answer, as the other places were not. If they are wrong, the card writes no
+record and no trend, and nothing else changes.
 
 The teams are the Team documents in Studio. A team's key is `frc` and its Team
 number, so number 3229 is `frc3229`. A team with no number is left out, and so is
@@ -67,6 +75,14 @@ One document in Sanity with the fixed id `frc-status` and the type `frcStatus`.
   - `snapshots`: one entry a day with the date, the rating and the district
     points, 120 entries at most
   - `lastSeason`: the events of the season before, kept when the year changes
+  - `schedule`: the qualification matches the team has still to play at the event now
+    (`event`, and `matches`): for each its code, label, number, time, the alliance colour, the
+    `partners` (the other teams on our alliance) and the `opponents`, each with team number,
+    nickname, rating (`epa`), record this season and `trend` (rising, falling or empty), and
+    `winProbability`, the chance that our alliance wins from Statbotics (0 to 1, or nothing).
+    No matches means the schedule is not posted yet
+  - `field`: the teams that come to the event, best rating first, each with number, nickname
+    and rating. It is written only in the 14 days before the event
 
 A value that is not known is empty. Nothing is made up to fill a gap. The ranking
 points are the first sort value in the rankings of The Blue Alliance, which is
@@ -114,7 +130,13 @@ nothing. A run by hand with `--now` ignores the time.
 
 ## Limits
 
-- At most 60 requests to The Blue Alliance and Statbotics in one run. The
+- The ratings for the field strength and the chances of our matches have a limit of their
+  own: at most 60 requests to Statbotics for them in one run (`field_max` in
+  `frc-contract.sh`). A rating is kept 12 hours (`field_keep_hours`) before it is asked for again,
+  and a team Statbotics does not know is not asked for again in that time. A run that reaches the
+  limit puts a note in the status, such as "Field strength: this run read 60 ratings from
+  Statbotics, which is the limit", and the next run goes on with the rest, 5 minutes later.
+- At most 60 requests to The Blue Alliance and Statbotics in one run, not counting the ones for the field. The
   question to Sanity does not count. A run that reaches 60 writes what it has,
   puts a note in the status, and the next run, 5 minutes later, carries on with
   the first address it has not read. A pass over all the addresses is finished
@@ -196,7 +218,7 @@ Until then `cutoff` is empty and nothing is shown.
 ## The cards on the screen
 
 The screen reads the document `frc-status` with the rest of the content, and draws
-it as seven cards in the large panel. Each card is a panel in
+it as ten cards in the large panel. Each card is a panel in
 `dashboard/panels/competition-*`, drawn as plain SVG at the size of the large
 panel, with no text under 44px and no line thinner than 3px. A card shows the
 data of the team that is on the screen. A team that the Teletraan computer did not read has no
@@ -212,6 +234,9 @@ left out, and a sentence says so.
 | Results strip | RESULTS | The last 8 matches as chips in red or blue, the colour the team was on, with the score and a tick for a win. A lost match is dimmer. | The same days. |
 | Alliance board | ALLIANCE | The number of the alliance and the teams on it. | The same days, once the selection has been made. |
 | District points | DISTRICT | The points, the rank and a bar that fills toward the cutoff for the state championship. | All season once the first event has started, when the computer has the points. |
+| Event preview | PREVIEW | Page one: the event, its city and days, the time left to its first day, how many teams come and a line for each of our teams, such as "Prime would rank 7th of 42 by EPA". Page two: the best eight teams by EPA with ours marked in their colors, and the average EPA of the field. Page three: the EPA of the team over the season. | Not in Auto. In Before and after, from 14 days before an event to the day before it. |
+| Our matches | MATCHES | Page one: the first match, the time left, the expected record, the hardest and the easiest match. Page two: those two matches in full, our alliance against the opponents with the EPA of each team, and a line about the best opponent. Then the qualification matches in time order, six to a page. | Not in Auto. In Before and after, in the preview days once the schedule is posted, and in the last 2 days before an event even when it is not. |
+| Event recap | RECAP | Page one: the final rank, the record, the ranking points, the change in EPA over the event and the district points gained. Page two: the awards, when there are any. The last page: the EPA over the season. | Not in Auto. In Before and after, for 7 days from the day after the event. |
 
 The days of an event are in the time zone on the Look page, from the first day to
 the last day. The state championship is on the timeline when the district list
@@ -233,6 +258,9 @@ reading does not pass for live.
 
 When a card is asked to draw and has nothing to show, it says one sentence:
 
+- Event preview: There is no event coming up.
+- Our matches: The match schedule is not posted yet.
+- Event recap: There is no event to look back on yet.
 - Next match: No match is scheduled yet.
 - Live rank: There is no rank yet. Rankings start after the first match.
 - Results strip: No matches have been played yet.
@@ -249,18 +277,37 @@ its data while it waits for its turn.
 
 ## When the cards come
 
-The Competition tab of Dashboard Settings has the setting. Competition cards is
-one of three:
+The Competition page in the sidebar (Dashboard Settings, Competition tab) has the setting.
+Competition cards is one of four:
 
+- Before and after (recommended, stored as `around`): the team is not at the school during a
+  competition, so the cards come only before and after an event, and not while it is on.
+  - The preview is from 14 days before the first day of an event to the day before it. It
+    has the Event preview card, the Our matches card (see below), the season timeline, and last
+    season or the district points as in Auto.
+  - While the event is on, from its first day to its last day, no card comes. The match by match
+    cards (Next match, Live rank, Results strip and Alliance board) are never shown in this mode.
+  - The recap is from the day after the last day for 7 days. It has the Event recap card, the
+    season timeline and the district points.
+  - With two events close together, the recap of the first and the preview of the second can be
+    on the same days. While one event is on, nothing comes, even if the other is near.
+  - The cards are spread evenly through the ordinary panels and come once in each time round.
 - Auto: each card comes in the time of its own, in the last column of the table.
   On the days of an event the cards take priority: the large panel shows a card,
   then an ordinary panel, then a card, and so on, starting with the next match.
   On the two days before an event, and for the cards that run all season, the
   cards are spread evenly through the ordinary panels and come once in each time
-  round.
+  round. The three newer cards do not come in Auto.
 - Always: every card that is switched on and has something to show, whatever the
   date. Use it to try the cards, or if the team wants them up all the time.
 - Off: no card.
+
+A settings page that has never stored a mode plays Before and after. A mode that is stored, Auto
+included, is kept as it is. The coaches change it on the Competition page.
+
+The Our matches card comes with the preview once the match schedule of the event is posted, which is
+usually the evening before. In the last 2 days before an event it comes even when the schedule is not
+posted, and then says so in one sentence. Before that it is left out, and the preview card carries on.
 
 Each card has a switch of its own, all on to start with. A card that is switched
 off is never put in the rotation, in any mode (Preview competition shows all of
@@ -285,9 +332,37 @@ The first block of the tab shows what the Teletraan computer last did: when it l
 data, how many events it found for each team, any note and the last error. With
 no document yet it says No connection yet and what to add to `local.env`.
 
+## Field strength and our matches
+
+These come from the 14 days before an event. The Teletraan computer reads them from The Blue Alliance
+(`/event/{event}/teams/simple` for the teams that come, and the matches of our team) and from Statbotics
+(`/team_year/{number}/{year}` for the rating of each team, and `/match/{match}` for the chance of winning each of
+our qualification matches). The Blue Alliance needs the key. Statbotics needs none.
+
+- Field strength: the teams that come are put in order by EPA. A team's place is one more than the
+  number of teams with a higher EPA, and the size of the field is the number of teams that come, so
+  "Prime would rank 7th of 42 by EPA" counts 42 teams. A team with no rating comes after the rated ones
+  and has no place. The average is the mean of the rated teams. A team Statbotics does not know shows a
+  dash. With fewer than two ratings there is no field, and the card shows only the event.
+- The chance of winning a match is the chance of our alliance. It is the one Statbotics gives. When
+  Statbotics has none, the card works it out: it adds the EPA of our two partners and of the three
+  opponents, and takes the normal curve at the gap between the sums over 25 points (`competitionEstimateSpread`
+  in `dashboard/config-lists.js`). A chance made this way is an ESTIMATE, and the card says so. With a rating
+  missing there is no estimate and the card shows a dash.
+- The expected record is the chances of all the matches added up and rounded: 7 wins and 5 losses. It is left
+  out when a match has no chance.
+- The hardest match has the lowest chance and the easiest the highest. They are named only when two
+  matches have a chance.
+- The note about a match is its best opponent by EPA, with that team's record this season and rising or falling
+  when the rating is 2 or more points over or under its start of the season. When the computer found neither,
+  there is no note.
+- The season trend is the EPA of the daily snapshots, drawn as one line. It needs 2 snapshots. The axis labels
+  are 28px and the last value is written next to the last point.
+- Everything on these cards is public data: team numbers, nicknames, match numbers and times and ratings.
+
 ## Preview competition
 
-The button on the Start here page shows the seven cards on sample data, so the
+The button on the Start here page shows the ten cards on sample data, so the
 team can see them before the season, with no key and no internet. Click it and,
 within a few seconds:
 
@@ -298,7 +373,8 @@ within a few seconds:
   The numbers of the other teams are made up and written in brackets, such as
   [1121], and the headers say SAMPLE.
 - The large panel shows every card in order of priority, each for an equal share
-  of 2 minutes (about 17 seconds), whatever the mode and the switches say. Then it
+  of 2 minutes (12 seconds), whatever the mode and the switches say. The three newer cards come last,
+  and each page of one of them is held for the same time (the Events panel does the same). Then it
   goes back to its own list.
 - Nothing is read from Sanity or from the Teletraan computer, and nothing is written. One
   click is handled once: the click that was handled is kept in the browser, so a
@@ -324,7 +400,10 @@ To see every card full, with real numbers, use an event that is over. Nothing he
    them. Prime and Nova take the places of the two best ranked teams. `--prime 1234 --nova 5678` chooses two others.
 3. Commit the file. The placeholder that is there now says PLACEHOLDER at its top.
 
-Open `index.html?sample=1&competition=1` to see the cards on the fixture. With `&event=2026ncwak` the screen reads
+Open `index.html?sample=1&competition=1` to see the cards on the fixture. The three newer cards are in the sample
+content of `dashboard/data/sample/content.json`. To see one in its phase on any day, add `&phase=` with preview, matches
+(the schedule is posted), nomatches (it is not) or recap, as in `?sample=1&competition=1&phase=recap&show=competition-recap`.
+The dates of the data move so that the first event of each team is in that phase. With `&event=2026ncwak` the screen reads
 the fixture only if it is for that event. Without `?sample=1`, `?competition=1&event=<key>` cuts the live card data
 down to that event. Either way the cards come whatever the Competition cards setting and the date say.
 

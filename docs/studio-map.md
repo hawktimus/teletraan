@@ -18,7 +18,7 @@ Every change has three steps: open a line in the sidebar, make the change, click
 | Monday | The Monday boards the computer can see, a preview of their items, and the Show on TV switch for each task (written by the Monday lane) |
 | Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
 | Look | The theme of each weekday, the background, the seasonal decorations, motion, frame polish, and the logo and name effects, on one page |
-| Competition | The competition cards: the mode, and one switch for each card |
+| Competition | The competition cards: the mode (Before and after, Auto, Always or Off), and one switch for each of the ten cards |
 | Coaches only | A heading. Under it: Dashboard Settings, Extra panels and Kept data |
 
 Under Coaches only:

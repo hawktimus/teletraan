@@ -173,7 +173,7 @@ The scripts are in `computer/scripts/`, and the units that start them are in `co
 - docs/calendar-filters.md: rules that hide or keep BAND events
 - docs/hide-a-repeating-meeting.md: the four steps for hiding the Pre-Season meetings
 - docs/calendar-links.md: adding a BAND calendar or changing its link
-- docs/frc-feed.md: the competition data the computer reads, the seven cards on the screen, when they come and the Preview competition button
+- docs/frc-feed.md: the competition data the computer reads, the ten cards on the screen, when they come and the Preview competition button
 - docs/monday.md: the Monday boards the computer reads, how an item becomes a task, what happens when an item goes, and what is public
 - docs/adding-a-field.md: adding a field to something editors fill in
 - docs/adding-a-panel.md: adding a new board

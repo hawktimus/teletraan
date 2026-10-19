@@ -120,7 +120,7 @@ A row is a panel and, if you want, the seconds. Without seconds the row follows 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
 - The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
 - Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents, which are in Old screens (not used) and kept for that. The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
-- The competition cards still come in by themselves from two days before an event, as the Competition tab says. They are not rows.
+- The competition cards still come in by themselves, as the Competition page says (Before and after: 14 days before an event and 7 days after it). They are not rows.
 - When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
 
 ### Views
@@ -366,7 +366,9 @@ says how each is drawn.
 ## The competition feed
 
 The Teletraan computer reads the public competition data of each team and keeps it in Sanity, and
-the screen draws seven cards from it (docs/frc-feed.md).
+the screen draws ten cards from it (docs/frc-feed.md). The team is not at the school during a
+competition, so the mode we recommend, Before and after, shows a preview before an event and a
+recap after it, and shows nothing while the event is on.
 
 - Key: `TBA_AUTH_KEY` in `computer/local.env` on the Teletraan computer. After it is added, install
   the timer and check the key (docs/rebuilding-the-computer.md, step 17):
@@ -376,11 +378,15 @@ the screen draws seven cards from it (docs/frc-feed.md).
 
 - Teams: a team is read when it is Active and has a Team number in Settings,
   Teams. A team without a number is left out, and that is not an error.
-- Competition mode: Dashboard Settings, Competition tab. Auto shows each card in the
-  time of its own. Always shows every card that is on and has something to show,
-  whatever the date. Off shows none. Auto is the start. A switch for each card is on
-  to start with, and a card that is off never shows, except in Preview competition.
-- Preview competition, on the Start here page, shows all seven cards for 2 minutes
+- Competition mode: the Competition page in the sidebar. Before and after (recommended)
+  plays a preview from 14 days before an event to the day before it, nothing while the
+  event is on, and a recap for 7 days from the day after it. Auto shows the older cards
+  from two days before an event and during it. Always shows every card that is on and has
+  something to show, whatever the date. Off shows none. A settings page that never stored a
+  mode plays Before and after. A mode that is already stored, Auto included, stays until you
+  change it. A switch for each card is on to start with, and a card that is off never shows,
+  except in Preview competition.
+- Preview competition, on the Start here page, shows all ten cards for 2 minutes
   on made-up data, with no key and no internet.
 
 | Card | What it shows | When it comes in Auto |
@@ -392,6 +398,18 @@ the screen draws seven cards from it (docs/frc-feed.md).
 | Results strip | The last 8 matches with their scores | The same days |
 | Alliance board | The alliance number and its partners | The same days, once the selection is made |
 | District points | The points and the rank against the cutoff | All season once the first event has started |
+
+The three newer cards come in Before and after and in Always. Auto does not show them.
+
+| Card | What it shows | When it comes in Before and after |
+|------|---------------|-----------------------------------|
+| Event preview | The event, its days, the time left, how many teams come, where each of our teams would rank by EPA, the best eight teams, and our EPA over the season | From 14 days before an event to the day before |
+| Our matches | Our qualification matches with the time, the chance to win each, the expected record, the hardest and the easiest match and a line about the best opponent | Once the schedule is posted, usually the evening before. Before that it says the schedule is not posted yet, in the last 2 days |
+| Event recap | The final rank, the record, the ranking points, the change in EPA, the district points gained, the awards and the EPA over the season | For 7 days from the day after the event |
+
+The chance to win a match is the one Statbotics gives. When it has none, the card works one out
+from the EPA of the two alliances and marks it ESTIMATE (EST in the list). An estimate is a guess
+from ratings, not a prediction of Statbotics. The expected record is the chances added up.
 
 A card with nothing to show is left out of the rotation, so a computer with no key
 shows no competition card. The data is public: team numbers, nicknames, match
@@ -470,7 +488,7 @@ section of Today. The alert is the first. docs/announcements.md has all three.
   boot screen
 - docs/announcements.md: the announcement bar, and how it differs from Play announcements
 - docs/monday.md: the Monday boards, how an item becomes a task and what is public
-- docs/frc-feed.md: the competition data, the seven cards and the Preview button
+- docs/frc-feed.md: the competition data, the ten cards and the Preview button
 - docs/calendars-page.md: the Calendars page and what the computer writes for it
 - docs/calendar-filters.md and docs/calendar-links.md: the rules, and adding a
   calendar

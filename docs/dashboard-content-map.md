@@ -35,7 +35,7 @@ Who: S is students, L is leads, C is coaches. The Studio page is the sidebar lin
 | Sponsor feature | L | Sponsors typed by hand | Sponsors | Rotation row; per item switches |
 | Photos | S, L | Photos uploaded | Photos | Photo fit and Photo order (Screen tab); photo count and seconds on the Rotation row; per photo fit, Show, Hide after |
 | Monday cards (tasks, done, status by department, overall, timeline, board, pie) | S (on Monday) | The Monday boards, read by the computer | Monday Tasks (Show on TV only); Monday Boards | Monday tab (boards, columns, how often, owner names); Days finished tasks stay; Rotation row department |
-| Competition cards (seven) and the Season timeline | L | The public FRC feed, read by the computer | none (Preview competition button on Start here) | Competition tab: mode and one switch per card |
+| Competition cards (ten) and the Season timeline | L | The public FRC feed, read by the computer | none (Preview competition button on Start here) | Competition tab: mode and one switch per card |
 | Extra panels | L | Built from blocks by hand | Extra panels | Rotation row |
 | Robot status, 3D view, Drive hours, Parts request QR code, Mini panel idea | C | Placeholders, Monday hours, a typed web address | none | Parts request address (Screen tab); Rotation row |
 
