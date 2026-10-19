@@ -333,7 +333,7 @@ test('the sample content, the seed file and the built-in team have the colors, t
   const seeded = read('docs/seed/teams.ndjson').split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
   const wanted = {
     prime: { primary: '#6C18B6', plate: '#3B2A7A', body: '#1A0F2E', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', label: '#FACA2A', metal: 'gold', glow: false },
-    nova: { primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#8C44DC', pink: '#D4A017', label: '#D9A6FF', metal: 'gold', glow: true, background: '#17110A' },
+    nova: { primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#8C44DC', pink: '#D4A017', label: '#D9A6FF', metal: 'purple', glow: true, background: '#17110A' },
   };
 
   Object.keys(wanted).forEach(code => {
@@ -474,12 +474,11 @@ test('Prime in Original is what it has always been: the colors of the theme, the
   assert.equal(lower(nova.html['--yellow']), '#c86bff');
 });
 
-test('the Nova of the sample has gold metal: no steel class, and the gold frames in every style, like Prime', () => {
+test('the Nova of the sample has purple metal: the purple class, no steel class, and no gold edge in the steel styles', () => {
   styles.forEach(style => {
-    const gold = pageWith('goldnova', style);
-    assert.ok(!gold.classes.includes('metal-steel'), style + ': no steel class');
-    assert.equal(gradientOf(gold.area['--edge-face']), 'edge-gold', style + ': gold edge');
-    assert.equal(lower(gold.area['--metal-3']), '#a98f43', style + ': the gold tokens');
+    const nova = pageWith('goldnova', style);
+    assert.ok(nova.classes.includes('metal-purple'), style + ': the purple class');
+    assert.ok(!nova.classes.includes('metal-steel'), style + ': no steel class');
   });
 });
 

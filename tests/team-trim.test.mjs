@@ -184,7 +184,7 @@ test('rendered in sample mode, the page of Prime and the page of Nova differ in 
     const own = classes.nova.filter(name => Object.values(config.teamTrim[field]).includes(name));
     assert.deepEqual(own, [classOf(field, novaTeam[field])].filter(Boolean), field + ': Nova has the class of its value, and Prime has none, so the classes differ (the name is solid for both)');
   });
-  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'mirrored', 'neon-glow', 'palette-inverted', 'ticker-bar'], 'and the glow, which is not trim, with no steel class: Nova has gold metal');
+  assert.deepEqual(classes.nova, ['accent-neon', 'bolts-round', 'corner-cut-tr', 'grid-dots', 'header-slant', 'metal-purple', 'mirrored', 'neon-glow', 'palette-inverted', 'ticker-bar'], 'and the glow, which is not trim, with no steel class: Nova has purple metal');
 });
 
 test('the classes of a team are cleared and replaced when the team changes, together with the mirror', async () => {
@@ -193,12 +193,12 @@ test('the classes of a team are cleared and replaced when the team changes, toge
   const withPrime = () => teams.applyTeamLook(primeTeam, page);
 
   withNova();
-  assert.equal(page.classes().length, 9, 'the mirror, the six, the glow and the inverted palette, and no steel: Nova has gold metal');
+  assert.equal(page.classes().length, 10, 'the mirror, the six, the glow and the inverted palette, and no steel: Nova has purple metal');
   withPrime();
   assert.deepEqual(page.classes(), [], 'all of them gone');
   withNova();
   withNova();
-  assert.equal(page.classes().length, 9, 'a team that is put on again changes nothing');
+  assert.equal(page.classes().length, 10, 'a team that is put on again changes nothing');
 
   // a team that has some of them: the others come off
   teams.applyTeamLook(Object.assign({}, primeTeam, { bolts: 'round', grid: 'dots' }), page);

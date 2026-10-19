@@ -4102,7 +4102,7 @@ function checkTeamSeed(type) {
 
   const wanted = {
     'team-prime': { number: '3229', code: 'prime', mirror: false, metal: 'gold', glow: false, colors: { primary: '#6C18B6', plate: '#3B2A7A', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', body: '#1A0F2E', label: '#FACA2A', headerInk: '#FFFFFF', dark: '#29054A', retro: '#FACA2A' } },
-    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'gold', glow: true, colors: { primary: '#D4A017', plate: '#6B4C08', accent: '#C86BFF', neon: '#8C44DC', pink: '#D4A017', background: '#17110A', body: '#241A04', label: '#D9A6FF', headerInk: '#1A1200', dark: '#3D2A05', retro: '#E0A400' } },
+    'team-nova': { number: '3426', code: 'nova', mirror: true, metal: 'purple', glow: true, colors: { primary: '#D4A017', plate: '#6B4C08', accent: '#C86BFF', neon: '#8C44DC', pink: '#D4A017', background: '#17110A', body: '#241A04', label: '#D9A6FF', headerInk: '#1A1200', dark: '#3D2A05', retro: '#E0A400' } },
   };
   need(problems, lines.length === 2, 'docs/seed/teams.ndjson should have two teams, Prime and Nova, it has ' + lines.length);
 

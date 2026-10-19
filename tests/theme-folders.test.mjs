@@ -126,7 +126,7 @@ test('the inverted palette is the Nova one: a class, purple chips with white tex
 
   const seeded = read('docs/seed/teams.ndjson').split('\n').filter(Boolean).map(line => JSON.parse(line));
   assert.equal(seeded.find(team => team.code === 'nova').palette, 'inverted');
-  assert.equal(seeded.find(team => team.code === 'nova').metal, 'gold', 'the metal of the seed is gold; purple is a choice');
+  assert.equal(seeded.find(team => team.code === 'nova').metal, 'purple', 'the metal of the seed is purple');
   assert.equal(seeded.find(team => team.code === 'prime').palette, undefined);
 });
 

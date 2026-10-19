@@ -62,7 +62,7 @@ test('prime equals the built-in team of dashboard/config.js', () => {
 test('nova is the inverted gold and purple palette of the order', () => {
   const nova = standardTeams.nova;
   assert.equal(nova.palette, 'inverted');
-  assert.equal(nova.metal, 'gold');
+  assert.equal(nova.metal, 'purple');
   assert.deepEqual(
     [nova.colors.primary, nova.colors.plate, nova.colors.dark, nova.colors.body, nova.colors.background, nova.colors.accent, nova.colors.label, nova.colors.text, nova.colors.headerInk, nova.colors.retro],
     ['#D4A017', '#6B4C08', '#3D2A05', '#241A04', '#17110A', '#C86BFF', '#D9A6FF', '#FFFFFF', '#1A1200', '#E0A400']
@@ -74,7 +74,7 @@ test('an old blue Nova document gets every standard value, and a standard one ge
   const result = standardChanges(blue, 'nova');
   assert.equal(result.set.colors.primary, '#D4A017');
   assert.ok(!result.lines.some(line => line.label === 'Text color'), 'a value that already matches is not listed');
-  assert.equal(result.set.metal, 'gold');
+  assert.equal(result.set.metal, 'purple');
   assert.equal(result.set.palette, 'inverted');
   assert.equal(result.set.name, undefined, 'the name is never touched');
   assert.ok(result.lines.some(line => line.label === 'Main color' && line.from === '#2B7FD6' && line.to === '#D4A017'));

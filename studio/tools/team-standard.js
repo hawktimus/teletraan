@@ -49,7 +49,7 @@ export const standardTeams = {
       dark: '#3D2A05',
       retro: '#E0A400',
     },
-    metal: 'gold',
+    metal: 'purple',
     palette: 'inverted',
     glow: true,
     bolts: 'round',
