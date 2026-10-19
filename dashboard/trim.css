@@ -98,6 +98,10 @@ html.ticker-bar .ticker .tag::after {
   height: 4px;
   background: var(--team-accent);
 }
+/* With the plate gone the word sits on the dark ticker, so it is the team's text color and not the header ink, which is
+   made for text on the main color (dark for the inverted palette). Retro and Foundry set the ink on it in their own rules. */
+html.ticker-bar .ticker .tag span,
+html[data-style].ticker-bar .ticker .tag span { color: var(--team-text); }
 
 
 /* The red parts of the countdown. The countdown, the war clock and the countdown of the sidebar layout take
