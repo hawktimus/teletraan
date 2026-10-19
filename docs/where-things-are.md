@@ -316,8 +316,8 @@ editors can sign in from anywhere.
                               schemas/customPanel.js and customPanelBlocks.js the Extra panels, sponsor.js the
                               Sponsors, tipOrNews.js Tips and News, presentationTimes.js the times in the
                               lists, and index.js the list of every type. inputs/control-address.js is where the
-                              control page is, inputs/monday-token-input.js with tools/monday-check.js the Test
-                              the token button, inputs/panel-preview.js, preview-panels.js,
+                              control page is, inputs/monday-token-input.js with tools/monday-check.js the Check
+                              the token note and link, inputs/panel-preview.js, preview-panels.js,
                               preview-panels-view.js and row-preview-input.js the panel previews,
                               inputs/note-field.js the one line notes in a form, and tools/add-templates.js what
                               a plus button makes

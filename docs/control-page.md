@@ -8,7 +8,7 @@ The Studio has two ways in: the Studio button on the landing page and in the hea
 
 The page has three tabs, Status, Display and Settings, and the Studio button in the header. Display is where the team builds the order the wall plays (see The Display tab below).
 
-Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has three folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open.
+Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has four folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links), Monday (Check the token, and Monday debug, which shows how Monday answers for one board number) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open.
 
 ### Two layouts, one page
 
@@ -205,7 +205,7 @@ The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the sam
 
 ## The helper and restarts
 
-The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`computer/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `sync-now news` (the FRC news read), `sync-now photos-drive`, `sync-now match13`, `write-env` and `monday-check`. `status` prints `kiosk:`, `display:`, `tailscale:` and other `name: value` lines. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
+The page cannot restart anything by itself. It asks a helper on the host through a Unix socket, `/run/teletraan/control.sock`, which only the login user can use. The helper (`computer/scripts/control-helper.sh`) knows these words and nothing else: `restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now calendars`, `sync-now monday`, `sync-now frc`, `sync-now news` (the FRC news read), `sync-now photos-drive`, `sync-now match13`, `write-env`, `monday-check` and `monday-debug <board number>` (digits only, 20 at most; it runs `monday-sync.sh --debug` and its answer holds no token and no names of people). `status` prints `kiosk:`, `display:`, `tailscale:` and other `name: value` lines. Each one is written to `/opt/teletraan/logs/helper.log` with the time. Anything else is refused and logged.
 
 The sudoers file `/etc/sudoers.d/teletraan-control` lets the login user run `systemctl restart teletraan-*`, `docker restart teletraan-web`, `systemctl start teletraan-*.service` and `systemctl reboot` without a password, and nothing more. The helper runs each by its full path, `/usr/bin/systemctl` and `/usr/bin/docker`, and the file lists the same paths. The reboot is also listed as `/bin/systemctl reboot`, `/usr/sbin/reboot` and `/sbin/reboot`, in case `sudo` compares the path as typed.
 

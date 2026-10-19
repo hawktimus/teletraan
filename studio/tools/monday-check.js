@@ -1,44 +1,17 @@
-// Test the token, on the Monday tab of Dashboard Settings (inputs/monday-token-input.js). It asks the
-// control page of the Teletraan computer to run the helper word monday-check, which asks Monday who the token belongs
-// to. The answer is the name of the account or the reason it failed. The token itself never reaches the
-// Studio: the Teletraan computer reads it from its own settings file and the answer holds a name only.
+// Where the Monday check is. The Studio cannot press the buttons of the Teletraan computer itself: the control page
+// is behind a PIN and on another address, and its helper answers only to that page. So the Monday tab of Dashboard
+// Settings and the Monday page show a note and a link to Settings, Monday on the control page, where Check the token
+// and Monday debug are. Nothing here sends a request and nothing here holds a key.
 //
-// Plain functions only, so that tests/schemas.test.mjs can run them with node.
+// Plain data only, so that tests/schemas.test.mjs can read it with node.
 
-import { helperAddress, controlAddress } from '../inputs/control-address.js';
+import { controlAddress } from '../inputs/control-address.js';
 
-export const checkWord = 'monday-check';
+// Settings, Monday on the control page (control/static/tabs/monday.js)
+export const checkAddress = controlAddress + '#settings/monday';
 
 export const words = {
-  asking: 'Asking Monday.',
-  unreachable: 'The control page could not be reached. Open ' + controlAddress + ' on the WiFi of the shop and try again.',
-  noAnswer: 'The Teletraan computer gave no answer.',
+  note: 'The check runs on the control page, which asks for the PIN. Open Settings, Monday there and press Check the token. Press Monday debug on the same page if the Monday page lists no tasks. Send the answer to a coach.',
+  link: 'Open the Monday check on the control page',
+  wifi: 'It works on the WiFi of the shop.',
 };
-
-// What the Teletraan computer answered, as a line: { text, failed }. The answer is { ok, account, output, error }; the
-// account name is the first line of output when account is missing.
-export function answerLine(answer) {
-  const source = answer && typeof answer === 'object' ? answer : {};
-  const first = text => (typeof text === 'string' ? text.trim().split('\n')[0].trim() : '');
-
-  if (source.ok === false) return { text: first(source.error) || first(source.output) || words.noAnswer, failed: true };
-  const account = first(source.account) || first(source.output);
-  if (source.ok === true && account) return { text: 'Connected as ' + account + '.', failed: false };
-  return { text: first(source.error) || words.noAnswer, failed: true };
-}
-
-// Asks the helper. fetcher is fetch, or a stand-in. This never throws: a page that cannot be reached is a line.
-export async function checkToken(fetcher) {
-  try {
-    const response = await fetcher(helperAddress, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ word: checkWord, args: [] }),
-    });
-    if (!response || typeof response.json !== 'function') return { text: words.unreachable, failed: true };
-    return answerLine(await response.json());
-  } catch (error) {
-    return { text: words.unreachable, failed: true };
-  }
-}
