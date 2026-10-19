@@ -26,7 +26,7 @@ async function check(name, test) {
 
 const sample = JSON.parse(fs.readFileSync(path.join(repo, 'dashboard/data/sample/content.json'), 'utf8'));
 const sampleMatch13 = fs.readFileSync(path.join(repo, 'dashboard/data/sample/match13.json'), 'utf8');
-const settingsKey = 'rotationRows, themeByWeekday';
+const settingsKey = '"drafts.dashboardSettings"]';
 
 const published = { _id: 'dashboardSettings', _type: 'dashboardSettings', _rev: 'rev-pub', _updatedAt: '2026-10-18T10:00:00Z', pageSeconds: 25, rotationRows: [{ _key: 'a1', view: 'robotics', panel: 'photo', photoCount: 4, secondsPerPhoto: 10, seconds: 40, shown: true }] };
 const draft = Object.assign({}, published, { _id: 'drafts.dashboardSettings', _rev: 'rev-draft', _updatedAt: '2026-10-18T11:00:00Z', rotationRows: published.rotationRows.concat([{ _key: 'b2', view: 'prime', panel: 'team-leads', part: 1, shown: false, extraField: 'kept' }]) });
@@ -400,6 +400,16 @@ await check('GET display/rev gives only the revision', async () => {
   const answer = await world.router.call('GET', '/display/rev');
   assert.deepEqual(Object.keys(answer.json).sort(), ['isDraft', 'rev', 'studioNewer', 'updatedAt']);
   assert.equal(answer.json.rev, 'rev-draft');
+});
+
+await check('the settings are read as whole documents, so a copy made for Save or Publish keeps the type and every other setting', () => {
+  assert.ok(!logic.settingsQuery.includes('{'), 'no projection');
+  const draft = Object.assign({}, published, { _id: 'drafts.dashboardSettings', _rev: 'r2', transitionSeconds: 3 });
+  const made = logic.publishMutations({ published: published, draft: draft });
+  assert.equal(made[0].createOrReplace._type, 'dashboardSettings');
+  assert.equal(made[0].createOrReplace.pageSeconds, 25);
+  const first = logic.saveMutations({ pageSeconds: 30 }, { published: published, draft: null });
+  assert.equal(first[0].createIfNotExists._type, 'dashboardSettings');
 });
 
 console.log('\n' + passed + ' passed');

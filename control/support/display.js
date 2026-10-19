@@ -14,7 +14,9 @@ export const settingsId = 'dashboardSettings';
 export const draftId = 'drafts.dashboardSettings';
 
 // The fields of the document this tab touches. Nothing else is read or written.
-export const settingsQuery = '*[_id in ["' + settingsId + '", "' + draftId + '"]] { _id, _rev, _updatedAt, rotationRows, themeByWeekday, generalViewTitle, transitionSeconds, pageSeconds }';
+// Whole documents, not a projection: Publish and the first Save copy a document, so a copy that left out _type or any other
+// setting would be refused, or worse, would replace the settings with the few fields read.
+export const settingsQuery = '*[_id in ["' + settingsId + '", "' + draftId + '"]]';
 
 // The fields of a row the tab changes. Any other field on a stored row (the Studio may add one) is kept as it is.
 const rowFields = ['view', 'panel', 'seconds', 'shown', 'department', 'part', 'side', 'photoCount', 'secondsPerPhoto'];
