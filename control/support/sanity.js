@@ -99,7 +99,17 @@ export function makeSanity(ctx) {
       }
       if (response.status === 401 || response.status === 403) throw new Refusal(502, 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.');
       if (response.status === 409) throw new Refusal(409, 'The document changed in Sanity while it was being saved.');
-      if (!response.ok) throw new Refusal(502, 'Sanity could not take the change (' + response.status + ').');
+      if (!response.ok) {
+        // Sanity says why in the body of the answer; without it a 400 cannot be told apart from another
+        let reason = '';
+        try {
+          const failure = await response.json();
+          reason = String((failure.error && (failure.error.description || failure.error.message)) || failure.message || '').slice(0, 300);
+        } catch (error) {
+          reason = '';
+        }
+        throw new Refusal(502, 'Sanity could not take the change (' + response.status + ').' + (reason ? ' It said: ' + reason : ''));
+      }
       const body = await response.json();
       // Sanity answers 200 with a result for each mutation. An empty list means nothing was written.
       if (body && Array.isArray(body.results) && body.results.length === 0) throw new Refusal(502, 'Sanity took the request but changed no document. Open Dashboard Settings in the Studio and publish it once.');
