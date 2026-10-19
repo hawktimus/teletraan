@@ -1,6 +1,7 @@
 // The Monday page, one line of the sidebar. It replaces Monday Tasks and Monday Boards, and has four tabs:
 //
-//   Boards       every board the token can see, as cards, with two choices on each: Show tasks from this
+//   Boards       the board chosen for tasks and the one for milestones at the top, the groups of each, and the
+//                other boards the token can see in a closed list below, as cards, with two choices on each: Show tasks from this
 //                board and Show milestones from this board. It also says how often Monday is read, the
 //                reads used today and a link to the Monday check on the control page
 //   Items        the tasks of the chosen task board, grouped by department, with a Show on TV switch on each
@@ -28,6 +29,9 @@ import {
   settingsDraftId,
   chosenFrom,
   boardCards,
+  cardSections,
+  countsQuestion,
+  departmentCounts,
   missingLines,
   showMultiLevelNote,
   updatedText,
@@ -82,6 +86,10 @@ const styles = {
   name: { display: 'block', fontSize: 16, fontWeight: 600, overflowWrap: 'anywhere' },
   line: { display: 'block', marginTop: 2, fontSize: 14, color: muted, overflowWrap: 'anywhere' },
   problem: { display: 'block', marginTop: 2, fontSize: 14, color: critical, overflowWrap: 'anywhere' },
+  chips: { display: 'flex', flexWrap: 'wrap', gap: 8, margin: '8px 0 0', padding: 0, listStyle: 'none' },
+  chip: { boxSizing: 'border-box', padding: '4px 12px', border: border, borderRadius: 16, fontSize: 14, overflowWrap: 'anywhere' },
+  fold: { margin: '0 0 16px' },
+  foldTitle: { display: 'flex', alignItems: 'center', minHeight: 44, fontWeight: 600, cursor: 'pointer' },
   roles: { display: 'flex', flexWrap: 'wrap', gap: '0 24px', marginTop: 8 },
   choice: { display: 'flex', gap: 8, alignItems: 'center', minHeight: 44, cursor: 'pointer' },
   box: { width: 24, height: 24, flex: 'none' },
@@ -116,6 +124,16 @@ function tabButton(current, name, label, change) {
 
 // ---------------------------------------------------------------- Boards
 
+// The groups of a board as plain chips: the title, and the number of tasks held when the group is a department
+function groupChips(card) {
+  if (!card.visible || card.groups.length === 0) return null;
+  return h(
+    'ul',
+    { style: styles.chips, 'aria-label': words.groupsHeading, 'data-groups': card.id },
+    card.groups.map(group => h('li', { key: group.title, style: styles.chip }, group.count === null ? group.title : group.title + ' · ' + group.count))
+  );
+}
+
 function BoardCard(props) {
   const card = props.card;
   const chosen = card.task || card.milestones;
@@ -127,6 +145,9 @@ function BoardCard(props) {
     h('span', { style: styles.line }, [card.items, card.read].join(' · ')),
     h('span', { style: card.visible ? styles.line : styles.problem }, card.status),
     card.note ? h('span', { style: styles.problem }, card.note) : null,
+    groupChips(card),
+    card.suggested ? h('span', { style: styles.line }, words.chooseThisHelp) : null,
+    card.suggested ? h('button', { type: 'button', disabled: props.busy, style: Object.assign({}, styles.button, props.busy ? styles.disabled : null), onClick: () => props.choose('task', card.id) }, words.chooseThis) : null,
     h(
       'div',
       { style: styles.roles },
@@ -163,8 +184,13 @@ function BoardsTab(props) {
     ]).then(([status, documents]) => {
       if (stopped) return;
       const chosen = chosenFrom(documents || []);
-      setRead({ status: status, settingsUnreadable: documents === null, chosen: chosen });
-      setMinutes(String(chosen.everyMinutes));
+      // The chips of the task board carry the tasks held for each department: a question to Sanity, not to Monday
+      const taskCard = boardCards(status && typeof status === 'object' ? status : null, chosen, new Date()).filter(card => card.task || card.suggested)[0];
+      return safely(taskCard ? client.fetch(countsQuestion, { board: taskCard.id }, { perspective: 'published' }) : Promise.resolve([])).then(tasks => {
+        if (stopped) return;
+        setRead({ status: status, settingsUnreadable: documents === null, chosen: chosen, counts: departmentCounts(tasks || []) });
+        setMinutes(String(chosen.everyMinutes));
+      });
     });
     return () => {
       stopped = true;
@@ -195,7 +221,9 @@ function BoardsTab(props) {
 
   const now = new Date();
   const status = read.status && typeof read.status === 'object' ? read.status : null;
-  const cards = boardCards(status, read.chosen, now);
+  const cards = boardCards(status, read.chosen, now, read.counts);
+  const sections = cardSections(cards);
+  const cardList = list => h('ul', { style: styles.list, 'data-list': 'boards' }, list.map(card => h(BoardCard, { key: card.id, card: card, choose: choose, busy: busy })));
   const missing = missingLines(status, read.chosen);
   const updated = updatedText(status, now);
   const error = errorText(status);
@@ -216,7 +244,11 @@ function BoardsTab(props) {
     updated ? h('p', { style: styles.muted }, updated) : null,
     error ? h('p', { style: styles.failed }, error) : null,
     message.text ? h('p', { role: message.failed ? 'alert' : 'status', style: message.failed ? styles.failed : styles.muted }, message.text) : h('p', { style: styles.muted }, words.saveNote),
-    !status ? h('p', { style: styles.muted }, words.nothingYet) : cards.length === 0 ? h('p', { style: styles.muted }, words.noBoards) : h('ul', { style: styles.list, 'data-list': 'boards' }, cards.map(card => h(BoardCard, { key: card.id, card: card, choose: choose, busy: busy }))),
+    !status ? h('p', { style: styles.muted }, words.nothingYet) : cards.length === 0 ? h('p', { style: styles.muted }, words.noBoards) : cardList(sections.top),
+    // Closed by default: the team works in two boards, and the rest are only here to choose from
+    status && sections.others.length > 0
+      ? h('details', { style: styles.fold, 'data-fold': 'other-boards' }, h('summary', { style: styles.foldTitle }, words.otherBoards + ' (' + sections.others.length + ')'), h('p', { style: styles.muted }, words.otherBoardsHelp), cardList(sections.others))
+      : null,
     h('h2', { style: styles.subheading }, 'How often Monday is read'),
     h(
       'div',

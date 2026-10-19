@@ -66,6 +66,12 @@ export const words = {
   milestonesNone: 'No milestones yet. Check the milestones board on the Boards tab, then wait for the next read.',
   milestonesUnreadable: 'The milestones could not be read. Refresh the page to try again.',
   checking: 'Asking Monday.',
+  groupsHeading: 'Groups',
+  noGroups: 'No groups listed yet. The list of boards is read again on the next read of a new day.',
+  chooseThis: 'Choose this board',
+  chooseThisHelp: 'This looks like the board the team works in. Choose it for tasks below.',
+  otherBoards: 'Other boards in your Monday',
+  otherBoardsHelp: 'The team does not use these for the TV. Open this list only to choose a different board.',
 };
 
 // The order of the groups on the Items tab: the departments of the task board as the sync writes them.
@@ -80,7 +86,11 @@ export const statusChoices = [
   { value: 'done', title: 'Done' },
 ];
 
-export const statusQuestion = '*[_id == $id][0] { connectedAs, lastSyncAt, lastError, callsToday, callsDate, "boards": boards[] { id, name, itemCount }, "readings": readings[] { boardId, itemsRead, readAt, note } }';
+export const statusQuestion = '*[_id == $id][0] { connectedAs, lastSyncAt, lastError, callsToday, callsDate, "boards": boards[] { id, name, hierarchy, itemCount, "groups": groups[] { title } }, "readings": readings[] { boardId, itemsRead, readAt, note } }';
+
+// How many tasks the Teletraan computer holds for each department of the task board. It is a question to
+// Sanity about tasks already written, so it costs no read of Monday.
+export const countsQuestion = '*[_type == "task" && source == "monday" && mondayBoardId == $board && !(_id in path("drafts.**"))] { "department": subteam->name }';
 
 export const itemsQuestion =
   '*[_type == "task" && source == "monday" && mondayBoardId == $board] { _id, title, status, priority, startDate, dueDate, estHours, owners, contact, showOnTv, showOnBoard, show, expires, hiddenReason, "department": subteam->name, "team": team->name }';
@@ -116,13 +126,45 @@ export function chosenFrom(documents) {
 
 // ---------------------------------------------------------------- the Boards tab
 
+// How many tasks each department has, from the answer to countsQuestion: { build: 12 }, keyed by the lower case name
+export function departmentCounts(tasks) {
+  const counts = {};
+  list(tasks).forEach(task => {
+    const name = text(task.department).toLowerCase();
+    if (name !== '') counts[name] = (counts[name] || 0) + 1;
+  });
+  return counts;
+}
+
+// The chips of a board: its groups by title. The count is the tasks held for the department of the same name,
+// and is left out when there are none, so a group like Done that is no department shows its title alone.
+function groupChips(board, counts) {
+  const wanted = counts && typeof counts === 'object' ? counts : {};
+  return list(board && board.groups)
+    .filter(group => text(group.title) !== '')
+    .map(group => {
+      const count = wanted[text(group.title).toLowerCase()];
+      return { title: group.title, count: typeof count === 'number' && count > 0 ? count : null };
+    });
+}
+
+// The board to suggest when no task board is chosen yet: Robotics Tasks by name, else the first multi-level board
+function suggestedId(boards) {
+  const named = boards.filter(board => text(board.name).toLowerCase() === 'robotics tasks')[0];
+  const multi = boards.filter(board => board.hierarchy === 'multi_level')[0];
+  return (named || multi || {}).id || '';
+}
+
 // One card for every board the token can see, then one for a chosen board it cannot see. A card has:
 // id, name, items (words), read (words), visible, task and milestones (this board is the one chosen for that
-// role), status (the plain line) and note (what the last read said about it, or empty).
-export function boardCards(status, chosen, now) {
+// role), suggested (no task board is chosen and this is the one to choose), status (the plain line), note
+// (what the last read said about it, or empty) and groups ([{ title, count }]). counts is the answer of
+// departmentCounts for the task board, used for the chips of that board only.
+export function boardCards(status, chosen, now, counts) {
   const boards = isRecord(status) ? list(status.boards).filter(board => typeof board.id === 'string' && board.id !== '') : [];
   const readings = isRecord(status) ? list(status.readings) : [];
   const readingOf = id => readings.filter(reading => reading.boardId === id)[0] || null;
+  const suggested = chosen.taskBoard ? '' : suggestedId(boards);
 
   function cardFor(id, board) {
     const reading = readingOf(id);
@@ -136,8 +178,10 @@ export function boardCards(status, chosen, now) {
       visible: Boolean(board),
       task: id === chosen.taskBoard,
       milestones: id === chosen.milestoneBoard,
+      suggested: id === suggested,
       status: board ? words.canRead : words.cannotRead,
       note: note,
+      groups: groupChips(board, id === chosen.taskBoard || id === suggested ? counts : null),
     };
   }
 
@@ -146,7 +190,16 @@ export function boardCards(status, chosen, now) {
     if (id && !cards.some(card => card.id === id)) cards.push(cardFor(id, null));
   });
   // the boards that have a role come first, so the choice is the first thing on the page
-  return cards.filter(card => card.task || card.milestones).concat(cards.filter(card => !card.task && !card.milestones));
+  const top = card => card.task || card.milestones || card.suggested;
+  return cards.filter(card => card.suggested).concat(cards.filter(card => top(card) && !card.suggested), cards.filter(card => !top(card)));
+}
+
+// The cards split for the page: the boards that have a role (or the one to choose) at the top, the rest for
+// the closed list. The sync already leaves out documents, custom objects and boards of subitems, so every
+// card here is a board with items.
+export function cardSections(cards) {
+  const top = card => card.task || card.milestones || card.suggested;
+  return { top: cards.filter(top), others: cards.filter(card => !top(card)) };
 }
 
 // The red lines at the top of the page: one for each chosen board that the token cannot see, with what to do.

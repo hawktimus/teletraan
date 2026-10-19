@@ -119,11 +119,18 @@ def reading_list($old):
       }
     | with_entries(select(.value != null))];
 
+# Titles only, so the Boards tab can show the groups of the board the team works in
+def kept_groups:
+  [board_groups | arrays | .[] | objects
+    | select((group_id | type) == "string" and (group_id | test("\\A[A-Za-z0-9_-]{1,50}\\z")))
+    | {_key: group_id, id: group_id, title: (group_title | whole_text(60))}]
+  | first_of_each("id") | .[0:$groups_kept];
+
 def kept_boards:
   [board_list | arrays | .[] | objects | select(board_is_offered)
     | select((board_id | tostring) | test("\\A[0-9]{1,20}\\z"))
     | (board_id | tostring) as $id
-    | {_key: $id, id: $id, name: (board_name | whole_text(60)), hierarchy: board_hierarchy, itemCount: (board_items | if type == "number" and . >= 0 then floor else 0 end), columns: kept_columns}]
+    | {_key: $id, id: $id, name: (board_name | whole_text(60)), hierarchy: board_hierarchy, itemCount: (board_items | if type == "number" and . >= 0 then floor else 0 end), columns: kept_columns, groups: kept_groups}]
   | first_of_each("id") | .[0:$boards_kept];
 
 ([$errors | split("\n")[] | select(. != "")] | unique | if length == 0 then null else (.[0:3] | join("; ") | .[0:300]) end) as $error

@@ -430,7 +430,7 @@ function boardsAnswer() {
     data: {
       me: { name: 'Jordan Example' },
       boards: [
-        { id: taskBoardId, name: 'Robotics Tasks', type: 'board', items_count: 10, columns: columns },
+        { id: taskBoardId, name: 'Robotics Tasks', type: 'board', items_count: 10, columns: columns, groups: [{ id: 'topics', title: 'Build' }, { id: 'group_two', title: 'Electrical' }, { id: 'bad id!', title: 'Skipped' }, { id: 'group_two', title: 'Duplicate' }] },
         { id: milestoneBoardId, name: 'Milestones', type: 'board', items_count: 7, columns: columns.slice(0, 2) },
         { id: '333', name: 'Subitems of Robotics Tasks', type: 'sub_items_board', items_count: 2, columns: columns.slice(0, 1) },
       ],
@@ -509,6 +509,23 @@ test('a list of boards written before boards carried their kind, or without the 
   const missing = setup('missing-board', { tools: true });
   world(missing, { known: Object.assign({}, laterRead, { unmarked: 0, boardIds: ['1', '2'] }) });
   assert.deepEqual(requestsOf(missing.run().calls), firstSequence, 'a list without the task board is asked for again');
+});
+
+test('a list of boards written before boards carried their groups is asked for again', () => {
+  const old = setup('ungrouped', { tools: true });
+  world(old, { known: Object.assign({}, laterRead, { unmarked: 0, ungrouped: 22 }) });
+  assert.deepEqual(requestsOf(old.run().calls), firstSequence, 'boards with no groups are listed again');
+});
+
+test('the list of boards asks for the groups and keeps their id and title only, a board with none keeps an empty list', () => {
+  const place = setup('groups', { tools: true });
+  world(place);
+  assert.equal(place.run().status, 0);
+  const boards = statusOf(place).set.boards;
+
+  assert.deepEqual(boards.find(board => board.id === taskBoardId).groups, [{ _key: 'topics', id: 'topics', title: 'Build' }, { _key: 'group_two', id: 'group_two', title: 'Electrical' }], 'an odd id is dropped and a repeated id keeps the first');
+  assert.deepEqual(boards.find(board => board.id === milestoneBoardId).groups, []);
+  assert.ok(textOf(path.join(repo, 'computer/scripts/monday-contract.sh')).includes('groups { id title }'), 'the question names the groups');
 });
 
 test('the requests go to the address and version of the block at the top, https only, with a time limit, and ask for the typed values of the chosen columns only', () => {

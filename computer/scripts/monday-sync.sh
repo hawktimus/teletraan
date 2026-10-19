@@ -209,10 +209,11 @@ fi
 # The boards the token can see, with their columns, and who the token belongs to. It is asked for on the
 # first read of a day and when the Teletraan computer has no list yet, and is one of the requests of the run.
 boards_listed=no
-# Also when the list kept in Sanity was written before boards carried their kind, or does not hold the board the settings
+# Also when the list kept in Sanity was written before boards carried their kind or their groups, or does not hold the board the settings
 # name: a list kept for the day would otherwise stay wrong after an update or a change of token.
 if [ "$calls_before" -eq 0 ] || [ "$(jq -r '.result.known.boards // 0' "$work/sanity.json")" -eq 0 ] \
   || [ "$(jq -r '.result.known.unmarked // 0' "$work/sanity.json")" -gt 0 ] \
+  || [ "$(jq -r '.result.known.ungrouped // 0' "$work/sanity.json")" -gt 0 ] \
   || { [ -n "$task_board" ] && jq -e --arg id "$task_board" '(.result.known.boardIds // null) | if . == null then false else (index($id) | not) end' "$work/sanity.json" > /dev/null 2>&1; }; then
   jq -n --arg query "$monday_query_boards" '{query: $query}' > "$work/body.json"
   ask "$work/body.json" "$work/boards-answer.json"
@@ -374,7 +375,7 @@ calls_after=$((calls_before + requests))
 jq -n --slurpfile sanity "$work/sanity.json" --slurpfile answer "$work/boards-answer.json" --slurpfile readings "$work/readings.ndjson" --slurpfile rows "$work/task-rows.ndjson" \
   --rawfile errors "$work/errors.txt" --arg now "$now_iso" --arg today "$today" --argjson calls "$calls_after" --argjson open "$open" \
   --arg tasks_read "$tasks_read" --arg boards_listed "$boards_listed" \
-  --argjson boards_kept "$boards_kept" --argjson columns_kept "$columns_kept" --argjson snapshots_kept "$snapshots_kept" \
+  --argjson boards_kept "$boards_kept" --argjson columns_kept "$columns_kept" --argjson groups_kept "$groups_kept" --argjson snapshots_kept "$snapshots_kept" \
   "$paths$helpers$status_patch" > "$work/status-patch.json"
 jq '{mutations: [{createIfNotExists: {_id: "monday-status", _type: "mondayStatus"}}, {patch: ({id: "monday-status", set: .set} + (if (.unset | length) == 0 then {} else {unset: .unset} end))}]}' "$work/status-patch.json" > "$work/write.json"
 

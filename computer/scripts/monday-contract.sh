@@ -16,7 +16,7 @@ monday_query_me='query { me { name } }'
 
 # Who the token belongs to, and the boards it can see with their columns. It is asked for on the
 # first read of a day, and when the Teletraan computer has no list yet, so the pickers of the Monday tab have it.
-monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at, hierarchy_types: [classic, multi_level]) { id name type hierarchy_type items_count columns { id title type } } }'
+monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at, hierarchy_types: [classic, multi_level]) { id name type hierarchy_type items_count columns { id title type } groups { id title } } }'
 
 # The first page of the parent items of one board, and the pages after it. $columns lists the
 # columns that are read. Subitems are not asked for, and an item with a parent is left out.
@@ -42,6 +42,10 @@ def board_id: .id;
 def board_name: .name;
 def board_items: .items_count;
 def board_columns: .columns;
+# The groups of a board. A multi-level board names them like its departments.
+def board_groups: .groups;
+def group_id: .id;
+def group_title: .title;
 def board_is_offered: ((.type // "board") == "board");
 def board_hierarchy: (.hierarchy_type? | if . == "multi_level" then "multi_level" else "classic" end);
 def column_id: .id;
@@ -154,6 +158,7 @@ slack_seconds=90
 # What monday-status keeps: boards, columns of a board, and daily counts
 boards_kept=100
 columns_kept=60
+groups_kept=40
 snapshots_kept=120
 
 # Rows (a row is a task) sent to Sanity in one request
@@ -192,7 +197,7 @@ query='{
   "milestones": *[_type == "milestone" && !(_id in path("drafts.**"))] {
     _id, name, targetDate, "team": team._ref, "subteam": subteam._ref, status, show
   },
-  "known": *[_id == "monday-status"][0] { lastSyncAt, lastError, callsToday, callsDate, "boards": count(boards), "unmarked": count(boards[!defined(hierarchy)]), "boardIds": boards[].id },
+  "known": *[_id == "monday-status"][0] { lastSyncAt, lastError, callsToday, callsDate, "boards": count(boards), "unmarked": count(boards[!defined(hierarchy)]), "ungrouped": count(boards[!defined(groups)]), "boardIds": boards[].id },
   "snapshots": *[_id == "monday-status"][0].snapshots[] { date, open },
   "readings": *[_id == "monday-status"][0].readings[] { boardId, boardName, itemsRead, readAt, note },
   "listed": *[_id == "monday-status"][0].boards[] { id, hierarchy }

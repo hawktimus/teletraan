@@ -144,7 +144,14 @@ turned down to 5 minutes for a long time, or when something fails and retries.
 
 One line of the sidebar, Monday, under TASKS. It replaces Monday Tasks and Monday Boards. It has four tabs.
 
-- **Boards**: a card for every board the token can see, with its name, how many items it has and when the
+- **Boards**: the board chosen for tasks and the one chosen for milestones are at the top. Each shows its
+  groups as plain chips: the title, and how many tasks the computer holds for it when the group has the
+  name of a department (Build, Electrical and so on; a group such as Done shows its title alone). The
+  counts come from the tasks already in Sanity, so they cost no read of Monday. When no task board is
+  chosen yet, Robotics Tasks (or the first multi-level board) is shown first with the words Choose this
+  board. Every other board the token can see is under one closed list, Other boards in your Monday; open it
+  only to choose a different board. Documents, custom objects and boards of subitems are never listed, because
+  the sync leaves them out of the list. A card has its name, how many items it has and when the
   Teletraan computer last read it. Each card has two choices: Show tasks from this board and Show
   milestones from this board. Click one and it is saved as a draft of Dashboard Settings, in the same two
   fields as before (the board of the Task board block and of the Milestones board block). Click Publish all
@@ -417,6 +424,9 @@ column of such a board does not answer as a `StatusValue`. It answers as a `Batt
 `{ key, count }`, where `key` is the number of a label as text and `count` is how many items under the
 parent have it. The sync handles this in four places:
 
+- The list of boards also asks for `groups { id title }`. They are stored on each board of `monday-status`
+  (id and title only, 40 at most) and drawn as chips on the Boards tab. A list written before groups
+  existed is asked for again on the next read.
 - The list of boards asks for `hierarchy_type`, and each board in the list of the Boards tab is marked
   `classic` or `multi_level` (the field Kind of board in `monday-status`).
 - A board that is `multi_level` in the list of this run, or in the list the last run wrote, is read with

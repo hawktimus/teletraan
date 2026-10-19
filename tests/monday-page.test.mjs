@@ -121,6 +121,44 @@ test('the boards of the token become cards, the chosen ones first, each with the
   assert.equal(parts.words.milestoneRole, 'Show milestones from this board');
 });
 
+test('the groups of a board become plain chips, with the tasks held for a group that is a department', () => {
+  const withGroups = Object.assign({}, status, {
+    boards: [
+      { id: '111', name: 'Robotics Tasks', hierarchy: 'multi_level', itemCount: 9, groups: [{ title: 'Build' }, { title: 'Electrical' }, { title: 'Done' }, { title: '' }] },
+      { id: '222', name: 'Epics', itemCount: 2 },
+    ],
+  });
+  const counts = parts.departmentCounts([{ department: 'Build' }, { department: 'build' }, { department: 'Electrical' }, { department: '' }, {}]);
+  const cards = parts.boardCards(withGroups, { taskBoard: '111', milestoneBoard: '', everyMinutes: 30 }, now, counts);
+
+  assert.deepEqual(counts, { build: 2, electrical: 1 });
+  assert.deepEqual(cards[0].groups, [{ title: 'Build', count: 2 }, { title: 'Electrical', count: 1 }, { title: 'Done', count: null }], 'a group with no title is left out, a group with no tasks held shows its title alone');
+  assert.deepEqual(cards[1].groups, [], 'a board with no groups stored has no chips');
+});
+
+test('the chosen boards are at the top and every other board is in one closed list', () => {
+  const cards = parts.boardCards(status, { taskBoard: '111', milestoneBoard: '18435272887', everyMinutes: 30 }, now);
+  const sections = parts.cardSections(cards);
+
+  assert.deepEqual(sections.top.map(card => card.id), ['18435272887', '111']);
+  assert.deepEqual(sections.others.map(card => card.id), ['222']);
+  assert.ok(/h\('details'/.test(viewSource) && !/h\('details', \{[^}]*open/.test(viewSource), 'the list of other boards is a details element that is not open');
+  assert.equal(parts.words.otherBoards, 'Other boards in your Monday');
+});
+
+test('with no task board chosen, Robotics Tasks is suggested first, else the first multi-level board', () => {
+  const none = { taskBoard: '', milestoneBoard: '', everyMinutes: 30 };
+  const named = parts.boardCards({ boards: [{ id: '1', name: 'Epics' }, { id: '2', name: 'Robotics Tasks' }, { id: '3', name: 'Other', hierarchy: 'multi_level' }] }, none, now);
+  assert.equal(named[0].id, '2');
+  assert.equal(named[0].suggested, true);
+  const multi = parts.boardCards({ boards: [{ id: '1', name: 'Epics' }, { id: '3', name: 'Other', hierarchy: 'multi_level' }] }, none, now);
+  assert.equal(multi[0].id, '3');
+  assert.equal(parts.words.chooseThis, 'Choose this board');
+  assert.equal(parts.cardSections(named).others.length, 2);
+  const chosen = parts.boardCards({ boards: [{ id: '1', name: 'Robotics Tasks' }] }, { taskBoard: '1', milestoneBoard: '', everyMinutes: 30 }, now);
+  assert.equal(chosen[0].suggested, false, 'nothing is suggested once a board is chosen');
+});
+
 test('a chosen board the token cannot see gets a card of its own that says what to do', () => {
   const cards = parts.boardCards(status, chosenMissing, now);
   const lost = cards.filter(card => card.id === '18435126893')[0];

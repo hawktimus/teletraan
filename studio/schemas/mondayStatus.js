@@ -31,6 +31,22 @@ const column = defineArrayMember({
   },
 });
 
+// Titles only: the Boards tab of the Monday page lists the groups of the board the team works in
+const group = defineArrayMember({
+  type: 'object',
+  title: 'Group',
+  fields: [
+    textField('id', 'Group id', 'The id of the group on the board.'),
+    textField('title', 'Group title', 'The title of the group as Monday shows it, such as a department.'),
+  ],
+  preview: {
+    select: { title: 'title', id: 'id' },
+    prepare(entry) {
+      return { title: entry.title || 'Group with no title', subtitle: entry.id };
+    },
+  },
+});
+
 const board = defineArrayMember({
   type: 'object',
   title: 'Board',
@@ -40,6 +56,7 @@ const board = defineArrayMember({
     textField('hierarchy', 'Kind of board', 'classic, or multi_level when the board has parent items with subitems. The Teletraan computer reads a multi-level board in another way.'),
     numberField('itemCount', 'Items', 'How many items the board has.'),
     defineField({ name: 'columns', title: 'Columns', type: 'array', of: [column], description: 'The columns of the board.' }),
+    defineField({ name: 'groups', title: 'Groups', type: 'array', of: [group], description: 'The groups of the board, by title. A multi-level board names its groups like its departments.' }),
   ],
   preview: {
     select: { title: 'name', id: 'id' },
