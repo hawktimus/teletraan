@@ -303,6 +303,25 @@ function previewBlock(kind) {
   return '<p class="note" data-left="' + kind + '" role="status"></p><p class="note" data-wall="' + kind + '" role="status"></p>';
 }
 
+// A group of controls. On a wide screen every group is open and plain; on a phone the groups fold and one is open at a time
+// (tabs/status.js).
+function group(id, title, body, open = false) {
+  return '<details class="group" data-group="' + id + '" data-fold="' + (open ? 'open' : 'closed') + '"' + (open ? ' open' : '') + '><summary>' + esc(title) + '</summary><div class="group-body">' + body + '</div></details>';
+}
+
+// The one button for Pause and Resume. It says what a press does, and the line under it says what the rotation is doing.
+// tabs/now.js swaps the two as the state changes.
+export function pauseToggleHtml(paused, kind = '') {
+  return '<button type="button" class="act ' + kind + '" data-toggle-pause data-action="' + (paused ? 'resume' : 'pause') + '">' + (paused ? 'Resume rotation' : 'Pause rotation') + '</button>';
+}
+
+export const pauseStateWords = { paused: 'The rotation is paused.', running: 'The rotation is running.' };
+
+// The three buttons that stay at the bottom of a phone
+export function quickBarHtml() {
+  return '<div class="quickbar" data-quickbar><div class="buttons">' + button('next', 'Next') + pauseToggleHtml(false) + button('schedule', 'Reset to today\'s schedule', '', 'quiet') + '</div></div>';
+}
+
 export function nowControlsHtml(options) {
   const o = options || {};
   const views = (o.views || []).map(view => ({ value: view.key, label: view.name }));
@@ -313,19 +332,26 @@ export function nowControlsHtml(options) {
   const live = o.liveAnnouncements === null || o.liveAnnouncements === undefined ? 'not known' : o.liveAnnouncements;
   const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it in Settings, Keys, then these buttons work.</p>' : '';
 
-  return '<div class="grid">' + blocked +
-    card('Move on', '<div class="buttons">' + button('next', 'Next') + button('pause', 'Pause rotation') + button('resume', 'Resume rotation') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>') +
-    card('Hold this panel', choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
-      minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>') +
-    card('Show a view', choice('view', views, 'View') + '<div class="buttons">' + button('view', 'Show this view') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' + previewBlock('view') +
-      minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for that many minutes', ' data-minutes-from="view-minutes"') + '</div>') +
-    card('Preview a theme', choice('theme', themes, 'Theme') + '<div class="buttons">' + button('theme', 'Preview this theme for ' + previewMinutes + ' minutes') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' + previewBlock('theme') +
-      '<p class="note">The theme goes on the wall in a swap within about 20 seconds. After ' + previewMinutes + ' minutes the wall goes back to its schedule.</p>') +
-    card('Announcements', '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
-      '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
-      '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>') +
-    card('Presentation', (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>') +
-    '</div>';
+  const playlist = '<div class="buttons">' + button('next', 'Next') + pauseToggleHtml(false) + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' +
+    '<p class="note" data-pause-state>' + pauseStateWords.running + '</p>';
+
+  const themeAndView = '<h3>View</h3>' + choice('view', views, 'View') +
+    '<div class="buttons">' + button('view', 'Show this view') + '</div>' + previewBlock('view') +
+    minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for that many minutes', ' data-minutes-from="view-minutes"') + '</div>' +
+    '<h3>Theme</h3>' + choice('theme', themes, 'Theme') +
+    '<div class="buttons">' + button('theme', 'Preview this theme for ' + previewMinutes + ' minutes') + '</div>' + previewBlock('theme') +
+    '<p class="note">The theme goes on the wall in a swap within about 20 seconds. After ' + previewMinutes + ' minutes the wall goes back to its schedule.</p>';
+
+  const hold = choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
+    minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>';
+
+  const messages = '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
+    '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
+    '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>' +
+    (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>';
+
+  return blocked + group('playlist', 'Playlist', playlist) + group('theme-view', 'Theme and view', themeAndView, true) +
+    group('hold', 'Hold a panel', hold) + group('messages', 'Messages', messages);
 }
 
 // The Keys tab. describe is GET env.

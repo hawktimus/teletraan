@@ -71,6 +71,7 @@ export function wirePreview(root) {
 
   function draw() {
     off.hidden = Boolean(frame || picture);
+    root.dataset.on = active ? 'yes' : 'no';
     toggle.textContent = active ? 'Hide live preview' : 'Show live preview';
     toggle.setAttribute('aria-pressed', String(active));
   }

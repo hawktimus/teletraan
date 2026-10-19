@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, statusHtml, wallCheck } from '../control/static/tabs/render.js';
+import { pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, statusHtml, wallCheck } from '../control/static/tabs/render.js';
 
 let passed = 0;
 function check(name, test) {
@@ -44,7 +44,14 @@ check('the card is grey with the number of seconds when the wall has gone quiet'
 
 check('the Now showing buttons are all there', () => {
   const html = nowControlsHtml({ views: [{ key: 'general', name: 'General' }], themes: ['original'], panels: ['tasks'], talks: [], liveAnnouncements: 1, canWrite: true });
-  ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
+  ['next', 'pause', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
+  ['Playlist', 'Theme and view', 'Hold a panel', 'Messages'].forEach(title => assert.ok(html.includes('<summary>' + title + '</summary>'), title));
+  assert.equal((html.match(/data-toggle-pause/g) || []).length, 1, 'Pause and Resume are one button');
+  assert.ok(pauseToggleHtml(true).includes('data-action="resume"') && pauseToggleHtml(true).includes('Resume rotation'));
+  assert.ok(pauseToggleHtml(false).includes('data-action="pause"'));
+  const bar = quickBarHtml();
+  ['next', 'pause', 'schedule'].forEach(action => assert.ok(bar.includes('data-action="' + action + '"'), 'bar ' + action));
+  assert.ok(bar.includes('Reset to today&#39;s schedule'));
   assert.ok(html.includes('Hold 1 minute') && html.includes('data-minutes="1"'));
   assert.ok(!html.includes('data-minutes="10"') && !html.includes('data-minutes="30"'), 'the two fixed hold buttons are gone');
   assert.match(html, /name="hold-minutes" type="number" inputmode="numeric" min="1" max="60" step="1" value="10"/);
@@ -104,10 +111,7 @@ check('the theme card says what a press does, and the lists come from the servic
   assert.ok(html.includes('<option value="cybertron">Cybertron</option>') && html.includes('<option value="foundry">Foundry</option>'));
   assert.ok(html.includes('<option value="general">Robotics</option>') && html.includes('<option value="family">Condensed</option>'));
   assert.ok(html.includes('data-left="theme"') && html.includes('data-wall="theme"') && html.includes('data-wall="view"'));
-  const themeCard = html.slice(html.indexOf('Preview a theme'));
-  assert.ok(themeCard.includes('Back to schedule') && themeCard.includes('data-action="schedule"'), 'the theme card has Back to schedule');
-  const viewCard = html.slice(html.indexOf('Show a view'), html.indexOf('Preview a theme'));
-  assert.ok(viewCard.includes('Back to schedule'), 'the view card has Back to schedule');
+  assert.ok(html.slice(0, html.indexOf('Theme and view')).includes('Back to schedule'), 'the Playlist group has Back to schedule');
 });
 
 check('a preview shows its end time and what is left, and says nothing when it has run out', () => {

@@ -60,7 +60,7 @@ nav button {
 }
 nav button[aria-selected="true"] { background: var(--paper); color: var(--purple-dark); }
 
-main { max-width: 1200px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+main { max-width: 1600px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
 
 .columns { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 .columns > *, .card { min-width: 0; }

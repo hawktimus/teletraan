@@ -67,3 +67,42 @@
 .settings-page .fold > summary { min-height: 44px; padding: 10px 16px; font: 700 20px 'Tomorrow', system-ui, sans-serif; color: var(--purple-dark, #53048f); cursor: pointer; }
 .settings-page .fold-body { padding: 0 16px 16px; }
 .settings-page .fold-body.tab { padding-top: 0; }
+
+/* The Status page. data-width on .status-page is wide (900px and up), medium or narrow (under 600px), set by tabs/status.js. */
+.status-page .cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.status-page .left, .status-page .right { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.status-page .left [data-preview-card] { margin: 0; }
+.status-page .group, .status-page .health { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; min-width: 0; }
+.status-page .group > summary, .status-page .health > summary { min-height: 44px; padding: 10px 16px; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); cursor: pointer; }
+.status-page .group-body { padding: 0 16px 16px; }
+.status-page .group h3 { margin: 16px 0 0; font-size: 18px; color: var(--page-text, #f3eefc); }
+.status-page .health > [data-health-body], .status-page .health > .card { margin: 0 16px 16px; }
+.status-page .health > [data-health-body] .card { margin: 0; }
+.status-page .quickbar { display: none; }
+.status-page[data-width="wide"] .group > summary, .status-page[data-width="wide"] .health > summary { cursor: default; }
+.status-page[data-width="wide"] .health > summary { font-size: 20px; }
+.status-page[data-width="wide"] .cols { grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); align-items: start; }
+.status-page[data-width="wide"] .left { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+.status-page[data-width="wide"] .health { margin-top: 16px; border: 0; background: transparent; }
+.status-page[data-width="wide"] .health > [data-health-body] .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.status-page[data-width="wide"] .health > [data-health-body], .status-page[data-width="wide"] .health > .card { margin: 16px 0 0; }
+/* Under 900px: one column, and a bar of the three most used buttons that stays at the bottom */
+.status-page[data-width="medium"], .status-page[data-width="narrow"] { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.status-page[data-width="medium"] .quickbar, .status-page[data-width="narrow"] .quickbar {
+  display: block; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0;
+  padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: #0b0714; border-top: 2px solid var(--card-edge, #3a2c55);
+}
+.status-page .quickbar .buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.status-page .quickbar .act { min-height: 48px; padding: 6px 8px; font-size: 16px; line-height: 1.2; }
+.status-page .quickbar .result { margin: 6px 0 0; font-size: 16px; }
+.status-page .quickbar .result:empty { display: none; }
+.status-page[data-width="medium"] .cols, .status-page[data-width="narrow"] .cols { max-width: 720px; margin: 0 auto; }
+.status-page[data-width="medium"] .health, .status-page[data-width="narrow"] .health { margin-top: 16px; max-width: 720px; margin-left: auto; margin-right: auto; }
+.status-page[data-width="medium"] .health > [data-health-body] .grid, .status-page[data-width="narrow"] .health > [data-health-body] .grid { grid-template-columns: minmax(0, 1fr); }
+.status-page[data-width="narrow"] [data-preview-card][data-on="no"] .preview { display: none; }
+.status-page[data-width="narrow"] .buttons .act { flex: 1 1 auto; }
+.tab .note { color: #b9afcf; }
+.status-page { max-width: 1560px; }
+.status-page[data-width="wide"] summary { list-style: none; }
+.status-page[data-width="wide"] summary::-webkit-details-marker { display: none; }

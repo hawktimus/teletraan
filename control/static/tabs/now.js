@@ -2,7 +2,7 @@
 // 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
 import { api, showResult, useStyles } from './api.js';
-import { nowCardHtml, nowControlsHtml, outcome, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
+import { nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 import { wirePreview } from './preview.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
@@ -85,6 +85,23 @@ function makeWatcher(root, options) {
   };
 }
 
+// Every Pause or Resume button (the group and the bar at the bottom of a phone) says what a press does
+function setPaused(root, paused) {
+  root.querySelectorAll('[data-toggle-pause]').forEach(toggle => {
+    toggle.dataset.action = paused ? 'resume' : 'pause';
+    toggle.textContent = paused ? 'Resume rotation' : 'Pause rotation';
+  });
+  root.querySelectorAll('[data-pause-state]').forEach(line => { line.textContent = paused ? pauseStateWords.paused : pauseStateWords.running; });
+}
+
+// A press is shown at once, and a report of the wall that is older than the press must not turn it back
+const pressed = { at: 0 };
+
+function pausedBy(requests, now = new Date()) {
+  const until = requests && requests.pauseRotation && requests.pauseRotation.until;
+  return Boolean(until) && Date.parse(until) > now.getTime();
+}
+
 function wire(root, watcher) {
   root.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
@@ -114,14 +131,17 @@ function wire(root, watcher) {
     const shown = outcome(result, action, body);
     showResult(button, shown.state, shown.words);
     if (result.ok && (action === 'theme' || action === 'view')) watcher.asked(action, body, result.data && result.data.until);
-    if (result.ok && action === 'schedule') watcher.cleared();
+    if (result.ok && action === 'schedule') { watcher.cleared(); setPaused(root, false); pressed.at = Date.now(); }
+    if (result.ok && (action === 'pause' || action === 'resume')) { setPaused(root, action === 'pause'); pressed.at = Date.now(); }
+    // The words under the bar at the bottom of a phone go away by themselves
+    if (button.closest('[data-quickbar]')) setTimeout(() => { const line = button.closest('.buttons').nextElementSibling; if (line && line.classList.contains('result')) line.textContent = ''; }, 6000);
   });
 }
 
 // Puts the card, the live preview and the buttons into the three boxes it is given. Returns the function that stops it.
 export async function mountNow(boxes) {
   useStyles();
-  const { cardBox, previewBox, controls } = boxes;
+  const { cardBox, previewBox, controls, root } = boxes;
   previewBox.innerHTML = previewCardHtml();
   let stopPreview = wirePreview(previewBox);
   let timer = null;
@@ -133,7 +153,8 @@ export async function mountNow(boxes) {
   if (left) return leave;
   controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
   const watcher = makeWatcher(controls, options.ok && options.data ? options.data : {});
-  wire(controls, watcher);
+  wire(root, watcher);
+  setPaused(root, pausedBy(options.ok && options.data ? options.data.requests : null));
   watcher.tick(0);
   let ticks = 0;
   ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
@@ -143,6 +164,7 @@ export async function mountNow(boxes) {
   async function refresh() {
     const answer = await api('GET', '/now');
     if (left) return;
+    if (answer.ok && wallReport(answer.data) && Date.now() - pressed.at > 15000) setPaused(root, wallReport(answer.data).pause === true);
     const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
     if (html === last) return;
     last = html;
