@@ -127,7 +127,7 @@ function makePlace(name, options = {}) {
   writeTool(place.fakes, 'sudo', fakeSudo);
   writeTool(place.fakes, 'systemctl', fakeSystemctl);
   fs.mkdirSync(path.join(place.computerRepo, 'computer/scripts'), { recursive: true });
-  ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'console', 'watchdog', 'backup', 'nightly'].forEach(entry => writeTool(path.join(place.computerRepo, 'computer/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n'));
+  ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'match13', 'console', 'watchdog', 'backup', 'nightly'].forEach(entry => writeTool(path.join(place.computerRepo, 'computer/scripts'), 'install-' + entry + '.sh', '#!/bin/sh\necho "ran install-' + entry + '.sh"\n'));
   fs.mkdirSync(path.join(place.computerHome, 'teletraan-staging/computer'), { recursive: true });
   writeTool(path.join(place.computerHome, 'teletraan-staging/computer'), 'install.sh', '#!/bin/sh\necho "install.sh $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/install.exit" ] && exit "$(cat "$STUB_DIR/install.exit")"\nexit 0\n');
   if (options.sudoPassword) place.stubFile('sudo-password.txt', options.sudoPassword + '\n');

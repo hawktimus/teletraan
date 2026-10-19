@@ -2808,7 +2808,7 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'famil
 // and the build stamp of ?debug=1, 20 px, the one size the order for the version on the wall allows below the rest
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.build-stamp', size: 20 }));
 
-// The Monday panels and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
+// The Match13 cards have the STALE chip at 30 and the rank axis labels of the forecast at 28. The Monday panels and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
 // chips at 30 (the status of a row, the count of a column, STALE and OVERDUE), the first name of who to ask at 40, the labels
 // of the numbers, of a department and of the legend at 36, the weeks and TODAY of the Monday timeline at 28, and
 // the other labels fixed for the board and the overall progress (26 to 40, listed here). The city and the
@@ -2827,6 +2827,8 @@ const orderSmall = [
   mondaySmall('panels/monday-status-depts/panel.css', { '.monday-status-depts .share': 40 }),
   mondaySmall('panels/monday-overall/panel.css', { '.monday-overall .hours-of': 32, '.monday-overall .milestone-name': 40, '.monday-overall .milestone-date': 32, '.monday-overall .milestone-days': 36, '.monday-overall .milestones-head': 36, '.monday-overall .hours': 40 }),
   mondaySmall('panels/monday-timeline/panel.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
+  mondaySmall('panels/competition-forecast/panel.css', { '.competition-forecast .stale-chip': 30, '.competition-forecast .tick': 28 }),
+  mondaySmall('panels/competition-qualify/panel.css', { '.competition-qualify .stale-chip': 30 }),
   mondaySmall('panels/monday-board/panel.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
 );
 Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });

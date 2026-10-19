@@ -384,10 +384,16 @@ read_section() {
   if [ -f "$sections/$1.json" ]; then cat "$sections/$1.json"; else echo null; fi
 }
 
+# The path of a section, or of a file that holds null, for jq to read
+echo null > "$work/null.json"
+section_file() {
+  if [ -f "$sections/$1.json" ]; then printf '%s' "$sections/$1.json"; else printf '%s' "$work/null.json"; fi
+}
+
 now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 echo '{}' > "$work/teams.json"
 for number in $(jq -r '.[]' "$work/numbers.json"); do
-  jq --arg n "$number" --slurpfile year <(read_section "team-$number") --slurpfile history <(read_section "history-$number") \
+  jq --arg n "$number" --slurpfile year "$(section_file "team-$number")" --slurpfile history "$(section_file "history-$number")" \
     '.[$n] = (($year[0] // {}) + {history: ($history[0] // [])})' "$work/teams.json" > "$work/teams.new"
   mv -f "$work/teams.new" "$work/teams.json"
   if [ "$(read_section "team-$number")" = null ]; then
@@ -401,7 +407,7 @@ for index in $(jq -r 'keys[]' "$work/events.json"); do
   notes='[]'
   [ "$(read_section "sim-$event")" != null ] || notes=$(printf '%s' "$notes" | jq --arg text "Match13 has not simulated $event yet." '. + [$text]')
   [ "$(read_section "field-$event")" != null ] || notes=$(printf '%s' "$notes" | jq --arg text "Match13 has no ratings for the teams of $event yet." '. + [$text]')
-  jq --arg key "$event" --argjson notes "$notes" --slurpfile sim <(read_section "sim-$event") --slurpfile field <(read_section "field-$event") --slurpfile matches <(read_section "matches-$event") \
+  jq --arg key "$event" --argjson notes "$notes" --slurpfile sim "$(section_file "sim-$event")" --slurpfile field "$(section_file "field-$event")" --slurpfile matches "$(section_file "matches-$event")" \
     '.[$key] = {sim: $sim[0], field: $field[0], matches: ($matches[0] // []), notes: $notes}' "$work/events-out.json" > "$work/events-out.new"
   mv -f "$work/events-out.new" "$work/events-out.json"
 done
@@ -410,7 +416,7 @@ district_note='[]'
 [ "$(read_section "district-$district")" != null ] || district_note='["Match13 has no standings for the district yet."]'
 
 jq -n --arg at "$now_iso" --argjson season "$year" --arg district "$district" --argjson ours "$(cat "$work/ours.json")" \
-  --slurpfile teams "$work/teams.json" --slurpfile events "$work/events-out.json" --slurpfile standings <(read_section "district-$district") \
+  --slurpfile teams "$work/teams.json" --slurpfile events "$work/events-out.json" --slurpfile standings "$(section_file "district-$district")" \
   --argjson districtNote "$district_note" '{generatedAt: $at, season: $season, ours: $ours, teams: $teams[0], events: $events[0],
     district: (($standings[0] // {ourTeams: []}) + {code: $district, notes: $districtNote})}' > "$work/match13.json"
 
