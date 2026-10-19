@@ -422,10 +422,10 @@ export function keysHtml(data) {
 }
 
 // The Log tab. lines is GET log.
-export function logHtml(lines) {
+export function logHtml(lines, title = 'Log') {
   const list = Array.isArray(lines) ? lines : [];
-  if (list.length === 0) return card('Log', '<p>The log is empty.</p>');
-  return card('Log', '<pre class="log">' + list.map(esc).join('\n') + '</pre>');
+  if (list.length === 0) return card(title, '<p>The log is empty.</p>');
+  return card(title, '<pre class="log">' + list.map(esc).join('\n') + '</pre>');
 }
 
 // What a button says when it is done. Every button shows a result: Done in green, or the reason in red.

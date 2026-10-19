@@ -60,7 +60,7 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|monday-check|mirror-start|mirror-watch|mirror-status)
+  restart-kiosk|restart-services|reboot|status|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   sync-now)
@@ -113,6 +113,23 @@ case $word in
     code=0
     as_root "$systemctl_bin" start "teletraan-$argument.service" || code=$?
     finish "$code"
+    ;;
+  log-bundle)
+    # What the log download adds from this computer: the python3 version, docker when the login user may run it, and the
+    # last 300 lines of the journal of each teletraan unit. Only what the login user can read is read; nothing here
+    # uses sudo. The control page takes the keys and calendar links out of all of it before anyone sees it.
+    echo "python3: $(python3 --version 2>&1 | head -n 1 || true)"
+    if command -v docker > /dev/null 2>&1 && "$docker_bin" ps > /dev/null 2>&1; then
+      echo "---- docker ps ----"
+      "$docker_bin" ps 2>&1 | head -n 30 | cut -c 1-300
+    else
+      echo "docker: not available to the login user without sudo"
+    fi
+    for unit in $(systemctl list-unit-files 'teletraan-*' --no-legend 2> /dev/null | awk '{ print $1 }'); do
+      echo "---- journal $unit (last 300 lines) ----"
+      journalctl -u "$unit" -n 300 --no-pager -o short-iso 2>&1 | cut -c 1-400 || true
+    done
+    finish 0
     ;;
   monday-check)
     code=0
