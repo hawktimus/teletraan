@@ -410,7 +410,8 @@ parent have it. The sync handles this in four places:
 - The list of boards asks for `hierarchy_type`, and each board in the list of the Boards tab is marked
   `classic` or `multi_level` (the field Kind of board in `monday-status`).
 - A board that is `multi_level` in the list of this run, or in the list the last run wrote, is read with
-  `monday_query_items_multi` and `monday_query_more_multi`. They add `... on BatteryValue { battery_value { key count } }`
+  `monday_query_items_multi` and `monday_query_more_multi`. They ask for `column_values(capabilities: [CALCULATED])`,
+  without which Monday leaves the status columns out, add `... on BatteryValue { battery_value { key count } }`
   and the settings of the chosen columns, which hold the label of every number. Any other board is read with
   the old questions, exactly as before, so Build Tasks and Milestones are unchanged.
 - The key becomes the index and the label comes from the settings of the column, so Department, Status,
@@ -419,9 +420,9 @@ parent have it. The sync handles this in four places:
 - The timeline (`... on TimelineValue { from to }`) and the people are read as on any board. Subitems are
   left out, as before.
 
-The API version is `monday_version` in `monday-contract.sh`, one line. It is 2026-01 now. That choice,
-the shape of `BatteryValue` and the question for the settings of a column have not been tried with the
-token of the Teletraan computer, only with made-up answers. If the Monday page still lists no tasks, press
+The API version is `monday_version` in `monday-contract.sh`, one line. It is 2026-01 now. The questions were
+tried by hand against Robotics Tasks and answered the department, status, team and Show on TV of its items; the
+sync itself has not run with them yet. If the Monday page still lists no tasks, press
 Monday debug on the control page, Settings, Monday (it runs `monday-sync.sh --debug` with the board number
 for you). It prints the kind of board, the API version and, for the first two items, each column with its id,
 its type and the shape of its value. It holds item names and column ids, and no token and no names of

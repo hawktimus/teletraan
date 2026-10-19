@@ -5,9 +5,10 @@
 # typed fragments, because a plain question for the values of columns gave empty values for status,
 # date and relation columns (docs/monday.md, "If an answer looks different").
 monday_address='https://api.monday.com/v2'
-# Multi-level boards (hierarchy_type multi_level) answer status columns as BatteryValue, which only the newer
-# versions describe. 2026-01 is a guess from Monday's release notes and has not been tried with the token of the
-# Teletraan computer. If Settings, Monday debug shows empty values, this is the line to try another version on.
+# Multi-level boards (hierarchy_type multi_level) leave status columns out of column_values unless the question asks
+# for capabilities: [CALCULATED], and then answer them as BatteryValue. Tried by hand against the team's own board
+# with a status, department, team and Show on TV column; if Settings, Monday debug shows empty values again, this block
+# is where to look.
 monday_version='2026-01'
 
 # Who the token belongs to
@@ -25,8 +26,8 @@ monday_query_more='query ($cursor: String!, $columns: [String!], $limit: Int) { 
 # The same two questions for a multi-level board. A status column of such a board has no StatusValue: it
 # answers BatteryValue, a list of { key, count } where key is the index of a label as text. The labels of the
 # columns come with the first page, because a key alone does not say Hide or Show.
-monday_query_items_multi='query ($board: [ID!], $columns: [String!], $limit: Int) { boards(ids: $board) { name columns(ids: $columns) { id settings_str } items_page(limit: $limit) { cursor items { id name parent_item { id } column_values(ids: $columns) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
-monday_query_more_multi='query ($cursor: String!, $columns: [String!], $limit: Int) { next_items_page(limit: $limit, cursor: $cursor) { cursor items { id name parent_item { id } column_values(ids: $columns) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } }'
+monday_query_items_multi='query ($board: [ID!], $columns: [String!], $limit: Int) { boards(ids: $board) { name columns(ids: $columns) { id settings_str } items_page(limit: $limit) { cursor items { id name parent_item { id } column_values(ids: $columns, capabilities: [CALCULATED]) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
+monday_query_more_multi='query ($cursor: String!, $columns: [String!], $limit: Int) { next_items_page(limit: $limit, cursor: $cursor) { cursor items { id name parent_item { id } column_values(ids: $columns, capabilities: [CALCULATED]) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } }'
 
 # The question of monday-sync.sh --debug: the first two items of one board with every column, in the typed shape
 monday_query_debug='query ($board: [ID!]) { boards(ids: $board) { name hierarchy_type items_page(limit: 2) { items { id name parent_item { id } column_values { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
