@@ -64,7 +64,7 @@ take_line() {
   local name=${1%%=*} value
   value=$(unquote "${1#*=}")
   case $name in
-    SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY)
+    SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|MATCH13_API_KEY)
       case $value in
         '') set_key "$name" '' ;;
         '['*) ;;
@@ -90,8 +90,8 @@ take_line() {
 }
 
 reset_secrets() {
-  key_values=('' '' '' '')
-  key_states=(0 0 0 0)
+  key_values=('' '' '' '' '')
+  key_states=(0 0 0 0 0)
   cal_names=()
   cal_values=()
   cal_count=0

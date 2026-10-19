@@ -125,7 +125,7 @@ pull_from_computer() {
   say "This replaces the values saved on this Mac with the ones in computer/local.env on the Teletraan computer. Nothing is printed."
   ask_yes "Go ahead?" no || { say "Nothing changed."; return 0; }
 
-  names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|CALENDAR_[A-Za-z0-9_]+_URL'
+  names='SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|MATCH13_API_KEY|CALENDAR_[A-Za-z0-9_]+_URL'
   (umask 077; computer_run "grep -E '^($names)=' '$COMPUTER_REPO/computer/local.env'" > "$raw")
   status=$?
   if [ "$status" = 255 ]; then

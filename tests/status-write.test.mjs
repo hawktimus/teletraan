@@ -400,6 +400,7 @@ test('--print asks for the status document with no token, writes nothing, and gi
     'Last slides fetch         1 minute ago (' + clockOf(times.lastSlidesFetchAt) + ')',
     'Last Monday sync          2 hours ago (' + clockOf(times.lastMondaySyncAt) + ')',
     'Last FRC data sync        3 days ago (' + clockOf(times.lastFrcSyncAt) + ')',
+    'Last Match13 read         Not yet',
     'Screen started            Not yet',
   ]);
 });
@@ -494,7 +495,7 @@ test('the status document and the fields in the script are the ones the Studio h
   const schema = readModule(path.join(repo, 'studio/schemas/status.js'), 'utf8');
   const studioFields = Array.from(schema.matchAll(/timeField\('(\w+)'/g)).map(match => match[1]);
   // photosDriveAt is written by the job photos-drive, which has its own test (tests/photos-drive.test.mjs)
-  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt']).sort());
+  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'match13At']).sort());
 
   const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));

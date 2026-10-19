@@ -173,9 +173,9 @@ test('merge-env.sh on the Mac takes GOOGLE_API_KEY and still refuses other names
 
 test('the Mac tool lists the Google key and installs the Drive photo timer with the others', () => {
   const tool = read('tools/teletraan/teletraan-tool');
-  assert.ok(tool.includes('key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY GOOGLE_API_KEY)'));
-  assert.ok(tool.includes('form_key_count=4'));
-  assert.ok(read('tools/teletraan/teletraan-tool-secrets.sh').includes('SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY)'));
+  assert.ok(tool.includes('key_names=(SANITY_WRITE_TOKEN MONDAY_API_TOKEN TBA_AUTH_KEY GOOGLE_API_KEY MATCH13_API_KEY)'));
+  assert.ok(tool.includes('form_key_count=5'));
+  assert.ok(read('tools/teletraan/teletraan-tool-secrets.sh').includes('SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|MATCH13_API_KEY)'));
   assert.ok(read('tools/teletraan/teletraan-tool-deploy.sh').includes('for name in calendars slides photos-drive monday frc console watchdog backup nightly; do'));
   assert.ok(read('computer/local.example.env').includes("# GOOGLE_API_KEY='[paste the Google key here]'"));
 });

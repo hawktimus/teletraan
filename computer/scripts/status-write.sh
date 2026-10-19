@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|photos-drive|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|photos-drive|match13|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -24,6 +24,9 @@
 #                              sends when the Google Drive photo folder was read, how many photos it
 #                              has and how it went (photosDriveAt, photosDriveCount, photosDriveState),
 #                              from photos/status.json, which photos-drive-sync.sh made in the data folder
+#   status-write.sh match13    sends when the Match13 forecasts were read, how many teams they hold and how
+#                              it went (match13At, match13Count, match13State), from match13-status.json,
+#                              which match13-sync.sh made in the data folder. Only times and counts.
 #   status-write.sh --print    writes nothing: prints each time in the document and how
 #                              long ago it was, which tools/teletraan/teletraan-tool shows
 #
@@ -39,7 +42,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|photos-drive|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|photos-drive|match13|restart N" >&2
   exit 2
 }
 
@@ -64,6 +67,7 @@ case $1 in
   restart) field=lastKioskRestartAt ;;
   calendar-status) field=calendar-status ;;
   photos-drive) field=photosDriveAt ;;
+  match13) field=match13At ;;
   --print) field=print ;;
   *) usage ;;
 esac
@@ -160,7 +164,7 @@ time_line() {
 }
 
 if [ "$field" = print ]; then
-  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, kioskStartedAt}"
+  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, match13At, kioskStartedAt}"
   status=0
   answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
@@ -187,6 +191,7 @@ if [ "$field" = print ]; then
   time_line lastSlidesFetchAt 'Last slides fetch'
   time_line lastMondaySyncAt 'Last Monday sync'
   time_line lastFrcSyncAt 'Last FRC data sync'
+  time_line match13At 'Last Match13 read'
   time_line kioskStartedAt 'Screen started'
   exit 0
 fi
@@ -233,6 +238,23 @@ elif [ "$field" = photosDriveAt ]; then
     exit 1
   fi
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"photosDriveAt":"%s","photosDriveState":"%s","photosDriveCount":%s}}}]}' \
+    "$document" "$document" "$at" "$state" "$count")
+elif [ "$field" = match13At ]; then
+  # The line match13-sync.sh wrote. Each part is checked, because it goes into a JSON body.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/match13-status.json"
+  [ -f "$file" ] || exit 0
+  text=$(head -c 300 "$file")
+  at=$(printf '%s' "$text" | sed -n 's/.*"at":"\([^"]*\)".*/\1/p')
+  state=$(printf '%s' "$text" | sed -n 's/.*"state":"\([^"]*\)".*/\1/p')
+  count=$(printf '%s' "$text" | sed -n 's/.*"count":\([0-9]*\).*/\1/p')
+  if ! printf '%s' "$at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$' ||
+    ! printf '%s' "$state" | grep -Eq '^[a-z-]{1,20}$' ||
+    ! printf '%s' "$count" | grep -Eq '^[0-9]{1,5}$'; then
+    echo "status: match13-status.json is not the line match13-sync.sh writes, so nothing was written." >&2
+    exit 1
+  fi
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"match13At":"%s","match13State":"%s","match13Count":%s}}}]}' \
     "$document" "$document" "$at" "$state" "$count")
 elif [ "$field" = lastContentSeenAt ]; then
   value=$(newest_update)

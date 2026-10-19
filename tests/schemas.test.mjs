@@ -4413,7 +4413,7 @@ function checkStatusWatchdog() {
 function checkStatusBlock() {
   const problems = [];
   const type = typeByName('status');
-  const wanted = ['lastContentSeenAt', 'lastCalendarSyncAt', 'lastSlidesFetchAt', 'lastMondaySyncAt', 'lastFrcSyncAt', 'kioskStartedAt'];
+  const wanted = ['lastContentSeenAt', 'lastCalendarSyncAt', 'lastSlidesFetchAt', 'lastMondaySyncAt', 'lastFrcSyncAt', 'match13At', 'kioskStartedAt'];
   const input = world.statusInput;
 
   need(problems, type && type.type === 'document', 'status should be a document type');
@@ -4455,9 +4455,9 @@ function checkStatusBlock() {
   need(problems, input.ageText(ago(3 * 24 * 60), now) === '3 days ago', 'an age of three days should read 3 days ago');
   need(problems, [undefined, null, '', 'soon', 5, {}].every(value => input.ageText(value, now) === ''), 'a time that cannot be read should give no words');
   const none = input.describeStatus(null, now);
-  need(problems, none.length === 6 && none.every(line => line.text === 'Not yet'), 'a missing document should give six lines that all say Not yet');
+  need(problems, none.length === 7 && none.every(line => line.text === 'Not yet'), 'a missing document should give seven lines that all say Not yet');
   const some = input.describeStatus({ lastCalendarSyncAt: ago(5), kioskStartedAt: 'oops' }, now);
-  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[5].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
+  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[6].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
   need(problems, JSON.stringify(input.statusView(null, now)).indexOf('Reading the status') !== -1, 'the block should say it is reading while it waits');
   need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: false }, now)).indexOf('No status yet') !== -1, 'the block should say No status yet when the document is missing');
   need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the status cannot be read');

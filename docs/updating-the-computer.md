@@ -100,7 +100,7 @@ Choice 3 opens a small menu: 1 changes the keys and the calendar links (the form
 #### 1. The form
 
 A form in the terminal. Each key shows as its first 4 characters and dots, or not
-set. For each of `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN`, `TBA_AUTH_KEY` and `GOOGLE_API_KEY` press
+set. For each of `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN`, `TBA_AUTH_KEY`, `GOOGLE_API_KEY` and `MATCH13_API_KEY` press
 `e` to type a new value, `k` or Return to keep it, or `c` to clear it. What you
 type is hidden. A value too short to show 4 characters of safely shows as dots
 only.

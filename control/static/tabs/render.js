@@ -71,6 +71,7 @@ export function statusHtml(data, now = new Date()) {
     row('Monday', esc(agoText(mini.monday, now))) +
     row('Monday reads today', esc(data.mondayCallsToday === null || data.mondayCallsToday === undefined ? 'not known' : data.mondayCallsToday)) +
     row('Competition data', esc(agoText(mini.frc, now))) +
+    row('Last Match13 read', esc(agoText(mini.match13, now))) +
     row('Screen started', esc(agoText(mini.screenStarted, now))) +
     row('Last backup', esc(agoText(data.lastBackupAt, now))) + '</dl>');
 
@@ -430,7 +431,7 @@ export function logHtml(lines, title = 'Log') {
 
 // What a button says when it is done. Every button shows a result: Done in green, or the reason in red.
 // body is what was sent. A helper word has a name of its own in the first argument.
-const syncNames = { calendars: 'calendars', monday: 'Monday', frc: 'competition', 'photos-drive': 'Drive photos' };
+const syncNames = { calendars: 'calendars', monday: 'Monday', frc: 'competition', 'photos-drive': 'Drive photos', match13: 'Match13' };
 
 export function doneWords(action, body = {}) {
   const minutes = body.minutes ? ' for ' + body.minutes + (body.minutes === 1 ? ' minute' : ' minutes') : '';
