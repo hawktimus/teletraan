@@ -2,7 +2,7 @@
 // and give markup with every value escaped. display.js puts the markup in the page and wires the buttons. Nothing here
 // touches the page, so tests/control-display-page.test.mjs can try it with node.
 
-import { blocksOf, durationWords, isShown, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
+import { blocksOf, countWhere, durationWords, isNovaRow, isShown, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
 
 const stateWords = { show: 'Will show', skip: 'Skipped', off: 'Off', unknown: 'Not known' };
@@ -148,6 +148,29 @@ export function rowsHtml(rows, page) {
       block.shown + ' of ' + block.count + ' on, ' + esc(durationWords(block.seconds)) + '.</h3>' +
       block.rows.map(item => rowHtml(item.row, item.index, item.index === rows.length - 1, page)).join('') + '</section>';
   }).join('');
+}
+
+function rowsWord(count) {
+  return count + (count === 1 ? ' row' : ' rows');
+}
+
+// One quick button. The label says what it will do and to how many rows. Nothing is sent until Save to draft.
+function quickButton(action, panel, name, counts) {
+  if (counts.total === 0) return '<li class="quick"><span class="word">' + esc(name) + ': no rows in the list.</span></li>';
+  const what = quickAction(counts);
+  const label = (what.hide ? 'Hide ' : 'Show ') + (action === 'quick-nova' ? 'all ' + name : name) + ' (' + rowsWord(what.rows) + ')';
+  return '<li class="quick"><button type="button" class="act' + (what.hide ? '' : ' quiet') + '" data-action="' + action + '"' + (panel ? ' data-panel="' + esc(panel) + '"' : '') + '>' + esc(label) + '</button>' +
+    '<span class="word">' + esc(name) + ' has ' + rowsWord(counts.total) + ', ' + counts.on + ' on now.</span></li>';
+}
+
+// Quick hide: switches the Show on screen of many rows at once, to hide them for a while and bring them back later.
+// It changes the list on this page only. Save to draft and Publish to the wall send it, like any other change.
+export function quickHtml(rows, choices) {
+  const titles = titlesOf(choices);
+  const panels = quickPanels(rows).map(item => quickButton('quick-panel', item.panel, titles[item.panel] || item.panel, item));
+  return '<section class="card" data-quick><h2>Quick hide</h2>' +
+    '<p class="word">Switch Show on screen off for many rows at once, and on again later. The rows stay in the list with all their settings. Nothing is sent until you press Save to draft.</p>' +
+    '<ul class="quicks">' + quickButton('quick-nova', '', 'Nova rows', countWhere(rows, isNovaRow)) + panels.join('') + '</ul></section>';
 }
 
 export function addRowHtml(choices) {

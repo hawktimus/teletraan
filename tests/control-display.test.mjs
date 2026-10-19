@@ -412,4 +412,31 @@ await check('the settings are read as whole documents, so a copy made for Save o
   assert.equal(first[0].createIfNotExists._type, 'dashboardSettings');
 });
 
+await check('quick hide flips only shown on the matching rows and keeps every other field', () => {
+  const list = rows.withKeys([
+    { view: 'nova', panel: 'tasks', seconds: 30, department: 'build', shown: true },
+    { view: 'nova', panel: 'robotStatus', shown: true },
+    { view: 'prime', panel: 'robotStatus' },
+    { view: 'prime', panel: 'wireframe', shown: false },
+    { view: 'robotics', panel: 'events', shown: true },
+  ]);
+  const nova = rows.countWhere(list, rows.isNovaRow);
+  assert.deepEqual(nova, { total: 2, on: 2 });
+  const hidden = rows.setShownWhere(list, rows.isNovaRow, false);
+  assert.deepEqual(hidden.map(row => row.shown), [false, false, undefined, false, true]);
+  assert.equal(hidden[0].department, 'build');
+  assert.equal(hidden[0]._key, list[0]._key);
+  assert.equal(list[0].shown, true, 'the old list is not changed');
+  assert.equal(rows.setShownWhere(hidden, rows.isNovaRow, false), hidden, 'nothing to change gives the same list');
+  const back = rows.setShownWhere(hidden, rows.isNovaRow, true);
+  assert.equal(back[0].shown, true);
+  assert.deepEqual(rows.quickAction({ total: 2, on: 0 }), { hide: false, rows: 2 });
+  assert.deepEqual(rows.quickAction(nova), { hide: true, rows: 2 });
+  assert.equal(rows.countWhere(list, rows.isPanelRow('robotStatus')).on, 2, 'a row with no shown field counts as on');
+  const panels = rows.quickPanels(list);
+  assert.deepEqual(panels.map(item => item.panel), ['robotStatus', 'wireframe', 'tasks', 'events']);
+  assert.deepEqual(panels[1], { panel: 'wireframe', total: 1, on: 0 });
+  assert.deepEqual(rows.quickPanels([])[0], { panel: 'robotStatus', total: 0, on: 0 });
+});
+
 console.log('\n' + passed + ' passed');

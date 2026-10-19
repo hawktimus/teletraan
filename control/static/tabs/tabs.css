@@ -145,6 +145,9 @@
 .display-page .chip[data-state="off"] { background: #9a9a9a; }
 .display-page .reason { margin: 8px 0 0; }
 .display-page .reason[data-state="skip"] { color: #ffb300; }
+.display-page .quicks { margin: 12px 0 0; padding: 0; list-style: none; }
+.display-page .quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
+.display-page .quick .act { min-height: 44px; white-space: normal; text-align: left; }
 .display-page .items { margin: 4px 0 0; padding-left: 20px; color: #b9afcf; }
 .display-page .drow .check { display: flex; margin-top: 4px; }
 .display-page [data-flash]:empty { display: none; }

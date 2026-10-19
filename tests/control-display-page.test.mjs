@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { addRowHtml, conflictHtml, controlsHtml, extrasHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from '../control/static/tabs/display-parts.js';
+import { addRowHtml, conflictHtml, controlsHtml, extrasHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
 import { withKeys } from '../control/static/display-rows.js';
 import { repo } from './helpers/control-world.mjs';
 
@@ -179,6 +179,18 @@ check('the words are plain: no em or en dash, no exclamation mark, no emoji in t
     assert.ok(!/[A-Za-z0-9.)'"]!(?!=)/.test(text), file + ' has an exclamation mark');
     assert.ok(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(text), file + ' has an emoji');
   });
+});
+
+check('Quick hide says what each button does and how many rows it changes, and escapes names', () => {
+  const quickRows = withKeys([{ view: 'nova', panel: 'tasks', shown: true }, { view: 'nova', panel: 'robotStatus', shown: true }, { view: 'prime', panel: 'wireframe', shown: false }]);
+  const quickChoices = Object.assign({}, choices, { panelGroups: [{ title: 'Wall panels', panels: [{ value: 'robotStatus', title: 'Robot Status' }, { value: 'wireframe', title: '3D view' }, { value: 'tasks', title: '<b>Tasks</b>' }] }] });
+  const html = quickHtml(quickRows, quickChoices);
+  assert.ok(html.includes('Hide all Nova rows (2 rows)'));
+  assert.ok(html.includes('Hide Robot Status (1 row)'));
+  assert.ok(html.includes('Show 3D view (1 row)'));
+  assert.ok(html.includes('data-action="quick-panel" data-panel="wireframe"'));
+  assert.ok(!html.includes('<b>Tasks</b>'));
+  assert.ok(quickHtml([], quickChoices).includes('no rows in the list'));
 });
 
 console.log('\n' + passed + ' passed');

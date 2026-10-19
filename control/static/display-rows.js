@@ -149,6 +149,37 @@ export function addRow(rows, view, panel) {
   return rows.concat([row]);
 }
 
+// Quick hide. These only change the shown field, so a hidden row keeps everything else and comes back with Show.
+// The page sends them with the normal Save to draft, like any other change.
+
+// Rows that the test accepts, as a count of all of them and of those that are on now
+export function countWhere(rows, test) {
+  const found = rows.filter(test);
+  return { total: found.length, on: found.filter(isShown).length };
+}
+
+// The same rows with shown set on every row the test accepts. A list with nothing to change comes back as it was.
+export function setShownWhere(rows, test, shown) {
+  if (!rows.some(row => test(row) && isShown(row) !== shown)) return rows;
+  return rows.map(row => (test(row) && isShown(row) !== shown ? Object.assign({}, row, { shown: shown }) : row));
+}
+
+export const isNovaRow = row => row.view === 'nova';
+export const isPanelRow = panel => row => row.panel === panel;
+
+// The panels that the Quick hide group lists: the ones named first, then every other panel in the list, in list order
+export function quickPanels(rows, first = ['robotStatus', 'wireframe']) {
+  const order = first.slice();
+  rows.forEach(row => { if (row.panel && !order.includes(row.panel)) order.push(row.panel); });
+  return order.map(panel => Object.assign({ panel: panel }, countWhere(rows, isPanelRow(panel))));
+}
+
+// What a quick button does now and how many rows it changes: hide the rows that are on, or, when none is on, show them all
+export function quickAction(counts) {
+  if (counts.on > 0) return { hide: true, rows: counts.on };
+  return { hide: false, rows: counts.total };
+}
+
 // True when two lists are the same rows with the same values, for "you have unsaved changes"
 export function sameRows(first, second) {
   return JSON.stringify(first) === JSON.stringify(second);
