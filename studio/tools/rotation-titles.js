@@ -47,3 +47,15 @@ export function panelTitleOf(panel) {
 // Robot status and the Wireframe view are large panels, Mini panel idea 1 is a small one.
 export const placeholderIds = ['robotStatus', 'wireframe', 'miniIdea1'];
 export const placeholderNote = 'Placeholder: draws only a title';
+
+// Registered panels that the board neither offers nor explains as automatic, each with the reason. A new panel in
+// dashboard/registry.js must be offered in the board, explained in tools/rotation-auto.js or named here, or
+// tests/rotation-panels-explained.test.mjs fails with its id.
+export const internalPanels = [
+  { id: 'monday-milestones', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
+  { id: 'monday-progress', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
+  { id: 'monday-milestones-both', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
+  { id: 'monday-progress-both', reason: 'Older Monday card. A saved row that names it plays as the tasks panel, so the board does not offer it.' },
+  { id: 'stand-in-tile', reason: 'Only for the hardware test (?stress). It is never on the wall.' },
+  { id: 'stand-in-ticker', reason: 'Only for the hardware test (?stress). It is never on the wall.' },
+];
