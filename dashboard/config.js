@@ -31,7 +31,8 @@ export const threat = {
 export {
   speeds, metals, looks, themeIds, barStyle, styles, screenIds, weekdays, defaultSchedule, standardSwapSeconds,
   defaultScreen, teamPanels, mondayRows, mondayKinds, mondayOldPanels, teamModes, lookSwaps, competitionModes,
-  competitionSwitches, competitionLeadDays, competitionPreviewSeconds, pageChangeStyles, frameFinishes,
+  competitionSwitches, competitionLeadDays, competitionPreviewDays, competitionRecapDays, competitionEstimateSpread,
+  competitionTrendPoints, competitionPreviewSeconds, pageChangeStyles, frameFinishes,
   photoOrders, photoSources, photoFits, portraitShapes, portraitFrames, nightStyles, nightSpeeds, nightFirstHit, limits,
   defaultPhotoRow, screenLimits, viewKeys, scheduledThemeIds, defaultThemeByWeekday, viewIds, viewTeams,
   viewLimits, viewLayoutNames, countdownPlaces, viewColors, defaultViews, familyPanels,

@@ -258,6 +258,9 @@ const contract = {
     competitionResults: 'boolean',
     competitionAlliance: 'boolean',
     competitionDistrict: 'boolean',
+    competitionPreview: 'boolean',
+    competitionMatches: 'boolean',
+    competitionRecap: 'boolean',
     mondayBoards: rows({
       boardId: text(20),
       team: teamRef,
@@ -437,7 +440,7 @@ const choices = {
   'dashboardSettings.teamMode': ['prime', 'nova', 'alternate'],
   'dashboardSettings.mondayStyle': ['original', 'cybertron', 'minimal'],
   'dashboardSettings.lookSwap': ['assemble', 'slats', 'cut'],
-  'dashboardSettings.competitionMode': ['auto', 'always', 'off'],
+  'dashboardSettings.competitionMode': ['auto', 'always', 'off', 'around'],
   'dashboardSettings.hiddenRequest.kind': ['desktop', 'redEyes'],
   'dashboardSettings.previewRequest.kind': ['prime', 'nova', 'cybertron', 'minimal', 'next-pack'],
   'demo.steps.screen': ['announcement', 'all-announcements', 'night-mode'],
@@ -4313,7 +4316,7 @@ function checkTeamsTab() {
 // fields they show stay in the schema, hidden. Presentations, Night mode and Hidden transitions are sections of Advanced.
 const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
-const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict'];
+const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap'];
 const settingsTabs = {
   screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
@@ -4498,18 +4501,18 @@ function checkCompetitionTab() {
   const modeRules = rulesOf(mode);
   const allowed = constraintNamed(modeRules, 'valid');
   const offered = choicesOf('dashboardSettings.competitionMode');
-  const modeTitles = { auto: 'Auto', always: 'Always', off: 'Off' };
-  need(problems, config.competitionModes.join() === 'auto,always,off', 'competitionModes in config.js should be auto, always and off, not ' + config.competitionModes.join());
+  const modeTitles = { auto: 'Auto', always: 'Always', off: 'Off', around: 'Before and after (recommended)' };
+  need(problems, config.competitionModes.join() === 'auto,always,off,around', 'competitionModes in config.js should be auto, always, off and around, not ' + config.competitionModes.join());
   need(problems, mode && mode.type === 'string' && mode.options && mode.options.layout === 'radio', 'competitionMode should be a radio list');
   need(problems, offered.map(item => item.value).join() === config.competitionModes.join(), 'competitionMode should offer the names in config.js, in the same order: ' + config.competitionModes.join(', '));
   offered.forEach(item => need(problems, item.title === modeTitles[item.value], 'the competition mode ' + item.value + ' should be titled ' + modeTitles[item.value]));
   need(problems, allowed && allowed.args[0].join() === config.competitionModes.join(), 'competitionMode should only allow: ' + config.competitionModes.join(', '));
-  need(problems, !constraintNamed(modeRules, 'required'), 'competitionMode should not be required: an empty mode is Auto, and the page must still publish');
-  need(problems, mode && mode.initialValue === 'auto' && config.defaultSettings.competitionMode === 'auto', 'competitionMode should start as auto, and so should its default in config.js');
-  need(problems, mode && /Auto/.test(mode.description || '') && /Always/.test(mode.description || '') && /Off/.test(mode.description || ''), 'the competitionMode description should say what Auto, Always and Off do');
+  need(problems, !constraintNamed(modeRules, 'required'), 'competitionMode should not be required: an empty mode is Before and after, and the page must still publish');
+  need(problems, mode && mode.initialValue === 'around' && config.defaultSettings.competitionMode === 'around', 'competitionMode should start as around (Before and after), and so should its default in config.js');
+  need(problems, mode && /Auto/.test(mode.description || '') && /Always/.test(mode.description || '') && /Off/.test(mode.description || '') && /Before and after/.test(mode.description || ''), 'the competitionMode description should say what Before and after, Auto, Always and Off do');
 
   // One switch for each card, in this order, all on to start with, in the names of config.js
-  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points'];
+  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points', 'Event preview', 'Our matches', 'Event recap'];
   need(problems, config.competitionSwitches.join() === competitionNames.join(), 'competitionSwitches in config.js should be the switches of the Competition tab, in order: ' + competitionNames.join(', '));
   competitionNames.forEach((name, index) => {
     const field = at(name);
@@ -4570,7 +4573,7 @@ function checkFrcStatus() {
   [named(fieldsIn(type || {})), named(teamFields), named(eventFields)].forEach(names => {
     names.forEach(name => need(problems, script.indexOf(name + ':') !== -1, 'frc-sync.sh should write the field ' + name));
   });
-  need(problems, named(teamFields).join() === 'team,number,key,events,focusEvent,nextMatch,results,ranking,alliance,awards,epa,districtPoints,snapshots,lastSeason', 'frcStatus.teams should have these fields, in this order: team, number, key, events, focusEvent, nextMatch, results, ranking, alliance, awards, epa, districtPoints, snapshots, lastSeason');
+  need(problems, named(teamFields).join() === 'team,number,key,events,focusEvent,nextMatch,results,ranking,alliance,awards,epa,districtPoints,snapshots,lastSeason,schedule,field', 'frcStatus.teams should have these fields, in this order: team, number, key, events, focusEvent, nextMatch, results, ranking, alliance, awards, epa, districtPoints, snapshots, lastSeason, schedule, field');
 
   // Editors never find it: no line in the sidebar and no place in the New menu
   need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'frcStatus'), 'the sidebar should have no line for the FRC data document');

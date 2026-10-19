@@ -202,6 +202,7 @@ const fixedTitles = [
   ['tasks', 'TASKS'], ['events', 'EVENTS'], ['tonight', 'AGENDA'], ['spotlight', 'SPOTLIGHT'], ['sponsor-feature', 'SPONSOR'],
   ['competition-next-match', 'MATCH'], ['competition-rank', 'RANK'], ['competition-results', 'RESULTS'], ['competition-alliance', 'ALLIANCE'],
   ['competition-timeline', 'SEASON'], ['competition-district', 'DISTRICT'], ['competition-last-season', 'LAST YR'],
+  ['competition-preview', 'PREVIEW'], ['competition-matches', 'MATCHES'], ['competition-recap', 'RECAP'],
 ];
 
 test('every title that is always the same fits before the line at 96 px, and the widest title there is, LEADERSHIP, fits with 4 to spare', () => {
@@ -281,7 +282,7 @@ test('the widest Daily Agenda date of the year, and every other words the header
   assert.equal(teamTitle.chipWidth(''), 0);
 
   // the tag text of the panels that have one is cut off with an ellipsis at the room
-  ['tonight', 'sponsor-feature', 'competition-next-match', 'competition-rank', 'competition-results', 'competition-alliance', 'competition-timeline', 'competition-district', 'competition-last-season'].forEach(panel => {
+  ['tonight', 'sponsor-feature', 'competition-next-match', 'competition-rank', 'competition-results', 'competition-alliance', 'competition-timeline', 'competition-district', 'competition-last-season', 'competition-preview', 'competition-matches', 'competition-recap'].forEach(panel => {
     const rule = new RegExp('\\.' + panel + ' \\.tag-text \\{([^}]*)\\}').exec(withoutComments(read('dashboard/panels/' + panel + '/panel.css')));
     assert.ok(rule && rule[1].includes('max-width: ' + wordsRoom + 'px;') && rule[1].includes('text-overflow: ellipsis;'), panel + ' cuts the tag text off at ' + wordsRoom);
   });

@@ -60,7 +60,7 @@ function PreviewItem(props) {
   const item = props.item;
   const ids = props.departments[item.team] || [];
   const department = item.slot > 0 ? ids[item.slot - 1] || '' : '';
-  const address = previewAddress(item.panel, item.team, department, props.screen);
+  const address = previewAddress(item.panel, item.team, department, props.screen, item.phase);
 
   return h(
     'div',

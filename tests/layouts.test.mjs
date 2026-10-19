@@ -2818,6 +2818,10 @@ const mondaySmall = (file, entries) => Object.keys(entries).map(selector => ({ f
 const orderSmall = [
   { file: 'monday.css', selector: '.monday .department', size: 36 },
   { file: 'panels/competition-timeline/panel.css', selector: '.competition-timeline .where', size: 36 },
+  // the Before and after cards: the chip that marks an estimate at 30, and the labels on the axes of the season trend at 28
+  { file: 'panels/competition-matches/panel.css', selector: '.competition-matches .chip', size: 30 },
+  { file: 'panels/competition-preview/panel.css', selector: '.competition-preview .axis', size: 28 },
+  { file: 'panels/competition-recap/panel.css', selector: '.competition-recap .axis', size: 28 },
   { file: 'panels/monday-milestones/panel.css', selector: '.monday-milestones .milestone-lead', size: 36 },
   { file: 'panels/monday-milestones/panel.css', selector: '.monday-milestones .cell-date', size: 36 },
 ].concat(

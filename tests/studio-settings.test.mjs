@@ -32,8 +32,8 @@ test('no stored name of Dashboard Settings changed: all of them are still fields
   const now = settings.fields.map(field => field.name);
   assert.deepEqual(storedNames.filter(name => now.indexOf(name) === -1), []);
   assert.equal(settings.name, 'dashboardSettings');
-  // The Photos page added these two, and hides them here
-  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder'], 'no other field was added');
+  // The Photos page added the first two, and hides them here. The Before and after cards added the last three switches
+  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'competitionPreview', 'competitionMatches', 'competitionRecap'], 'no other field was added');
 });
 
 test('there are five tabs at most, in the order of the content map, and Timing opens first', () => {
@@ -85,7 +85,7 @@ test('the fields the Today, Look, Competition and team pages took over are hidde
   ['pageSeconds', 'doneDays', 'countdown', 'calendars', 'mondayEveryMinutes', 'nightEnabled'].forEach(name => assert.notEqual(fieldNamed(name).hidden, true, name + ' stays'));
 });
 
-test('the Competition page shows the connection, the mode and seven switches, and writes only the field changed', async () => {
+test('the Competition page shows the connection, the modes and ten switches, and writes only the field changed', async () => {
   globalThis.studioClient = fakeClient([{ _id: 'dashboardSettings', _type: 'dashboardSettings', competitionMode: 'auto', motion: 'calm' }]);
   const page = studio.mount(view.CompetitionView);
   await page.settle();
@@ -94,7 +94,9 @@ test('the Competition page shows the connection, the mode and seven switches, an
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'connection').length === 1);
   const rows = nodesWhere(page.tree(), node => node.props && node.props['data-field']).map(node => node.props['data-field']);
   assert.deepEqual(rows, parts.fieldNames);
-  assert.equal(parts.cardNames.length, 7);
+  assert.equal(parts.cardNames.length, 10);
+  assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'modes').length === 1, 'the modes are described in plain words');
+  assert.match(wordsIn(page.tree()), /Before and after \(recommended\)/);
 
   const radio = nodesWhere(page.tree(), node => node.type === 'input' && node.props.value === 'always')[0];
   radio.props.onChange();

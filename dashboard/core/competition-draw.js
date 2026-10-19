@@ -13,7 +13,7 @@ import { textWidth } from './text-width.js';
 import { minutesIn } from './night.js';
 import { pad } from './time.js';
 import { frcOf, todayOf } from './competition.js';
-import { teamEntry, weekdayName } from './frc.js';
+import { daysFromTo, shortDate, teamEntry, weekdayName } from './frc.js';
 import { dateIn, timeZoneOf } from './theme.js';
 
 export const bodySize = { width: 1096, height: 512 };
@@ -65,12 +65,15 @@ export function tagTextFor(frc, now) {
   return hours < 48 ? hours + ' HR OLD' : Math.floor(hours / 24) + ' DAYS OLD';
 }
 
-// The page of a card: the header with the title and the tag, and the body. The body is one slat.
-export function pageMarkup(cardId, title, tag, inner) {
+// The page of a card: the header with the title and the tag, and the body. The body is one slat. A card with
+// more than one page of chart says how many (pageCount): it is then scrolled by the page like the Events panel
+// (scrollPages in its script, and scrollCard in frame.js), and data-scroll-page says which page is in view.
+export function pageMarkup(cardId, title, tag, inner, pageCount = 1) {
   const tagText = tag ? `<span class="tag-text">${escapeHtml(tag)}</span>` : '';
+  const scrolls = pageCount > 1 ? ' data-scroll-page="1"' : '';
 
   return `
-    <section class="page competition ${cardId}">
+    <section class="page competition ${cardId}"${scrolls}>
       <div class="header">
         <h2 class="title" data-slat="title">${escapeHtml(title)}</h2>
         <div class="tag" data-slat="tag">${tagText}${markBeside(textWidth(tag || '', 600, 44))}</div>
@@ -88,6 +91,13 @@ export function emptyMarkup(sentence) {
 // A chart: one SVG the size of the body, with the words a screen reader says
 export function chartMarkup(description, parts) {
   return `<svg class="chart" width="${bodySize.width}" height="${bodySize.height}" viewBox="0 0 ${bodySize.width} ${bodySize.height}" role="img" aria-label="${escapeHtml(description)}">${parts.join('')}</svg>`;
+}
+
+// Charts one above the other in a window the size of the body, for a card with pages. Each page is { description, parts }.
+// The window shows one page, and the list moves up by 512px to show the next (data-scroll-list in frame.css).
+export function pagedChartsMarkup(pages) {
+  const charts = pages.map(page => chartMarkup(page.description, page.parts)).join('');
+  return `<div class="window"><div data-scroll-list>${charts}</div></div>`;
 }
 
 // A piece of text in a chart. The class sets the size, so the sizes are all in the stylesheet of the card.
@@ -109,4 +119,36 @@ export function whenText(zone, moment, today) {
   const clock = clockText(zone, moment);
   const date = dateIn(zone, moment);
   return date === today ? clock : weekdayName(date) + ' ' + clock;
+}
+
+// MAR 12-14, or MAR 30-APR 1 when the event crosses a month, or one date for a one day event
+export function rangeText(start, end) {
+  if (!start) return '';
+  if (!end || end === start) return shortDate(start);
+  return start.slice(0, 7) === end.slice(0, 7) ? shortDate(start) + '-' + Number(end.slice(8, 10)) : shortDate(start) + '-' + shortDate(end);
+}
+
+// The time left to the start of a day, as whole { days, hours }: the first day of an event begins at midnight in the
+// zone. today is a plain date in the zone and now a Date.
+export function untilDay(zone, now, today, date) {
+  const days = daysFromTo(today, date);
+  if (days <= 0) return { days: 0, hours: 0 };
+
+  const left = (days - 1) * 1440 + (1440 - minutesIn(zone, now));
+  return { days: Math.floor(left / 1440), hours: Math.floor((left % 1440) / 60) };
+}
+
+// The time left to a moment, as whole { days, hours, minutes }. A moment that has passed is none.
+export function untilMoment(now, moment) {
+  const minutes = Math.max(0, Math.floor((moment.getTime() - now.getTime()) / 60000));
+  return { days: Math.floor(minutes / 1440), hours: Math.floor((minutes % 1440) / 60), minutes: minutes % 60 };
+}
+
+// 6 DAYS 5 HRS, 4 HRS 12 MIN, 12 MIN. A part that is zero is left out unless it is the only one.
+export function leftText(left) {
+  const parts = [];
+  if (left.days > 0) parts.push(left.days + (left.days === 1 ? ' DAY' : ' DAYS'));
+  if (left.hours > 0 || (left.days > 0 && left.minutes === undefined)) parts.push(left.hours + (left.hours === 1 ? ' HR' : ' HRS'));
+  if (left.minutes !== undefined && left.days === 0 && (left.minutes > 0 || parts.length === 0)) parts.push(left.minutes + ' MIN');
+  return parts.join(' ');
 }

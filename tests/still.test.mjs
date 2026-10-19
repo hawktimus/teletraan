@@ -84,8 +84,9 @@ test('the Studio address names the panel, the team, the department, the Screen a
 });
 
 test('the Studio lists sixteen panels, each id once, at half size', () => {
-  assert.equal(preview.previewPanels.length, 16);
-  assert.equal(new Set(preview.previewPanels.map(item => item.id)).size, 16);
+  assert.equal(preview.previewPanels.length, 19, 'the 16 Monday and small panels, and the three Before and after cards');
+  assert.equal(new Set(preview.previewPanels.map(item => item.id)).size, 19);
+  assert.equal(preview.previewAddress('competition-recap', 'prime', '', 'original', 'recap'), '/dashboard/index.html?panel=competition-recap&team=prime&screen=original&competition=1&phase=recap&still=1');
   assert.equal(preview.frameSize.width * 2, preview.frameSize.canvasWidth);
   assert.equal(preview.frameSize.height * 2, preview.frameSize.canvasHeight);
 });

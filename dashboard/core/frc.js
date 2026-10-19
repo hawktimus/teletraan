@@ -18,7 +18,7 @@ const plainDate = /^\d{4}-\d{2}-\d{2}$/;
 const teamCode = /^[a-z0-9]+$/;
 
 // How many of each the cards can draw. The Teletraan computer keeps at most these as well.
-const most = { events: 12, districtEvents: 30, results: 8, people: 4, picks: 4, awards: 20, snapshots: 120, notes: 5 };
+const most = { events: 12, districtEvents: 30, results: 8, people: 4, picks: 4, awards: 20, snapshots: 120, notes: 5, scheduled: 16, scouts: 3, field: 80 };
 
 function listOf(value) {
   return Array.isArray(value) ? value.filter(isRecord) : [];
@@ -66,6 +66,13 @@ function tidyPeople(list, longest) {
   return listOf(list).map(tidyPerson).filter(person => person.number !== '').slice(0, longest);
 }
 
+// A team in a scouting list (the schedule of the team): the same as a person, with the record of the season and a
+// trend when the Teletraan computer found them. Both are left empty otherwise.
+function tidyScout(raw) {
+  const trend = raw.trend === 'rising' || raw.trend === 'falling' ? raw.trend : '';
+  return Object.assign(tidyPerson(raw), { record: tidyRecord(raw.record), trend: trend });
+}
+
 function tidyEvent(raw) {
   return {
     key: textOf(raw.key, 30),
@@ -103,6 +110,37 @@ function tidyNextMatch(raw) {
     blue: tidyPeople(raw.blue, most.people),
     redWinProbability: odds === null ? null : Math.min(1, Math.max(0, odds)),
   };
+}
+
+// One qualification match the team has still to play: the time, the partners and the opponents with their
+// EPA, and the chance that the team's alliance wins when Statbotics has one (0 to 1, or null)
+function tidyScheduled(raw) {
+  const odds = numberOrNull(raw.winProbability);
+  return {
+    match: textOf(raw.match, 40),
+    label: textOf(raw.label, 12),
+    number: numberOrNull(raw.number),
+    time: timeOrEmpty(raw.time),
+    alliance: colorOf(raw.alliance),
+    partners: listOf(raw.partners).map(tidyScout).filter(person => person.number !== '').slice(0, most.scouts),
+    opponents: listOf(raw.opponents).map(tidyScout).filter(person => person.number !== '').slice(0, most.scouts),
+    winProbability: odds === null ? null : Math.min(1, Math.max(0, odds)),
+  };
+}
+
+// The qualification matches still to play at the event now. A schedule with no matches is the schedule that is not posted yet.
+function tidySchedule(raw) {
+  if (!isRecord(raw)) return null;
+
+  return { event: textOf(raw.event, 30), matches: listOf(raw.matches).map(tidyScheduled).filter(match => match.label !== '').slice(0, most.scheduled) };
+}
+
+// The teams that come to the event, with the EPA of each when it was read, best first
+function tidyField(raw) {
+  if (!isRecord(raw)) return null;
+
+  const teams = listOf(raw.teams).map(tidyPerson).filter(person => person.number !== '').slice(0, most.field);
+  return teams.length === 0 ? null : { event: textOf(raw.event, 30), teams: teams };
 }
 
 function tidyResult(raw) {
@@ -175,6 +213,8 @@ function tidyTeam(raw) {
     districtPoints: tidyDistrictPoints(raw.districtPoints),
     snapshots: tidySnapshots(raw.snapshots),
     lastSeason: tidyLastSeason(raw.lastSeason),
+    schedule: tidySchedule(raw.schedule),
+    field: tidyField(raw.field),
   };
 }
 

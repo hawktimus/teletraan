@@ -4,7 +4,9 @@
 //   frcConnection      a read only block that says when the Teletraan computer last read the competition
 //                      data (../frc-status-input.js). It stores nothing
 //   competitionMode    auto (the cards come two days before a team event and take priority
-//                      during it), always or off, auto to start with
+//                      during it), always, off, or around (Before and after: a preview for the
+//                      14 days before an event, nothing while it is on, a recap for the 7 days after).
+//                      around is the starting value. A document that already stores a mode keeps it
 //   one switch for each card, all on to start with
 //
 // The mode and the switches are the same names, choices and starting values as the
@@ -28,6 +30,7 @@ const modes = [
   { title: 'Auto', value: 'auto' },
   { title: 'Always', value: 'always' },
   { title: 'Off', value: 'off' },
+  { title: 'Before and after (recommended)', value: 'around' },
 ];
 
 // One for each card, in the order the cards are listed in dashboard/core/competition.js
@@ -39,6 +42,9 @@ const cards = [
   { name: 'competitionResults', title: 'Results strip', description: 'The last 8 matches as red or blue chips with the score. In Auto it shows from two days before an event to its last day.' },
   { name: 'competitionAlliance', title: 'Alliance board', description: 'The alliance number and its partners. In Auto it shows during an event, once the selection is made.' },
   { name: 'competitionDistrict', title: 'District points', description: 'Points against the cutoff for the state championship. In Auto it shows all season once the first event has started.' },
+  { name: 'competitionPreview', title: 'Event preview', description: 'The next event, the days left, the strength of the field by EPA and the season trend. In Before and after it shows from 14 days before an event.' },
+  { name: 'competitionMatches', title: 'Our matches', description: 'Our qualification matches with the chance of winning each. In Before and after it shows once the schedule is posted, usually the evening before.' },
+  { name: 'competitionRecap', title: 'Event recap', description: 'The final rank, record, awards and the change in EPA. In Before and after it shows for 7 days after an event.' },
 ];
 
 export function competitionFields() {
@@ -58,10 +64,10 @@ export function competitionFields() {
       title: 'Competition cards',
       type: 'string',
       group: 'competition',
-      description: 'Auto shows the cards from two days before a team event and gives them priority during it. Always shows every card that is on and has data. Off shows none.',
+      description: 'Before and after: preview, then nothing during the event, then a recap. Auto: older cards from 2 days before. Always: every card with data. Off: none.',
       options: { list: modes, layout: 'radio', direction: 'horizontal' },
-      initialValue: 'auto',
-      validation: Rule => Rule.valid(modes.map(mode => mode.value)).error('Pick Auto, Always or Off.'),
+      initialValue: 'around',
+      validation: Rule => Rule.valid(modes.map(mode => mode.value)).error('Pick Auto, Always, Off or Before and after.'),
     }),
   ];
 

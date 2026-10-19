@@ -152,8 +152,8 @@ const panels = {
   },
 };
 
-// The seven cards of the competition and the five of Monday
-['alliance', 'district', 'last-season', 'next-match', 'rank', 'results', 'timeline'].forEach(card => {
+// The ten cards of the competition and the five of Monday
+['alliance', 'district', 'last-season', 'matches', 'next-match', 'preview', 'rank', 'recap', 'results', 'timeline'].forEach(card => {
   const name = 'competition-' + card;
   panels[name] = style => {
     const top = pixels(valueIn(style, panelCss(name), '.' + name + ' .body', 'top'));

@@ -36,7 +36,10 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
 });
 
 const cardNames = ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district', 'last-season'];
+// The three newer cards (Before and after) are tested in tests/competition-phases.test.mjs
+const newerNames = ['preview', 'matches', 'recap'];
 const cardIds = cardNames.map(name => 'competition-' + name);
+const newerIds = newerNames.map(name => 'competition-' + name);
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
   copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
@@ -115,22 +118,23 @@ const idsOf = plan => plan.cards.map(id => id.replace('competition-', ''));
 
 // The settings
 
-test('the mode and the seven switches have their lists and starting values in config.js, and anything odd is the starting value', () => {
-  assert.deepEqual(config.competitionModes, ['auto', 'always', 'off']);
-  assert.deepEqual(config.competitionSwitches, ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict']);
-  assert.equal(config.defaultSettings.competitionMode, 'auto');
+test('the mode and the ten switches have their lists and starting values in config.js, and anything odd is the starting value', () => {
+  assert.deepEqual(config.competitionModes, ['auto', 'always', 'off', 'around']);
+  assert.deepEqual(config.competitionSwitches, ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap']);
+  // a settings document with no stored mode plays Before and after, and a stored mode is kept
+  assert.equal(config.defaultSettings.competitionMode, 'around');
   config.competitionSwitches.forEach(name => assert.equal(config.defaultSettings[name], true, name));
   assert.equal(config.competitionLeadDays, 2);
   assert.equal(config.competitionPreviewSeconds, 120);
 
   const empty = contentModule.withDefaults({}).settings;
-  assert.equal(empty.competitionMode, 'auto');
+  assert.equal(empty.competitionMode, 'around');
   config.competitionSwitches.forEach(name => assert.equal(empty[name], true, name));
 
-  ['always', 'off', 'auto'].forEach(mode => assert.equal(sanity.normalizeContent({ settings: { competitionMode: mode } }).settings.competitionMode, mode));
+  ['always', 'off', 'auto', 'around'].forEach(mode => assert.equal(sanity.normalizeContent({ settings: { competitionMode: mode } }).settings.competitionMode, mode));
   [' auto', 'AUTO', 'never', 5, true, null, ['auto'], {}].forEach(mode => {
-    assert.equal(sanity.normalizeContent({ settings: { competitionMode: mode } }).settings.competitionMode, 'auto', 'mode ' + JSON.stringify(mode));
-    assert.equal(sanity.normalizeSample({ settings: { competitionMode: mode } }).settings.competitionMode, 'auto', 'sample mode ' + JSON.stringify(mode));
+    assert.equal(sanity.normalizeContent({ settings: { competitionMode: mode } }).settings.competitionMode, 'around', 'mode ' + JSON.stringify(mode));
+    assert.equal(sanity.normalizeSample({ settings: { competitionMode: mode } }).settings.competitionMode, 'around', 'sample mode ' + JSON.stringify(mode));
   });
 
   config.competitionSwitches.forEach(name => {
@@ -309,7 +313,7 @@ test('Auto: the cards due on each day of the season, with the next match first a
     assert.equal(plan.priority, entry[3], entry[0] + ' priority');
     assert.deepEqual(competition.dueCards(content, noon(entry[0])), plan.cards);
   });
-  assert.deepEqual(competition.cards.map(card => card.id), cardIds, 'the cards are listed in the order of priority');
+  assert.deepEqual(competition.cards.map(card => card.id), cardIds.concat(newerIds), 'the cards are listed in the order of priority, with the newer ones last');
 });
 
 test('the window follows the date in the time zone of the Look page, not the computer', () => {
@@ -329,10 +333,10 @@ test('the window follows the date in the time zone of the Look page, not the com
 
 test('Always shows every card with something to show whatever the date, Off shows none, and a switch takes its card out', () => {
   const always = contentWith(raw => { raw.settings.competitionMode = 'always'; });
-  assert.deepEqual(idsOf(competition.competitionPlan(always, noon('2026-10-09'))), cardNames, 'in October, all seven');
+  assert.deepEqual(idsOf(competition.competitionPlan(always, noon('2026-10-09'))), cardNames.concat(newerNames), 'in October, all ten');
   assert.equal(competition.competitionPlan(always, noon('2026-10-09')).priority, false);
   assert.equal(competition.competitionPlan(always, noon('2027-03-12')).priority, true, 'the cards still take turns with the panels on the days of an event');
-  assert.deepEqual(idsOf(competition.competitionPlan(always, noon('2027-04-18'))), cardNames.filter(name => name !== 'timeline'), 'the timeline has no date left, so it has nothing to show');
+  assert.deepEqual(idsOf(competition.competitionPlan(always, noon('2027-04-18'))), cardNames.filter(name => name !== 'timeline').concat(['recap']), 'the timeline has no date left, no event is coming, and the schedule is for an event that is over, so it has nothing to show');
 
   const off = contentWith(raw => { raw.settings.competitionMode = 'off'; });
   ['2026-10-09', '2027-03-12'].forEach(date => assert.deepEqual(competition.competitionPlan(off, noon(date)), { cards: [], priority: false }, 'off on ' + date));
@@ -340,7 +344,7 @@ test('Always shows every card with something to show whatever the date, Off show
   config.competitionSwitches.forEach((name, index) => {
     const content = contentWith(raw => { raw.settings.competitionMode = 'always'; raw.settings[name] = false; });
     const left = idsOf(competition.competitionPlan(content, noon('2027-03-12')));
-    assert.equal(left.length, 6, name);
+    assert.equal(left.length, 9, name);
     assert.ok(!left.includes(competition.cards.find(card => card.setting === name).id.replace('competition-', '')), name + ' is off');
   });
   const allOff = contentWith(raw => { config.competitionSwitches.forEach(name => { raw.settings[name] = false; }); });
@@ -377,12 +381,13 @@ test('no frc data, a team the Teletraan computer did not read, or a problem with
   assert.deepEqual(competition.competitionPlan({ frc: { teams: [] } }, noon('2027-03-12')), none);
   assert.deepEqual(competition.competitionPlan(contentWith(raw => { raw.frc.teams = raw.frc.teams.filter(team => team.team !== 'prime'); }), noon('2027-03-12')), none, 'Prime has no entry');
 
-  // content with no settings uses the starting values: Auto, every card on
+  // content with no settings uses the starting values: Before and after, every card on. October is no phase of an event.
   const bare = { frc: contentWith().frc };
-  assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2026-10-09'))), ['timeline', 'last-season']);
-  // a mode that is not one is Auto
+  assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2026-10-09'))), []);
+  assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2027-03-02'))), ['timeline', 'last-season', 'preview', 'matches'], 'nine days before the first event: the preview, and our matches because the schedule is posted');
+  // a mode that is not one is the starting value
   const odd = contentWith(); odd.settings.competitionMode = 'sometimes';
-  assert.deepEqual(idsOf(competition.competitionPlan(odd, noon('2026-10-09'))), ['timeline', 'last-season']);
+  assert.deepEqual(idsOf(competition.competitionPlan(odd, noon('2026-10-09'))), []);
 });
 
 test('the cards are for the team on the screen: Nova has its own entry, and a team with none has no cards', () => {
@@ -508,12 +513,12 @@ test('Preview competition shows every card in order of priority on the sample da
     assert.equal(competition.previewIsOn(start), true);
     assert.equal(competition.frcOf(content, start), sample, 'the cards draw the preview data, not the content');
     const steps = competition.withCompetition(playlist, content, start);
-    assert.deepEqual(steps.map(step => step.panel), cardIds, 'every card, whatever the mode, the switches and the date');
-    assert.ok(steps.every(step => step.show === true && step.seconds === 17), '120 seconds shared by 7 is 17');
+    assert.deepEqual(steps.map(step => step.panel), cardIds.concat(newerIds), 'every card, whatever the mode, the switches and the date');
+    assert.ok(steps.every(step => step.show === true && step.seconds === 12), '120 seconds shared by 10 is 12');
     assert.ok(steps.length * steps[0].seconds <= config.competitionPreviewSeconds);
 
     const off = contentWith(raw => { raw.settings.competitionMode = 'off'; config.competitionSwitches.forEach(name => { raw.settings[name] = false; }); });
-    assert.equal(competition.withCompetition(playlist, off, start).length, 7, 'a preview is asked for, so the settings do not stop it');
+    assert.equal(competition.withCompetition(playlist, off, start).length, 10, 'a preview is asked for, so the settings do not stop it');
     assert.equal(competition.previewIsOn(new Date(until)), false, 'it ends at its time');
     assert.deepEqual(competition.withCompetition(playlist, content, new Date(until)), playlist);
   } finally {
@@ -1196,8 +1201,9 @@ test('every card is a panel of the large frame with a script and a stylesheet, i
     assert.ok(fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.js')) && fs.existsSync(path.join(dashboardFolder, 'panels', id, 'panel.css')), id);
     assert.ok(!read('core/panel-order.js').includes(id) && !config.defaultSettings.rotation.grid1.some(step => step.panel === id), id + ' is not in a rotation list');
   });
-  assert.equal(countOf(registry, 'competition: true'), 7);
-  assert.deepEqual(competition.cards.map(card => card.id).sort(), cardIds.slice().sort());
+  newerIds.forEach(id => assert.ok(registry.includes("{ id: '" + id + "', region: 'grid1', topic: 'competition', competition: true },"), id));
+  assert.equal(countOf(registry, 'competition: true'), 10);
+  assert.deepEqual(competition.cards.map(card => card.id).sort(), cardIds.concat(newerIds).sort());
   assert.ok(cardIds.every(id => competition.isCard(id)) && !competition.isCard('tasks'));
   competition.cards.forEach(card => assert.ok(config.competitionSwitches.includes(card.setting), card.id + ' has a switch'));
 });

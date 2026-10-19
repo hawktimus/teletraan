@@ -13,6 +13,11 @@
 //           come from two days before its first day until its last day, and on the days of
 //           the event they take priority: the rotation alternates a card and an ordinary panel
 //   always  every card that is switched on and has something to show, whatever the date
+//   around  Before and after: the cards play only in two phases of an event, and not while it is on. The preview is
+//           from 14 days before its first day to the day before it, and the recap is from the day after its last
+//           day for 7 days. The three newer cards (competition-preview, competition-matches and
+//           competition-recap) come in this mode and in Always only. The cards that follow the match by match
+//           course of an event (next match, rank, results, alliance) are marked during and never play in this mode.
 //
 // A card with nothing to show is not due, so a screen with no key on the Teletraan computer shows no
 // competition card at all. The cards still say so in one plain sentence when they are asked
@@ -22,7 +27,7 @@
 // cards in it each time the next page is chosen (core/schedule.js asks for the playlist
 // again every time).
 
-import { competitionLeadDays, competitionModes, competitionPreviewSeconds, defaultSettings } from '../config.js';
+import { competitionLeadDays, competitionModes, competitionPreviewDays, competitionPreviewSeconds, competitionRecapDays, defaultSettings } from '../config.js';
 import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
 import { dateIn, timeZoneOf } from './theme.js';
 import { parseLocalDateTime } from './time.js';
@@ -34,13 +39,17 @@ export const timelineDates = 6;
 // something to show. They are given the facts of the team on the screen (competitionPlan below).
 // The list is in the order of priority, so the next match comes first.
 export const cards = [
-  { id: 'competition-next-match', setting: 'competitionNextMatch', window: facts => facts.near, data: facts => facts.entry.nextMatch !== null },
-  { id: 'competition-rank', setting: 'competitionRank', window: facts => facts.near, data: facts => facts.entry.ranking !== null },
-  { id: 'competition-results', setting: 'competitionResults', window: facts => facts.near, data: facts => facts.entry.results.length > 0 },
-  { id: 'competition-alliance', setting: 'competitionAlliance', window: facts => facts.near, data: facts => facts.entry.alliance !== null },
+  { id: 'competition-next-match', setting: 'competitionNextMatch', during: true, window: facts => facts.near, data: facts => facts.entry.nextMatch !== null },
+  { id: 'competition-rank', setting: 'competitionRank', during: true, window: facts => facts.near, data: facts => facts.entry.ranking !== null },
+  { id: 'competition-results', setting: 'competitionResults', during: true, window: facts => facts.near, data: facts => facts.entry.results.length > 0 },
+  { id: 'competition-alliance', setting: 'competitionAlliance', during: true, window: facts => facts.near, data: facts => facts.entry.alliance !== null },
   { id: 'competition-timeline', setting: 'competitionTimeline', window: () => true, data: facts => facts.markers.length > 0 },
   { id: 'competition-district', setting: 'competitionDistrict', window: facts => facts.started, data: facts => facts.entry.districtPoints !== null },
   { id: 'competition-last-season', setting: 'competitionLastSeason', window: facts => !facts.started, data: facts => facts.entry.lastSeason !== null },
+  // The newer cards, for Before and after and Always. Their windows are the phases (eventPhases below).
+  { id: 'competition-preview', setting: 'competitionPreview', phased: true, window: facts => facts.phases.preview !== null, data: facts => previewEventOf(facts.entry, facts.today) !== null },
+  { id: 'competition-matches', setting: 'competitionMatches', phased: true, window: facts => facts.phases.preview !== null && (scheduleIsFor(facts.entry, facts.phases.preview) || daysToFirstDay(facts.phases.preview, facts.today) <= competitionLeadDays), data: facts => scheduleIsLive(facts.entry, facts.today) || (facts.mode === 'around' && facts.phases.preview !== null) },
+  { id: 'competition-recap', setting: 'competitionRecap', phased: true, window: facts => facts.phases.recap !== null, data: facts => recapHasData(facts.entry, recapEventOf(facts.entry, facts.today)) },
 ];
 
 export function isCard(id) {
@@ -65,6 +74,76 @@ export function previewIsOn(now = new Date()) {
 export function frcOf(content, now = new Date()) {
   if (previewIsOn(now)) return previewed.frc;
   return content && content.frc ? content.frc : null;
+}
+
+// The phases of an event
+
+function startOrder(first, second) {
+  return first.startDate < second.startDate ? -1 : first.startDate > second.startDate ? 1 : 0;
+}
+
+// What today is for the events of the team, as { during, preview, recap }, each an event or null. during is an
+// event that is on (its first day to its last). While one is on, the other two are null, because nothing
+// plays in Before and after on the days of an event. preview is the event that starts in the next 14 days, the
+// nearest one, and recap is the event that ended in the last 7 days, the latest one. Two events close together
+// can give a preview and a recap on the same day. Dates are plain dates (core/frc.js).
+export function eventPhases(events, today) {
+  const none = { during: null, preview: null, recap: null };
+  const dated = events.filter(event => event.startDate !== '');
+
+  const during = dated.filter(event => event.startDate <= today && today <= endOf(event))[0] || null;
+  if (during) return Object.assign(none, { during: during });
+
+  const preview = dated.filter(event => addDays(event.startDate, -competitionPreviewDays) <= today && today < event.startDate).sort(startOrder)[0] || null;
+  const recap = dated
+    .filter(event => endOf(event) < today && today <= addDays(endOf(event), competitionRecapDays))
+    .sort((first, second) => (endOf(first) < endOf(second) ? 1 : -1))[0] || null;
+  return { during: null, preview: preview, recap: recap };
+}
+
+// Whole days from today to the first day of an event
+export function daysToFirstDay(event, today) {
+  return daysFromTo(today, event.startDate);
+}
+
+// The event the preview card is about: the one in its 14 days, and otherwise the first that is not over. The card
+// can be asked for by hand on any day, and it still has an event to write about.
+export function previewEventOf(entry, today) {
+  const coming = entry.events.filter(event => event.startDate !== '' && endOf(event) >= today).sort(startOrder);
+  const near = coming.filter(event => addDays(event.startDate, -competitionPreviewDays) <= today && today < event.startDate)[0];
+  return near || coming[0] || null;
+}
+
+// The event the recap card is about: the one that ended in the last 7 days, and otherwise the latest that is over, and
+// for sample data the last that has a rank
+export function recapEventOf(entry, today) {
+  const over = entry.events.filter(event => event.startDate !== '' && endOf(event) < today).sort((first, second) => (endOf(first) < endOf(second) ? 1 : -1));
+  const near = over.filter(event => today <= addDays(endOf(event), competitionRecapDays))[0];
+  return near || over.filter(event => recapHasData(entry, event))[0] || entry.events.filter(event => event.rank !== null).slice(-1)[0] || null;
+}
+
+// The recap has something to say when the event has a rank, a record or an award
+export function recapHasData(entry, event) {
+  if (!event) return false;
+  return event.rank !== null || event.record !== null || entry.awards.some(award => award.event === event.key);
+}
+
+// The schedule is posted when the Teletraan computer found qualification matches still to play
+export function scheduleIsPosted(entry) {
+  return entry.schedule !== null && entry.schedule.matches.length > 0;
+}
+
+// The schedule belongs to an event: it says which one, and a schedule that does not say is taken as belonging to any
+export function scheduleIsFor(entry, event) {
+  return scheduleIsPosted(entry) && (entry.schedule.event === '' || entry.schedule.event === event.key);
+}
+
+// The schedule is for an event that is not over. A schedule whose event is unknown is taken as live.
+export function scheduleIsLive(entry, today) {
+  if (!scheduleIsPosted(entry)) return false;
+
+  const event = entry.events.filter(item => item.key === entry.schedule.event)[0];
+  return !event || endOf(event) >= today;
 }
 
 // The clock
@@ -163,10 +242,19 @@ export function competitionPlan(content, now = new Date()) {
   const entry = teamEntry(frcOf(content, now));
   if (!entry) return none;
 
-  const facts = Object.assign({ entry: entry, markers: timelineMarkers(content, entry, now) }, eventFacts(entry, todayOf(content, now)));
-  const due = cards.filter(card => settings[card.setting] !== false && card.data(facts) && (mode === 'always' || card.window(facts)));
+  const today = todayOf(content, now);
+  const phases = eventPhases(entry.events, today);
+  const facts = Object.assign({ entry: entry, markers: timelineMarkers(content, entry, now), mode: mode, today: today, phases: phases }, eventFacts(entry, today));
+  const inPhase = phases.preview !== null || phases.recap !== null;
 
-  return { cards: due.map(card => card.id), priority: due.length > 0 && facts.onNow };
+  const due = cards.filter(card => {
+    if (settings[card.setting] === false || !card.data(facts)) return false;
+    if (mode === 'always') return true;
+    if (mode === 'around') return inPhase && !card.during && card.window(facts);
+    return !card.phased && card.window(facts);
+  });
+
+  return { cards: due.map(card => card.id), priority: mode !== 'around' && due.length > 0 && facts.onNow };
 }
 
 // The ids of the cards that are due

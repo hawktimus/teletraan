@@ -251,7 +251,8 @@ export const defaultSettings = {
   // The competition cards (the Competition tab in the Studio, core/competition.js, docs/frc-feed.md).
   //   competitionMode  see competitionModes above
   //   the switches     one for each card, see competitionSwitches above
-  competitionMode: 'auto',
+  // A settings document with no stored mode plays Before and after. A stored mode, Auto included, is kept as it is.
+  competitionMode: 'around',
   competitionTimeline: true,
   competitionLastSeason: true,
   competitionRank: true,
@@ -259,6 +260,9 @@ export const defaultSettings = {
   competitionResults: true,
   competitionAlliance: true,
   competitionDistrict: true,
+  competitionPreview: true,
+  competitionMatches: true,
+  competitionRecap: true,
   // The Monday tab in the Studio (docs/monday.md). The Teletraan computer reads these (computer/scripts/monday-sync.sh) and writes the
   // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
   // chip) and mondayShowOwners.

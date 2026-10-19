@@ -28,6 +28,10 @@ export const previewPanels = [
   { id: 'drive-hours', title: 'Drive hours', panel: 'driveHours', team: '', slot: 0 },
   { id: 'parts-request', title: 'Parts request (small panel)', panel: 'qrParts', team: '', slot: 0 },
   { id: 'mini-idea-1', title: 'Mini panel idea 1 (small panel)', panel: 'miniIdea1', team: '', slot: 0 },
+  // The Before and after cards. phase moves the dates of the competition data so that the card is drawn in its own phase (docs/frc-feed.md)
+  { id: 'competition-preview', title: 'Event preview (Before and after)', panel: 'competition-preview', team: 'prime', slot: 0, phase: 'preview' },
+  { id: 'competition-matches', title: 'Our matches (Before and after)', panel: 'competition-matches', team: 'prime', slot: 0, phase: 'matches' },
+  { id: 'competition-recap', title: 'Event recap (Before and after)', panel: 'competition-recap', team: 'prime', slot: 0, phase: 'recap' },
 ];
 
 // The registry ids the previews use, once each
@@ -38,13 +42,15 @@ export function previewRegistryIds(list = previewPanels) {
 // The Team leads of a team in order, as the preview takes them: { _id } for each, first by order
 export const departmentsQuestion = '*[_type == "subteam" && (!defined(team) || team->code == $code)] | order(order asc, _createdAt asc) [0...2] { _id }';
 
-// The address of a preview. department is a Team lead _id, or empty. screen is one of previewScreens.
-export function previewAddress(panel, team, department, screen) {
+// The address of a preview. department is a Team lead _id, or empty. screen is one of previewScreens. phase is for the competition
+// cards: the preview moves the dates of the published data into that phase.
+export function previewAddress(panel, team, department, screen, phase) {
   const parts = ['panel=' + encodeURIComponent(panel)];
 
   if (team) parts.push('team=' + encodeURIComponent(team));
   if (department) parts.push('dept=' + encodeURIComponent(department));
   parts.push('screen=' + (previewScreens.indexOf(screen) !== -1 ? screen : 'original'));
+  if (phase) parts.push('competition=1', 'phase=' + encodeURIComponent(phase));
   parts.push('still=1');
   return previewPath + '?' + parts.join('&');
 }

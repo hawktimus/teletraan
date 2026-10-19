@@ -1,0 +1,142 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-preview .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-preview .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-preview .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
+.competition-preview .tag-text {
+  min-width: 0;
+  max-width: 289px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.competition-preview .tag .double-slash { flex: none; }
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-preview .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-preview .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-preview .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+
+/* Pages one above the other. The window shows one, and frame.js (scrollCard) moves the list up by 512px to show the next. */
+.competition-preview { --scroll-step: 512px; }
+.competition-preview .window {
+  width: 1096px;
+  height: 512px;
+  overflow: hidden;
+}
+
+.competition-preview .name {
+  fill: var(--yellow);
+  font: 700 var(--size-body-large)/72px var(--font-display);
+}
+.competition-preview .where {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-preview .caption {
+  fill: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.competition-preview .countdown {
+  fill: var(--white);
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-preview .count {
+  fill: var(--white);
+  font: 700 var(--size-body)/60px var(--font-display);
+}
+.competition-preview .rank-line {
+  fill: var(--white);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+
+/* The best eight: the place, the team, the nickname and the EPA. Our teams are in the colors of their tags, with a line round the row. */
+.competition-preview .place,
+.competition-preview .team,
+.competition-preview .epa {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-preview .nickname {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-preview .average {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-preview .is-prime { fill: var(--prime-tag); }
+.competition-preview .is-nova { fill: var(--nova-tag); }
+.competition-preview .ours {
+  fill: none;
+  stroke-width: 3;
+}
+.competition-preview .ours-prime { stroke: var(--prime-tag); }
+.competition-preview .ours-nova { stroke: var(--nova-tag); }
+
+/* The season trend: one line through the daily snapshots, with 28px labels on its axes. The line is drawn once. */
+.competition-preview .sub {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-preview .trend-line {
+  fill: none;
+  stroke: var(--team-accent);
+  stroke-width: 5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.competition-preview .trend-dot { fill: var(--team-accent); }
+.competition-preview .axis-line {
+  stroke: var(--lilac);
+  stroke-width: 3;
+}
+.competition-preview .axis {
+  fill: var(--lilac);
+  font: 500 28px/32px var(--font-text);
+}
+.competition-preview .last {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}

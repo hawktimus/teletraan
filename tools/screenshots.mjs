@@ -90,9 +90,11 @@ export function planShots(panels) {
     });
   });
 
+  // The three newer cards are taken in the phase they belong to (?phase= moves the dates, core/competition-address.js)
+  const phaseOf = { 'competition-preview': 'preview', 'competition-matches': 'matches', 'competition-recap': 'recap' };
   usable.filter(panel => panel.competition).forEach(panel => {
     screens.forEach(screen => teams.forEach(team => {
-      shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team, competition: '1' }) });
+      shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team, competition: '1', phase: phaseOf[panel.id] || '' }) });
     }));
   });
 

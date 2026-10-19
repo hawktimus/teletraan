@@ -1,5 +1,5 @@
 // The Competition page, in the sidebar. It is a page of its own, not a document. It shows when the Teletraan computer
-// last read the competition data, the mode of the competition cards (Auto, Always or Off) and one switch for each card.
+// last read the competition data, the mode of the competition cards (Before and after, Auto, Always or Off) and one switch for each card.
 // Dashboard Settings hides these fields. The page writes only the field that is changed, to the draft of Dashboard
 // Settings. Publish all in the top bar puts a change on the screen. No stored name changes.
 //
@@ -37,6 +37,7 @@ export function pageOf(model, handlers) {
       h('h1', { style: styles.heading }, words.title),
       h('p', { style: styles.text }, words.intro),
       h('div', { 'data-block': 'connection' }, h('h2', { style: styles.subheading }, words.connection), h('p', { style: styles.muted }, words.connectionSays), h(FrcStatusInput, null)),
+      h('div', { 'data-block': 'modes' }, h('h2', { style: styles.subheading }, words.modesTitle), words.modeLines.map(line => h('p', { key: line, style: styles.muted }, line))),
       h('div', { 'data-block': 'cards' }, h('h2', { style: styles.subheading }, words.cards), h('p', { style: styles.muted }, words.cardsSays), cards),
       saveLine(settings)
     )
