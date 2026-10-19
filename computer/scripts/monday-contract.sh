@@ -30,7 +30,7 @@ monday_query_items_multi='query ($board: [ID!], $columns: [String!], $limit: Int
 monday_query_more_multi='query ($cursor: String!, $columns: [String!], $limit: Int) { next_items_page(limit: $limit, cursor: $cursor) { cursor items { id name parent_item { id } column_values(ids: $columns, capabilities: [CALCULATED]) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } }'
 
 # The question of monday-sync.sh --debug: the first two items of one board with every column, in the typed shape
-monday_query_debug='query ($board: [ID!]) { boards(ids: $board) { name hierarchy_type items_page(limit: 2) { items { id name parent_item { id } column_values { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
+monday_query_debug='query ($board: [ID!]) { boards(ids: $board) { name hierarchy_type items_page(limit: 2) { items { id name parent_item { id } column_values(capabilities: [CALCULATED]) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
 
 # Where each value sits in an answer, as jq functions. Each one is given the part
 # of the answer it belongs to: the answer, a board, a column, a page, an item or
