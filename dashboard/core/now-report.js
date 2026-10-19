@@ -9,12 +9,26 @@
 import { dotStates } from './dots.js';
 import { lastContentRead } from './content.js';
 import { activeRequests } from './screen-requests.js';
+import { heldNoteFor } from './held-note.js';
+import { resolveView, viewNameOf, viewSteps } from './views.js';
 import { isLocalHost, makeReport, reportAddress, reportSeconds } from './now-report-parts.js';
 
 function readTeam(getTeam) {
   const team = typeof getTeam === 'function' ? getTeam() : null;
   if (team && typeof team === 'object') return team.code || team.name || '';
   return typeof team === 'string' ? team : '';
+}
+
+// The words for a held view with nothing to show, or ''
+function readHeldNote(content, requests, now) {
+  const key = requests.showView;
+  if (!key) return '';
+
+  try {
+    return heldNoteFor(viewNameOf(content, key), viewSteps(content, key, now), resolveView(content, key).panels);
+  } catch (error) {
+    return '';
+  }
 }
 
 // What the page shows now, read from the page and the content
@@ -24,6 +38,7 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
   const content = (typeof getContent === 'function' ? getContent() : null) || {};
   const mini = content.mini || {};
   const read = lastContentRead();
+  const requests = activeRequests(content.settings, now);
 
   return {
     view: root.dataset.view || '',
@@ -33,7 +48,8 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
     panel: large ? large.dataset.page || '' : '',
     page: large ? large.dataset.pageNumber || '' : '',
     build: typeof window !== 'undefined' && window.teletraanBuild ? window.teletraanBuild : '',
-    requests: activeRequests(content.settings, now),
+    requests: requests,
+    heldNote: readHeldNote(content, requests, now),
     dots: dotStates({
       monday: content.monday,
       everyMinutes: content.settings ? content.settings.mondayEveryMinutes : undefined,
