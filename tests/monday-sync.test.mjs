@@ -500,6 +500,16 @@ test('a later read of the same day does not ask for the list of boards again', (
   assert.deepEqual(requestsOf(noList.run().calls), firstSequence, 'a status with no list of boards asks for it');
 });
 
+test('a list of boards written before boards carried their kind, or without the board the settings name, is asked for again', () => {
+  const old = setup('old-list', { tools: true });
+  world(old, { known: Object.assign({}, laterRead, { unmarked: 22 }) });
+  assert.deepEqual(requestsOf(old.run().calls), firstSequence, 'boards with no kind are listed again');
+
+  const missing = setup('missing-board', { tools: true });
+  world(missing, { known: Object.assign({}, laterRead, { unmarked: 0, boardIds: ['1', '2'] }) });
+  assert.deepEqual(requestsOf(missing.run().calls), firstSequence, 'a list without the task board is asked for again');
+});
+
 test('the requests go to the address and version of the block at the top, https only, with a time limit, and ask for the typed values of the chosen columns only', () => {
   const place = setup('flags', { tools: true });
   world(place);

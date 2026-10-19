@@ -207,7 +207,11 @@ fi
 # The boards the token can see, with their columns, and who the token belongs to. It is asked for on the
 # first read of a day and when the Teletraan computer has no list yet, and is one of the requests of the run.
 boards_listed=no
-if [ "$calls_before" -eq 0 ] || [ "$(jq -r '.result.known.boards // 0' "$work/sanity.json")" -eq 0 ]; then
+# Also when the list kept in Sanity was written before boards carried their kind, or does not hold the board the settings
+# name: a list kept for the day would otherwise stay wrong after an update or a change of token.
+if [ "$calls_before" -eq 0 ] || [ "$(jq -r '.result.known.boards // 0' "$work/sanity.json")" -eq 0 ] \
+  || [ "$(jq -r '.result.known.unmarked // 0' "$work/sanity.json")" -gt 0 ] \
+  || { [ -n "$task_board" ] && jq -e --arg id "$task_board" '(.result.known.boardIds // null) | if . == null then false else (index($id) | not) end' "$work/sanity.json" > /dev/null 2>&1; }; then
   jq -n --arg query "$monday_query_boards" '{query: $query}' > "$work/body.json"
   ask "$work/body.json" "$work/boards-answer.json"
   if [ "$outcome" = ok ] && jq -e "$paths"'board_list | arrays' "$work/boards-answer.json" > /dev/null 2>&1; then

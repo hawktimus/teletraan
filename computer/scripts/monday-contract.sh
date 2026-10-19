@@ -190,7 +190,7 @@ query='{
   "milestones": *[_type == "milestone" && !(_id in path("drafts.**"))] {
     _id, name, targetDate, "team": team._ref, "subteam": subteam._ref, status, show
   },
-  "known": *[_id == "monday-status"][0] { lastSyncAt, lastError, callsToday, callsDate, "boards": count(boards) },
+  "known": *[_id == "monday-status"][0] { lastSyncAt, lastError, callsToday, callsDate, "boards": count(boards), "unmarked": count(boards[!defined(hierarchy)]), "boardIds": boards[].id },
   "snapshots": *[_id == "monday-status"][0].snapshots[] { date, open },
   "readings": *[_id == "monday-status"][0].readings[] { boardId, boardName, itemsRead, readAt, note },
   "listed": *[_id == "monday-status"][0].boards[] { id, hierarchy }
