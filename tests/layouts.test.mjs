@@ -2808,34 +2808,25 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'famil
 // and the build stamp of ?debug=1, 20 px, the one size the order for the version on the wall allows below the rest
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.css', selector: '.build-stamp', size: 20 }));
 
-// The Match13 cards have the STALE chip at 30 and the rank axis labels of the forecast at 28. The Monday panels and the season timeline have the sizes under 44 px that the order for them sets, in every style: the
-// chips at 30 (the status of a row, the count of a column, STALE and OVERDUE), the first name of who to ask at 40, the labels
-// of the numbers, of a department and of the legend at 36, the weeks and TODAY of the Monday timeline at 28, and
-// the other labels fixed for the board and the overall progress (26 to 40, listed here). The city and the
-// day in a row of the season timeline's legend are 36, and the department and the date in a row of the milestones card
-// (an older card, still registered) are 36
+// The Match13 cards have the STALE chip at 30 and the rank axis labels of the forecast at 28. The two Monday panels and the
+// season timeline have the sizes under 44 px that the order for them sets, in every style: the chips at 30 (the status of a
+// row and STALE), and the labels at 36 (the names of the columns of Department tasks, the labels of the numbers, the legend
+// and the months of the TV charts). The city and the day in a row of the season timeline's legend are 36.
 const mondaySmall = (file, entries) => Object.keys(entries).map(selector => ({ file: file, selector: selector, size: entries[selector] }));
 const orderSmall = [
-  { file: 'monday.css', selector: '.monday .department', size: 36 },
   { file: 'panels/competition-timeline/panel.css', selector: '.competition-timeline .where', size: 36 },
   // the Before and after cards: the chip that marks an estimate at 30, and the labels on the axes of the season trend at 28
   { file: 'panels/competition-matches/panel.css', selector: '.competition-matches .chip', size: 30 },
   { file: 'panels/competition-preview/panel.css', selector: '.competition-preview .axis', size: 28 },
   { file: 'panels/competition-preview/panel.css', selector: '.competition-preview .chip', size: 30 },
   { file: 'panels/competition-recap/panel.css', selector: '.competition-recap .axis', size: 28 },
-  { file: 'panels/monday-milestones/panel.css', selector: '.monday-milestones .milestone-lead', size: 36 },
-  { file: 'panels/monday-milestones/panel.css', selector: '.monday-milestones .cell-date', size: 36 },
 ].concat(
-  mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .poc': 40, '.monday .fact-label': 36, '.monday .legend': 36 }),
-  mondaySmall('panels/monday-tasks/panel.css', { '.monday-tasks .due': 36, '.monday-tasks .chip-overdue': 30 }),
-  mondaySmall('panels/monday-done/panel.css', { '.monday-done .date': 36 }),
-  mondaySmall('panels/monday-status-depts/panel.css', { '.monday-status-depts .share': 40 }),
-  mondaySmall('panels/monday-overall/panel.css', { '.monday-overall .hours-of': 32, '.monday-overall .milestone-name': 40, '.monday-overall .milestone-date': 32, '.monday-overall .milestone-days': 36, '.monday-overall .milestones-head': 36, '.monday-overall .hours': 40 }),
-  mondaySmall('panels/monday-timeline/panel.css', { '.monday-timeline .week': 28, '.monday-timeline .dept': 36, '.monday-timeline .bar text': 32, '.monday-timeline .today-label': 28, '.monday-timeline .gamedrop-label': 28 }),
+  mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .fact-label': 36 }),
+  mondaySmall('panels/monday-department/panel.css', { '.monday-department .columns': 36 }),
+  mondaySmall('panels/monday-charts/panel.css', { '.monday-charts .legend': 36, '.monday-charts .month': 36 }),
   mondaySmall('panels/competition-forecast/panel.css', { '.competition-forecast .stale-chip': 30, '.competition-forecast .tick': 28 }),
   mondaySmall('panels/competition-qualify/panel.css', { '.competition-qualify .stale-chip': 30 }),
-  mondaySmall('panels/frc-news/panel.css', { '.frc-news .chip': 30, '.frc-news .stale-chip': 30 }),
-  mondaySmall('panels/monday-board/panel.css', { '.monday-board .column-name': 34, '.monday-board .count': 30, '.monday-board .card-department': 28, '.monday-board .card-title': 40, '.monday-board .card-poc': 32, '.monday-board .stuck-tag': 26, '.monday-board .more': 30 })
+  mondaySmall('panels/frc-news/panel.css', { '.frc-news .chip': 30, '.frc-news .stale-chip': 30 })
 );
 Object.keys(smallTextOf).forEach(style => { smallTextOf[style] = smallTextOf[style].concat(orderSmall); });
 

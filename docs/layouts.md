@@ -680,7 +680,7 @@ to the extra width, except the Monday cards.** The page keeps the width it was w
 on the screen, at the left of the panel, and the 286 px at the right of it are used by nothing but the header of every panel
 and the Monday cards. This is the least invasive way, because no panel has to change, and
 it is the only one that never shows a panel in two widths. The Monday cards are the one
-exception, because the owner asked for them to fill the panel: see "The width of the Monday cards" below. A width variable could
+exception, because the owner asked for them to fill the panel: see "The Monday panels" below. A width variable could
 stretch a panel's boxes, but every panel has a part that is drawn by the code at a
 fixed length, and a variable cannot reach that:
 
@@ -1237,10 +1237,9 @@ What plays on the screen is set by four View documents, Robotics (stored as gene
 - A view has a layout, a team, the minutes it stays (1 to 30), `panels` (the rows of the main panel, area B, each a panel from
   `registry.js` and, if wanted, seconds from 6 to 120) and `sidePanels` (the rows of the side panel, area D, standard layout only).
   The starting views are `defaultViews` in `config.js`, which has the shape of `studio/tools/view-defaults.js`.
-- The team of a row is the team of its view. The six Monday panels are `monday-tasks`, `monday-done`, `monday-status-depts`,
-  `monday-overall`, `monday-timeline` and `monday-board` (docs/monday.md). A Monday tasks row with no department plays one page for
-  each Team lead that has On the Monday board switched on. The Events panel is one row that scrolls from its first four events to
-  the next four.
+- The team of a row is the team of its view. The two Monday panels are `monday-department` and `monday-charts` (docs/monday.md);
+  a Monday row names the team of its tasks itself, or none for both. The Events panel is one row that scrolls from its first four
+  events to the next four.
 - The countdown (area C) has no rows: its title and dates are in Dashboard Settings, Countdown tab, and are the same for every view.
   The ticker (area E) has none either: it shows every published tip and news item in order.
 - The order of the views, the name and title of General and the theme of each weekday are in Dashboard Settings (the Look tab and
@@ -1421,166 +1420,42 @@ slashes, and keep the room. In the bar layout the header is as wide as the panel
 The Photo panel has no title and nothing at the right end: the header of its frame is empty, and the photo is under it. The picture cannot be drawn over the header,
 because the page lies over the frame and the header plates would be covered with the tab and the line that every other panel shows.
 
-## The Monday cards
+## The Monday panels
 
-A Monday row of a view plays one of six panels in the Monday style: tasks, done, status by department, overall progress, timeline
-and board (docs/monday.md, "The eleven panels", has what each one shows and `core/monday-views.js` works out what they draw). The rest of
-this section is about the first cards, which stay in the code. A saved row that names one of the older cards plays as the tasks panel.
+A Monday row plays one of two panels in the Monday style (docs/monday.md): Department tasks (`monday-department`), a table of
+one department in one list, and the TV charts (`monday-charts`), one chart a row. `core/monday-views.js` works out what they draw
+and `core/monday-draw.js` has the header, the status chip and the numbers; what they share is in `dashboard/monday.css`. The
+eleven Monday cards of the older sync are gone from the registry; a stored row that names one plays nothing.
 
-The older Monday cards are the tasks card, the milestones card and the progress card, and the milestones and progress cards of both
-teams. They are panels of the large frame, `monday-tasks`, `monday-milestones`, `monday-progress`, `monday-milestones-both` and `monday-progress-both`,
-each a folder in `dashboard/panels/` with a script and a stylesheet. What they share is in `dashboard/monday.css`. They draw the tasks that the
-board sync on the Teletraan computer keeps in Sanity: a task with the source `monday` (docs/editing-content.md, "The Monday cards"). The plain
-functions that pick and rank the tasks are in `core/monday.js`, and `core/monday-draw.js` has the header, the rows and the page marker.
-The sentence a card says when it has nothing else to show and the text in a chart are the ones the competition cards use
-(`core/competition-draw.js`). `node tests/monday-cards.test.mjs` and `node tests/monday-rows.test.mjs` check them.
-
-**Who has the cards.** A team has board tasks when a task with the source `monday` shows on the TV for it:
-Show on TV and Show on screen are on, it has not expired, and it is for the team or for both. `mondaySteps` in
-`core/monday.js` gives the steps of the large panel's list for a Monday row: one page of the tasks card for each Team lead
-entry that has tasks. A team with no board tasks gets none, and its Monday rows are skipped. Every card counts the
-board tasks and nothing else (`boardTasksFor`), whatever its status, so the cards always agree on how many rows there are. A task that is
-not from the board is never on a Monday card, and a task with `showOnTv` off never shows on any card.
-
-The registry flags the six panels of the task board and the four older cards `monday: true`. They are not in the older Panel order list of Dashboard Settings and not in the
+The registry flags the two panels `monday: true`. They are not in the older Panel order list of Dashboard Settings and not in the
 lists of `config.js`: they are the Monday rows of a view, and a saved Panel order that still names one is ignored
-(`core/panel-order.js`). `withCompetition` in `core/competition.js` never held them, and a Monday row has no competition cards in it. They have the topic
-monday, as the competition cards have the topic competition, so a Monday row never waits for the small frame to leave the topic tasks, which it
-would if all the cards had to avoid the task counts. Every card is drawn for a frame of 1152 by 708, as every panel is, and the bar
-layout scales the frame and gives the cards the whole width of it ("The width of the Monday cards").
+(`core/panel-order.js`). They have the topic monday, as the competition cards have the topic
+competition, so a Monday row never waits for the small frame to leave the topic tasks. They are drawn for a frame of 1152 by 708,
+as every panel is, and in the bar layout the header and the body take the whole width of the area (`--bar-area-width`), with the
+same 24 px at each side. The Robotics view plays both in its wide layout.
 
-**The team.** The cards take their tasks the way every panel does, through `visibleItems`, so they are the tasks of the
-team on the screen and of both teams. A Monday row can ask about the team of the next row before it is on the screen, so
-`visibleItems` takes the code of a team as a third argument. The cards of both teams ask about each team in turn.
+**The header.** The title is the department and the list (BUILD TASKS, BUILD DONE) or the chart (STATUS BY DEPARTMENT), at 60 px,
+56 or 44 when it does not fit before the line that ends the tab (`smallTitleClass`). The team a row names, by the short name of
+its Team document, and how long ago the board was read are at the right end, at 44 px. When the board is older than twice the
+read interval an amber STALE chip stands in the place of the age.
 
-**The name of the team.** A header that names a department reads the department in capitals and TEAM, such as BUILD TEAM, and the
-name of the team is a chip of 44 px in the accent of the team at the right end of the header: PRIME or NOVA, which is the
-`shortName` of the team that the items follow. A page whose tasks are all for both teams, and each of the cards of both teams, has no chip
-(`core/team-title.js`). A department name that already ends in TEAM does not get a second one. The title is 60 px (`--size-team`). The Roster,
-Leadership and Team leads headers have the same chip, with BUILD TEAM, LEADERSHIP and TEAM LEADS as their titles, which are at the size of a heading
-(96 px) when they fit before the line that ends the tab and at 60 px when they do not (`titleClass` in `core/team-title.js`, and "The header of a
-large panel" above). Leadership and Team leads have no chip only when everyone on their list is for both teams, and Roster asks about the subteam of its page.
-
-### The width of the Monday cards
-
-In the standard layout a card is 1152 wide, with a header of 1152 and a body of 1104, 24 px in from each edge. In the bar layout
-(Minimal) the area is 1427 wide before the scale (`--bar-area-width`, "The width of the main panel"), and the card uses all of it:
-`monday.css` makes the header as wide as the area, as `layouts/bar.css` does for the header of every panel ("The header of a large panel"), and the body 48 px less, which is 1379, with the same 24 px at each side. There is
-no second copy of a card and no markup that depends on the layout: the rules are `html[data-layout="bar"]` and nothing else changes in
-the standard layout or the sidebar layout, where a card is drawn exactly as it was.
-
-The weld seam, the vertical line that Minimal draws on the main panel at x = 1188, stands where a 1152 page ends. A card is wider than
-that, so the seam is not drawn while one is on screen. `core/areas.js` writes the id of the page in the area as `data-page` each time a
-page goes in (`markPage`), and `layouts/bar-minimal.css` hides the two seam paths under a `data-page` that starts with `monday-`. The seam is
-in the frame and not in the card, so it comes back with the next panel that is not a Monday card, and the swap and the page change have
-nothing to do. The other panels keep the width they were written for and keep the seam.
-
-What the wider body does to each card:
-
-| Card | Standard layout | Bar layout |
-|------|-----------------|------------|
-| Tasks | the title takes what the status, the owner and the priority leave | the same rule, so the title has 275 px more |
-| Milestones | 330 for the department, two cells of 254, 230 for the chip | the two cells are 391 each |
-| Progress | bars in 700 px, the bar 206 long, the line in the 1096 at the left of its 1104 | the line moves 251 px to the right (it ends 56 px short of the frame, clear of its rust), the bars have 951 px and the bar is 457 long |
-| Milestones and Progress of both teams | the rows fill the body, the bar is 400 long | the rows fill the body, the bar is 689 long |
-
-The bar is stretched along its length only: the svg of a bar has `preserveAspectRatio="none"`, so its stacks keep their proportions, and
-`vector-effect: non-scaling-stroke` keeps the dark edge between two stacks at 3 px. The size of the bar in the standard layout is the size
-it was, so the pictures of Original and Cybertron are the same to the pixel. `node tests/monday-fill.test.mjs` checks the numbers.
-
-### The tasks card
-
-One page for each Team lead entry that has tasks, in the order of the Team leads list. A task is
-matched to an entry by its subteam name, without regard to capitals. An entry that is switched off, has expired, is for
-the other team or has the same name as an earlier one has no page, and a task that no entry has is on no card.
-
-The body is up to ten rows of 84 px, in the mix of two done tasks, up to three in the backlog and the rest in progress
-(`pickRows` in `core/monday.js`). A status that has fewer tasks than its share leaves its slots to the others, in progress
-first, then the backlog, then done, so two in progress and seven in the backlog is a card. A blocked task has no row. The rows are
-ranked by priority (high, medium, low, none), then the earliest due date, with none last, then the title. A row is a status label
-236 by 44 (IN PROGRESS, BACKLOG or DONE, in 30 px letters: the one size on a card under 44 px that is a label and not reading text), the
-title at 52 px on one line with an ellipsis, the first name of the owner at 40 px in the muted color when the board gives one, and
-the priority as a shape at the far right: a filled red triangle for high, an outlined triangle in the accent for medium, and nothing for
-low. Under the rows at the bottom left are three numbers with a rule at the left of each, the labels at 36 px and the numbers at 72
-px: OVERDUE, which is the open tasks of the entry with a due date before today, OPEN, which is every task that is not done, and DONE.
-They count all the tasks of the entry, not only the rows that show.
-
-**Scrolling.** Five rows show at a time. A card with more than five rows is held for its time, then the list moves up by five rows and
-it is held again for the same time. `core/schedule.js` asks the panel how many pages it holds for (`scrollPages`) and calls `scrollCard`
-in `frame.js` between them. The move is transform only, 600 ms with the easing of the slats, in full motion. In calm and none the list is at its
-place at once. The frame does not move. A page marker at the bottom right shows a filled square for the page in view and an
-outline for the other, and its place in words, such as 1 OF 2 · 10 TASKS. A card of five rows or fewer has no marker and does not scroll. Ten rows
-at the most make two pages, which is all the marker has room for.
+**Department tasks.** The names of the five columns at 36 px, then a window of four rows of 84 px: the status chip (30 px), the
+project at 56 px on one line, or at 44 px on up to two lines when the name is longer than 13 characters, the contact, the
+priority and the Estimated Completion Date at 44 px. A value the board does not have reads Unassigned, No Priority or No Date in
+the quiet color. In a view set to the standard layout the main panel is about 1100 wide, so the project is always on two
+lines at 44 px and Contact and Priority are narrower. Under the window are the open and done counts and, for a list of more than four rows, its place in words,
+1 OF 3. The list is held for its time, moves up four rows (`scrollPages` in the panel, `scrollCard` in `frame.js`, 600 ms,
+transform only, in full motion) and is held again, up to 20 rows. In Cybertron the body is 532 high, and the counts end at 528.
 
 The Events panel scrolls with the same machinery, four rows at a time and with no marker (`panels/events`, and "The two pages of the
 Events panel" in docs/editing-content.md). Its window is four rows, `--scroll-step` is the height of the window, and Cybertron has rows of
-132 where Original and Minimal have 144, so its step is 528 and the others are 576 (`styles/cybertron/theme.css`). A step that is not the height of
-the window shows the second page cut off at the top.
+132 where Original and Minimal have 144, so its step is 528 and the others are 576 (`styles/cybertron/theme.css`). A step that is not the
+height of the window shows the second page cut off at the top.
 
-### The milestones card
-
-A row for each Team lead entry that has an open task with a due date, and two columns, This week and Next. Only a task from the board whose status
-is not done and that has a due date counts. A week is Monday to Sunday, and the day today is the date in the time zone of the Look page, so the
-week turns over at midnight there and not by the clock of the computer. A due date before this week is in This week, so a task that is late is not
-lost, and its date is drawn in red. A cell shows the task of the entry that is due soonest in that week: the title on one line at 44 px, cut off
-with an ellipsis, and the date under it at 36 px. The other tasks of the week are not drawn. A chip at the end of the row counts the tasks that are
-due after next week, such as +3 later, and a row with nothing due later has no chip. A row is 84 px: the department in 36 px letters in 330 px, two
-cells and 230 px for the chip, so PROGRAMMING and ELECTRICAL fit. There are five rows at most, in the order of the Team leads list, and `+N more` says
-how many entries did not fit. An entry with nothing due has no row, so it does not use one of the five.
-
-### The progress card
-
-The bars are on the left: one for each Team lead entry that has board tasks, six at most, as long as the entry has tasks, the longest being
-206 px. A row is the department in 36 px letters in 330 px, cut off with an ellipsis (PROGRAMMING and ELECTRICAL fit), the bar, and done out of all.
-The three stacks are the backlog, in progress and done, in the colours of the status marks. The legend is along the top and does not wrap. Under
-the rows, `+N more` says how many entries did not fit, and the totals of the team are under that: `66 OPEN · 5 OVERDUE` and nothing longer. Open is
-every board task of the entries that is not done, as the tasks card counts it, and overdue is the open ones with a due date before today. The card counts
-exactly the rows the tasks card shows (`groupsFor` in `core/monday.js`): a task that is not from the board is on neither, so one never says No board
-items are showing yet while the other has a row. On the right is the line of the items left: the open board
-tasks on each day, from the document `monday-status`. `core/sanity.js` asks for `lastSyncAt`, `lastError` and `snapshots` of it,
-and `tidyMondayStatus` in `core/monday.js` cleans them to one count a day, oldest first, 120 at the most. The line has at
-most 12 points, taken evenly from the first count to the last with both ends kept, and a point is as far along as its day is,
-so a gap of days is a gap in the line. The dashed target line goes from the first point down to nothing on the next date of the
-countdown, the one the season timeline uses (`countdownMarker` in `core/competition.js`), and it is left out when no date
-is still to come. With fewer than two counts a sentence stands in the place of the line, and the bars stay. The line is an SVG of 1096 by
-512 and the rows are HTML on the left of it, so that a font size in the stylesheet is the size on the screen.
-
-### The cards of both teams
-
-The milestones card and the progress card of both teams play when a milestones or a progress row of a view has the team Both teams. Their headers read MILESTONES and PROGRESS
-with no chip. They have a row for each department and each team that has board tasks for it, and the rows alternate between the teams: a department's rows
-together, Prime first and then Nova, in the order of the active teams. A department whose tasks all come from boards with no team is one row with no team. No columns side by side. Every row starts with a label of the team, PRIME
-in gold and NOVA in light purple. There are ten rows at the most, five at a time, which scroll and have a page marker as the tasks card does
-(`scrollPages`).
-
-The progress card of both teams has a row of the team, the department in 36 px letters in 330 px, one bar of the team's board tasks in
-three stacks, done, then in progress, then backlog, and done out of all of them. The bars are as long as the tasks are many, the longest filling
-400 px, and the legend is along the top. The milestones card of both teams has a row of the team, the department, the open task with a due date that
-is due soonest, on one line with an ellipsis, and its date, which is orange when it is past. A department and team with nothing due has no row.
-With no rows each says one plain sentence.
-
-### What is on every card
-
-**The words about the board.** At the right end of the header, before the chip, are the words 4 MIN AGO: how long ago the Teletraan computer read the
-board, in minutes, hours or days, and SAMPLE on the sample. They are muted. They go only where they fit (`wordsAtRight` in `core/monday-draw.js`,
-which counts the width of the words with `core/text-width.js`): they have the 289 px at the right end of every header, and a board that was read ten
-days ago or more has no words, because 10 DAYS AGO is 291 wide. Beside the chip of a team they do not fit in a header 1152 wide, so the header says it has a chip
-(`tag-with-chip`) and `monday.css` hides the words there. In the bar layout, which Minimal uses and the Monday cards are drawn in, the header is as wide as the panel,
-and the words are shown beside the chip. A card of both teams has no chip, and its words are shown in every layout. The slashes are left out when they would not
-fit beside the chip, or beside the words when there is no chip.
-
-**With nothing to show.** A card says one plain sentence in place of its body, and the sentence says why. No board is chosen yet. when Dashboard
-Settings, Monday has no board. Waiting for the first sync from the board. when there is a board and the Teletraan computer has not written the status yet. Nothing
-on the chosen boards is showing yet. when the board is read and no board task shows on the TV. The milestones cards say No open board items have a due
-date yet. when there are board tasks and none has a due date. A team with no board tasks has its Monday rows skipped, so these are what the `?show=`
-address shows when there are none. No card invents a number.
-
-**Sizes.** No text is under 44 px except the sizes the cards themselves set: the status label of a row at 30, the first name of the owner at 40, and
-the labels of the numbers and of a department at 36. No line is under 3 px, and a card has no blur, glow, shadow or filter. The body is 1104 by 544,
-24 px in from the frame and 132 px down. The rows stay clear of the cut corner at the bottom right: the page marker ends 68 px in from the right edge of the body.
-
-The sample content has board tasks only: six for both teams, nine for Prime and six for Nova, on six Team lead entries, and a `monday` document with
-14 daily counts, all in brackets, so `?sample=1` shows the cards on made up tasks, and the cards of both teams.
+**The TV charts.** Status by department is a row of 52 px for each department with tasks, a bar against the longest row in the
+three status colors with the count in each part wide enough for it, and the total at the end. Overall progress is the percent at
+the size of a stat, a bar and the hours in words. The timeline is this month and the next two, a row for each department with its
+bars in up to three lanes, and a red line for today. Nothing in either panel moves.
 
 ## Team trim
 

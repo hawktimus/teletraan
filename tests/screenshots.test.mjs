@@ -25,9 +25,8 @@ const small = [
   { id: 'tasks', region: 'grid1', topic: 'tasks' },
   { id: 'photo', region: 'grid1', topic: 'photo' },
   { id: 'competition-rank', region: 'grid1', competition: true },
-  { id: 'monday-tasks', region: 'grid1', monday: true },
-  { id: 'monday-overall', region: 'grid1', monday: true },
-  { id: 'monday-progress-both', region: 'grid1', monday: true },
+  { id: 'monday-department', region: 'grid1', monday: true },
+  { id: 'monday-charts', region: 'grid1', monday: true },
   { id: 'forecast', region: 'grid2' },
   { id: 'stand-in-tile', region: 'grid2', testOnly: true },
 ];
@@ -47,12 +46,14 @@ test('every small panel is taken in three Screens and a hardware test panel is l
   assert.ok(!list.some(name => name.includes('stand-in')));
 });
 
-test('a Monday panel has a team in its name only where it takes one', () => {
-  const list = names(tool.planShots(small));
-  assert.ok(list.includes('monday-tasks-cybertron-nova'));
-  assert.ok(list.includes('monday-overall-minimal'));
-  assert.ok(list.includes('monday-progress-both-original'));
-  assert.ok(!list.some(name => name.startsWith('monday-overall') && /-(prime|nova)$/.test(name)));
+test('the Monday panels are taken in the bar layout: Department tasks open and done for both teams and Prime, and the three charts', () => {
+  const shots = tool.planShots(small);
+  const list = names(shots);
+  assert.deepEqual(list.filter(name => name.startsWith('monday-department-') && name.includes('-cybertron')), ['monday-department-open-cybertron', 'monday-department-open-cybertron-prime', 'monday-department-done-cybertron', 'monday-department-done-cybertron-prime']);
+  assert.deepEqual(list.filter(name => name.startsWith('monday-charts-') && name.endsWith('-original')), ['monday-charts-status-original', 'monday-charts-progress-original', 'monday-charts-timeline-original']);
+  const open = shots.find(shot => shot.name === 'monday-department-open-original-prime');
+  assert.ok(open.url.includes('dept=build') && open.url.includes('list=open') && open.url.includes('team=prime') && open.url.includes('layout=bar'), open.url);
+  assert.ok(shots.find(shot => shot.name === 'monday-charts-timeline-minimal').url.includes('chart=timeline'));
 });
 
 test('competition cards are taken with ?competition=1 and the countdown in all three Screens', () => {

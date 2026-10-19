@@ -168,18 +168,18 @@ test('the General view starts with the agenda, events, leadership, four photos o
   assert.deepEqual(view.sidePanels.map(row => [row.panel, row.seconds]), [['next-event', 30], ['task-counts', 20], ['safety-days', 20], ['forecast', 15], ['sponsor-logo', 15]]);
 });
 
-test('Prime and Nova start with Monday tasks, done, timeline and board at 30 seconds, in their team, and have no small panel', () => {
+test('Prime and Nova start with the status and the progress charts at 30 seconds, in their team, and have no small panel', () => {
   ['prime', 'nova'].forEach(key => {
     const view = views.tidyView(null, key);
-    assert.deepEqual(view.panels.map(row => [row.panel, row.team, row.seconds]), [['monday-tasks', key, 30], ['monday-done', key, 30], ['monday-timeline', key, 30], ['monday-board', key, 30]]);
+    assert.deepEqual(view.panels.map(row => [row.panel, row.team, row.seconds, row.chart, row.tasksTeam]), [['monday-charts', key, 30, 'status', key], ['monday-charts', key, 30, 'progress', key]]);
     assert.deepEqual(view.sidePanels, [], 'the bar layout has no small panel');
   });
 });
 
-test('the panels of the Family view are Overall progress and Status by department, whatever the document says', () => {
-  const locked = views.tidyView({ panels: [{ panel: 'events', seconds: 30 }, { panel: 'monday-status-depts', seconds: 12 }] }, 'family');
-  assert.deepEqual(locked.panels.map(row => row.panel), ['monday-overall', 'monday-status-depts']);
-  assert.equal(locked.panels[1].seconds, 12, 'the seconds of a locked row can be typed');
+test('the panel of the Family view is the status chart, whatever the document says', () => {
+  const locked = views.tidyView({ panels: [{ panel: 'events', seconds: 30 }, { panel: 'monday-charts', chart: 'status', seconds: 12 }] }, 'family');
+  assert.deepEqual(locked.panels.map(row => row.panel), ['monday-charts']);
+  assert.equal(locked.panels[0].seconds, 12, 'the seconds of a locked row can be typed');
   assert.deepEqual(views.tidyView(null, 'family').panels.map(row => row.panel), config.familyPanels);
 });
 
@@ -192,7 +192,7 @@ test('a document is read the way it is typed, and a number or a list that cannot
   assert.equal(views.tidyView({ minutes: 99 }, 'prime').minutes, 30);
   assert.equal(views.tidyView({ minutes: 0 }, 'prime').minutes, 1);
   assert.equal(views.tidyView({ minutes: 'six' }, 'prime').minutes, 6);
-  assert.equal(views.tidyView({ panels: [] }, 'prime').panels.length, 4, 'an empty list is the starting list');
+  assert.equal(views.tidyView({ panels: [] }, 'prime').panels.length, 2, 'an empty list is the starting list');
 });
 
 test('a team view keeps its team, a team that is typed in lower case is read, and General and Family have none', () => {
@@ -274,40 +274,20 @@ test('a team view plays every one of its steps in its team, and General plays th
   const general = views.viewSteps(content, 'general', monday12);
   assert.deepEqual(general.map(step => step.panel), ['tonight', 'events', 'leadership', 'photo', 'sponsor-feature']);
   general.forEach(step => assert.equal(step.view, 'general'));
-  assert.deepEqual(views.viewSteps(content, 'family', monday12).map(step => step.panel), ['monday-overall', 'monday-status-depts']);
+  assert.deepEqual(views.viewSteps(content, 'family', monday12).map(step => step.panel), ['monday-charts']);
 });
 
-test('the Monday tasks row of a team view becomes one step for each Team lead that has tasks, in the order of the Team leads list', () => {
-  const content = contentWith(raw => { raw.subteams.forEach(lead => { delete lead.monday; }); });
-  const steps = views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks');
-  assert.deepEqual(steps.map(step => step.page.department), ['subteam-a', 'subteam-b', 'subteam-c']);
-  steps.forEach(step => assert.equal(step.page.team, 'prime'));
-});
-
-test('a Team lead with Monday switched off is left out, and one with no mark is on', () => {
+test('a Department tasks row of a team view plays its department, and a department with nothing in its list is skipped', () => {
   const content = contentWith(raw => {
-    raw.subteams.forEach(lead => { delete lead.monday; });
-    raw.subteams.find(lead => lead.id === 'subteam-b').monday = false;
-    raw.subteams.find(lead => lead.id === 'subteam-a').monday = true;
-  });
-  const steps = views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks');
-  assert.deepEqual(steps.map(step => step.page.department), ['subteam-a', 'subteam-c']);
-});
-
-test('a department added later is played without any edit to the view', () => {
-  const before = contentWith(raw => { raw.tasks = raw.tasks.filter(task => task.subteamId !== 'subteam-c'); });
-  const after = contentWith();
-  const count = content => views.viewSteps(content, 'prime', monday12).filter(step => step.panel === 'monday-tasks').length;
-  assert.equal(count(before) + 1, count(after));
-});
-
-test('a Monday tasks row with a department of its own plays that department only, and a department marked with no tasks is skipped', () => {
-  const content = contentWith(raw => {
-    raw.views = [{ _id: 'view-prime', panels: [{ panel: 'monday-tasks', department: 'subteam-b', seconds: 20 }, { panel: 'monday-tasks', department: 'subteam-k', seconds: 20 }] }];
+    raw.views = [{ _id: 'view-prime', panels: [
+      { panel: 'monday-department', department: 'build', list: 'open', team: 'prime', seconds: 20 },
+      { panel: 'monday-department', department: 'strategy', list: 'open', team: 'prime', seconds: 20 },
+    ] }];
   });
   const steps = views.viewSteps(content, 'prime', monday12);
-  assert.deepEqual(steps.map(step => step.page.department), ['subteam-b'], 'subteam-k has no tasks');
+  assert.deepEqual(steps.map(step => step.page.department), ['build'], 'Strategy has nothing open');
   assert.equal(steps[0].seconds, 20);
+  assert.equal(steps[0].page.team, 'prime');
 });
 
 test('a view whose team is not switched on has no steps, and ?team= leaves out the view of the other team', () => {
@@ -367,7 +347,7 @@ test('the layout of a view is its field, and the theme of the day is the weekday
 
 test('the look of a step is the team of its view and the theme of the day, and the team is empty for a view with none', () => {
   const plan = { style: 'original', mondayStyle: 'minimal' };
-  assert.deepEqual(views.lookForViewStep({ panel: 'monday-tasks', view: 'prime', team: 'prime' }, plan, 'bar'), { team: 'prime', style: 'original', monday: true });
+  assert.deepEqual(views.lookForViewStep({ panel: 'monday-department', view: 'prime', team: 'prime' }, plan, 'bar'), { team: 'prime', style: 'original', monday: true });
   assert.deepEqual(views.lookForViewStep({ panel: 'tonight', view: 'general', team: '' }, plan, 'standard'), { team: '', style: 'original', monday: false });
 });
 
@@ -544,7 +524,7 @@ test('a swap plays at every view change: the first step of the next view is held
 test('a swap plays between two views that look alike, because the view is a change by itself', async () => {
   const world = await start({ content: contentWith(raw => { raw.teams = raw.teams.map(team => Object.assign(team, { mirror: false })); }) });
   const content = world.content;
-  const step = (view, team) => ({ panel: 'monday-overall', show: true, view: view, team: team });
+  const step = (view, team) => ({ panel: 'monday-charts', show: true, view: view, team: team });
 
   world.hooks.begin(step('family', ''));
   world.log.length = 0;
@@ -667,11 +647,11 @@ test('a panel the control page holds is the only one the large panel plays, in t
   const world = await start();
   views.holdBootView(world.content, new Date());
   const at = new Date();
-  world.content.settings.holdPanel = { panel: 'monday-board', until: new Date(at.getTime() + 30 * 60 * 1000).toISOString() };
+  world.content.settings.holdPanel = { panel: 'monday-charts', until: new Date(at.getTime() + 30 * 60 * 1000).toISOString() };
   world.log.length = 0;
   world.seconds(at);
   assert.equal(views.cycleKey(), 'prime');
-  assert.deepEqual(views.viewPlaylist(world.content, at).map(step => step.panel), ['monday-board']);
+  assert.deepEqual(views.viewPlaylist(world.content, at).map(step => step.panel), ['monday-charts', 'monday-charts']);
   assert.ok(world.log.includes('moveOn grid1'));
 
   world.content.settings.holdPanel = { panel: '', until: '' };

@@ -67,10 +67,10 @@ test('the content query reads the published Dashboard Settings whole, so rotatio
   assert.ok(!/rotationRows\s*\[|rotationRows\s*\{/.test(query), 'no part of the list is picked out by name, so no field can be left out');
 });
 
-test('every field the board writes on a row reaches the wall: view, panel, seconds, shown, side, part, department and the photo values', () => {
+test('every field the board writes on a row reaches the wall: view, panel, seconds, shown, side, part, department, list, team and the photo values', () => {
   const written = [
     row('robotics', 'events', 30, { part: 2, side: 'forecast' }),
-    row('prime', 'monday-tasks', 40, { department: 'build' }),
+    row('prime', 'monday-department', 40, { department: 'build', list: 'done', team: 'nova' }),
     { view: 'nova', panel: 'photo', photoCount: 3, secondsPerPhoto: 12, shown: true },
     row('nova', 'roster', undefined, { department: 'business,marketing', shown: false }),
   ];
@@ -78,7 +78,7 @@ test('every field the board writes on a row reaches the wall: view, panel, secon
   const saved = rotation.savedRotationRows(content);
   assert.equal(saved.length, 4);
   assert.deepEqual([saved[0].view, saved[0].panel, saved[0].seconds, saved[0].part, saved[0].side, saved[0].shown], ['robotics', 'events', 30, 2, 'forecast', true]);
-  assert.deepEqual([saved[1].department, saved[1].seconds], ['build', 40]);
+  assert.deepEqual([saved[1].department, saved[1].seconds, saved[1].list, saved[1].team], ['build', 40, 'done', 'nova']);
   assert.deepEqual([saved[2].photoCount, saved[2].secondsPerPhoto, saved[2].seconds], [3, 12, 36]);
   assert.deepEqual([saved[3].department, saved[3].shown], ['business,marketing', false]);
   assert.deepEqual(saved.map(item => item.panel), written.map(item => item.panel), 'the order is the order of the board');
@@ -112,12 +112,18 @@ test('a list with no shown row plays the default rotation, and one shown row is 
 });
 
 test('a Monday row with no tasks for its department is skipped by the wall, and plays once the tasks are there', () => {
+  const rows = [row('robotics', 'tonight', 20), row('prime', 'monday-department', 20, { department: 'build', list: 'open' })];
   const content = contentWith(raw => {
-    raw.settings.rotationRows = [row('robotics', 'tonight', 20), row('prime', 'monday-tasks', 20, { department: 'build' })];
+    raw.settings.rotationRows = rows;
     raw.tasks = [];
   });
   assert.deepEqual(views.viewSteps(content, 'prime', monday12).map(step => step.panel), [], 'nothing to show, the row is skipped');
   assert.deepEqual(views.viewSteps(content, 'general', monday12).map(step => step.panel), ['tonight']);
+  const filled = contentWith(raw => {
+    raw.settings.rotationRows = rows;
+    raw.tasks = [{ title: '[A]', department: 'build', list: 'open', status: 'up-next', source: 'monday', showOnTv: true }];
+  });
+  assert.deepEqual(views.viewSteps(filled, 'prime', monday12).map(step => step.panel), ['monday-department']);
 });
 
 // A published change reaches the wall without a restart: the clock reads the newest content every second
@@ -162,36 +168,48 @@ test('the screen reads new content from the stream and every 5 minutes, and the 
   assert.ok(shell.includes('viewPlaylist(shellState.content'), 'the large panel list is worked out from the content on the screen');
 });
 
-test('the Rotation board names a row that the wall skips for lack of data', () => {
+test('the Rotation board names a row that the wall skips for lack of data, and every row of a retired panel', () => {
   const rows = [
-    { _key: 'a', view: 'prime', panel: 'monday-tasks', department: 'build', shown: true },
+    { _key: 'a', view: 'prime', panel: 'monday-department', department: 'build', list: 'open', team: 'prime', shown: true },
     { _key: 'b', view: 'robotics', panel: 'photo', shown: true },
     { _key: 'c', view: 'robotics', panel: 'events', shown: true },
     { _key: 'd', view: 'nova', panel: 'monday-board', shown: false },
   ];
   const none = board.skipNotes(rows, { tasks: [], photos: [] });
-  assert.deepEqual(Object.keys(none).sort(), ['a', 'b']);
-  assert.ok(none.a.startsWith('Skipped now: no Monday task is on the TV'));
+  assert.deepEqual(Object.keys(none).sort(), ['a', 'b', 'd']);
+  assert.equal(none.a, 'Skipped now: no open Build task is on the TV for the Prime team.');
   assert.equal(none.b, 'Skipped now: no photos (every photo is hidden or past its expiry).');
+  assert.equal(none.d, 'Retired, use Department tasks.', 'a retired row says so, shown or not');
 
-  const some = { tasks: [{ team: 'prime', department: 'Electrical' }, { team: '', department: 'Design' }], photos: [{ expires: '2999-01-01T00:00:00Z' }] };
-  const notes = board.skipNotes(rows.concat([{ _key: 'e', view: 'prime', panel: 'monday-done', department: 'electrical', shown: true }, { _key: 'f', view: 'nova', panel: 'monday-tasks', department: 'cnc', shown: true }, { _key: 'g', view: 'nova', panel: 'monday-tasks', department: 'electrical', shown: true }]), some);
-  assert.equal(notes.a, 'Skipped now: no Monday tasks for build in the Prime team.');
+  const some = { tasks: [{ team: 'prime', department: 'electrical', list: 'done' }, { team: '', department: 'cnc', status: 'up-next' }, { team: 'nova', department: 'build', list: 'open', startDate: '2026-10-01', dueDate: '2026-10-20' }], photos: [{ expires: '2999-01-01T00:00:00Z' }] };
+  const more = [
+    { _key: 'e', view: 'prime', panel: 'monday-department', department: 'electrical', list: 'done', shown: true },
+    { _key: 'f', view: 'nova', panel: 'monday-tasks', department: 'cnc', shown: true },
+    { _key: 'g', view: 'nova', panel: 'monday-department', department: 'electrical', list: 'done', team: 'nova', shown: true },
+    { _key: 'h', view: 'robotics', panel: 'monday-department', shown: true },
+    { _key: 'i', view: 'robotics', panel: 'monday-charts', chart: 'timeline', team: 'prime', shown: true },
+    { _key: 'j', view: 'robotics', panel: 'monday-charts', chart: 'timeline', shown: true },
+  ];
+  const notes = board.skipNotes(rows.concat(more), some);
+  assert.equal(notes.a, 'Skipped now: no open Build task is on the TV for the Prime team.', 'a Nova task is not on the Prime panel');
   assert.equal(notes.b, undefined, 'a photo that has not expired is something to show');
   assert.equal(notes.e, undefined);
-  assert.equal(notes.f, undefined, 'Design and CNC are one department, and a task of no team counts for every team');
-  assert.equal(notes.g, 'Skipped now: no Monday tasks for electrical in the Nova team.');
-  assert.deepEqual(board.skipNotes(rows, null), {}, 'when the data cannot be read there are no notes');
-  assert.deepEqual(Object.keys(board.skipNotes(rows, { tasks: [], photos: [{ expires: '2000-01-01T00:00:00Z' }] })).sort(), ['a', 'b'], 'an expired photo is not a photo');
+  assert.equal(notes.f, undefined, 'an older tasks row with a department plays as Department tasks, and a task of no team counts for every team');
+  assert.equal(notes.g, 'Skipped now: no done Electrical task is on the TV for the Nova team.');
+  assert.equal(notes.h, 'Skipped now: pick a Department in Details.');
+  assert.equal(notes.i, 'Skipped now: no Monday task of the Prime team has a Timeline.');
+  assert.equal(notes.j, undefined);
+  assert.deepEqual(board.skipNotes(rows, null), { d: 'Retired, use Department tasks.' }, 'when the data cannot be read only the retired rows have notes');
+  assert.deepEqual(Object.keys(board.skipNotes(rows, { tasks: [], photos: [{ expires: '2000-01-01T00:00:00Z' }] })).sort(), ['a', 'b', 'd'], 'an expired photo is not a photo');
 });
 
 test('the board asks for the same tasks the wall would show, and draws the notes under the panel', () => {
-  assert.ok(board.skipQuestion.includes('source == "monday"') && board.skipQuestion.includes('showOnTv != false') && board.skipQuestion.includes('hiddenReason != "unassigned"'));
+  assert.ok(board.skipQuestion.includes('source == "monday"') && board.skipQuestion.includes('showOnTv != false') && board.skipQuestion.includes('showOnBoard != false') && board.skipQuestion.includes('defined(department)'));
   const view = readModule(path.join(studioFolder, 'inputs/rotation-board-view.js'), 'utf8');
   assert.ok(view.includes('skipNotes(state.rows, state.data)') && view.includes("perspective: 'published'"));
   assert.ok(view.includes('words.skipHint'));
   const parts = readModule(path.join(studioFolder, 'inputs/rotation-board-parts.js'), 'utf8');
-  assert.ok(parts.includes("'data-skip'") && parts.includes('state.skips[row._key]'));
+  assert.ok(parts.includes("'data-skip'") && parts.includes('state.skips[row._key]') && parts.includes("'data-retired'"));
   assert.ok(!/[—–]/.test(board.skipHint) && !/!/.test(board.skipHint), 'written plainly');
 });
 
@@ -201,10 +219,12 @@ test('a list like the one on the wall, 107 rows with department rows, passes the
   try {
     const rows = [];
     ['robotics', 'prime', 'nova'].forEach(view => {
-      ['events', 'leadership', 'photo', 'roster', 'monday-tasks', 'monday-board'].forEach((panel, at) => {
+      ['events', 'leadership', 'photo', 'roster', 'monday-department', 'monday-charts', 'monday-tasks', 'monday-board'].forEach((panel, at) => {
         const item = { _key: view + at, view: view, panel: panel, shown: true, seconds: 30 };
         if (panel === 'photo') Object.assign(item, { photoCount: 4, secondsPerPhoto: 10, seconds: 40 });
-        if (panel === 'monday-tasks' || panel === 'roster') item.department = 'build';
+        if (panel === 'monday-tasks' || panel === 'roster' || panel === 'monday-department') item.department = 'build';
+        if (panel === 'monday-department') Object.assign(item, { list: 'done', team: 'nova' });
+        if (panel === 'monday-charts') item.chart = 'timeline';
         if (panel === 'events') Object.assign(item, { part: 1, side: 'task-counts' });
         rows.push(item);
       });

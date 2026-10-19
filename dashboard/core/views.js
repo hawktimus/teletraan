@@ -10,15 +10,14 @@
 //      view the panels change with the plain page change.
 //   3. The theme of the day (the Screens' schedule, core/screens.js) is drawn over whichever view plays. The Screen
 //      documents stay as they were: they hold the banner settings and the Monday style, and the seed of the Views.
-//   4. A row of a team view with no department stands for every Team lead marked for Monday (expandRows).
-//   5. The minutes stand still while an alert, an announcement, a talk, a demo or the night screen has the screen, so
+//   4. The minutes stand still while an alert, an announcement, a talk, a demo or the night screen has the screen, so
 //      the view that was interrupted is the view that comes back, at the panel that was next.
 
 export {
   longestName, viewOrderOf, tidyView, tidyViews, resolveView, viewNameOf, viewTitleOf, viewShowsTag,
 } from './views-tidy.js';
 export {
-  expandRows, viewSteps, viewSideSteps, dayThemeFor, viewPlan, viewLayoutOf, layoutOfStep, drawStyleFor, stepInView,
+  viewSteps, viewSideSteps, dayThemeFor, viewPlan, viewLayoutOf, layoutOfStep, drawStyleFor, stepInView,
   lookForViewStep, cycleKey, cycleBlock, cycleSeconds, resetViews, holdPanelId, findViewWithPanel, viewPlaylist,
   viewSidePlaylist, pairSide, tickView, holdBootView,
 } from './views-play.js';

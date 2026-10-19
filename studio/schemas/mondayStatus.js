@@ -31,22 +31,6 @@ const column = defineArrayMember({
   },
 });
 
-// Titles only: the Boards tab of the Monday page lists the groups of the board the team works in
-const group = defineArrayMember({
-  type: 'object',
-  title: 'Group',
-  fields: [
-    textField('id', 'Group id', 'The id of the group on the board.'),
-    textField('title', 'Group title', 'The title of the group as Monday shows it, such as a department.'),
-  ],
-  preview: {
-    select: { title: 'title', id: 'id' },
-    prepare(entry) {
-      return { title: entry.title || 'Group with no title', subtitle: entry.id };
-    },
-  },
-});
-
 const board = defineArrayMember({
   type: 'object',
   title: 'Board',
@@ -56,7 +40,6 @@ const board = defineArrayMember({
     textField('hierarchy', 'Kind of board', 'classic, or multi_level when the board has parent items with subitems. The Teletraan computer reads a multi-level board in another way.'),
     numberField('itemCount', 'Items', 'How many items the board has.'),
     defineField({ name: 'columns', title: 'Columns', type: 'array', of: [column], description: 'The columns of the board.' }),
-    defineField({ name: 'groups', title: 'Groups', type: 'array', of: [group], description: 'The groups of the board, by title. A multi-level board names its groups like its departments.' }),
   ],
   preview: {
     select: { title: 'name', id: 'id' },
@@ -84,6 +67,22 @@ const reading = defineArrayMember({
   },
 });
 
+const departmentCount = defineArrayMember({
+  type: 'object',
+  title: 'Department',
+  fields: [
+    textField('name', 'Department', 'The department, such as build.'),
+    numberField('open', 'Open', 'How many open tasks of the department are on the TV.'),
+    numberField('done', 'Done', 'How many done tasks of the department are on the TV.'),
+  ],
+  preview: {
+    select: { title: 'name', open: 'open', done: 'done' },
+    prepare(entry) {
+      return { title: entry.title || 'Department', subtitle: (entry.open || 0) + ' open, ' + (entry.done || 0) + ' done' };
+    },
+  },
+});
+
 const snapshot = defineArrayMember({
   type: 'object',
   title: 'Count',
@@ -107,14 +106,15 @@ export default defineType({
   // Keeps it out of Studio's search, so it is not found by accident
   __experimental_omnisearch_visibility: false,
   fields: [
-    textField('connectedAs', 'Connected as', 'The first name of the account the token belongs to. The Teletraan computer writes it.'),
+    textField('connectedAs', 'Connected as', 'Not written any more: the first name of the account of the token, which the older sync kept.'),
     defineField({ name: 'lastSyncAt', title: 'Last sync', type: 'datetime', description: 'When the Teletraan computer last read Monday. The computer writes it.' }),
     textField('lastError', 'Last error', 'What went wrong in the last run, in plain words. Empty when nothing did.'),
-    defineField({ name: 'boards', title: 'Boards', type: 'array', of: [board], description: 'Every board the token can see, with its columns.' }),
-    defineField({ name: 'readings', title: 'Board readings', type: 'array', of: [reading], description: 'One entry for each board chosen in Dashboard Settings: how many items the Teletraan computer read from it, when, and why a board gave none.' }),
+    defineField({ name: 'boards', title: 'Boards', type: 'array', of: [board], description: 'Not written any more: the older sync listed every board the token could see here. The next read takes it out.' }),
+    defineField({ name: 'readings', title: 'Board readings', type: 'array', of: [reading], description: 'One entry for each of the two boards: how many items the Teletraan computer read from it, when, and why a board gave none.' }),
+    defineField({ name: 'departments', title: 'Departments', type: 'array', of: [departmentCount], description: 'The open and done tasks of each department on the TV, from the last read.' }),
     defineField({ name: 'snapshots', title: 'Daily counts', type: 'array', of: [snapshot], description: 'One count a day of the open items, 120 at most.' }),
-    numberField('taskCount', 'Tasks', 'How many parent items the Teletraan computer read from the task board the last time, hidden ones included.'),
-    numberField('hiddenUnassigned', 'Hidden, no department', 'How many of those tasks have no department, so they are kept off the TV.'),
+    numberField('taskCount', 'Tasks', 'How many tasks the Teletraan computer read from the two boards the last time, hidden ones included.'),
+    numberField('hiddenUnassigned', 'Hidden, no department', 'Not written any more: the older sync counted the tasks with no department here.'),
     numberField('callsToday', 'Reads today', 'How many requests the Teletraan computer has made to Monday today. Past 900 it waits for midnight.'),
     defineField({ name: 'callsDate', title: 'Reads counted for', type: 'date', description: 'The day of the count of reads, in the time zone of the screen.' }),
   ],

@@ -3,11 +3,11 @@
 //
 // Plain functions only, so that the test can run them with node.
 //
-// Fifteen blocks, in the order the team asked for. A row is { view, panel, seconds, shown } and, when it needs it, department (the name of a department of the Team leads, or
-// two with a comma), part (1 or 2: the first or the second page of a list), side (the small panel shown with the row) and
-// photoCount with secondsPerPhoto. A row with no seconds follows Seconds per page.
+// Fifteen blocks, in the order the team asked for. A row is { view, panel, seconds, shown } and, when it needs it, department (a
+// department of the Monday boards, or for the roster the name of a department of the Team leads, or two with a comma), list
+// (open or done) and team for Department tasks, chart for the TV charts, part (1 or 2: the first or the second page of a list),
+// side (the small panel shown with the row) and photoCount with secondsPerPhoto. A row with no seconds follows Seconds per page.
 const pair = (panel, side, extra) => Object.assign({ view: 'robotics', panel: panel, side: side, shown: true }, extra);
-const wide = (panel, department, seconds = 30) => ({ view: 'robotics', panel: panel, department: department, seconds: seconds, shown: true });
 
 function pairBlock() {
   return [
@@ -20,24 +20,21 @@ function pairBlock() {
   ];
 }
 
-function businessRows() {
-  return [
-    wide('monday-tasks', 'business'), wide('monday-done', 'business'),
-    wide('monday-tasks', 'operations'), wide('monday-done', 'operations'),
-    wide('monday-tasks', 'marketing'), wide('monday-done', 'marketing'),
-    { view: 'robotics', panel: 'roster', department: 'business,marketing', shown: true },
-  ];
+// The Monday block: the open tasks of each of the nine departments, then the three TV charts, for both teams
+function mondayRows() {
+  const departments = ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing'];
+  const charts = ['status', 'progress', 'timeline'];
+  return [].concat(
+    departments.map(department => ({ view: 'robotics', panel: 'monday-department', department: department, list: 'open', seconds: 20, shown: true })),
+    charts.map(chart => ({ view: 'robotics', panel: 'monday-charts', chart: chart, seconds: 30, shown: true })),
+    [{ view: 'robotics', panel: 'roster', department: 'business,marketing', shown: true }],
+  );
 }
 
-// The seven rows of a department of a team view
+// The two roster rows of a department of a team view
 function departmentRows(view, department) {
-  const row = (panel, extra) => Object.assign({ view: view, panel: panel, department: department, shown: true }, extra);
-
-  return [
-    row('monday-tasks', { seconds: 30 }), row('monday-done', { seconds: 30 }),
-    row('roster', { part: 1 }), row('roster', { part: 2 }),
-    row('monday-board', { seconds: 30 }), row('monday-pie', { seconds: 30 }), row('monday-timeline', { seconds: 30 }),
-  ];
+  const row = part => ({ view: view, panel: 'roster', department: department, part: part, shown: true });
+  return [row(1), row(2)];
 }
 
 function leadRows(view) {
@@ -51,11 +48,11 @@ function lastRows(view) {
   ];
 }
 
-// Blocks 1 to 15: Robotics with the Business rows, Prime and Nova (Build with the Team leads), their Electrical rows,
+// Blocks 1 to 15: Robotics with the Monday block, Prime and Nova (Build with the Team leads), their Electrical rows,
 // Robotics, Programming, Design and CNC, Robotics, Strategy, and the last four panels of each team
 export function defaultRotationRows() {
   return [].concat(
-    pairBlock(), businessRows(),
+    pairBlock(), mondayRows(),
     leadRows('prime'), departmentRows('prime', 'build'),
     leadRows('nova'), departmentRows('nova', 'build'),
     departmentRows('prime', 'electrical'), departmentRows('nova', 'electrical'),

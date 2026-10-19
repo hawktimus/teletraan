@@ -64,7 +64,6 @@ test('the section draws a card for each thing, the mode with a link to the Compe
   assert.equal(link.props.href, '/structure/competition');
   assert.equal(textOf(page).split('Added by the wall, not a row.').length - 1, auto.allAutoCards.length, 'every card says so');
   assert.equal(textOf(page).split('Can also be a row: yes').length - 1, 1);
-  assert.match(textOf(page), /one step for each Team lead/);
   assert.match(textOf(page), /sit on top of everything/);
   assert.match(textOf(page), /Not panels/);
   assert.equal(nodesWhere(page, node => node.type === 'details').length, 1, 'it can be closed, and a phone opens it closed');

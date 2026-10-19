@@ -15,7 +15,7 @@ import { cleanRows, cleanTheme, pickSettings, publishMutations, saveMutations, s
 import { checkRows, extrasOf, loadWorld } from '../support/display-wall.js';
 import { withKeys } from '../static/display-rows.js';
 import { defaultRotationRows } from '../../dashboard/config-rotation.js';
-import { scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
+import { mondayCharts, mondayDepartments, mondayLists, mondayTeams, scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
 import { themeNames } from '../support/requests.js';
 import { panelGroups, sidePanelGroups, viewTable } from '../../studio/tools/rotation-titles.js';
 
@@ -41,6 +41,7 @@ function choices() {
     sideGroups: titled(sidePanelGroups),
     themes: scheduledThemeIds.map(id => ({ value: id, title: themeNames[id] || id })),
     weekdays: weekdays,
+    monday: { departments: mondayDepartments, lists: mondayLists, charts: mondayCharts, teams: mondayTeams },
   };
 }
 

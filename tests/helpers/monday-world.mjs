@@ -1,5 +1,5 @@
-// What the tests of the Monday panels share (tests/monday-rules.test.mjs, monday-panels.test.mjs and
-// monday-acceptance.test.mjs): a copy of the dashboard folder that node can import, the modules and panels
+// What the tests of the Monday panels share (tests/monday-panels.test.mjs and the tests of the panels that read the board
+// tasks): a copy of the dashboard folder that node can import, the modules and panels
 // loaded from it, and a small task board to build content from. The board is made up: placeholders in brackets,
 // with a full name and an address in the places a real board might hold them, so a test can show they do not reach
 // the screen. Not a test itself.
@@ -33,7 +33,7 @@ export const contentModule = await load('core/content.js');
 export const screens = await load('core/screens.js');
 export const teams = await load('core/teams.js');
 
-export const panelIds = ['monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board'];
+export const panelIds = ['monday-department', 'monday-charts'];
 export const panels = {};
 for (const id of panelIds) panels[id] = await load('panels/' + id + '/panel.js');
 
@@ -49,11 +49,14 @@ export const leads = [
   { id: 'lead-design', name: '[Design]', team: 'nova', order: 4 },
 ];
 
-// A task from the board the way the sync writes it, with what a test changes. The department is Build, the team Prime.
+// A task from the board the way the sync writes it, with what a test changes. The department is Build, the team Prime, and
+// the Team lead of Build is the one with that id.
 export function task(fields) {
   return Object.assign(
     {
       title: '[Task]',
+      department: 'build',
+      list: 'open',
       subteam: '[Build]',
       subteamId: 'lead-build',
       status: 'up-next',
@@ -66,7 +69,6 @@ export function task(fields) {
       contact: '[Jordan]',
       startDate: '2026-10-12',
       dueDate: '2026-10-30',
-      milestoneIds: [],
     },
     fields
   );

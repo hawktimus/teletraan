@@ -38,7 +38,7 @@ const skippedTypes = ['photo', 'presentationDay', 'presentation', 'announcement'
 // Fields that are not columns. The board sync sets the source, the board item number, the board and
 // the due date of a task, and the two notes at the top of a task store nothing.
 const notColumns = {
-  task: ['source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'boardNote', 'manualNote', 'dueDate', 'startDate', 'estHours', 'completedOn', 'owners', 'milestoneIds', 'showOnBoard', 'hiddenReason'],
+  task: ['source', 'mondayId', 'mondayBoardId', 'mondayBoardName', 'boardNote', 'manualNote', 'department', 'list', 'dueDate', 'startDate', 'estHours', 'completedOn', 'owners', 'milestoneIds', 'showOnBoard', 'hiddenReason'],
 };
 
 // The columns whose words make the id of a row, in order. The id is the type

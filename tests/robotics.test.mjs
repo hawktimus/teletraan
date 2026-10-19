@@ -1,6 +1,5 @@
 // Tests for the Robotics view (docs/views.md): its layouts chosen by the panel, its title and team plate, no view tag, the
-// departments (Design and CNC as one, Business, Operations and Marketing for both teams), the roster from the Monday board
-// and the two placeholder panels.
+// departments of the Team leads (Design and CNC as one), the roster from the Monday board and the two placeholder panels.
 //
 //   node tests/robotics.test.mjs
 
@@ -10,6 +9,7 @@ import { config, contentOf, dashboardFolder, load, now, read, registry, runTests
 const playing = await load('core/views.js');
 const rosterModule = await load('core/roster.js');
 const placeholder = await load('core/placeholder.js');
+const leadDepartments = await load('core/lead-departments.js');
 
 const lead = (id, name, order) => ({ id: id, name: name, order: order });
 const board = () => contentOf([
@@ -25,9 +25,9 @@ test('the Robotics layout is chosen by the panel: wide for the Monday cards, the
   const content = board();
   const layout = panel => playing.layoutOfStep(content, { view: 'general', panel: panel });
 
-  ['monday-tasks', 'monday-overall', 'roster', 'robotStatus', 'wireframe'].forEach(panel => assert.equal(layout(panel), 'bar', panel));
+  ['monday-department', 'monday-charts', 'roster', 'robotStatus', 'wireframe'].forEach(panel => assert.equal(layout(panel), 'bar', panel));
   ['tonight', 'events', 'leadership', 'photo', 'sponsor-feature'].forEach(panel => assert.equal(layout(panel), 'standard', panel));
-  assert.equal(playing.layoutOfStep(content, { view: 'prime', panel: 'monday-tasks' }), 'bar', 'Prime keeps the layout of its document');
+  assert.equal(playing.layoutOfStep(content, { view: 'prime', panel: 'monday-department' }), 'bar', 'Prime keeps the layout of its document');
 });
 
 test('the title of the Robotics banner is HAWKTIMUS ROBOTICS and no view draws a tag', () => {
@@ -48,33 +48,13 @@ test('the Robotics view shows both team numbers on the team plate, in both layou
   assert.equal(config.roboticsPlate, undefined, 'there are no words for the plate in config');
 });
 
-test('Design and CNC are one department, DESIGN · CNC, with the tasks of both', () => {
+test('Design and CNC are one department of the Team leads, DESIGN · CNC, with the tasks of both', () => {
   const content = board();
-  const list = views.departmentsOf(content, content.tasks, now);
+  const list = leadDepartments.departmentsOf(content, content.tasks, now);
   const design = list.find(item => item.name === config.designDepartment);
   assert.ok(design);
   assert.deepEqual(design.ids, ['lead-design', 'lead-cnc']);
   assert.equal(list.filter(item => /cnc|design/i.test(item.name) && item !== design).length, 0);
-  const view = views.tasksView(content, now, { team: '', department: 'lead-cnc' });
-  assert.equal(view.title, 'DESIGN · CNC TASKS');
-  assert.equal(view.rows.length, 2);
-});
-
-test('Business is a department of both teams: a row with no team in Robotics plays it with no team in the title, and a team view leaves it out', () => {
-  const content = board();
-  const robotics = playing.expandRows([{ panel: 'monday-tasks', team: '', department: '' }], content, now);
-  assert.deepEqual(robotics.map(row => row.department), ['lead-business']);
-  const prime = playing.expandRows([{ panel: 'monday-tasks', team: 'prime', department: '' }], content, now);
-  assert.ok(!prime.some(row => row.department === 'lead-business'));
-  assert.ok(prime.some(row => row.department === 'lead-build'));
-  assert.equal(views.tasksView(content, now, { team: '', department: 'lead-business' }).title, 'BUSINESS TASKS');
-});
-
-test('panel titles do not repeat the team: done, timeline and board are named for what they show', () => {
-  const content = board();
-  assert.equal(views.doneView(contentOf([task({ status: 'done', completedOn: '2026-10-14' })]), now, { team: 'prime' }).title, 'DONE');
-  assert.equal(views.boardView(content, now, { team: 'prime' }).title, 'BOARD');
-  assert.equal(views.timelineView(content, now, { team: 'prime' }).title, 'TIMELINE');
 });
 
 test('the roster comes from the owners of the board and their hours, six rows a page, Design and CNC together', () => {

@@ -1,5 +1,5 @@
 // Tests for the rows of the default rotation that name a department or a part (docs/views.md, "The default rotation"): the
-// Monday cards for one department by its name, the roster for one department in two parts, the Events and Team leads panels in
+// Department tasks for one of the nine departments, the roster for one department in two parts, the Events and Team leads panels in
 // two parts, and the competition rank card as the FRC ranking of a team's view.
 //
 //   node tests/department-rows.test.mjs
@@ -13,46 +13,42 @@ const eventsPanel = await load('panels/events/panel.js');
 const leadsPanel = await load('panels/team-leads/panel.js');
 const rankPanel = await load('panels/competition-rank/panel.js');
 const screens = await load('core/screens.js');
+const leadDepartments = await load('core/lead-departments.js');
 
-const crew = names => names.map((name, at) => task({ title: '[T' + at + ']', subteamId: 'lead-build', contact: name, owners: [name], estHours: 10 - at, status: at % 2 === 0 ? 'in-progress' : 'done', completedOn: '2026-10-14' }));
+const crew = names => names.map((name, at) => task({ title: '[T' + at + ']', subteamId: 'lead-build', contact: name, owners: [name], estHours: 10 - at, status: at % 2 === 0 ? 'in-progress' : 'done', list: at % 2 === 0 ? 'open' : 'done', completedOn: '2026-10-14' }));
 const world = tasks => contentOf(tasks, raw => {
   raw.subteams = [{ id: 'lead-build', name: 'Build', order: 1 }, { id: 'lead-electrical', name: 'Electrical', order: 2 }, { id: 'lead-design', name: 'Design', order: 3 }, { id: 'lead-cnc', name: 'CNC', order: 4 }];
 });
 const eight = ['[A1]', '[A2]', '[A3]', '[A4]', '[A5]', '[A6]', '[A7]', '[A8]'];
 
-test('a department is found by its name in any case, by the id of a Team lead, and Design and CNC are one', () => {
+test('a department of the Team leads is found by its name in any case, by the id of a Team lead, and Design and CNC are one', () => {
   const content = world(crew(eight).concat([task({ subteamId: 'lead-design', subteam: 'Design' }), task({ subteamId: 'lead-cnc', subteam: 'CNC' })]));
-  const found = views.departmentsOf(content, content.tasks, now);
+  const found = leadDepartments.departmentsOf(content, content.tasks, now);
 
-  assert.equal(views.departmentIn(found, 'build').name, 'Build');
-  assert.equal(views.departmentIn(found, 'BUILD').name, 'Build');
-  assert.equal(views.departmentIn(found, 'lead-build').name, 'Build');
-  assert.equal(views.departmentIn(found, 'design').name, config.designDepartment);
-  assert.equal(views.departmentIn(found, 'cnc').name, config.designDepartment);
-  assert.equal(views.departmentIn(found, 'strategy'), null);
-  assert.equal(views.departmentIn(found, ''), null);
+  assert.equal(leadDepartments.departmentIn(found, 'build').name, 'Build');
+  assert.equal(leadDepartments.departmentIn(found, 'BUILD').name, 'Build');
+  assert.equal(leadDepartments.departmentIn(found, 'lead-build').name, 'Build');
+  assert.equal(leadDepartments.departmentIn(found, 'design').name, config.designDepartment);
+  assert.equal(leadDepartments.departmentIn(found, 'cnc').name, config.designDepartment);
+  assert.equal(leadDepartments.departmentIn(found, 'strategy'), null);
+  assert.equal(leadDepartments.departmentIn(found, ''), null);
 });
 
-test('the done, board, timeline and tasks cards take a department, and a department with nothing to show has no card', () => {
+test('Department tasks take a department and a list, and a department with nothing in the list has nothing to show', () => {
   const content = world(crew(eight));
-  ['tasksView', 'doneView', 'boardView', 'timelineView'].forEach(name => {
-    assert.notEqual(views[name](content, now, { team: 'prime', department: 'build' }), null, name);
-    assert.equal(views[name](content, now, { team: 'prime', department: 'electrical' }), null, name + ' for a department with no task');
-  });
-  assert.equal(views.doneView(content, now, { team: 'prime', department: 'build' }).title, 'BUILD DONE');
-  assert.equal(views.boardView(content, now, { team: 'prime', department: 'build' }).title, 'BUILD BOARD');
-  assert.equal(views.timelineView(content, now, { team: 'prime', department: 'build' }).title, 'BUILD TIMELINE');
-  assert.equal(views.tasksView(content, now, { team: 'prime', department: 'build' }).title, 'BUILD TASKS');
-  assert.equal(views.doneView(content, now, { team: 'prime', department: '' }).title, 'DONE', 'a row with no department is the card it was');
+  assert.equal(views.departmentView(content, now, { department: 'build', list: 'open' }).title, 'BUILD TASKS');
+  assert.equal(views.departmentView(content, now, { department: 'build', list: 'done' }).title, 'BUILD DONE');
+  assert.equal(views.departmentView(content, now, { department: 'electrical', list: 'open' }), null);
+  assert.equal(views.departmentView(content, now, { department: '', list: 'open' }), null, 'a row with no department plays nothing');
 });
 
-test('a Monday row with a department and no team is for both teams in the Robotics view only', () => {
-  const row = { panel: 'monday-done', team: '', department: 'business' };
-  assert.deepEqual(screens.tidyMainRow(row, true, true), { panel: 'monday-done', team: '', department: 'business' });
-  assert.equal(screens.tidyMainRow(row, false, true), null, 'a team view has no card for both teams');
-  assert.equal(screens.tidyMainRow({ panel: 'monday-done', team: '' }, true, true), null, 'and without a department the card is for one team');
-  assert.equal(screens.tidyMainRow({ panel: 'monday-pie', team: 'prime', department: 'build' }, false, true).department, 'build');
-  assert.equal(screens.tidyMainRow({ panel: 'monday-done', team: 'prime', department: 'build' }, false).department, undefined, 'a Screen row has no department on this card');
+test('a Monday row of the rotation keeps its department, list and team, and the look keeps the team of its view', () => {
+  assert.deepEqual(screens.tidyMainRow({ panel: 'monday-department', team: '', tasksTeam: 'nova', department: 'Build', list: 'done' }, true, true),
+    { panel: 'monday-department', team: '', tasksTeam: 'nova', department: 'build', list: 'done' });
+  assert.deepEqual(screens.tidyMainRow({ panel: 'monday-department', team: 'prime', department: 'business' }, false, true),
+    { panel: 'monday-department', team: 'prime', tasksTeam: '', department: 'business', list: 'open' }, 'a row of the Prime view with no team shows both teams');
+  assert.deepEqual(screens.tidyMainRow({ panel: 'monday-charts', team: '', chart: 'nope' }, true, true), { panel: 'monday-charts', team: '', tasksTeam: '', chart: 'status' });
+  assert.equal(screens.tidyMainRow({ panel: 'monday-done', team: 'prime', department: 'build' }, false, true), null, 'a retired panel plays nothing');
 });
 
 test('the roster of a department has six people in part 1 and the rest in part 2, which scrolls six at a time', () => {

@@ -120,17 +120,17 @@ test('a row of the small panel keeps its panel and seconds and never a team, and
   assert.deepEqual(screen.sideRows, [{ panel: 'forecast', seconds: 12 }, { panel: 'task-counts' }]);
 });
 
-test('only a panel that follows the team has a team, and a Monday row needs a team unless its panel is for both teams', () => {
+test('only a panel that follows the team has a team, a Monday row keeps its team or none, and a row of a retired Monday panel is dropped', () => {
   const screen = screens.tidyScreen({
     mainRows: [
       { panel: 'tasks', team: 'nova' },
       { panel: 'events', team: 'nova' },
       { panel: 'photo', team: 'both' },
       { panel: 'tonight', team: 'both' },
-      { panel: 'monday-tasks', team: 'prime' },
-      { panel: 'monday-tasks', team: '' },
-      { panel: 'monday-tasks' },
-      { panel: 'monday-tasks', team: 'both' },
+      { panel: 'monday-charts', team: 'prime' },
+      { panel: 'monday-charts', team: '' },
+      { panel: 'monday-charts' },
+      { panel: 'monday-charts', team: 'both' },
       { panel: 'monday-milestones', team: 'both' },
       { panel: 'monday-progress', team: 'NOVA' },
       { panel: 'monday-progress' },
@@ -138,7 +138,7 @@ test('only a panel that follows the team has a team, and a Monday row needs a te
     ],
   }, 'original', 'minimal');
 
-  assert.deepEqual(rowsOf(screen.mainRows), ['tasks nova', 'events', 'photo 40s', 'tonight', 'monday-tasks prime', 'monday-tasks nova'], 'a row of an older Monday panel is the tasks panel of its team, one for both teams is dropped, and the same row twice is one');
+  assert.deepEqual(rowsOf(screen.mainRows), ['tasks nova', 'events', 'photo 40s', 'tonight', 'monday-charts prime', 'monday-charts', 'monday-charts', 'monday-charts'], 'a Monday row of both teams has no team, and a row of a retired panel is dropped');
   assert.deepEqual(config.teamPanels, ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom']);
   config.teamPanels.forEach(id => assert.equal(registry.panels.find(panel => panel.id === id).region, 'grid1', id + ' is a large panel'));
 });
@@ -275,7 +275,7 @@ test('the rows that Screens build are the ones of the seeding module, and the te
   assert.deepEqual(screens.teamsOf({ teams: [Object.assign({}, prime, { active: false }), nova] }).map(team => team.code), ['nova'], 'a team that is switched off has no rows');
   assert.deepEqual(screens.teamsOf({ teams: [Object.assign({}, prime, { active: false })] }).map(team => team.code), ['prime'], 'and with none on there is the built-in one');
   assert.deepEqual(screens.teamsOf({ teams: [nova, prime] }).map(team => team.code), ['nova', 'prime'], 'in the order of the Teams');
-  assert.deepEqual(rowsOf(seed.seedMainRows({ order: [{ panel: 'tasks' }] }, screens.teamsOf({ teams: [nova, prime] }))).slice(0, 2), ['tasks nova', 'monday-tasks nova']);
+  assert.deepEqual(rowsOf(seed.seedMainRows({ order: [{ panel: 'tasks' }] }, screens.teamsOf({ teams: [nova, prime] }))).slice(0, 2), ['tasks nova', 'monday-charts nova']);
 });
 
 
@@ -292,7 +292,7 @@ test('with no Screen documents the dashboard plays rows built from the Panel ord
   const screen = screens.resolveScreen(content, 'cybertron');
   assert.equal(screen.style, 'cybertron');
   assert.deepEqual(rowsOf(screen.mainRows).slice(0, 4), ['tonight prime', 'leadership prime', 'team-leads prime', 'tasks prime']);
-  assert.equal(screen.mainRows.length, 16);
+  assert.equal(screen.mainRows.length, 12);
   assert.deepEqual(rowsOf(screen.sideRows), ['forecast', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts']);
   assert.deepEqual([screen.nameEffectEveryMinutes, screen.hawkEveryMinutes, screen.swapSeconds, screen.mondayStyle], [10, 5, 1.25, 'minimal']);
 
@@ -317,9 +317,9 @@ test('a Screen with an empty list of rows is built from the Panel order, each li
   assert.deepEqual(rowsOf(original.sideRows), ['forecast', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts'], 'and the small ones it did not have');
 
   const cybertron = screens.resolveScreen(content, 'cybertron');
-  assert.equal(cybertron.mainRows.length, 16);
+  assert.equal(cybertron.mainRows.length, 12);
   assert.deepEqual(rowsOf(cybertron.sideRows), ['safety-days']);
-  assert.equal(screens.resolveScreen(content, 'minimal').mainRows.length, 16, 'a Screen that has no document at all');
+  assert.equal(screens.resolveScreen(content, 'minimal').mainRows.length, 12, 'a Screen that has no document at all');
 });
 
 test('content that is not content, or has no settings, still gives a Screen and a look', () => {
@@ -381,63 +381,52 @@ test('the rows of the large panel are the ones of the Screen of the day, also wh
   clean();
 });
 
-test('a Monday row is one step with the team, the department and the turn, and a row of an older panel plays as the tasks panel of its team', () => {
+test('a Monday row is one step with the team of its tasks, the department, the list and the chart, and a row of a retired panel plays nothing', () => {
   clean();
   const content = contentWith(raw => {
     raw.screens = [doc('original', { mainRows: [
-      { panel: 'monday-tasks', team: 'prime', department: 'subteam-b' }, { panel: 'monday-milestones', team: 'prime', seconds: 20 }, { panel: 'monday-progress', team: 'prime' },
-      { panel: 'monday-tasks', team: 'nova' },
-      { panel: 'monday-board', team: 'prime' }, { panel: 'monday-board', team: 'prime' }, { panel: 'monday-overall' },
+      { panel: 'monday-department', team: 'prime', department: 'build', list: 'open' }, { panel: 'monday-milestones', team: 'prime', seconds: 20 },
+      { panel: 'monday-charts', team: 'nova', chart: 'progress' },
+      { panel: 'monday-department', department: 'operations', list: 'done', seconds: 20 }, { panel: 'monday-charts' },
+      { panel: 'monday-department', department: 'strategy', list: 'open', team: 'nova' },
     ] })];
   });
   const steps = screens.mainPlaylist(content, mondayNoon);
 
   assert.deepEqual(steps.map(step => [step.panel, step.team, step.seconds, step.row]), [
-    ['monday-tasks', 'prime', undefined, 0],
-    ['monday-tasks', 'prime', 20, 1],
-    ['monday-tasks', 'nova', undefined, 2],
-    ['monday-board', 'prime', undefined, 3],
-    ['monday-board', 'prime', undefined, 4],
-    ['monday-overall', '', undefined, 5],
-  ]);
+    ['monday-department', 'prime', undefined, 0],
+    ['monday-charts', 'nova', undefined, 1],
+    ['monday-department', '', 20, 2],
+    ['monday-charts', '', undefined, 3],
+  ], 'the retired row and a department with nothing in its list play nothing');
   assert.deepEqual(steps.map(step => step.page), [
-    { team: 'prime', department: 'subteam-b', turn: 1 },
-    { team: 'prime', department: '', turn: 1 },
-    { team: 'nova', department: '', turn: 1 },
-    { team: 'prime', department: '', turn: 1 },
-    { team: 'prime', department: '', turn: 2 },
-    { team: '', department: '', turn: 1 },
+    { team: 'prime', department: 'build', list: 'open', chart: 'status' },
+    { team: 'nova', department: '', list: 'open', chart: 'progress' },
+    { team: '', department: 'operations', list: 'done', chart: 'status' },
+    { team: '', department: '', list: 'open', chart: 'status' },
   ]);
-});
-
-test('a Monday row for both teams of an older panel is left out, and the panels for both teams take no team', () => {
-  clean();
-  const content = contentWith(raw => {
-    raw.screens = [doc('original', { mainRows: [{ panel: 'monday-milestones', team: 'both' }, { panel: 'monday-progress', team: 'both', seconds: 25 }, { panel: 'monday-status-depts', team: 'nova', seconds: 25 }] })];
-  });
-  assert.deepEqual(screens.mainPlaylist(content, mondayNoon).map(step => [step.panel, step.team, step.seconds]), [['monday-status-depts', '', 25]]);
 });
 
 test('a row for a team that is switched off or is not there is left out, and ?team= leaves out the rows of the other team', () => {
   clean();
-  const mainRows = [{ panel: 'tasks', team: 'prime' }, { panel: 'tasks', team: 'nova' }, { panel: 'tonight', team: 'ghost' }, { panel: 'photo' }, { panel: 'monday-overall' }];
+  const mainRows = [{ panel: 'tasks', team: 'prime' }, { panel: 'tasks', team: 'nova' }, { panel: 'tonight', team: 'ghost' }, { panel: 'photo' }, { panel: 'monday-charts' }];
   const content = contentWith(raw => {
     raw.screens = [doc('original', { mainRows: mainRows })];
   });
   const names = steps => steps.map(step => step.panel + (step.team ? ' ' + step.team : ''));
 
-  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'tasks nova', 'photo', 'monday-overall']);
+  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'tasks nova', 'photo', 'monday-charts']);
 
   const off = contentWith(raw => {
     raw.screens = [doc('original', { mainRows: mainRows })];
     raw.teams.forEach(team => { if (team.code === 'nova') team.active = false; });
   });
-  assert.deepEqual(names(screens.mainPlaylist(off, mondayNoon)), ['tasks prime', 'photo', 'monday-overall']);
+  assert.deepEqual(names(screens.mainPlaylist(off, mondayNoon)), ['tasks prime', 'photo', 'monday-charts']);
 
   teamsModule.askForTeam('nova');
-  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks nova', 'photo', 'monday-overall']);
+  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks nova', 'photo', 'monday-charts']);
   teamsModule.askForTeam('prime');
-  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'photo', 'monday-overall']);
+  assert.deepEqual(names(screens.mainPlaylist(content, mondayNoon)), ['tasks prime', 'photo', 'monday-charts']);
   teamsModule.askForTeam('alternate');
   assert.equal(screens.mainPlaylist(content, mondayNoon).length, 4, 'Alternate mode leaves out nothing');
   clean();
@@ -477,7 +466,7 @@ function swapsOf(steps, plan, start, laps) {
 }
 
 test('a list of Prime, Prime, no team, Nova, a Monday row of Nova, Prime swaps at rows 4, 5 and 6, and at the same rows when it loops', () => {
-  const list = [plain('tasks', 'prime'), plain('tonight', 'prime'), plain('photo'), plain('tasks', 'nova'), plain('monday-milestones', 'nova'), plain('leadership', 'prime')];
+  const list = [plain('tasks', 'prime'), plain('tonight', 'prime'), plain('photo'), plain('tasks', 'nova'), plain('monday-department', 'nova'), plain('leadership', 'prime')];
 
   assert.deepEqual(swapsOf(list, originalDay, startOfDay, 1), [4, 5, 6]);
   assert.deepEqual(swapsOf(list, originalDay, startOfDay, 2), [4, 5, 6, 10, 11, 12], 'the loop goes from Prime to Prime, so the first row has no swap');
@@ -501,7 +490,7 @@ test('a list that ends in the other team swaps at the loop, and a list of one te
 });
 
 test('a Monday row is in the Monday style going in, and the Screen of the day coming out, and the cards between are one look', () => {
-  const list = [plain('tasks', 'prime'), plain('monday-tasks', 'prime'), plain('monday-milestones', 'prime'), plain('monday-progress', 'prime'), plain('events')];
+  const list = [plain('tasks', 'prime'), plain('monday-charts', 'prime'), plain('monday-department', 'prime'), plain('monday-charts', 'prime'), plain('events')];
   const walk = screens.walkSteps(list, originalDay, startOfDay);
 
   assert.deepEqual(walk.map(entry => entry.look.style), ['original', 'minimal', 'minimal', 'minimal', 'original']);
@@ -513,7 +502,7 @@ test('a Monday row is in the Monday style going in, and the Screen of the day co
 });
 
 test('a Monday style that is the style of the day changes no style going in and coming out, and the Monday cards are noted for the swap of full motion', () => {
-  const list = [plain('tasks', 'prime'), plain('monday-progress', 'prime'), plain('photo')];
+  const list = [plain('tasks', 'prime'), plain('monday-charts', 'prime'), plain('photo')];
   const walk = screens.walkSteps(list, { style: 'original', mondayStyle: 'original' }, startOfDay);
 
   assert.deepEqual(walk.map(entry => entry.changes.swap), [false, false, false], 'no style and no team changes');
@@ -522,7 +511,7 @@ test('a Monday style that is the style of the day changes no style going in and 
 });
 
 test('a row with no team keeps the team, also after a Monday row, and a row for both teams keeps it too', () => {
-  const list = [plain('tasks', 'nova'), plain('photo'), plain('monday-milestones', 'both'), plain('events'), plain('monday-progress', 'nova'), plain('photo')];
+  const list = [plain('tasks', 'nova'), plain('photo'), plain('monday-department', 'both'), plain('events'), plain('monday-charts', 'nova'), plain('photo')];
   const walk = screens.walkSteps(list, originalDay, { team: 'prime', style: 'original', monday: false });
 
   assert.deepEqual(walk.map(entry => entry.look.team), ['nova', 'nova', 'nova', 'nova', 'nova', 'nova']);
@@ -552,7 +541,7 @@ test('the steps of the real sample rows swap only where the team or the Monday c
   const walk = screens.walkSteps(steps, plan, screens.bootLook(content, mondayNoon));
 
   const swaps = walk.filter(entry => entry.changes.swap).map(entry => entry.panel);
-  assert.ok(swaps.includes('monday-tasks'), 'into the Monday cards');
+  assert.ok(swaps.some(panel => panel.startsWith('monday-')), 'into the Monday cards');
   assert.ok(swaps.includes('tasks'), 'and out of them, into the next team');
   assert.equal(walk[0].changes.swap, false, 'the first row is where the screen starts');
   walk.filter(entry => entry.look.monday).forEach(entry => assert.equal(entry.look.style, 'minimal'));
@@ -605,12 +594,12 @@ test('the screen starts in the Screen of the day, with the team of the first row
   assert.equal(screens.bootLook(novaOnly, mondayNoon).team, 'nova', 'the first team that is switched on');
 
   const mondayFirst = contentWith(raw => {
-    raw.screens = [doc('original', { mainRows: [{ panel: 'monday-tasks', team: 'nova' }, { panel: 'tasks', team: 'nova' }], mondayStyle: 'cybertron' })];
+    raw.screens = [doc('original', { mainRows: [{ panel: 'monday-charts', team: 'nova' }, { panel: 'tasks', team: 'nova' }], mondayStyle: 'cybertron' })];
   });
   assert.deepEqual(screens.bootLook(mondayFirst, mondayNoon), { team: 'nova', style: 'cybertron', monday: true }, 'a first row that is a Monday row starts in the Monday style');
 
   const empty = contentWith(raw => {
-    raw.screens = [doc('original', { mainRows: [{ panel: 'monday-tasks', team: 'nova' }], sideRows: [] })];
+    raw.screens = [doc('original', { mainRows: [{ panel: 'monday-charts', team: 'nova' }], sideRows: [] })];
     raw.tasks = [];
   });
   assert.deepEqual(screens.bootLook(empty, mondayNoon), { team: 'prime', style: 'original', monday: false }, 'no row to play: the style of the day and the first team');

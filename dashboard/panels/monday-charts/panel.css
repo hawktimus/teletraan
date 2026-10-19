@@ -1,0 +1,179 @@
+/* The TV charts (panels/monday-charts). The header, the body and the numbers are in monday.css. The three parts of a bar
+   are the status colours of the theme: Done, In Progress (with In Review and Stuck) and To Do. Nothing here moves. */
+.monday-charts .part-done { background: var(--status-done); }
+.monday-charts .part-progress { background: var(--status-progress); }
+.monday-charts .part-todo { background: var(--status-next); }
+
+/* The legend along the top of the status chart and the timeline: a square and the word of each part, at 36px */
+.monday-charts .legend {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  white-space: nowrap;
+  font: 600 36px/36px var(--font-display);
+}
+.monday-charts .key {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.monday-charts .swatch {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+}
+
+/* A department name is in a column of 360, where PROGRAMMING fits at 44px */
+.monday-charts .name {
+  flex: none;
+  width: 360px;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+
+
+/* Status by department: up to nine rows of 52 under the legend. A bar is as long as its tasks against the longest row,
+   and a part wide enough for its number carries it. The total of the row is at its end. */
+.monday-charts .status-rows {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.monday-charts .status-row {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.monday-charts .status-rows.rows-1 .status-row,
+.monday-charts .status-rows.rows-2 .status-row,
+.monday-charts .status-rows.rows-3 .status-row,
+.monday-charts .status-rows.rows-4 .status-row,
+.monday-charts .status-rows.rows-5 .status-row { height: 80px; }
+.monday-charts .track {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  display: flex;
+}
+.monday-charts .segment {
+  box-sizing: border-box;
+  height: 44px;
+  overflow: hidden;
+  text-align: center;
+  color: var(--ground);
+  font: 700 var(--size-label)/44px var(--font-display);
+}
+.monday-charts .total {
+  flex: none;
+  width: 96px;
+  text-align: right;
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+
+
+/* Overall progress: the percent at the size of a stat, a bar across the body, the hours (or the tasks) in words, and the
+   done and open tasks along the bottom */
+.monday-charts .progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 16px;
+}
+.monday-charts .percent {
+  display: block;
+  color: var(--yellow);
+  font: 700 var(--size-stat)/168px var(--font-display);
+}
+.monday-charts .progress-track {
+  margin-top: 24px;
+  height: 72px;
+  background: var(--plate);
+}
+.monday-charts .progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--status-done);
+}
+.monday-charts .progress-words {
+  margin: 24px 0 0;
+  font: 600 var(--size-body)/64px var(--font-display);
+}
+.monday-charts.chart-progress .facts { top: 448px; }
+
+
+/* Timeline: a line of month names, then a row for each department with its bars in its lanes. The lines are the
+   first day of each month, and the red line is today. A row has up to three lanes. */
+.monday-charts .timeline {
+  position: relative;
+  margin-top: 4px;
+}
+.monday-charts .months,
+.monday-charts .lane-row,
+.monday-charts .today-layer {
+  display: flex;
+  gap: 16px;
+}
+.monday-charts .months { height: 48px; }
+.monday-charts .lanes {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.monday-charts .month {
+  position: absolute;
+  top: 0;
+  padding-left: 12px;
+  color: var(--yellow);
+  font: 600 36px/48px var(--font-display);
+}
+.monday-charts .lane-row {
+  height: 54px;
+  align-items: center;
+  border-top: 3px solid var(--plate);
+}
+.monday-charts .lane-row .lanes { height: 100%; }
+.monday-charts .month-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--plate);
+}
+.monday-charts .bar {
+  position: absolute;
+  height: 36px;
+  top: 10px;
+}
+.monday-charts .bar.of-2 { height: 20px; }
+.monday-charts .bar.of-2.lane-0 { top: 6px; }
+.monday-charts .bar.of-2.lane-1 { top: 30px; }
+.monday-charts .bar.of-3 { height: 14px; }
+.monday-charts .bar.of-3.lane-0 { top: 4px; }
+.monday-charts .bar.of-3.lane-1 { top: 20px; }
+.monday-charts .bar.of-3.lane-2 { top: 36px; }
+.monday-charts .today-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.monday-charts .today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--danger);
+}
+.monday-charts .notes {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  color: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-display);
+}

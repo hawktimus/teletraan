@@ -193,4 +193,15 @@ check('Quick hide says what each button does and how many rows it changes, and e
   assert.ok(quickHtml([], quickChoices).includes('no rows in the list'));
 });
 
+check('a Department tasks row has a Department, a List and a Team dropdown, and a TV charts row a Chart and a Team dropdown', () => {
+  const monday = { departments: [{ value: 'build', title: 'Build' }, { value: 'cnc', title: 'CNC' }], lists: [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }], charts: [{ value: 'status', title: 'Status by department' }, { value: 'timeline', title: 'Timeline' }], teams: [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }, { value: 'nova', title: 'Nova' }] };
+  const rows = withKeys([{ view: 'robotics', panel: 'monday-department', department: 'cnc', list: 'done', shown: true }, { view: 'robotics', panel: 'monday-charts', chart: 'timeline', team: 'nova', shown: true }, { view: 'robotics', panel: 'photo', shown: true }]);
+  const html = rowsHtml(rows, Object.assign({}, page, { rows: rows, checks: {}, choices: Object.assign({}, choices, { monday: monday }) }));
+  const cards = html.split('<article').slice(1);
+  ['department', 'list', 'team'].forEach(name => assert.ok(cards[0].includes('data-field="' + name + '"'), name));
+  assert.ok(cards[0].includes('<option value="cnc" selected>CNC</option>') && cards[0].includes('<option value="done" selected>Done</option>') && cards[0].includes('<option value="" selected>Both</option>'));
+  assert.ok(cards[1].includes('data-field="chart"') && cards[1].includes('<option value="timeline" selected>Timeline</option>') && cards[1].includes('<option value="nova" selected>Nova</option>'));
+  assert.ok(!cards[1].includes('data-field="list"') && !cards[2].includes('data-field="team"'));
+});
+
 console.log('\n' + passed + ' passed');

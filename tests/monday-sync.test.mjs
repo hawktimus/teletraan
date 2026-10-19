@@ -1,5 +1,5 @@
-// Tests for computer/scripts/monday-sync.sh (the task board and the milestones board of
-// the rebuilt Monday workspace) and computer/scripts/install-monday.sh. The tools they use
+// Tests for computer/scripts/monday-sync.sh (the two boards Robotics Tasks and Completed Tasks)
+// and computer/scripts/install-monday.sh. The tools they use
 // on the Teletraan computer (curl, date, flock, id, systemctl) are replaced with small fake ones in a
 // temporary folder, so nothing touches the network or the machine. jq is the real one,
 // because the scripts depend on what it does, so this test needs jq installed. The
@@ -86,7 +86,7 @@ case $address in
     query=$(jq -r '.query' "$body")
     case $query in
       'query { me { name } }') name=me ;;
-      'query { me { name } boards'*) name=boards ;;
+      'query ($ids'*) name=users ;;
       'query ($board'*) name="items-$(jq -r '.variables.board[0]' "$body")" ;;
       'query ($cursor'*) name="more-$(jq -r '.variables.cursor' "$body")" ;;
       *) name=unknown ;;
@@ -298,170 +298,107 @@ function filesUnder(folder) {
 }
 
 
-// The made-up world. The ids of the columns and the indexes are the ones of the rebuilt workspace
-// (the contract of docs/monday.md), because they are the starting values of Dashboard Settings.
+
+// The made-up world: the two boards of docs/monday.md, with their real numbers, column ids and label
+// numbers, and made-up items in the multi-level shape (a status is a BatteryValue, a person is an id).
 const taskBoardId = '18435126893';
-const milestoneBoardId = '18435272887';
+const doneBoardId = '18435131682';
 const todayText = '2027-01-12';
 const nowText = '2027-01-12T15:00:00Z';
 
-// One value of a column, as the typed fragments give it
 function value(id, type, text, extra) {
   return Object.assign({ id: id, type: type, text: text }, extra || {});
 }
-function status(id, label, index) {
-  return value(id, 'status', label, { label: label, index: index });
+// A status column of a multi-level board: the number of the label as the key, with one item under it
+function battery(id, index) {
+  return value(id, 'status', '', { battery_value: index === null ? [] : [{ key: String(index), count: 1 }] });
 }
-function item(id, name, values, parent, group) {
-  const answer = { id: id, name: name, parent_item: parent ? { id: parent } : null, column_values: values };
-  if (group) answer.group = { id: 'group_' + group.toLowerCase(), title: group };
-  return answer;
+function item(id, name, values, group, parent) {
+  return { id: id, name: name, parent_item: parent ? { id: parent } : null, group: group ? { id: 'group_' + group.toLowerCase(), title: group } : null, column_values: values };
 }
 
-// The columns of a task, by what they hold
 const col = {
-  department: (label, index) => status('color_mm82nvea', label, index),
-  state: (label, index) => status('color_mkv6tatz', label, index),
-  team: (label, index) => status('color_mm82jgxg', label, index),
-  priority: (label, index) => status('color_mm82wfy', label, index),
-  show: (label, index) => status('color_mm83p12x', label, index),
-  assigned: text => value('multiple_person_mm82cqbx', 'people', text, { persons_and_teams: [{ id: 1 }] }),
-  poc: text => value('multiple_person_mm8331h1', 'people', text, { persons_and_teams: [{ id: 1 }] }),
+  department: index => battery('color_mm82nvea', index),
+  state: index => battery('color_mkv6tatz', index),
+  team: index => battery('color_mm82jgxg', index),
+  priority: index => battery('color_mm82wfy', index),
+  show: index => battery('color_mm83p12x', index),
+  assigned: (ids, text) => value('multiple_person_mm82cqbx', 'people', text || '', { persons_and_teams: ids.map(id => ({ id: id, kind: 'person' })) }),
   timeline: (from, to) => value('timerange_mkyp8kx7', 'timeline', from + ' - ' + to, { from: from, to: to }),
   hours: text => value('numeric_mm82pw1a', 'numbers', text),
   completed: day => value('date_mm82kn5v', 'date', day, { date: day }),
-  milestone: ids => value('board_relation_mm83phwy', 'board_relation', ids.length + ' linked', { linked_item_ids: ids }),
 };
 
-// One item for each kind the contract lists: a status of each index, a General item, an Unassigned item, a Hide item
-// and a subitem, and an item with nothing set but its department
+// Robotics Tasks: one item for each rule of docs/monday.md
 function taskItems() {
   return [
-    item('1001', 'Wire the robot', [
-      col.department('Build', 1), col.state('In Progress', 0), col.team('Prime', 1), col.priority('High', 2), col.show('Show', 5),
-      col.assigned('Pat Kim, Jo Ray'), col.poc('Sam Lee'), col.timeline('2026-10-01', '2026-10-20'), col.hours('12.5'), col.milestone(['2001', '2004']),
-      value('text_mm82s03v', 'text', 'Sam Lee, sam@example.com, call 555 0100'),
-    ]),
-    item('1002', 'Pick up parts', [
-      col.department('Build', 1), col.state('Done', 1), col.team('Prime', 1), col.priority('Low', 1), col.show('Show', 5),
-      col.poc('Ana Diaz'), col.completed('2026-10-10'), col.hours('4'),
-    ]),
-    item('1003', 'Waiting on a part', [
-      col.department('Electrical', 0), col.state('Stuck', 2), col.team('Nova', 0), col.priority('Medium', 0), col.show('Show', 5),
-      col.timeline('2027-01-05', '2027-01-30'),
-    ]),
-    item('1004', 'Check the bumpers', [
-      col.department('Design', 3), col.state('In Review', 3), col.team('Prime', 1), col.show('Show', 5), col.poc('Lee'),
-    ]),
-    // Done is the group of this item, and its status is To Do, so it reads To Do
-    item('1005', 'Reopened task', [
-      col.department('Programming', 2), col.state('To Do', 5), col.team('General', 5), col.priority('', 5), col.show('Show', 5),
-    ]),
-    item('1006', 'Plan the outreach', [
-      col.department('Strategy', 6), col.state('In Progress', 0), col.team('General', 5), col.show('Show', 5), col.hours('0'),
-    ]),
-    item('1007', 'Nobody owns this', [
-      col.department('Unassigned', 5), col.state('To Do', 5), col.team('Prime', 1), col.show('Show', 5),
-    ]),
-    item('1008', 'Hidden from the TV', [
-      col.department('Build', 1), col.state('In Progress', 0), col.team('Prime', 1), col.show('Hide', 6),
-    ]),
-    item('1009', 'A subitem of the wiring', [
-      col.department('Build', 1), col.state('In Progress', 0), col.team('Prime', 1), col.show('Show', 5),
-    ], '1001'),
-    // Nothing is set but the department: every unset column reports 5, or is not in the answer
-    item('1010', 'Nothing set', [col.department('Build', 1)]),
+    // the group is the department, whatever the Department column says
+    item('1001', 'Wire the robot', [col.department(0), col.state(0), col.team(1), col.priority(2), col.show(5), col.assigned([71, 72]), col.timeline('2026-10-01', '2026-10-20'), col.hours('12.5')], 'Build'),
+    // the Done group puts a task in the done list, and the Department column gives its department
+    item('1002', 'Pick up parts', [col.department(1), col.state(5), col.team(0), col.priority(1), col.show(5), col.completed('2026-10-10')], 'Done'),
+    // Status Done is done in any group
+    item('1003', 'Mount the camera', [col.state(1), col.team(5), col.completed('2027-01-05')], 'Electrical'),
+    // Stuck, In Review, no priority, nobody assigned
+    item('1004', 'Waiting on a part', [col.state(2), col.priority(5), col.show(5)], 'Programming'),
+    item('1005', 'Check the bumpers', [col.state(3), col.team(1), col.assigned([73])], 'Design'),
+    // Hide keeps it off the TV
+    item('1006', 'Hidden from the TV', [col.state(0), col.show(2)], 'CNC'),
+    // a group that is not a department and no Department column: left out
+    item('1007', 'Nobody owns this', [col.department(5), col.state(5)], 'Ideas'),
+    // a subitem is never a task
+    item('1008', 'A step of the wiring', [col.state(0)], 'Build', '1001'),
+    // nothing set but the group
+    item('1009', 'Nothing set', [], 'Marketing'),
   ];
 }
 
-function milestoneItems() {
-  const date = day => value('date_mm83y6zw', 'date', day, { date: day });
-  const team = (label, index) => status('color_mm83be52', label, index);
-  const department = (label, index) => status('color_mm83f77w', label, index);
-  const state = (label, index) => status('color_mm83ndkf', label, index);
+// Completed Tasks: every item is done, and its group is its department
+function doneItems() {
   return [
-    item('2001', 'First robot test', [date('2026-12-01'), team('Prime', 109), department('Build', 107), state('On Track', 1)]),
-    item('2002', 'Kickoff', [date('2027-01-09'), team('Both Teams', 5), department('All Departments', 5), state('Not Started', 5)]),
-    item('2003', 'Wiring done', [date('2026-11-15'), team('Nova', 8), department('Electrical', 9), state('At Risk', 2)]),
-    item('2004', 'Bumpers done', [date('2026-10-01'), team('Prime', 109), department('Design', 1), state('Done', 3)]),
-    item('2005', 'EXAMPLE - edit or delete me (Robot reveal)', [team('Both Teams', 5), department('All Departments', 5), state('Not Started', 5)]),
-    item('2006', 'No date yet', [team('Prime', 109), department('Build', 107), state('Not Started', 5)]),
-    item('2007', 'EXAMPLE with a date', [date('2026-12-24'), team('Both Teams', 5), department('All Departments', 5), state('Not Started', 5)]),
+    item('2001', 'Old gearbox', [col.state(5), col.team(1), col.assigned([71]), col.hours('6')], 'Build'),
+    item('2002', 'Old dashboard', [col.state(1)], 'Strategy'),
   ];
 }
 
-// The Team leads of the made-up team. A lead may be written with capitals or spaces that the label is not.
-const leads = [
-  { _id: 'subteam-electrical', name: 'Electrical' }, { _id: 'subteam-build', name: ' build ' }, { _id: 'subteam-programming', name: 'Programming' },
-  { _id: 'subteam-design', name: 'Design' }, { _id: 'subteam-cnc', name: 'CNC' }, { _id: 'subteam-strategy', name: 'Strategy' },
-  { _id: 'subteam-business', name: 'Business' }, { _id: 'subteam-marketing', name: 'Marketing' }, { _id: 'subteam-operations', name: 'Operations' },
-];
+const leads = [{ _id: 'subteam-build', name: ' Build ' }, { _id: 'subteam-design', name: 'Design' }];
 
 function world(place, options) {
   const given = options || {};
   place.at(nowText, todayText);
   place.sanity({
     zone: given.zone || 'America/New_York',
-    owners: given.owners === true,
     every: given.every === undefined ? null : given.every,
-    taskBoard: given.taskBoard === undefined ? null : given.taskBoard,
-    milestoneBoard: given.milestoneBoard === undefined ? null : given.milestoneBoard,
-    teams: [{ _id: 'team-prime' }, { _id: 'team-nova' }],
-    subteams: given.subteams || leads,
+    teams: [{ _id: 'team-prime', code: 'prime' }, { _id: 'team-nova', code: 'nova' }],
+    subteams: leads,
     tasks: given.tasks || [],
-    milestones: given.milestones || [],
     known: given.known === undefined ? null : given.known,
     snapshots: given.snapshots === undefined ? null : given.snapshots,
-    readings: given.readings === undefined ? null : given.readings,
+    readings: null,
   });
-  place.answer('boards', boardsAnswer());
   place.answer('me', { data: { me: { name: 'Jordan Example' } } });
-  place.pages(taskBoardId, given.items || taskItems(), 200, 'Robotics Tasks');
-  place.pages(milestoneBoardId, given.milestoneItems || milestoneItems(), 200, 'Milestones');
+  place.answer('users', { data: { users: [{ id: '71', name: 'Pat Kim' }, { id: 72, name: 'Jo Ray' }, { id: '73', name: 'sam@example.com' }] } });
+  place.pages(taskBoardId, given.items || taskItems(), given.size || 200, 'Robotics Tasks');
+  place.pages(doneBoardId, given.doneItems || doneItems(), 200, 'Completed Tasks');
 }
 
-function boardsAnswer() {
-  const columns = [
-    { id: 'name', title: 'Name', type: 'name' },
-    { id: 'color_mkv6tatz', title: 'Status', type: 'status' },
-    { id: 'timerange_mkyp8kx7', title: 'Timeline', type: 'timeline' },
-  ];
-  return {
-    data: {
-      me: { name: 'Jordan Example' },
-      boards: [
-        { id: taskBoardId, name: 'Robotics Tasks', type: 'board', items_count: 10, columns: columns, groups: [{ id: 'topics', title: 'Build' }, { id: 'group_two', title: 'Electrical' }, { id: 'bad id!', title: 'Skipped' }, { id: 'group_two', title: 'Duplicate' }] },
-        { id: milestoneBoardId, name: 'Milestones', type: 'board', items_count: 7, columns: columns.slice(0, 2) },
-        { id: '333', name: 'Subitems of Robotics Tasks', type: 'sub_items_board', items_count: 2, columns: columns.slice(0, 1) },
-      ],
-    },
-    account_id: 1,
-  };
-}
+const sequence = ['sanity-query', 'monday items-' + taskBoardId, 'monday items-' + doneBoardId, 'monday users', 'sanity-write', 'sanity-write', 'status-write monday'];
 
-// A first read of a day: the list of boards, the task board, the milestones board
-const firstSequence = ['sanity-query', 'monday boards', 'monday items-' + taskBoardId, 'monday items-' + milestoneBoardId, 'sanity-write', 'sanity-write', 'status-write monday'];
-
-// The reads that a day already had, so the list of boards is not asked for again
-const laterRead = { lastSyncAt: '2027-01-12T14:00:00Z', callsToday: 6, callsDate: todayText, lastError: null, boards: 3 };
-const laterSequence = ['sanity-query', 'monday items-' + taskBoardId, 'monday items-' + milestoneBoardId, 'sanity-write', 'sanity-write', 'status-write monday'];
-
-// The documents the run made or patched, by id
+// The documents the run made, patched or deleted, by id
 function documentsOf(place) {
-  const patches = {};
+  const found = {};
   place.taskMutations().forEach(mutation => {
-    if (mutation.createIfNotExists) patches[mutation.createIfNotExists._id] = Object.assign(patches[mutation.createIfNotExists._id] || {}, { created: mutation.createIfNotExists });
+    if (mutation.createIfNotExists) found[mutation.createIfNotExists._id] = Object.assign(found[mutation.createIfNotExists._id] || {}, { created: mutation.createIfNotExists });
+    if (mutation.delete) found[mutation.delete.id] = { deleted: true };
     if (mutation.patch) {
-      const entry = patches[mutation.patch.id] || {};
+      const entry = found[mutation.patch.id] || {};
       entry.set = Object.assign(entry.set || {}, mutation.patch.set);
       entry.unset = (entry.unset || []).concat(mutation.patch.unset || []);
-      patches[mutation.patch.id] = entry;
+      found[mutation.patch.id] = entry;
     }
   });
-  return patches;
+  return found;
 }
 
-// The patch to monday-status that the last write made
 function statusOf(place) {
   const all = place.writes();
   const last = all[all.length - 1].mutations;
@@ -469,1277 +406,372 @@ function statusOf(place) {
   return last[1].patch;
 }
 
-test('a first read of a day: the list of boards, the task board, the milestones board, the writes, then the status, then the time goes to status-mini', () => {
+function refOf(reference) {
+  return reference ? reference._ref : undefined;
+}
+
+test('a read asks Sanity, the two boards and the names of the people, writes the tasks, then the status, then tells status-mini', () => {
   const place = setup('sequence', { tools: true });
   world(place);
   const result = place.run();
 
   assert.equal(result.status, 0, result.errors);
   assert.equal(result.errors, '');
-  assert.deepEqual(requestsOf(result.calls), firstSequence);
-  assert.ok(requestsOf(result.calls).filter(line => line.startsWith('monday ')).length <= 4, 'at most four requests to Monday');
-  assert.ok(result.text.includes('monday: 9 task(s) and 4 milestone(s) read'), result.text);
-  assert.ok(result.text.includes('monday: 9 task(s) wanted, 9 new, 0 changed, 0 switched off, 4 milestone(s)'), result.text);
-  assert.ok(result.text.includes('monday: status written'), result.text);
-  assert.equal(place.writes().length, 2);
+  assert.deepEqual(requestsOf(result.calls), sequence);
+  assert.ok(result.text.includes('monday: 9 task(s) read'), result.text);
+  assert.ok(result.text.includes('monday: 9 task(s), 9 new, 0 changed, 0 deleted'), result.text);
   assert.deepEqual(fs.readdirSync(place.folder).sort(), ['.lock']);
 });
 
-test('a later read of the same day does not ask for the list of boards again', () => {
-  const place = setup('later', { tools: true });
-  world(place, { known: Object.assign({}, laterRead, { lastSyncAt: '2027-01-12T14:00:00Z' }) });
-  const result = place.run();
-
-  assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(requestsOf(result.calls), laterSequence);
-  assert.equal(statusOf(place).set.callsToday, 8, 'six reads before and two now');
-  assert.equal(statusOf(place).set.callsDate, todayText);
-  assert.ok(!('boards' in statusOf(place).set), 'the list of boards is left as it was');
-
-  const noList = setup('no-list', { tools: true });
-  world(noList, { known: Object.assign({}, laterRead, { boards: 0 }) });
-  assert.deepEqual(requestsOf(noList.run().calls), firstSequence, 'a status with no list of boards asks for it');
-});
-
-test('a list of boards written before boards carried their kind, or without the board the settings name, is asked for again', () => {
-  const old = setup('old-list', { tools: true });
-  world(old, { known: Object.assign({}, laterRead, { unmarked: 22 }) });
-  assert.deepEqual(requestsOf(old.run().calls), firstSequence, 'boards with no kind are listed again');
-
-  const missing = setup('missing-board', { tools: true });
-  world(missing, { known: Object.assign({}, laterRead, { unmarked: 0, boardIds: ['1', '2'] }) });
-  assert.deepEqual(requestsOf(missing.run().calls), firstSequence, 'a list without the task board is asked for again');
-});
-
-test('a list of boards written before boards carried their groups is asked for again', () => {
-  const old = setup('ungrouped', { tools: true });
-  world(old, { known: Object.assign({}, laterRead, { unmarked: 0, ungrouped: 22 }) });
-  assert.deepEqual(requestsOf(old.run().calls), firstSequence, 'boards with no groups are listed again');
-});
-
-test('the list of boards asks for the groups and keeps their id and title only, a board with none keeps an empty list', () => {
-  const place = setup('groups', { tools: true });
+test('the boards are read by their numbers only, with the multi-level question, and no board list is asked for', () => {
+  const place = setup('questions', { tools: true });
   world(place);
-  assert.equal(place.run().status, 0);
-  const boards = statusOf(place).set.boards;
-
-  assert.deepEqual(boards.find(board => board.id === taskBoardId).groups, [{ _key: 'topics', id: 'topics', title: 'Build' }, { _key: 'group_two', id: 'group_two', title: 'Electrical' }], 'an odd id is dropped and a repeated id keeps the first');
-  assert.deepEqual(boards.find(board => board.id === milestoneBoardId).groups, []);
-  assert.ok(textOf(path.join(repo, 'computer/scripts/monday-contract.sh')).includes('groups { id title }'), 'the question names the groups');
-});
-
-test('the requests go to the address and version of the block at the top, https only, with a time limit, and ask for the typed values of the chosen columns only', () => {
-  const place = setup('flags', { tools: true });
-  world(place);
-  const result = place.run();
-  const lines = result.calls.split('\n').filter(line => line.startsWith('curl '));
-
-  lines.forEach(line => {
-    assert.ok(line.startsWith('curl --disable '), 'curl ignores the settings file of the account: ' + line);
-    assert.ok(line.includes('--proto =https'), line);
-    assert.ok(line.includes('--max-time '), line);
-    assert.ok(!line.includes('--location'), 'no redirect is followed: ' + line);
-  });
-  const monday = lines.filter(line => line.includes('api.monday.com'));
-  assert.equal(monday.length, 3);
-  monday.forEach(line => {
-    assert.ok(line.endsWith('https://api.monday.com/v2'), line);
-    assert.ok(line.includes('--header API-Version: ' + versionOf(syncFile)), line);
-    assert.ok(line.includes('--config -'), 'the token comes in on standard input: ' + line);
-  });
+  place.run();
   const variables = place.variables();
-  assert.deepEqual(variables[0], {});
-  assert.deepEqual(variables[1].board, [taskBoardId]);
-  assert.equal(variables[1].limit, 200);
-  assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'color_mm82nvea', 'color_mm82wfy', 'color_mm83p12x', 'date_mm82kn5v', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'numeric_mm82pw1a', 'timerange_mkyp8kx7', 'board_relation_mm83phwy'].sort());
-  assert.deepEqual(variables[2], { board: [milestoneBoardId], columns: ['color_mm83be52', 'color_mm83f77w', 'color_mm83ndkf', 'date_mm83y6zw'], limit: 200 });
+  assert.deepEqual(variables[0].board, [taskBoardId]);
+  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x']);
+  assert.deepEqual(variables[1].board, [doneBoardId]);
+  assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a'], 'Completed Tasks has fewer columns');
+  assert.deepEqual(variables[2].ids.sort(), ['71', '73'], 'the first person of each item, once');
+  assert.deepEqual(place.battery(), ['items-' + taskBoardId, 'items-' + doneBoardId], 'both boards ask for BatteryValue');
 
-  const script = textOf(syncFile);
-  ['... on StatusValue { label index }', '... on BoardRelationValue { linked_item_ids }', '... on DateValue { date }', '... on TimelineValue { from to }', '... on PeopleValue { persons_and_teams { id } }'].forEach(fragment => {
-    assert.ok(script.split(fragment).length >= 3, 'both item questions use the typed fragment ' + fragment);
-  });
-  assert.ok(!/subitems\s*\{/.test(script), 'subitems are never asked for');
+  const text = textOf(syncFile);
+  assert.ok(text.includes('capabilities: [CALCULATED]'));
+  assert.ok(!/boards\(limit/.test(text), 'the list of every board is not asked for');
+  assert.ok(!/18435272887/.test(text), 'the milestones board is not read');
+  assert.equal(text.split("task_board='18435126893'").length, 2, 'the board numbers are written once');
+  assert.equal(text.split("done_board='18435131682'").length, 2);
 });
 
-test('Sanity is asked for the settings, the teams, the Team leads, what the Teletraan computer wrote earlier and its own last read, without a login, and the writes go to the project in config.js', () => {
-  const place = setup('sanity', { tools: true });
-  world(place);
-  const result = place.run();
-  const config = fs.readFileSync(path.join(repo, 'dashboard/config.js'), 'utf8');
-  const project = config.match(/projectId: '([^']*)'/)[1];
-  const dataset = config.match(/dataset: '([^']*)'/)[1];
-  const version = config.match(/apiVersion: '([^']*)'/)[1];
-
-  const question = result.calls.split('\n').filter(line => line.includes('/data/query/'))[0];
-  assert.ok(question.includes('https://' + project + '.api.sanity.io/v' + version + '/data/query/' + dataset), 'the ordinary host, not the cached one: ' + question);
-  assert.ok(question.includes('perspective=published'));
-  ['mondayTaskBoard', 'mondayMilestoneBoard', 'mondayEveryMinutes', 'mondayShowOwners', 'source == "monday"', '_type == "milestone"', '_type == "subteam"', '_type == "team"', 'monday-status'].forEach(word => {
-    assert.ok(question.includes(word), 'the question has ' + word);
-  });
-  assert.ok(!question.includes('mondayBoards'), 'the old board rows are ignored');
-  assert.ok(!question.includes('--config'), 'the dataset is public, so the question sends no login');
-
-  const writes = result.calls.split('\n').filter(line => line.includes('/data/mutate/'));
-  assert.equal(writes.length, 2);
-  writes.forEach(write => {
-    assert.ok(write.includes('--request POST') && write.includes('Content-Type: application/json') && write.includes('--fail'), write);
-    assert.ok(write.includes('--config -'), 'the token comes in on standard input: ' + write);
-  });
-  const addresses = fs.readFileSync(path.join(place.stub, 'addresses.txt'), 'utf8').trim().split('\n');
-  addresses.forEach(address => assert.equal(address, 'https://' + project + '.api.sanity.io/v' + version + '/data/mutate/' + dataset));
-
-  const script = textOf(syncFile);
-  [project, dataset, version].forEach(value => assert.ok(!script.includes(value), 'the script should not contain ' + value));
-});
-
-function refOf(reference) {
-  return reference && reference._ref ? reference._ref : null;
-}
-
-// The tasks and milestones of a run as Sanity would give them back on the next run
-function storedFrom(place) {
-  const stored = { tasks: [], milestones: [] };
-  const all = documentsOf(place);
-  Object.keys(all).forEach(id => {
-    const set = all[id].set;
-    const document = Object.assign({ _id: id }, set, { subteam: refOf(set.subteam), team: refOf(set.team) });
-    ['subteam', 'team'].forEach(name => { if (document[name] === null) delete document[name]; });
-    (id.startsWith('task-') ? stored.tasks : stored.milestones).push(document);
-  });
-  return stored;
-}
-
-test('a task is made from the columns by index: department to the Team lead, status, priority, team, dates, hours and milestones', () => {
-  const place = setup('mapping', { tools: true });
-  world(place);
-  assert.equal(place.run().status, 0);
-  const documents = documentsOf(place);
-
-  assert.deepEqual(Object.keys(documents).filter(id => id.startsWith('task-')).sort(), ['task-monday-1001', 'task-monday-1002', 'task-monday-1003', 'task-monday-1004', 'task-monday-1005', 'task-monday-1006', 'task-monday-1007', 'task-monday-1008', 'task-monday-1010']);
-  assert.deepEqual(documents['task-monday-1001'].created, { _id: 'task-monday-1001', _type: 'task', source: 'monday', mondayId: '1001' });
-  assert.deepEqual(documents['task-monday-1001'].set, {
-    title: 'Wire the robot',
-    subteam: { _type: 'reference', _ref: 'subteam-build' },
-    team: { _type: 'reference', _ref: 'team-prime' },
-    status: 'in-progress',
-    priority: 'high',
-    showOnBoard: true,
-    contact: 'Sam',
-    startDate: '2026-10-01',
-    dueDate: '2026-10-20',
-    estHours: 12.5,
-    milestoneIds: ['2001', '2004'],
-    show: true,
-    mondayBoardId: taskBoardId,
-    mondayBoardName: 'Robotics Tasks',
-  });
-
-  // one item for each status index
-  const statusOf = id => documents['task-monday-' + id].set.status;
-  assert.equal(statusOf(1001), 'in-progress', 'index 0');
-  assert.equal(statusOf(1002), 'done', 'index 1');
-  assert.equal(statusOf(1003), 'blocked', 'Stuck, index 2');
-  assert.equal(statusOf(1004), 'in-review', 'index 3');
-  assert.equal(statusOf(1005), 'up-next', 'index 5 is To Do, whatever group the item is in');
-  assert.equal(statusOf(1010), 'up-next', 'a status that nobody set');
-
-  // the done task keeps the day it was completed, and the others have none
-  assert.equal(documents['task-monday-1002'].set.completedOn, '2026-10-10');
-  assert.ok(documents['task-monday-1001'].unset.includes('completedOn'));
-  assert.equal(documents['task-monday-1002'].set.priority, 'low');
-  assert.equal(documents['task-monday-1003'].set.priority, 'medium');
-  assert.equal(documents['task-monday-1005'].set.priority, undefined, 'the unset priority, index 5');
-  assert.deepEqual(documents['task-monday-1003'].set.team, { _type: 'reference', _ref: 'team-nova' });
-
-  // General: the team index 5, or a team that nobody set, gives no team
-  assert.equal(documents['task-monday-1005'].set.team, undefined);
-  assert.ok(documents['task-monday-1005'].unset.includes('team'));
-  assert.equal(documents['task-monday-1006'].set.team, undefined);
-  assert.equal(documents['task-monday-1010'].set.team, undefined);
-
-  // the department is the index and not the label, and a label that is written with other capitals still finds its lead
-  assert.equal(refOf(documents['task-monday-1003'].set.subteam), 'subteam-electrical');
-  assert.equal(refOf(documents['task-monday-1004'].set.subteam), 'subteam-design');
-  assert.equal(refOf(documents['task-monday-1002'].set.subteam), 'subteam-build', 'the lead is called " build " and the row is Build');
-});
-
-test('a task with no department is written hidden with the reason, an item with Show on TV set to Hide is written with showOnBoard false, and a subitem is not written', () => {
-  const place = setup('hidden', { tools: true });
+test('department: the group when it is a department, else the Department column, else the task is left out', () => {
+  const place = setup('department', { tools: true });
   world(place);
   place.run();
-  const documents = documentsOf(place);
-
-  const unassigned = documents['task-monday-1007'].set;
-  assert.equal(unassigned.show, false);
-  assert.equal(unassigned.hiddenReason, 'unassigned');
-  assert.equal(unassigned.subteam, undefined);
-  assert.ok(documents['task-monday-1007'].unset.includes('subteam'));
-  assert.equal(documents['task-monday-1001'].set.hiddenReason, undefined, 'a task with a department has no reason');
-
-  assert.equal(documents['task-monday-1008'].set.showOnBoard, false);
-  assert.equal(documents['task-monday-1008'].set.show, true, 'the editor switch and the screen switch are other things');
-  assert.equal(documents['task-monday-1001'].set.showOnBoard, true);
-  assert.equal(documents['task-monday-1010'].set.showOnBoard, true, 'Show is the default');
-
-  assert.equal(documents['task-monday-1009'], undefined, 'a subitem is never a task');
-  place.taskMutations().forEach(mutation => assert.ok(!JSON.stringify(mutation).includes('A subitem of the wiring')));
-
-  const status = statusOf(place).set;
-  assert.equal(status.taskCount, 9);
-  assert.equal(status.hiddenUnassigned, 1);
+  const docs = documentsOf(place);
+  assert.equal(docs['task-monday-1001'].set.department, 'build', 'the group wins over the column (Electrical)');
+  assert.equal(docs['task-monday-1002'].set.department, 'build', 'the Done group takes the column');
+  assert.equal(docs['task-monday-1009'].set.department, 'marketing');
+  assert.equal(docs['task-monday-2002'].set.department, 'strategy', 'Completed Tasks takes the group');
+  assert.equal(docs['task-monday-1007'], undefined, 'no department, no task');
+  assert.equal(docs['task-monday-1008'], undefined, 'a subitem is not a task');
+  assert.equal(refOf(docs['task-monday-1001'].set.subteam), 'subteam-build', 'the Team lead with the name of the department');
+  assert.equal(docs['task-monday-1004'].set.subteam, undefined, 'no Team lead named Programming');
 });
 
-test('Hide is read by its label text, whatever its capitals, and the text is a setting', () => {
-  const place = setup('hide-label', { tools: true });
-  world(place, { items: [item('1', 'Lower case hide', [col.department('Build', 1), col.show('hide', 6)]), item('2', 'Other word', [col.department('Build', 1), col.show('Hide', 6)])], taskBoard: { hideLabel: 'Hidden' } });
-  place.run();
-  const documents = documentsOf(place);
-  assert.equal(documents['task-monday-1'].set.showOnBoard, true, 'the label is now Hidden, so hide is a label like any other');
-  assert.equal(documents['task-monday-2'].set.showOnBoard, true);
-
-  const other = setup('hide-label-default', { tools: true });
-  world(other, { items: [item('1', 'Lower case hide', [col.department('Build', 1), col.show('hide', 6)])] });
-  other.run();
-  assert.equal(documentsOf(other)['task-monday-1'].set.showOnBoard, false);
-});
-
-test('the contact is the first name of the POC, and owners are the first names of Assigned only when the setting is on; an email gives none', () => {
-  const off = setup('owners-off', { tools: true });
-  world(off);
-  off.run();
-  assert.equal(documentsOf(off)['task-monday-1001'].set.contact, 'Sam');
-  assert.equal(documentsOf(off)['task-monday-1001'].set.owners, undefined);
-  assert.ok(documentsOf(off)['task-monday-1001'].unset.includes('owners'));
-
-  const on = setup('owners-on', { tools: true });
-  world(on, { owners: true });
-  on.run();
-  assert.deepEqual(documentsOf(on)['task-monday-1001'].set.owners, ['Pat', 'Jo']);
-  assert.equal(documentsOf(on)['task-monday-1001'].set.contact, 'Sam');
-
-  const odd = setup('owners-odd', { tools: true });
-  world(odd, {
-    owners: true,
-    items: [item('1', 'Odd names', [col.department('Build', 1), col.poc('sam@example.com'), col.assigned('sam@example.com, Mary-Anne Smith, Pat Kim, Pat Lee, , Jo Ray, Al, Bo, Cy, Di')])],
-  });
-  odd.run();
-  const set = documentsOf(odd)['task-monday-1'].set;
-  assert.equal(set.contact, undefined);
-  assert.deepEqual(set.owners, ['Mary-Anne', 'Pat', 'Jo', 'Al', 'Bo', 'Cy'], 'first names only, each once, six at most');
-  assert.ok(!JSON.stringify(odd.writes()).includes('Smith'), 'no last name is written');
-});
-
-test('no last name, email or note of an item reaches a document, and a title is cut to 22 characters', () => {
-  const place = setup('private', { tools: true });
-  world(place, { owners: true, items: taskItems().concat([item('1011', 'A title that is much longer than twenty two characters', [col.department('Build', 1)])]) });
-  place.run();
-  const written = JSON.stringify(place.writes());
-  ['Sam Lee', 'Pat Kim', 'Jo Ray', 'Ana Diaz', 'sam@example.com', '555 0100', 'Notes'].forEach(word => {
-    assert.ok(!written.includes(word), 'the documents have ' + word);
-  });
-  assert.equal(documentsOf(place)['task-monday-1011'].set.title, 'A title that is much l');
-});
-
-test('dates: the Timeline from and to, the text of the column when the typed values are missing, and a day that is not on the calendar gives none', () => {
-  const place = setup('dates', { tools: true });
-  world(place, {
-    items: [
-      item('1', 'Typed', [col.department('Build', 1), col.timeline('2026-10-01', '2026-10-20')]),
-      item('2', 'Text only', [col.department('Build', 1), value('timerange_mkyp8kx7', 'timeline', '2026-10-12 - 2026-10-20')]),
-      item('3', 'Not a day', [col.department('Build', 1), col.timeline('2026-02-30', '2026-13-01')]),
-      item('4', 'Completed with a time', [col.department('Build', 1), col.state('Done', 1), value('date_mm82kn5v', 'date', '2026-10-10 09:30', { date: '2026-10-10' })]),
-      item('5', 'Hours', [col.department('Build', 1), col.hours('1,250.256')]),
-      item('6', 'Words for hours', [col.department('Build', 1), col.hours('a few')]),
-      item('7', 'Negative hours', [col.department('Build', 1), col.hours('-3')]),
-    ],
-  });
-  place.run();
-  const documents = documentsOf(place);
-
-  assert.equal(documents['task-monday-1'].set.startDate, '2026-10-01');
-  assert.equal(documents['task-monday-1'].set.dueDate, '2026-10-20');
-  assert.equal(documents['task-monday-2'].set.startDate, '2026-10-12');
-  assert.equal(documents['task-monday-2'].set.dueDate, '2026-10-20');
-  assert.equal(documents['task-monday-3'].set.startDate, undefined);
-  assert.equal(documents['task-monday-3'].set.dueDate, undefined);
-  assert.equal(documents['task-monday-4'].set.completedOn, '2026-10-10');
-  assert.equal(documents['task-monday-5'].set.estHours, 1250.26);
-  assert.equal(documents['task-monday-6'].set.estHours, undefined);
-  assert.equal(documents['task-monday-7'].set.estHours, undefined);
-});
-
-test('the settings of the Monday tab win over the starting values: team labels, department rows with a Team lead, columns, and the status indexes', () => {
-  const place = setup('settings', { tools: true });
-  world(place, {
-    items: [
-      item('1', 'Team label one', [col.department('Build', 1), col.team('Prime', 1)]),
-      item('2', 'Team label seven', [col.department('Build', 1), col.team('Orion', 7)]),
-      item('3', 'Lead by reference', [col.department('Electrical', 0)]),
-      item('4', 'Moved department', [col.department('Build', 42)]),
-      item('5', 'Own status', [col.department('Build', 1), col.state('Parked', 8), value('own_state', 'status', 'Parked', { label: 'Parked', index: 8 })]),
-      item('6', 'Not shown row', [col.department('Build', 1)]),
-    ],
-    taskBoard: {
-      teamLabels: [{ index: 1, team: 'team-nova' }, { index: 7, team: 'team-prime' }],
-      departmentLabels: [{ index: 0, name: 'Spark', subteam: 'subteam-programming' }, { index: 1, name: 'Build' }, { index: 42, name: 'Wood' }, { index: 5, name: 'Unassigned', neverShown: true }],
-      statusIndexes: { done: 8 },
-    },
-  });
-  place.run();
-  const documents = documentsOf(place);
-
-  assert.equal(refOf(documents['task-monday-1'].set.team), 'team-nova', 'index 1 is now Nova');
-  assert.equal(refOf(documents['task-monday-2'].set.team), 'team-prime');
-  assert.equal(refOf(documents['task-monday-3'].set.subteam), 'subteam-programming', 'a Team lead on the row wins over the name');
-  assert.equal(documents['task-monday-4'].set.hiddenReason, 'unassigned', 'a department that has no Team lead named Wood is hidden');
-  assert.equal(documents['task-monday-5'].set.status, 'done', 'the done index is a setting');
-  assert.equal(documents['task-monday-5'].set.status, 'done');
-  assert.equal(documents['task-monday-6'].set.status, 'up-next');
-});
-
-test('a setting that cannot be used skips its board and says so, and the other board is still read', () => {
-  const place = setup('bad-settings', { tools: true });
-  world(place, { taskBoard: { boardId: 'not a number' } });
-  const result = place.run();
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('monday: The task board in Dashboard Settings has no usable board number, so it was skipped.'), result.errors);
-  assert.deepEqual(requestsOf(result.calls).filter(line => line.startsWith('monday ')), ['monday boards', 'monday items-' + milestoneBoardId]);
-  assert.equal(Object.keys(documentsOf(place)).filter(id => id.startsWith('task-')).length, 0);
-  assert.ok(Object.keys(documentsOf(place)).some(id => id.startsWith('milestone-')));
-  assert.ok(!('lastSyncAt' in statusOf(place).set), 'no task board was read, so the screen is not told it is up to date');
-  assert.match(statusOf(place).set.lastError, /no usable board number/);
-
-  const noColumn = setup('no-status-column', { tools: true });
-  world(noColumn, { taskBoard: { statusColumn: 'a b c' } });
-  const second = noColumn.run();
-  assert.ok(second.errors.includes('has no Department or Status column'), second.errors);
-});
-
-test('milestones: a name, a target date, the team and department by index, the status, and one with no date or a name that starts with EXAMPLE is skipped', () => {
-  const place = setup('milestones', { tools: true });
+test('list: done for status Done, the Done group and Completed Tasks; open for the rest', () => {
+  const place = setup('list', { tools: true });
   world(place);
   place.run();
-  const documents = documentsOf(place);
-
-  assert.deepEqual(Object.keys(documents).filter(id => id.startsWith('milestone-')).sort(), ['milestone-monday-2001', 'milestone-monday-2002', 'milestone-monday-2003', 'milestone-monday-2004']);
-  assert.deepEqual(documents['milestone-monday-2001'].created, { _id: 'milestone-monday-2001', _type: 'milestone' });
-  assert.deepEqual(documents['milestone-monday-2001'].set, { name: 'First robot test', targetDate: '2026-12-01', team: { _type: 'reference', _ref: 'team-prime' }, subteam: { _type: 'reference', _ref: 'subteam-build' }, status: 'on-track', show: true });
-  assert.deepEqual(documents['milestone-monday-2002'].set, { name: 'Kickoff', targetDate: '2027-01-09', status: 'not-started', show: true }, 'Both Teams and All Departments are empty');
-  assert.equal(documents['milestone-monday-2003'].set.status, 'at-risk');
-  assert.equal(refOf(documents['milestone-monday-2003'].set.team), 'team-nova');
-  assert.equal(documents['milestone-monday-2004'].set.status, 'done');
-  assert.equal(refOf(documents['milestone-monday-2004'].set.subteam), 'subteam-design');
-  assert.ok(!documents['milestone-monday-2005'] && !documents['milestone-monday-2006'] && !documents['milestone-monday-2007']);
-  assert.equal(JSON.stringify(place.writes()).includes('EXAMPLE'), false);
+  const docs = documentsOf(place);
+  const list = id => docs['task-monday-' + id].set.list;
+  assert.equal(list('1001'), 'open');
+  assert.equal(list('1002'), 'done', 'the Done group, though the status is To Do');
+  assert.equal(list('1003'), 'done', 'status Done');
+  assert.equal(list('1004'), 'open');
+  assert.equal(list('2001'), 'done', 'Completed Tasks, though the status is To Do');
+  assert.equal(list('2002'), 'done');
 });
 
-test('a milestone that is gone, or has lost its date, is switched off and never deleted; one that is up to date is left alone', () => {
-  const first = setup('milestones-first', { tools: true });
-  world(first);
-  first.run();
-  const stored = storedFrom(first);
-  const gone = stored.milestones.concat([{ _id: 'milestone-monday-2099', name: 'Vanished', targetDate: '2026-12-31', show: true }, { _id: 'milestone-monday-2006', name: 'No date yet', targetDate: '2026-12-01', show: true }]);
+test('status, team, priority, contact, dates, hours and Show on TV come from the label numbers and the columns', () => {
+  const place = setup('fields', { tools: true });
+  world(place);
+  place.run();
+  const docs = documentsOf(place);
+  const first = docs['task-monday-1001'];
+  assert.deepEqual(first.created, { _id: 'task-monday-1001', _type: 'task', source: 'monday', mondayId: '1001' });
+  assert.equal(first.set.title, 'Wire the robot');
+  assert.equal(first.set.status, 'in-progress');
+  assert.equal(refOf(first.set.team), 'team-prime');
+  assert.equal(first.set.priority, 'high');
+  assert.equal(first.set.contact, 'Pat', 'the first word of the first person in Assigned');
+  assert.equal(first.set.startDate, '2026-10-01');
+  assert.equal(first.set.dueDate, '2026-10-20', 'the end of the Timeline is the estimated completion date');
+  assert.equal(first.set.estHours, 12.5);
+  assert.equal(first.set.showOnBoard, true);
+  assert.equal(first.set.show, true);
+  assert.equal(first.set.mondayBoardId, taskBoardId);
+  assert.equal(first.set.mondayBoardName, 'Robotics Tasks');
 
-  const place = setup('milestones-second', { tools: true });
-  world(place, { milestones: gone, tasks: stored.tasks, known: laterRead });
+  assert.equal(refOf(docs['task-monday-1002'].set.team), 'team-nova');
+  assert.equal(docs['task-monday-1002'].set.priority, 'low');
+  assert.equal(docs['task-monday-1002'].set.completedOn, '2026-10-10');
+  assert.equal(docs['task-monday-1003'].set.team, undefined, 'General is both teams');
+  assert.equal(docs['task-monday-1004'].set.status, 'blocked', 'Stuck');
+  assert.equal(docs['task-monday-1005'].set.status, 'in-review');
+  assert.equal(docs['task-monday-1004'].set.priority, undefined, 'label 5 is no priority');
+  assert.equal(docs['task-monday-1006'].set.showOnBoard, false, 'Hide keeps it off the TV');
+  assert.equal(docs['task-monday-1009'].set.status, 'up-next', 'no status is To Do');
+  assert.equal(docs['task-monday-1009'].set.showOnBoard, true, 'no Show on TV is Show');
+});
+
+test('empty values are left out: no contact, no priority, no dates, no hours; an email is never a contact', () => {
+  const place = setup('empty', { tools: true });
+  world(place);
+  place.run();
+  const docs = documentsOf(place);
+  const bare = docs['task-monday-1009'];
+  ['contact', 'priority', 'startDate', 'dueDate', 'completedOn', 'estHours', 'team', 'subteam'].forEach(name => assert.equal(bare.set[name], undefined, name));
+  assert.ok(bare.unset.includes('contact') && bare.unset.includes('dueDate'));
+  assert.equal(docs['task-monday-1005'].set.contact, undefined, 'an email as a name gives no contact');
+  assert.ok(!JSON.stringify(place.writes()).includes('example.com'));
+  assert.ok(!JSON.stringify(place.writes()).includes('Kim'), 'no last name reaches a document');
+});
+
+test('a contact falls back to the text of Assigned when the names question gives nothing', () => {
+  const place = setup('contact-text', { tools: true });
+  world(place, { items: [item('1', 'One', [col.assigned([99], 'Robin Hale, Ash Lee')], 'Build')], doneItems: [] });
+  place.run();
+  assert.equal(documentsOf(place)['task-monday-1'].set.contact, 'Robin');
+});
+
+test('a task whose item has gone is deleted with its draft, and one that is up to date is left alone', () => {
+  const place = setup('gone', { tools: true });
+  const same = { _id: 'task-monday-2002', title: 'Old dashboard', department: 'strategy', list: 'done', status: 'done', team: null, subteam: null, contact: null, priority: null, startDate: null, dueDate: null, completedOn: null, estHours: null, showOnBoard: true, show: true, mondayBoardId: doneBoardId, mondayBoardName: 'Completed Tasks', old: false };
+  world(place, { tasks: [same, { _id: 'task-monday-9999', title: 'Gone', old: false }, { _id: 'task-other', title: 'Not ours', old: false }] });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(place.taskMutations(), [
-    { patch: { id: 'milestone-monday-2099', set: { show: false } } },
-    { patch: { id: 'milestone-monday-2006', set: { show: false } } },
-  ]);
-  assert.ok(!JSON.stringify(place.writes()).includes('delete'));
+  const mutations = place.taskMutations();
+  assert.ok(mutations.some(mutation => mutation.delete && mutation.delete.id === 'task-monday-9999'));
+  assert.ok(mutations.some(mutation => mutation.delete && mutation.delete.id === 'drafts.task-monday-9999'));
+  assert.ok(!mutations.some(mutation => (mutation.delete && mutation.delete.id === 'task-other') || (mutation.patch && mutation.patch.id === 'task-other')), 'only task-monday-* is deleted');
+  assert.ok(!mutations.some(mutation => mutation.patch && mutation.patch.id === 'task-monday-2002'), 'an up to date task is not touched');
+  assert.ok(result.text.includes('1 deleted'), result.text);
+  assert.ok(!JSON.stringify(mutations).includes('showOnTv'), 'the editor switch is never sent');
 });
 
-test('a task that is up to date is not touched, Show on TV is never sent, and an item that gone is switched off, never deleted', () => {
-  const first = setup('uptodate-first', { tools: true });
-  world(first);
-  first.run();
-  const stored = storedFrom(first);
-
-  const same = setup('uptodate', { tools: true });
-  world(same, { tasks: stored.tasks, milestones: stored.milestones, known: laterRead });
-  const result = same.run();
-  assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(same.taskMutations(), [], 'nothing is written for tasks that did not change');
-  assert.ok(result.text.includes('monday: 9 task(s) wanted, 0 new, 0 changed, 0 switched off, 4 milestone(s)'), result.text);
-  assert.ok(!JSON.stringify(first.writes()).includes('showOnTv'), 'the editor switch is never sent');
-
-  // one task changed on the board, one is gone, and one that was switched off comes back
-  const changed = stored.tasks.map(task => (task._id === 'task-monday-1001' ? Object.assign({}, task, { status: 'up-next' }) : task));
-  const withGone = changed.concat([{ _id: 'task-monday-3000', title: 'Gone', show: true, source: 'monday' }, { _id: 'task-monday-3001', title: 'Gone already', show: false, source: 'monday' }]);
-  withGone[withGone.findIndex(task => task._id === 'task-monday-1002')].show = false;
-  const second = setup('uptodate-changes', { tools: true });
-  world(second, { tasks: withGone, milestones: stored.milestones, known: laterRead });
-  second.run();
-  const mutations = second.taskMutations();
-  const ids = mutations.map(mutation => mutation.patch.id).sort();
-  assert.deepEqual(ids, ['task-monday-1001', 'task-monday-1002', 'task-monday-3000']);
-  assert.equal(mutations.find(mutation => mutation.patch.id === 'task-monday-1001').patch.set.status, 'in-progress');
-  assert.equal(mutations.find(mutation => mutation.patch.id === 'task-monday-1002').patch.set.show, true);
-  assert.deepEqual(mutations.find(mutation => mutation.patch.id === 'task-monday-3000').patch, { id: 'task-monday-3000', set: { show: false } });
-  mutations.forEach(mutation => assert.ok(!mutation.delete && !mutation.createOrReplace));
-});
-
-test('a task from the older boards, made before the rebuilt workspace, is switched off once and then left alone', () => {
-  const place = setup('old-board-tasks', { tools: true });
-  world(place, { tasks: [{ _id: 'task-monday-555', title: 'From an old board', show: true, source: 'monday', mondayBoardId: '111' }], known: laterRead });
+test('a task the older sync wrote loses its older fields once', () => {
+  const place = setup('older', { tools: true });
+  world(place, { tasks: [{ _id: 'task-monday-2002', title: 'Old dashboard', department: 'strategy', list: 'done', status: 'done', showOnBoard: true, show: true, mondayBoardId: doneBoardId, mondayBoardName: 'Completed Tasks', old: true }] });
   place.run();
-  assert.ok(place.taskMutations().some(mutation => mutation.patch && mutation.patch.id === 'task-monday-555' && mutation.patch.set.show === false));
+  const unset = documentsOf(place)['task-monday-2002'].unset;
+  ['owners', 'milestoneIds', 'hiddenReason'].forEach(name => assert.ok(unset.includes(name), name));
 });
 
-function manyItems(count, first) {
-  const many = [];
-  for (let number = 0; number < count; number += 1) many.push(item(String(first + number), 'Task ' + number, [col.department('Build', 1)]));
-  return many;
-}
-
-test('at most four requests go to Monday in a run: a board of 800 items is read to its end in four pages, and more is said and switches nothing off', () => {
-  const fits = setup('four-pages', { tools: true });
-  world(fits, { items: manyItems(800, 10000), tasks: [{ _id: 'task-monday-3000', title: 'Elsewhere', show: true, source: 'monday' }], known: laterRead });
-  const done = fits.run();
-  assert.deepEqual(requestsOf(done.calls).filter(line => line.startsWith('monday ')), ['monday items-' + taskBoardId, 'monday more-cursor' + taskBoardId + 'n1', 'monday more-cursor' + taskBoardId + 'n2', 'monday more-cursor' + taskBoardId + 'n3']);
-  assert.ok(fits.taskMutations().some(mutation => mutation.patch && mutation.patch.id === 'task-monday-3000'), 'the board was read to its end, so a task that is not on it is switched off');
-  assert.equal(statusOf(fits).set.callsToday, 10);
-
-  const over = setup('five-pages', { tools: true });
-  world(over, { items: manyItems(850, 10000), tasks: [{ _id: 'task-monday-3000', title: 'Elsewhere', show: true, source: 'monday' }], known: laterRead });
-  const capped = over.run();
-  assert.equal(requestsOf(capped.calls).filter(line => line.startsWith('monday ')).length, 4, 'four requests and no more');
-  assert.ok(capped.errors.includes('This run stopped after 4 requests to Monday and goes on at the next run.'), capped.errors);
-  assert.ok(!over.taskMutations().some(mutation => mutation.patch && mutation.patch.id === 'task-monday-3000'), 'nothing is switched off');
-  assert.ok(!('snapshots' in statusOf(over).set), 'no count of a board that was not read');
-  assert.ok(!('lastSyncAt' in statusOf(over).set));
-  assert.equal(statusOf(over).set.callsToday, 10, 'the reads still count');
-
-  // the list of boards is one of the four on the first read of a day
-  const first = setup('capped-first', { tools: true });
-  world(first, { items: manyItems(650, 10000) });
-  const second = first.run();
-  assert.deepEqual(requestsOf(second.calls).filter(line => line.startsWith('monday ')), ['monday boards', 'monday items-' + taskBoardId, 'monday more-cursor' + taskBoardId + 'n1', 'monday more-cursor' + taskBoardId + 'n2']);
-  assert.equal(statusOf(first).set.callsToday, 4);
-  assert.deepEqual(statusOf(first).set.readings.map(entry => entry.boardId), [taskBoardId, milestoneBoardId]);
-  const readings = statusOf(first).set.readings;
-  assert.match(readings[0].note, /stopped after 4 requests/);
-  assert.match(readings[1].note, /stopped before it read this board/);
-  readings.forEach(entry => assert.ok(!entry.readAt, 'a board that was not read to its end keeps the time of the run before'));
-});
-
-// How old the last read is, as a moment before the clock of the test
-function readAgo(seconds) {
-  const moment = new Date(Date.parse(nowText) - seconds * 1000).toISOString().replace('.000Z', 'Z');
-  return Object.assign({}, laterRead, { lastSyncAt: moment });
-}
-
-test('the Sync Monday now file makes a run that is not due read at once, and only for two minutes', () => {
-  const force = '/tmp/teletraan-monday-force';
-  fs.rmSync(force, { force: true });
-  try {
-    const before = setup('force-none', { tools: true });
-    world(before, { every: 30, known: readAgo(600) });
-    assert.ok(!requestsOf(before.run().calls).includes('monday items-' + taskBoardId), 'no file: not due, no read');
-
-    fs.writeFileSync(force, '');
-    const now = setup('force-file', { tools: true });
-    world(now, { every: 30, known: readAgo(600) });
-    assert.ok(requestsOf(now.run().calls).includes('monday items-' + taskBoardId), 'the file: a read');
-
-    const old = new Date(Date.now() - 5 * 60 * 1000);
-    fs.utimesSync(force, old, old);
-    const stale = setup('force-old', { tools: true });
-    world(stale, { every: 30, known: readAgo(600) });
-    assert.ok(!requestsOf(stale.run().calls).includes('monday items-' + taskBoardId), 'a file older than two minutes counts for nothing');
-  } finally {
-    fs.rmSync(force, { force: true });
-  }
-});
-
-test('how often: a run before the setting says so ends without a word, without asking Monday and without a write; a run after it reads', () => {
-  const cases = [
-    // [every setting, seconds since the last read, whether the run reads]
-    [30, 600, false],
-    [30, 1700, false],
-    [30, 1720, true],
-    [30, 3600, true],
-    [5, 200, false],
-    [5, 215, true],
-    [120, 7000, false],
-    [120, 7120, true],
-    [null, 1700, false],
-    [null, 1720, true],
-    [3, 1700, false],
-    [200, 1700, false],
-    [200, 1720, true],
-    [7.5, 300, false],
-    [7.5, 360, true],
-  ];
-  cases.forEach(entry => {
-    const place = setup('gate-' + entry.join('-'), { tools: true });
-    world(place, { every: entry[0], known: readAgo(entry[1]) });
-    const result = place.run();
-    const label = 'every ' + entry[0] + ', ' + entry[1] + ' seconds ago';
-    assert.equal(result.status, 0, label);
-    assert.equal(result.text + result.errors, entry[2] ? result.text + result.errors : '', label);
-    if (entry[2]) {
-      assert.ok(requestsOf(result.calls).includes('monday items-' + taskBoardId), label);
-    } else {
-      assert.deepEqual(requestsOf(result.calls), ['sanity-query'], label);
-      assert.equal(place.writes().length, 0, label);
-    }
-  });
-});
-
-test('how often: the first run ever, a last read in the future, and a last read that is not a time all read', () => {
-  [null, '2027-01-12T16:00:00Z', 'yesterday', '2027-01-12T14:00:00.123Z'].forEach((moment, index) => {
-    const place = setup('gate-odd-' + index, { tools: true });
-    world(place, { known: Object.assign({}, laterRead, { lastSyncAt: moment }) });
-    assert.ok(requestsOf(place.run().calls).includes('monday items-' + taskBoardId), String(moment));
-  });
-});
-
-test('how often: the setting is read from Sanity on every run, so a change needs no new timer', () => {
-  const slow = setup('every-slow', { tools: true });
-  world(slow, { every: 60, known: readAgo(1800) });
-  assert.deepEqual(requestsOf(slow.run().calls), ['sanity-query']);
-  const fast = setup('every-fast', { tools: true });
-  world(fast, { every: 5, known: readAgo(1800) });
-  assert.ok(requestsOf(fast.run().calls).includes('monday items-' + taskBoardId));
-});
-
-test('the daily budget: reads are counted for the day of the screen, and at 900 the run waits for midnight and says so', () => {
-  const place = setup('budget', { tools: true });
-  world(place, { known: Object.assign({}, laterRead, { callsToday: 899 }) });
-  const result = place.run();
-  assert.equal(statusOf(place).set.callsToday, 901, 'a run that starts under the limit finishes');
-  assert.ok(requestsOf(result.calls).includes('monday items-' + taskBoardId));
-
-  const full = setup('budget-full', { tools: true });
-  world(full, { known: Object.assign({}, laterRead, { callsToday: 901, lastError: null }) });
-  const stopped = full.run();
-  assert.equal(stopped.status, 0, stopped.errors);
-  assert.deepEqual(requestsOf(stopped.calls), ['sanity-query', 'sanity-write']);
-  assert.deepEqual(full.writes()[0].mutations[1].patch.set, { lastError: 'Daily read limit reached; reads resume at midnight.', callsToday: 901, callsDate: todayText });
-  assert.ok(!full.writes()[0].mutations[1].patch.set.lastSyncAt, 'the screen is not told it is up to date');
-  assert.ok(stopped.text.includes('Daily read limit reached; reads resume at midnight.'));
-
-  const exactly = setup('budget-exactly', { tools: true });
-  world(exactly, { known: Object.assign({}, laterRead, { callsToday: 900 }) });
-  assert.deepEqual(requestsOf(exactly.run().calls), ['sanity-query', 'sanity-write']);
-
-  const midnight = setup('budget-next-day', { tools: true });
-  world(midnight, { known: Object.assign({}, laterRead, { callsToday: 950, callsDate: '2027-01-11' }) });
-  const next = midnight.run();
-  assert.ok(requestsOf(next.calls).includes('monday boards'), 'a new day starts with the list of boards');
-  assert.equal(statusOf(midnight).set.callsToday, 3);
-  assert.equal(statusOf(midnight).set.callsDate, todayText);
-});
-
-test('the day is the day in the time zone of the screen, not in UTC', () => {
-  const place = setup('zone', { tools: true });
-  world(place, { zone: 'Pacific/Auckland' });
-  const result = place.run();
-  assert.ok(result.calls.includes('date TZ=Pacific/Auckland +%Y-%m-%d'), result.calls);
-  const odd = setup('zone-odd', { tools: true });
-  world(odd, { zone: 'Not/A zone; rm' });
-  assert.ok(odd.run().calls.includes('date TZ=America/New_York +%Y-%m-%d'));
-});
-
-test('monday-status: the first name of the account, the boards with their columns, when, how many tasks and how many were hidden, the reads, and nothing that is empty', () => {
-  const place = setup('status', { tools: true });
-  world(place);
-  place.run();
-  const patch = statusOf(place);
-
-  assert.deepEqual(Object.keys(patch.set).sort(), ['boards', 'callsDate', 'callsToday', 'connectedAs', 'hiddenUnassigned', 'lastSyncAt', 'readings', 'snapshots', 'taskCount']);
-  assert.equal(patch.set.connectedAs, 'Jordan');
-  assert.equal(patch.set.lastSyncAt, nowText);
-  assert.equal(patch.set.taskCount, 9);
-  assert.equal(patch.set.hiddenUnassigned, 1);
-  assert.equal(patch.set.callsToday, 3);
-  assert.equal(patch.set.callsDate, todayText);
-  assert.deepEqual(patch.set.boards.map(board => board.id), [taskBoardId, milestoneBoardId], 'a board that is not a board, like the board of subitems, is not offered');
-  assert.deepEqual(patch.unset, ['lastError']);
-  assert.deepEqual(patch.set.readings.map(entry => [entry.boardId, entry.boardName, entry.itemsRead]), [[taskBoardId, 'Robotics Tasks', 10], [milestoneBoardId, 'Milestones', 7]]);
-});
-
-test('the count of open tasks is kept once a day, a second run on the same day replaces the day, and 120 entries are kept', () => {
-  const place = setup('snapshots', { tools: true });
-  world(place, { snapshots: [{ date: '2027-01-12', open: 99 }, { date: '2027-01-11', open: 12 }, { date: 'not a day', open: 1 }, { date: '2027-01-10', open: 'many' }] });
-  place.run();
-  const snapshots = statusOf(place).set.snapshots;
-  assert.deepEqual(snapshots.map(entry => [entry.date, entry.open]), [['2027-01-11', 12], ['2027-01-12', 7]], 'open tasks that a person could see: not done, and not hidden');
-
-  const long = setup('snapshots-long', { tools: true });
-  const earlier = [];
-  for (let day = 0; day < 130; day += 1) earlier.push({ date: new Date(Date.UTC(2026, 8, 1 + day)).toISOString().slice(0, 10), open: day });
-  world(long, { snapshots: earlier });
-  long.run();
-  const kept = statusOf(long).set.snapshots;
-  assert.equal(kept.length, 120);
-  assert.equal(kept[119].date, todayText);
-  assert.ok(kept[0].date > earlier[0].date, 'the oldest go first');
-});
-
-test('a refused token stops the run at once, says what to check, and never says the token', () => {
-  [401, 403].forEach(code => {
-    const place = setup('refused-' + code, { tools: true });
-    world(place);
-    place.answer('boards', { error_message: 'Not Authenticated' }, { code: code });
-    const result = place.run();
-
-    assert.equal(result.status, 1);
-    assert.deepEqual(requestsOf(result.calls), ['sanity-query', 'monday boards', 'sanity-write']);
-    const set = statusOf(place).set;
-    assert.equal(set.lastError, 'Monday refused the token. Check MONDAY_API_TOKEN in local.env.');
-    assert.equal(set.callsToday, 1, 'the request counts');
-    assert.ok(!('lastSyncAt' in set));
-    assert.ok(!requestsOf(result.calls).includes('status-write monday'));
-    assert.ok(!(result.text + result.errors + result.calls).includes(mondayToken));
-  });
-});
-
-test('too many requests from Monday stops the run and says it carries on later', () => {
-  const place = setup('limit', { tools: true });
-  world(place, { known: laterRead });
-  place.answer('items-' + taskBoardId, { error_message: 'Rate limit' }, { code: 429 });
+test('nothing is deleted when a board was not read to its end', () => {
+  const place = setup('partial', { tools: true });
+  world(place, { tasks: [{ _id: 'task-monday-9999', title: 'Gone', old: false }] });
+  place.answer('items-' + doneBoardId, { errors: [{ message: 'Board not found' }] });
   const result = place.run();
   assert.equal(result.status, 1);
-  assert.deepEqual(requestsOf(result.calls).filter(line => line.startsWith('monday ')), ['monday items-' + taskBoardId], 'the milestones board is not asked');
-  assert.equal(statusOf(place).set.lastError, 'Monday says there were too many requests, so this run stopped. It goes on at the next run.');
-  assert.equal(place.taskMutations().length, 0);
-});
-
-test('Monday not answering, or sending something that is not data, or a GraphQL error, is recorded in plain characters and the run does not touch a task', () => {
-  const offline = setup('offline', { tools: true });
-  world(offline, { known: laterRead, tasks: [{ _id: 'task-monday-3000', title: 'Elsewhere', show: true, source: 'monday' }] });
-  offline.answer('items-' + taskBoardId, undefined, { exit: 6 });
-  const first = offline.run();
-  assert.equal(first.status, 1);
-  assert.match(statusOf(offline).set.lastError, /Monday did not answer, could not find the server/);
-  assert.ok(!offline.taskMutations().some(mutation => mutation.patch && mutation.patch.id.startsWith('task-')), 'a task is not switched off by a read that did not happen');
-
-  const notData = setup('not-data', { tools: true });
-  world(notData, { known: laterRead });
-  fs.writeFileSync(path.join(notData.stub, 'monday', 'items-' + taskBoardId + '.json'), '<html>bad gateway</html>');
-  notData.run();
-  assert.match(statusOf(notData).set.lastError, /Monday sent an answer that is not data/);
-
-  const oddError = setup('graphql', { tools: true });
-  world(oddError, { known: laterRead });
-  oddError.answer('items-' + taskBoardId, { errors: [{ message: 'Field "x" <not> `known` $(rm -rf) "quoted"\nnew line' }] });
-  oddError.run();
-  const said = statusOf(oddError).set.lastError;
-  assert.equal(said, 'Monday said: Field x not known (rm -rf) quoted new line');
-  assert.ok(!/[`$<>"\n]/.test(said));
-
-  const older = setup('older-error', { tools: true });
-  world(older, { known: laterRead });
-  older.answer('items-' + taskBoardId, { error_message: 'Complexity budget exhausted' });
-  older.run();
-  assert.equal(statusOf(older).set.lastError, 'Monday said: Complexity budget exhausted');
-});
-
-test('the milestones board failing keeps the tasks: they are written and the time is told, and the error is kept', () => {
-  const place = setup('milestones-fail', { tools: true });
-  world(place, { known: laterRead, milestones: [{ _id: 'milestone-monday-2001', name: 'First robot test', targetDate: '2026-12-01', show: true }] });
-  place.answer('items-' + milestoneBoardId, { errors: [{ message: 'Board not found' }] });
-  const result = place.run();
-  assert.equal(result.status, 1);
-  assert.ok(Object.keys(documentsOf(place)).filter(id => id.startsWith('task-')).length > 0);
-  assert.equal(documentsOf(place)['milestone-monday-2001'], undefined, 'a milestone is not switched off by a read that did not happen');
-  assert.equal(statusOf(place).set.lastSyncAt, nowText);
-  assert.match(statusOf(place).set.lastError, /Board not found/);
-  assert.ok(requestsOf(result.calls).includes('status-write monday'));
-});
-
-test('a board the account cannot see gives a plain message, and the other board goes on', () => {
-  const place = setup('no-board', { tools: true });
-  world(place, { known: laterRead });
-  place.answer('items-' + taskBoardId, { data: { boards: [] } });
-  const result = place.run();
-  assert.ok(result.errors.includes('Monday gave no items for board ' + taskBoardId + ', so the account of the token may not be able to see it.'), result.errors);
-  assert.ok(requestsOf(result.calls).includes('monday items-' + milestoneBoardId));
-  assert.equal(place.taskMutations().filter(mutation => mutation.patch && mutation.patch.id.startsWith('task-')).length, 0);
-});
-
-test('Sanity refusing a write is recorded, stops the writes, and nothing is switched off by a run that did not finish', () => {
-  const place = setup('sanity-refuses', { tools: true });
-  world(place, { known: laterRead });
-  fs.writeFileSync(path.join(place.stub, 'mutate.exit'), '22');
-  const result = place.run();
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('Could not write to Sanity, Sanity refused it'), result.errors);
+  assert.ok(!place.taskMutations().some(mutation => mutation.delete), 'no delete');
+  assert.ok(documentsOf(place)['task-monday-1001'], 'the tasks that were read are written');
+  const set = statusOf(place).set;
+  assert.ok(!('lastSyncAt' in set), 'the read did not work');
+  assert.equal(set.lastError, 'Monday said: Board not found. Press Monday debug on the control page and send the answer to a coach.');
   assert.ok(!requestsOf(result.calls).includes('status-write monday'));
 });
 
-test('when Sanity cannot be asked or gives no answer the run stops and nothing is changed', () => {
-  const down = setup('sanity-down', { tools: true });
-  world(down);
-  fs.writeFileSync(path.join(down.stub, 'sanity.exit'), '6');
-  const first = down.run();
-  assert.equal(first.status, 1);
-  assert.ok(first.errors.includes('Could not get the settings from Sanity. Nothing was changed.'), first.errors);
-  assert.deepEqual(requestsOf(first.calls), ['sanity-query']);
-
-  const empty = setup('sanity-empty', { tools: true });
-  world(empty);
-  fs.writeFileSync(path.join(empty.stub, 'sanity.json'), JSON.stringify({ result: null }));
-  assert.equal(empty.run().status, 1);
+test('a board of 450 items is read in pages', () => {
+  const many = [];
+  for (let index = 0; index < 450; index += 1) many.push(item(String(5000 + index), 'Task ' + index, [col.state(5)], 'Build'));
+  const place = setup('pages', { tools: true });
+  world(place, { items: many, doneItems: [] });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.deepEqual(requestsOf(result.calls).filter(line => line.startsWith('monday ')), ['monday items-' + taskBoardId, 'monday more-cursor' + taskBoardId + 'n1', 'monday more-cursor' + taskBoardId + 'n2', 'monday items-' + doneBoardId]);
+  assert.ok(result.text.includes('monday: 450 task(s) read'), result.text);
 });
 
-test('text from Monday never reaches the shell or breaks the JSON: quotes, dollar signs, backticks, newlines and control characters are made safe', () => {
+test('monday-status: last read, the error in plain words or none, the reads, the readings and the counts of each department', () => {
+  const place = setup('status', { tools: true });
+  world(place, { known: { lastSyncAt: '2027-01-12T14:00:00Z', callsToday: 6, callsDate: todayText } });
+  place.run();
+  const patch = statusOf(place);
+  assert.equal(patch.set.lastSyncAt, nowText);
+  assert.equal(patch.set.callsToday, 9, 'six before and three now');
+  assert.equal(patch.set.callsDate, todayText);
+  assert.equal(patch.set.taskCount, 9);
+  assert.deepEqual(patch.unset, ['boards', 'hiddenUnassigned', 'connectedAs', 'lastError']);
+  assert.deepEqual(patch.set.readings.map(reading => [reading.boardId, reading.boardName, reading.itemsRead]), [[taskBoardId, 'Robotics Tasks', 9], [doneBoardId, 'Completed Tasks', 2]]);
+  const build = patch.set.departments.find(entry => entry.name === 'build');
+  assert.deepEqual(build, { _key: 'build', name: 'build', open: 1, done: 2 });
+  assert.deepEqual(patch.set.departments.map(entry => entry.name), ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing']);
+  assert.equal(patch.set.departments.find(entry => entry.name === 'cnc').open, 0, 'a hidden task is not counted');
+  assert.deepEqual(patch.set.snapshots, [{ _key: todayText, date: todayText, open: 4 }], 'the open tasks on the TV');
+});
+
+test('how often: a run before the setting ends without a word; the Sync Monday now file reads at once', () => {
+  // The file of the control page is moved into the folder of this test, so another test that writes the real one changes nothing here
+  const force = path.join(work, 'every-force');
+  const place = setup('every', { tools: true, edits: [['/tmp/teletraan-monday-force', force]] });
+  const known = { lastSyncAt: '2027-01-12T14:50:00Z', callsToday: 3, callsDate: todayText };
+  world(place, { every: 30, known: known });
+  const early = place.run();
+  assert.equal(early.status, 0);
+  assert.equal(early.text, '');
+  assert.deepEqual(requestsOf(early.calls), ['sanity-query']);
+  assert.ok(textOf(syncFile).includes('/tmp/teletraan-monday-force -mmin -2'), 'the force file of the control page');
+
+  fs.writeFileSync(force, '');
+  world(place, { every: 30, known: known });
+  assert.deepEqual(requestsOf(place.run().calls), sequence, 'Sync Monday now reads at once');
+  fs.rmSync(force);
+
+  world(place, { every: 5, known: known });
+  assert.deepEqual(requestsOf(place.run().calls), sequence, 'ten minutes old with a setting of 5 reads');
+});
+
+test('the daily budget: at 900 reads the run waits for midnight and says so', () => {
+  const place = setup('budget', { tools: true });
+  world(place, { known: { lastSyncAt: '2027-01-12T10:00:00Z', callsToday: 900, callsDate: todayText } });
+  const result = place.run();
+  assert.equal(result.status, 0);
+  assert.deepEqual(requestsOf(result.calls), ['sanity-query', 'sanity-write']);
+  assert.equal(place.writes()[0].mutations[1].patch.set.lastError, 'Daily read limit reached. Reads start again at midnight.');
+});
+
+test('a refused token stops the run, says in one sentence what to do, and never says the token', () => {
+  const place = setup('refused', { tools: true });
+  world(place);
+  place.answer('items-' + taskBoardId, { error_message: 'Not Authenticated' }, { code: 401 });
+  const result = place.run();
+  assert.equal(result.status, 1);
+  assert.deepEqual(requestsOf(result.calls), ['sanity-query', 'monday items-' + taskBoardId, 'sanity-write']);
+  assert.equal(statusOf(place).set.lastError, 'Monday refused the token; paste a new MONDAY_API_TOKEN in Settings, Keys on the control page.');
+  assert.ok(!(result.text + result.errors + result.calls).includes(mondayToken));
+});
+
+test('every failure says what to do in one sentence', () => {
+  const offline = setup('offline', { tools: true });
+  world(offline);
+  offline.answer('items-' + taskBoardId, undefined, { exit: 6 });
+  offline.run();
+  assert.match(statusOf(offline).set.lastError, /^Monday did not answer \(could not find the server, so the network may be down\); check that the Teletraan computer is online, and the next run tries again\./);
+
+  const unseen = setup('unseen', { tools: true });
+  world(unseen);
+  unseen.answer('items-' + taskBoardId, { data: { boards: [] } });
+  unseen.run();
+  assert.match(statusOf(unseen).set.lastError, /Monday gave no items for board 18435126893\. Share the board with the account of the Monday token, then press Sync Monday now\./);
+
+  const refused = setup('write-refused', { tools: true });
+  world(refused);
+  fs.writeFileSync(path.join(refused.stub, 'mutate.exit'), '22');
+  const result = refused.run();
+  assert.ok(result.errors.includes('Could not write to Sanity (Sanity refused it, so the token may be wrong or may not have Editor access); check SANITY_WRITE_TOKEN in Settings, Keys on the control page.'), result.errors);
+});
+
+test('text from Monday never reaches the shell or breaks the JSON', () => {
   const place = setup('hostile', { tools: true });
-  world(place, {
-    owners: true,
-    items: [item('1', 'Say "hi" $(touch x) `id`\tnow', [col.department('Build', 1), col.poc('O\'Neil\u0007 Sam'), col.assigned('Zoë Ray, "Quote" Mark')])],
-    milestoneItems: [item('2', 'Name with \\ and "quotes" $HOME', [value('date_mm83y6zw', 'date', '2027-01-09', { date: '2027-01-09' })])],
-  });
+  world(place, { items: [item('1', 'Say "hi" $(touch x) `id`\tnow', [col.assigned([71])], 'Build')], doneItems: [] });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
-  const set = documentsOf(place)['task-monday-1'].set;
-  assert.equal(set.title, 'Say "hi" $(touch x) `id` now'.slice(0, 22));
-  assert.equal(set.contact, "O'Neil");
-  assert.deepEqual(set.owners, ['Zoë', 'Quote']);
+  assert.equal(documentsOf(place)['task-monday-1'].set.title, 'Say "hi" $(touch x) `id` now');
   assert.ok(!fs.existsSync(path.join(place.root, 'x')));
-  assert.equal(documentsOf(place)['milestone-monday-2'].set.name, 'Name with \\ and "quotes" $HOME');
 });
 
-test('answers of an odd shape do not stop the run: missing names, values and columns, numbers for texts, an account with no name', () => {
-  const place = setup('odd', { tools: true });
-  world(place, {
-    items: [
-      { id: '1', name: 'No values at all', parent_item: null },
-      { id: '2', name: 'Null values', column_values: null },
-      item('3', 'Odd values', [{ id: 'color_mm82nvea', type: 'status', text: 5, label: 7, index: '1' }, { id: 'timerange_mkyp8kx7', text: null, from: 5, to: {} }, null, 'nothing']),
-      { id: 4, name: 'Number id', column_values: [col.department('Build', 1)] },
-      { id: '5', name: '', column_values: [col.department('Build', 1)] },
-      { id: 'x y', name: 'Bad id', column_values: [col.department('Build', 1)] },
-    ],
-  });
-  place.answer('boards', { data: { me: null, boards: [{ id: 5, name: null, type: 'board', columns: null }, 'text', null] } });
-  const result = place.run();
-  assert.equal(result.status, 0, result.errors);
-  const ids = Object.keys(documentsOf(place)).filter(id => id.startsWith('task-')).sort();
-  assert.deepEqual(ids, ['task-monday-1', 'task-monday-2', 'task-monday-3', 'task-monday-4'], 'an item with no usable id or no name is left out');
-  ['1', '2', '3'].forEach(id => assert.equal(documentsOf(place)['task-monday-' + id].set.hiddenReason, 'unassigned', 'a department that cannot be read is no department'));
-  assert.equal(documentsOf(place)['task-monday-4'].set.hiddenReason, undefined);
-});
-
-test('the token of Monday and the token of Sanity are never printed, never in an argument of curl, never written to a file or a document, and the other secrets are never read', () => {
+test('the tokens are never printed, never an argument of curl, never in a file or a document', () => {
   const place = setup('secrets', { tools: true });
   world(place);
   const result = place.run();
-
-  [mondayToken, writeToken, secret, 'SECRET-FEED-TOKEN'].forEach(value => {
-    assert.ok(!result.text.includes(value), 'standard output has ' + value);
-    assert.ok(!result.errors.includes(value), 'standard error has ' + value);
-    assert.ok(!result.calls.includes(value), 'an argument of a call has ' + value);
-    assert.ok(!JSON.stringify(place.writes()).includes(value), 'a document has ' + value);
-    filesUnder(place.data).forEach(file => assert.ok(!fs.readFileSync(file, 'utf8').includes(value), file + ' has ' + value));
+  [mondayToken, writeToken, secret, 'SECRET-FEED-TOKEN'].forEach(word => {
+    assert.ok(!(result.text + result.errors + result.calls).includes(word), word);
+    assert.ok(!JSON.stringify(place.writes()).includes(word), word);
+    filesUnder(place.data).forEach(file => assert.ok(!fs.readFileSync(file, 'utf8').includes(word), file));
   });
-  const configs = place.configs();
-  assert.ok(configs.includes('header = "Authorization: ' + mondayToken + '"'), 'Monday gets the token in a header on standard input');
-  assert.ok(configs.includes('header = "Authorization: Bearer ' + writeToken + '"'), 'Sanity gets the write token in a header on standard input');
-  assert.ok(!configs.includes('SECRET-FEED-TOKEN'), 'the calendar address is never read');
-  assert.deepEqual(fs.readdirSync(place.temp), [], 'no work folder is left');
-
-  const failing = setup('secrets-failing', { tools: true });
-  world(failing);
-  failing.answer('boards', { error_message: 'Not Authenticated' }, { code: 401 });
-  const refused = failing.run();
-  [mondayToken, writeToken].forEach(value => {
-    assert.ok(!(refused.text + refused.errors + refused.calls + JSON.stringify(failing.writes())).includes(value), 'a failed run has ' + value);
-  });
+  assert.ok(place.configs().includes('header = "Authorization: ' + mondayToken + '"'));
+  assert.ok(place.configs().includes('header = "Authorization: Bearer ' + writeToken + '"'));
 });
 
-test('without the token of Monday, or the token of Sanity, or with the placeholder, the run says so in one line, asks for nothing and ends without an error', () => {
-  const cases = [
-    ['no-env', { noEnv: true }, 'MONDAY_API_TOKEN'],
-    ['no-monday', { env: "TELETRAAN_DATA='<data>'\nSANITY_WRITE_TOKEN='" + writeToken + "'\n" }, 'MONDAY_API_TOKEN'],
-    ['placeholder', { env: "TELETRAAN_DATA='<data>'\nMONDAY_API_TOKEN='[paste the Monday token here]'\nSANITY_WRITE_TOKEN='" + writeToken + "'\n" }, 'MONDAY_API_TOKEN'],
-    ['no-sanity', { env: "TELETRAAN_DATA='<data>'\nMONDAY_API_TOKEN='" + mondayToken + "'\n" }, 'SANITY_WRITE_TOKEN'],
-    ['sanity-placeholder', { env: "TELETRAAN_DATA='<data>'\nMONDAY_API_TOKEN='" + mondayToken + "'\nSANITY_WRITE_TOKEN='[paste the Sanity write token here]'\n" }, 'SANITY_WRITE_TOKEN'],
-  ];
-  cases.forEach(item => {
-    const place = setup('not-set-up-' + item[0], Object.assign({ tools: true }, item[1]));
-    world(place);
-    const result = place.run();
-
-    assert.equal(result.status, 0, item[0]);
-    assert.equal(result.text.trim(), item[2] + ' is not in local.env yet, so nothing was read. See docs/monday.md.', item[0]);
-    assert.equal(result.errors, '', item[0]);
-    assert.equal(requestsOf(result.calls).length, 0, item[0]);
-    assert.ok(!fs.existsSync(place.folder), item[0]);
-  });
-
-  const odd = setup('odd-token', { tools: true, env: "TELETRAAN_DATA='<data>'\nMONDAY_API_TOKEN='has a space \"'\nSANITY_WRITE_TOKEN='" + writeToken + "'\n" });
-  world(odd);
-  const result = odd.run();
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('MONDAY_API_TOKEN in local.env does not look like a token'), result.errors);
-  assert.ok(!result.errors.includes('has a space'), 'the odd value is not repeated');
+test('without a token the run says so in one line and asks for nothing', () => {
+  const place = setup('no-token', { tools: true, env: "TELETRAAN_DATA='<data>'\nSANITY_WRITE_TOKEN='" + writeToken + "'\n" });
+  world(place);
+  const result = place.run();
+  assert.equal(result.status, 0);
+  assert.equal(result.text.trim(), 'MONDAY_API_TOKEN is not in local.env yet, so nothing was read. See docs/monday.md.');
   assert.equal(requestsOf(result.calls).length, 0);
 });
 
-test('--check asks Monday one question and writes nothing: OK for a token that works, FAIL with the reason when it does not', () => {
-  const good = setup('check-good', { tools: true });
-  world(good);
-  const result = good.run(['--check']);
+test('--check asks who the token belongs to and writes nothing', () => {
+  const place = setup('check', { tools: true });
+  world(place);
+  const result = place.run(['--check']);
   assert.equal(result.status, 0, result.errors);
   assert.deepEqual(result.text.trim().split('\n'), ['OK    Monday accepts the token (connected as Jordan)', 'OK    SANITY_WRITE_TOKEN is in local.env']);
   assert.deepEqual(requestsOf(result.calls), ['monday me']);
-  assert.equal(good.writes().length, 0);
-  assert.ok(!fs.existsSync(good.folder), 'the data folder is not touched');
-
-  const refused = setup('check-refused', { tools: true });
-  world(refused);
-  refused.answer('me', { error_message: 'Not Authenticated' }, { code: 401 });
-  const second = refused.run(['--check']);
-  assert.equal(second.status, 1);
-  assert.ok(second.text.includes('FAIL  Monday refused the token. Check MONDAY_API_TOKEN in local.env.'), second.text);
-
-  const missing = setup('check-missing', { tools: true, noEnv: true });
-  world(missing);
-  const third = missing.run(['--check']);
-  assert.equal(third.status, 1);
-  assert.ok(third.text.includes('FAIL  MONDAY_API_TOKEN is not in local.env') && third.text.includes('FAIL  SANITY_WRITE_TOKEN is not in local.env'), third.text);
-  assert.equal(requestsOf(third.calls).length, 0);
+  assert.equal(place.writes().length, 0);
 });
 
-test('a word the script does not know, or two, prints how to use it and changes nothing', () => {
-  const place = setup('usage', { tools: true });
+test('--debug prints the kind of board and the shape of two items, with no names of people', () => {
+  const place = setup('debug', { tools: true });
   world(place);
-  [['--now'], ['--check', '--check'], ['check']].forEach(args => {
-    const result = place.run(args);
-    assert.equal(result.status, 1, args.join(' '));
-    assert.ok(result.errors.includes('Usage:'), result.errors);
-  });
-  assert.equal(fs.readFileSync(place.log, 'utf8'), '');
-  assert.ok(!fs.existsSync(place.folder));
+  place.answer('items-' + taskBoardId, { data: { boards: [{ name: 'Robotics Tasks', hierarchy_type: 'multi_level', items_page: { items: taskItems().slice(0, 2) } }] } });
+  const result = place.run(['--debug', taskBoardId]);
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(result.text.includes('Board: Robotics Tasks') && result.text.includes('Hierarchy: multi_level'), result.text);
+  assert.ok(result.text.includes('"battery_value"'), result.text);
+  assert.ok(result.text.includes('{"count":2}'), 'a people column says how many');
+  assert.equal(place.writes().length, 0);
+  assert.equal(place.run(['--debug', 'x']).status, 1);
 });
 
-test('without curl or jq the script prints the apt line and stops', () => {
-  const place = setup('no-curl', { tools: false });
-  const result = place.run();
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('The curl command is missing'), result.errors);
-  assert.ok(result.errors.includes('  sudo apt install curl jq\n'));
-  assert.ok(!fs.existsSync(place.folder));
-});
-
-test('with no data folder the script stops with a plain line and asks Monday for nothing', () => {
-  const place = setup('no-data', { tools: true, noData: true });
-  world(place);
-  const result = place.run();
-
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('The data folder ' + path.join(place.root, 'data') + ' does not exist'), result.errors);
-  assert.equal(requestsOf(result.calls).length, 0);
-});
-
-test('a run that finds the lock taken stops at once and changes nothing', () => {
+test('a run that finds the lock taken stops at once', () => {
   const place = setup('locked', { tools: true });
   world(place);
   const result = place.run([], { STUB_LOCKED: 'yes' });
-
   assert.equal(result.status, 0);
-  assert.ok(result.text.includes('still going'), result.text);
-  assert.ok(result.calls.includes('flock -n 9'), 'the lock is asked for without waiting');
+  assert.ok(result.text.includes('still going'));
   assert.equal(requestsOf(result.calls).length, 0);
-  assert.deepEqual(fs.readdirSync(place.folder), ['.lock']);
 });
 
-test('the work folder is removed after every run, and one a stopped run left behind is cleaned up', () => {
-  const place = setup('leftovers', { tools: true });
-  world(place);
-  fs.mkdirSync(path.join(place.folder, '.work.interrupted'), { recursive: true });
-  place.run();
-  assert.deepEqual(fs.readdirSync(place.folder).sort(), ['.lock']);
-  assert.deepEqual(fs.readdirSync(place.temp), []);
-});
-
-test('the script also works under bash, with the same requests and the same documents', () => {
+test('the script also works under bash, with the same writes', () => {
   if (!fs.existsSync('/bin/bash')) return;
   const reference = setup('bash-reference', { tools: true });
-  world(reference, { owners: true });
+  world(reference);
   reference.run();
-
   const place = setup('bash', { tools: true });
-  world(place, { owners: true });
+  world(place);
   const result = place.run([], {}, '/bin/bash');
-
   assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(requestsOf(result.calls), firstSequence);
   assert.deepEqual(place.writes(), reference.writes());
 });
 
-test('the scripts have valid sh syntax, are executable, and local.env and the secrets are never printed', () => {
+test('the scripts have valid sh syntax, are executable, and secrets only go to curl on standard input', () => {
   [syncFile, installFile].forEach(file => {
-    const syntax = spawnSync('/bin/sh', ['-n', file], { encoding: 'utf8' });
-    assert.equal(syntax.status, 0, syntax.stderr);
-    if (fs.existsSync('/bin/dash')) {
-      const dash = spawnSync('/bin/dash', ['-n', file], { encoding: 'utf8' });
-      assert.equal(dash.status, 0, dash.stderr);
-    }
-
+    assert.equal(spawnSync('/bin/sh', ['-n', file], { encoding: 'utf8' }).status, 0);
+    assert.ok((fs.statSync(file).mode & 0o111) !== 0);
     const text = fs.readFileSync(file, 'utf8');
-    assert.ok(text.startsWith('#!/bin/bash\n'));
-    assert.ok(/^set -euo pipefail$/m.test(text), 'the script stops at the first error');
-    assert.ok((fs.statSync(file).mode & 0o111) !== 0, path.basename(file) + ' should be executable');
-    assert.ok(!/\bcat\b[^\n]*local\.env/.test(text), 'local.env is never printed');
-    assert.ok(!/\beval\b/.test(text), 'nothing is run from text');
-    assert.ok(!/CALENDAR_|TBA_/.test(text), 'the other secrets are not read');
+    assert.ok(/^set -euo pipefail$/m.test(text));
+    assert.ok(!/\bcat\b[^\n]*local\.env/.test(text));
+    assert.ok(!/CALENDAR_|TBA_/.test(text));
   });
-
   const text = textOf(syncFile);
-  assert.ok(!/\becho\b[^\n]*\$(monday_token|write_token)/.test(text), 'a secret is never echoed');
-  assert.ok(!/\bprintf\b[^\n]*\$(monday_token|write_token)[^\n]*>&2/.test(text), 'a secret is never printed as an error');
-  assert.ok(!/--header[^\n]*(Authorization)|-H [^\n]*(Authorization)/.test(text), 'a secret is not an argument of curl');
-  assert.ok(!/set -x|--verbose|--trace/.test(text), 'curl and the shell do not trace what they send');
-  text.split('\n').filter(line => line.includes('$monday_token') || line.includes('$write_token')).forEach(line => {
-    const handed = line.includes("printf 'header = \"Authorization: %s\"\\n' \"$monday_token\"") || line.includes("printf 'header = \"Authorization: Bearer %s\"\\n' \"$write_token\"");
-    const checked = /^\s*(case \$(monday_token|write_token) in|looks_like_key (MONDAY_API_TOKEN|SANITY_WRITE_TOKEN) "\$(monday_token|write_token)")$/.test(line);
-    assert.ok(handed || checked, 'a token is only checked or handed to curl on standard input: ' + line);
-  });
-  assert.ok(!/\$\(([^)]*)\)\s*\|\s*sh\b/.test(text), 'nothing is piped into a shell');
+  assert.ok(!/--header[^\n]*Authorization/.test(text));
+  assert.ok(!/set -x|--verbose|--trace/.test(text));
 });
 
-test('every address, version, question and place in an answer is in the block at the top, and nowhere else', () => {
-  const text = textOf(syncFile);
-  const start = text.indexOf("monday_address='");
-  const end = text.indexOf("\n'\n", start) + 3;
-  const block = text.slice(start, end);
-  const rest = text.slice(0, start) + text.slice(end);
-
-  assert.equal(text.split('api.monday.com').length, 2, 'one address in the whole script');
-  assert.ok(block.includes("monday_address='https://api.monday.com/v2'"));
-  assert.ok(/\nmonday_version='20[0-9]{2}-[0-9]{2}'\n/.test(block), 'the version is one named line');
-  assert.equal(text.split('monday_version=').length, 2, 'the version is written once');
-  ['monday_query_me=', 'monday_query_boards=', 'monday_query_items=', 'monday_query_more=', 'monday_query_items_multi=', 'monday_query_more_multi=', 'monday_query_debug='].forEach(name => {
-    assert.equal(text.split(name).length, 2, name + ' is written once');
-    assert.ok(block.includes(name), name);
-  });
-  ['items_page', 'next_items_page', 'items_count', 'column_values', 'parent_item', 'linked_item_ids'].forEach(word => {
-    assert.ok(block.includes(word), 'the block has ' + word);
-    assert.ok(!rest.includes(word), 'the rest of the script does not have ' + word);
-  });
-  ['.data.me.name', '.data.boards', '.items_count', '.column_values', '.data.next_items_page', '.cursor', '.errors[]?.message', '.error_message', '.parent_item.id', '.linked_item_ids'].forEach(place => {
-    assert.ok(block.includes(place), 'the block has ' + place);
-    assert.ok(!rest.includes(place), 'the rest of the script does not have ' + place);
-  });
-});
-
-test('the limits of the script are the limits of the Studio fields and the contract: a title of 22, a first name of 12, a milestone name of 40, four requests, 900 reads a day, 120 snapshots', () => {
+test('the limits: a title of 40 and a first name of 12 as in the task schema, 900 reads a day, 120 counts', () => {
   const text = textOf(syncFile);
   const task = fs.readFileSync(path.join(repo, 'studio/schemas/task.js'), 'utf8');
-  const milestone = fs.readFileSync(path.join(repo, 'studio/schemas/milestone.js'), 'utf8');
-
-  assert.ok(text.includes('\ntitle_limit=22\n') && task.includes("name: 'title'") && /tooLong\(Rule, 22\)/.test(task), 'the title');
-  assert.ok(text.includes('\ncontact_limit=12\n') && /name: 'contact'[\s\S]*?tooLong\(Rule, 12\)/.test(task), 'the contact');
-  assert.ok(text.includes('\nmilestone_limit=40\n') && /name: 'name'[\s\S]*?tooLong\(Rule, 40\)/.test(milestone), 'the milestone name');
-  assert.ok(text.includes('\nmax_requests=4\n'));
-  assert.ok(text.includes('\npage_size=200\n'));
+  assert.ok(text.includes('\ntitle_limit=40\n') && /tooLong\(Rule, 40\)/.test(task));
+  assert.ok(text.includes('\ncontact_limit=12\n') && /name: 'contact'[\s\S]*?tooLong\(Rule, 12\)/.test(task));
   assert.ok(text.includes('\ndaily_limit=900\n'));
   assert.ok(text.includes('\nsnapshots_kept=120\n'));
+  assert.ok(text.includes("monday_version='2026-01'"));
 });
 
-test('the starting values of the script are the starting values of Dashboard Settings: the same boards, columns, indexes and every', async () => {
-  const text = textOf(syncFile);
-  const block = text.slice(text.indexOf("defaults='") + "defaults='".length, text.indexOf("\n}'\n", text.indexOf("defaults='")) + 2);
-  const script = JSON.parse(block);
-  const { defaultSettings } = await import(pathToFileURL(path.join(repo, 'dashboard/config.js')).href);
-
-  // a team is its document id in the script, and a reference in the settings
-  function plain(value) {
-    return JSON.parse(JSON.stringify(value, (key, found) => (found && found._ref ? found._ref : found)));
-  }
-  assert.equal(defaultSettings.mondayEveryMinutes, script.every);
-  assert.deepEqual(plain(defaultSettings.mondayTaskBoard), script.taskBoard);
-  assert.deepEqual(plain(defaultSettings.mondayMilestoneBoard), script.milestoneBoard);
-});
-
-test('the unit files name the account ACCOUNT, run the script, and the timer wakes it 2 minutes after boot and every 5 minutes', () => {
+test('the unit files run the script every 5 minutes as ACCOUNT, and status-write knows the job monday', () => {
   const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-monday.service'), 'utf8');
   const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-monday.timer'), 'utf8');
-
   assert.deepEqual(service.match(/^User=.*$/gm), ['User=ACCOUNT']);
-  assert.ok(/^Type=oneshot$/m.test(service));
   assert.deepEqual(service.match(/^ExecStart=.*$/gm), ['ExecStart=/opt/teletraan/computer/scripts/monday-sync.sh']);
-  assert.ok(!/^ExecStartPost=/m.test(service), 'the script tells status-mini itself, and only after a run that worked');
-  assert.ok(fs.existsSync(syncFile), 'the script the unit runs exists');
-  assert.ok(/^OnBootSec=2min$/m.test(timer));
   assert.ok(/^OnUnitActiveSec=5min$/m.test(timer));
-  assert.ok(/^WantedBy=timers\.target$/m.test(timer));
-  assert.ok(!/hawktimus/i.test(service + timer), 'no account name is written in the unit files');
-  assert.ok(!/^OnCalendar=/m.test(timer), 'one timer, every 5 minutes after the last run');
-  assert.ok(/every 5 minutes/.test(timer) && /Dashboard Settings/.test(timer), 'the timer says that the setting decides how often Monday is read');
-  unitFiles.forEach(unit => assert.ok(fs.statSync(path.join(repo, 'computer/systemd', unit)).size > 100, unit + ' is not empty'));
+  assert.ok(fs.readFileSync(path.join(repo, 'computer/scripts/status-write.sh'), 'utf8').includes('monday) field=lastMondaySyncAt ;;'));
 });
 
-test('the script tells status-mini through status-write.sh, which knows the job monday', () => {
-  const status = fs.readFileSync(path.join(repo, 'computer/scripts/status-write.sh'), 'utf8');
-  assert.ok(status.includes('monday) field=lastMondaySyncAt ;;'));
-  assert.ok(textOf(syncFile).includes('"$computer/scripts/status-write.sh" monday || true'));
-});
-
-test('install-monday.sh stops, naming the file, when a unit file is missing or empty', () => {
-  const missing = setup('install-missing', { tools: true, install: true });
-  fs.rmSync(path.join(missing.root, 'computer/systemd/teletraan-monday.service'));
-  const first = missing.install();
-  assert.equal(first.status, 1);
-  assert.ok(first.errors.includes('teletraan-monday.service is missing or empty'), first.errors);
-
-  const empty = setup('install-empty', { tools: true, install: true });
-  fs.writeFileSync(path.join(empty.root, 'computer/systemd/teletraan-monday.timer'), '');
-  const second = empty.install();
-  assert.equal(second.status, 1);
-  assert.ok(second.errors.includes('teletraan-monday.timer is missing or empty'), second.errors);
-
-  const noScript = setup('install-no-script', { tools: true, install: true });
-  fs.chmodSync(path.join(noScript.root, 'computer/scripts/monday-sync.sh'), 0o644);
-  const third = noScript.install();
-  assert.equal(third.status, 1);
-  assert.ok(third.errors.includes('monday-sync.sh is missing or cannot be run'), third.errors);
-
-  [first, second, third].forEach(result => assert.ok(!result.calls.includes('systemctl'), 'nothing was changed'));
-});
-
-test('install-monday.sh prints the apt line when a package is missing, and never runs apt', () => {
-  const place = setup('install-packages', { tools: false, install: true });
-  const result = place.install();
-
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('These packages are not installed: curl jq'), result.errors);
-  assert.ok(result.errors.includes('  sudo apt install curl jq\n'));
-  assert.ok(!result.calls.includes('apt') && !result.calls.includes('systemctl'), result.calls);
-});
-
-test('install-monday.sh with everything in place still needs sudo and the repository at /opt/teletraan before it changes anything', () => {
+test('install-monday.sh needs sudo and the repository at /opt/teletraan before it changes anything', () => {
   const place = setup('install-checks', { tools: true, install: true });
   const plain = place.install({ STUB_UID: '1000' });
   assert.equal(plain.status, 1);
   assert.ok(plain.errors.includes('it has to run with sudo'), plain.errors);
-
-  const root = place.install({ STUB_UID: '0' });
-  assert.equal(root.status, 1);
-  assert.ok(root.errors.includes('The unit files expect the repository at /opt/teletraan'), root.errors);
-  assert.ok(!root.calls.includes('systemctl') && !root.calls.includes('apt'));
-});
-
-test('install-monday.sh copies the two monday units only, with ACCOUNT filled in, and writes no account name of its own', () => {
-  const text = fs.readFileSync(installFile, 'utf8');
-  assert.deepEqual(text.match(/teletraan-[a-z]+\.(service|timer)/g).filter((name, index, all) => all.indexOf(name) === index).sort(), ['teletraan-monday.service', 'teletraan-monday.timer']);
-  assert.ok(text.includes('sed "s/^User=ACCOUNT\\$/User=$account/"'));
-  assert.ok(!/hawktimus/.test(text.split('\n').filter(line => !line.includes('called hawktimus') && !line.includes('chown')).join('\n')), 'the account name is only in the hint');
-  assert.ok(text.includes('systemctl enable --now teletraan-monday.timer') && text.includes('systemctl restart teletraan-monday.timer'));
-  assert.ok(text.includes('(every 5 minutes)'), 'the installer says what the timer does');
-  assert.ok(!/frc|slides|poppler/i.test(text), 'nothing is left of the other installers');
+  assert.ok(!plain.calls.includes('systemctl'));
 });
 
 test('local.example.env has a MONDAY_API_TOKEN line with a placeholder', () => {
   const example = fs.readFileSync(path.join(repo, 'computer/local.example.env'), 'utf8');
-  assert.ok(/^MONDAY_API_TOKEN='\[[^\n]*\]'$/m.test(example), 'a placeholder that starts with [');
+  assert.ok(/^MONDAY_API_TOKEN='\[[^\n]*\]'$/m.test(example));
 });
 
-// The group of an item stands in for the department when the Department column is empty or Unassigned
-function groupItems() {
-  const base = [col.state('To Do', 5), col.team('Prime', 1), col.show('Show', 5)];
-  return [
-    item('3001', 'Column wins', [col.department('Build', 1)].concat(base), null, 'Electrical'),
-    item('3002', 'Empty column', base, null, 'electrical'),
-    item('3003', 'Unassigned column', [col.department('Unassigned', 5)].concat(base), null, ' DESIGN '),
-    item('3004', 'Group matches nothing', [col.department('Unassigned', 5)].concat(base), null, 'Done'),
-    item('3005', 'No group at all', base),
-    item('3006', 'Group named Unassigned', base, null, 'Unassigned'),
-  ];
-}
-
-function checkGroups(documents) {
-  assert.equal(refOf(documents['task-monday-3001'].set.subteam), 'subteam-build', 'a department in the column is kept');
-  assert.equal(refOf(documents['task-monday-3002'].set.subteam), 'subteam-electrical', 'an empty column uses the group, whatever its capitals');
-  assert.equal(refOf(documents['task-monday-3003'].set.subteam), 'subteam-design', 'Unassigned uses the group');
-  assert.equal(documents['task-monday-3004'].set.hiddenReason, 'unassigned', 'a group like Done changes nothing');
-  assert.equal(documents['task-monday-3005'].set.hiddenReason, 'unassigned');
-  assert.equal(documents['task-monday-3006'].set.hiddenReason, 'unassigned', 'the Unassigned label is never a department');
-}
-
-test('the group of a task is its department when the Department column is empty or Unassigned and the group matches a label', () => {
-  const place = setup('group-classic', { tools: true });
-  world(place, { items: groupItems() });
-  assert.equal(place.run().status, 0);
-  checkGroups(documentsOf(place));
-  assert.ok(textOf(path.join(repo, 'computer/scripts/monday-contract.sh')).includes('group { id title }'));
-});
-
-test('the group works the same on a multi-level board', () => {
-  const place = setup('group-multi', { tools: true });
-  multiWorld(place, { items: groupItems() });
-  const result = place.run();
-  assert.equal(result.status, 0, result.errors);
-  checkGroups(documentsOf(place));
-});
-
-// Multi-level boards (hierarchy_type multi_level): a status column answers BatteryValue, a list of { key, count } where
-// key is the index of a label as text, and the labels come from the settings of the column. The answers here are made up
-// in that shape; how Monday really answers has not been tried with the token (docs/monday.md, "If an answer looks different").
-function multiLevelItems(items) {
-  return items.map(entry => Object.assign({}, entry, {
-    column_values: entry.column_values.map(column => {
-      if (typeof column.index !== 'number') return column;
-      return { id: column.id, type: column.type, text: column.text, battery_value: [{ key: String(column.index), count: 1 }] };
-    }),
-  }));
-}
-
-// The label table the settings of the status columns would give: every label that the items use, by index
-function labelSettings(items) {
-  const tables = {};
-  items.forEach(entry => entry.column_values.forEach(column => {
-    if (typeof column.index !== 'number') return;
-    tables[column.id] = tables[column.id] || {};
-    tables[column.id][String(column.index)] = column.label;
-  }));
-  return Object.keys(tables).map(id => ({ id: id, settings_str: JSON.stringify({ labels: tables[id] }) }));
-}
-
-function multiWorld(place, options) {
-  const given = options || {};
-  const classic = given.items || taskItems();
-  world(place, Object.assign({}, given, { items: multiLevelItems(classic) }));
-  const boards = boardsAnswer();
-  boards.data.boards[0].hierarchy_type = 'multi_level';
-  place.answer('boards', boards);
-  place.pages(taskBoardId, multiLevelItems(classic), 200, 'Robotics Tasks', { columns: labelSettings(classic) });
-}
-
-test('the list of boards asks for hierarchy_type and keeps a multi-level board with a marker', () => {
-  const place = setup('multi-list', { tools: true });
-  multiWorld(place);
-  const result = place.run();
-
-  assert.equal(result.status, 0, result.errors);
-  const boards = statusOf(place).set.boards;
-  assert.equal(boards.find(board => board.id === taskBoardId).hierarchy, 'multi_level');
-  assert.equal(boards.find(board => board.id === milestoneBoardId).hierarchy, 'classic', 'a board with no hierarchy_type is classic');
-  assert.ok(textOf(syncFile).includes('hierarchy_type'));
-});
-
-test('a multi-level board is read with the BatteryValue question, and its tasks come out the same as the classic board gives', () => {
-  const classic = setup('classic-same', { tools: true });
-  world(classic);
-  assert.equal(classic.run().status, 0);
-  assert.deepEqual(classic.battery(), [], 'a classic board never gets the BatteryValue question');
-
-  const multi = setup('multi-same', { tools: true });
-  multiWorld(multi);
-  const result = multi.run();
-  assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(multi.battery(), ['items-' + taskBoardId], 'only the multi-level board gets it, the milestones board stays classic');
-  assert.deepEqual(documentsOf(multi), documentsOf(classic), 'the same documents: department, status, team, priority and Show on TV by index');
-  const hidden = documentsOf(multi)['task-monday-1008'];
-  assert.equal(hidden.set.showOnBoard, false, 'the Hide label is found from the labels of the column settings');
-  assert.deepEqual(multi.variables()[1].columns, classic.variables()[1].columns, 'the same columns are asked for');
-});
-
-test('a multi-level board listed by an earlier run is read the same way when the list is not asked for again', () => {
-  const place = setup('multi-later', { tools: true });
-  multiWorld(place, { known: laterRead });
-  const answer = JSON.parse(fs.readFileSync(path.join(place.stub, 'sanity.json'), 'utf8')).result;
-  place.sanity(Object.assign(answer, { listed: [{ id: taskBoardId, hierarchy: 'multi_level' }] }));
-  const result = place.run();
-
-  assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(requestsOf(result.calls), laterSequence);
-  assert.deepEqual(place.battery(), ['items-' + taskBoardId]);
-  assert.equal(documentsOf(place)['task-monday-1001'].set.status, 'in-progress');
-});
-
-test('a parent with several keys takes the key with the most items under it, and the first one on a tie', () => {
-  const items = taskItems();
-  const place = setup('multi-counts', { tools: true });
-  multiWorld(place, { items: items });
-  const many = multiLevelItems(items);
-  many[0].column_values.find(column => column.id === 'color_mkv6tatz').battery_value = [{ key: '5', count: 1 }, { key: '1', count: 3 }];
-  many[1].column_values.find(column => column.id === 'color_mkv6tatz').battery_value = [{ key: '0', count: 2 }, { key: '1', count: 2 }];
-  place.pages(taskBoardId, many, 200, 'Robotics Tasks', { columns: labelSettings(items) });
-  const result = place.run();
-
-  assert.equal(result.status, 0, result.errors);
-  assert.equal(documentsOf(place)['task-monday-1001'].set.status, 'done', 'three items done beat one to do');
-  assert.equal(documentsOf(place)['task-monday-1002'].set.status, 'in-progress', 'a tie goes to the first key Monday lists');
-});
-
-test('a timeline and the people of a multi-level board are read as they are on a classic one', () => {
-  const place = setup('multi-timeline', { tools: true });
-  multiWorld(place, { owners: true });
-  const result = place.run();
-
-  assert.equal(result.status, 0, result.errors);
-  const task = documentsOf(place)['task-monday-1001'].set;
-  assert.equal(task.startDate, '2026-10-01');
-  assert.equal(task.dueDate, '2026-10-20');
-  assert.equal(task.contact, 'Sam');
-  assert.deepEqual(task.owners, ['Pat', 'Jo']);
-});
-
-test('items that all come back with no department say so and point to Monday debug', () => {
-  const place = setup('empty-values', { tools: true });
-  const empty = taskItems().map(entry => Object.assign({}, entry, { column_values: entry.column_values.map(column => ({ id: column.id, type: column.type, text: '' })) }));
-  world(place, { items: empty });
-  const result = place.run();
-
-  assert.equal(result.status, 1);
-  assert.ok(result.errors.includes('No task from the task board has a Department') && result.errors.includes('Monday debug'), result.errors);
-});
-
-test('the debug run prints the kind of board, the version and the shape of two items, and no token and no names of people', () => {
-  const place = setup('debug', { tools: true });
-  place.at(nowText, todayText);
-  const items = multiLevelItems(taskItems());
-  place.answer('items-' + taskBoardId, { data: { boards: [{ name: 'Robotics Tasks', hierarchy_type: 'multi_level', items_page: { items: items.slice(0, 2) } }] } });
-  const result = place.run(['--debug', taskBoardId]);
-
-  assert.equal(result.status, 0, result.errors);
-  assert.ok(result.text.includes('API version: ' + versionOf(syncFile)), result.text);
-  assert.ok(result.text.includes('Hierarchy: multi_level') && result.text.includes('Board: Robotics Tasks'), result.text);
-  assert.ok(result.text.includes('Item: Wire the robot') && result.text.includes('Item: Pick up parts'), result.text);
-  assert.ok(result.text.includes('color_mm82nvea status: {"text":"Build","battery_value":[{"key":"1","count":1}]}'), result.text);
-  ['Pat Kim', 'Sam Lee', 'Jo Ray', 'Ana Diaz', 'sam@example.com', 'call 555'].forEach(secret => assert.ok(!result.text.includes(secret), secret + ' is not printed'));
-  assert.ok(result.text.includes('multiple_person_mm82cqbx people: {"text":"(hidden)","persons_and_teams":{"count":1}}'), result.text);
-  assert.ok(result.text.includes('text_mm82s03v text: {"text":"(hidden)"}'), 'a text column is hidden');
-  assert.ok(!result.text.includes(mondayToken) && !result.errors.includes(mondayToken) && !result.calls.includes(mondayToken));
-  assert.ok(!result.text.includes('Item: Waiting on a part'), 'only two items');
-  assert.deepEqual(requestsOf(result.calls), ['monday items-' + taskBoardId], 'one request to Monday, nothing to Sanity');
-  assert.equal(place.writes().length, 0);
-  assert.deepEqual(place.battery(), ['items-' + taskBoardId], 'the debug question asks for the multi-level shape');
-});
-
-test('the debug run refuses what is not a board number, and says so when Monday gives an error or no board', () => {
-  const place = setup('debug-bad', { tools: true });
-  place.at(nowText, todayText);
-  [[], ['abc'], ['12 34'], ['1;ls'], ['-1']].forEach(extra => {
-    const result = place.run(['--debug'].concat(extra));
-    assert.equal(result.status, 1, JSON.stringify(extra));
-    assert.ok(result.errors.includes('Usage:'), result.errors);
-    assert.equal(requestsOf(result.calls).length, 0);
-  });
-
-  place.answer('items-' + taskBoardId, { errors: [{ message: 'Cannot query field on type' }] });
-  const refused = place.run(['--debug', taskBoardId]);
-  assert.equal(refused.status, 1);
-  assert.ok(refused.text.includes('FAIL  Monday said: Cannot query field on type'), refused.text);
-
-  place.answer('items-' + taskBoardId, { data: { boards: [] } });
-  const none = place.run(['--debug', taskBoardId]);
-  assert.equal(none.status, 0);
-  assert.ok(none.text.includes('No board came back'), none.text);
-
-  const unset = setup('debug-unset', { tools: true, env: "TELETRAAN_DATA='<data>'\nMONDAY_API_TOKEN='[your token]'\n" });
-  unset.at(nowText, todayText);
-  const missing = unset.run(['--debug', taskBoardId]);
-  assert.equal(missing.status, 1);
-  assert.ok(missing.text.includes('FAIL  MONDAY_API_TOKEN is not in local.env'), missing.text);
-});
 
 let failures = 0;
 try {

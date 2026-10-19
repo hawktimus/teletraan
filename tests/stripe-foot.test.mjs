@@ -168,36 +168,28 @@ const panels = {
   };
 });
 
-// A Monday card: the body is at the same place in every card, and the lowest thing in it is the page marker, at
-// the foot of the body, or what a card puts under its rows
+// A Monday panel: the body is at the same place in both, and the lowest thing in it is what a panel puts at its foot
 const mondayBody = style => {
   const top = pixels(valueIn(style, sheets.monday, '.monday .body', 'top'));
   return { top: top, height: pixels(valueIn(style, sheets.monday, '.monday .body', 'height')) };
 };
 const factNumber = () => lineOf(rule(sheets.monday, '.monday .fact-number').font);
-// The panels of the one task board (docs/monday.md) are in the same body. The numbers of the tasks, done and overall panels are
-// under their rows, the legend and the age of the status panel are at its foot, the timeline is its svg (40 over the rows, six rows of 72
-// and 24 for TODAY, which is what the script draws) and its legend, and the board is its head and two cards in each column
+// Department tasks has its counts under the rows. The TV charts have at most: the legend of 48, 8 and nine rows of status; the
+// progress counts; the legend, 4, the months of 48 and seven rows of the timeline. The note of the timeline is at the foot of the body.
 const mondayLowest = {
-  'monday-tasks': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-tasks'), '.monday-tasks .facts', 'top')) + factNumber(),
-  'monday-done': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-done'), '.monday-done .facts', 'top')) + factNumber(),
-  'monday-status-depts': (style, body) => body.top + Math.max(pixels(rule(panelCss('monday-status-depts'), '.monday-status-depts .legend').top) + lineOf(rule(sheets.monday, '.monday .legend').font), pixels(rule(panelCss('monday-status-depts'), '.monday-status-depts .age').top) + lineOf(rule(panelCss('monday-status-depts'), '.monday-status-depts .age').font)),
-  'monday-overall': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-overall'), '.monday-overall .facts', 'top')) + factNumber(),
-  'monday-timeline': (style, body) => body.top + (40 + 6 * 72 + 24) + lineOf(rule(sheets.monday, '.monday .legend').font),
-  'monday-board': (style, body) => {
-    const css = panelCss('monday-board');
-    return body.top + pixels(rule(css, '.monday-board .column-head').height) + pixels(rule(css, '.monday-board .column-head')['margin-bottom']) + 2 * (pixels(rule(css, '.monday-board .card').height) + 14) + lineOf(rule(css, '.monday-board .more').font);
+  'monday-department': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-department'), '.monday-department .facts', 'top')) + factNumber(),
+  'monday-charts': (style, body) => {
+    const css = panelCss('monday-charts');
+    const status = 48 + 8 + 9 * pixels(rule(css, '.monday-charts .status-row').height);
+    const progress = pixels(rule(css, '.monday-charts.chart-progress .facts').top) + factNumber();
+    const timeline = 48 + 4 + pixels(rule(css, '.monday-charts .months').height) + 7 * pixels(rule(css, '.monday-charts .lane-row').height);
+    return body.top + Math.max(status, progress, timeline);
   },
-  'monday-pie': (style, body) => body.top + 440,
-  'monday-milestones': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-milestones'), '.monday-milestones .more', 'top')) + lineOf(rule(panelCss('monday-milestones'), '.monday-milestones .more').font),
-  'monday-progress': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-progress'), '.monday-progress .totals', 'top')) + lineOf(rule(panelCss('monday-progress'), '.monday-progress .totals').font),
-  'monday-milestones-both': (style, body) => body.top + pixels(rule(sheets.monday, '.monday .rows-window').height),
-  'monday-progress-both': (style, body) => body.top + lineOf(rule(panelCss('monday-progress-both'), '.monday-progress-both .legend').font) + pixels(rule(panelCss('monday-progress-both'), '.monday-progress-both .rows-window').height),
 };
 Object.keys(mondayLowest).forEach(name => {
   panels[name] = style => {
     const body = mondayBody(style);
-    // the page marker is at the foot of the body
+    // the page marker and the note of the timeline are at the foot of the body
     return { bottom: Math.max(mondayLowest[name](style, body), body.top + body.height), box: body.top + body.height, top: body.top };
   };
 });
@@ -277,7 +269,7 @@ test('the pages of Original are as they were: the boxes of the panels end at 700
   assert.equal(panels.spotlight('original').bottom, 692);
   assert.equal(panels['sponsor-feature']('original').bottom, 692);
   rowCounts.forEach(count => assert.equal(panels['leadership on pages of ' + count]('original').bottom, 700, count + ' rows'));
-  assert.equal(panels['monday-tasks']('original').bottom, 676);
+  assert.equal(panels['monday-department']('original').bottom, 676);
 
   const base = sheets.base;
   assert.equal(rule(base, '.person-rows').top, '124px');
@@ -313,7 +305,7 @@ test('Cybertron: the boxes end at 664, the rows start at 136, 4 under the stripe
   assert.equal(panels.tonight('cybertron').bottom, 664);
   assert.equal(panels.spotlight('cybertron').bottom, 664);
   assert.equal(panels['sponsor-feature']('cybertron').bottom, 664);
-  assert.equal(panels['monday-tasks']('cybertron').bottom, 664);
+  assert.equal(panels['monday-department']('cybertron').bottom, 664);
 });
 
 test('Cybertron: the words fit the shorter rows at their own sizes', () => {
@@ -366,32 +358,22 @@ test('Cybertron: the words fit the shorter rows at their own sizes', () => {
   assert.ok(Math.max(pixels(rule(sponsor, '.sponsor-feature .logo-card').height), 4 * lineOf(rule(sponsor, '.sponsor-feature .blurb').font)) <= lower);
 });
 
-test('Cybertron: the cards of Monday fit a body of 532, with the numbers and the totals moved up and no word made smaller', () => {
-  const tasks = panelCss('monday-tasks');
-  const progress = panelCss('monday-progress');
-  const milestones = panelCss('monday-milestones');
-
+test('Cybertron: the Monday panels fit a body of 532 with no word made smaller, and the timeline note stays clear of its rows', () => {
+  const department = panelCss('monday-department');
+  const charts = panelCss('monday-charts');
   assert.equal(pixels(valueIn('cybertron', sheets.monday, '.monday .body', 'height')), 532);
   assert.equal(pixels(rule(sheets.monday, '.monday .body').height), 544, 'the body of Original is as it was');
 
-  // the five rows of the window end at 420, and the numbers start under them
-  assert.equal(pixels(rule(sheets.monday, '.monday .rows-window').height), 420);
-  assert.ok(pixels(valueIn('cybertron', tasks, '.monday-tasks .facts', 'top')) >= 420);
+  // Department tasks: the names of the columns, four rows of 84 in the window, and the counts under them
+  const window = pixels(rule(department, '.monday-department .rows-window').top) + pixels(rule(department, '.monday-department .rows-window').height);
+  assert.equal(pixels(rule(department, '.monday-department .rows-window').height), 4 * pixels(rule(department, '.monday-department .row').height));
+  assert.ok(pixels(rule(department, '.monday-department .columns').height) <= pixels(rule(department, '.monday-department .rows-window').top));
+  assert.ok(window <= pixels(rule(department, '.monday-department .facts').top), 'the counts are under the rows');
+  assert.ok(pixels(rule(department, '.monday-department .facts').top) + factNumber() <= 532);
 
-  // progress: six rows of 64 under the legend, then the line that says how many more, then the totals, one under the other
-  const bars = pixels(rule(progress, '.monday-progress .bars').top) + 6 * pixels(rule(progress, '.monday-progress .bar-row').height);
-  const more = pixels(valueIn('cybertron', progress, '.monday-progress .more', 'top'));
-  const totals = pixels(valueIn('cybertron', progress, '.monday-progress .totals', 'top'));
-  assert.ok(bars <= more && more + lineOf(rule(progress, '.monday-progress .more').font) <= totals, 'the rows, the line of more and the totals do not overlap: ' + [bars, more, totals].join(', '));
-  assert.ok(totals + lineOf(rule(progress, '.monday-progress .totals').font) <= 532);
-
-  // milestones: the heading row of 52, five rows of 84 and +N MORE under them
-  const milestoneRows = 52 + 5 * pixels(rule(milestones, '.monday-milestones .milestone-row').height);
-  assert.ok(milestoneRows <= pixels(rule(milestones, '.monday-milestones .more').top));
-  assert.ok(pixels(rule(milestones, '.monday-milestones .more').top) + 48 <= 532);
-
-  // the chart of progress is an svg 512 high at the top of the body
-  assert.ok(512 <= 532);
+  // the timeline: its rows end above the note at the foot
+  const rows = 48 + 4 + pixels(rule(charts, '.monday-charts .months').height) + 7 * pixels(rule(charts, '.monday-charts .lane-row').height);
+  assert.ok(rows <= 532 - lineOf(rule(charts, '.monday-charts .notes').font), 'the rows end at ' + rows);
 });
 
 test('the Cybertron rules for the foot of the large frame change no size of a letter, use no animation, shadow, blur or filter, and are for every layout', () => {

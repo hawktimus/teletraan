@@ -307,7 +307,7 @@ export function retire(area) {
   return whenDone(area);
 }
 
-// A card that has more rows than fit (the Monday cards, panels/monday-*) moves its list up by one page of
+// A card that has more rows than fit (Department tasks, the Events panel) moves its list up by one page of
 // rows: index is the page to show, counting from 0. The card, which is the page's own element, says which
 // page is in view in data-scroll-page and in --scroll-page, which frame.css moves the list by and the page
 // marker follows. In full motion the list takes 600 ms to get there, with the easing of the slats. In calm

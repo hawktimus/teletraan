@@ -314,10 +314,6 @@ html[data-style="cybertron"] .sponsor-feature .story {
   height: 524px;
 }
 html[data-style="cybertron"] .monday .body { height: 532px; }
-html[data-style="cybertron"] .monday-tasks .fact-label { line-height: 36px; }
-html[data-style="cybertron"] .monday-tasks .fact-number { line-height: 72px; }
-html[data-style="cybertron"] .monday-progress .more { top: 440px; }
-html[data-style="cybertron"] .monday-progress .totals { top: 488px; }
 
 
 /* The foot of the small frame has the neon slashes, 332 to 346 down the frame (core/plate.js,

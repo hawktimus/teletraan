@@ -117,10 +117,9 @@ export function mainPlaylist(content, now = new Date(), screen = planFor(content
   return steps;
 }
 
-// One step for a row. A Monday row has one step, and none while its panel has nothing to show (viewOf in core/monday-views.js): a
-// department with no visible task is left out as an empty row always was. The page of the step is the team, the department and
-// the turn of the row: how many rows of the same panel, team and department come right before it, plus one, so that a board that
-// plays twice in a row shows the next cards the second time.
+// One step for a row. A Monday row has one step, and none while its panel has nothing to show (viewOf in core/monday-views.js):
+// a department with no task on the TV is left out. The page of a Monday step is what the row says, { team, department, list,
+// chart }, where team is the team of the tasks (prime, nova, or empty for both).
 export function stepsOfRow(row, index, rows, content, now) {
   const step = { show: true, team: row.team };
   if (row.seconds) step.seconds = row.seconds;
@@ -132,10 +131,7 @@ export function stepsOfRow(row, index, rows, content, now) {
     return [Object.assign({ panel: row.panel }, step, named ? { page: { team: row.team, department: row.department || '', part: row.part || 0 } } : {})];
   }
 
-  let turn = 1;
-  const same = other => other.panel === row.panel && other.team === row.team && (other.department || '') === (row.department || '');
-  while (index - turn >= 0 && same(rows[index - turn])) turn += 1;
-  const page = { team: row.team, department: row.department || '', turn: turn };
+  const page = { team: row.tasksTeam || '', department: row.department || '', list: row.list || 'open', chart: row.chart || 'status' };
   return viewOf(row.panel, content, now, page) === null ? [] : [Object.assign({ panel: row.panel, page: page }, step)];
 }
 

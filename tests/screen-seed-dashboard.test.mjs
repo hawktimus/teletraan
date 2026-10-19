@@ -44,22 +44,22 @@ const ownersOrder = ['tonight', 'forecast', 'leadership', 'team-leads', 'photo',
 test('the Panel order saved on the screen today becomes: each team with its panels and its Monday rows, then the panels that are the same for both', () => {
   const main = seedMainRows({ order: ownersOrder }, [prime, nova]);
   assert.deepEqual(rowsOf(main), [
-    'tonight prime', 'leadership prime', 'team-leads prime', 'tasks prime', 'monday-tasks prime', 'monday-done prime', 'monday-board prime',
-    'tonight nova', 'leadership nova', 'team-leads nova', 'tasks nova', 'monday-tasks nova', 'monday-done nova', 'monday-board nova',
+    'tonight prime', 'leadership prime', 'team-leads prime', 'tasks prime', 'monday-charts prime',
+    'tonight nova', 'leadership nova', 'team-leads nova', 'tasks nova', 'monday-charts nova',
     'photo', 'events',
   ]);
   assert.deepEqual(rowsOf(seedSideRows({ order: ownersOrder })), ['forecast', 'next-event', 'task-counts', 'sponsor-logo', 'task-counts'], 'task-counts is twice, as it is in the order');
-  main.slice(14).forEach(row => assert.equal(row.team, '', row.panel + ' has no team'));
-  main.slice(0, 14).forEach(row => assert.ok(row.team === 'prime' || row.team === 'nova', row.panel));
+  main.slice(10).forEach(row => assert.equal(row.team, "", row.panel + " has no team"));
+  main.slice(0, 10).forEach(row => assert.ok(row.team === "prime" || row.team === "nova", row.panel));
 });
 
 test('with one team the rows are that team\'s, its Monday rows and then the shared panels, and with the teams the other way round Nova comes first', () => {
   const only = seedMainRows({ order: ownersOrder }, [prime]);
-  assert.deepEqual(rowsOf(only), ['tonight prime', 'leadership prime', 'team-leads prime', 'tasks prime', 'monday-tasks prime', 'monday-done prime', 'monday-board prime', 'photo', 'events']);
+  assert.deepEqual(rowsOf(only), ['tonight prime', 'leadership prime', 'team-leads prime', 'tasks prime', 'monday-charts prime', 'photo', 'events']);
 
   assert.deepEqual(rowsOf(seedMainRows({ order: [{ panel: 'tasks' }, { panel: 'photo' }] }, [nova, prime])), [
-    'tasks nova', 'monday-tasks nova', 'monday-done nova', 'monday-board nova',
-    'tasks prime', 'monday-tasks prime', 'monday-done prime', 'monday-board prime',
+    'tasks nova', 'monday-charts nova',
+    'tasks prime', 'monday-charts prime',
     'photo',
   ]);
   assert.deepEqual(seedMainRows({ order: ownersOrder }, []).map(row => row.panel), ['photo', 'events'], 'no team has only the panels that are the same for both');
@@ -78,7 +78,7 @@ test('seconds carry over, a row with none has none, a row that is off is not car
   ];
 
   const seeded = seedMainRows({ order: order }, [prime]);
-  assert.deepEqual(rowsOf(seeded), ['tasks prime 25s', 'leadership prime 15s', 'monday-tasks prime', 'monday-done prime', 'monday-board prime', 'events']);
+  assert.deepEqual(rowsOf(seeded), ['tasks prime 25s', 'leadership prime 15s', 'monday-charts prime', 'events']);
   assert.deepEqual(rowsOf(seedSideRows({ order: order })), ['forecast 9s', 'sponsor-logo']);
   assert.deepEqual(seeded[0], { panel: 'tasks', team: 'prime', seconds: 25 });
   assert.equal('seconds' in seeded[seeded.length - 1], false, 'Events has none');
@@ -93,9 +93,9 @@ test('an empty Panel order is built from the two older lists, the large panels a
     grid2: [{ panel: 'safety-days', show: true }, { panel: 'task-counts', show: true }],
   };
 
-  assert.deepEqual(rowsOf(seedMainRows(lists, [prime])), ['tasks prime 22s', 'monday-tasks prime', 'monday-done prime', 'monday-board prime', 'events']);
+  assert.deepEqual(rowsOf(seedMainRows(lists, [prime])), ['tasks prime 22s', 'monday-charts prime', 'events']);
   assert.deepEqual(rowsOf(seedSideRows(lists)), ['safety-days', 'task-counts']);
-  assert.deepEqual(seedMainRows({}, [prime]).map(row => row.panel), ['monday-tasks', 'monday-done', 'monday-board'], 'no order and no lists is only the Monday rows');
+  assert.deepEqual(seedMainRows({}, [prime]).map(row => row.panel), ['monday-charts'], 'no order and no lists is only the Monday rows');
   assert.deepEqual(seedSideRows({}), []);
   assert.deepEqual(seedSideRows(undefined), []);
 });
@@ -125,7 +125,7 @@ test('a panel has a team when the list of items it draws has the Team field, and
   const followTeam = Object.keys(drawn).filter(panel => drawn[panel] && lists[drawn[panel]]).sort();
   assert.deepEqual(config.teamPanels.slice().sort(), followTeam);
   assert.deepEqual(config.teamPanels, ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom']);
-  assert.deepEqual(config.mondayRows, ['monday-tasks', 'monday-done', 'monday-board']);
+  assert.deepEqual(config.mondayRows, ['monday-charts']);
   config.teamPanels.forEach(id => assert.equal(registry.panels.find(panel => panel.id === id).region, 'grid1', id + ' is a large panel'));
 });
 

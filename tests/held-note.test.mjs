@@ -23,7 +23,7 @@ const tests = [];
 const test = (name, run) => tests.push({ name, run });
 
 test('a held view with no steps and only Monday rows says no Monday task is on the TV', () => {
-  const note = heldNoteFor('Condensed', [], [{ panel: 'monday-overall' }, { panel: 'monday-status-depts' }]);
+  const note = heldNoteFor('Condensed', [], [{ panel: 'monday-charts' }, { panel: 'monday-department' }]);
   assert.equal(note, 'The held view Condensed has nothing to show: no Monday task is on the TV. The wall stays on the schedule.');
 });
 

@@ -1,8 +1,6 @@
 // The steps of a view, the view of the day and the held view (part of views.js).
 
 import { barStyle, defaultThemeByWeekday, roboticsWidePanels, scheduledThemeIds, viewKeys, weekdays } from '../config.js';
-import { forTeam, visibleTasks } from './monday.js';
-import { departmentEntries, departmentsOf, isBothTeamDepartment } from './monday-views.js';
 import { holdScreenLook, isMondayPanel, isTeamCode, planFor, stepsOfRow, teamsOf, tidyMainRow, weekdayIn } from './screens.js';
 import { rotateLayout } from './style.js';
 import { addressTeam } from './teams.js';
@@ -11,40 +9,6 @@ import { isRecord } from './text.js';
 import { timeZoneOf } from './theme.js';
 import { mainRowOf, rotationBlocks, rotationRowsOf } from './rotation.js';
 import { resolveView, viewOrderOf } from './views-tidy.js';
-
-// The Monday rows
-
-// The ids of the Team leads a Monday tasks row plays for: the ones with tasks for the team, except those with Monday
-// switched off (monday: false on the Team lead). A Team lead with no mark is on. A new department is a new row without any
-// edit. Design and CNC are one row. A team view plays the departments of its team, and a row with no team (Robotics) plays
-// the departments of both teams (Business, Operations, Marketing), which a team view leaves out.
-function mondayDepartments(content, team, now = new Date()) {
-  const entries = departmentEntries(content, now);
-  const wanted = entries.filter(entry => entry.monday !== false).map(entry => entry.id);
-  const both = team === '';
-  const withTasks = departmentsOf(content, forTeam(visibleTasks(content, now), team), now);
-
-  return withTasks
-    .filter(group => group.ids.some(id => wanted.includes(id)) && isBothTeamDepartment(group.name) === both)
-    .map(group => group.id);
-}
-
-// The rows with each Monday tasks row that has no department replaced by one row for every department that Monday
-// plays for the team. A row with a department is the one department.
-export function expandRows(rows, content, now = new Date()) {
-  const expanded = [];
-
-  rows.forEach(row => {
-    if (row.panel !== 'monday-tasks' || (row.department || '') !== '') {
-      expanded.push(row);
-      return;
-    }
-
-    mondayDepartments(content, row.team, now).forEach(id => expanded.push(Object.assign({}, row, { department: id })));
-  });
-  return expanded;
-}
-
 
 // The lists
 
@@ -82,7 +46,7 @@ export function viewSteps(content, key, now = new Date(), block = -1, ownRows = 
   const view = resolveView(content, key);
   const teams = teamsOf(content).map(team => team.code);
   const only = addressTeam();
-  const rows = expandRows(ownRows || rowsOfView(content, key, block), content, now);
+  const rows = ownRows || rowsOfView(content, key, block);
   const steps = [];
 
   if (view.team !== '' && (!teams.includes(view.team) || (only !== '' && view.team !== only))) return steps;

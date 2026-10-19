@@ -119,7 +119,7 @@ export const mainRow = defineArrayMember({
   title: 'Row',
   components: { input: RowWithPreview }, // the form of the row and, for a Monday row, a Preview button below it
   fields: [
-    panelField(largePanels.concat(mondayPanels), 'Which panel this row plays. Put Monday: Board by team in two rows in a row and the second shows cards three and four.'),
+    panelField(largePanels.concat(mondayPanels), 'Which panel this row plays. The Rotation board is where Monday rows are set up now.'),
     defineField({
       name: 'team',
       title: 'Team',
@@ -135,7 +135,7 @@ export const mainRow = defineArrayMember({
       name: 'department',
       title: 'Department',
       type: 'string',
-      description: 'Which Team lead, which department, the tasks panel shows. Leave it on the first one to play the first department that has tasks.',
+      description: 'Which department of the Monday boards Department tasks shows. A row with none plays nothing.',
       components: { input: RowDepartmentInput },
       hidden: ({ parent }) => !takesDepartment(parent && parent.panel),
     }),
@@ -144,8 +144,9 @@ export const mainRow = defineArrayMember({
   preview: {
     select: { panel: 'panel', team: 'team', seconds: 'seconds', department: 'department', photoCount: 'photoCount', secondsPerPhoto: 'secondsPerPhoto' },
     prepare(row) {
-      const team = row.team ? teamWord(row.team) : teamKindOf(row.panel) === 'optional' ? 'Keeps the team on the screen' : '';
-      const department = takesDepartment(row.panel) ? (row.department ? 'One department' : 'First department with tasks') : '';
+      const blank = mondayPanels.some(item => item.value === row.panel) ? 'Both teams' : 'Keeps the team on the screen';
+      const team = row.team ? teamWord(row.team) : teamKindOf(row.panel) === 'optional' ? blank : '';
+      const department = takesDepartment(row.panel) ? (row.department ? 'One department' : 'No department') : '';
       return { title: panelTitle(row.panel) || 'Panel not chosen', subtitle: [team, department, secondsWords(row)].filter(Boolean).join(' · ') };
     },
   },

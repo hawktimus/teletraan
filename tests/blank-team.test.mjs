@@ -1,6 +1,6 @@
 // Tests for a blank team (docs/team-on-an-item.md): an item with no team is for both teams, the screen shows
-// no team chip for it and never writes BOTH TEAMS, the cards of both teams read MILESTONES or PROGRESS alone,
-// and a row of those cards from a board with no team has no label. It also checks that no panel has a Prime or
+// no team chip for it and never writes BOTH TEAMS, and a Monday task of the team General is on the panels of both
+// teams and names no team. It also checks that no panel has a Prime or
 // a Nova flavor. The Studio side (the team fields are optional and say "Leave blank when it is for both
 // teams.") is in tests/schemas.test.mjs, and the board sync is in tests/monday-script.test.mjs. The
 // dashboard files are copied next to a package.json that says "type": "module", so any version of node reads
@@ -35,7 +35,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
-const cardIds = ['monday-tasks', 'monday-status-depts', 'monday-overall', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster'];
+const cardIds = ['monday-department', 'monday-charts', 'leadership', 'team-leads', 'roster'];
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
   copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
@@ -173,82 +173,21 @@ test('no chip is written for no name, and a title is at the size of a heading wh
 });
 
 
-// The cards of both teams
+// The Monday panels
 
-test('the cards of both teams read MILESTONES or PROGRESS alone, with the words about the board and the slashes', () => {
-  const mix = contentOf([board({ title: '[a]', team: 'prime' }), board({ title: '[b]', team: 'nova' })], ['[Subteam A]']);
-  const milestones = panels['monday-milestones-both'].markupFor(mix, monday12);
-  const progress = panels['monday-progress-both'].markupFor(mix, monday12);
-
-  [milestones, progress].forEach(html => {
-    noChip(html);
-    assert.ok(html.includes('class="double-slash"'));
-    assert.equal(/BOTH/.test(html), false);
-  });
-  assert.ok(milestones.includes('data-slat="title">MILESTONES</h2>') && progress.includes('data-slat="title">PROGRESS</h2>'));
-
-  // the words have the room of the chip that is not there, and the slashes go when the words need the room
-  const status = { lastSyncAt: '2026-10-12T15:56:00Z' };
-  const header = draw.headerMarkup('PROGRESS', '', status, monday12);
-  assert.equal(header.includes('team-chip'), false);
-  assert.equal(header.includes('tag-with-chip'), false, 'there is no chip for the words to fit beside');
-  assert.ok(header.includes('<span class="ago">4 MIN AGO</span>') && !header.includes('class="double-slash"'), 'the words are there and the slashes are not');
-  const sample = draw.headerMarkup('PROGRESS', '', { sample: true }, monday12);
-  assert.ok(sample.indexOf('<span class="ago">SAMPLE</span>') !== -1 && sample.indexOf('class="ago"') < sample.indexOf('class="double-slash"'), 'SAMPLE is short, so the slashes come after it');
-});
-
-test('a row is labeled with the team of its board, and a department whose tasks come only from boards with no team is one row with no label', () => {
-  const lone = contentOf([board({ title: '[a]', team: '' }), board({ title: '[b]', team: '', status: 'done' })], ['[Subteam A]']);
-  const rows = monday.bothRows(lone, [{ code: 'prime' }, { code: 'nova' }], monday12);
-  assert.equal(rows.length, 1, 'both teams have the same two tasks, so there is one row');
-  assert.equal(rows[0].team, null);
-  assert.equal(rows[0].tasks.length, 2);
-
-  const progress = panels['monday-progress-both'].markupFor(lone, monday12);
-  assert.equal(progress.includes('team-tag'), false, 'a card of rows with no team has no labels at all');
-  assert.deepEqual(textOf(progress, 'count'), ['1/2']);
-  const milestones = panels['monday-milestones-both'].markupFor(lone, monday12);
-  assert.equal(milestones.includes('team-tag'), false);
-  assert.ok(milestones.includes('[a]'));
-
-  // a department of the teams next to one that is for both: the labels of the teams, and a blank of the same width
-  const mixed = contentOf([
-    board({ title: '[a]', team: 'prime', subteam: '[Subteam A]' }),
-    board({ title: '[b]', team: 'nova', subteam: '[Subteam A]' }),
-    board({ title: '[c]', team: '', subteam: '[Subteam B]' }),
-  ], ['[Subteam A]', '[Subteam B]']);
-  const mixedRows = monday.bothRows(mixed, [{ code: 'prime', shortName: 'PRIME' }, { code: 'nova', shortName: 'NOVA' }], monday12);
-  assert.deepEqual(mixedRows.map(row => (row.team ? row.team.code : 'none') + ' ' + row.lead), ['prime [Subteam A]', 'nova [Subteam A]', 'none [Subteam B]']);
-
-  const html = panels['monday-progress-both'].markupFor(mixed, monday12);
-  assert.deepEqual(textOf(html, 'team-tag'), ['PRIME', 'NOVA', ''], 'the third row has a blank where the label would be');
-  assert.ok(html.includes('team-tag team-tag-blank'));
-  assert.equal(html.split('class="row"').length - 1, 3);
-  assert.equal(draw.teamTagMarkup(null), '');
-  assert.equal(draw.teamTagMarkup(null, true), '<span class="team-tag team-tag-blank"></span>');
-  assert.equal(draw.teamTagMarkup({ code: 'nova', shortName: 'NOVA' }, true), '<span class="team-tag team-tag-nova">NOVA</span>');
-  assert.ok(/\.monday \.team-tag-blank \{ background: none; \}/.test(read('dashboard/monday.css')), 'the blank has no color');
-});
-
-test('the tasks panel of a department has the chip of its team, also with General tasks, and the panels for both teams have none', () => {
-  const content = (tasks, leads = ['[Subteam A]']) => {
-    const raw = JSON.parse(read('dashboard/data/sample/content.json'));
-    raw.settings.countdown = { kickoffLabel: 'KICKOFF IN', kickoff: '2027-01-09T17:00:00.000Z', rolloutLabel: 'ROLLOUT IN', rollout: '' };
-    raw.tasks = tasks;
-    raw.subteams = leads.map((name, index) => ({ name: name, id: 'lead-' + (index + 1) }));
-    return sanity.normalizeSample(raw);
-  };
-
-  const general = content([board({ title: '[a]', team: '', subteamId: 'lead-1' })]);
-  const html = panels['monday-tasks'].markupFor(general, monday12, { team: 'prime', department: 'lead-1' });
-  assert.equal(chipOf(html), 'PRIME');
-  assert.ok(html.includes('data-slat="title">[SUBTEAM A] TASKS</h2>'));
-  assert.equal(chipOf(panels['monday-tasks'].markupFor(general, monday12, { team: 'nova', department: 'lead-1' })), 'NOVA', 'a General task is on the panel of the other team too');
-
-  const own = content([board({ title: '[a]', team: 'prime', subteamId: 'lead-1' }), board({ title: '[b]', team: '', subteamId: 'lead-1' })]);
-  assert.equal(chipOf(panels['monday-tasks'].markupFor(own, monday12, { team: 'prime', department: 'lead-1' })), 'PRIME');
-  noChip(panels['monday-status-depts'].markupFor(own, monday12));
-  noChip(panels['monday-overall'].markupFor(own, monday12));
+test('a Monday task of the team General is on the panels of both teams, and a row for both teams names no team', () => {
+  const tasks = [board({ title: '[a]', team: '', department: 'build', list: 'open' }), board({ title: '[b]', team: 'prime', department: 'build', list: 'open' })];
+  const given = contentOf(tasks, []);
+  const both = panels['monday-department'].markupFor(given, monday12, { department: 'build', list: 'open' });
+  noChip(both);
+  assert.ok(both.includes('data-slat="title">BUILD TASKS</h2>'));
+  assert.equal(/BOTH|PRIME|NOVA/.test(both.replace(/\[[^\]]*\]/g, '')), false, 'no team words for both teams');
+  const nova = panels['monday-department'].markupFor(given, monday12, { department: 'build', list: 'open', team: 'nova' });
+  assert.ok(nova.includes('[a]') && !nova.includes('[b]'), 'the General task is on the Nova panel, the Prime one is not');
+  assert.ok(/<span class="ago">NOVA/.test(nova));
+  const chart = panels['monday-charts'].markupFor(given, monday12, { chart: 'status' });
+  noChip(chart);
+  assert.equal(/BOTH/.test(chart), false);
 });
 
 

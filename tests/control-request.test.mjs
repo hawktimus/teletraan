@@ -154,7 +154,7 @@ await check('GET request gives the views with the names of the Team documents, t
   assert.equal(options.views[3].name, 'Condensed');
   assert.deepEqual(options.themeNames, { original: 'Original', cybertron: 'Cybertron', retro: 'Retro', foundry: 'Foundry' });
   assert.deepEqual(options.themes, ['original', 'cybertron', 'retro', 'foundry']);
-  assert.ok(options.panels.includes('tasks') && options.panels.includes('monday-board'));
+  assert.ok(options.panels.includes('tasks') && options.panels.includes('monday-charts'));
   assert.ok(!options.panels.includes('banner'));
   assert.equal(options.liveAnnouncements, 2);
   assert.equal(options.talks.length, 1);

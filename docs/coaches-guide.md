@@ -118,8 +118,8 @@ Rotation is the second line of the sidebar. The wall plays the list top to botto
 
 A row is a panel and, if you want, the seconds. Without seconds the row follows Seconds per page on the Timing tab of Dashboard Settings. The Photo row has no seconds of its own. It has Photos (1 to 20, starting at 4) and Seconds per photo (5 to 60, starting at 10), and the time it stays up is the two multiplied. Four photos of 10 seconds stay up 40 seconds.
 
-- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Tasks by team and department, Done by team, Status by department, Overall progress, Timeline by team and Board by team (docs/monday.md, "The eleven panels"). Upcoming events is one row that scrolls from its first four events to the next four.
-- The team of a row is the team of its view. A Monday tasks row with no department plays one page for each Team lead that has On the Monday board switched on. A Monday row with nothing to show, such as a department with no tasks, is skipped (docs/monday.md).
+- Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Department tasks and TV charts (docs/monday.md). Upcoming events is one row that scrolls from its first four events to the next four.
+- The team of a row is the team of its view. A Monday row names its department, list or chart, and the team of its tasks. A Monday row with nothing to show, such as a department with no open task, is skipped (docs/monday.md).
 - Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents, which are in Old screens (not used) and kept for that. The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
 - The competition cards still come in by themselves, as the Competition page says (Before and after: 14 days before an event and 7 days after it). They are not rows.
 - When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
@@ -183,26 +183,18 @@ choice. Show owner first names on the TV starts off.
 The tasks and the board names are public, like the rest of the dataset (docs/monday.md, "The
 dataset is public").
 
-## Monday Tasks and Monday Boards
+## The Monday page
 
-Both are under Monday in the sidebar. Nobody types a task: the Teletraan computer makes each one
-from an item on a Monday board, and the screen shows only those.
+Monday is a line of the sidebar. Nobody types a task: the Teletraan computer makes each one from an item of
+Robotics Tasks or Completed Tasks, and the screen shows only those.
 
-- Monday Tasks has two lists, On the TV and Hidden, each sorted by board. A task
-  opens read only, except for Show on TV. Hidden holds every task that is not on the
-  TV, because Show on TV is off, Show on screen is off or Hide after has passed. A
-  task is in one list only.
-- A task typed by hand, and every task made before the board was connected, is in
-  Hidden with Manual (not shown) in its line. The screen never shows it. It stays
-  until someone deletes it.
-- Monday Boards lists every board the token can see, with its items and when the
-  computer last read it, and says which boards Dashboard Settings has chosen. The name of
-  a chosen board opens its tasks in the same two lists. Choose boards opens Dashboard
-  Settings, at the Task board block of its Monday tab. A second list, Milestones, holds the
-  milestones the Teletraan computer made. Nobody can change them there.
-
-A Monday row shows only when it has something to draw, so a team with no tasks from
-the board has no Monday rows (docs/monday.md, "The eleven panels").
+- The page is read only. Its first line says when the computer last read Monday, and what went wrong if it did.
+  Then each of the nine departments has a table with Status, Project, Contact, Priority and Estimated
+  Completion Date, and its open and done counts. Change a task in Monday.
+- A department goes on the TV with a Department tasks row on the Rotation board: pick the Department, the List
+  (Open or Done) and the Team in Details. The TV charts are a row of Monday: TV charts.
+- A row whose department has nothing in its list is skipped, and the board says why under the row
+  (docs/monday.md).
 
 ## The Calendars page
 

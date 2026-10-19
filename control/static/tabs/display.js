@@ -5,7 +5,7 @@
 
 import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
-import { addRow, copyRow, countWhere, isNovaRow, isPanelRow, moveRow, photoRange, quickAction, removeRow, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
+import { addRow, copyRow, countWhere, isNovaRow, isPanelRow, mondayFieldNames, moveRow, photoRange, quickAction, removeRow, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
 import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, extrasHtml, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml } from './display-parts.js';
 
 const undoLimit = 20;
@@ -263,6 +263,7 @@ export async function mountDisplay(container) {
       const name = target.dataset.field;
       if (name === 'shown') return change(setRowValue(page.rows, index, 'shown', target.checked), true);
       if (name === 'view' || name === 'panel') return change(setRowValue(page.rows, index, name, target.value), true);
+      if (mondayFieldNames.includes(name)) return change(setRowValue(page.rows, index, name, target.value), true);
       if (name === 'seconds') {
         const seconds = secondsFrom(target.value);
         if (seconds === null) return flash('bad', 'Seconds should be a whole number from 6 to 120, or empty.');

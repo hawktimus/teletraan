@@ -18,6 +18,9 @@ const priorities = [
   { title: 'Low', value: 'low' },
 ];
 
+// The nine departments of the team boards (docs/monday.md), as the sync writes them
+const departmentChoices = ['Build', 'Electrical', 'Programming', 'Design', 'CNC', 'Strategy', 'Operations', 'Business', 'Marketing'].map(name => ({ title: name, value: name.toLowerCase() }));
+
 const sources = [
   { title: 'Typed by hand', value: 'manual' },
   { title: 'From the team board', value: 'monday' },
@@ -44,8 +47,22 @@ const fields = [
     name: 'title',
     title: 'Task name',
     type: 'string',
-    description: 'What needs doing, in a few words. Up to 22 characters fit.',
-    validation: Rule => [Rule.required().error('Give the task a name.'), tooLong(Rule, 22)],
+    description: 'The project, as named on the Monday board. Up to 40 characters are kept.',
+    validation: Rule => [Rule.required().error('Give the task a name.'), tooLong(Rule, 40)],
+  }),
+  defineField({
+    name: 'department',
+    title: 'Department',
+    type: 'string',
+    description: 'The department of the task: its group on the board, or else its Department column.' + reading,
+    options: { list: departmentChoices },
+  }),
+  defineField({
+    name: 'list',
+    title: 'List',
+    type: 'string',
+    description: 'Open (To Do, In Progress, In Review, Stuck) or Done. Done is a Done status, the Done group or the Completed Tasks board.' + reading,
+    options: { list: [{ title: 'Open', value: 'open' }, { title: 'Done', value: 'done' }] },
   }),
   defineField({
     name: 'subteam',
@@ -74,7 +91,7 @@ const fields = [
     name: 'contact',
     title: 'Point of contact',
     type: 'string',
-    description: 'Optional. The first name of who to ask about the task, with no last name. Up to 12 characters fit.',
+    description: 'Optional. The first name of the first person in Assigned, with no last name. Up to 12 characters fit.',
     validation: Rule => [tooLong(Rule, 12), Rule.custom(firstNameOnly)],
   }),
   // Create new is left on, so an editor can add a place while editing a task
@@ -96,7 +113,7 @@ const fields = [
     name: 'dueDate',
     title: 'Due date',
     type: 'date',
-    description: 'Optional. The day the task is due. A task from the team board takes it from the board.',
+    description: 'Optional. The estimated completion date: the last day of the Timeline of the task on the board.',
   }),
   defineField({
     name: 'startDate',
@@ -121,7 +138,7 @@ const fields = [
     title: 'Owners',
     type: 'array',
     of: [{ type: 'string', validation: Rule => tooLong(Rule, 12) }],
-    description: 'Optional. First names from Assigned, kept when owner names are on. Up to 6 names of 12 characters.' + reading,
+    description: 'Not written any more: the older sync kept the first names from Assigned here. Up to 6 names of 12 characters.' + reading,
     validation: Rule => Rule.max(6).error('Up to 6 names fit. Remove one.'),
   }),
   defineField({
@@ -129,21 +146,21 @@ const fields = [
     title: 'Milestones',
     type: 'array',
     of: [{ type: 'string', validation: Rule => tooLong(Rule, 20) }],
-    description: 'Optional. The numbers of the milestone items the task is linked to. Up to 50.' + reading,
+    description: 'Not written any more: the older sync kept the milestone items of the task here. Up to 50.' + reading,
     validation: Rule => Rule.max(50).error('Up to 50 milestones fit. Remove one.'),
   }),
   defineField({
     name: 'showOnBoard',
     title: 'Show on TV in Monday',
     type: 'boolean',
-    description: 'On unless the Show on TV column holds the Hide label. Both this and Show on TV must be on.' + reading,
+    description: 'Off when the Show on TV? column of the board says Hide. Both this and Show on TV must be on.' + reading,
     initialValue: true,
   }),
   defineField({
     name: 'hiddenReason',
     title: 'Why it is hidden',
     type: 'string',
-    description: 'Optional. Unassigned means the task has no department, so it is kept off the TV until it has one.' + reading,
+    description: 'Not written any more: the older sync marked a task with no department here.' + reading,
     options: { list: [{ title: 'No department', value: 'unassigned' }] },
   }),
   teamField(),

@@ -18,8 +18,8 @@ TV. The dashboard reads what they publish.
     inputs/calendars-view.js        the Calendars page under Events, written as a plain function (docs/calendars-page.md)
     inputs/calendars-view-parts.js  the words and rows of the Calendars page, with no Studio in it, so node can test them
     inputs/calendars-hide-rules.js  the rules of the Hide buttons of the Calendars page and how they are read and written
-    inputs/monday-boards-view.js    the Monday Boards page under Tasks, written as a plain function (docs/monday.md)
-    inputs/monday-boards-parts.js   the words and rows of the Monday Boards page, with no Studio in it, so node can test them
+    inputs/monday-page.js           the read only Monday page, a table for each department, written as a plain function (docs/monday.md)
+    inputs/monday-page-parts.js     the words, the question and the tables of the Monday page, with no Studio in it, so node can test them
     inputs/time-text.js             ages in words and times as the editor's computer writes them, used by inputs/status-input.js and the Calendars page
     inputs/plain-values.js          the two checks the status pages share: is it a record, and a reason as a sentence
     tools/actions.js                the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings

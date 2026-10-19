@@ -10,7 +10,8 @@
 //
 //   large-<panel>-<screen>-<team>.png      every large panel, three Screens, both teams
 //   small-<panel>-<screen>.png             every small panel, three Screens
-//   monday-...-<screen>[-<team>].png       every Monday panel (the panel id starts the name), with a team where it takes one
+//   monday-department-<list>-<screen>[-<team>].png   Department tasks: Build open and Operations done, for both teams and Prime
+//   monday-charts-<chart>-<screen>.png     the three TV charts
 //   competition-...-<screen>-<team>.png    the competition cards, with ?competition=1
 //   countdown-<screen>.png                 the countdown in the three Screens
 //   swap-team-200ms.png (and 400, 800)     one frame of the swap from Prime to Nova
@@ -35,9 +36,6 @@ export const swapTimes = [200, 400, 800];
 export const views = ['general', 'prime', 'nova', 'family'];
 export const themes = ['original', 'cybertron', 'retro', 'foundry'];
 
-// A Monday panel that is for both teams has no team in its address
-const mondayWithoutTeam = ['monday-status-depts', 'monday-overall'];
-
 // The announcement plate of the page (core/notice-run.js): the element #notice, which has the attribute hidden
 // until an announcement is live. ?notice=1 makes the sample announcement live. The picture is skipped when the
 // address shows no plate.
@@ -49,10 +47,6 @@ export const announcement = {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(here, '..');
-
-function takesTeam(id) {
-  return !id.endsWith('-both') && !mondayWithoutTeam.includes(id);
-}
 
 function address(parts) {
   const query = ['sample=1', 'still=1'].concat(Object.keys(parts).filter(key => parts[key] !== '').map(key => key + '=' + encodeURIComponent(parts[key])));
@@ -80,15 +74,18 @@ export function planShots(panels) {
     screens.forEach(screen => shots.push({ name: 'small-' + fileId(panel.id) + '-' + screen, kind: 'still', url: address({ panel: panel.id, screen: screen }) }));
   });
 
-  usable.filter(panel => panel.monday).forEach(panel => {
-    screens.forEach(screen => {
-      if (!takesTeam(panel.id)) {
-        shots.push({ name: fileId(panel.id) + '-' + screen, kind: 'still', url: address({ panel: panel.id, screen: screen }) });
-        return;
-      }
-      teams.forEach(team => shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team }) }));
-    });
-  });
+  // The Monday panels in the bar layout, as the Robotics view draws them: Build open and Operations done (the sample has
+  // both) for both teams and for Prime, and the three charts
+  if (usable.some(panel => panel.id === 'monday-department')) {
+    screens.forEach(screen => ['open', 'done'].forEach(list => ['', 'prime'].forEach(team => {
+      shots.push({ name: 'monday-department-' + list + '-' + screen + (team ? '-' + team : ''), kind: 'still', url: address({ panel: 'monday-department', dept: list === 'open' ? 'build' : 'operations', list: list, screen: screen, team: team, layout: 'bar' }) });
+    })));
+  }
+  if (usable.some(panel => panel.id === 'monday-charts')) {
+    screens.forEach(screen => ['status', 'progress', 'timeline'].forEach(chart => {
+      shots.push({ name: 'monday-charts-' + chart + '-' + screen, kind: 'still', url: address({ panel: 'monday-charts', chart: chart, screen: screen, layout: 'bar' }) });
+    }));
+  }
 
   // The three newer cards are taken in the phase they belong to (?phase= moves the dates, core/competition-address.js)
   const phaseOf = { 'competition-preview': 'preview', 'competition-matches': 'matches', 'competition-recap': 'recap' };

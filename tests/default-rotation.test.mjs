@@ -26,13 +26,11 @@ const studioDefault = await import(pathToFileURL(path.join(workFolder, 'tools', 
 const content = contentOf([]);
 const rows = rotation.rotationRowsOf(content);
 const blocks = rotation.rotationBlocks(rows);
-const line = block => block.rows.map(item => item.panel + (item.part ? ' ' + item.part : '') + (item.department ? ' [' + item.department + ']' : ''));
+const line = block => block.rows.map(item => item.panel + (item.part ? ' ' + item.part : '') + (item.department ? ' [' + item.department + ']' : '') + (item.list ? ' ' + item.list : '') + (item.chart ? ' ' + item.chart : ''));
 
-// The seven rows of a department, in the order the team asked for
-const seven = department => [
-  'monday-tasks [' + department + ']', 'monday-done [' + department + ']', 'roster 1 [' + department + ']', 'roster 2 [' + department + ']',
-  'monday-board [' + department + ']', 'monday-pie [' + department + ']', 'monday-timeline [' + department + ']',
-];
+// The two roster rows of a department of a team view
+const two = department => ['roster 1 [' + department + ']', 'roster 2 [' + department + ']'];
+const nine = ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing'];
 const lastFour = ['robotStatus', 'wireframe', 'driveHours', 'competition-rank'];
 const pairs = [
   ['leadership', 'sponsor-logo'], ['events 1', 'task-counts'], ['events 2', 'forecast'], ['sponsor-feature', 'next-event'], ['spotlight', 'miniIdea1'], ['photo', 'qrParts'],
@@ -45,23 +43,22 @@ test('an untouched Studio plays the default rotation: fifteen blocks, in the vie
   assert.ok(rows.every(item => item.shown));
 });
 
-test('block 1 is the six pairs of the split layout and then the Business, Operations and Marketing rows of the wide layout', () => {
+test('block 1 is the six pairs of the split layout, then the open tasks of the nine departments, the three TV charts and the Business and Marketing roster', () => {
   const first = blocks[0].rows;
   assert.deepEqual(first.slice(0, 6).map(item => [item.panel + (item.part ? ' ' + item.part : ''), item.side]), pairs);
-  assert.deepEqual(line({ rows: first.slice(6) }), [
-    'monday-tasks [business]', 'monday-done [business]', 'monday-tasks [operations]', 'monday-done [operations]',
-    'monday-tasks [marketing]', 'monday-done [marketing]', 'roster [business,marketing]',
-  ]);
+  assert.deepEqual(line({ rows: first.slice(6) }), nine.map(name => 'monday-department [' + name + '] open').concat([
+    'monday-charts status', 'monday-charts progress', 'monday-charts timeline', 'roster [business,marketing]',
+  ]));
   first.slice(6).forEach(item => assert.equal(config.roboticsWidePanels.includes(item.panel), true, item.panel + ' is wide'));
   first.slice(0, 6).forEach(item => assert.equal(config.roboticsWidePanels.includes(item.panel), false, item.panel + ' is split'));
 });
 
 test('blocks 2 and 3 are the Team leads and Build for Prime and for Nova, blocks 4 and 5 Electrical', () => {
   const leads = ['team-leads 1', 'team-leads 2'];
-  assert.deepEqual(line(blocks[1]), leads.concat(seven('build')));
-  assert.deepEqual(line(blocks[2]), leads.concat(seven('build')));
-  assert.deepEqual(line(blocks[3]), seven('electrical'));
-  assert.deepEqual(line(blocks[4]), seven('electrical'));
+  assert.deepEqual(line(blocks[1]), leads.concat(two('build')));
+  assert.deepEqual(line(blocks[2]), leads.concat(two('build')));
+  assert.deepEqual(line(blocks[3]), two('electrical'));
+  assert.deepEqual(line(blocks[4]), two('electrical'));
 });
 
 test('blocks 6 and 11 are the six pairs again with no Business rows', () => {
@@ -69,18 +66,18 @@ test('blocks 6 and 11 are the six pairs again with no Business rows', () => {
 });
 
 test('blocks 7 to 10 and 12 to 13 are Programming, Design and CNC, and Strategy, Prime then Nova', () => {
-  assert.deepEqual(line(blocks[6]), seven('programming'));
-  assert.deepEqual(line(blocks[7]), seven('programming'));
-  assert.deepEqual(line(blocks[8]), seven('design'));
-  assert.deepEqual(line(blocks[9]), seven('design'));
-  assert.deepEqual(line(blocks[11]), seven('strategy'));
-  assert.deepEqual(line(blocks[12]), seven('strategy'));
+  assert.deepEqual(line(blocks[6]), two('programming'));
+  assert.deepEqual(line(blocks[7]), two('programming'));
+  assert.deepEqual(line(blocks[8]), two('design'));
+  assert.deepEqual(line(blocks[9]), two('design'));
+  assert.deepEqual(line(blocks[11]), two('strategy'));
+  assert.deepEqual(line(blocks[12]), two('strategy'));
 });
 
 test('blocks 14 and 15 are the last four panels of Prime and of Nova', () => {
   assert.deepEqual(line(blocks[13]), lastFour);
   assert.deepEqual(line(blocks[14]), lastFour);
-  assert.equal(rows.length, 7 + 6 + 2 * (2 + 7) + 2 * 7 + 6 + 4 * 7 + 6 + 2 * 7 + 2 * 4, 'the count of rows adds up');
+  assert.equal(rows.length, 6 + 13 + 2 * (2 + 2) + 2 * 2 + 6 + 4 * 2 + 6 + 2 * 2 + 2 * 4, 'the count of rows adds up');
 });
 
 test('every default row is a registered panel the list accepts, and nothing is dropped by tidy', () => {
@@ -100,8 +97,8 @@ test('the panels the team named are these registered ones', () => {
   const mapping = {
     'Leadership Roster': 'leadership', 'Upcoming Events 1 and 2': 'events', 'Sponsor Spotlight': 'sponsor-feature', 'Sponsor Logo Spotlight': 'sponsor-logo',
     'Task Counts': 'task-counts', 'Weather Forecast': 'forecast', 'Next Event': 'next-event', 'Subteam Spotlight': 'spotlight', Photos: 'photo',
-    'Mini Panel Idea 1': 'miniIdea1', 'QR Code for Parts Request': 'qrParts', 'Tasks In Progress': 'monday-tasks', 'Tasks To Do / Done': 'monday-done',
-    'Team Roster': 'roster', 'Team Kanban Chart': 'monday-board', 'Team Status Pie Chart': 'monday-pie', 'Team Milestones Chart': 'monday-timeline',
+    'Mini Panel Idea 1': 'miniIdea1', 'QR Code for Parts Request': 'qrParts', 'Department tasks': 'monday-department', 'TV Charts': 'monday-charts',
+    'Team Roster': 'roster',
     'Team Leads': 'team-leads', 'Total Robot Status': 'robotStatus', '3D Wireframe of Robot': 'wireframe', 'Drive Hours Recorded': 'driveHours', 'FRC Ranking': 'competition-rank',
   };
   Object.keys(mapping).forEach(name => assert.ok(registry.panels.some(panel => panel.id === mapping[name]), name + ' is ' + mapping[name]));
@@ -154,29 +151,24 @@ test('the steps of the first block carry the small panel of each row, and the pa
   const side = playing.viewSidePlaylist(content);
   assert.deepEqual(side.map(step => [step.panel, step.paired]), [['qrParts', true]]);
   assert.ok(side[0].seconds > steps[5].seconds, 'the side outlasts the step, the next step moves it');
-  assert.equal(playing.pairSide({ panel: 'monday-tasks' }), true, 'a step with no side takes the pairing away');
-  assert.equal(playing.pairSide({ panel: 'monday-tasks' }), false);
+  assert.equal(playing.pairSide({ panel: 'monday-department' }), true, 'a step with no side takes the pairing away');
+  assert.equal(playing.pairSide({ panel: 'monday-department' }), false);
   assert.equal(playing.viewSidePlaylist(content)[0].panel !== 'qrParts', true);
   playing.resetViews();
 });
 
-test('the Prime block plays a department by its name, and a department with no tasks leaves its Monday rows out', () => {
+test('the Robotics Monday block plays the departments with open tasks and the charts, and leaves the others out', () => {
   const named = contentOf([
-    task({ title: '[A]', subteamId: 'lead-build', status: 'in-progress', team: 'prime', owners: ['[Ann]'], estHours: 4 }),
-    task({ title: '[B]', subteamId: 'lead-electrical', status: 'done', team: 'prime', owners: ['[Ben]'], estHours: 2, completedOn: '2026-10-14' }),
-  ], raw => {
-    raw.subteams = [{ id: 'lead-build', name: 'Build', order: 1 }, { id: 'lead-electrical', name: 'Electrical', order: 2 }, { id: 'lead-strategy', name: 'Strategy', order: 3 }];
-  });
-  const first = playing.viewSteps(named, 'prime', now, 1).map(step => step.panel);
-  assert.ok(first.includes('monday-tasks') && first.includes('roster') && first.includes('team-leads'));
-  assert.ok(!first.includes('monday-done'), 'Build has nothing done');
-  const strategy = playing.viewSteps(named, 'prime', now, 11).map(step => step.panel);
-  assert.ok(!strategy.includes('monday-tasks') && !strategy.includes('monday-board'), 'Strategy has no tasks');
+    task({ title: '[A]', department: 'build', status: 'in-progress', team: 'prime', estHours: 4 }),
+    task({ title: '[B]', department: 'electrical', list: 'done', status: 'done', team: 'prime', estHours: 2, completedOn: '2026-10-14' }),
+  ]);
+  const first = playing.viewSteps(named, 'general', now, 0).filter(step => step.panel.startsWith('monday-'));
+  assert.deepEqual(first.map(step => step.page.department || step.page.chart), ['build', 'status', 'progress', 'timeline'], 'Electrical has nothing open');
 });
 
 test('the views doc has the table of the default order', () => {
   const text = fs.readFileSync(path.join(path.dirname(dashboardFolder), 'docs', 'views.md'), 'utf8');
-  ['The default rotation', 'miniIdea1', 'qrParts', 'monday-pie', 'driveHours', 'competition-rank', 'partsRequestUrl'].forEach(word => assert.ok(text.includes(word), 'views.md names ' + word));
+  ['The default rotation', 'miniIdea1', 'qrParts', 'monday-department', 'monday-charts', 'driveHours', 'competition-rank', 'partsRequestUrl'].forEach(word => assert.ok(text.includes(word), 'views.md names ' + word));
   assert.ok(read('registry.js').includes('rotationOnly'));
 });
 

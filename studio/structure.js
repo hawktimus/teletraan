@@ -3,8 +3,8 @@
 // COACHES ONLY Dashboard Settings, Extra panels and Kept data. docs/studio-map.md says what lives where.
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
-// here either: they come from the team's Monday boards, and the Items tab of the Monday page lists them
-// with one switch each, Show on TV. The types behind the Today page (the agenda, the talks, the meeting days and the
+// here either: they come from the team's Monday boards, and the Monday page shows them, read only. The task and
+// milestone types have no line: nobody changes them in the Studio. The types behind the Today page (the agenda, the talks, the meeting days and the
 // announcements), the Look page (the dated rules and the subthemes) and the old Screens have no line of their own: a
 // link on their page opens them (notInSidebar in tests/schemas.test.mjs gives the reason for each). Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
@@ -12,7 +12,7 @@
 // them) and demo (its buttons moved to the control page). The status documents, which the Teletraan computer
 // writes, have no line either: status, which the status block in Dashboard Settings
 // shows, calendarStatus, which the Calendars page shows, and frcStatus and mondayStatus,
-// which the connection blocks of the Competition and Monday tabs show. tests/schemas.test.mjs
+// which the Competition page and the Monday page show. tests/schemas.test.mjs
 // lists them with the reason.
 //
 // One line is one entry:
@@ -30,7 +30,7 @@
 //   kind 'component'  opens a page that is not a document. component is a plain function
 //                     that draws it (start-here.js, calendars-view.js), and it needs an id.
 //                     children names a function (S, times) that builds the pane that a link
-//                     on the page opens (mondayPanes, for the Monday page)
+//                     on the page opens (todayChildren, for the Today page)
 //   kind 'divider'    a thin line between groups. With a title it is a heading
 // Every entry except a divider needs an icon, and no two entries share one.
 // The icons come from @sanity/icons. Each is imported from its own file, such as
@@ -43,11 +43,9 @@ import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
 import { CubeIcon } from '@sanity/icons/Cube';
-import { DashboardIcon } from '@sanity/icons/Dashboard';
 import { DesktopIcon } from '@sanity/icons/Desktop';
 import { DiamondIcon } from '@sanity/icons/Diamond';
 import { EarthGlobeIcon } from '@sanity/icons/EarthGlobe';
-import { EyeClosedIcon } from '@sanity/icons/EyeClosed';
 import { FilterIcon } from '@sanity/icons/Filter';
 import { HeartIcon } from '@sanity/icons/Heart';
 import { HomeIcon } from '@sanity/icons/Home';
@@ -62,7 +60,6 @@ import { StackIcon } from '@sanity/icons/Stack';
 import { StarIcon } from '@sanity/icons/Star';
 import { SyncIcon } from '@sanity/icons/Sync';
 import { TargetIcon } from '@sanity/icons/Target';
-import { TaskIcon } from '@sanity/icons/Task';
 import { ThLargeIcon } from '@sanity/icons/ThLarge';
 import { ThListIcon } from '@sanity/icons/ThList';
 import { TokenIcon } from '@sanity/icons/Token';
@@ -70,8 +67,7 @@ import { UserIcon } from '@sanity/icons/User';
 import { UsersIcon } from '@sanity/icons/Users';
 import { StartHere } from './inputs/start-here.js';
 import { CalendarsView } from './inputs/calendars-view.js';
-import { milestonesChild } from './inputs/monday-boards-parts.js';
-import { MondayPage, oldTasksChild } from './inputs/monday-page.js';
+import { MondayPage } from './inputs/monday-page.js';
 import { screenType, screenStyles, screenIdOf } from './inputs/screen-ids.js';
 import { LookView } from './inputs/look-view.js';
 import { CompetitionView } from './inputs/competition-view.js';
@@ -121,9 +117,6 @@ const newestUploadFirst = { field: '_createdAt', direction: 'desc' };
 const byFirstTalk = { field: 'firstSlotAt', direction: 'asc' };
 const soonestStart = { field: 'start', direction: 'asc' };
 const latestStart = { field: 'start', direction: 'desc' };
-const oldestFirst = { field: '_createdAt', direction: 'asc' };
-const byBoard = { field: 'mondayBoardName', direction: 'asc' };
-const byTargetDate = { field: 'targetDate', direction: 'asc' };
 
 // What a filter keeps. $since is a day ago and $now is the time the sidebar opened. Both are
 // worked out when the sidebar opens in structure() below: Studio keeps a list live, and a live
@@ -132,14 +125,6 @@ const byTargetDate = { field: 'targetDate', direction: 'asc' };
 // still be found.
 const startedRecently = '!defined(start) || start >= $since';
 const startedEarlier = 'defined(start) && start < $since';
-
-// The two old lists of tasks. Each task is in exactly one of them. A task is on the TV when
-// it comes from the board and is not switched off, here or by the Show on TV column of the board. Every other task is hidden, including a task
-// typed by hand, which the screen no longer shows: a task with no source counts as typed by hand,
-// so every task made before the team board is under Hidden. A task that expires while the Studio
-// is open moves when the page is loaded again, because $now is fixed until then.
-const tasksOnTv = 'source == "monday" && showOnTv != false && showOnBoard != false && show != false && (!defined(expires) || expires > $now)';
-const tasksHidden = 'source != "monday" || showOnTv == false || showOnBoard == false || show == false || (defined(expires) && expires <= $now)';
 
 // Today and the other pages that open lists in the next pane give their links an id. The agenda, the booked talks
 // and the meeting days sit behind the Today page, and one announcement opens from its card.
@@ -158,19 +143,6 @@ const talksFolder = {
 };
 export const announcementChild = 'announcement-';
 const subthemesList = { kind: 'list', title: 'Subthemes', id: 'subthemes', type: 'subtheme', sort: byName, add: ['newSubtheme'] };
-
-// The two old lists of tasks, On the TV and Hidden, which the Old manual tasks link on the Items tab of Monday opens.
-// They are not a line of the sidebar. A task typed by hand lives only here.
-export const oldTasksFolder = {
-  kind: 'group',
-  title: 'Old manual tasks',
-  icon: TaskIcon,
-  id: 'mondayTasks',
-  entries: [
-    { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'tasksOnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksOnTv, add: [] },
-    { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'tasksHidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: tasksHidden, add: [] },
-  ],
-};
 
 export const sidebarEntries = [
   { kind: 'component', title: 'Start here', id: 'startHere', icon: HomeIcon, component: StartHere },
@@ -199,7 +171,7 @@ export const sidebarEntries = [
     ],
   },
   { kind: 'component', title: 'Photos', id: 'photos', icon: ImagesIcon, component: PhotosView, children: photosOf },
-  { kind: 'component', title: 'Monday', id: 'monday', icon: ThListIcon, component: MondayPage, children: mondayPanes },
+  { kind: 'component', title: 'Monday', id: 'monday', icon: ThListIcon, component: MondayPage },
   {
     kind: 'group',
     title: 'Teams and views',
@@ -247,29 +219,6 @@ const photoList = { kind: 'list', title: 'Photos', id: photosChild, type: 'photo
 
 function photosOf(S, times) {
   return () => paneOf(S, photoList, times);
-}
-
-// The milestones list the Teletraan computer made, a second list the older Boards page linked to with this id
-// (milestonesChild, in monday-boards-parts.js) in place of a board number. Nobody adds one.
-const milestoneList = { kind: 'list', title: 'Milestones', id: 'milestones', type: 'milestone', sort: byTargetDate, add: [] };
-
-// What a link on the Monday page opens. The link named oldTasksChild opens the two old lists of tasks. The
-// older Boards page linked a board number, which opens the tasks of that board in the same two lists, and
-// milestonesChild, which opens the milestones. The function it gives back is handed the id of the link.
-function mondayPanes(S, times) {
-  return boardId => {
-    if (boardId === oldTasksChild) return groupList(S, oldTasksFolder, times);
-    if (boardId === milestonesChild) return paneOf(S, milestoneList, times);
-    const kept = filter => 'mondayBoardId == $board && (' + filter + ')';
-    const lists = [
-      { kind: 'list', title: 'On the TV', icon: DashboardIcon, id: 'board' + boardId + 'OnTv', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: kept(tasksOnTv), params: { board: boardId }, add: [] },
-      { kind: 'list', title: 'Hidden', icon: EyeClosedIcon, id: 'board' + boardId + 'Hidden', type: 'task', sort: byBoard, thenBy: oldestFirst, filter: kept(tasksHidden), params: { board: boardId }, add: [] },
-    ];
-    return S.list()
-      .title('Tasks of the board')
-      .id('board' + boardId)
-      .items(lists.map(entry => listOf(S, entry, times)));
-  };
 }
 
 // What a link on the Today page opens: the agenda, the booked talks, the meeting days, or one announcement in its

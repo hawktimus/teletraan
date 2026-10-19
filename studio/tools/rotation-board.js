@@ -6,6 +6,7 @@
 
 import { defaultRotationRows } from './default-rotation.js';
 import { panelTitleOf, viewEntry } from './rotation-titles.js';
+import { mondayChartChoices, mondayDepartmentChoices, mondayListChoices, olderMondayPanels } from '../inputs/screen-panels.js';
 
 export const settingsId = 'dashboardSettings';
 export const draftId = 'drafts.dashboardSettings';
@@ -18,12 +19,40 @@ export const startingPhotos = { count: 4, each: 10 };
 
 // The Robotics panels that use the wide layout. The other Robotics panels are split, so a small panel sits beside them.
 // tests/rotation-board.test.mjs compares this list with roboticsWidePanels in dashboard/config-rotation.js.
-export const wideRoboticsPanels = [
-  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie', 'roster', 'driveHours',
-  'robotStatus', 'wireframe',
-];
+export const wideRoboticsPanels = ['monday-department', 'monday-charts', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
 
 export const departmentHints = ['build', 'electrical', 'programming', 'design', 'strategy', 'business', 'operations', 'marketing'];
+
+// The teams a Monday row can show: both (no team), Prime or Nova (mondayTeams in dashboard/config-lists.js)
+export const mondayTeamChoices = [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }, { value: 'nova', title: 'Nova' }];
+
+// The words under a row of one of the eleven Monday panels of the older sync (retiredWords in dashboard/config-lists.js)
+export const retiredWords = 'Retired, use Department tasks.';
+
+export function isRetired(row) {
+  return Boolean(row) && olderMondayPanels.some(item => item.value === row.panel);
+}
+
+// A row of the older Monday tasks panel with one of the nine departments plays as Department tasks, open, for that department
+// and the team of its view (upgradeMondayRow in dashboard/core/rotation.js). null for any other row.
+export function upgradedRow(row) {
+  if (!row || row.panel !== 'monday-tasks') return null;
+  const department = String(row.department || '').trim().toLowerCase();
+  if (!mondayDepartmentChoices.some(item => item.value === department)) return null;
+  const team = row.view === 'prime' || row.view === 'nova' ? row.view : '';
+  return Object.assign({}, row, { panel: 'monday-department', department: department, list: 'open' }, team ? { team: team } : {});
+}
+
+// What a stored row of an older Monday panel does now, in words, or nothing for any other row
+export function retiredNote(row) {
+  const upgraded = upgradedRow(row);
+  if (upgraded) return 'Older Monday row: it plays as Department tasks, ' + choiceTitle(mondayDepartmentChoices, upgraded.department) + ', Open. Pick Department tasks to keep it.';
+  return isRetired(row) ? retiredWords : '';
+}
+
+function choiceTitle(list, value) {
+  return (list.filter(item => item.value === (value || ''))[0] || { title: '' }).title;
+}
 
 // A key for a row that has none: letters and digits, like the keys Studio makes
 export function newKey() {
@@ -151,9 +180,14 @@ export function detailsFor(row) {
     list.push({ kind: 'number', field: 'photoCount', label: 'Photos', help: 'How many photos the row shows, from 1 to 20.', min: photoRange.count.min, max: photoRange.count.max });
     list.push({ kind: 'number', field: 'secondsPerPhoto', label: 'Seconds per photo', help: 'How long each photo stays, from 5 to 60. The row stays photos times this.', min: photoRange.each.min, max: photoRange.each.max });
   }
-  if (panel && panel.indexOf('monday-') === 0) {
-    list.push({ kind: 'text', field: 'department', label: 'Department', help: 'The department the card shows, such as build. Empty shows every department.' });
-    list.push({ kind: 'team', field: 'view', label: 'Team', help: 'The card shows the team of the View. Change the View to change the team.' });
+  if (panel === 'monday-department') {
+    list.push({ kind: 'choice', field: 'department', label: 'Department', help: 'The department whose tasks the panel shows. A row with no department is skipped.', choices: [{ value: '', title: 'Pick a department' }].concat(mondayDepartmentChoices) });
+    list.push({ kind: 'choice', field: 'list', label: 'List', help: 'Open is To Do, In Progress, In Review and Stuck. Done is the done tasks, the newest first.', choices: mondayListChoices });
+    list.push({ kind: 'choice', field: 'team', label: 'Team', help: 'The tasks of both teams, or of Prime or Nova. A task with the team General shows for both.', choices: mondayTeamChoices });
+  }
+  if (panel === 'monday-charts') {
+    list.push({ kind: 'choice', field: 'chart', label: 'Chart', help: 'Status by department, Overall progress (by estimated hours) or the Timeline of this month and the next two.', choices: mondayChartChoices });
+    list.push({ kind: 'choice', field: 'team', label: 'Team', help: 'The tasks of both teams, or of Prime or Nova. A task with the team General counts for both.', choices: mondayTeamChoices });
   }
   if (panel === 'roster' || panel === 'driveHours') {
     list.push({ kind: 'text', field: 'department', label: 'Department', help: 'The department shown, or two with a comma, such as business,marketing. Empty shows every department.' });
@@ -171,7 +205,13 @@ export function detailsFor(row) {
 export function detailsSummary(row) {
   const words = [];
   if (row.panel === 'photo') words.push(startingCount(row.photoCount, startingPhotos.count) + ' photos, ' + startingCount(row.secondsPerPhoto, startingPhotos.each) + ' s each');
-  if (row.department) words.push(row.department);
+  if (row.panel === 'monday-department') {
+    words.push(choiceTitle(mondayDepartmentChoices, row.department) || 'No department', row.list === 'done' ? 'Done' : 'Open', choiceTitle(mondayTeamChoices, row.team) || 'Both');
+  } else if (row.panel === 'monday-charts') {
+    words.push(choiceTitle(mondayChartChoices, row.chart || 'status'), choiceTitle(mondayTeamChoices, row.team) || 'Both');
+  } else if (row.department) {
+    words.push(row.department);
+  }
   if (row.part) words.push('Page ' + row.part);
   if (row.side === 'qrParts') words.push('QR link');
   return words.join(', ');
@@ -297,72 +337,83 @@ export function pushUndo(history, rows) {
 }
 
 // Why a row is skipped on the wall right now. The wall leaves out a row that has nothing to show: a Monday row with no task for
-// its team and department, and a Photo row with no photo. The board asks for the tasks and photos the wall would read and
-// writes a note under each such row. These rules are the ones of visibleTasks and forTeam in dashboard/core/monday-tasks.js,
-// kept short: a note says there is nothing, and never says there is something.
+// its department, list and team, and a Photo row with no photo. The board asks for the tasks and photos the wall would read and
+// writes a note under each such row. These rules are the ones of boardTasks, ofTeam and listOf in dashboard/core/monday-views.js,
+// kept short: a note says there is nothing, and never says there is something. A row of a retired Monday panel always has its note.
 export const skipQuestion = `{
-  "tasks": *[_type == "task" && source == "monday" && show != false && showOnTv != false && showOnBoard != false && hiddenReason != "unassigned" && isSubitem != true && !defined(parentId) && defined(subteam)] {
+  "tasks": *[_type == "task" && source == "monday" && show != false && showOnTv != false && showOnBoard != false && defined(department)] {
     "team": team->code,
-    "department": subteam->name,
+    department,
+    list,
+    status,
+    startDate,
+    dueDate,
     expires
   },
   "photos": *[_type == "photo" && show != false] { expires }
 }`;
 
-const mondayPanelIds = [
-  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie',
-  'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both',
-];
-const teamOfView = { robotics: '', prime: 'prime', nova: 'nova' };
-
 function notExpired(item, now) {
   return !item || !item.expires || Date.parse(item.expires) > now.getTime();
 }
 
-function nameOf(text) {
-  return String(text || '').trim().toLowerCase();
+function listOf(task) {
+  if (task.list === 'open' || task.list === 'done') return task.list;
+  return task.status === 'done' ? 'done' : 'open';
 }
 
-// Design and CNC are one department on the screen
-function sameDepartment(wanted, name) {
-  const design = text => text === 'design' || text === 'cnc';
-  return nameOf(name) === wanted || (design(wanted) && design(nameOf(name)));
+function teamWords(team) {
+  return team === 'prime' || team === 'nova' ? 'the ' + team.charAt(0).toUpperCase() + team.slice(1) + ' team' : 'both teams';
 }
 
-// { rowKey: 'Skipped now: ...' } for the shown rows that have nothing to show. data is what skipQuestion found, or null when it
-// could not be read, and then there are no notes (the page says so in general words).
+// The note of a Monday row, or nothing when it has something to show
+function mondayNote(row, tasks) {
+  const team = row.team === 'prime' || row.team === 'nova' ? row.team : '';
+  const ofTeam = tasks.filter(task => team === '' || !task.team || task.team === team);
+
+  if (row.panel === 'monday-charts') {
+    const drawn = row.chart === 'timeline' ? ofTeam.filter(task => task.startDate && task.dueDate) : ofTeam;
+    if (drawn.length > 0) return '';
+    return row.chart === 'timeline'
+      ? 'Skipped now: no Monday task of ' + teamWords(team) + ' has a Timeline.'
+      : 'Skipped now: no Monday task is on the TV for ' + teamWords(team) + '.';
+  }
+
+  const department = choiceTitle(mondayDepartmentChoices, row.department);
+  if (department === '') return 'Skipped now: pick a Department in Details.';
+  const list = row.list === 'done' ? 'done' : 'open';
+  if (ofTeam.some(task => task.department === row.department && listOf(task) === list)) return '';
+  return 'Skipped now: no ' + list + ' ' + department + ' task is on the TV for ' + teamWords(team) + '.';
+}
+
+// { rowKey: 'Skipped now: ...' } for the shown rows that have nothing to show, and every row of a retired Monday panel. data is
+// what skipQuestion found, or null when it could not be read, and then only the retired rows have notes (the page says so in
+// general words).
 export function skipNotes(rows, data, now = new Date()) {
   const notes = {};
-  if (!data || !Array.isArray(data.tasks) || !Array.isArray(data.photos)) return notes;
-
-  const tasks = data.tasks.filter(task => notExpired(task, now));
-  const photos = data.photos.filter(photo => notExpired(photo, now));
+  const read = Boolean(data && Array.isArray(data.tasks) && Array.isArray(data.photos));
+  const tasks = read ? data.tasks.filter(task => notExpired(task, now)) : [];
+  const photos = read ? data.photos.filter(photo => notExpired(photo, now)) : [];
 
   (Array.isArray(rows) ? rows : []).forEach(row => {
-    if (!row || !isShown(row)) return;
+    if (!row) return;
+    const upgraded = upgradedRow(row);
+    if (isRetired(row) && !upgraded) {
+      notes[row._key] = retiredWords;
+      return;
+    }
+    if (!read || !isShown(row)) return;
 
     if (row.panel === 'photo' && photos.length === 0) {
       notes[row._key] = 'Skipped now: no photos (every photo is hidden or past its expiry).';
       return;
     }
-    if (mondayPanelIds.indexOf(row.panel) === -1) return;
-
-    if (tasks.length === 0) {
-      notes[row._key] = 'Skipped now: no Monday task is on the TV. A task needs a department that matches a Team lead, and Show on TV on.';
-      return;
-    }
-    const team = teamOfView[row.view] === undefined ? '' : teamOfView[row.view];
-    const ofTeam = tasks.filter(task => !task.team || team === '' || task.team === team);
-    const departments = String(row.department || '').split(',').map(nameOf).filter(Boolean);
-    const forRow = departments.length === 0 ? ofTeam : ofTeam.filter(task => departments.some(name => sameDepartment(name, task.department)));
-    if (forRow.length > 0) return;
-
-    const who = team === '' ? 'the team' : 'the ' + team.charAt(0).toUpperCase() + team.slice(1) + ' team';
-    notes[row._key] = departments.length === 0
-      ? 'Skipped now: no Monday tasks for ' + who + '.'
-      : 'Skipped now: no Monday tasks for ' + row.department.trim().split(',').join(' or ') + ' in ' + who + '.';
+    const monday = upgraded || row;
+    if (monday.panel !== 'monday-department' && monday.panel !== 'monday-charts') return;
+    const note = mondayNote(monday, tasks);
+    if (note !== '') notes[row._key] = note;
   });
   return notes;
 }
 
-export const skipHint = 'The wall skips a row with nothing to show. An example is a Monday row with no tasks for its department. A skipped row is marked under its panel.';
+export const skipHint = 'The wall skips a row with nothing to show. An example is a Department tasks row with no task in its list. A skipped row is marked under its panel.';

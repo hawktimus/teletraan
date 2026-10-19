@@ -1,6 +1,6 @@
 // Tidying the rows and the Screens that are stored, and the weekday schedule (part of screens.js).
 
-import { defaultPhotoRow, defaultScreen, defaultSchedule, defaultSettings, limits, mondayKinds, mondayOldPanels, screenIds, styles, teamPanels, weekdays } from '../config.js';
+import { defaultPhotoRow, defaultScreen, defaultSchedule, defaultSettings, limits, mondayCharts, mondayDepartments, mondayKinds, screenIds, styles, teamPanels, weekdays } from '../config.js';
 import { panels } from '../registry.js';
 import { keepInRange } from './content.js';
 import { seedMainRows, seedSideRows } from './screen-seed.js';
@@ -47,13 +47,12 @@ function tidyTeam(value) {
 }
 
 // A row of the large panel becomes { panel, team, seconds }. The seconds are left out when there are none. A row
-// of a panel that is not a large panel is dropped. Only a panel that follows the team has a team, so one
-// stored on any other row is not read. A Monday row is for a team, as the kind of its panel says (mondayKinds in
-// config.js): the tasks panel for a team and a department (a Team lead, stored as department), done, timeline and board for a
-// team, and status by department and overall progress for neither. A Monday row that needs a team and has none is
-// dropped, except a tasks row of the Robotics view (bothTeams), which is for the departments of both teams. rotating is true for a row of
-// the rotation list. A row that names one of the older Monday panels is the tasks panel of its team, for the first department that has
-// tasks, and a row for both teams that is dropped.
+// of a panel that is not a large panel is dropped, and so is a row of one of the older Monday panels, which are not in the
+// registry any more. Only a panel that follows the team has a team, so one stored on any other row is not read. A row of
+// the two Monday panels (mondayKinds in config.js) also has the team of its tasks (tasksTeam: prime, nova, or empty for
+// both), and the department and the list (Department tasks) or the chart (the TV charts). A row of the rotation gives the
+// team of its tasks as tasksTeam (core/rotation.js, mainRowOf), and a row of a Screen or a view gives it as its team.
+// rotating is true for a row of the rotation list.
 export function tidyMainRow(raw, bothTeams = false, rotating = false) {
   if (!isRecord(raw) || typeof raw.panel !== 'string') return null;
 
@@ -61,46 +60,41 @@ export function tidyMainRow(raw, bothTeams = false, rotating = false) {
   if (!panel || panel.region !== 'grid1' || panel.testOnly) return null;
 
   let team = tidyTeam(raw.team);
-  // a row of the rotation (core/rotation.js, mainRowOf) can also name a department on any Monday card, a part and a side
   const named = rotating && typeof raw.department === 'string' && raw.department.trim() !== '';
-  let id = panel.id;
-  let older = false;
   if (panel.monday) {
-    if (mondayOldPanels.includes(id)) {
-      older = true;
-      id = 'monday-tasks';
-    }
-    const kind = mondayKinds[id];
-    if (!kind) return null;
-    if (kind === 'none') team = '';
-    // a row with no team and a department is a department of both teams, which only the Robotics view plays (bothTeams)
-    else if (team === 'both' || (team === '' && !(bothTeams && (kind === 'department' || named)))) return null;
+    if (!mondayKinds[panel.id]) return null;
+    if (team === 'both') team = '';
   } else if (!teamPanels.includes(panel.id) || team === 'both') {
     team = '';
   }
 
-  const row = { panel: id, team: team };
-  if (panel.monday && mondayKinds[id] === 'department') row.department = typeof raw.department === 'string' && !older ? raw.department.trim() : '';
-  else if (named && !older && (panel.monday || departmentPanels.includes(panel.id))) row.department = raw.department.trim();
+  const row = { panel: panel.id, team: team };
+  if (panel.monday) Object.assign(row, mondaySettingsOf(raw, rotating ? raw.tasksTeam : raw.team, panel.id));
+  else if (named && departmentPanels.includes(panel.id)) row.department = raw.department.trim();
   if (rotating && halfPanels.includes(panel.id) && (raw.part === 1 || raw.part === 2)) row.part = raw.part;
   if (rotating && typeof raw.side === 'string' && sideIds.includes(raw.side.trim())) row.side = raw.side.trim();
   const seconds = tidySeconds(raw.seconds);
   if (seconds) row.seconds = seconds;
-  if (older) Object.defineProperty(row, 'older', { value: true, enumerable: false });
   if (panel.id === 'photo') Object.assign(row, photoRowOf(raw));
   return row;
 }
 
-// The rows of the large panel. A row that was one of the older Monday panels and is now the same as an earlier row is left out,
-// so a Screen that had the three older cards for a team plays one tasks panel and not three.
-function tidyMainRows(list) {
-  const rows = [];
-  const same = (a, b) => a.panel === b.panel && a.team === b.team && a.department === b.department;
+// The settings of a row of a Monday panel: the team of its tasks, and the department and list or the chart
+function mondaySettingsOf(raw, tasksTeam, id) {
+  const settings = { tasksTeam: tasksTeam === 'prime' || tasksTeam === 'nova' ? tasksTeam : '' };
+  if (id === 'monday-department') {
+    const department = typeof raw.department === 'string' ? raw.department.trim().toLowerCase() : '';
+    settings.department = mondayDepartments.some(entry => entry.value === department) ? department : '';
+    settings.list = raw.list === 'done' ? 'done' : 'open';
+  } else {
+    settings.chart = mondayCharts.some(entry => entry.value === raw.chart) ? raw.chart : 'status';
+  }
+  return settings;
+}
 
-  tidyRows(list, raw => tidyMainRow(raw)).forEach(row => {
-    if (!(row.older === true && rows.some(earlier => same(earlier, row)))) rows.push(row);
-  });
-  return rows;
+// The rows of the large panel
+function tidyMainRows(list) {
+  return tidyRows(list, raw => tidyMainRow(raw));
 }
 
 // A Photos row shows photoCount photos, each for secondsPerPhoto seconds, and stays up for the product. That

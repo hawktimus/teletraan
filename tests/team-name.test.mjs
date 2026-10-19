@@ -35,7 +35,7 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
   copyModule(path.join(dashboardFolder, file), path.join(root, file));
 });
 
-const panelIds = ['monday-tasks', 'monday-milestones-both', 'monday-progress-both', 'leadership', 'team-leads', 'roster', 'team-tile'];
+const panelIds = ['monday-department', 'leadership', 'team-leads', 'roster', 'team-tile'];
 panelIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
   copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
@@ -79,7 +79,7 @@ function contentOf(tasks, leads) {
 const leadId = name => 'lead-' + name.replace(/[^A-Za-z0-9]+/g, '-');
 
 function board(fields) {
-  const task = Object.assign({ title: '[Task]', subteam: '[Subteam A]', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true, dueDate: '2026-10-20' }, fields);
+  const task = Object.assign({ title: '[Task]', subteam: '[Subteam A]', department: 'build', list: 'open', status: 'up-next', team: 'prime', source: 'monday', mondayId: '[item]', showOnTv: true, dueDate: '2026-10-20' }, fields);
   return Object.assign(task, { subteamId: leadId(task.subteam) });
 }
 
@@ -144,34 +144,22 @@ const textOf = (html, cssClass) => Array.from(html.matchAll(new RegExp('<span cl
           roster: mounted(panels.roster, content),
           'team-leads': mounted(panels['team-leads'], content),
           leadership: mounted(panels.leadership, content),
-          'monday-tasks': panels['monday-tasks'].markupFor(content, monday12, { team: code, department: '' }),
+          'monday-department': panels['monday-department'].markupFor(content, monday12, { team: code, department: 'build', list: 'open' }),
         };
-        ['roster', 'team-leads', 'leadership', 'monday-tasks'].forEach(id => assert.equal(chipOf(rendered[id]), mine.shortName, id));
+        ['roster', 'team-leads', 'leadership'].forEach(id => assert.equal(chipOf(rendered[id]), mine.shortName, id));
+        assert.ok(rendered['monday-department'].includes('<span class="ago">' + mine.shortName), 'the Monday header names the team by its short name');
         Object.keys(rendered).forEach(id => assert.equal(fromSeed.test(words(rendered[id])), false, id + ' writes something from the seed'));
       });
     });
   });
 });
 
-test('the rows of both teams are labeled with the short names of the documents, and the Monday headers carry nothing else', () => {
-  const content = contentOf([
-    board({ title: '[a]', team: 'prime', subteam: '[Subteam A]' }),
-    board({ title: '[b]', team: 'nova', subteam: '[Subteam A]' }),
-  ], ['[Subteam A]']);
-  const progress = panels['monday-progress-both'].markupFor(content, monday12);
-  const milestones = panels['monday-milestones-both'].markupFor(content, monday12);
-
-  assert.deepEqual(textOf(progress, 'team-tag'), ['ZORPLE', 'MUMBO']);
-  assert.deepEqual(textOf(milestones, 'team-tag'), ['ZORPLE', 'MUMBO']);
-  [progress, milestones].forEach(html => assert.equal(fromSeed.test(words(html)), false));
-});
-
 test('a team with no short name is written by its name, and never by a name from the seed', () => {
   const content = contentOf([board({ team: 'prime' })], ['[Subteam A]']);
   content.teams[0].shortName = '';
   onTeamScreen(content, 'prime', () => {
-    const html = panels['monday-tasks'].markupFor(content, monday12, 1);
-    assert.equal(chipOf(html), 'QZX WOBBLE');
+    const html = panels['monday-department'].markupFor(content, monday12, { team: 'prime', department: 'build', list: 'open' });
+    assert.ok(html.includes('<span class="ago">QZX WOBBLE'), html);
     assert.equal(fromSeed.test(words(html)), false);
   });
 });

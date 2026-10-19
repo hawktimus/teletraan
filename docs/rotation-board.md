@@ -27,7 +27,7 @@ for that.
 - Handle: drag it to move the row. On a phone use the Up and Down buttons.
 - Checkbox: select rows. Show on screen, Hide and Delete selected then work on all of them.
 - #: the place of the row in the list.
-- View: Robotics, Prime or Nova. A Monday card shows the team of its View.
+- View: Robotics, Prime or Nova.
 - Panel: what the row plays, with the plain title, grouped by kind.
 - Small panel: only for a Robotics row in the split layout. It names the small panel beside the row. Empty follows the small
   panels of the view. Rows in the wide layout and rows of Prime and Nova have no small panel, so the cell is empty.
@@ -54,7 +54,8 @@ the list.
 ## Details by panel
 
 - Photo: Photos (1 to 20) and Seconds per photo (5 to 60).
-- Monday cards: Department (empty shows every one) and the team, which follows the View.
+- Monday: Department tasks: Department (one of the nine), List (Open or Done) and Team (Both, Prime or Nova). Monday: TV charts:
+  Chart (Status by department, Overall progress or Timeline) and Team.
 - Subteam roster: Department and Page. Drive hours: Department.
 - Upcoming events and Team leads: Page 1 or the next pages.
 - A row whose small panel is the Parts request QR code: says whether the Parts request address is set. Set it in Dashboard
@@ -79,7 +80,6 @@ in, and whether the same panel can also be a row.
 - Above them, the mode of Dashboard Settings (Auto, Always or Off) with a link to the Competition page, and one line from the
   frc-status document the Mini writes, such as Next event: Wake on 12 March 2027: the cards start on 10 March 2027. With no
   event ahead it says No event is coming up: the cards are off.
-- A Monday card row with no department: it expands to one step for each Team lead.
 - The announcement bar and alerts, which sit on top of everything.
 - Booked talks, which take the whole screen.
 - The small panel on the right, and the banner, countdown and ticker that stay on screen.
@@ -102,15 +102,17 @@ board does not show stays on the row. The same list is in Dashboard Settings, Ad
 ## Why the wall may not play a row
 
 A row on the board is a plan. The wall skips a row that has nothing to show, and the board says so under the panel, for
-example Skipped now: no Monday task is on the TV. It reads the published tasks and photos once when the page opens. The rules
+example Skipped now: no open Build task is on the TV for both teams. A row of one of the eleven retired Monday panels
+says Retired, use Department tasks, and plays nothing; an older tasks row with a department says it plays as Department
+tasks. It reads the published tasks and photos once when the page opens. The rules
 are in skipNotes in studio/tools/rotation-board.js. A change is on the wall only after Publish all, so a draft that did not
 publish (Publish all names it) is the other reason the wall differs from the board.
 
 ## Every panel is explained
 
 A panel in dashboard/registry.js is either offered in the pickers of the board, listed as an automatic panel (the cards above),
-or named as an old or internal panel with a reason (internalPanels in studio/tools/rotation-titles.js). The older Monday
-cards and the two stand-ins of the hardware test are the internal ones. tests/rotation-panels-explained.test.mjs fails with
+or named as an old or internal panel with a reason (internalPanels in studio/tools/rotation-titles.js). The two stand-ins of the
+hardware test are the internal ones. The retired Monday panels are not in the registry any more. tests/rotation-panels-explained.test.mjs fails with
 the id of a panel that is none of these, so a panel cannot reach the wall without the Studio saying what it is.
 
 ## Where the code is

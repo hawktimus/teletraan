@@ -19,7 +19,7 @@ function rowsOf(list) {
   return Array.isArray(list) ? list.filter(row => row && typeof row.panel === 'string' && row.panel !== '') : [];
 }
 
-// The rows of one view document, or the starting rows of the view when it has none. Family is always its two panels.
+// The rows of one view document, or the starting rows of the view when it has none. Family is always its one panel.
 function listOf(key, doc) {
   if (key === 'family') return familyPanels.map(panel => ({ panel: panel, seconds: 30 }));
 
@@ -29,9 +29,11 @@ function listOf(key, doc) {
 
 function rowFrom(key, panel) {
   const row = { view: nameOf(key), panel: panel.panel, shown: true };
-  ['seconds', 'department', 'photoCount', 'secondsPerPhoto'].forEach(field => {
+  ['seconds', 'department', 'photoCount', 'secondsPerPhoto', 'list', 'chart'].forEach(field => {
     if (panel[field] !== undefined && panel[field] !== '') row[field] = panel[field];
   });
+  // a Monday row of a team view shows the tasks of that team
+  if ((row.panel === 'monday-department' || row.panel === 'monday-charts') && (panel.team === 'prime' || panel.team === 'nova')) row.team = panel.team;
   if (row.panel === 'photo' && row.photoCount && row.secondsPerPhoto) row.seconds = row.photoCount * row.secondsPerPhoto;
   return row;
 }

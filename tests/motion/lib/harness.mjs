@@ -35,8 +35,12 @@ function holdLook(content, look) {
 }
 
 // The address every test opens: the sample content, the clock fixed, full motion and no night screen
+// The settings a Monday panel needs to be held: Build, open, for Department tasks (the sample has five pages of it), and the status chart
+const mondayHeld = { 'monday-department': { dept: 'build', list: 'open' }, 'monday-charts': { chart: 'status' } };
+
 export function addressFor(extra = {}) {
   const query = new URLSearchParams({ sample: '1', clock: 'fixed', motion: 'full', night: 'off' });
+  Object.keys(mondayHeld[extra.panel] || {}).forEach(key => query.set(key, mondayHeld[extra.panel][key]));
   Object.keys(extra).forEach(key => query.set(key, extra[key]));
   return '/index.html?' + query.toString();
 }

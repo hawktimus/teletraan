@@ -274,16 +274,12 @@ export const defaultSettings = {
   newsCategories: ['FRC', 'Control System'],
   newsInTicker: false,
   newsHiddenLinks: [],
-  // The Monday tab in the Studio (docs/monday.md). The Teletraan computer reads these (computer/scripts/monday-sync.sh) and writes the
-  // tasks and milestones, which carry what the panels need. The screen reads only mondayEveryMinutes (for the stale
-  // chip) and mondayShowOwners.
+  // The Monday tab in the Studio (docs/monday.md). The Teletraan computer reads the two boards by the numbers in
+  // computer/scripts/monday-contract.sh, and reads only mondayEveryMinutes here. The screen reads it for the stale chip.
   //   mondayEveryMinutes    how often the Teletraan computer reads the boards, 5 to 120 minutes
-  //   mondayTaskBoard       the task board: its number, the column of each field, the label tables (a label is read by its
-  //                         index, not its text), and the Hide label text. A team label row names a Team, none meaning both
-  //                         teams. A department row names a Team lead, or is matched to the Team lead with the same name
-  //   mondayMilestoneBoard  the milestones board, the same way
-  //   mondayBoards          not used any more: the rows of the older Monday tab, kept so that nothing typed is lost
-  //   mondayShowOwners      keeps the first names of the people in Assigned. Off to start with
+  //   mondayTaskBoard, mondayMilestoneBoard, mondayBoards and mondayShowOwners
+  //                         not read any more: the settings of the older sync, hidden in the Studio and kept so that nothing
+  //                         typed is lost
   mondayEveryMinutes: 30,
   mondayTaskBoard: {
     boardId: '18435126893',

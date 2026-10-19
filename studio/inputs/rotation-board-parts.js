@@ -6,7 +6,7 @@
 
 import { createElement } from 'react';
 import {
-  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, secondsOf, skipHint, stripOf,
+  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
 import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge, playsNowWords } from '../tools/rotation-find.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
@@ -197,6 +197,7 @@ export function dataRow(item, count, state, actions) {
       cell('View', 'view', h('select', { value: row.view || '', style: styles.select, 'aria-label': 'View', onChange: event => actions.edit(index, 'view', event.target.value) }, viewOptions(row.view))),
       cell('Panel', 'panel', h('select', { value: row.panel || '', style: styles.select, 'aria-label': 'Panel', onChange: event => actions.panel(index, event.target.value) }, groupedOptions(panelGroups, row.panel)),
         state.skips && state.skips[row._key] ? h('span', { className: 'rb-help', 'data-skip': row._key }, state.skips[row._key]) : null,
+        retiredNote(row) && !(state.skips && state.skips[row._key] === retiredNote(row)) ? h('span', { className: 'rb-help', 'data-retired': row._key }, retiredNote(row)) : null,
         placeholderBadge(row) ? h('span', { className: 'rb-badge', 'data-placeholder': row._key }, placeholderBadge(row)) : null),
       small
         ? cell(words.small, 'small', h('select', { value: row.side || '', style: styles.select, 'aria-label': words.small, onChange: event => actions.edit(index, 'side', event.target.value) }, groupedOptions(sidePanelGroups, row.side, 'Follows the view')))
@@ -227,6 +228,10 @@ export function editorOf(row, index, state, actions) {
       input = h('input', { key: row._key + item.field + value, id: 'rb-' + item.field, type: 'number', min: item.min, max: item.max, defaultValue: value, style: styles.number, onBlur: event => actions.photo(index, item.field, event.target.value, item) });
     } else if (item.kind === 'text') {
       input = h('input', { key: row._key + item.field + (row[item.field] || ''), id: 'rb-' + item.field, type: 'text', list: 'rb-departments', defaultValue: row[item.field] || '', style: styles.textBox, placeholder: 'Every department', onBlur: event => actions.edit(index, item.field, event.target.value.trim()) });
+    } else if (item.kind === 'choice') {
+      const current = row[item.field] === undefined ? (item.field === 'list' ? 'open' : item.field === 'chart' ? 'status' : '') : String(row[item.field]);
+      input = h('select', { id: 'rb-' + item.field, value: current, style: styles.select, onChange: event => actions.edit(index, item.field, event.target.value) },
+        item.choices.map(choice => h('option', { key: choice.value, value: choice.value }, choice.title)));
     } else if (item.kind === 'part') {
       input = h('select', { id: 'rb-' + item.field, value: row.part ? String(row.part) : '', style: styles.select, onChange: event => actions.edit(index, 'part', event.target.value === '' ? '' : Number(event.target.value)) },
         [h('option', { key: '', value: '' }, 'All pages'), h('option', { key: '1', value: '1' }, 'Page 1 only'), h('option', { key: '2', value: '2' }, 'Page 2 on')]);

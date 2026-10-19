@@ -78,24 +78,21 @@ Tasks come from the team's Monday boards. Nobody types a task in the Studio, so 
 is no plus button. The Teletraan computer reads the boards on a timer and makes a task for each item.
 The reading takes up to 30 minutes, so a change in Monday is not on the TV at once.
 
-Your task shows on the TV when it has a department, a team or General, Show on TV is Show, and it is not a subitem.
+Your task shows on the TV when it is a parent item, it has a department, and Show on TV? is not Hide.
 
-- **Department** is the Department column in Monday. A task whose department is
-  Unassigned never shows. A new task gets a department from its group, and the
-  automation can take up to 30 seconds.
+- **Department** is the group the task is in: Build, Electrical, Programming, Design, CNC, Strategy,
+  Operations, Business or Marketing. A task in the Done group takes the Department column.
+- **Done** is a Done status, the Done group, or the Completed Tasks board. Everything else is Open.
 - **Team** is the Team column: Prime, Nova or General. General shows for both teams.
 - **Show on TV?** is a column. Show is the starting value. Hide takes the task off.
 - **Subitems** never show. Put the work you want on the TV on a parent item.
-- **Status** comes from the Status column, not from the group. A task you reopen
-  stays in the Done group and still reads as To Do.
-- **POC** is the person in charge. Only the first name shows. Pick one person.
-- **Timeline** and **Estimated Hours** feed the due date, the overdue mark and the
-  progress numbers. A task with no hours counts as one hour.
+- **Assigned**: the first name of the first person is the Contact. With nobody it reads Unassigned.
+- **Timeline**: its last day is the Estimated Completion Date. **Estimated Hours** feed the Overall
+  progress chart.
 
-In the Studio, the Items tab of Monday lists the tasks, with a switch for each.
-Each task opens read only. The one thing you can change is **Show on TV**. Monday
-Boards shows every board the Teletraan computer can see, with when it was last read. If a Monday
-panel shows a STALE chip, the computer has not read the boards for a while. Tell a coach.
+In the Studio, the Monday page shows what the Teletraan computer read, a table for each department. It is read
+only: change a task in Monday. A coach puts a department on the TV with a Department tasks row on the Rotation
+board. If a Monday panel shows a STALE chip, the computer has not read the boards for a while. Tell a coach.
 
 ## Events
 

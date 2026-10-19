@@ -45,7 +45,7 @@ const row = (view, panel, extra) => Object.assign({ _key: view + panel + Math.ra
 const sample = () => board.withKeys([
   row('robotics', 'leadership', { seconds: 20, side: 'sponsor-logo', secret: 'kept' }),
   row('robotics', 'events', { part: 1, seconds: 30, side: 'task-counts' }),
-  row('prime', 'monday-tasks', { department: 'build', seconds: 30 }),
+  row('prime', 'monday-department', { department: 'build', list: 'open', seconds: 30 }),
   row('prime', 'roster', { department: 'build', part: 1 }),
   row('nova', 'photo', { photoCount: 4, secondsPerPhoto: 10, seconds: 40, shown: false }),
   row('robotics', 'tonight', { seconds: 45 }),
@@ -74,7 +74,7 @@ test('rows of one view that follow each other are one block, with the count and 
   assert.equal(board.blocksOf(sample(), 10)[1].seconds, 40);
   const standard = board.blocksOf(board.standardRows());
   assert.equal(standard[0].view, 'robotics');
-  assert.equal(standard[0].count, 13);
+  assert.equal(standard[0].count, 19, 'six pairs, nine departments, three charts and the Business and Marketing roster');
   assert.equal(standard.reduce((all, block) => all + block.count, 0), defaults.defaultRotationRows().length);
 });
 
@@ -94,7 +94,7 @@ test('the loop time counts only rows that are shown and is said in plain words',
 
 test('the preview strip has a tile for each row, greys the hidden ones and marks a view change only between rows that play', () => {
   const items = board.stripOf(sample());
-  assert.deepEqual(items.filter(item => item.type === 'tile').map(item => item.title), ['Leadership', 'Upcoming events', 'Monday: Tasks by team and department', 'Subteam roster', 'Photo', 'Daily Agenda']);
+  assert.deepEqual(items.filter(item => item.type === 'tile').map(item => item.title), ['Leadership', 'Upcoming events', 'Monday: Department tasks', 'Subteam roster', 'Photo', 'Daily Agenda']);
   assert.equal(items.filter(item => item.type === 'tile' && !item.shown).length, 1);
   const changes = items.filter(item => item.type === 'change').map(item => item.from + '>' + item.to);
   assert.deepEqual(changes, ['robotics>prime', 'prime>robotics'], 'the hidden Nova row starts no view change');
@@ -108,7 +108,7 @@ test('the preview strip has a tile for each row, greys the hidden ones and marks
 test('the small panel column is for a Robotics row that is split, and the wide list is the one of the dashboard', () => {
   assert.deepEqual(board.wideRoboticsPanels, dashboardRotation.roboticsWidePanels);
   assert.equal(board.hasSmallPanel(row('robotics', 'events')), true);
-  assert.equal(board.hasSmallPanel(row('robotics', 'monday-tasks')), false, 'a wide Robotics row has none');
+  assert.equal(board.hasSmallPanel(row('robotics', 'monday-department')), false, 'a wide Robotics row has none');
   assert.equal(board.hasSmallPanel(row('prime', 'events')), false, 'a team view row has none');
   const page = parts.tableOf(state(sample()), noActions);
   const cells = nodesWhere(page, node => node.props['data-cell'] === 'small');
@@ -122,8 +122,9 @@ test('the small panel column is for a Robotics row that is split, and the wide l
 test('the details of a row depend on its panel', () => {
   const fields = panel => board.detailsFor(row('prime', panel)).map(item => item.field + ':' + item.kind).join();
   assert.equal(fields('photo'), 'photoCount:number,secondsPerPhoto:number');
-  assert.equal(fields('monday-tasks'), 'department:text,view:team');
-  assert.equal(fields('monday-board'), 'department:text,view:team');
+  assert.equal(fields('monday-department'), 'department:choice,list:choice,team:choice');
+  assert.equal(fields('monday-charts'), 'chart:choice,team:choice');
+  assert.equal(fields('monday-board'), '', 'a retired panel has no details');
   assert.equal(fields('roster'), 'department:text,part:part');
   assert.equal(fields('driveHours'), 'department:text');
   assert.equal(fields('events'), 'part:part');
@@ -132,11 +133,19 @@ test('the details of a row depend on its panel', () => {
   assert.equal(board.detailsFor(row('robotics', 'photo', { side: 'qrParts' })).map(item => item.kind).join(), 'number,number,link');
   assert.match(board.qrStatus(false), /not set/);
   assert.match(board.qrStatus(true), /is set/);
-  board.detailsFor(row('robotics', 'photo', { side: 'qrParts' })).concat(board.detailsFor(row('prime', 'roster')), board.detailsFor(row('prime', 'monday-tasks'))).forEach(item => assert.ok(item.help.length > 10 && !/[–—]/.test(item.help), 'a one line help for ' + item.field));
+  board.detailsFor(row('robotics', 'photo', { side: 'qrParts' })).concat(board.detailsFor(row('prime', 'roster')), board.detailsFor(row('prime', 'monday-department')), board.detailsFor(row('prime', 'monday-charts'))).forEach(item => assert.ok(item.help.length > 10 && !/[–—]/.test(item.help), 'a one line help for ' + item.field));
   const editor = parts.editorOf(row('robotics', 'photo', { side: 'qrParts' }), 0, state([]), noActions);
   assert.equal(nodesWhere(editor, node => node.props['data-link'] === 'missing').length, 1);
   assert.equal(nodesWhere(parts.editorOf(row('robotics', 'photo', { side: 'qrParts' }), 0, state([], { settings: { pageSeconds: 20, partsLink: true } }), noActions), node => node.props['data-link'] === 'set').length, 1);
   assert.equal(board.detailsSummary(row('prime', 'roster', { department: 'build', part: 2 })), 'build, Page 2');
+  assert.equal(board.detailsSummary(row('robotics', 'monday-department', { department: 'cnc', list: 'done', team: 'nova' })), 'CNC, Done, Nova');
+  assert.equal(board.detailsSummary(row('robotics', 'monday-department', {})), 'No department, Open, Both');
+  assert.equal(board.detailsSummary(row('robotics', 'monday-charts', {})), 'Status by department, Both');
+  const choices = parts.editorOf(row('robotics', 'monday-department', { department: 'cnc' }), 0, state([]), noActions);
+  const selects = nodesWhere(choices, node => node.type === 'select');
+  assert.deepEqual(selects.map(node => node.props.id + '=' + node.props.value), ['rb-department=cnc', 'rb-list=open', 'rb-team=']);
+  assert.deepEqual(nodesWhere(selects[1], node => node.type === 'option').map(textOf), ['Open', 'Done']);
+  assert.deepEqual(nodesWhere(selects[2], node => node.type === 'option').map(textOf), ['Both', 'Prime', 'Nova']);
   assert.match(board.detailsSummary(row('robotics', 'photo', { photoCount: 4, secondsPerPhoto: 10 })), /4 photos, 10 s each/);
 });
 

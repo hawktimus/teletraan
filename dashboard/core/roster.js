@@ -7,7 +7,7 @@ import { visibleItems } from './content.js';
 import { makePages } from './turns.js';
 import { leadPhotoOf } from './team-leads.js';
 import { rosterPageRows } from '../config.js';
-import { departmentIn, departmentsOf, tasksOfDepartment } from './monday-views.js';
+import { departmentIn, departmentsOf, tasksOfDepartment } from './lead-departments.js';
 import { forTeam, visibleTasks } from './monday.js';
 
 export const rowsPerColumn = 8;

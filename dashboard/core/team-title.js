@@ -1,7 +1,7 @@
 // What a panel writes where it names a team. A team is PRIME or NOVA, the short name the Studio sends for
 // it. Content that belongs to both teams names none, and its header has no chip. A header that names a
 // department reads BUILD TEAM, with the name of the team in a chip at its right end. These are plain
-// functions, so tests/monday-rows.test.mjs can run them.
+// functions, so tests/blank-team.test.mjs and tests/team-name.test.mjs can run them.
 
 import { titleRoom, titleSpare } from './header-room.js';
 import { escapeHtml, hasText } from './text.js';

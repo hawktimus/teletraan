@@ -1,7 +1,6 @@
 // What each View starts with. The dashboard has the same shape as defaultViews in
 // dashboard/config.js, and tests/schemas.test.mjs compares them when that name exists there.
-// A row of panels is { panel, seconds } with a team on the Monday rows and, for the tasks row,
-// no department: the screen plays one row for each Team lead that is on the Monday board.
+// A row of panels is { panel, seconds } with a team on the Monday rows, and the chart of a TV charts row.
 //
 //   layout       standard (banner, main panel, countdown and small panels) or bar (banner across the
 //                top, a column at one side, one main panel). The look is not set here, only the arrangement
@@ -11,10 +10,10 @@
 //   teamChip     the team chip on the cards of the view
 //   colors       team (the colors of the team document) or general (the colors of the screen)
 
-export const monday = (panel, team) => ({ panel: panel, team: team, seconds: 30 });
+export const chartRow = (chart, team) => ({ panel: 'monday-charts', chart: chart, team: team, seconds: 30 });
 
 function teamRows(team) {
-  return [monday('monday-tasks', team), monday('monday-done', team), monday('monday-timeline', team), monday('monday-board', team)];
+  return [chartRow('status', team), chartRow('progress', team)];
 }
 
 export const defaultViews = {
@@ -52,12 +51,11 @@ export const defaultViews = {
     teamChip: false,
     colors: 'general',
     panels: [
-      { panel: 'monday-overall', seconds: 30 },
-      { panel: 'monday-status-depts', seconds: 30 },
+      { panel: 'monday-charts', chart: 'status', seconds: 30 },
     ],
     sidePanels: [],
   },
 };
 
-// The two panels the Family view always plays. Its list of panels cannot be changed.
-export const familyPanels = ['monday-overall', 'monday-status-depts'];
+// The panel the Family view always plays. Its list of panels cannot be changed.
+export const familyPanels = ['monday-charts'];

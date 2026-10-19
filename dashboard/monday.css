@@ -1,13 +1,11 @@
-/* What the Monday cards share (core/monday-draw.js): the header, the body, the sentence a card says when it has
-   nothing to show, the window the rows are in, the page marker, the labels of a department and a team. Each
-   card's own stylesheet in panels/monday-* has the rest. The page is the large panel's, 1152 by 708, with
-   its header 120 high. Nothing here moves: a card that scrolls is moved by frame.js (scrollCard). */
+/* What the two Monday panels share (core/monday-draw.js): the header, the body, the sentence a panel says when it has
+   nothing to show, the status chip and the numbers along the bottom. Each panel's own stylesheet in panels/monday-* has
+   the rest. The page is the large panel's, 1152 by 708, with its header 120 high. Nothing here moves: a panel that
+   scrolls is moved by frame.js (scrollCard). */
 
-/* The header sits on top of the two header plates of the area's frame. The title is the department and
-   TEAM at 60px, and is cut off with an ellipsis before it reaches the line that ends the tab. At the right
-   end are the words about the board, the chip with the name of the team (in base.css) and the slashes. The
-   words are left out by core/monday-draw.js when they do not fit, and then the slashes when they do not fit
-   beside the chip. */
+/* The header sits on top of the two header plates of the area's frame. The title is at 60px, or smaller when it
+   does not fit (smallTitleClass in core/team-title.js), and is cut off with an ellipsis before it reaches the line that
+   ends the tab. At the right end are the team of the row, how long ago the board was read, and the slashes. */
 .monday .header {
   position: absolute;
   left: 0;
@@ -44,17 +42,8 @@
   white-space: nowrap;
   font: 600 var(--size-label)/44px var(--font-display);
 }
-/* Beside the chip the words need more than the 289px at the right end of a header 1152 wide. The header of
-   the bar layout is as wide as the panel (layouts/bar.css), and has the room. */
-.monday .tag-with-chip .ago { display: none; }
-html[data-layout="bar"] .monday .tag-with-chip .ago { display: inline; }
+/* The amber chip says the board is stale. Its 30px text is the size of every chip. */
 .monday .tag .double-slash { flex: none; }
-
-/* The panels of the task board (core/monday-draw.js, boardHeader): the words of the header that do not fit beside
-   the chip of a header 1152 wide are shown only in the bar layout, which has the room. The amber chip says the
-   board is stale. Its 30px text is the size of every chip. */
-.monday .ago-wide { display: none; }
-html[data-layout="bar"] .monday .ago-wide { display: inline; }
 .monday .stale-chip {
   flex: none;
   padding: 0 14px;
@@ -64,8 +53,8 @@ html[data-layout="bar"] .monday .ago-wide { display: inline; }
   font: 700 30px/44px var(--font-display);
 }
 
-/* The body is 1104 x 544, 24px in from the frame and 132px down. The rows end 420px down and what is
-   under them stays clear of the cut corner at the bottom right. */
+/* The body is 1104 x 544, 24px in from the frame and 132px down. What is at its foot stays clear of the cut corner
+   at the bottom right. */
 .monday .body {
   position: absolute;
   left: 24px;
@@ -89,94 +78,17 @@ html[data-layout="bar"] .monday .ago-wide { display: inline; }
   font: 500 var(--size-body)/72px var(--font-text);
 }
 
-/* The bar layout (Minimal) gives the large panel a page 1427 wide, where every other panel keeps the 1152 it was
-   written for (docs/layouts.md, "The width of the main panel"). The Monday cards use all of it: the header and the
+/* The bar layout gives the large panel a page 1427 wide, where every other panel keeps the 1152 it was
+   written for (docs/layouts.md, "The width of the main panel"). The Monday panels use all of it: the header and the
    body are as wide as the area, with the same 24px at each side. layouts/bar.css gives the header of every panel that
    width, and the rule here says it for the cards. styles/minimal.css leaves out the weld seam, which
    stands where the narrow page ends. The standard layout and the sidebar layout have no rule here. */
 html[data-layout="bar"] .monday .header { width: var(--bar-area-width); }
 html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px); }
 
-/* Five rows of 84 are in the window. A card with more rows is moved up in it by five rows at a time
-   (frame.js, scrollCard, and frame.css, which has the position of the list). The two tags are the colors
-   of the teams on the cards of both teams, the same on every team's screen. */
-.monday {
-  --scroll-step: 420px;
-}
-.monday .rows-window {
-  height: 420px;
-  overflow: hidden;
-}
-
-/* The page marker: a square for each page, the one in view filled, and its place in words. frame.js puts the
-   page in view in data-scroll-page on the card, and the rules here show the square and the words of that page. */
-.monday .marker {
-  position: absolute;
-  right: 68px;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-.monday .squares {
-  display: flex;
-  gap: 8px;
-}
-.monday .square {
-  box-sizing: border-box;
-  width: 28px;
-  height: 28px;
-  border: 4px solid var(--yellow);
-}
-.monday[data-scroll-page="1"] .square-1,
-.monday[data-scroll-page="2"] .square-2 { background: var(--yellow); }
-.monday .place {
-  display: none;
-  white-space: nowrap;
-  color: var(--lilac);
-  font: 600 var(--size-label)/48px var(--font-display);
-}
-.monday[data-scroll-page="1"] .place-1,
-.monday[data-scroll-page="2"] .place-2 { display: block; }
-/* The count of rows after the page of the tasks panel of the one task board, where the panel is wide enough for it */
-.monday .place-more { display: none; }
-html[data-layout="bar"] .monday .place-more { display: inline; }
-
-/* The name of a department in a row, in the label color of the team, 330px wide and cut off with an ellipsis
-   if it is longer. PROGRAMMING and ELECTRICAL fit at this size. */
-.monday .department {
-  flex: none;
-  box-sizing: border-box;
-  width: 330px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--team-label, var(--yellow));
-  font: 700 36px/44px var(--font-text);
-}
-
-/* The team of a row of the cards of both teams: PRIME in gold and NOVA in light purple. A team that is neither has
-   the accent of the screen. */
-.monday .team-tag {
-  flex: none;
-  box-sizing: border-box;
-  width: 174px;
-  text-align: center;
-  color: var(--ground);
-  font: 700 var(--size-label)/52px var(--font-display);
-  background: var(--yellow);
-}
-.monday .team-tag-prime { background: var(--prime-tag); }
-.monday .team-tag-nova { background: var(--nova-tag); }
-/* The room of a label for a row with no team, when other rows of the card have one */
-.monday .team-tag-blank { background: none; }
-
-
-/* The panels of the one task board (core/monday-views.js says what they draw). They share the five status colors, the
-   numbers along the bottom, the legend and the first name of who to ask. A status chip and the squares of the legend
-   are the same colors. In review is the gold that the Prime tag has, and stuck is the red. The 30px text of a chip is
-   the one size under 44px that a chip has, and the word is there for anyone who cannot tell the colors apart. */
+/* The status chip in the five status colours. In review is the gold that the Prime tag has, and stuck is the red. The
+   30px text of a chip is the one size under 44px that a chip has, and the word is there for anyone who cannot tell the
+   colours apart. */
 .monday .chip {
   flex: none;
   box-sizing: border-box;
@@ -191,15 +103,6 @@ html[data-layout="bar"] .monday .place-more { display: inline; }
 .monday .chip-in-review { background: var(--prime-tag); }
 .monday .chip-blocked { background: var(--danger); }
 .monday .chip-done { background: var(--status-done); }
-
-.monday .poc {
-  flex: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--lilac);
-  font: 500 40px/48px var(--font-text);
-}
 
 /* The numbers along the bottom: a 72px number and its word beside it, each with a rule at its left. The top is in the
    stylesheet of the panel. */
@@ -221,22 +124,4 @@ html[data-layout="bar"] .monday .place-more { display: inline; }
 .monday .fact-label {
   color: var(--yellow);
   font: 600 36px/40px var(--font-display);
-}
-
-/* The five statuses as a legend: a square and the word, at 36px like the other labels */
-.monday .legend {
-  display: flex;
-  gap: 24px;
-  white-space: nowrap;
-  font: 600 36px/36px var(--font-display);
-}
-.monday .key {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.monday .swatch {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
 }

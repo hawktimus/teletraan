@@ -35,10 +35,6 @@ export const autoCards = [
 // The cards that are not competition cards. The panels are the ones the card explains that no picker offers.
 export const otherCards = [
   {
-    id: 'monday-departments', title: 'Monday rows with no department', shows: 'A Monday card row with no department expands to one step for each Team lead. Type a department in Details to keep it to one.',
-    when: 'Whenever the row plays and the team has tasks.', panels: [], row: false,
-  },
-  {
     id: 'announcements', title: 'Announcement bar and alerts', shows: 'An announcement is a plate under the banner. An alert fills the screen. Both sit on top of everything, whatever row plays.',
     when: 'While an announcement is live, and when an alert is set in Dashboard Settings.', panels: ['announcement', 'alert'], row: false,
   },

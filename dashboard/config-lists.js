@@ -69,28 +69,33 @@ export const defaultScreen = { nameEffectEveryMinutes: 10, hawkEveryMinutes: 5, 
 // copies this list for the Team field of a row.
 export const teamPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roster', 'leadership', 'sponsor-feature', 'custom'];
 
-// The Monday rows a team is seeded with, in the order they play: the tasks of its first department, what it finished and its
-// board. A Screen that nobody has opened in the Studio plays them (core/screen-seed.js), and the Studio fills an empty Screen with
-// the same ones (studio/tools/screen-seed.js).
-export const mondayRows = ['monday-tasks', 'monday-done', 'monday-board'];
+// The Monday rows a team is seeded with: the status chart of its tasks. A Screen that nobody has opened in the Studio plays
+// it (core/screen-seed.js), and the Studio fills an empty Screen with the same one (studio/tools/screen-seed.js).
+export const mondayRows = ['monday-charts'];
 
-// The panels of the one task board, in the order the Studio offers them (docs/monday.md), and what a row of each says
-// about the team and the department:
-//   department  a team and a department (a Team lead): the tasks panel
-//   team        a team: done, timeline and board
-//   none        neither: the panels for both teams, status by department and overall progress
-export const mondayKinds = {
-  'monday-tasks': 'department',
-  'monday-done': 'team',
-  'monday-status-depts': 'none',
-  'monday-overall': 'none',
-  'monday-timeline': 'team',
-  'monday-board': 'team',
-  'monday-pie': 'team',
-};
+// The two Monday panels (docs/monday.md) and what a row of each says:
+//   monday-department  a department, a list (open or done) and a team (prime, nova, or empty for both)
+//   monday-charts      a chart (status, progress or timeline) and a team
+export const mondayKinds = { 'monday-department': 'department', 'monday-charts': 'chart' };
 
-// The older Monday panels: still in the registry, so that a saved row keeps working, and not in the picker
-export const mondayOldPanels = ['monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both'];
+// The nine departments of the boards, the two lists and the three charts, in the order the pickers offer them
+export const mondayDepartments = [
+  { value: 'build', title: 'Build' }, { value: 'electrical', title: 'Electrical' }, { value: 'programming', title: 'Programming' },
+  { value: 'design', title: 'Design' }, { value: 'cnc', title: 'CNC' }, { value: 'strategy', title: 'Strategy' },
+  { value: 'operations', title: 'Operations' }, { value: 'business', title: 'Business' }, { value: 'marketing', title: 'Marketing' },
+];
+export const mondayLists = [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }];
+export const mondayCharts = [{ value: 'status', title: 'Status by department' }, { value: 'progress', title: 'Overall progress' }, { value: 'timeline', title: 'Timeline' }];
+export const mondayTeams = [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }, { value: 'nova', title: 'Nova' }];
+
+// The eleven Monday panels of the older sync. They are gone from the registry and from every list. A stored row that names
+// one plays nothing and says so, except a monday-tasks row with a department, which plays as Department tasks, open
+// (core/rotation.js, upgradeMondayRow).
+export const retiredMondayPanels = [
+  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie',
+  'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both',
+];
+export const retiredWords = 'Retired, use Department tasks.';
 
 // The team settings in Dashboard Settings (Look tab): which team the screen shows. The Studio copies this list.
 //   prime      the Prime team all the time
@@ -310,10 +315,9 @@ export const viewLayoutNames = ['standard', 'bar'];
 export const countdownPlaces = ['side', 'banner'];
 export const viewColors = ['team', 'general'];
 
-// A tasks row of a team view with no department stands for every Team lead on the Monday board, and is worked out each
-// time the view is read, so a new department needs no edit (core/views.js, expandRows)
-const mondayRow = (panel, team) => ({ panel: panel, team: team, seconds: 30 });
-const teamRows = team => [mondayRow('monday-tasks', team), mondayRow('monday-done', team), mondayRow('monday-timeline', team), mondayRow('monday-board', team)];
+// The Monday rows of a team view: the status and the progress charts of its tasks
+const chartRow = (chart, team) => ({ panel: 'monday-charts', chart: chart, team: team, seconds: 30 });
+const teamRows = team => [chartRow('status', team), chartRow('progress', team)];
 
 export const defaultViews = {
   general: {
@@ -350,15 +354,14 @@ export const defaultViews = {
     teamChip: false,
     colors: 'general',
     panels: [
-      { panel: 'monday-overall', seconds: 30 },
-      { panel: 'monday-status-depts', seconds: 30 },
+      { panel: 'monday-charts', chart: 'status', seconds: 30 },
     ],
     sidePanels: [],
   },
 };
 
 // The panels of the Family view are fixed
-export const familyPanels = ['monday-overall', 'monday-status-depts'];
+export const familyPanels = ['monday-charts'];
 
 // The background of the Original theme (Look tab of Dashboard Settings, field background). sweep is the screen as it has
 // always been, the light band that crosses each frame. The other four are drawn behind the panels (core/theme-bg.js, and
