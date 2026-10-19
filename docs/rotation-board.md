@@ -27,6 +27,20 @@ for that.
 - Details: opens the fields of the panel of the row.
 - Up, Down, Copy, Delete: move one place, make a copy under the row, and delete the row after a question.
 
+## Finding a row
+
+Above the table:
+
+- Search panel titles: type part of a title, such as robot or photo. The table keeps the rows that match the panel, the small
+  panel, the View or the department.
+- Show only rows that are skipped now: rows that are switched off, and rows that are on but have nothing to show.
+- Show only placeholders: Robot status, Wireframe view, and any row whose Small panel is Mini panel idea 1. A placeholder row
+  has the badge Placeholder: draws only a title, because the panel is not designed yet and draws a title and a dashed frame.
+- Jump to: one button for each block, such as Robotics, rows 1 to 13. It scrolls to the group line of the block.
+
+With a filter on, a line says how many rows of the list are shown. Filters only hide rows on the page. They change nothing in
+the list.
+
 ## Details by panel
 
 - Photo: Photos (1 to 20) and Seconds per photo (5 to 60).
@@ -87,6 +101,7 @@ publish (Publish all names it) is the other reason the wall differs from the boa
 - studio/inputs/rotation-board-view.js: the page and its actions.
 - studio/inputs/rotation-board-parts.js: the drawing and the style sheet.
 - studio/tools/rotation-board.js: the plain functions (groups, loop time, changes, save).
+- studio/tools/rotation-find.js: the filters, the search, the Jump to links and the placeholder badge.
 - studio/tools/rotation-titles.js: the one table of view and panel titles.
 - studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.js: the Automatic panels section.
 - tests/rotation-board.test.mjs and tests/rotation-wall-path.test.mjs: the tests.

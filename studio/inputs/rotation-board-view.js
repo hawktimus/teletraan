@@ -17,6 +17,7 @@ import {
 } from '../tools/rotation-board.js';
 import { panelChoices, boardCss, stripOfPage, styles, tableOf, toolsOf, words } from './rotation-board-parts.js';
 import { autoCss, autoSection } from './rotation-auto-parts.js';
+import { blockId } from '../tools/rotation-find.js';
 import { competitionModeFrom, frcQuestion } from '../tools/rotation-auto.js';
 
 const h = createElement;
@@ -70,7 +71,7 @@ export function RotationView(props) {
   const ask = props && typeof props.confirm === 'function' ? props.confirm : text => (typeof window !== 'undefined' ? window.confirm(text) : true);
   const [state, setState] = useState({
     read: false, rows: null, settings: { pageSeconds: defaultPageSeconds, partsLink: false }, busy: false, text: '', failed: false, open: '', collapsed: {}, selected: {}, history: [],
-    newView: 'robotics', newPanel: panelChoices[0].value, dragging: -1, data: null, mode: 'auto', frc: { read: false, doc: null, unreadable: false },
+    newView: 'robotics', newPanel: panelChoices[0].value, dragging: -1, data: null, mode: 'auto', search: '', onlySkipped: false, onlyPlaceholders: false, frc: { read: false, doc: null, unreadable: false },
   });
   const latest = useRef(state);
   latest.current = state;
@@ -155,6 +156,10 @@ export function RotationView(props) {
     selectMany: (keys, checked) => merge({ selected: keys.reduce((all, key) => Object.assign(all, { [key]: checked }), Object.assign({}, latest.current.selected)) }),
     selectAll: checked => merge({ selected: checked ? rowsNow().reduce((all, row) => Object.assign(all, { [row._key]: true }), {}) : {} }),
     pick: (name, value) => merge({ [name]: value }),
+    jump: key => {
+      const line = typeof document !== 'undefined' ? document.getElementById(blockId(key)) : null;
+      if (line && line.scrollIntoView) line.scrollIntoView({ block: 'start' });
+    },
     add: () => change(addRow(rowsNow(), latest.current.newView, latest.current.newPanel)),
     fill: () => (ask(words.confirmFill) ? change(standardRows()) : Promise.resolve()),
     undo: () => {

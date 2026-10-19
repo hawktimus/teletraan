@@ -42,3 +42,8 @@ export const sideChoices = sidePanelGroups.reduce((all, group) => all.concat(gro
 export function panelTitleOf(panel) {
   return panelTitle(panel) || (olderMondayPanels.filter(item => item.value === panel)[0] || {}).title || '';
 }
+
+// The panels that only draw a title and a dashed frame until they are designed (placeholder in dashboard/registry.js).
+// Robot status and the Wireframe view are large panels, Mini panel idea 1 is a small one.
+export const placeholderIds = ['robotStatus', 'wireframe', 'miniIdea1'];
+export const placeholderNote = 'Placeholder: draws only a title';

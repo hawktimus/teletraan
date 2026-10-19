@@ -33,6 +33,7 @@ export async function rotationWorld() {
 
   const load = file => import(pathToFileURL(path.join(work, file)).href);
   return {
+    workFile: file => path.join(work, file),
     board: await load('tools/rotation-board.js'),
     titles: await load('tools/rotation-titles.js'),
     auto: await load('tools/rotation-auto.js'),
