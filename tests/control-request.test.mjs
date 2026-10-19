@@ -141,7 +141,7 @@ await check('a bad request is refused before Sanity is asked, and Sanity refusin
   world.ctx.fetch = async () => ({ ok: false, status: 401, json: async () => ({}) });
   const refused = await world.router.call('POST', '/request', { body: { action: 'next' } });
   assert.equal(refused.status, 502);
-  assert.equal(refused.json.error, 'Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab.');
+  assert.equal(refused.json.error, 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.');
 });
 
 await check('GET request gives the views with the names of the Team documents, the themes and the panels of the large frame', async () => {
