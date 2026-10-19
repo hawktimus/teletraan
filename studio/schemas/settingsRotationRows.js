@@ -47,7 +47,9 @@ const rotationRow = defineArrayMember({
       title: 'Panel',
       type: 'string',
       description: 'Which panel this row plays. A row whose panel has nothing to show right now is skipped.',
-      options: { list: panelChoices },
+      // The retired Monday panels stay in the list: Sanity also checks a value against options.list, and a stored row that
+      // names one must not stop Dashboard Settings from being published. The board and the Display tab offer only the others.
+      options: { list: panelChoices.concat(olderMondayPanels) },
       validation: Rule => [Rule.required().error('Pick a panel.'), Rule.valid(panelChoices.concat(olderMondayPanels).map(panel => panel.value)).error('Pick a panel from the list.')],
     }),
     defineField({

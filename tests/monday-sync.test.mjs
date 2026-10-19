@@ -443,6 +443,40 @@ test('the boards are read by their numbers only, with the multi-level question, 
   assert.equal(text.split("done_board='18435131682'").length, 2);
 });
 
+// Four items exactly as Monday answered the multi-level question for Robotics Tasks on 19 October 2026
+const realBattery = (id, key) => ({ id: id, type: 'status', text: '', battery_value: [{ key: String(key), count: 1 }] });
+const realItem = (id, name, group, keys, timeline, completed) => ({
+  id: id, name: name, parent_item: null, group: group,
+  column_values: [
+    realBattery('color_mm82nvea', keys[0]), realBattery('color_mkv6tatz', keys[1]), realBattery('color_mm82jgxg', keys[2]),
+    { id: 'multiple_person_mm82cqbx', type: 'people', text: '', persons_and_teams: [] },
+    realBattery('color_mm82wfy', keys[3]),
+    { id: 'timerange_mkyp8kx7', type: 'timeline', text: '', from: timeline ? timeline[0] : null, to: timeline ? timeline[1] : null },
+    { id: 'numeric_mm82pw1a', type: 'numbers', text: '' },
+    { id: 'date_mm82kn5v', type: 'date', text: completed || '', date: completed || '' },
+    realBattery('color_mm83p12x', 5),
+  ],
+});
+const realItems = [
+  realItem('13277447565', 'Chasis Frame Assembly', { id: 'topics', title: 'Build' }, [1, 5, 1, 2]),
+  realItem('13278121732', 'Signal Processing Module Layout', { id: 'group_mm82yeab', title: 'Electrical' }, [0, 0, 5, 1], ['2026-06-15T00:00:00+00:00', '2026-07-20T00:00:00+00:00']),
+  realItem('13278121737', 'Social Media Marketing Campaign', { id: 'group_mm82zrbk', title: 'Marketing' }, [8, 0, 5, 0], ['2026-07-15T00:00:00+00:00', '2026-07-15T00:00:00+00:00']),
+  realItem('13278121733', 'Sensor Calibration Protocol', { id: 'group_mm83k6er', title: 'Done' }, [0, 1, 5, 1], ['2026-05-20T00:00:00+00:00', '2026-06-15T00:00:00+00:00'], '2026-06-15'),
+];
+
+test('the real answer of Robotics Tasks becomes open tasks of Build, Electrical and Marketing and a done task of Electrical', () => {
+  const place = setup('real-answer', { tools: true });
+  world(place, { items: realItems, doneItems: [] });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  const docs = documentsOf(place);
+  const set = id => docs['task-monday-' + id].set;
+  assert.deepEqual([set('13277447565').department, set('13277447565').list, refOf(set('13277447565').team), set('13277447565').priority], ['build', 'open', 'team-prime', 'high']);
+  assert.deepEqual([set('13278121732').department, set('13278121732').list], ['electrical', 'open']);
+  assert.deepEqual([set('13278121737').department, set('13278121737').list], ['marketing', 'open']);
+  assert.deepEqual([set('13278121733').department, set('13278121733').list], ['electrical', 'done'], 'the Done group takes the Department column');
+});
+
 test('department: the group when it is a department, else the Department column, else the task is left out', () => {
   const place = setup('department', { tools: true });
   world(place);
