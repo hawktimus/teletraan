@@ -66,6 +66,9 @@ export function findContent(stage, boxes) {
       .forEach(child => content.push(child));
   });
   stage.querySelectorAll('.page-host').forEach(host => content.push(host));
+  // The frames of Retro and Foundry are drawn by theme-art.js beside the plates, not as plates, so they
+  // fade away with the content and the blue screen or the eyes show behind the pile
+  stage.querySelectorAll('.area > .theme-art').forEach(art => content.push(art));
   boxes.forEach(box => {
     Array.from(box.children).filter(child => !child.matches('.kit')).forEach(child => content.push(child));
   });
