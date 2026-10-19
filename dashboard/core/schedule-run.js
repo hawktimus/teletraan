@@ -323,6 +323,7 @@ export function startTicker(getContent) {
   let position = -1;
   let seenRestarts = restarts;
   let lastLines = null;
+  let lineShown = false; // true once a line is on screen
 
   // A line that is new or changed shows within a second of the publish, not after the lines before it
   function watchLines() {
@@ -351,7 +352,7 @@ export function startTicker(getContent) {
   async function loop() {
     while (true) {
       try {
-        await waitWhilePaused(() => pageShown);
+        await waitWhilePaused(() => lineShown);
         if (seenRestarts !== restarts) {
           seenRestarts = restarts;
           position = -1;
@@ -378,10 +379,12 @@ export function startTicker(getContent) {
           continue;
         }
         const arrivedAfter = await changePage('ticker', page);
+        lineShown = true;
         await hold(holdFor(stayFor('ticker', content.settings.rotation.tickerSeconds, content.settings), arrivedAfter), since, 'ticker');
       } catch (error) {
         console.error('The ticker hit a problem and will try again', error);
         clearRegion('ticker');
+        lineShown = false;
         await frame.wait(5000);
       }
     }

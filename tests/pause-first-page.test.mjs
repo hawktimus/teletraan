@@ -30,11 +30,12 @@ stand('frame.js', [
   'export const isPaused = () => false;',
   'export const wait = () => new Promise(resolve => globalThis.world.waits.push(resolve));',
   'export const scrollCard = () => {};',
+  'export const onSecond = () => {};',
 ]);
 stand('core/panels.js', [
   'export function buildPage(id) { globalThis.world.log.push("build " + id); return { id: id, element: { name: id } }; }',
   'export const canShow = () => true;',
-  'export const moduleOf = () => null;',
+  'export const moduleOf = id => (globalThis.world.modules || {})[id] || null;',
   'export const regionOf = () => "grid1";',
   'export const topicOf = () => null;',
 ]);
@@ -90,6 +91,17 @@ await test('a pause that comes while a page is on screen holds that page as befo
   world.module.pauseRotation();
   await quarters(world, 200);
   assert.deepEqual(world.log, ['build leadership', 'page leadership'], 'nothing changes during the pause');
+});
+
+await test('the ticker also draws its first line under a pause that is on from the start, and keeps it', async world => {
+  world.modules = { ticker: { items: () => ['one', 'two'] } };
+  world.module.pauseRotation();
+  world.module.startTicker(() => content);
+  await quarters(world, 4);
+  assert.deepEqual(world.log, ['build ticker', 'page ticker'], 'the first line is drawn');
+
+  await quarters(world, 400);
+  assert.deepEqual(world.log, ['build ticker', 'page ticker'], 'and no other while the pause lasts');
 });
 
 fs.rmSync(work, { recursive: true, force: true });
