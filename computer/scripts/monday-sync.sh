@@ -243,11 +243,15 @@ if [ "$task_usable" = yes ]; then
     | def value_of($column): if $column == null then {} else (.values[$column] // {}) end;
       def index_of($column): (value_of($column).index | if type == "number" then floor else null end);
       def row_of($table; $i): [$table[]? | objects | select(.index == $i)][0];
+      # A multi-level board keeps tasks in groups named like the departments; used only when the column is empty
+      def group_row($title): if ($title | type) != "string" then null
+        else (($title | plain | ascii_downcase) as $wanted | [$b.departmentLabels[]? | objects | select(.neverShown != true and (.name | type) == "string" and (.name | plain | ascii_downcase) == $wanted)][0]) end;
       ($cfg[0].subteams) as $subteams
       | $items[]
       | select(.parent == null)
       | (index_of($b.departmentColumn) // $unset) as $department
-      | row_of($b.departmentLabels; $department) as $row
+      | (if $department == $unset then group_row(.group) else null end) as $group_row
+      | (if $group_row != null then $group_row else row_of($b.departmentLabels; $department) end) as $row
       | (if $row == null or $row.neverShown == true then null
          elif ($row.subteam | type) == "string" and any($subteams[]; ._id == $row.subteam) then $row.subteam
          else ([$subteams[] | select(.name == ($row.name | if type == "string" then plain | ascii_downcase else "" end))][0]._id) end) as $subteam

@@ -36,9 +36,10 @@ so the Teletraan computer reads the number of a label and never its words.
 | Milestone | `board_relation_mm83phwy` | Board relation | links a task to a milestone |
 | Subitems | `subtasks_mkps8zm9` | Subitems | never read |
 
-The groups are one for each department, and Done. The group never decides anything. An
+The groups are one for each department, and Done. The group does not decide the status: that is
+the Status column. It is only a second place for the department (see "The Show on TV rule"). An
 automation moves a finished task to Done and sets Date Completed. A task that is reopened
-stays in the Done group, so the group cannot be trusted. Automations take 3 to 30 seconds, so a
+stays in the Done group, so the group cannot be trusted for status. Automations take 3 to 30 seconds, so a
 task may read Department = Unassigned for a moment. That is normal.
 
 The milestones board is Milestones, board `18435272887`. A milestone has a Name, a Target Date
@@ -57,7 +58,7 @@ The boards that the older Monday tab read, and the archived and copied boards
 
 | Column | On the screen |
 |---|---|
-| Department | Which Team lead a task belongs to, so which department panel shows it. Unassigned means no panel, ever. |
+| Department | Which Team lead a task belongs to, so which department panel shows it. When the column is empty or Unassigned, the group of the task is used if its title is a department label. Unassigned with no such group means no panel. |
 | Status | The status chip and the order of the rows: IN PROGRESS, IN REVIEW, STUCK, TO DO, DONE. Stuck shows in the red. |
 | Team | Prime or Nova, or General, which counts for both teams. |
 | Priority | The priority mark on a row, and the order of the To Do tasks: High, Medium, Low, none. |
@@ -77,7 +78,7 @@ typed there cannot get out.
 
 A task shows on the TV when all of these are true:
 
-- it has a department, and the department is not Unassigned
+- it has a department, and the department is not Unassigned (the department is the Department column, or, when that is empty or Unassigned, the group the task sits in)
 - it has a team, or General
 - Show on TV? is Show, which is the default
 - it is not a subitem
@@ -89,6 +90,15 @@ General, Show on TV is Show, and it is not a subitem.
 
 The Show on TV? column becomes `showOnBoard` on the task. The Show on TV switch in Studio is
 `showOnTv`, and only an editor changes it. The Teletraan computer never writes it. Both must be on.
+
+The department comes from the Department column first. A task whose column is set keeps it,
+whatever its group. When the column is empty or says Unassigned, the sync reads the title of the
+group and compares it with the department labels in the settings, ignoring capitals and extra
+spaces. A group called Electrical gives the department Electrical. A group that matches no label
+(Done, for example) changes nothing, and the task stays Unassigned. The label Unassigned is never
+used as a department. The group is not stored on the task: only the Team lead the sync works out
+from it is. The questions to Monday ask `group { id title }` for every item, in the block at the
+top of `monday-contract.sh`.
 
 A task with Team = Prime and Department = Build shows on the Prime Build panel and on no Nova
 panel. The same task with Team = General shows on the Build panel of both teams. Setting Show

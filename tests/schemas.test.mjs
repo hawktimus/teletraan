@@ -5821,7 +5821,7 @@ function checkMondayStatus() {
   });
   need(problems, script.indexOf('showOnTv') === -1, 'monday-sync.sh should never write showOnTv: an editor owns it');
   need(problems, script.indexOf('statusIndexes') !== -1 && script.indexOf('group_status') === -1 && script.indexOf('groups_done') === -1, 'monday-sync.sh should read the status by index and never by the title of the group');
-  need(problems, script.indexOf('item_group') === -1 && script.indexOf('group {') === -1, 'monday-sync.sh should never ask for the group of an item');
+  need(problems, script.indexOf('group_row(.group)') !== -1 && script.indexOf('group_row(.group) as $state') === -1, 'monday-sync.sh should use the title of the group for the department only, and store no group field');
   const milestone = typeByName('milestone');
   ['name', 'targetDate', 'team', 'subteam', 'status', 'show'].forEach(name => need(problems, fieldsIn(milestone).some(field => field.name === name) && script.indexOf(name) !== -1, 'monday-sync.sh should write the field ' + name + ' of a milestone'));
   need(problems, script.indexOf('task-monday-') !== -1 && script.indexOf('milestone-monday-') !== -1, 'monday-sync.sh should write the ids task-monday-<item> and milestone-monday-<item>');

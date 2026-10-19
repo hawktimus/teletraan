@@ -312,8 +312,9 @@ function value(id, type, text, extra) {
 function status(id, label, index) {
   return value(id, 'status', label, { label: label, index: index });
 }
-function item(id, name, values, parent) {
+function item(id, name, values, parent, group) {
   const answer = { id: id, name: name, parent_item: parent ? { id: parent } : null, column_values: values };
+  if (group) answer.group = { id: 'group_' + group.toLowerCase(), title: group };
   return answer;
 }
 
@@ -1498,6 +1499,44 @@ test('install-monday.sh copies the two monday units only, with ACCOUNT filled in
 test('local.example.env has a MONDAY_API_TOKEN line with a placeholder', () => {
   const example = fs.readFileSync(path.join(repo, 'computer/local.example.env'), 'utf8');
   assert.ok(/^MONDAY_API_TOKEN='\[[^\n]*\]'$/m.test(example), 'a placeholder that starts with [');
+});
+
+// The group of an item stands in for the department when the Department column is empty or Unassigned
+function groupItems() {
+  const base = [col.state('To Do', 5), col.team('Prime', 1), col.show('Show', 5)];
+  return [
+    item('3001', 'Column wins', [col.department('Build', 1)].concat(base), null, 'Electrical'),
+    item('3002', 'Empty column', base, null, 'electrical'),
+    item('3003', 'Unassigned column', [col.department('Unassigned', 5)].concat(base), null, ' DESIGN '),
+    item('3004', 'Group matches nothing', [col.department('Unassigned', 5)].concat(base), null, 'Done'),
+    item('3005', 'No group at all', base),
+    item('3006', 'Group named Unassigned', base, null, 'Unassigned'),
+  ];
+}
+
+function checkGroups(documents) {
+  assert.equal(refOf(documents['task-monday-3001'].set.subteam), 'subteam-build', 'a department in the column is kept');
+  assert.equal(refOf(documents['task-monday-3002'].set.subteam), 'subteam-electrical', 'an empty column uses the group, whatever its capitals');
+  assert.equal(refOf(documents['task-monday-3003'].set.subteam), 'subteam-design', 'Unassigned uses the group');
+  assert.equal(documents['task-monday-3004'].set.hiddenReason, 'unassigned', 'a group like Done changes nothing');
+  assert.equal(documents['task-monday-3005'].set.hiddenReason, 'unassigned');
+  assert.equal(documents['task-monday-3006'].set.hiddenReason, 'unassigned', 'the Unassigned label is never a department');
+}
+
+test('the group of a task is its department when the Department column is empty or Unassigned and the group matches a label', () => {
+  const place = setup('group-classic', { tools: true });
+  world(place, { items: groupItems() });
+  assert.equal(place.run().status, 0);
+  checkGroups(documentsOf(place));
+  assert.ok(textOf(path.join(repo, 'computer/scripts/monday-contract.sh')).includes('group { id title }'));
+});
+
+test('the group works the same on a multi-level board', () => {
+  const place = setup('group-multi', { tools: true });
+  multiWorld(place, { items: groupItems() });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  checkGroups(documentsOf(place));
 });
 
 // Multi-level boards (hierarchy_type multi_level): a status column answers BatteryValue, a list of { key, count } where

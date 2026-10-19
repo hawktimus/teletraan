@@ -208,6 +208,7 @@ read_board() {
           id: (item_id | tostring),
           name: item_name,
           parent: (item_parent | if . == null then null else tostring end),
+          group: (item_group // ""),
           values: (((item_values | arrays) // []) | map(select(type == "object") | {key: (value_column | tostring), value: ({text: (value_text // "")} + with_battery + {linked: value_linked, date: value_date, from: value_from, to: value_to})}) | from_entries)
         }' "$work/page.json" >> "$work/$kind-items.ndjson"
 
