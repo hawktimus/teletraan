@@ -8,7 +8,7 @@ import { createElement } from 'react';
 import {
   blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
-import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge } from '../tools/rotation-find.js';
+import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge, playsNowWords } from '../tools/rotation-find.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
 
 const h = createElement;
@@ -32,6 +32,7 @@ export const words = {
   viewChange: 'view change',
   skipHint: skipHint,
   small: 'Small panel',
+  now: 'What the wall plays now.',
   smallHelp: 'The small panel beside a Robotics row in the split layout. Empty follows the small panels of the view.',
 };
 
@@ -322,3 +323,8 @@ export function toolsOf(state, actions) {
 }
 
 export { panelChoices, sideChoices };
+
+// The line at the top of the page, from the published tasks and photos the board has read
+export function nowLine(state) {
+  return h('p', { style: styles.text, 'data-block': 'plays-now' }, h('b', null, words.now + ' '), playsNowWords(state.rows, state.skips, Boolean(state.data)));
+}

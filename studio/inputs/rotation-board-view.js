@@ -15,7 +15,7 @@ import {
   addRow, copyRow, moveRow, moveTo, notPublished, pushUndo, removeRow, removeRows, rowsFrom, saveRows, secondsFrom, setPhotoValue, setRowValue,
   setShown, settingsFrom, skipNotes, skipQuestion, standardRows, startingPhotos, wholeFrom, defaultPageSeconds,
 } from '../tools/rotation-board.js';
-import { panelChoices, boardCss, stripOfPage, styles, tableOf, toolsOf, words } from './rotation-board-parts.js';
+import { panelChoices, boardCss, nowLine, stripOfPage, styles, tableOf, toolsOf, words } from './rotation-board-parts.js';
 import { autoCss, autoSection } from './rotation-auto-parts.js';
 import { blockId } from '../tools/rotation-find.js';
 import { competitionModeFrom, frcQuestion } from '../tools/rotation-auto.js';
@@ -41,6 +41,7 @@ export function pageOf(state, actions) {
     body = h(
       'div',
       { 'data-block': 'board' },
+      state.rows.length === 0 ? null : nowLine(state),
       tools[0],
       tools[1],
       state.rows.length === 0 ? h('p', { style: styles.text, 'data-block': 'empty' }, words.empty) : tableOf(state, actions),

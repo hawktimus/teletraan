@@ -3,6 +3,14 @@
 Rotation is the first line under SCREEN in the Studio sidebar. It is a table of every row the wall plays, top to bottom.
 Change a row and the change is saved as a draft at once. Click Publish all in the top bar to put it on the screen.
 
+## What the wall plays now
+
+The first line under the intro says, for example, Right now the loop has 80 rows shown, 3 skipped (no data), 24 switched off.
+Shown rows have something to show. Skipped rows are on but have nothing to show (the note under their panel says why).
+Switched off rows have Show on screen off. The line uses the list in the table and the published tasks and photos, read once
+when the page opens. The Studio cannot reach the Mini, so it does not say which row is on the screen this second. The Now
+showing tab of the control page does. The cards the wall adds by itself are not counted.
+
 ## The groups
 
 Rows that follow each other in one view are one group. The group line shows the view, how many rows it has and how long the

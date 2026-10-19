@@ -68,3 +68,17 @@ export function blockId(key) {
 export function findingWords(shown, total) {
   return shown === 0 ? 'No row matches. Clear the filters to see the whole list.' : 'Showing ' + shown + (shown === 1 ? ' row' : ' rows') + ' of ' + total + '.';
 }
+
+// The line at the top of the page: how many rows play, how many are skipped for want of data and how many are switched off.
+// dataRead is false while the tasks and photos are not read, and then the skipped rows cannot be counted.
+export function playsNowWords(rows, skips, dataRead) {
+  const list = Array.isArray(rows) ? rows : [];
+  const on = list.filter(isShown);
+  const off = list.length - on.length;
+  const noData = on.filter(row => skips && skips[row._key]).length;
+  const rowWord = count => count + (count === 1 ? ' row' : ' rows');
+  const offWords = off === 0 ? '' : ', ' + off + ' switched off';
+
+  if (!dataRead) return 'Right now the loop has ' + rowWord(on.length) + ' switched on' + offWords + '. Which of them have no data to show could not be read yet.';
+  return 'Right now the loop has ' + rowWord(on.length - noData) + ' shown, ' + noData + ' skipped (no data)' + offWords + '. The cards the wall adds by itself are not counted.';
+}
