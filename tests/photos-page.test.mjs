@@ -1,5 +1,5 @@
 // Tests for the Photos page in Studio (studio/inputs/photos-parts.js, photos-view.js), the folder link rule
-// (studio/schemas/driveFolder.js), the two settings fields and the GOOGLE_API_KEY handling of the Keys tab and
+// (studio/schemas/driveFolder.js), the two settings fields and the GOOGLE_API_KEY handling of the Keys section of Settings and
 // the Mac tool. The page itself needs a browser, so its code is read for what it must and must not do.
 //
 //   node tests/photos-page.test.mjs
@@ -65,7 +65,7 @@ test('the status of the Drive folder reads in plain words for every state', () =
   const at = '2027-03-01T10:00:00Z';
   assert.equal(driveStatusLine({ photosDriveAt: at, photosDriveState: 'ok', photosDriveCount: 34 }, folder, now), 'Last read 6 minutes ago, 34 photos.');
   assert.equal(driveStatusLine({ photosDriveAt: at, photosDriveState: 'ok', photosDriveCount: 1 }, folder, now), 'Last read 6 minutes ago, 1 photo.');
-  assert.equal(driveStatusLine({ photosDriveAt: at, photosDriveState: 'no-key', photosDriveCount: 0 }, folder, now), 'The Teletraan computer has no Google key yet. Add GOOGLE_API_KEY on the control page, Keys tab.');
+  assert.equal(driveStatusLine({ photosDriveAt: at, photosDriveState: 'no-key', photosDriveCount: 0 }, folder, now), 'The Teletraan computer has no Google key yet. Add GOOGLE_API_KEY on the control page, Settings, Keys.');
   assert.match(driveStatusLine({ photosDriveAt: at, photosDriveState: 'bad-key' }, folder, now), /did not accept the key/);
   assert.match(driveStatusLine({ photosDriveAt: at, photosDriveState: 'api-off' }, folder, now), /not turned on/);
   assert.match(driveStatusLine({ photosDriveAt: at, photosDriveState: 'not-shared' }, folder, now), /Anyone with the link/);
@@ -139,7 +139,7 @@ test('the sidebar has a Photos page with the list one link away', () => {
   assert.ok(structure.includes("type: 'photo', sort: newestUploadFirst, add: ['newPhoto']"));
 });
 
-test('the Keys tab knows GOOGLE_API_KEY, masks it, merges it and refuses a bad one', () => {
+test('the Keys section of Settings knows GOOGLE_API_KEY, masks it, merges it and refuses a bad one', () => {
   assert.ok(keyNames.includes('GOOGLE_API_KEY'));
   assert.equal(labels.GOOGLE_API_KEY, 'Google key for the photo folder');
   assert.equal(mask('AIzaSyFAKEFAKEFAKEFAKE'), 'AIza........');

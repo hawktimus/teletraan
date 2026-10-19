@@ -8,7 +8,7 @@ here is whether one event shows on the TV.
 ## Reading the page
 
 - Top: a line of help, and a note that the calendar links are secret and live on
-  the control page, Keys tab. They are not kept in Studio.
+  the control page, Keys section of Settings. They are not kept in Studio.
 - Below it: when the calendars were last downloaded ("Last downloaded 4 minutes
   ago from 6 calendars"), and one line for each calendar. A calendar either works
   or failed, and a failed one gives the reason in plain words. "Download failed,
@@ -16,7 +16,7 @@ here is whether one event shows on the TV.
   docs/calendar-links.md, "Change a link". The TV keeps the events of the last good
   download.
 - If the Teletraan computer has no calendar links, a notice says: No calendars are
-  set up on the Teletraan computer. Add the links on the control page, Keys tab.
+  set up on the Teletraan computer. Add the links on the control page, Keys section of Settings.
   Nothing yet means the computer has not written the list. It writes it after every
   calendar run, which is every 15 minutes. Events not listed means the computer
   downloaded a calendar but did not list its events. The usual reason is that Node

@@ -1,4 +1,4 @@
-// The Keys tab. GET /control/api/env shows each key masked (the first four characters then dots for
+// The Keys section of Settings. GET /control/api/env shows each key masked (the first four characters then dots for
 // a long value, dots only for a short one, "not set" for none). POST /control/api/env takes the
 // changes, merges them into local.env with the rules of tools/teletraan/merge-env.sh, hands the whole
 // merged file to the helper's write-env word, then runs the calendar sync once. A value is never

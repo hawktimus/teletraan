@@ -113,7 +113,7 @@ case $key in
   ''|'['*) stop_with no-key "there is no GOOGLE_API_KEY in local.env yet. See docs/photos-drive.md." ;;
 esac
 if ! printf '%s' "$key" | grep -Eq '^[A-Za-z0-9_-]{20,100}$'; then
-  stop_with bad-key "GOOGLE_API_KEY in local.env does not look like a Google key. Paste it again on the Keys tab of the control page."
+  stop_with bad-key "GOOGLE_API_KEY in local.env does not look like a Google key. Paste it again in the Keys section of Settings of the control page."
 fi
 
 # Asks Google for $1 (an address with no key) and saves the answer in $2. The key goes to curl as
@@ -151,7 +151,7 @@ case $http_code in
   400|401|403|404)
     state=$(refusal_state "$work/list.json")
     case $state in
-      bad-key) stop_with bad-key "Google did not accept the key. Check GOOGLE_API_KEY on the Keys tab of the control page." ;;
+      bad-key) stop_with bad-key "Google did not accept the key. Check GOOGLE_API_KEY in the Keys section of Settings of the control page." ;;
       api-off) stop_with api-off "the Google Drive API is not turned on for the project of the key. See docs/photos-drive.md, step 2." ;;
       *) stop_with not-shared "Google would not list the folder. Share it with Anyone with the link as Viewer, and check the link on the Photos page." ;;
     esac

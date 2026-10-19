@@ -399,7 +399,7 @@ export function nowControlsHtml(options) {
     group('hold', 'Hold a panel', hold) + group('messages', 'Messages', messages);
 }
 
-// The Keys tab. describe is GET env.
+// The Keys section of Settings. describe is GET env.
 export function keysHtml(data) {
   const keys = (data && data.keys) || [];
   const calendars = (data && data.calendars) || [];

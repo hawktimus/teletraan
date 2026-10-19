@@ -597,7 +597,7 @@ test('the docs start with the switch and give the rule form second, and name the
   assert.ok(filters.includes('Hide:') && filters.includes('Hide all:') && filters.includes('calendarFilter-one-') && /Calendars page/.test(filters), 'docs/calendar-filters.md should name the one event rules and the older Hide: and Hide all: rules of the Calendars page');
 
   const page = fs.readFileSync(path.join(root, 'docs/calendars-page.md'), 'utf8').replace(/\s+/g, ' ');
-  ['next 40 events', 'No kind, no chip', 'Dashboard Settings', 'Click Publish all to apply', 'calendarFilter-one-', 'Keys tab', 'Earlier today', 'Hidden by you'].forEach(words => assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words));
+  ['next 40 events', 'No kind, no chip', 'Dashboard Settings', 'Click Publish all to apply', 'calendarFilter-one-', 'Keys section of Settings', 'Earlier today', 'Hidden by you'].forEach(words => assert.ok(page.includes(words), 'docs/calendars-page.md should say: ' + words));
   assert.ok(!/next 12|up to 12/.test(page), 'docs/calendars-page.md should not still say 12');
 });
 

@@ -281,7 +281,7 @@ test('the header says when and from how many calendars, each calendar works or f
   assert.match(lines[0].text, /^Works\. Downloaded 4 minutes ago\.$/);
   assert.equal(lines[2].failed, true);
   assert.match(lines[2].text, /^Failed\. Download failed, the server said no/);
-  assert.equal(parts.emptyNotice({ calendars: [] }), 'No calendars are set up on the Teletraan computer. Add the links on the control page, Keys tab.');
+  assert.equal(parts.emptyNotice({ calendars: [] }), 'No calendars are set up on the Teletraan computer. Add the links on the control page, Settings, Keys.');
   assert.match(parts.emptyNotice(null), /^Nothing yet\./);
   assert.equal(parts.emptyNotice(status), '');
 });

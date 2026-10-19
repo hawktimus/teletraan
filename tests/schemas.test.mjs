@@ -5190,7 +5190,7 @@ function checkCalendarsPage() {
   const page = view.calendarsPage(model(), actions());
   need(problems, wordsIn(nodesWhere(page, node => node.type === 'h1')) === 'Calendars', 'the page should open with the heading Calendars');
   const paragraphs = nodesWhere(page, node => node.type === 'p').map(wordsIn);
-  need(problems, paragraphs[0] === parts.words.help && paragraphs[1] === parts.words.linksNote && /control page, Keys tab/.test(parts.words.linksNote), 'under the heading come the help line and the note that the links live on the control page, Keys tab');
+  need(problems, paragraphs[0] === parts.words.help && paragraphs[1] === parts.words.linksNote && /control page, Settings, Keys/.test(parts.words.linksNote), 'under the heading come the help line and the note that the links live on the control page, Settings, Keys');
   need(problems, !/Hide all like this|Hide this one/.test(wordsIn(page)), 'the old buttons are gone');
 
   // One row for each coming event, grouped by day, with the state and a switch

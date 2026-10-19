@@ -74,7 +74,7 @@ check('the Status tab shows the three dots with their reasons and says not known
   assert.ok(statusHtml(null).includes('did not answer'));
 });
 
-check('the Keys tab never holds a value, only the mask, and has a field and a clear for each', () => {
+check('the Keys section of Settings never holds a value, only the mask, and has a field and a clear for each', () => {
   const html = keysHtml({ keys: [{ name: 'TBA_AUTH_KEY', label: 'The Blue Alliance key', masked: 'abcd........' }], calendars: [{ name: 'CALENDAR_TEAM_URL', code: 'team', masked: 'not set' }] });
   assert.ok(html.includes('abcd........'));
   assert.ok(html.includes('type="password"') && html.includes('data-clear="TBA_AUTH_KEY"') && html.includes('data-clear-calendar="CALENDAR_TEAM_URL"'));

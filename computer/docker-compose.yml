@@ -71,7 +71,7 @@ services:
       - ${TELETRAAN_ROOT:-/opt/teletraan}:/opt/teletraan
       # local.env is read through the folder above and not mounted as a file of its own: the helper replaces the file
       # by renaming a new one over it, and a file mounted by itself would keep showing the old one, so the keys saved
-      # on the Keys tab would not be seen until the container is made again.
+      # in the Keys section of Settings would not be seen until the container is made again.
       # The folder that holds the helper socket and nothing else
       - /run/teletraan:/run/teletraan
       - type: bind

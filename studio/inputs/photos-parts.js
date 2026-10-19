@@ -35,7 +35,7 @@ export const words = {
   listLink: 'Open the list of photos',
   listHelp: 'There you can change a caption, a credit, the fit, the focus point or the switch of one photo, or delete it.',
   driveHeading: 'Google Drive folder',
-  driveHelp: 'Share the folder with Anyone with the link as Viewer, then paste its link here. The Teletraan computer copies the pictures about every 15 minutes after you click Publish all. It needs the Google key on the control page, Keys tab. The guide Photos from Google Drive has the steps.',
+  driveHelp: 'Share the folder with Anyone with the link as Viewer, then paste its link here. The Teletraan computer copies the pictures about every 15 minutes after you click Publish all. It needs the Google key on the control page, Settings, Keys. The guide Photos from Google Drive has the steps.',
   folderLabel: 'Folder link',
   folderSave: 'Save folder',
   folderNameHelp: 'A file named Firstname - caption.jpg shows that first name as the credit and the caption on the photo. Any other name shows no text.',
@@ -119,9 +119,9 @@ export function driveStatusLine(status, folder, now) {
       return 'Last read ' + when + ', ' + count + (count === 1 ? ' photo.' : ' photos.');
     }
     case 'no-key':
-      return 'The Teletraan computer has no Google key yet. Add GOOGLE_API_KEY on the control page, Keys tab.';
+      return 'The Teletraan computer has no Google key yet. Add GOOGLE_API_KEY on the control page, Settings, Keys.';
     case 'bad-key':
-      return 'Google did not accept the key. Check GOOGLE_API_KEY on the control page, Keys tab.';
+      return 'Google did not accept the key. Check GOOGLE_API_KEY on the control page, Settings, Keys.';
     case 'api-off':
       return 'The Google Drive API is not turned on for the project of the key. Turn it on in the Google Cloud console (step 2 of the guide Photos from Google Drive).';
     case 'not-shared':

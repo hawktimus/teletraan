@@ -177,7 +177,7 @@ The page cannot restart anything by itself. It asks a helper on the host through
 
 The sudoers file `/etc/sudoers.d/teletraan-control` lets the login user run `systemctl restart teletraan-*`, `docker restart teletraan-web`, `systemctl start teletraan-*.service` and `systemctl reboot` without a password, and nothing more. The helper runs each by its full path, `/usr/bin/systemctl` and `/usr/bin/docker`, and the file lists the same paths. The reboot is also listed as `/bin/systemctl reboot`, `/usr/sbin/reboot` and `/sbin/reboot`, in case `sudo` compares the path as typed.
 
-The control container mounts `/opt/teletraan` (read and write, which includes `local.env`) and the `/run/teletraan` folder that holds the socket. It reads `local.env` through the folder and not as a mount of its own file, so a key saved on the Keys tab is seen at once. It does not mount the Docker socket or anything under `/etc`.
+The control container mounts `/opt/teletraan` (read and write, which includes `local.env`) and the `/run/teletraan` folder that holds the socket. It reads `local.env` through the folder and not as a mount of its own file, so a key saved in the Keys section of Settings is seen at once. It does not mount the Docker socket or anything under `/etc`.
 
 ## When a button does nothing
 
@@ -199,9 +199,9 @@ The screen sees a request from the control page or the Studio (Run presentation 
 
 ## The PIN
 
-The page accepts exactly two PINs, 3229 and 3426. They are a constant list in `control/lib/auth.js`. The page asks once and keeps a signed cookie for 30 days. Six wrong tries from one address in ten minutes block that address for an hour. The Keys tab shows "PIN: fixed" and has no field for it.
+The page accepts exactly two PINs, 3229 and 3426. They are a constant list in `control/lib/auth.js`. The page asks once and keeps a signed cookie for 30 days. Six wrong tries from one address in ten minutes block that address for an hour. The Keys section of Settings shows "PIN: fixed" and has no field for it.
 
-To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/teletraan/local.env` by hand over SSH (4 to 12 digits, nothing else is checked). The page then accepts only that PIN, the two fixed ones stop working, and every cookie made before is over. Take the line out to go back to the two fixed PINs. A value that is not 4 to 12 digits is ignored. The Mac tool and the Keys tab never write this line and leave it alone.
+To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/teletraan/local.env` by hand over SSH (4 to 12 digits, nothing else is checked). The page then accepts only that PIN, the two fixed ones stop working, and every cookie made before is over. Take the line out to go back to the two fixed PINs. A value that is not 4 to 12 digits is ignored. The Mac tool and the Keys section of Settings never write this line and leave it alone.
 
 ## Where the code is
 

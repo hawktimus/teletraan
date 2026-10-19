@@ -1,4 +1,4 @@
-// Tests for the Keys tab (control/routes/env.js, control/support/keys.js): masking, checks, and a merge that
+// Tests for the Keys section of Settings (control/routes/env.js, control/support/keys.js): masking, checks, and a merge that
 // gives the same file as tools/teletraan/merge-env.sh. Fake values only.
 //
 //   node tests/control-keys.test.mjs

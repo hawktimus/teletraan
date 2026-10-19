@@ -12,9 +12,9 @@ import { shortHash, ruleMatchesEvent } from './calendars-hide-rules.js';
 export const statusId = 'calendar-status';
 
 export const words = {
-  noCalendars: 'No calendars are set up on the Teletraan computer. Add the links on the control page, Keys tab.',
-  nothingYet: 'Nothing yet. The Teletraan computer writes this list after it has downloaded the calendars. If no calendars are set up, add the links on the control page, Keys tab.',
-  linksNote: 'The calendar links are secret, so they are not kept here. They live on the control page, Keys tab.',
+  noCalendars: 'No calendars are set up on the Teletraan computer. Add the links on the control page, Settings, Keys.',
+  nothingYet: 'Nothing yet. The Teletraan computer writes this list after it has downloaded the calendars. If no calendars are set up, add the links on the control page, Settings, Keys.',
+  linksNote: 'The calendar links are secret, so they are not kept here. They live on the control page, Settings, Keys.',
   help: 'These are the events the Teletraan computer downloaded from BAND, from now on. The switch on an event shows it on the TV or hides it. Past events are not listed.',
   applyNote: 'Click Publish all to apply.',
   publicNote: 'These titles are saved in the dataset, which anyone can read. That includes the hidden ones.',

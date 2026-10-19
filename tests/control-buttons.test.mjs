@@ -198,7 +198,7 @@ test('every button of the Status tab and the Log section reports through the res
   assert.ok(/\.result\[data-state="done"\] \{ color: #2fd27a/.test(css) && /\.result\[data-state="bad"\] \{ color: #ff8a8a/.test(css));
 });
 
-test('the keys are read through the folder, so a key saved on the Keys tab is seen without making the container again', () => {
+test('the keys are read through the folder, so a key saved in the Keys section of Settings is seen without making the container again', () => {
   const compose = read('computer/docker-compose.yml');
   assert.ok(!/local\.env:\/opt\/teletraan\/local\.env/.test(compose), 'a file mounted by itself keeps the old file when the helper renames a new one over it');
   assert.ok(/- \$\{TELETRAAN_ROOT:-\/opt\/teletraan\}:\/opt\/teletraan\n/.test(compose));
