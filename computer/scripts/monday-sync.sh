@@ -133,7 +133,9 @@ due=$(jq -r --arg now "$now_iso" --argjson every "$every" --argjson slack "$slac
   def seconds: sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601;
   (try ((($now | seconds) - (.result.known.lastSyncAt | seconds))) catch null) as $age
   | if $age == null or $age < 0 or $age >= ($every * 60 - $slack) then "yes" else "no" end' "$work/sanity.json")
-if [ "$due" = no ]; then
+# The Sync Monday now button leaves this file (control-helper.sh); a run within two minutes of it reads at once, because
+# a button that waited for the setting looked as if it did nothing
+if [ "$due" = no ] && [ -z "$(find /tmp/teletraan-monday-force -mmin -2 2> /dev/null)" ]; then
   exit 0
 fi
 

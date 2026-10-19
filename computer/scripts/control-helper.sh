@@ -115,6 +115,10 @@ case $word in
     ;;
   sync-now)
     code=0
+    # Monday reads only when the last read is older than its setting; this file asks for a read now (monday-sync.sh)
+    if [ "$argument" = monday ]; then
+      : > /tmp/teletraan-monday-force && chmod 666 /tmp/teletraan-monday-force || true
+    fi
     as_root "$systemctl_bin" start "teletraan-$argument.service" || code=$?
     finish "$code"
     ;;

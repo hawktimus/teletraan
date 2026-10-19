@@ -23,7 +23,7 @@ const unitFiles = ['teletraan-monday.service', 'teletraan-monday.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-monday-'));
 
 // The tools the scripts need that are not the ones being faked
-const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'mktemp', 'mv', 'rm', 'mkdir', 'dirname', 'basename', 'cat', 'cp', 'cmp', 'tr', 'stat', 'sleep', 'wc'];
+const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'mktemp', 'mv', 'rm', 'mkdir', 'dirname', 'basename', 'cat', 'cp', 'cmp', 'tr', 'stat', 'sleep', 'wc', 'find'];
 
 function findTool(name) {
   const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
@@ -913,6 +913,29 @@ function readAgo(seconds) {
   const moment = new Date(Date.parse(nowText) - seconds * 1000).toISOString().replace('.000Z', 'Z');
   return Object.assign({}, laterRead, { lastSyncAt: moment });
 }
+
+test('the Sync Monday now file makes a run that is not due read at once, and only for two minutes', () => {
+  const force = '/tmp/teletraan-monday-force';
+  fs.rmSync(force, { force: true });
+  try {
+    const before = setup('force-none', { tools: true });
+    world(before, { every: 30, known: readAgo(600) });
+    assert.ok(!requestsOf(before.run().calls).includes('monday items-' + taskBoardId), 'no file: not due, no read');
+
+    fs.writeFileSync(force, '');
+    const now = setup('force-file', { tools: true });
+    world(now, { every: 30, known: readAgo(600) });
+    assert.ok(requestsOf(now.run().calls).includes('monday items-' + taskBoardId), 'the file: a read');
+
+    const old = new Date(Date.now() - 5 * 60 * 1000);
+    fs.utimesSync(force, old, old);
+    const stale = setup('force-old', { tools: true });
+    world(stale, { every: 30, known: readAgo(600) });
+    assert.ok(!requestsOf(stale.run().calls).includes('monday items-' + taskBoardId), 'a file older than two minutes counts for nothing');
+  } finally {
+    fs.rmSync(force, { force: true });
+  }
+});
 
 test('how often: a run before the setting says so ends without a word, without asking Monday and without a write; a run after it reads', () => {
   const cases = [
