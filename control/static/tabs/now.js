@@ -130,7 +130,9 @@ function wire(root, watcher, afterPress) {
     const result = await api('POST', '/request', body);
     button.disabled = false;
     const shown = outcome(result, action, body);
-    showResult(button, shown.state, shown.words);
+    // The bar at the bottom of a phone has room for one word; the longer sentence is in the group above
+    const inBar = Boolean(button.closest('[data-quickbar]'));
+    showResult(button, shown.state, inBar && shown.state === 'done' ? 'Done.' : shown.words);
     if (result.ok) afterPress();
     if (result.ok && (action === 'theme' || action === 'view')) watcher.asked(action, body, result.data && result.data.until);
     if (result.ok && action === 'schedule') { watcher.cleared(); setPaused(root, false); pressed.at = Date.now(); }

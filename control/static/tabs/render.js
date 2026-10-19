@@ -430,6 +430,8 @@ export function logHtml(lines, title = 'Log') {
 
 // What a button says when it is done. Every button shows a result: Done in green, or the reason in red.
 // body is what was sent. A helper word has a name of its own in the first argument.
+const syncNames = { calendars: 'calendars', monday: 'Monday', frc: 'competition', 'photos-drive': 'Drive photos' };
+
 export function doneWords(action, body = {}) {
   const minutes = body.minutes ? ' for ' + body.minutes + (body.minutes === 1 ? ' minute' : ' minutes') : '';
   const words = {
@@ -446,7 +448,7 @@ export function doneWords(action, body = {}) {
     'restart-kiosk': 'The screen is restarting.',
     'restart-services': 'The services restarted.',
     reboot: 'The Teletraan computer is rebooting. This page is back in about a minute.',
-    'sync-now': 'The ' + (body.target || 'sync') + ' sync has started.',
+    'sync-now': 'The ' + (syncNames[body.target] || 'sync') + ' sync has started.',
     refresh: 'The log is up to date.',
   };
   return words[action] || 'It worked.';

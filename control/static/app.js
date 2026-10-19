@@ -51,6 +51,8 @@ async function start() {
     bar.appendChild(button);
   });
   show(location.hash.slice(1));
+  // an address typed or followed while the page is open (replaceState in show() does not fire this)
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
   wallLine();
 }
 

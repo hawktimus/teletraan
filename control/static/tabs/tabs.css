@@ -114,3 +114,14 @@
 .tab .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
 .tab .check input { width: 24px; min-height: 24px; height: 24px; }
 .tab .log { max-height: 50vh; }
+/* The Keys and Log sections sit on the light Settings page: their loose text and quiet buttons are dark there */
+.settings-page .fold-body.tab { color: var(--ink, #1d1a24); }
+.settings-page .fold-body.tab .note { color: #5d5670; }
+.settings-page .fold-body.tab .act.quiet { color: var(--purple-dark, #53048f); border-color: var(--purple, #6c18b6); }
+.settings-page .fold-body.tab .card .note, .settings-page .fold-body.tab .card .act.quiet { color: #b9afcf; }
+.settings-page .fold-body.tab .card .act.quiet { color: var(--page-text, #f3eefc); border-color: var(--card-edge, #3a2c55); }
+.settings-page .fold-body.tab .result { color: #5d5670; }
+.settings-page .fold-body.tab .result[data-state="done"] { color: #1d7a3e; }
+.settings-page .fold-body.tab .result[data-state="bad"] { color: #b3261e; }
+.settings-page .fold-body.tab .result[data-state="wait"] { color: #8a5a00; }
+.settings-page .fold-body.tab .card { color: var(--page-text, #f3eefc); }
