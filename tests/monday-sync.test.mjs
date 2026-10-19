@@ -93,6 +93,7 @@ case $address in
     esac
     echo "monday $name" >> "$STUB_LOG"
     jq -c '.variables // {}' "$body" >> "$STUB_DIR/variables.txt"
+    printf '%s %s\\n' "$name" "$(printf '%s' "$query" | grep -c BatteryValue)" >> "$STUB_DIR/shapes.txt"
     base="$STUB_DIR/monday/$name"
     [ -f "$base.exit" ] && exit "$(cat "$base.exit")"
     code=200
@@ -222,12 +223,12 @@ function setup(name, options) {
       if (given.exit) fs.writeFileSync(base + '.exit', String(given.exit));
     },
     // The items of one board as the pages Monday would give, size items to a page
-    pages(board, items, size, name) {
+    pages(board, items, size, name, extra) {
       const count = Math.max(1, Math.ceil(items.length / size));
       for (let index = 0; index < count; index += 1) {
         const cursor = index + 1 < count ? 'cursor' + board + 'n' + (index + 1) : null;
         const page = { cursor: cursor, items: items.slice(index * size, (index + 1) * size) };
-        if (index === 0) this.answer('items-' + board, { data: { boards: [{ name: name || 'Board', items_page: page }] } });
+        if (index === 0) this.answer('items-' + board, { data: { boards: [Object.assign({ name: name || 'Board', items_page: page }, extra || {})] } });
         else this.answer('more-cursor' + board + 'n' + index, { data: { next_items_page: page } });
       }
     },
@@ -250,12 +251,22 @@ function setup(name, options) {
       const file = path.join(stub, 'configs.txt');
       return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
     },
+    // Which questions asked for the multi-level shape (BatteryValue), as 'name' lines
+    battery() {
+      const file = path.join(stub, 'shapes.txt');
+      return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().split('\n').filter(line => !line.endsWith(' 0')).map(line => line.split(' ')[0]) : [];
+    },
     variables() {
       const file = path.join(stub, 'variables.txt');
       return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().split('\n').map(line => JSON.parse(line)) : [];
     },
   };
   return place;
+}
+
+// The API version of the contract block, so a test does not repeat the number
+function versionOf(file) {
+  return (textOf(file).match(/\nmonday_version='([0-9-]+)'\n/) || [])[1];
 }
 
 const tests = [];
@@ -505,7 +516,7 @@ test('the requests go to the address and version of the block at the top, https 
   assert.equal(monday.length, 3);
   monday.forEach(line => {
     assert.ok(line.endsWith('https://api.monday.com/v2'), line);
-    assert.ok(line.includes('--header API-Version: 2025-07'), line);
+    assert.ok(line.includes('--header API-Version: ' + versionOf(syncFile)), line);
     assert.ok(line.includes('--config -'), 'the token comes in on standard input: ' + line);
   });
   const variables = place.variables();
@@ -1351,8 +1362,9 @@ test('every address, version, question and place in an answer is in the block at
 
   assert.equal(text.split('api.monday.com').length, 2, 'one address in the whole script');
   assert.ok(block.includes("monday_address='https://api.monday.com/v2'"));
-  assert.ok(block.includes("monday_version='2025-07'"));
-  ['monday_query_me=', 'monday_query_boards=', 'monday_query_items=', 'monday_query_more='].forEach(name => {
+  assert.ok(/\nmonday_version='20[0-9]{2}-[0-9]{2}'\n/.test(block), 'the version is one named line');
+  assert.equal(text.split('monday_version=').length, 2, 'the version is written once');
+  ['monday_query_me=', 'monday_query_boards=', 'monday_query_items=', 'monday_query_more=', 'monday_query_items_multi=', 'monday_query_more_multi=', 'monday_query_debug='].forEach(name => {
     assert.equal(text.split(name).length, 2, name + ' is written once');
     assert.ok(block.includes(name), name);
   });
@@ -1476,6 +1488,168 @@ test('install-monday.sh copies the two monday units only, with ACCOUNT filled in
 test('local.example.env has a MONDAY_API_TOKEN line with a placeholder', () => {
   const example = fs.readFileSync(path.join(repo, 'computer/local.example.env'), 'utf8');
   assert.ok(/^MONDAY_API_TOKEN='\[[^\n]*\]'$/m.test(example), 'a placeholder that starts with [');
+});
+
+// Multi-level boards (hierarchy_type multi_level): a status column answers BatteryValue, a list of { key, count } where
+// key is the index of a label as text, and the labels come from the settings of the column. The answers here are made up
+// in that shape; how Monday really answers has not been tried with the token (docs/monday.md, "If an answer looks different").
+function multiLevelItems(items) {
+  return items.map(entry => Object.assign({}, entry, {
+    column_values: entry.column_values.map(column => {
+      if (typeof column.index !== 'number') return column;
+      return { id: column.id, type: column.type, text: column.text, battery_value: [{ key: String(column.index), count: 1 }] };
+    }),
+  }));
+}
+
+// The label table the settings of the status columns would give: every label that the items use, by index
+function labelSettings(items) {
+  const tables = {};
+  items.forEach(entry => entry.column_values.forEach(column => {
+    if (typeof column.index !== 'number') return;
+    tables[column.id] = tables[column.id] || {};
+    tables[column.id][String(column.index)] = column.label;
+  }));
+  return Object.keys(tables).map(id => ({ id: id, settings_str: JSON.stringify({ labels: tables[id] }) }));
+}
+
+function multiWorld(place, options) {
+  const given = options || {};
+  const classic = given.items || taskItems();
+  world(place, Object.assign({}, given, { items: multiLevelItems(classic) }));
+  const boards = boardsAnswer();
+  boards.data.boards[0].hierarchy_type = 'multi_level';
+  place.answer('boards', boards);
+  place.pages(taskBoardId, multiLevelItems(classic), 200, 'Robotics Tasks', { columns: labelSettings(classic) });
+}
+
+test('the list of boards asks for hierarchy_type and keeps a multi-level board with a marker', () => {
+  const place = setup('multi-list', { tools: true });
+  multiWorld(place);
+  const result = place.run();
+
+  assert.equal(result.status, 0, result.errors);
+  const boards = statusOf(place).set.boards;
+  assert.equal(boards.find(board => board.id === taskBoardId).hierarchy, 'multi_level');
+  assert.equal(boards.find(board => board.id === milestoneBoardId).hierarchy, 'classic', 'a board with no hierarchy_type is classic');
+  assert.ok(textOf(syncFile).includes('hierarchy_type'));
+});
+
+test('a multi-level board is read with the BatteryValue question, and its tasks come out the same as the classic board gives', () => {
+  const classic = setup('classic-same', { tools: true });
+  world(classic);
+  assert.equal(classic.run().status, 0);
+  assert.deepEqual(classic.battery(), [], 'a classic board never gets the BatteryValue question');
+
+  const multi = setup('multi-same', { tools: true });
+  multiWorld(multi);
+  const result = multi.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.deepEqual(multi.battery(), ['items-' + taskBoardId], 'only the multi-level board gets it, the milestones board stays classic');
+  assert.deepEqual(documentsOf(multi), documentsOf(classic), 'the same documents: department, status, team, priority and Show on TV by index');
+  const hidden = documentsOf(multi)['task-monday-1008'];
+  assert.equal(hidden.set.showOnBoard, false, 'the Hide label is found from the labels of the column settings');
+  assert.deepEqual(multi.variables()[1].columns, classic.variables()[1].columns, 'the same columns are asked for');
+});
+
+test('a multi-level board listed by an earlier run is read the same way when the list is not asked for again', () => {
+  const place = setup('multi-later', { tools: true });
+  multiWorld(place, { known: laterRead });
+  const answer = JSON.parse(fs.readFileSync(path.join(place.stub, 'sanity.json'), 'utf8')).result;
+  place.sanity(Object.assign(answer, { listed: [{ id: taskBoardId, hierarchy: 'multi_level' }] }));
+  const result = place.run();
+
+  assert.equal(result.status, 0, result.errors);
+  assert.deepEqual(requestsOf(result.calls), laterSequence);
+  assert.deepEqual(place.battery(), ['items-' + taskBoardId]);
+  assert.equal(documentsOf(place)['task-monday-1001'].set.status, 'in-progress');
+});
+
+test('a parent with several keys takes the key with the most items under it, and the first one on a tie', () => {
+  const items = taskItems();
+  const place = setup('multi-counts', { tools: true });
+  multiWorld(place, { items: items });
+  const many = multiLevelItems(items);
+  many[0].column_values.find(column => column.id === 'color_mkv6tatz').battery_value = [{ key: '5', count: 1 }, { key: '1', count: 3 }];
+  many[1].column_values.find(column => column.id === 'color_mkv6tatz').battery_value = [{ key: '0', count: 2 }, { key: '1', count: 2 }];
+  place.pages(taskBoardId, many, 200, 'Robotics Tasks', { columns: labelSettings(items) });
+  const result = place.run();
+
+  assert.equal(result.status, 0, result.errors);
+  assert.equal(documentsOf(place)['task-monday-1001'].set.status, 'done', 'three items done beat one to do');
+  assert.equal(documentsOf(place)['task-monday-1002'].set.status, 'in-progress', 'a tie goes to the first key Monday lists');
+});
+
+test('a timeline and the people of a multi-level board are read as they are on a classic one', () => {
+  const place = setup('multi-timeline', { tools: true });
+  multiWorld(place, { owners: true });
+  const result = place.run();
+
+  assert.equal(result.status, 0, result.errors);
+  const task = documentsOf(place)['task-monday-1001'].set;
+  assert.equal(task.startDate, '2026-10-01');
+  assert.equal(task.dueDate, '2026-10-20');
+  assert.equal(task.contact, 'Sam');
+  assert.deepEqual(task.owners, ['Pat', 'Jo']);
+});
+
+test('items that all come back with no department say so and point to Monday debug', () => {
+  const place = setup('empty-values', { tools: true });
+  const empty = taskItems().map(entry => Object.assign({}, entry, { column_values: entry.column_values.map(column => ({ id: column.id, type: column.type, text: '' })) }));
+  world(place, { items: empty });
+  const result = place.run();
+
+  assert.equal(result.status, 1);
+  assert.ok(result.errors.includes('No task from the task board has a Department') && result.errors.includes('Monday debug'), result.errors);
+});
+
+test('the debug run prints the kind of board, the version and the shape of two items, and no token and no names of people', () => {
+  const place = setup('debug', { tools: true });
+  place.at(nowText, todayText);
+  const items = multiLevelItems(taskItems());
+  place.answer('items-' + taskBoardId, { data: { boards: [{ name: 'Robotics Tasks', hierarchy_type: 'multi_level', items_page: { items: items.slice(0, 2) } }] } });
+  const result = place.run(['--debug', taskBoardId]);
+
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(result.text.includes('API version: ' + versionOf(syncFile)), result.text);
+  assert.ok(result.text.includes('Hierarchy: multi_level') && result.text.includes('Board: Robotics Tasks'), result.text);
+  assert.ok(result.text.includes('Item: Wire the robot') && result.text.includes('Item: Pick up parts'), result.text);
+  assert.ok(result.text.includes('color_mm82nvea status: {"text":"Build","battery_value":[{"key":"1","count":1}]}'), result.text);
+  ['Pat Kim', 'Sam Lee', 'Jo Ray', 'Ana Diaz', 'sam@example.com', 'call 555'].forEach(secret => assert.ok(!result.text.includes(secret), secret + ' is not printed'));
+  assert.ok(result.text.includes('multiple_person_mm82cqbx people: {"text":"(hidden)","persons_and_teams":{"count":1}}'), result.text);
+  assert.ok(result.text.includes('text_mm82s03v text: {"text":"(hidden)"}'), 'a text column is hidden');
+  assert.ok(!result.text.includes(mondayToken) && !result.errors.includes(mondayToken) && !result.calls.includes(mondayToken));
+  assert.ok(!result.text.includes('Item: Waiting on a part'), 'only two items');
+  assert.deepEqual(requestsOf(result.calls), ['monday items-' + taskBoardId], 'one request to Monday, nothing to Sanity');
+  assert.equal(place.writes().length, 0);
+  assert.deepEqual(place.battery(), ['items-' + taskBoardId], 'the debug question asks for the multi-level shape');
+});
+
+test('the debug run refuses what is not a board number, and says so when Monday gives an error or no board', () => {
+  const place = setup('debug-bad', { tools: true });
+  place.at(nowText, todayText);
+  [[], ['abc'], ['12 34'], ['1;ls'], ['-1']].forEach(extra => {
+    const result = place.run(['--debug'].concat(extra));
+    assert.equal(result.status, 1, JSON.stringify(extra));
+    assert.ok(result.errors.includes('Usage:'), result.errors);
+    assert.equal(requestsOf(result.calls).length, 0);
+  });
+
+  place.answer('items-' + taskBoardId, { errors: [{ message: 'Cannot query field on type' }] });
+  const refused = place.run(['--debug', taskBoardId]);
+  assert.equal(refused.status, 1);
+  assert.ok(refused.text.includes('FAIL  Monday said: Cannot query field on type'), refused.text);
+
+  place.answer('items-' + taskBoardId, { data: { boards: [] } });
+  const none = place.run(['--debug', taskBoardId]);
+  assert.equal(none.status, 0);
+  assert.ok(none.text.includes('No board came back'), none.text);
+
+  const unset = setup('debug-unset', { tools: true, env: "TELETRAAN_DATA='<data>'\nMONDAY_API_TOKEN='[your token]'\n" });
+  unset.at(nowText, todayText);
+  const missing = unset.run(['--debug', taskBoardId]);
+  assert.equal(missing.status, 1);
+  assert.ok(missing.text.includes('FAIL  MONDAY_API_TOKEN is not in local.env'), missing.text);
 });
 
 let failures = 0;

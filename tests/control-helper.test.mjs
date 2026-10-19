@@ -44,7 +44,7 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
 });
@@ -113,6 +113,18 @@ test('status prints plain name=value lines, and monday-check runs the check of t
   const check = h.ask('monday-check\n');
   assert.equal(check.status, 'ok');
   assert.ok(check.calls.includes('monday --check'), check.calls);
+});
+
+test('monday-debug takes one board number and runs the debug of the Monday script, and refuses anything else', () => {
+  const h = setup();
+  const answer = h.ask('monday-debug 18435126893\n');
+  assert.equal(answer.status, 'ok');
+  assert.ok(answer.calls.includes('monday --debug 18435126893'), answer.calls);
+  ['monday-debug', 'monday-debug abc', 'monday-debug 12 34', 'monday-debug 1;reboot', 'monday-debug $(reboot)', 'monday-debug -1', 'monday-debug 123456789012345678901'].forEach(line => {
+    const refused = h.ask(line + '\n');
+    assert.equal(refused.status, 'refused', line);
+    assert.equal(refused.calls, answer.calls, line + ' ran something');
+  });
 });
 
 test('reboot asks sudo for the reboot itself, before the answer, and leaves no job in the background', () => {

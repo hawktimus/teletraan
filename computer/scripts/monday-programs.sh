@@ -123,7 +123,7 @@ def kept_boards:
   [board_list | arrays | .[] | objects | select(board_is_offered)
     | select((board_id | tostring) | test("\\A[0-9]{1,20}\\z"))
     | (board_id | tostring) as $id
-    | {_key: $id, id: $id, name: (board_name | whole_text(60)), itemCount: (board_items | if type == "number" and . >= 0 then floor else 0 end), columns: kept_columns}]
+    | {_key: $id, id: $id, name: (board_name | whole_text(60)), hierarchy: board_hierarchy, itemCount: (board_items | if type == "number" and . >= 0 then floor else 0 end), columns: kept_columns}]
   | first_of_each("id") | .[0:$boards_kept];
 
 ([$errors | split("\n")[] | select(. != "")] | unique | if length == 0 then null else (.[0:3] | join("; ") | .[0:300]) end) as $error

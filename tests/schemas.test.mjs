@@ -381,7 +381,7 @@ const studioOnlyFields = {
   'view.rotationNote': 'the note on the Main panel tab of a view, which points to the Rotation list. It stores nothing',
   'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
   'dashboardSettings.mondayConnection': 'the block at the top of the Monday tab. It stores nothing',
-  'dashboardSettings.mondayTokenTest': 'the Test the token button of the Monday tab. It stores nothing',
+  'dashboardSettings.mondayTokenTest': 'the note and the link to the Monday check on the control page, on the Monday tab. It stores nothing',
   'dashboardSettings.frcConnection': 'the block at the top of the Competition tab. It stores nothing',
   'theme.settingsNote': 'the note on the Look page. It stores nothing',
   'dashboardSettings.nightStart': 'hidden. The screen uses the fixed time in dashboard/core/constants.js',
@@ -5791,7 +5791,7 @@ function checkMondayStatus() {
 
   need(problems, type && type.type === 'document', 'mondayStatus should be a document type');
   need(problems, names(type) === mondayStatusFields.join(), 'mondayStatus should have these fields, in this order: ' + mondayStatusFields.join(', '));
-  need(problems, names(fieldAt('mondayStatus.boards')) === 'id,name,itemCount,columns', 'a board of mondayStatus should have these fields, in this order: id, name, itemCount, columns');
+  need(problems, names(fieldAt('mondayStatus.boards')) === 'id,name,hierarchy,itemCount,columns', 'a board of mondayStatus should have these fields, in this order: id, name, hierarchy, itemCount, columns');
   need(problems, names(fieldAt('mondayStatus.boards.columns')) === 'id,title,type', 'a column of mondayStatus should have these fields, in this order: id, title, type');
   need(problems, names(fieldAt('mondayStatus.snapshots')) === 'date,open', 'a count of mondayStatus should have these fields, in this order: date, open');
   need(problems, names(fieldAt('mondayStatus.readings')) === 'boardId,boardName,itemsRead,readAt,note', 'a reading of mondayStatus should have these fields, in this order: boardId, boardName, itemsRead, readAt, note');
@@ -6696,7 +6696,7 @@ async function checkScreenForm() {
 }
 
 // The four Views, the Themes page and the weekday theme schedule, the Look tab fields, the first fill of a
-// View from the Screens, and Test the token (schemas/view.js, schemas/settingsViews.js, inputs/view-input.js,
+// View from the Screens, and Check the token (schemas/view.js, schemas/settingsViews.js, inputs/view-input.js,
 // inputs/themes-view.js, tools/view-seed.js, tools/monday-check.js). The starting values of a view are the ones in
 // tools/view-defaults.js, which defaultViews in dashboard/config.js copies once the runtime has it.
 const viewGroupFields = {
@@ -7084,34 +7084,22 @@ async function checkMondayToken() {
   const input = world.mondayTokenInput;
   const field = fieldAt('dashboardSettings.mondayTokenTest');
 
-  need(problems, field && field.group === 'monday' && field.readOnly === true && field.initialValue === undefined && field.components && field.components.input === input.MondayTokenInput, 'the Monday tab should have a read only Test the token field, drawn by MondayTokenInput (monday-token-input.js)');
-  need(problems, field && field.title === 'Test the token' && /computer/.test(field.description || '') && /account name or the error/.test(field.description || ''), 'Test the token should say that the Teletraan computer answers with the account name or the error');
-  need(problems, check.checkWord === 'monday-check', 'the helper word should be monday-check');
+  need(problems, field && field.group === 'monday' && field.readOnly === true && field.initialValue === undefined && field.components && field.components.input === input.MondayTokenInput, 'the Monday tab should have a read only Check the token field, drawn by MondayTokenInput (monday-token-input.js)');
+  need(problems, field && field.title === 'Check the token' && /control page/.test(field.description || '') && /link/.test(field.description || ''), 'Check the token should say that the check is on the control page and that the field is a link to it');
 
-  // what the Teletraan computer answers, in words
-  const line = answer => check.answerLine(answer);
-  need(problems, line({ ok: true, account: 'Pat Example' }).text === 'Connected as Pat Example.' && line({ ok: true, account: 'Pat Example' }).failed === false && line({ ok: true, output: 'Sam\nsecond line' }).text === 'Connected as Sam.', 'a good answer should say Connected as and the account name');
-  need(problems, line({ ok: false, error: 'Not authorized' }).text === 'Not authorized' && line({ ok: false, error: 'Not authorized' }).failed === true && line({ ok: false }).text === check.words.noAnswer && line(null).failed === true && line({ ok: true }).failed === true, 'a bad answer should give the error, or say the Teletraan computer gave no answer');
+  // the control page is on port 3229 and the helper is not reached from the Studio
+  need(problems, /^http:\/\/teletraan\.local:3229\/control\/$/.test(world.controlAddress.controlAddress) && world.controlAddress.helperAddress === undefined, 'controlAddress should be the control page on port 3229, and the Studio should not hold a helper address');
+  need(problems, check.checkAddress === world.controlAddress.controlAddress + '#settings/monday', 'the check link should open Settings, Monday on the control page');
+  need(problems, check.checkToken === undefined && check.answerLine === undefined, 'the Studio should not call the helper any more');
+  checkPlainSentences(problems, 'the lines of Check the token', Object.values(check.words).join(' '));
 
-  // the call: a POST of the word to the helper endpoint of the control page, with the cookie
-  const sent = [];
-  const answering = result => async (address, options) => { sent.push({ address: address, options: options }); if (result instanceof Error) throw result; return { json: async () => result }; };
-  const good = await check.checkToken(answering({ ok: true, account: 'Pat Example' }));
-  const call = sent[0];
-  need(problems, good.text === 'Connected as Pat Example.' && call.address === world.controlAddress.helperAddress && call.address.indexOf(world.controlAddress.controlAddress) === 0 && call.options.method === 'POST' && call.options.credentials === 'include' && JSON.parse(call.options.body).word === 'monday-check', 'Test the token should post the word monday-check to the helper of the control page');
-  need(problems, !/token|key|secret/i.test(call.options.body), 'the request should carry the word and nothing secret');
-  const down = await check.checkToken(answering(new Error('network')));
-  need(problems, down.failed === true && down.text === check.words.unreachable, 'a control page that cannot be reached should be a line, not an error');
-  need(problems, (await check.checkToken(async () => ({}))).failed === true && (await check.checkToken(async () => ({ json: async () => { throw new Error('not json'); } }))).failed === true, 'an answer that is not JSON should be a line, not an error');
-  checkPlainSentences(problems, 'the lines of Test the token', Object.values(check.words).join(' '));
-
-  // the button: asks, shows the answer, and waits while it asks
-  const tree = input.MondayTokenInput({ fetcher: answering({ ok: true, account: 'Pat Example' }) });
-  const button = nodesWhere(tree, node => node.type === 'button')[0];
-  need(problems, button && wordsIn(button) === 'Test the token' && button.props.type === 'button' && typeof button.props.onClick === 'function' && button.props.style.minHeight >= 44, 'the field should draw a Test the token button');
-  await button.props.onClick();
-  need(problems, sent.length === 3, 'a click should ask the control page once');
-  need(problems, !/MONDAY_API_TOKEN|local\.env|Authorization/.test(world.mondayTokenInputSource + readModule(path.join(here, 'tools', 'monday-check.js'), 'utf8')), 'the Studio should not name the key or its file, or send an authorization header');
+  // the field: a note and a link in a new tab, and no button
+  const tree = input.MondayTokenInput();
+  need(problems, nodesWhere(tree, node => node.type === 'button').length === 0, 'the field should draw no button');
+  const links = nodesWhere(tree, node => node.type === 'a');
+  need(problems, links.length === 1 && links[0].props.href === check.checkAddress && links[0].props.target === '_blank' && /noopener/.test(links[0].props.rel || '') && wordsIn(links[0]) === check.words.link, 'the field should draw one link to the Monday check on the control page, in a new tab');
+  need(problems, wordsIn(tree).indexOf(check.words.note) !== -1, 'the field should draw the note');
+  need(problems, !/MONDAY_API_TOKEN|local\.env|Authorization|fetch\(/.test(world.mondayTokenInputSource + readModule(path.join(here, 'tools', 'monday-check.js'), 'utf8')), 'the Studio should not name the key or its file, send an authorization header or fetch');
   return problems;
 }
 
@@ -7312,7 +7300,7 @@ async function main() {
   results.push({ name: 'the pages of the Studio fit a phone: a 16 pixel gutter, nothing fixed wider than 390 pixels and buttons of 44 pixels', problems: checkPhonePages() });
   results.push({ name: 'the Themes page lists the themes, has a picker for each weekday, and writes only themeByWeekday to the draft of Dashboard Settings', problems: await checkThemesPage().catch(error => ['the check stopped: ' + error.stack]) });
   results.push({ name: 'a View is filled once from the Screens split by team, Family keeps its two panels, and the form has the picker and the map', problems: await checkViewSeed().catch(error => ['the check stopped: ' + error.stack]) });
-  results.push({ name: 'Test the token asks the control page for the monday-check word and shows the account name or the error', problems: await checkMondayToken().catch(error => ['the check stopped: ' + error.stack]) });
+  results.push({ name: 'Check the token is a note and a link to the Monday check on the control page, with no call to the helper', problems: await checkMondayToken().catch(error => ['the check stopped: ' + error.stack]) });
 
   process.exitCode = report() > 0 ? 1 : 0;
 }

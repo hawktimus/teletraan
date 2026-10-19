@@ -37,9 +37,9 @@ Open Look. Its first section lists the themes and holds the theme of each day of
 
 Look links to the dated rules: the color themes (Hawktimus, Neon Prime), the seasonal packs and the time zone. They are in a form of their own. It is not the theme of each day.
 
-## Test the token
+## Check the token
 
-Dashboard Settings, Monday tab, Test the token asks the Teletraan computer through the control page who the Monday token belongs to. It shows the account name or the error.
+Dashboard Settings, Monday tab, Check the token is a note and a link. The check runs on the control page (`http://teletraan.local:3229/control/`, Settings, Monday), which asks for the PIN, because the Studio cannot reach the helper of the Teletraan computer. Check the token shows the account name or the error. Monday debug on the same page shows how Monday answers for one board.
 
 ## Not used any more
 

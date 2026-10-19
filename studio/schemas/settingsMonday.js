@@ -5,7 +5,7 @@
 //   mondayConnection       a read only block that says who the token belongs to, when the Teletraan computer last
 //                          read Monday, how often it reads and how many tasks it made
 //                          (../monday-status-input.js). It stores nothing
-//   mondayTokenTest        the Test the token button (../monday-token-input.js). It stores nothing
+//   mondayTokenTest        a note and a link to the Monday check on the control page (../monday-token-input.js). It stores nothing
 //   mondayEveryMinutes     how often the Teletraan computer reads, 5 to 120 minutes
 //   mondayTaskBoard        the task board: its number, the column of each field, the tables that say
 //                          what each label index means, and the text of the Hide label (Advanced tab)
@@ -293,11 +293,11 @@ export function mondayFields() {
 
     defineField({
       name: 'mondayTokenTest',
-      title: 'Test the token',
+      title: 'Check the token',
       type: 'string',
       group: 'monday',
       readOnly: true,
-      description: 'Asks the Teletraan computer, through the control page, who the Monday token belongs to. It shows the account name or the error. It stores nothing.',
+      description: 'The check runs on the control page, Settings, Monday, which asks for the PIN. This is a link to it. It stores nothing.',
       components: { input: MondayTokenInput },
     }),
 

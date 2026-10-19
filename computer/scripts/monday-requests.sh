@@ -139,6 +139,22 @@ write_to_sanity() {
   fi
 }
 
+# The kind of a board, classic or multi_level, from the list of this run when it was asked for, and else
+# from the list the last run wrote. A board that is in neither is read as classic.
+hierarchy_of() {
+  said=""
+  if [ -s "$work/boards-answer.json" ]; then
+    said=$(jq -r --arg board "$1" "$paths"'[board_list | arrays | .[] | objects | select((board_id | tostring) == $board) | board_hierarchy][0] // empty' "$work/boards-answer.json" 2> /dev/null || true)
+  fi
+  if [ -z "$said" ]; then
+    said=$(jq -r --arg board "$1" '[.result.listed | arrays | .[] | objects | select(.id == $board) | .hierarchy][0] // empty' "$work/sanity.json" 2> /dev/null || true)
+  fi
+  case $said in
+    multi_level) echo multi_level ;;
+    *) echo classic ;;
+  esac
+}
+
 # Reads every page of one board. $1 is tasks or milestones, $2 the board number and $3 the columns
 # as a list. The parent items are left in $work/<kind>-items.ndjson. Leaves read_all (yes when the
 # board was read to its end) and board_title. A problem is written for a page that did not come.
@@ -152,15 +168,22 @@ read_board() {
   read_all=no
   board_title=""
   seen=yes
+  query_first=$monday_query_items
+  query_more=$monday_query_more
+  if [ "$(hierarchy_of "$board")" = multi_level ]; then
+    query_first=$monday_query_items_multi
+    query_more=$monday_query_more_multi
+  fi
+  echo '{}' > "$work/labels.json"
 
   while :; do
     if [ -z "$cursor" ]; then
       page='first_page'
-      jq -n --arg query "$monday_query_items" --arg board "$board" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
+      jq -n --arg query "$query_first" --arg board "$board" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
         '{query: $query, variables: {board: [$board], columns: $columns[0], limit: $limit}}' > "$work/body.json"
     else
       page='more_page'
-      jq -n --arg query "$monday_query_more" --arg cursor "$cursor" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
+      jq -n --arg query "$query_more" --arg cursor "$cursor" --slurpfile columns "$work/columns.json" --argjson limit "$page_size" \
         '{query: $query, variables: {cursor: $cursor, columns: $columns[0], limit: $limit}}' > "$work/body.json"
     fi
     ask "$work/body.json" "$work/page.json"
@@ -174,15 +197,18 @@ read_board() {
 
     if [ -z "$cursor" ]; then
       board_title=$(jq -r "$paths$helpers"'first_board_name | whole_text(60)' "$work/page.json" 2> /dev/null || true)
+      jq -c "$paths"'board_labels' "$work/page.json" > "$work/labels.json" 2> /dev/null || echo '{}' > "$work/labels.json"
     fi
 
-    jq -c "$paths$page"'
-      | page_items | .[] | objects
+    jq -c --slurpfile labels "$work/labels.json" "$paths$page"'
+      | def with_battery: value_battery as $key | ((value_column | tostring) as $column | $labels[0][$column][($key // "")] // null) as $named
+          | {index: (value_index // ($key | if . == null then null else tonumber end)), label: (value_label // $named)};
+        page_items | .[] | objects
       | {
           id: (item_id | tostring),
           name: item_name,
           parent: (item_parent | if . == null then null else tostring end),
-          values: (((item_values | arrays) // []) | map(select(type == "object") | {key: (value_column | tostring), value: {text: (value_text // ""), label: value_label, index: value_index, linked: value_linked, date: value_date, from: value_from, to: value_to}}) | from_entries)
+          values: (((item_values | arrays) // []) | map(select(type == "object") | {key: (value_column | tostring), value: ({text: (value_text // "")} + with_battery + {linked: value_linked, date: value_date, from: value_from, to: value_to})}) | from_entries)
         }' "$work/page.json" >> "$work/$kind-items.ndjson"
 
     cursor=$(jq -r "$paths$page"' | page_cursor | strings' "$work/page.json")

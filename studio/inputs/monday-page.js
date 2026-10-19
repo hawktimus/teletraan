@@ -2,7 +2,7 @@
 //
 //   Boards       every board the token can see, as cards, with two choices on each: Show tasks from this
 //                board and Show milestones from this board. It also says how often Monday is read, the
-//                reads used today and a button that checks the token
+//                reads used today and a link to the Monday check on the control page
 //   Items        the tasks of the chosen task board, grouped by department, with a Show on TV switch on each
 //   Milestones   the milestones the Teletraan computer read, read only
 //   Preview the panels   the pictures of the Monday panels (preview-panels-view.js)
@@ -17,7 +17,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { usePaneRouter } from 'sanity/structure';
-import { checkToken, words as checkWords } from '../tools/monday-check.js';
+import { checkAddress, words as checkWords } from '../tools/monday-check.js';
 import { PreviewPanelsView } from './preview-panels-view.js';
 import {
   words,
@@ -153,7 +153,6 @@ function BoardsTab(props) {
   const [message, setMessage] = useState({ text: '', failed: false });
   const [busy, setBusy] = useState(false);
   const [minutes, setMinutes] = useState('');
-  const [check, setCheck] = useState({ text: '', failed: false, busy: false });
 
   useEffect(() => {
     let stopped = false;
@@ -192,11 +191,6 @@ function BoardsTab(props) {
     return saved(saveInterval(client, minutes));
   }
 
-  function checkNow() {
-    setCheck({ text: checkWords.asking, failed: false, busy: true });
-    return checkToken((...given) => fetch(...given)).then(line => setCheck({ text: line.text, failed: line.failed, busy: false }));
-  }
-
   if (!read) return h('p', { style: styles.muted }, words.reading);
 
   const now = new Date();
@@ -216,8 +210,8 @@ function BoardsTab(props) {
     h(
       'div',
       { style: styles.row },
-      h('button', { type: 'button', disabled: check.busy, style: Object.assign({}, styles.button, check.busy ? styles.disabled : null), onClick: checkNow }, words.check),
-      check.text ? h('span', { role: check.failed ? 'alert' : undefined, 'aria-live': 'polite', style: check.failed ? styles.failed : styles.text }, check.text) : null
+      h('span', { style: styles.text }, checkWords.note),
+      h('a', { href: checkAddress, target: '_blank', rel: 'noopener noreferrer', style: styles.text }, checkWords.link)
     ),
     updated ? h('p', { style: styles.muted }, updated) : null,
     error ? h('p', { style: styles.failed }, error) : null,

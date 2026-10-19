@@ -139,7 +139,8 @@ One line of the sidebar, Monday, under TASKS. It replaces Monday Tasks and Monda
   milestones from this board. Click one and it is saved as a draft of Dashboard Settings, in the same two
   fields as before (the board of the Task board block and of the Milestones board block). Click Publish all
   in the top bar to put it on the screen. Each card says in plain words whether the computer can read the
-  board. The Check the token button asks Monday who the token belongs to. The page also holds the minutes
+  board. A note and a link open the Monday check on the control page, Settings, Monday, where Check the token
+  asks Monday who the token belongs to. The page also holds the minutes
   between reads (5 to 120, the same setting as How often) and the reads used today out of 900.
 - **Items**: the tasks of the chosen task board, grouped by department in the order Build, Electrical,
   Programming, Design, CNC, Strategy, Business, Operations, Marketing and General, then any other
@@ -155,9 +156,10 @@ One line of the sidebar, Monday, under TASKS. It replaces Monday Tasks and Monda
 If a chosen board is not among the boards the token can see, the top of the Boards tab says so in red with
 the board number and what to do: in Monday open the board, click Share, and add the account the token
 belongs to, or choose another board. Robotics Tasks, the board the team works in, is a multi-level board.
-Monday may not list a multi-level board for a token, even when the token can read it, so a missing
-Robotics Tasks may be this and not a wrong number. The first thing to check is that the account of the
-token is a member of the board.
+An older version of the Monday API did not list a multi-level board for a token, even when the token could
+read it, so a missing Robotics Tasks may be this and not a wrong number. The first thing to check is that
+the account of the token is a member of the board. If it is, press Monday debug on the control page (see
+Multi-level boards below) and send the answer to a coach.
 
 The switch on a task changes the draft of that task. The draft is a copy of the task as it was. Publish all
 puts it on the screen, and the next read from Monday may change the other fields of the task again.
@@ -334,6 +336,11 @@ On the Teletraan computer:
     /opt/teletraan/computer/scripts/monday-sync.sh
 
 `--check` asks Monday who the token belongs to and writes nothing. The second line is one run.
+`--debug` and a board number prints how Monday answers for the first two items of that board (see
+Multi-level boards below) and also writes nothing:
+
+    /opt/teletraan/computer/scripts/monday-sync.sh --debug 18435126893
+
 It reads only when the last read is old enough, so a run right after a good one prints nothing.
 To force a read, set How often to 5 and wait. The journal has the lines of every run:
 
@@ -356,7 +363,10 @@ Go down the list. Each step rules out one cause.
    Show on TV? set to Show, and it must not be a subitem.
 6. Look at the Show on TV switch of the row in Studio. A task with it off is in the list and not
    on the TV, and the computer never changes that switch.
-7. On the computer, run the line below and read the last lines. A line that starts with `monday:`
+7. If the board is on the list and still no task has a department, the board may be a multi-level board
+   that was read in the wrong shape. Press Monday debug on the control page (Settings, Monday) and send
+   the answer to a coach.
+8. On the computer, run the line below and read the last lines. A line that starts with `monday:`
    says how many tasks and milestones were read, or what went wrong. The script never prints the
    token.
 
@@ -390,11 +400,40 @@ Use a Monday account that can see only the team's boards, and leave Show owner f
 the TV off unless students and parents have agreed to it. The token is never written in any
 document or file.
 
+## Multi-level boards
+
+Robotics Tasks and Completed Tasks are multi-level boards (`hierarchy_type` is `multi_level`). A status
+column of such a board does not answer as a `StatusValue`. It answers as a `BatteryValue`, a list of
+`{ key, count }`, where `key` is the number of a label as text and `count` is how many items under the
+parent have it. The sync handles this in four places:
+
+- The list of boards asks for `hierarchy_type`, and each board in the list of the Boards tab is marked
+  `classic` or `multi_level` (the field Kind of board in `monday-status`).
+- A board that is `multi_level` in the list of this run, or in the list the last run wrote, is read with
+  `monday_query_items_multi` and `monday_query_more_multi`. They add `... on BatteryValue { battery_value { key count } }`
+  and the settings of the chosen columns, which hold the label of every number. Any other board is read with
+  the old questions, exactly as before, so Build Tasks and Milestones are unchanged.
+- The key becomes the index and the label comes from the settings of the column, so Department, Status,
+  Team, Priority and Show on TV work the same afterwards. A parent that has more than one key takes the key
+  with the highest count, and the first one Monday lists when two have the same count.
+- The timeline (`... on TimelineValue { from to }`) and the people are read as on any board. Subitems are
+  left out, as before.
+
+The API version is `monday_version` in `monday-contract.sh`, one line. It is 2026-01 now. That choice,
+the shape of `BatteryValue` and the question for the settings of a column have not been tried with the
+token of the Teletraan computer, only with made-up answers. If the Monday page still lists no tasks, press
+Monday debug on the control page, Settings, Monday (it runs `monday-sync.sh --debug` with the board number
+for you). It prints the kind of board, the API version and, for the first two items, each column with its id,
+its type and the shape of its value. It holds item names and column ids, and no token and no names of
+people: the text of a people or text column is replaced by `(hidden)`. Send what it prints to a coach, who
+can correct the version or the shape in `monday-contract.sh`.
+
 ## If an answer looks different
 
 The address, the version, the four questions and the places in the answers are in one file,
 `computer/scripts/monday-contract.sh`, which `monday-sync.sh` reads: `monday_address`, `monday_version`,
-`monday_query_me`, `monday_query_boards`, `monday_query_items`, `monday_query_more`, and the
+`monday_query_me`, `monday_query_boards`, `monday_query_items`, `monday_query_more`,
+`monday_query_items_multi`, `monday_query_more_multi`, `monday_query_debug`, and the
 `paths` block of jq functions. Correct a line there and nowhere else. The questions use typed
 fragments (`... on StatusValue { label index }` and the like), because a plain question gave
 empty values for status, date and relation columns. Check one known item after any change.
@@ -413,7 +452,9 @@ boards: one task for each status number, a General task, an Unassigned task, a H
 subitem, an EXAMPLE milestone and a milestone with no date, the settings that win over the
 starting values, the owner names on and off, the hours and the dates, the quiet exit before
 How often, the 900 reads a day, the four requests, a task or milestone that goes, errors from
-Monday, and that no token is printed or saved. It does not touch the network.
+Monday, and that no token is printed or saved. It also reads a made-up multi-level board (BatteryValue
+and the labels of the column settings), checks that its tasks are the same as the classic board gives,
+and runs `--debug`. It does not touch the network.
 `tests/monday-settings.test.mjs` checks the settings on the screen's side,
 `tests/monday-boards.test.mjs` the rows of the older Boards page, `tests/monday-page.test.mjs` the Monday
 page, and

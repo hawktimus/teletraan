@@ -5,7 +5,7 @@
 
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'mirror-start', 'mirror-watch', 'mirror-status'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status'];
 const syncTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 
 // These stop or restart something people are watching, so the request must say it was confirmed
@@ -18,6 +18,10 @@ function checkRequest(word, body) {
   if (word === 'sync-now') {
     if (!syncTargets.includes(body.target)) throw new Refusal(400, 'Sync one of: ' + syncTargets.join(', ') + '.');
     return [body.target];
+  }
+  if (word === 'monday-debug') {
+    if (typeof body.board !== 'string' || !/^[0-9]{1,20}$/.test(body.board)) throw new Refusal(400, 'Type the board number, digits only.');
+    return [body.board];
   }
   return [];
 }
@@ -36,6 +40,6 @@ export function register(router, ctx) {
       if (typeof ctx.log === 'function') ctx.log('helper ' + word + ' failed' + (error && error.code ? ' (' + error.code + ')' : '') + ': ' + String(error && error.message).slice(0, 200));
       throw new Refusal(502, String((error && error.message) || 'The helper did not answer.'));
     }
-    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, 2000) });
+    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, word === 'monday-debug' ? 8000 : 2000) });
   });
 }

@@ -5,19 +5,31 @@
 # typed fragments, because a plain question for the values of columns gave empty values for status,
 # date and relation columns (docs/monday.md, "If an answer looks different").
 monday_address='https://api.monday.com/v2'
-monday_version='2025-07'
+# Multi-level boards (hierarchy_type multi_level) answer status columns as BatteryValue, which only the newer
+# versions describe. 2026-01 is a guess from Monday's release notes and has not been tried with the token of the
+# Teletraan computer. If Settings, Monday debug shows empty values, this is the line to try another version on.
+monday_version='2026-01'
 
 # Who the token belongs to
 monday_query_me='query { me { name } }'
 
 # Who the token belongs to, and the boards it can see with their columns. It is asked for on the
 # first read of a day, and when the Teletraan computer has no list yet, so the pickers of the Monday tab have it.
-monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at) { id name type items_count columns { id title type } } }'
+monday_query_boards='query { me { name } boards(limit: 100, state: active, order_by: used_at) { id name type hierarchy_type items_count columns { id title type } } }'
 
 # The first page of the parent items of one board, and the pages after it. $columns lists the
 # columns that are read. Subitems are not asked for, and an item with a parent is left out.
 monday_query_items='query ($board: [ID!], $columns: [String!], $limit: Int) { boards(ids: $board) { name items_page(limit: $limit) { cursor items { id name parent_item { id } column_values(ids: $columns) { id type text ... on StatusValue { label index } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
 monday_query_more='query ($cursor: String!, $columns: [String!], $limit: Int) { next_items_page(limit: $limit, cursor: $cursor) { cursor items { id name parent_item { id } column_values(ids: $columns) { id type text ... on StatusValue { label index } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } }'
+
+# The same two questions for a multi-level board. A status column of such a board has no StatusValue: it
+# answers BatteryValue, a list of { key, count } where key is the index of a label as text. The labels of the
+# columns come with the first page, because a key alone does not say Hide or Show.
+monday_query_items_multi='query ($board: [ID!], $columns: [String!], $limit: Int) { boards(ids: $board) { name columns(ids: $columns) { id settings_str } items_page(limit: $limit) { cursor items { id name parent_item { id } column_values(ids: $columns) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
+monday_query_more_multi='query ($cursor: String!, $columns: [String!], $limit: Int) { next_items_page(limit: $limit, cursor: $cursor) { cursor items { id name parent_item { id } column_values(ids: $columns) { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } }'
+
+# The question of monday-sync.sh --debug: the first two items of one board with every column, in the typed shape
+monday_query_debug='query ($board: [ID!]) { boards(ids: $board) { name hierarchy_type items_page(limit: 2) { items { id name parent_item { id } column_values { id type text ... on StatusValue { label index } ... on BatteryValue { battery_value { key count } } ... on BoardRelationValue { linked_item_ids } ... on DateValue { date } ... on TimelineValue { from to } ... on PeopleValue { persons_and_teams { id } } } } } } }'
 
 # Where each value sits in an answer, as jq functions. Each one is given the part
 # of the answer it belongs to: the answer, a board, a column, a page, an item or
@@ -30,6 +42,7 @@ def board_name: .name;
 def board_items: .items_count;
 def board_columns: .columns;
 def board_is_offered: ((.type // "board") == "board");
+def board_hierarchy: (.hierarchy_type? | if . == "multi_level" then "multi_level" else "classic" end);
 def column_id: .id;
 def column_title: .title;
 def column_type: .type;
@@ -42,6 +55,10 @@ def item_id: .id;
 def item_name: .name;
 def item_parent: (.parent_item.id? // null);
 def item_values: .column_values;
+def first_board: (.data.boards[0]? // null);
+def first_items: (((first_page | page_items | arrays) // [])[0:2]);
+def board_kind: (.hierarchy_type? // null);
+def value_type: .type;
 def value_column: .id;
 def value_text: .text;
 def value_label: .label?;
@@ -50,6 +67,8 @@ def value_linked: .linked_item_ids?;
 def value_date: .date?;
 def value_from: .from?;
 def value_to: .to?;
+def board_labels: ([.data.boards[0].columns[]? | objects | select(.id | type == "string") | {key: .id, value: ((.settings_str | if type == "string" then (try fromjson catch {}) else {} end) | (.labels? | if type == "object" then . else {} end))}] | from_entries);
+def value_battery: ((.battery_value? | if type == "array" then . elif type == "object" then [.] else [] end) | map(select(type == "object" and ((.key | tostring) | test("\\A[0-9]{1,6}\\z")))) | sort_by(-(.count | if type == "number" then . else 0 end)) | .[0].key? // null);
 def error_messages: [(.errors[]?.message?), .error_message?] | map(strings);
 '
 
@@ -172,5 +191,6 @@ query='{
   },
   "known": *[_id == "monday-status"][0] { lastSyncAt, lastError, callsToday, callsDate, "boards": count(boards) },
   "snapshots": *[_id == "monday-status"][0].snapshots[] { date, open },
-  "readings": *[_id == "monday-status"][0].readings[] { boardId, boardName, itemsRead, readAt, note }
+  "readings": *[_id == "monday-status"][0].readings[] { boardId, boardName, itemsRead, readAt, note },
+  "listed": *[_id == "monday-status"][0].boards[] { id, hierarchy }
 }'

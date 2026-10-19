@@ -12,6 +12,9 @@
 #                            Monday only when the last read is older than "How often" on the
 #                            Monday tab, and otherwise ends without a word
 #   monday-sync.sh --check   asks Monday who the token belongs to, and writes nothing
+#   monday-sync.sh --debug <board number>
+#                            prints how Monday answers for the first two items of one board
+#                            (no token, no names of people), and writes nothing
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 . "$computer/scripts/monday-contract.sh"
@@ -20,7 +23,7 @@ set -euo pipefail
 . "$computer/scripts/monday-programs.sh"
 
 usage() {
-  echo "Usage: $0 [--check]" >&2
+  echo "Usage: $0 [--check | --debug <board number>]" >&2
   exit 1
 }
 
@@ -36,15 +39,24 @@ mode=run
 case ${1:-} in
   '') ;;
   --check) mode=check ;;
+  --debug) mode=debug ;;
   *) usage ;;
 esac
-[ "$#" -le 1 ] || usage
+if [ "$mode" = debug ]; then
+  [ "$#" -eq 2 ] || usage
+  printf '%s' "$2" | grep -Eq '^[0-9]{1,20}$' || usage
+else
+  [ "$#" -le 1 ] || usage
+fi
 
 monday_token=$(setting MONDAY_API_TOKEN)
 write_token=$(setting SANITY_WRITE_TOKEN)
 
 if [ "$mode" = check ]; then
   run_check
+fi
+if [ "$mode" = debug ]; then
+  run_debug "$2"
 fi
 
 
@@ -305,6 +317,12 @@ if [ "$milestone_usable" = yes ]; then
             else "not-started" end)
         }
       | select(.id != null and .name != "" and .targetDate != null and (.name | startswith("EXAMPLE") | not))' >> "$work/milestone-rows.ndjson"
+fi
+
+# Items came but none could be placed on a department: the usual cause is a multi-level board that was read as a
+# classic one, whose status columns then come back empty
+if [ "$task_usable" = yes ] && [ -s "$work/task-rows.ndjson" ] && [ "$(jq -s '[.[] | select(.hidden == "")] | length' "$work/task-rows.ndjson")" -eq 0 ]; then
+  problem "No task from the task board has a Department. If it is a multi-level board, press Monday debug on the control page (Settings, Monday) and send the answer to a coach."
 fi
 
 echo "monday: $(wc -l < "$work/task-rows.ndjson" | tr -d ' ') task(s) and $(wc -l < "$work/milestone-rows.ndjson" | tr -d ' ') milestone(s) read"

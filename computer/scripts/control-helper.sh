@@ -69,6 +69,10 @@ case $word in
       *) refuse "$shown" ;;
     esac
     ;;
+  monday-debug)
+    # The argument is a board number and nothing else, because it ends up on a command line
+    printf '%s' "$argument" | grep -Eq '^[0-9]{1,20}$' || refuse "$shown"
+    ;;
   write-env)
     [ -z "$argument" ] || refuse "$shown"
     ;;
@@ -134,6 +138,11 @@ case $word in
   monday-check)
     code=0
     "$root/computer/scripts/monday-sync.sh" --check || code=$?
+    finish "$code"
+    ;;
+  monday-debug)
+    code=0
+    "$root/computer/scripts/monday-sync.sh" --debug "$argument" || code=$?
     finish "$code"
     ;;
   write-env)
