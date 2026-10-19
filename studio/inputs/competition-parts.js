@@ -9,6 +9,8 @@ export const words = {
   intro: 'The competition cards show the season, the next match, the rank and the results, from two days before a team event. Change them here, then click Publish all in the top bar.',
   connection: 'Competition data',
   connectionSays: 'When the Teletraan computer last read the public competition data.',
+  match13: 'Match13',
+  match13Says: 'Match13 gives the Forecast and Chances cards. The Teletraan computer reads it with the Match13 key and keeps the numbers on itself, not in Sanity.',
   cards: 'Cards',
   cardsSays: 'Auto shows the cards from two days before a team event. Always shows every card that is on. Off shows none.',
   noSettings: 'Dashboard Settings has not been published yet. Open it, click Publish once, and come back.',

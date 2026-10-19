@@ -14,6 +14,7 @@ import { useDraftDocument, apiVersion } from './draft-fields.js';
 import { fieldRows, saveLine } from './field-editor.js';
 import { specsOf, problemWith, changeFor } from './field-editor-parts.js';
 import { FrcStatusInput } from './frc-status-input.js';
+import { Match13StatusInput } from './match13-status-input.js';
 import { words, fieldNames, settingsId } from './competition-parts.js';
 
 const h = createElement;
@@ -37,6 +38,7 @@ export function pageOf(model, handlers) {
       h('h1', { style: styles.heading }, words.title),
       h('p', { style: styles.text }, words.intro),
       h('div', { 'data-block': 'connection' }, h('h2', { style: styles.subheading }, words.connection), h('p', { style: styles.muted }, words.connectionSays), h(FrcStatusInput, null)),
+      h('div', { 'data-block': 'match13' }, h('h2', { style: styles.subheading }, words.match13), h('p', { style: styles.muted }, words.match13Says), h(Match13StatusInput, null)),
       h('div', { 'data-block': 'cards' }, h('h2', { style: styles.subheading }, words.cards), h('p', { style: styles.muted }, words.cardsSays), cards),
       saveLine(settings)
     )

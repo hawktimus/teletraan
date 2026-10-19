@@ -14,7 +14,7 @@ const TOP = 8;
 // The chance of the top 8 in words. The simulation gives three points of the finish, not every one, so a
 // number would claim more than the file knows.
 export function topEightWords(row) {
-  if (row.p95 <= TOP) return 'TOP 8: VERY LIKELY';
+  if (row.p95 <= TOP) return 'TOP 8: NEARLY SURE';
   if (row.p50 <= TOP) return 'TOP 8: LIKELY';
   if (row.p5 <= TOP) return 'TOP 8: POSSIBLE';
   return 'TOP 8: UNLIKELY';

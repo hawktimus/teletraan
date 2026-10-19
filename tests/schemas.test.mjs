@@ -4511,7 +4511,7 @@ function checkCompetitionTab() {
   need(problems, mode && /Auto/.test(mode.description || '') && /Always/.test(mode.description || '') && /Off/.test(mode.description || ''), 'the competitionMode description should say what Auto, Always and Off do');
 
   // One switch for each card, in this order, all on to start with, in the names of config.js
-  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points'];
+  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points', 'Event forecast (Match13)', 'Championship chances (Match13)'];
   need(problems, config.competitionSwitches.join() === competitionNames.join(), 'competitionSwitches in config.js should be the switches of the Competition tab, in order: ' + competitionNames.join(', '));
   competitionNames.forEach((name, index) => {
     const field = at(name);

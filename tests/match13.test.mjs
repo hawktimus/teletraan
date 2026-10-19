@@ -136,7 +136,7 @@ test('the forecast says plainly when there is nothing, and a settled rank has a 
   match13.setMatch13(settled, null);
   try {
     const html = forecast.markupFor(null, now);
-    assert.ok(html.includes('SETTLED AT 5TH') && html.includes('TOP 8: VERY LIKELY'));
+    assert.ok(html.includes('SETTLED AT 5TH') && html.includes('TOP 8: NEARLY SURE'));
     assert.ok(/<rect class="span" x="\d+" y="\d+" width="14"/.test(html), 'a settled rank is still a bar you can see');
     assert.ok(!html.includes('stale-chip'), 'one hour old is not stale');
     const old = forecast.markupFor(null, new Date('2026-01-02T06:00:00Z'));
@@ -147,7 +147,7 @@ test('the forecast says plainly when there is nothing, and a settled rank has a 
 });
 
 test('the top 8 words come from the three ranks of the simulation', () => {
-  assert.equal(forecast.topEightWords({ p5: 1, p50: 3, p95: 8 }), 'TOP 8: VERY LIKELY');
+  assert.equal(forecast.topEightWords({ p5: 1, p50: 3, p95: 8 }), 'TOP 8: NEARLY SURE');
   assert.equal(forecast.topEightWords({ p5: 2, p50: 8, p95: 14 }), 'TOP 8: LIKELY');
   assert.equal(forecast.topEightWords({ p5: 5, p50: 11, p95: 22 }), 'TOP 8: POSSIBLE');
   assert.equal(forecast.topEightWords({ p5: 12, p50: 20, p95: 30 }), 'TOP 8: UNLIKELY');

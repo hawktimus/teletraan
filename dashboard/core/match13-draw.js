@@ -62,7 +62,7 @@ export function eventTitle(content, key, now) {
   return found ? eventName(found) : key.toUpperCase();
 }
 
-// 80% from 0.8, with 0% and 100% kept for values that really are those, and nothing in between rounded to either
+// 80% from 0.8, with 0% and 100% kept for values that are those, and nothing in between rounded to either
 export function percentText(value) {
   if (typeof value !== 'number' || !isFinite(value)) return '-';
   const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);

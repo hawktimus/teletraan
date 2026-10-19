@@ -85,7 +85,7 @@ test('the fields the Today, Look, Competition and team pages took over are hidde
   ['pageSeconds', 'doneDays', 'countdown', 'calendars', 'mondayEveryMinutes', 'nightEnabled'].forEach(name => assert.notEqual(fieldNamed(name).hidden, true, name + ' stays'));
 });
 
-test('the Competition page shows the connection, the mode and seven switches, and writes only the field changed', async () => {
+test('the Competition page shows the connection, the Match13 block, the mode and nine switches, and writes only the field changed', async () => {
   globalThis.studioClient = fakeClient([{ _id: 'dashboardSettings', _type: 'dashboardSettings', competitionMode: 'auto', motion: 'calm' }]);
   const page = studio.mount(view.CompetitionView);
   await page.settle();
@@ -94,7 +94,8 @@ test('the Competition page shows the connection, the mode and seven switches, an
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'connection').length === 1);
   const rows = nodesWhere(page.tree(), node => node.props && node.props['data-field']).map(node => node.props['data-field']);
   assert.deepEqual(rows, parts.fieldNames);
-  assert.equal(parts.cardNames.length, 7);
+  assert.equal(parts.cardNames.length, 9);
+  assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'match13').length === 1, 'the Match13 block');
 
   const radio = nodesWhere(page.tree(), node => node.type === 'input' && node.props.value === 'always')[0];
   radio.props.onChange();
