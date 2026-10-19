@@ -9,6 +9,8 @@ export const words = {
   intro: 'The competition cards show the season, an event preview, our matches and a recap. Pick when they come, then click Publish all in the top bar.',
   connection: 'Competition data',
   connectionSays: 'When the Teletraan computer last read the public competition data.',
+  match13: 'Match13',
+  match13Says: 'Match13 gives the Forecast and Chances cards. The Teletraan computer reads it with the Match13 key and keeps the numbers on itself, not in Sanity.',
   cards: 'Cards',
   cardsSays: 'The mode says when the cards come. Each card has a switch of its own.',
   modesTitle: 'The modes',
@@ -23,8 +25,9 @@ export const words = {
 };
 
 // The mode, then one switch for each card, in the order of dashboard/core/competition.js
-export const cardNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap'];
+export const cardNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify'];
 export const fieldNames = ['competitionMode'].concat(cardNames);
 
 // Every field of Dashboard Settings that the page shows. Dashboard Settings hides each of them (dashboardSettings.js).
 export const settingsNames = ['frcConnection'].concat(fieldNames);
+// The four fields of the FRC news section (news-parts.js) are hidden in Dashboard Settings the same way

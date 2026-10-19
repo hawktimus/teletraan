@@ -36,6 +36,9 @@ import { requestsQuery } from './request-poll.js';
 // deleted has no code either. A team's logo is sent like a person's photo.
 // The FRC data (frc-status) is one document that the Teletraan computer writes. It is sent as it is and
 // core/frc.js cleans it. No document means no competition cards.
+// The FRC news (frc-news) is one document that the Teletraan computer writes: the newest headlines of the FIRST blog, with
+// a title, a date, categories and an address, and never the text of an article. core/news.js cleans it. No document means the
+// FRC news panel has nothing to show.
 // The board status (monday-status) is one document that the Teletraan computer writes. Only the sync time and the
 // daily counts of open items are asked for, and core/monday.js cleans them. No document means the
 // progress card has no line to draw. The tasks from the board come with the other tasks, above, and
@@ -157,6 +160,7 @@ export const contentQuery = `{
     "sidePanels": coalesce(sidePanels, [])
   },
   "frc": *[_id == "frc-status"][0],
+  "news": *[_id == "frc-news"][0] { lastSyncAt, lastError, "items": coalesce(items, []) [] { title, link, date, categories, systemcore } },
   "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) },
   "mini": *[_id == "status-mini"][0] { lastCalendarSyncAt }
 }`;

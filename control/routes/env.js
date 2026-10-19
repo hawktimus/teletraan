@@ -52,6 +52,14 @@ export function register(router, ctx) {
         // the timer runs it within 15 minutes
       }
     }
+    // A new Match13 key reads the forecasts at once, so the Status tab shows the state without a wait
+    if (changed.some(item => item.name === 'MATCH13_API_KEY' && item.did === 'set')) {
+      try {
+        await ctx.helper('sync-now', ['match13']);
+      } catch (error) {
+        // the timer runs it within 30 minutes
+      }
+    }
     send(res, 200, { ok: true, changed: changed, calendarsRun: synced, ...describe(readEnv(envPath(ctx))) });
   });
 }

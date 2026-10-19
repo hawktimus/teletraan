@@ -21,7 +21,7 @@ const kept = await studio.load('inputs/kept-data-view.js');
 const keptParts = await studio.load('inputs/kept-data-parts.js');
 
 // The 102 names Dashboard Settings had before it was cleaned up. None may be renamed or removed.
-const storedNames = ['miniStatus', 'team', 'lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule', 'dailyStyles', 'mondayStyle', 'teamOrder', 'lookSwap', 'style', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'teamMode', 'alternateMinutes', 'logoAnimations', 'logoEntrance', 'logoSpin', 'logoSpinEvery', 'logoSpinDuration', 'logoHawk', 'logoHawkEvery', 'logoHawkDuration', 'nameTransform', 'nameEvery', 'nameDuration', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance', 'rotationRows', 'transitionSeconds', 'countdown', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince', 'photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame', 'announcements', 'announceRequest', 'nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest', 'presentationsEnabled', 'noShowMinutes', 'graceMinutes', 'presentationTestRequest', 'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards', 'frcConnection', 'competitionMode', 'competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'contentSource', 'showConnectionStatus'];
+const storedNames = ['miniStatus', 'team', 'lookNote', 'cycleNote', 'generalViewName', 'generalViewTitle', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule', 'dailyStyles', 'mondayStyle', 'teamOrder', 'lookSwap', 'style', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'teamMode', 'alternateMinutes', 'logoAnimations', 'logoEntrance', 'logoSpin', 'logoSpinEvery', 'logoSpinDuration', 'logoHawk', 'logoHawkEvery', 'logoHawkDuration', 'nameTransform', 'nameEvery', 'nameDuration', 'pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance', 'rotationRows', 'transitionSeconds', 'countdown', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince', 'photoOrder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame', 'announcements', 'announceRequest', 'nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest', 'presentationsEnabled', 'noShowMinutes', 'graceMinutes', 'presentationTestRequest', 'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards', 'frcConnection', 'competitionMode', 'competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionForecast', 'competitionQualify', 'contentSource', 'showConnectionStatus'];
 
 // What the old Screens runtime and the retired settings left behind. Each is hidden and says Not used any more.
 const neverUsed = ['screenSchedule', 'dailyStyles', 'mondayStyle', 'teamOrder', 'lookSwap', 'style', 'teamMode', 'alternateMinutes', 'viewOrder', 'generalViewName', 'logoHawkEvery', 'nameEvery', 'photoSeconds', 'portraitScale', 'photoScale', 'nightStart', 'nightEnd', 'noShowMinutes', 'graceMinutes', 'contentSource'];
@@ -32,8 +32,8 @@ test('no stored name of Dashboard Settings changed: all of them are still fields
   const now = settings.fields.map(field => field.name);
   assert.deepEqual(storedNames.filter(name => now.indexOf(name) === -1), []);
   assert.equal(settings.name, 'dashboardSettings');
-  // The Photos page added the first two, and hides them here. The Before and after cards added the last three switches
-  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'competitionPreview', 'competitionMatches', 'competitionRecap'], 'no other field was added');
+  // The Photos page added the first two, the FRC news section the next four, and the Before and after cards the last three switches. Each is hidden here
+  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
 });
 
 test('there are five tabs at most, in the order of the content map, and Timing opens first', () => {
@@ -85,7 +85,7 @@ test('the fields the Today, Look, Competition and team pages took over are hidde
   ['pageSeconds', 'doneDays', 'countdown', 'calendars', 'mondayEveryMinutes', 'nightEnabled'].forEach(name => assert.notEqual(fieldNamed(name).hidden, true, name + ' stays'));
 });
 
-test('the Competition page shows the connection, the modes and ten switches, and writes only the field changed', async () => {
+test('the Competition page shows the connection, the Match13 block, the modes and twelve switches, and writes only the field changed', async () => {
   globalThis.studioClient = fakeClient([{ _id: 'dashboardSettings', _type: 'dashboardSettings', competitionMode: 'auto', motion: 'calm' }]);
   const page = studio.mount(view.CompetitionView);
   await page.settle();
@@ -94,7 +94,8 @@ test('the Competition page shows the connection, the modes and ten switches, and
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'connection').length === 1);
   const rows = nodesWhere(page.tree(), node => node.props && node.props['data-field']).map(node => node.props['data-field']);
   assert.deepEqual(rows, parts.fieldNames);
-  assert.equal(parts.cardNames.length, 10);
+  assert.equal(parts.cardNames.length, 12);
+  assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'match13').length === 1, 'the Match13 block');
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'modes').length === 1, 'the modes are described in plain words');
   assert.match(wordsIn(page.tree()), /Before and after \(recommended\)/);
 

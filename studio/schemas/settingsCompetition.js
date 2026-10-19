@@ -45,6 +45,8 @@ const cards = [
   { name: 'competitionPreview', title: 'Event preview', description: 'The next event, the days left, the strength of the field by EPA and the season trend. In Before and after it shows from 14 days before an event.' },
   { name: 'competitionMatches', title: 'Our matches', description: 'Our qualification matches with the chance of winning each. In Before and after it shows once the schedule is posted, usually the evening before.' },
   { name: 'competitionRecap', title: 'Event recap', description: 'The final rank, record, awards and the change in EPA. In Before and after it shows for 7 days after an event.' },
+  { name: 'competitionForecast', title: 'Event forecast (Match13)', description: 'Where Match13 expects each team to finish the event. Needs the Match13 key. In Auto it shows from two days before an event.' },
+  { name: 'competitionQualify', title: 'Championship chances (Match13)', description: 'The chance of the District and World Championship. Needs the Match13 key. In Auto it shows once the first event has started.' },
 ];
 
 export function competitionFields() {

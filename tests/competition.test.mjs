@@ -40,6 +40,8 @@ const cardNames = ['next-match', 'rank', 'results', 'alliance', 'timeline', 'dis
 const newerNames = ['preview', 'matches', 'recap'];
 const cardIds = cardNames.map(name => 'competition-' + name);
 const newerIds = newerNames.map(name => 'competition-' + name);
+// The two Match13 cards take their numbers from match13.json, so they are tested in tests/match13.test.mjs
+const match13Ids = ['competition-forecast', 'competition-qualify'];
 cardIds.forEach(id => {
   fs.mkdirSync(path.join(root, 'panels', id), { recursive: true });
   copyModule(path.join(dashboardFolder, 'panels', id, 'panel.js'), path.join(root, 'panels', id, 'panel.js'));
@@ -118,9 +120,9 @@ const idsOf = plan => plan.cards.map(id => id.replace('competition-', ''));
 
 // The settings
 
-test('the mode and the ten switches have their lists and starting values in config.js, and anything odd is the starting value', () => {
+test('the mode and the twelve switches have their lists and starting values in config.js, and anything odd is the starting value', () => {
   assert.deepEqual(config.competitionModes, ['auto', 'always', 'off', 'around']);
-  assert.deepEqual(config.competitionSwitches, ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap']);
+  assert.deepEqual(config.competitionSwitches, ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify']);
   // a settings document with no stored mode plays Before and after, and a stored mode is kept
   assert.equal(config.defaultSettings.competitionMode, 'around');
   config.competitionSwitches.forEach(name => assert.equal(config.defaultSettings[name], true, name));
@@ -313,7 +315,7 @@ test('Auto: the cards due on each day of the season, with the next match first a
     assert.equal(plan.priority, entry[3], entry[0] + ' priority');
     assert.deepEqual(competition.dueCards(content, noon(entry[0])), plan.cards);
   });
-  assert.deepEqual(competition.cards.map(card => card.id), cardIds.concat(newerIds), 'the cards are listed in the order of priority, with the newer ones last');
+  assert.deepEqual(competition.cards.map(card => card.id), cardIds.concat(newerIds, match13Ids), 'the cards are listed in the order of priority, with the newer ones last');
 });
 
 test('the window follows the date in the time zone of the Look page, not the computer', () => {
@@ -344,7 +346,8 @@ test('Always shows every card with something to show whatever the date, Off show
   config.competitionSwitches.forEach((name, index) => {
     const content = contentWith(raw => { raw.settings.competitionMode = 'always'; raw.settings[name] = false; });
     const left = idsOf(competition.competitionPlan(content, noon('2027-03-12')));
-    assert.equal(left.length, 9, name);
+    // the two Match13 cards have no data in this content, so they are not in the list to start with
+    assert.equal(left.length, match13Ids.some(id => id.endsWith(name.replace('competition', '').toLowerCase())) ? 10 : 9, name);
     assert.ok(!left.includes(competition.cards.find(card => card.setting === name).id.replace('competition-', '')), name + ' is off');
   });
   const allOff = contentWith(raw => { config.competitionSwitches.forEach(name => { raw.settings[name] = false; }); });
@@ -513,12 +516,12 @@ test('Preview competition shows every card in order of priority on the sample da
     assert.equal(competition.previewIsOn(start), true);
     assert.equal(competition.frcOf(content, start), sample, 'the cards draw the preview data, not the content');
     const steps = competition.withCompetition(playlist, content, start);
-    assert.deepEqual(steps.map(step => step.panel), cardIds.concat(newerIds), 'every card, whatever the mode, the switches and the date');
-    assert.ok(steps.every(step => step.show === true && step.seconds === 12), '120 seconds shared by 10 is 12');
+    assert.deepEqual(steps.map(step => step.panel), cardIds.concat(newerIds, match13Ids), 'every card, whatever the mode, the switches and the date');
+    assert.ok(steps.every(step => step.show === true && step.seconds === 10), '120 seconds shared by 12 is 10');
     assert.ok(steps.length * steps[0].seconds <= config.competitionPreviewSeconds);
 
     const off = contentWith(raw => { raw.settings.competitionMode = 'off'; config.competitionSwitches.forEach(name => { raw.settings[name] = false; }); });
-    assert.equal(competition.withCompetition(playlist, off, start).length, 10, 'a preview is asked for, so the settings do not stop it');
+    assert.equal(competition.withCompetition(playlist, off, start).length, 12, 'a preview is asked for, so the settings do not stop it');
     assert.equal(competition.previewIsOn(new Date(until)), false, 'it ends at its time');
     assert.deepEqual(competition.withCompetition(playlist, content, new Date(until)), playlist);
   } finally {
@@ -1202,8 +1205,8 @@ test('every card is a panel of the large frame with a script and a stylesheet, i
     assert.ok(!read('core/panel-order.js').includes(id) && !config.defaultSettings.rotation.grid1.some(step => step.panel === id), id + ' is not in a rotation list');
   });
   newerIds.forEach(id => assert.ok(registry.includes("{ id: '" + id + "', region: 'grid1', topic: 'competition', competition: true },"), id));
-  assert.equal(countOf(registry, 'competition: true'), 10);
-  assert.deepEqual(competition.cards.map(card => card.id).sort(), cardIds.concat(newerIds).sort());
+  assert.equal(countOf(registry, 'competition: true'), 12);
+  assert.deepEqual(competition.cards.map(card => card.id).sort(), cardIds.concat(newerIds, match13Ids).sort());
   assert.ok(cardIds.every(id => competition.isCard(id)) && !competition.isCard('tasks'));
   competition.cards.forEach(card => assert.ok(config.competitionSwitches.includes(card.setting), card.id + ' has a switch'));
 });

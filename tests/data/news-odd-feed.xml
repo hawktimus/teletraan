@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!DOCTYPE rss>
+<rss version="2.0"><channel>
+<title>Channel title is not an item</title>
+<!-- <item><title>Hidden in a comment</title></item> -->
+<item>
+<title><![CDATA[CDATA title with <b>tag</b> & ampersand]]></title>
+<link> https://news.example.test/cdata </link>
+<description><![CDATA[<item><title>Fake title inside a description</title><category>FRC</category></item>]]></description>
+<category><![CDATA[FRC]]></category>
+<category>  control   system </category>
+<pubDate>Mon, 5 Oct 2026 08:30 +0200</pubDate>
+</item>
+<item>
+<title>Entities &amp; things: &#8217;quoted&#8217; &#x2014; dash &lt;b&gt; &nbsp;gap &unknown; &amp;#8217;</title>
+<link>https://news.example.test/entities</link>
+<category>FRC</category>
+<category/>
+<pubDate>Sun, 04 Oct 2026 23:10:00 EST</pubDate>
+</item>
+<item>
+<title>No date at all</title>
+<link>https://news.example.test/nodate</link>
+<category>FRC</category>
+</item>
+<item>
+<title>No link here</title>
+<category>FRC</category>
+<dc:date>2026-10-01T10:00:00Z</dc:date>
+</item>
+<item>
+<title>Only a date line, with a fraction</title>
+<link>https://news.example.test/fraction</link>
+<category>Control System</category>
+<dc:date>2026-10-03T10:00:00.250Z</dc:date>
+</item>
+</channel></rss>

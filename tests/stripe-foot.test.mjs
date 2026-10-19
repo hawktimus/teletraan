@@ -140,6 +140,12 @@ const panels = {
     const height = pixels(valueIn(style, panelCss('roster'), '.roster .body', 'height'));
     return { bottom: top + height, box: top + height, top: top };
   },
+  // FRC news has one window of headlines
+  'frc-news': style => {
+    const top = pixels(valueIn(style, panelCss('frc-news'), '.frc-news .rows', 'top'));
+    const height = pixels(valueIn(style, panelCss('frc-news'), '.frc-news .rows', 'height'));
+    return { bottom: top + height, box: top + height, top: top };
+  },
   custom: style => {
     const top = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'top'));
     const height = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'height'));
@@ -152,8 +158,8 @@ const panels = {
   },
 };
 
-// The ten cards of the competition and the five of Monday
-['alliance', 'district', 'last-season', 'matches', 'next-match', 'preview', 'rank', 'recap', 'results', 'timeline'].forEach(card => {
+// The twelve cards of the competition (the last two are the Match13 cards) and the five of Monday
+['alliance', 'district', 'last-season', 'matches', 'next-match', 'preview', 'rank', 'recap', 'results', 'timeline', 'forecast', 'qualify'].forEach(card => {
   const name = 'competition-' + card;
   panels[name] = style => {
     const top = pixels(valueIn(style, panelCss(name), '.' + name + ' .body', 'top'));

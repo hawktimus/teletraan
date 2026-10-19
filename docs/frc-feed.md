@@ -4,7 +4,7 @@ For the coaches and the students who look after the Teletraan computer. The comp
 public competition data of each team and keeps it in Sanity, so the screen can
 show the season, the next match, the last results, the rank and the ratings.
 This page says what it reads, what it writes, how often, what to do when it
-stops, and then what the screen does with it: the ten competition cards, the
+stops, and then what the screen does with it: the twelve competition cards, the
 setting that says when they come, and the Preview competition button.
 
 None of it has been tried against the live services. The addresses and the
@@ -218,7 +218,7 @@ Until then `cutoff` is empty and nothing is shown.
 ## The cards on the screen
 
 The screen reads the document `frc-status` with the rest of the content, and draws
-it as ten cards in the large panel. Each card is a panel in
+it as twelve cards in the large panel. Each card is a panel in
 `dashboard/panels/competition-*`, drawn as plain SVG at the size of the large
 panel, with no text under 44px and no line thinner than 3px. A card shows the
 data of the team that is on the screen. A team that the Teletraan computer did not read has no
@@ -360,9 +360,23 @@ our qualification matches). The Blue Alliance needs the key. Statbotics needs no
   are 28px and the last value is written next to the last point.
 - Everything on these cards is public data: team numbers, nicknames, match numbers and times and ratings.
 
+## Match13 in the preview and matches cards
+
+When Match13 has numbers (docs/match13.md), the cards use them first and Statbotics second.
+
+- Event preview: the field list and "Prime would rank 9th of 36 by xP" come from `fieldStrengthFor(eventKey)`, the xP rating
+  of Match13. Match13 gives the best 16 teams and the average, so a team of ours outside the best 16 has no line. Without
+  Match13 the list is by Statbotics EPA as described above.
+- Our matches: the chance of winning each match, the expected scores and the chance of each ranking point come from
+  `matchForecastFor(matchKey)`. Match13 does not say which alliance is red, so the colour of our alliance comes from the
+  schedule in frc-status. A match Match13 does not have uses the Statbotics chance, and then the estimate.
+- One small line on the card says where the ratings come from: "Ratings: Match13" or "Ratings: Statbotics".
+- The two Match13 cards, Forecast and Chances, follow the same phase rule in Before and after: they play in the preview and
+  recap days and not while an event is on. In Auto they come as before.
+
 ## Preview competition
 
-The button on the Start here page shows the ten cards on sample data, so the
+The button on the Start here page shows the twelve cards on sample data, so the
 team can see them before the season, with no key and no internet. Click it and,
 within a few seconds:
 
@@ -373,7 +387,7 @@ within a few seconds:
   The numbers of the other teams are made up and written in brackets, such as
   [1121], and the headers say SAMPLE.
 - The large panel shows every card in order of priority, each for an equal share
-  of 2 minutes (12 seconds), whatever the mode and the switches say. The three newer cards come last,
+  of 2 minutes (10 seconds), whatever the mode and the switches say. The three newer cards come last,
   and each page of one of them is held for the same time (the Events panel does the same). Then it
   goes back to its own list.
 - Nothing is read from Sanity or from the Teletraan computer, and nothing is written. One

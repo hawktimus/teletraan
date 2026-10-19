@@ -5,7 +5,7 @@
 export const hidden = '<hidden>';
 
 // The names of the keys in local.env, and any other setting whose name says it holds a secret
-const named = /\b((?:export\s+)?(?:SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]*_URL|[A-Za-z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)[A-Za-z0-9_]*))\s*[=:]\s*("[^"]*"|'[^']*'|\S*)/g;
+const named = /\b((?:export\s+)?(?:SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|MATCH13_API_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]*_URL|[A-Za-z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)[A-Za-z0-9_]*))\s*[=:]\s*("[^"]*"|'[^']*'|\S*)/g;
 const bearer = /\bBearer\s+[^\s"']+/gi;
 // A JWT: three base64url parts joined by dots
 const jwt = /\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g;

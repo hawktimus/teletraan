@@ -100,6 +100,7 @@ page names them and never holds a value.
 | `MONDAY_API_TOKEN` | Read the Monday boards | Monday, Developers, My access tokens | docs/rebuilding-the-computer.md, step 18, and docs/monday.md |
 | `TBA_AUTH_KEY` | Read the competition data | The Blue Alliance, Account, Read API Keys | docs/rebuilding-the-computer.md, step 17, and docs/frc-feed.md |
 | `GOOGLE_API_KEY` | Copy the pictures of a Google Drive photo folder | Google Cloud console, an API key for the Google Drive API | docs/photos-drive.md |
+| `MATCH13_API_KEY` | Read the forecasts of the coming matches | match13.com, Account page | docs/match13.md |
 
 A script that does not find its key does nothing, says so in one line and ends
 without an error. `computer/local.example.env` has each line with a placeholder. The
@@ -366,7 +367,7 @@ says how each is drawn.
 ## The competition feed
 
 The Teletraan computer reads the public competition data of each team and keeps it in Sanity, and
-the screen draws ten cards from it (docs/frc-feed.md). The team is not at the school during a
+the screen draws twelve cards from it (docs/frc-feed.md). The team is not at the school during a
 competition, so the mode we recommend, Before and after, shows a preview before an event and a
 recap after it, and shows nothing while the event is on.
 
@@ -386,7 +387,7 @@ recap after it, and shows nothing while the event is on.
   mode plays Before and after. A mode that is already stored, Auto included, stays until you
   change it. A switch for each card is on to start with, and a card that is off never shows,
   except in Preview competition.
-- Preview competition, on the Start here page, shows all ten cards for 2 minutes
+- Preview competition, on the Start here page, shows all twelve cards for 2 minutes
   on made-up data, with no key and no internet.
 
 | Card | What it shows | When it comes in Auto |

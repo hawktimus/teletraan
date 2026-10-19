@@ -38,6 +38,19 @@ async function checkPresentationsOn(ctx) {
   }
 }
 
+// The screen ignores a push while Allow hidden transitions is off, so the page says so
+async function checkHiddenOn(ctx) {
+  let enabled;
+  try {
+    enabled = await makeSanity(ctx).query('*[_id == "dashboardSettings"][0].hiddenEnabled');
+  } catch (error) {
+    return;
+  }
+  if (enabled === false) {
+    throw new Refusal(409, 'Allow hidden transitions is switched off, so the screen would ignore it. Switch it on under Dashboard Settings, Advanced in the Studio, publish, then press the button again.');
+  }
+}
+
 export function register(router, ctx) {
   mount(router, ctx, 'GET', '/request', async (req, res) => {
     let data = null;
@@ -68,6 +81,7 @@ export function register(router, ctx) {
     const body = await readJson(req);
     const built = buildRequest(body.action, body, new Date());
     if (body.action === 'presentation-test') await checkPresentationsOn(ctx);
+    if (body.action === 'hidden') await checkHiddenOn(ctx);
     await makeSanity(ctx).mutate(mutationsFor(built));
     const until = (built.set && ((built.set.previewTheme && built.set.previewTheme.until) || (built.set.showView && built.set.showView.until))) || '';
     send(res, 200, { ok: true, action: body.action, until: until });

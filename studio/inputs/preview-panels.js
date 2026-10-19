@@ -26,6 +26,7 @@ export const previewPanels = [
   { id: 'pie-prime', title: 'Prime status pie', panel: 'monday-pie', team: 'prime', slot: 0 },
   { id: 'pie-nova', title: 'Nova status pie', panel: 'monday-pie', team: 'nova', slot: 0 },
   { id: 'drive-hours', title: 'Drive hours', panel: 'driveHours', team: '', slot: 0 },
+  { id: 'frc-news', title: 'FRC news', panel: 'frc-news', team: '', slot: 0 },
   { id: 'parts-request', title: 'Parts request (small panel)', panel: 'qrParts', team: '', slot: 0 },
   { id: 'mini-idea-1', title: 'Mini panel idea 1 (small panel)', panel: 'miniIdea1', team: '', slot: 0 },
   // The Before and after cards. phase moves the dates of the competition data so that the card is drawn in its own phase (docs/frc-feed.md)

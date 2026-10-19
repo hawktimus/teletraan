@@ -1,0 +1,104 @@
+/* The header sits on top of the two header plates of the area's frame. At the right end are the words FROM FIRST, the amber
+   chip when the list is old, and the slashes. */
+.frc-news .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.frc-news .title {
+  flex: none;
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.frc-news .tag {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.frc-news .ago {
+  color: var(--lilac);
+  white-space: nowrap;
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.frc-news .stale-chip {
+  flex: none;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: var(--ground);
+  background: var(--stale);
+  font: 700 30px/44px var(--font-display);
+}
+/* Beside the chip the words need more than the 289px at the right end of a header 1152 wide, so only the chip is shown
+   there, with the slashes. The header of the bar layout is as wide as the panel and has the room. */
+.frc-news .tag-stale .ago { display: none; }
+html[data-layout="bar"] .frc-news .tag-stale .ago { display: inline; }
+.frc-news .tag .double-slash { flex: none; }
+
+/* The window is 528px high and starts at 136, so it ends at 664, above the slashes at the foot of the large frame in Cybertron and
+   under the stripe below the header there (the same box in every style). A row is as high as its headline, with 12px above and below, and carries the thin metal bar
+   under it, except the last. The headline column is 824px wide: the date column is 240px and 88px stay clear of the cut
+   corner at the bottom right (core/news.js, newsLayout, works out how many rows fit). */
+.frc-news .rows {
+  position: absolute;
+  left: 0;
+  top: 136px;
+  width: 1152px;
+  height: 528px;
+  overflow: hidden;
+}
+.frc-news .row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding: 12px 88px 12px 0;
+}
+.frc-news .row-bar {
+  left: 14px;
+  bottom: -10px;
+}
+.frc-news .date {
+  flex: none;
+  width: 240px;
+  color: var(--yellow);
+  text-align: center;
+  white-space: nowrap;
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+/* The page keeps every line on one line (base.css). A headline may wrap, and is never cut */
+.frc-news .headline {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: normal;
+  font: 500 var(--size-label)/52px var(--font-text);
+  overflow-wrap: break-word;
+}
+.frc-news .row-big .date { line-height: 72px; }
+.frc-news .row-big .headline { font: 600 var(--size-body-large)/72px var(--font-text); }
+
+/* The chip is the 30px text of every chip, in the colors of the kind chip of the Events panel */
+.frc-news .chip {
+  display: inline-block;
+  margin-left: 14px;
+  padding: 0 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: var(--yellow);
+  color: var(--ground);
+  font: 700 30px/40px var(--font-display);
+}
+.frc-news .empty {
+  margin: 0;
+  padding: 40px 76px;
+  color: var(--lilac);
+  font: 500 var(--size-body)/64px var(--font-text);
+}

@@ -60,6 +60,7 @@ export const panels = [
   { id: 'team-leads', region: 'grid1', topic: 'subteams' },
   { id: 'roster', region: 'grid1', topic: 'subteams' },
   { id: 'driveHours', region: 'grid1', topic: 'subteams', rotationOnly: true },
+  { id: 'frc-news', region: 'grid1', topic: 'news', rotationOnly: true },
   { id: 'custom', region: 'grid1', topic: 'custom' },
   // placeholders: a title and a dashed frame, to be designed (core/placeholder.js)
   { id: 'robotStatus', region: 'grid1', topic: 'robot', placeholder: true },
@@ -74,6 +75,8 @@ export const panels = [
   { id: 'competition-preview', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-matches', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-recap', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-forecast', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-qualify', region: 'grid1', topic: 'competition', competition: true },
   { id: 'monday-tasks', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-done', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-status-depts', region: 'grid1', topic: 'monday', monday: true },

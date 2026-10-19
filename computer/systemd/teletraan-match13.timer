@@ -1,0 +1,12 @@
+[Unit]
+Description=Wake the Match13 forecasts every 30 minutes
+
+[Timer]
+# One timer wakes the script every 30 minutes. The script ends at once unless it is time. A computer that
+# was off catches up at its next wake.
+OnBootSec=3min
+OnUnitActiveSec=30min
+Unit=teletraan-match13-timer.service
+
+[Install]
+WantedBy=timers.target

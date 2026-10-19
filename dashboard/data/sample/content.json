@@ -27,6 +27,7 @@
   ],
 
   "settings": {
+    "newsInTicker": true,
     "speed": "normal",
     "frameMetal": "gold",
     "glint": true,
@@ -85,7 +86,7 @@
     "groupEventsByKind": false,
     "competitionMode": "auto",
     "competitionTimeline": true, "competitionLastSeason": true, "competitionRank": true, "competitionNextMatch": true,
-    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true, "competitionPreview": true, "competitionMatches": true, "competitionRecap": true,
+    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true, "competitionPreview": true, "competitionMatches": true, "competitionRecap": true, "competitionForecast": true, "competitionQualify": true,
     "mondayBoards": [],
     "mondayShowOwners": false
   },
@@ -392,6 +393,16 @@
       { "date": "2026-10-06", "open": 19 },
       { "date": "2026-10-07", "open": 17 },
       { "date": "2026-10-08", "open": 16 }
+    ]
+  },
+
+  "news": {
+    "sample": true,
+    "hoursAgo": 1,
+    "items": [
+      { "title": "[Sample headline about the control system]", "daysAgo": 4, "link": "https://news.example.test/sample-1", "categories": ["FRC", "Control System"], "systemcore": true, "source": "FIRST" },
+      { "title": "[Sample headline about the season with a long title that wraps onto a second line on the screen]", "daysAgo": 9, "link": "https://news.example.test/sample-2", "categories": ["FRC"], "systemcore": false, "source": "FIRST" },
+      { "title": "[Sample headline about an event]", "daysAgo": 20, "link": "https://news.example.test/sample-3", "categories": ["FRC", "Featured"], "systemcore": false, "source": "FIRST" }
     ]
   },
 

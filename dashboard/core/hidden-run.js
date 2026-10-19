@@ -28,13 +28,14 @@
 // to normal.
 
 import * as frame from '../frame.js';
-import { hiddenAdvanceSeconds } from '../config.js';
+import { hiddenAdvanceSeconds, hiddenForceSeconds, hiddenWindowSeconds } from '../config.js';
 import { setBusy } from './busy.js';
 import { allPictures, makePictureChooser, pictureAddress } from './hidden-pictures.js';
-import { chooseHidden, holdReason, pushedKind, readHandledRequest, readLastFired, rememberHandledRequest, rememberLastFired } from './hidden.js';
+import { chooseHidden, holdReason, pushedKind, tidyHiddenRequest, readHandledRequest, readLastFired, rememberHandledRequest, rememberLastFired } from './hidden.js';
 import { hiddenTransitions } from './hidden-transitions.js';
 import { makePile } from './hidden-pile.js';
-import { preloadImages } from './images.js';
+import { findImageTypes, loadPicture } from './hidden-load.js';
+import { finishRun, noteIgnored, noteStep, secondsText, setBrowser, setImageTypes, startRun } from './hidden-log.js';
 import { setHiddenOffer, startWholeScreen } from './areas.js';
 import { moveOn, pauseRotation, resumeRotation, secondsUntilChange } from './schedule.js';
 import { layoutNow, otherAreas } from './layout.js';
@@ -87,6 +88,8 @@ export async function startHidden(contentGetter, switchText) {
   }
 
   hiddenState.chooser = makePictureChooser(hiddenState.storage);
+  setBrowser(navigator.userAgent);
+  findImageTypes().then(setImageTypes).catch(() => {});
   loadPictures();
   // On the html element, where tokens.css works --time-hidden out from it
   document.documentElement.style.setProperty('--hidden-seconds', String(flySeconds));
@@ -96,29 +99,41 @@ export async function startHidden(contentGetter, switchText) {
 
 // Loads the four pictures now and puts each one in #backdrop when it has loaded,
 // hidden until a step shows it. One that fails to load is left out, and the step
-// that would have used it takes the next picture of its set, or shows none.
+// that would have used it takes the next picture of its set, or shows none. What each load gave
+// (its time, its size or why it failed) is kept for the run log.
 function loadPictures() {
-  const pictures = allPictures();
-
-  preloadImages(pictures.map(pictureAddress)).then(results => {
-    results.forEach((result, index) => {
-      const picture = pictures[index];
-      if (!result.ok) {
-        console.error('The hidden transition picture ' + picture.file + ' did not load, so it is skipped');
-        return;
-      }
-
-      const image = result.image;
-      image.className = 'picture';
-      image.alt = '';
-      image.dataset.fit = picture.fit;
-      if (picture.crisp) image.dataset.crisp = 'on';
-      backdrop.appendChild(image);
-      pictureElements[picture.file] = image;
-      // Decoded now, not at the cut. Browsers that cannot do this just decode it when it first shows.
-      if (image.decode) image.decode().catch(() => {});
-    });
+  allPictures().forEach(picture => {
+    loadPicture(pictureAddress(picture)).then(result => keepPicture(picture, result));
   });
+}
+
+function keepPicture(picture, result) {
+  hiddenState.pictureFacts[picture.file] = result;
+  if (!result.ok) {
+    console.error('The hidden transition picture ' + picture.file + ' did not load (' + result.why + '), so it is skipped');
+    return;
+  }
+  if (pictureElements[picture.file]) return;
+
+  const image = result.image;
+  image.className = 'picture';
+  image.alt = '';
+  image.dataset.fit = picture.fit;
+  if (picture.crisp) image.dataset.crisp = 'on';
+  backdrop.appendChild(image);
+  pictureElements[picture.file] = image;
+  // Decoded now, not at the cut. Browsers that cannot do this just decode it when it first shows.
+  if (image.decode) image.decode().catch(() => {});
+}
+
+// A picture that failed at the start may only have met a busy moment of the web server. Before a transition plays,
+// the missing ones are asked for once more, for four seconds at most, so one bad moment does not cost the picture for good.
+async function retryMissingPictures() {
+  const missing = allPictures().filter(picture => pictureElements[picture.file] === undefined);
+  if (missing.length === 0) return;
+
+  const tries = missing.map(picture => loadPicture(pictureAddress(picture) + '?again=' + Date.now(), 4000).then(result => keepPicture(picture, result)));
+  await Promise.all(tries);
 }
 
 // What the screen is doing, as core/hidden.js wants it
@@ -152,9 +167,49 @@ function offer() {
   return { play: swapPage => play(choice, content.settings.hiddenRequest.requestedAt, swapPage) };
 }
 
+// The words for why the screen cannot play a transition now
+function busyWords() {
+  const state = screenState();
+  if (state.takeover) return 'an alert, announcement or talk is on';
+  if (state.demo) return 'a demo is on';
+  if (state.night) return 'night mode is on';
+  return 'another transition was running';
+}
+
+const ignoredWords = { off: 'Allow hidden transitions is off (hiddenEnabled)', motion: 'motion is calm or none, not full' };
+const logged = new Set(); // the requests already written to the log as ignored
+
+function logIgnoredOnce(key, kind, words) {
+  if (logged.has(key)) return;
+  logged.add(key);
+  noteIgnored(kind, words);
+}
+
+// A request that was never played and is older than the window ran out unseen. The log says so, once.
+function noteExpired(request) {
+  const tidy = tidyHiddenRequest(request);
+  if (tidy.kind === '' || tidy.requestedAt === hiddenState.handled) return;
+
+  const age = (Date.now() - Date.parse(tidy.requestedAt)) / 1000;
+  if (age <= hiddenWindowSeconds || age > 3600) return;
+
+  const key = tidy.kind + ' ' + tidy.requestedAt;
+  const waited = hiddenState.pending.key === key && hiddenState.pending.why ? ', held by: ' + hiddenState.pending.why : '';
+  logIgnoredOnce(key, tidy.kind, 'request older than ' + Math.round(hiddenWindowSeconds / 60) + ' min' + waited);
+}
+
+// Plays the push now, with no page change of the large panel: the same page comes back after the cube. Used
+// when the panel stays long, is held, or the rotation is paused, so no page change comes in time.
+function playWithoutPageChange(now) {
+  hiddenState.pending.retryAt = now.getTime() + 5000; // a try that finds the areas moving is made again a little later
+  const offered = offer();
+  if (offered) offered.play(() => {}).catch(error => console.error('The hidden transition failed', error));
+}
+
 // Once a second: a push from the Studio does not wait for a page change that is
 // far away. When the large panel has more than hiddenAdvanceSeconds to go, it is
-// asked to change page now, and that page change is where the push plays.
+// asked to change page now, and that page change is where the push plays. When no page change
+// comes within hiddenForceSeconds (a held panel, a paused rotation), it plays without one.
 function look(now) {
   const content = hiddenState.getContent();
   if (!content || hiddenState.addressOff || hiddenState.playing) return;
@@ -163,18 +218,30 @@ function look(now) {
   const wanted = hiddenState.addressKind || pushedKind(request, hiddenState.handled, now);
   if (wanted === '') {
     hiddenState.asked = '';
+    noteExpired(request);
     return;
   }
+
+  const key = wanted + ' ' + request.requestedAt;
+  if (hiddenState.pending.key !== key) hiddenState.pending = { key: key, since: now.getTime(), why: '', retryAt: 0 };
 
   // Off and no motion never play it. Busy (an alert, an announcement, a demo,
   // night mode) waits for the screen to be free again.
   const reason = holdReason(content.settings, screenState());
   if (reason !== '') {
-    if (reason === 'busy') hiddenState.asked = '';
+    if (reason === 'busy') {
+      hiddenState.asked = '';
+      hiddenState.pending.why = busyWords();
+    } else {
+      logIgnoredOnce(key, wanted, ignoredWords[reason]);
+    }
     return;
   }
 
-  const key = wanted + ' ' + request.requestedAt;
+  if (now.getTime() - hiddenState.pending.since >= hiddenForceSeconds * 1000 && now.getTime() >= hiddenState.pending.retryAt) {
+    playWithoutPageChange(now);
+    return;
+  }
   if (hiddenState.asked === key) return;
 
   const left = secondsUntilChange('grid1');
@@ -219,15 +286,24 @@ async function waitForRest() {
 async function play(choice, requestedAt, swapPage) {
   if (hiddenState.playing) return 0;
   hiddenState.playing = true;
+  startRun(choice.kind);
 
-  // From now on the other areas wait at the gate rather than change page. The look stays as it is: the
-  // frames fall into a pile, and a look that drew them again would leave some behind
-  const screen = startWholeScreen(true);
+  let screen = null;
   let cameBack = 0;
+  let ignored = false;
 
   setBusy(true, 'hidden');
   try {
-    if (!await waitForRest()) return 0;
+    await retryMissingPictures();
+
+    // From now on the other areas wait at the gate rather than change page. The look stays as it is: the
+    // frames fall into a pile, and a look that drew them again would leave some behind
+    screen = startWholeScreen(true);
+    if (!await waitForRest()) {
+      ignored = true;
+      noteIgnored(choice.kind, interrupted() ? 'stopped before it began: ' + interruptedWords() : 'the areas did not come to rest within ' + longestRest / 1000 + ' s');
+      return 0;
+    }
 
     // It starts now, so it counts as handled, and a restart will not play it again
     if (choice.how === 'push') {
@@ -245,11 +321,24 @@ async function play(choice, requestedAt, swapPage) {
     await hiddenTransitions[choice.kind].run(scene);
     cameBack = scene.cameBack();
   } catch (error) {
-    if (!(error instanceof Stopped)) console.error('The hidden transition "' + choice.kind + '" failed', error);
+    if (error instanceof Stopped) noteStep('stopped: ' + interruptedWords());
+    else {
+      noteStep('failed: ' + String(error && error.message ? error.message : error).slice(0, 50));
+      console.error('The hidden transition "' + choice.kind + '" failed', error);
+    }
   } finally {
+    if (!ignored) finishRun();
     putBack(screen);
   }
   return cameBack;
+}
+
+// What took the screen from a transition, in words for the log
+function interruptedWords() {
+  if (takeoverRunning()) return 'an alert, announcement or talk began';
+  if (hiddenState.demoRunning()) return 'a demo began';
+  if (hiddenState.nightIsUp()) return 'night mode began';
+  return 'motion is no longer full';
 }
 
 // Takes the glitch layers away, the red one and the blue one
@@ -265,13 +354,47 @@ function clearGlitch() {
 // When no picture of the set can be shown, nothing changes on the backdrop.
 function showPicture(set, state) {
   hiddenState.showing = null;
-  const picture = hiddenState.chooser.next(set, file => pictureElements[file] !== undefined);
-  if (!picture) return;
+  const picture = hiddenState.chooser.next(set, file => {
+    const ready = pictureElements[file] !== undefined;
+    if (!ready) {
+      const facts = hiddenState.pictureFacts[file];
+      noteStep('picture ' + file + ' FAILED: ' + (facts ? facts.why : 'not loaded'));
+    }
+    return ready;
+  });
+  if (!picture) {
+    noteStep('picture none, plain backdrop');
+    return;
+  }
 
+  const facts = hiddenState.pictureFacts[picture.file];
+  noteStep('picture ' + picture.file + ' loaded ' + facts.width + 'x' + facts.height + ' after ' + facts.ms + 'ms');
   hiddenState.showing = pictureElements[picture.file];
   backdrop.style.setProperty('--picture-fill', picture.fill);
   backdrop.dataset.look = 'picture';
   hiddenState.showing.dataset.state = state;
+  hiddenState.shownAt = performance.now();
+}
+
+// How much of the picture shows: the opacity of the picture times that of every element it sits in
+function shownOpacity(element) {
+  let opacity = 1;
+  for (let node = element; node && node !== document.documentElement; node = node.parentElement) {
+    const style = getComputedStyle(node);
+    opacity *= Number(style.opacity);
+    if (style.visibility === 'hidden' || style.display === 'none') return 0;
+  }
+  return opacity;
+}
+
+// Writes down what the page makes of the picture: its size on the screen and how solid it is
+function noteOnScreen() {
+  const image = hiddenState.showing;
+  if (!image) return;
+
+  const opacity = shownOpacity(image);
+  const visible = !backdrop.hidden && image.offsetWidth > 0 && opacity > 0.9;
+  noteStep('on screen ' + image.offsetWidth + 'x' + image.offsetHeight + ' opacity ' + opacity.toFixed(1) + (visible ? '' : ' NOT VISIBLE'));
 }
 
 // The steps a transition is made of (core/hidden-transitions.js lists them)
@@ -299,6 +422,7 @@ function makeScene(screen, swapPage) {
     // The frames collapse into a pile and the backdrop shows behind them. When the content has faded
     // away the pages are swapped, and the areas that were waiting swap theirs. The pile stays down.
     async collapse(look) {
+      const fell = performance.now();
       backdrop.dataset.look = look;
       backdrop.hidden = false;
       world.dataset.hidden = 'break';
@@ -314,6 +438,7 @@ function makeScene(screen, swapPage) {
       await sleep(flySeconds - contentGoneAfter);
       world.dataset.hidden = 'apart';
       clearGlitch();
+      noteStep('pile ' + secondsText(performance.now() - fell));
     },
 
     wait: seconds => sleep(seconds),
@@ -323,13 +448,17 @@ function makeScene(screen, swapPage) {
       backdrop.style.setProperty('--look-seconds', String(seconds));
       showPicture(set, 'in');
       await sleep(seconds);
+      noteOnScreen();
       if (hiddenState.showing) hiddenState.showing.dataset.state = 'on';
     },
 
     // The next picture of the set is there at once, in the very next frame, and stays
     async pictureCut(set, seconds) {
       showPicture(set, 'on');
-      await sleep(seconds);
+      const look = Math.min(0.2, seconds);
+      await sleep(look);
+      noteOnScreen();
+      await sleep(seconds - look);
     },
 
     // The picture fades out
@@ -344,6 +473,7 @@ function makeScene(screen, swapPage) {
     // collapse, and nothing else moves meanwhile. The rotation clock is held from the cube on. cameBack is the
     // rebuild only: the pieces rising and the content coming in
     async rebuild() {
+      if (hiddenState.shownAt) noteStep('effect shown ' + secondsText(performance.now() - hiddenState.shownAt));
       screen.together();
       pauseRotation();
       hiddenState.rotationHeld = true;
@@ -361,6 +491,7 @@ function makeScene(screen, swapPage) {
       hiddenState.pile.contentIn();
       await sleep(pileTimes.contentMs / 1000);
       cameBackIn = performance.now() - started;
+      noteStep('rebuild ok');
     },
 
     cameBack: () => cameBackIn,
@@ -389,10 +520,11 @@ function putBack(screen) {
   backdrop.style.removeProperty('--picture-fill');
   Object.keys(pictureElements).forEach(file => delete pictureElements[file].dataset.state);
   hiddenState.showing = null;
+  hiddenState.shownAt = 0;
   clearGlitch();
   frame.stopGlitch();
   frame.setHiddenPlaying(false);
-  screen.end();
+  if (screen) screen.end();
   setBusy(false, 'hidden');
   hiddenState.playing = false;
 }

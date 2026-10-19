@@ -199,6 +199,8 @@ editors can sign in from anywhere.
                               re-forms, whether the icon of the logo flutters or only goes with them, and how), swap-run.js plays it on the page, in full motion,
                               calm motion or none, and busy.js says that a transition has the screen
                               (docs/layouts.md, "The swap"),
+                              news.js cleans the frc-news document the computer writes, picks the headlines of the
+                              FRC news panel (panels/frc-news) and the ticker, and fits them to the panel.
                               frc.js cleans the frc-status document the computer writes and has the date helpers for
                               it, competition.js decides which competition cards are due now (from the document,
                               the clock and the Competition cards setting) and mixes them into the list of the
@@ -285,6 +287,9 @@ editors can sign in from anywhere.
                               the one it writes for the Calendars page. inputs/time-text.js has the ages in words that
                               both use. frcStatus.js is the document the computer writes for the competition cards,
                               settingsCompetition.js the Competition tab and inputs/frc-status-input.js its connection block.
+                              frcNews.js is the document the computer writes for the FRC news (docs/frc-news.md),
+                              settingsNews.js the four news fields of Dashboard Settings, and inputs/news-section.js,
+                              with news-parts.js, the FRC news section of the Competition page.
                               mondayStatus.js is the document the computer writes for the Monday tab, settingsMonday.js
                               the Monday tab, inputs/monday-status-input.js its connection block and inputs/monday-pickers.js
                               the board and column lists of a board entry (docs/monday.md).
@@ -355,6 +360,9 @@ editors can sign in from anywhere.
                               monday-check.sh (--check) and monday-programs.sh (the jq programs).
                               frc-sync.sh is split the same way into frc-contract.sh, frc-requests.sh,
                               frc-modes.sh, frc-read.sh and frc-programs.sh.
+                              scripts/news-sync.sh reads the FIRST community blog feed (news-rss.awk is its
+                              awk reader) and writes the newest headlines into the frc-news document in
+                              Sanity, and install-news.sh turns on its timer (docs/frc-news.md).
                               scripts/lib.sh is read by every script: the folders, the local.env reader
                               (setting) and the config.js reader (config_value). Every script starts with
                               bash, a usage line, set -euo pipefail and lib.sh.

@@ -41,6 +41,7 @@ function summaryPage(view, state) {
   parts.push(textAt(0, 212, view.record ? 'Expected record ' + view.record.wins + ' ' + (view.record.wins === 1 ? 'win' : 'wins') + ', ' + view.record.losses + ' ' + (view.record.losses === 1 ? 'loss' : 'losses') : 'No expected record yet', 'record'));
   if (view.anyEstimate) parts.push(textAt(0, 252, 'ESTIMATE (EST): THE CHANCE IS WORKED OUT FROM EPA', 'chip'));
 
+  if (view.source) parts.push(textAt(0, 500, 'Ratings: ' + view.source, 'chip'));
   if (view.hardest && view.easiest) {
     parts.push(textAt(0, 352, 'HARDEST ' + view.hardest.label, 'kind'));
     parts.push(textAt(1096, 352, percentText(view.hardest), 'percent', 'end'));
@@ -57,16 +58,20 @@ function blockParts(title, row, top, state) {
   const parts = [
     textAt(0, top, title + ' ' + row.label, 'kind'),
     textAt(1096, top, percentText(row) + (row.estimate ? ' ESTIMATE' : ''), 'percent', 'end'),
-    textAt(0, top + 50, 'WITH ' + teamsText(match.partners), 'alliance'),
-    textAt(0, top + 100, 'VS ' + teamsText(match.opponents), 'alliance'),
+    textAt(0, top + 48, 'WITH ' + teamsText(match.partners), 'alliance'),
+    textAt(0, top + 96, 'VS ' + teamsText(match.opponents), 'alliance'),
   ];
   if (moment) parts.push(textAt(560, top, clockText(state.zone, moment), 'when', 'middle'));
-  if (row.note) parts.push(textAt(0, top + 150, cut(row.note, 40), 'note'));
+  if (row.note) parts.push(textAt(0, top + 144, cut(row.note, 40), 'note'));
+  if (row.forecast && row.forecast.ourScore !== null && row.forecast.theirScore !== null) {
+    const rp = row.forecast.rp.filter(value => value !== null).map(value => Math.round(value * 100)).join(' ');
+    parts.push(textAt(0, top + 192, 'EXPECTED ' + Math.round(row.forecast.ourScore) + ' TO ' + Math.round(row.forecast.theirScore) + (rp ? '  RP ' + rp : ''), 'note'));
+  }
   return parts;
 }
 
 function detailPage(view, state) {
-  const parts = blockParts('HARDEST', view.hardest, 56, state).concat(blockParts('EASIEST', view.easiest, 290, state));
+  const parts = blockParts('HARDEST', view.hardest, 50, state).concat(blockParts('EASIEST', view.easiest, 300, state));
   return { description: 'The hardest and the easiest match', parts: parts };
 }
 

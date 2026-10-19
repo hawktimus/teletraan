@@ -37,7 +37,7 @@ function eventPage(event, strength, state) {
 
 // The best eight, one under the other with our teams marked in their colors, and the average under them
 function fieldPage(strength) {
-  const parts = [textAt(0, 52, 'FIELD STRENGTH BY EPA', 'sub')];
+  const parts = [textAt(0, 52, 'FIELD STRENGTH BY ' + strength.unit.toUpperCase(), 'sub')];
 
   strength.top.forEach((team, index) => {
     const top = ROW_FIRST + index * ROW_HEIGHT;
@@ -50,7 +50,8 @@ function fieldPage(strength) {
     parts.push(textAt(1084, top, numberFor(team.epa), 'epa' + mark, 'end'));
   });
 
-  parts.push(textAt(0, 500, strength.average === null ? 'NO AVERAGE YET' : 'FIELD AVERAGE ' + numberFor(strength.average) + ' EPA', 'average'));
+  parts.push(textAt(0, 500, strength.average === null ? 'NO AVERAGE YET' : 'FIELD AVERAGE ' + numberFor(strength.average) + ' ' + strength.unit.toUpperCase(), 'average'));
+  parts.push(textAt(1096, 500, 'Ratings: ' + strength.source, 'chip', 'end'));
   return { description: 'Field strength: the best teams by EPA, average ' + numberFor(strength.average), parts: parts };
 }
 
@@ -60,7 +61,7 @@ function pagesFor(content, now) {
   const event = entry ? previewEventOf(entry, state.today) : null;
   if (!event) return null;
 
-  const strength = fieldStrength(state.frc, entry);
+  const strength = fieldStrength(state.frc, entry, event.key);
   const pages = [eventPage(event, strength, state)];
   if (strength && strength.top.length > 0) pages.push(fieldPage(strength));
   if (hasTrend(entry.snapshots)) pages.push({ description: 'EPA over the season', parts: trendParts(entry.snapshots, 'EPA OVER THE SEASON') });

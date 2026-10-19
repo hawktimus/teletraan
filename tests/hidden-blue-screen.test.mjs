@@ -69,7 +69,7 @@ test('the two blue screen pictures are files of the dashboard and are the size t
 test('the screen loads every picture of every set when the hidden transitions start', () => {
   const run = read('core/hidden-run.js');
   assert.match(run, /allPictures\(\)/);
-  assert.match(run, /preloadImages\(pictures\.map\(pictureAddress\)\)/);
+  assert.match(run, /loadPicture\(pictureAddress\(picture\)\)/);
   assert.match(run, /pictureElements\[picture\.file\] = image/);
   assert.equal(pictures.allPictures().filter(picture => picture.set === 'blueScreen').length, 2);
 });
@@ -97,8 +97,8 @@ test('with no picture loaded the step gets none, and the run falls back to the p
   const chooser = pictures.makePictureChooser(fakeStorage());
   assert.equal(chooser.next('blueScreen', () => false), null);
   const run = read('core/hidden-run.js');
-  assert.match(run, /if \(!picture\) return;/);
-  assert.match(run, /did not load, so it is skipped/);
+  assert.match(run, /noteStep\('picture none, plain backdrop'\)/);
+  assert.match(run, /so it is skipped/);
 });
 
 test('a storage that cannot be read still lets the blue screen set take turns', () => {
@@ -110,10 +110,10 @@ test('a storage that cannot be read still lets the blue screen set take turns', 
 
 // Starting it
 
-test('a push for the desktop reveal that is a few seconds old plays, and one past a minute does not', () => {
+test('a push for the desktop reveal that is a few seconds old plays, and one past five minutes does not', () => {
   const fresh = sixty({ hiddenEnabled: true, hiddenRequest: { kind: 'desktop', requestedAt: secondsBefore(5) } });
   assert.deepEqual(choose(fresh), { kind: 'desktop', how: 'push' });
-  const old = sixty({ hiddenEnabled: true, hiddenRequest: { kind: 'desktop', requestedAt: secondsBefore(75) } });
+  const old = sixty({ hiddenEnabled: true, hiddenRequest: { kind: 'desktop', requestedAt: secondsBefore(330) } });
   assert.equal(choose(old), null);
 });
 

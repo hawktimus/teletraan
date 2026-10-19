@@ -148,7 +148,7 @@ The scripts are in `computer/scripts/`, and the units that start them are in `co
 - `kiosk.sh`: starts the browser full screen when the Teletraan computer boots, writes `build.js` and writes `device.json` every minute
 - `watchdog.sh`: every 2 minutes, restarts the screen when the page has stopped writing its heartbeat. `nightly.sh` restarts the screen at 04:00 and reboots the computer on Sundays, unless a talk is near. `backup-dataset.sh` exports the dataset at 03:15 and keeps 14
 - `control-helper.sh`: the host side of the control page, which accepts a fixed list of words
-- `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-frc.sh`, `install-monday.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
+- `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-monday.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
 - `check-connection.sh`: one OK or FAIL line each for the computer's connection to Sanity, BAND, Docker and the kiosk
 - `check-calendars.sh`: lists the next 30 days of events and says which ones the Calendar filters hide. It needs Node, so it runs on a computer that has it
 
@@ -173,7 +173,8 @@ The scripts are in `computer/scripts/`, and the units that start them are in `co
 - docs/calendar-filters.md: rules that hide or keep BAND events
 - docs/hide-a-repeating-meeting.md: the four steps for hiding the Pre-Season meetings
 - docs/calendar-links.md: adding a BAND calendar or changing its link
-- docs/frc-feed.md: the competition data the computer reads, the ten cards on the screen, when they come and the Preview competition button
+- docs/frc-feed.md: the competition data the computer reads, the twelve cards on the screen, when they come and the Preview competition button
+- docs/match13.md: the Match13 forecasts, the key, where the numbers are kept, the limits and the two cards (Forecast and Chances)
 - docs/monday.md: the Monday boards the computer reads, how an item becomes a task, what happens when an item goes, and what is public
 - docs/adding-a-field.md: adding a field to something editors fill in
 - docs/adding-a-panel.md: adding a new board

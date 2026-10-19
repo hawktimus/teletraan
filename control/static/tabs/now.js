@@ -2,7 +2,7 @@
 // 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
 import { api, showResult, useStyles } from './api.js';
-import { heldLine, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
+import { heldLine, hiddenRunHtml, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 import { wirePreview } from './preview.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
@@ -124,6 +124,7 @@ function wire(root, watcher, afterPress) {
     }
     if (action === 'theme') body.theme = value('theme');
     if (action === 'post-announcement') body.text = value('text');
+    if (action === 'hidden') body.kind = button.dataset.kind;
 
     button.disabled = true;
     showResult(button, 'working', 'Sending.');
@@ -185,6 +186,16 @@ export async function mountNow(boxes) {
     if (Date.now() - pressed.at > 15000) setPaused(root, pausedBy(requests));
   }
 
+  // The last hidden transition, under the buttons. Redrawn only when its words changed.
+  let hiddenLast = '';
+  function drawHiddenRun(report) {
+    const box = controls.querySelector('[data-hidden-run]');
+    const html = hiddenRunHtml(report);
+    if (!box || html === hiddenLast) return;
+    hiddenLast = html;
+    box.innerHTML = html;
+  }
+
   // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
   let last = '';
   async function refresh() {
@@ -192,6 +203,7 @@ export async function mountNow(boxes) {
     const answer = await api('GET', '/now');
     if (left) return;
     if (answer.ok && wallReport(answer.data) && Date.now() - pressed.at > 15000) setPaused(root, wallReport(answer.data).pause === true);
+    drawHiddenRun(answer.ok ? wallReport(answer.data) : null);
     const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
     if (html === last) return;
     last = html;

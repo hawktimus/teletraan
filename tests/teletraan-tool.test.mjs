@@ -111,7 +111,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-const installNames = ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'console', 'watchdog', 'backup', 'nightly'];
+const installNames = ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'news', 'match13', 'console', 'watchdog', 'backup', 'nightly'];
 
 // Makes the Mac's home, the fake tools and the folder that stands for the Teletraan computer,
 // and returns how to run the tool in them.
@@ -427,6 +427,7 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
     'c',
     'e', secrets.newTba,
     'k',
+    'k',
     'a', 'Build season', secrets.webcal,
     'e', '1', secrets.newGroup,
     'r', '2', 'y',
@@ -487,7 +488,7 @@ test('the form shows values masked, takes edit, keep and clear, adds, edits and 
 
 test('a link typed as webcal:// is stored as https:// on the Mac and on the Teletraan computer', () => {
   const place = makePlace('webcal', { secrets: '', computerEnv: "TELETRAAN_PORT='3229'\n" });
-  const result = place.run(['3', '1', 'k', 'k', 'k', 'k', 'a', 'team', secrets.webcal, '', '', 'b', 'q']);
+  const result = place.run(['3', '1', 'k', 'k', 'k', 'k', 'k', 'a', 'team', secrets.webcal, '', '', 'b', 'q']);
   assert.equal(result.status, 0, result.errors);
 
   const expected = "CALENDAR_TEAM_URL='" + secrets.stored + "'\n";
@@ -503,6 +504,7 @@ test('a key or a link that is not usable is refused with a reason that does not 
   const result = place.run([
     '3', '1',
     'e', 'has a space ' + secrets.newSanity,
+    'k',
     'k',
     'k',
     'k',
@@ -526,7 +528,7 @@ test('a key or a link that is not usable is refused with a reason that does not 
 test('a name of more than 20 characters is refused, and a name that exists replaces the link of that calendar', () => {
   const place = makePlace('form-names', { secrets: macSecrets, computerEnv: computerEnv });
   const result = place.run([
-    '3', '1', 'k', 'k', 'k', 'k',
+    '3', '1', 'k', 'k', 'k', 'k', 'k',
     'a', 'a calendar with a very long name indeed',
     'a', 'GROUP', secrets.newGroup,
     '',
@@ -545,7 +547,7 @@ test('a name of more than 20 characters is refused, and a name that exists repla
 test('when the values cannot be sent, they stay saved on the Mac with what was cleared, and a second try sends them and tidies the file', () => {
   const place = makePlace('form-retry', { secrets: macSecrets, computerEnv: computerEnv });
   place.stubFile('scp.exit', '1');
-  const first = place.run(['3', '1', 'k', 'c', 'k', 'k', '', '', 'b', 'q']);
+  const first = place.run(['3', '1', 'k', 'c', 'k', 'k', 'k', '', '', 'b', 'q']);
 
   assert.ok(first.errors.includes('could not send the values to ' + computerAddress + ' (exit 1)'), first.errors);
   assert.ok(first.errors.includes('Nothing on the Teletraan computer changed.'));
@@ -555,7 +557,7 @@ test('when the values cannot be sent, they stay saved on the Mac with what was c
   assertNoLeak(first, 'first try');
 
   fs.rmSync(path.join(place.stub, 'scp.exit'));
-  const second = place.run(['3', '1', 'k', 'k', 'k', 'k', '', 'y', 'b', 'q']);
+  const second = place.run(['3', '1', 'k', 'k', 'k', 'k', 'k', '', 'y', 'b', 'q']);
   assert.ok(second.text.includes('Monday token') && second.text.includes('cleared, not sent yet'), second.text);
   assert.ok(second.text.includes('Nothing changed.'));
   assert.ok(!fs.readFileSync(place.computerEnvFile(), 'utf8').includes('MONDAY_API_TOKEN'), 'the Teletraan computer lost the line');
@@ -566,7 +568,7 @@ test('when the values cannot be sent, they stay saved on the Mac with what was c
 test('when ssh fails after the copy, the Mac keeps the values and says so, and no temporary file stays on the Mac', () => {
   const place = makePlace('form-ssh-down', { secrets: macSecrets, computerEnv: computerEnv });
   place.stubFile('ssh.exit', '255');
-  const result = place.run(['3', '1', 'e', secrets.newSanity, 'k', 'k', 'k', '', '', 'b', 'q']);
+  const result = place.run(['3', '1', 'e', secrets.newSanity, 'k', 'k', 'k', 'k', '', '', 'b', 'q']);
 
   assert.ok(result.errors.includes('could not reach ' + computerAddress), result.errors);
   assert.ok(result.text.includes('The values are saved on this Mac.'), result.text);
@@ -578,7 +580,7 @@ test('when ssh fails after the copy, the Mac keeps the values and says so, and n
 test('the calendar service not being installed is said in plain words and the merge still happened', () => {
   const place = makePlace('form-no-service', { secrets: macSecrets, computerEnv: computerEnv });
   place.stubFile('systemctl.exit', '5');
-  const result = place.run(['3', '1', 'e', secrets.newSanity, 'k', 'k', 'k', '', '', 'b', 'q']);
+  const result = place.run(['3', '1', 'e', secrets.newSanity, 'k', 'k', 'k', 'k', '', '', 'b', 'q']);
 
   assert.ok(result.text.includes('The calendar service did not run. If it is not installed on this computer, run the install again (Install everything).'), result.text);
   assert.ok(fs.readFileSync(place.computerEnvFile(), 'utf8').includes(secrets.newSanity));
@@ -616,7 +618,7 @@ test('copying from the Teletraan computer asks first, replaces the saved values 
   assert.equal(modeOf(place.secretsFile()), 0o600);
   assert.ok(result.text.includes('These lines on the Teletraan computer did not look like a key or a link and were left out: CALENDAR_BAD_URL'), result.text);
   assert.ok(!fs.existsSync(path.join(place.home, '.teletraan/pulled.tmp')), 'the temporary copy is removed');
-  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.computerRepo + "/computer/local.env'"), 'only the names it needs are asked for: ' + result.calls);
+  assert.ok(result.calls.includes("grep -E '^(SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|MATCH13_API_KEY|CALENDAR_[A-Za-z0-9_]+_URL)=' '" + place.computerRepo + "/computer/local.env'"), 'only the names it needs are asked for: ' + result.calls);
   assertNoLeak(result, 'pull');
   assert.ok(!result.text.includes('NOTSECURE0123'));
 });
@@ -870,7 +872,7 @@ test('the Mac tool has no PIN anywhere: no menu choice, no key, no function, and
   assert.ok(!/CONTROL_PIN|set_pin|Set the PIN|PIN of the control/.test(code), 'the tool does not know the PIN');
   assert.ok(!/CONTROL_PIN/.test(fs.readFileSync(mergeFile, 'utf8')), 'merge-env.sh does not know the PIN');
   const place = makePlace('no-pin', { secrets: "SANITY_WRITE_TOKEN='" + secrets.oldSanity + "'\nCONTROL_PIN='123456'\n", computerEnv: "CONTROL_PIN='4417'\n" });
-  const result = place.run(['3', '1', 'k', 'k', 'k', 'k', '', 'y', 'b', 'q']);
+  const result = place.run(['3', '1', 'k', 'k', 'k', 'k', 'k', '', 'y', 'b', 'q']);
   assert.ok(!result.text.includes('PIN'), 'the form does not mention a PIN: ' + result.text);
   assert.ok(fs.readFileSync(place.computerEnvFile(), 'utf8').includes("CONTROL_PIN='4417'"), 'a PIN typed by hand on the computer is left alone');
   assert.ok(!fs.readFileSync(place.secretsFile(), 'utf8').includes('CONTROL_PIN'), 'an old PIN line on the Mac is dropped');

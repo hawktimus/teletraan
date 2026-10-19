@@ -261,6 +261,12 @@ const contract = {
     competitionPreview: 'boolean',
     competitionMatches: 'boolean',
     competitionRecap: 'boolean',
+    competitionForecast: 'boolean',
+    competitionQualify: 'boolean',
+    newsEnabled: 'boolean',
+    newsCategories: strings(30, 12),
+    newsInTicker: 'boolean',
+    newsHiddenLinks: strings(300, 100),
     mondayBoards: rows({
       boardId: text(20),
       team: teamRef,
@@ -404,6 +410,7 @@ const studioOnlyTypes = {
 const writtenByTheComputer = {
   frcStatus: 'the Teletraan computer writes it, and the dashboard reads it to draw the competition cards',
   mondayStatus: 'the Teletraan computer writes it, the Monday tab shows it, and the dashboard reads its daily counts',
+  frcNews: 'the Teletraan computer writes it, the FRC news section of the Competition page lists it, and the dashboard reads its headlines for the FRC news panel and the ticker',
 };
 
 const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
@@ -488,6 +495,7 @@ const notInSidebar = {
   calendarStatus: 'the Teletraan computer writes it, and the Calendars page shows it',
   frcStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Competition tab',
   mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
+  frcNews: 'the Teletraan computer writes it, and the FRC news section of the Competition page lists its headlines',
   plan: 'the Today page links to the list of agenda items and opens it in the next pane',
   presentation: 'the Today page links to the talks, Upcoming and Past, and opens them in the next pane',
   presentationDay: 'the Today page links to the meeting days and opens them in the next pane',
@@ -4316,7 +4324,7 @@ function checkTeamsTab() {
 // fields they show stay in the schema, hidden. Presentations, Night mode and Hidden transitions are sections of Advanced.
 const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
-const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap'];
+const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify'];
 const settingsTabs = {
   screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
@@ -4324,7 +4332,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, nightNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {
@@ -4416,7 +4424,7 @@ function checkStatusWatchdog() {
 function checkStatusBlock() {
   const problems = [];
   const type = typeByName('status');
-  const wanted = ['lastContentSeenAt', 'lastCalendarSyncAt', 'lastSlidesFetchAt', 'lastMondaySyncAt', 'lastFrcSyncAt', 'kioskStartedAt'];
+  const wanted = ['lastContentSeenAt', 'lastCalendarSyncAt', 'lastSlidesFetchAt', 'lastMondaySyncAt', 'lastFrcSyncAt', 'match13At', 'kioskStartedAt'];
   const input = world.statusInput;
 
   need(problems, type && type.type === 'document', 'status should be a document type');
@@ -4430,7 +4438,9 @@ function checkStatusBlock() {
   need(problems, type && type.readOnly === true, 'status should be read only: the Teletraan computer writes it');
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'status should be kept out of Studio search');
   need(problems, input.statusId === 'status-mini', 'the status document should have the fixed id status-mini');
-  need(problems, input.statusLines.map(line => line.field).join() === wanted.join(), 'the block should show these fields, in this order: ' + wanted.join(', '));
+  // The block also shows the last news read (newsAt, written by the job news, tested in tests/news-sync.test.mjs), after the FRC data
+  const shown = wanted.slice(0, 5).concat(['newsAt'], wanted.slice(5));
+  need(problems, input.statusLines.map(line => line.field).join() === shown.join(), 'the block should show these fields, in this order: ' + shown.join(', '));
 
   // Editors never find it: no line in the sidebar and no place in the New menu
   need(problems, allLines(world.structure.sidebarEntries).every(entry => entry.type !== 'status'), 'the sidebar should have no line for the status document');
@@ -4458,9 +4468,9 @@ function checkStatusBlock() {
   need(problems, input.ageText(ago(3 * 24 * 60), now) === '3 days ago', 'an age of three days should read 3 days ago');
   need(problems, [undefined, null, '', 'soon', 5, {}].every(value => input.ageText(value, now) === ''), 'a time that cannot be read should give no words');
   const none = input.describeStatus(null, now);
-  need(problems, none.length === 6 && none.every(line => line.text === 'Not yet'), 'a missing document should give six lines that all say Not yet');
+  need(problems, none.length === 8 && none.every(line => line.text === 'Not yet'), 'a missing document should give eight lines that all say Not yet');
   const some = input.describeStatus({ lastCalendarSyncAt: ago(5), kioskStartedAt: 'oops' }, now);
-  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[5].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
+  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[7].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
   need(problems, JSON.stringify(input.statusView(null, now)).indexOf('Reading the status') !== -1, 'the block should say it is reading while it waits');
   need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: false }, now)).indexOf('No status yet') !== -1, 'the block should say No status yet when the document is missing');
   need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the status cannot be read');
@@ -4512,7 +4522,7 @@ function checkCompetitionTab() {
   need(problems, mode && /Auto/.test(mode.description || '') && /Always/.test(mode.description || '') && /Off/.test(mode.description || '') && /Before and after/.test(mode.description || ''), 'the competitionMode description should say what Before and after, Auto, Always and Off do');
 
   // One switch for each card, in this order, all on to start with, in the names of config.js
-  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points', 'Event preview', 'Our matches', 'Event recap'];
+  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points', 'Event preview', 'Our matches', 'Event recap', 'Event forecast (Match13)', 'Championship chances (Match13)'];
   need(problems, config.competitionSwitches.join() === competitionNames.join(), 'competitionSwitches in config.js should be the switches of the Competition tab, in order: ' + competitionNames.join(', '));
   competitionNames.forEach((name, index) => {
     const field = at(name);
@@ -5100,7 +5110,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'task', 'milestone']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));

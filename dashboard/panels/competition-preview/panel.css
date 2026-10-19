@@ -140,3 +140,8 @@
   fill: var(--white);
   font: 700 var(--size-label)/48px var(--font-display);
 }
+
+.competition-preview .chip {
+  fill: var(--lilac);
+  font: 600 30px/36px var(--font-display);
+}

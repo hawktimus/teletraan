@@ -1,0 +1,108 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-forecast .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-forecast .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-forecast .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.competition-forecast .tag .double-slash { flex: none; }
+
+/* The amber chip says the file is old. Its 30px text is the size of every chip. */
+.competition-forecast .stale-chip {
+  flex: none;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: var(--ground);
+  background: var(--stale);
+  font: 700 30px/44px var(--font-display);
+}
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-forecast .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-forecast .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-forecast .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+.competition-forecast .event {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-forecast .name {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-forecast .rank {
+  fill: var(--white);
+  font: 700 var(--size-person)/72px var(--font-display);
+}
+.competition-forecast .note,
+.competition-forecast .range,
+.competition-forecast .points,
+.competition-forecast .source {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-forecast .chance {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+
+/* The axis, the bar of the range (5th to 95th percentile), the dot of the most likely rank and the cut of the top 8.
+   The numbers under the axis are the 28px axis labels. */
+.competition-forecast .axis {
+  stroke: var(--lilac);
+  stroke-width: 4;
+}
+.competition-forecast .cut {
+  stroke: var(--lilac);
+  stroke-width: 4;
+}
+.competition-forecast .span {
+  fill: var(--yellow);
+}
+.competition-forecast .middle {
+  fill: var(--white);
+  stroke: var(--ground);
+  stroke-width: 4;
+}
+.competition-forecast .tick {
+  fill: var(--lilac);
+  font: 600 28px/32px var(--font-display);
+}

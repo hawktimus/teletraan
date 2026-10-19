@@ -27,6 +27,7 @@ export default defineType({
     timeField('lastSlidesFetchAt', 'Last slides fetch', 'When the Teletraan computer last downloaded the slides of the coming talks. The computer writes this.'),
     timeField('lastMondaySyncAt', 'Last Monday sync', 'When the Teletraan computer last read the Monday boards. The computer writes this.'),
     timeField('lastFrcSyncAt', 'Last FRC data sync', 'When the Teletraan computer last read the FRC competition data. The computer writes this.'),
+    timeField('match13At', 'Last Match13 read', 'When the Teletraan computer last read the Match13 forecasts. The computer writes this.'),
     timeField('kioskStartedAt', 'Screen started', 'When the browser on the Teletraan computer last started the screen. The computer writes this.'),
     textField('buildCommit', 'Build on the wall', 'The short hash of the files the screen runs. The Teletraan computer writes this.'),
     textField('buildDate', 'Build date', 'The day of that build. The Teletraan computer writes this.'),
@@ -40,6 +41,12 @@ export default defineType({
     timeField('photosDriveAt', 'Last Drive photos read', 'When the Teletraan computer last looked at the Google Drive photo folder. The computer writes this.'),
     textField('photosDriveState', 'Drive photos state', 'How the last read of the Google Drive photo folder went: ok, off, no-folder, no-key, bad-key, api-off or not-shared. The Teletraan computer writes this.'),
     defineField({ name: 'photosDriveCount', title: 'Drive photos', type: 'number', description: 'How many pictures the Google Drive photo folder had at the last read. The Teletraan computer writes this.' }),
+    // Match13 state and count (computer/scripts/match13-sync.sh, status-write.sh match13): no forecast is stored here
+    textField('match13State', 'Match13 state', 'How the last read of Match13 went: ok, no-key, bad-key, limit or down. The Teletraan computer writes this.'),
+    defineField({ name: 'match13Count', title: 'Match13 teams', type: 'number', description: 'How many teams the Match13 file held at the last read. The Teletraan computer writes this.' }),
+    // The FIRST news headlines (computer/scripts/news-sync.sh, status-write.sh news)
+    timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
+    defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],
   preview: {
     prepare: () => ({ title: 'Status of the Teletraan computer' }),

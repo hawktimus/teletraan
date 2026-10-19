@@ -48,6 +48,7 @@ const scouting = await import(base + 'core/competition-scouting.js');
 const trend = await import(base + 'core/competition-trend.js');
 const draw = await import(base + 'core/competition-draw.js');
 const address = await import(base + 'core/competition-address.js');
+const match13 = await import(base + 'core/match13.js');
 const sanity = await import(base + 'core/sanity.js');
 const panels = {};
 for (const name of newerNames) panels[name] = await import(base + 'panels/competition-' + name + '/panel.js');
@@ -597,6 +598,99 @@ test('would rank 7th of 42: a field of 42 teams with ours in the 7th place says 
   assert.ok(panels.preview.markupFor(content, noon('2027-03-05')).includes('42 TEAMS COMING'));
 });
 
+// Match13
+
+function match13Data() {
+  return match13.tidyMatch13({
+    generatedAt: '2027-03-05T12:00:00Z',
+    season: 2027,
+    ours: [{ code: 'prime', number: 3229 }, { code: 'nova', number: 3426 }],
+    teams: {},
+    events: {
+      '2027ncsa1': {
+        sim: { iterations: 1000, simmedAt: 1, teamCount: 36, teams: [{ teamNumber: 3229, meanRank: 8, meanRps: 20, p5: 3, p50: 8, p95: 15 }] },
+        field: { teamCount: 36, average: 40.5, top: [1, 2, 3, 4, 5, 6, 7, 8].map(i => ({ teamNumber: 1100 + i, xp: 90 - i, rank: i })).concat([{ teamNumber: 3229, xp: 70, rank: 9 }]) },
+        matches: [{ key: '2027ncsa1_qm14', unplayed: true, pred: { winProb: 0.8, redScore: 70.4, blueScore: 55.2, redRp1: 0.7, redRp2: 0.4, redRp3: 0.1, blueRp1: 0.2, blueRp2: 0.3, blueRp3: 0.05 }, teams: {} }],
+      },
+    },
+    district: { code: 'fnc', ourTeams: [{ teamNumber: 3229, pCmp: 0.3, pDcmp: 0.5 }] },
+  });
+}
+
+test('the Match13 cards follow the phase rule in Before and after: preview and recap days only, and the same as before in Auto', () => {
+  match13.setMatch13(match13Data());
+  try {
+    const content = contentWith();
+    ['2027-03-02', '2027-03-10'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-forecast'), 'forecast in the preview ' + day));
+    ['2027-03-15', '2027-03-20'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-qualify'), 'qualify in the recap ' + day));
+    ['2027-03-11', '2027-03-12', '2027-03-13', '2027-02-10'].forEach(day => {
+      const plan = competition.competitionPlan(content, noon(day)).cards;
+      assert.ok(!plan.includes('competition-forecast') && !plan.includes('competition-qualify'), 'neither on ' + day);
+    });
+    const auto = contentWith(raw => { raw.settings.competitionMode = 'auto'; });
+    assert.ok(competition.competitionPlan(auto, noon('2027-03-12')).cards.includes('competition-forecast'), 'Auto is as it was');
+    assert.ok(!competition.competitionPlan(content, noon('2027-03-12')).cards.some(id => id.startsWith('competition-') && id !== 'competition-timeline' && id !== 'competition-district'));
+  } finally {
+    match13.setMatch13(null);
+  }
+});
+
+test('the field strength takes the ratings of Match13 when it has them, and says where the numbers come from', () => {
+  const content = contentWith();
+  const own = scouting.fieldStrength(content.frc, entryOf(content), '2027ncsa1');
+  assert.equal(own.source, 'Statbotics');
+
+  match13.setMatch13(match13Data());
+  try {
+    const real = scouting.fieldStrength(content.frc, entryOf(content), '2027ncsa1');
+    assert.equal(real.source, 'Match13');
+    assert.equal(real.unit, 'xP');
+    assert.equal(real.count, 36);
+    assert.equal(real.average, 40.5);
+    assert.equal(real.top.length, 8);
+    assert.equal(real.top[0].number, '1101');
+    assert.equal(real.lines.find(line => line.code === 'prime').text, 'Prime would rank 9th of 36 by xP');
+    assert.equal(real.lines.find(line => line.code === 'nova'), undefined, 'a team outside the best 16 has no line');
+    assert.equal(scouting.fieldStrength(content.frc, entryOf(content), '2027other').source, 'Statbotics', 'another event has none from Match13');
+
+    const html = panels.preview.markupFor(content, noon('2027-03-05'));
+    assert.ok(html.includes('Prime would rank 9th of 36 by xP') && html.includes('Ratings: Match13') && html.includes('FIELD STRENGTH BY XP'));
+  } finally {
+    match13.setMatch13(null);
+  }
+  assert.ok(panels.preview.markupFor(content, noon('2027-03-05')).includes('Ratings: Statbotics'));
+});
+
+test('the matches card takes the chance, the scores and the ranking points of Match13, the colour from frc-status, and falls back to Statbotics', () => {
+  const content = contentWith();
+  match13.setMatch13(match13Data());
+  try {
+    const view = scouting.matchesView(entryOf(content));
+    const row = view.rows.find(item => item.label === 'Q14');
+    assert.equal(row.source, 'Match13');
+    assert.equal(row.chance, 0.8, 'we are red in Q14, so the chance is the chance of red');
+    assert.deepEqual([row.forecast.ourScore, row.forecast.theirScore], [70.4, 55.2]);
+    assert.deepEqual(row.forecast.rp, [0.7, 0.4, 0.1]);
+    const flipped = contentWith(raw => { primeOf(raw.frc).schedule.matches[0].alliance = 'blue'; });
+    const other = scouting.matchesView(entryOf(flipped)).rows.find(item => item.label === 'Q14');
+    assert.equal(other.chance, 0.2, 'on blue it is 1 minus that');
+    assert.deepEqual([other.forecast.ourScore, other.forecast.theirScore], [55.2, 70.4]);
+    assert.deepEqual(other.forecast.rp, [0.2, 0.3, 0.05]);
+    assert.equal(view.rows.find(item => item.label === 'Q27').source, 'Statbotics');
+    assert.equal(view.rows.find(item => item.label === 'Q19').source, 'estimate');
+    assert.equal(view.source, 'Match13');
+
+    const html = panels.matches.markupFor(content, at('2027-03-10T17:00:00Z'));
+    assert.ok(html.includes('Ratings: Match13'));
+  } finally {
+    match13.setMatch13(null);
+  }
+  const plain = scouting.matchesView(entryOf(content));
+  assert.equal(plain.source, 'Statbotics');
+  assert.equal(plain.rows.find(item => item.label === 'Q14').chance, 0.31);
+  assert.ok(panels.matches.markupFor(content, noon('2027-03-10')).includes('Ratings: Statbotics'));
+});
+
 // The address
 
 test('?phase= moves the dates so that the first event of each team is in the phase, and keeps the shape of the data', () => {
@@ -824,9 +918,9 @@ test('Preview competition shows the three newer cards after the others, on the s
   competition.previewCompetition(sample, start.getTime() + config.competitionPreviewSeconds * 1000);
   try {
     const steps = competition.withCompetition([{ panel: 'tasks', show: true }], content, start);
-    assert.deepEqual(steps.slice(-3).map(step => step.panel), ['competition-preview', 'competition-matches', 'competition-recap']);
-    assert.equal(steps.length, 10);
-    assert.ok(steps.every(step => step.seconds === 12));
+    assert.deepEqual(steps.slice(-5).map(step => step.panel), ['competition-preview', 'competition-matches', 'competition-recap', 'competition-forecast', 'competition-qualify']);
+    assert.equal(steps.length, 12);
+    assert.ok(steps.every(step => step.seconds === 10));
     // on the day the preview is asked for, the cards still have an event to write about: the first that is not over, and the latest that has data
     const preview = panels.preview.markupFor({ frc: sample, settings: {}, theme: {} }, start);
     assert.ok(preview.includes('Event one') && preview.includes('SAMPLE'));

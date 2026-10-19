@@ -1,0 +1,93 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-qualify .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-qualify .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-qualify .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+.competition-qualify .tag .double-slash { flex: none; }
+
+/* The amber chip says the file is old. Its 30px text is the size of every chip. */
+.competition-qualify .stale-chip {
+  flex: none;
+  padding: 0 14px;
+  white-space: nowrap;
+  color: var(--ground);
+  background: var(--stale);
+  font: 700 30px/44px var(--font-display);
+}
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-qualify .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-qualify .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-qualify .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+.competition-qualify .name {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-qualify .rank {
+  fill: var(--white);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-qualify .points,
+.competition-qualify .cutline {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-qualify .what {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.competition-qualify .percent {
+  fill: var(--white);
+  font: 700 var(--size-body)/56px var(--font-display);
+}
+
+/* The lane is the whole way to a seat and the fill is the chance. Both are flat blocks. */
+.competition-qualify .lane {
+  fill: var(--ground);
+  stroke: var(--lilac);
+  stroke-width: 3;
+}
+.competition-qualify .fill {
+  fill: var(--yellow);
+}

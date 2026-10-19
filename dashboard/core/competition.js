@@ -29,6 +29,7 @@
 
 import { competitionLeadDays, competitionModes, competitionPreviewDays, competitionPreviewSeconds, competitionRecapDays, defaultSettings } from '../config.js';
 import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
+import { hasForecast, hasQualify, setMatch13Preview } from './match13.js';
 import { dateIn, timeZoneOf } from './theme.js';
 import { parseLocalDateTime } from './time.js';
 
@@ -50,6 +51,9 @@ export const cards = [
   { id: 'competition-preview', setting: 'competitionPreview', phased: true, window: facts => facts.phases.preview !== null, data: facts => previewEventOf(facts.entry, facts.today) !== null },
   { id: 'competition-matches', setting: 'competitionMatches', phased: true, window: facts => facts.phases.preview !== null && (scheduleIsFor(facts.entry, facts.phases.preview) || daysToFirstDay(facts.phases.preview, facts.today) <= competitionLeadDays), data: facts => scheduleIsLive(facts.entry, facts.today) || (facts.mode === 'around' && facts.phases.preview !== null) },
   { id: 'competition-recap', setting: 'competitionRecap', phased: true, window: facts => facts.phases.recap !== null, data: facts => recapHasData(facts.entry, recapEventOf(facts.entry, facts.today)) },
+  // The two Match13 cards take their numbers from core/match13.js and not from frc-status
+  { id: 'competition-forecast', setting: 'competitionForecast', window: facts => facts.near, around: () => true, data: () => hasForecast() },
+  { id: 'competition-qualify', setting: 'competitionQualify', window: facts => facts.started, around: () => true, data: () => hasQualify() },
 ];
 
 export function isCard(id) {
@@ -64,6 +68,7 @@ let previewed = null; // { frc, until }: a preview (core/competition-preview.js)
 // no data, or no time, ends it.
 export function previewCompetition(frc, until) {
   previewed = frc && typeof until === 'number' && isFinite(until) ? { frc: frc, until: until } : null;
+  setMatch13Preview(previewed !== null);
 }
 
 export function previewIsOn(now = new Date()) {
@@ -250,7 +255,7 @@ export function competitionPlan(content, now = new Date()) {
   const due = cards.filter(card => {
     if (settings[card.setting] === false || !card.data(facts)) return false;
     if (mode === 'always') return true;
-    if (mode === 'around') return inPhase && !card.during && card.window(facts);
+    if (mode === 'around') return inPhase && !card.during && (card.around || card.window)(facts);
     return !card.phased && card.window(facts);
   });
 

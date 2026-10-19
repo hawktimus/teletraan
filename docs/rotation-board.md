@@ -3,6 +3,14 @@
 Rotation is the first line under SCREEN in the Studio sidebar. It is a table of every row the wall plays, top to bottom.
 Change a row and the change is saved as a draft at once. Click Publish all in the top bar to put it on the screen.
 
+## What the wall plays now
+
+The first line under the intro says, for example, Right now the loop has 80 rows shown, 3 skipped (no data), 24 switched off.
+Shown rows have something to show. Skipped rows are on but have nothing to show (the note under their panel says why).
+Switched off rows have Show on screen off. The line uses the list in the table and the published tasks and photos, read once
+when the page opens. The Studio cannot reach the Mini, so it does not say which row is on the screen this second. The Now
+showing tab of the control page does. The cards the wall adds by itself are not counted.
+
 ## The groups
 
 Rows that follow each other in one view are one group. The group line shows the view, how many rows it has and how long the
@@ -27,6 +35,20 @@ for that.
 - Details: opens the fields of the panel of the row.
 - Up, Down, Copy, Delete: move one place, make a copy under the row, and delete the row after a question.
 
+## Finding a row
+
+Above the table:
+
+- Search panel titles: type part of a title, such as robot or photo. The table keeps the rows that match the panel, the small
+  panel, the View or the department.
+- Show only rows that are skipped now: rows that are switched off, and rows that are on but have nothing to show.
+- Show only placeholders: Robot status, Wireframe view, and any row whose Small panel is Mini panel idea 1. A placeholder row
+  has the badge Placeholder: draws only a title, because the panel is not designed yet and draws a title and a dashed frame.
+- Jump to: one button for each block, such as Robotics, rows 1 to 13. It scrolls to the group line of the block.
+
+With a filter on, a line says how many rows of the list are shown. Filters only hide rows on the page. They change nothing in
+the list.
+
 ## Details by panel
 
 - Photo: Photos (1 to 20) and Seconds per photo (5 to 60).
@@ -42,6 +64,26 @@ Under the table, one tile for each row in order, with its title, its seconds and
 that is off and is skipped. The words view change mark where the wall swaps view. Above the tiles one line says how long a
 full loop takes, counting only the rows that are on. A row whose panel has nothing to show at that moment is skipped by the
 wall, so a real loop can be shorter.
+
+## Automatic panels
+
+Under the loop preview, a section called Automatic panels lists what the wall adds by itself. None of it is a row, so none of
+it is in the table. It is open on a computer and closed on a phone. Each card says Added by the wall, not a row, when it comes
+in, and whether the same panel can also be a row.
+
+- The seven competition cards: Next match, Live rank, Results strip (the last matches, also called Match Statistics), Alliance
+  board, Season timeline, District points and Last season at a glance. In Auto they come in from 2 days before an event. Only
+  Live rank can also be a row (Competition: Rank).
+- Above them, the mode of Dashboard Settings (Auto, Always or Off) with a link to the Competition page, and one line from the
+  frc-status document the Mini writes, such as Next event: Wake on 12 March 2027: the cards start on 10 March 2027. With no
+  event ahead it says No event is coming up: the cards are off.
+- A Monday card row with no department: it expands to one step for each Team lead.
+- The announcement bar and alerts, which sit on top of everything.
+- Booked talks, which take the whole screen.
+- The small panel on the right, and the banner, countdown and ticker that stay on screen.
+- Season packs and subthemes. They are not panels.
+
+The code is studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.js.
 
 ## The buttons above the table
 
@@ -62,10 +104,20 @@ example Skipped now: no Monday task is on the TV. It reads the published tasks a
 are in skipNotes in studio/tools/rotation-board.js. A change is on the wall only after Publish all, so a draft that did not
 publish (Publish all names it) is the other reason the wall differs from the board.
 
+## Every panel is explained
+
+A panel in dashboard/registry.js is either offered in the pickers of the board, listed as an automatic panel (the cards above),
+or named as an old or internal panel with a reason (internalPanels in studio/tools/rotation-titles.js). The older Monday
+cards and the two stand-ins of the hardware test are the internal ones. tests/rotation-panels-explained.test.mjs fails with
+the id of a panel that is none of these, so a panel cannot reach the wall without the Studio saying what it is.
+
 ## Where the code is
 
 - studio/inputs/rotation-board-view.js: the page and its actions.
 - studio/inputs/rotation-board-parts.js: the drawing and the style sheet.
 - studio/tools/rotation-board.js: the plain functions (groups, loop time, changes, save).
+- studio/tools/rotation-find.js: the filters, the search, the Jump to links and the placeholder badge.
 - studio/tools/rotation-titles.js: the one table of view and panel titles.
-- tests/rotation-board.test.mjs and tests/rotation-wall-path.test.mjs: the tests.
+- studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.js: the Automatic panels section.
+- tests/rotation-board.test.mjs, tests/rotation-wall-path.test.mjs, tests/rotation-auto.test.mjs, tests/rotation-find.test.mjs,
+  tests/rotation-now-line.test.mjs and tests/rotation-panels-explained.test.mjs: the tests.

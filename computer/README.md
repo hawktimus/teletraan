@@ -104,7 +104,11 @@ to attach the data folder to.
 | `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/photos-drive-sync.sh` | Copies the pictures of the Google Drive folder named on the Photos page in Studio into the data folder, with a manifest. Needs `GOOGLE_API_KEY` (docs/photos-drive.md) |
 | `scripts/install-photos-drive.sh` | Copies the two Drive photo unit files into place and turns on the timer (every 15 minutes). Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/match13-sync.sh` | Reads the forecasts of Match13 for the teams and events of the competition feed and writes `match13.json` in the data folder, which the forecast cards read. Needs `MATCH13_API_KEY` (docs/match13.md). Sends nothing to Sanity but a time and a count |
+| `scripts/install-match13.sh` | Copies the three Match13 unit files into place and turns on the timer (every 30 minutes). Does not install the packages |
 | `scripts/install-frc.sh` | Copies the two FRC unit files into place and turns on the FRC timer. Does not install the packages, it prints the `apt install` line when one is missing |
+| `scripts/news-sync.sh` | Reads the FIRST community blog feed every 2 hours (the awk reader is `scripts/news-rss.awk`) and writes the newest headlines of the chosen categories into the document `frc-news` in Sanity: headline, link, date and categories, never the text. Needs `curl`, `jq` and `SANITY_WRITE_TOKEN` (docs/frc-news.md) |
+| `scripts/install-news.sh` | Copies the two news unit files into place and turns on the news timer (every 2 hours). Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/mirror.py` | The picture of the screen for the Live preview (see above). Needs python3 only. Run by `systemd/teletraan-mirror.service`; `MIRROR_PORT`, `MIRROR_DATA`, `MIRROR_IDLE` and `MIRROR_MAX` change its port, folder and limits |
 | `scripts/watchdog.sh` | Restarts the kiosk service when the screen has frozen (see above). Runs as root. Needs `curl`, `pgrep` and `awk`. Keeps its count in `watchdog-state` in the data folder |
 | `scripts/install-watchdog.sh` | Copies the two watchdog unit files into place and turns on the watchdog timer. Does not install the packages, it prints the `apt install` line when one is missing |
@@ -184,6 +188,10 @@ happens.
   `sudo /opt/teletraan/computer/scripts/install-photos-drive.sh`
 - an FRC file in `systemd/` changed: run
   `sudo /opt/teletraan/computer/scripts/install-frc.sh`
+- a Match13 file in `systemd/` changed: run
+  `sudo /opt/teletraan/computer/scripts/install-match13.sh`
+- a news file in `systemd/` changed: run
+  `sudo /opt/teletraan/computer/scripts/install-news.sh`
 - a Monday file in `systemd/` changed: run
   `sudo /opt/teletraan/computer/scripts/install-monday.sh`
 - a watchdog file in `systemd/` changed: run
@@ -213,7 +221,7 @@ the step that uses each one, is the table at the top of
 ## Names this folder assumes
 
 The unit files use the repository location `/opt/teletraan`.
-`install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-frc.sh`,
+`install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`,
 `install-monday.sh`, `install-watchdog.sh`, `install-nightly.sh`, `install-backup.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
 else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the

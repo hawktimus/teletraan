@@ -1,0 +1,13 @@
+[Unit]
+Description=Read the Match13 forecasts for Teletraan I when it is time
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-match13.sh with the account that owns the repository.
+User=ACCOUNT
+# The script decides whether it is time: every 30 minutes while a team has an event within 14 days
+# or on, every 6 hours otherwise, and not at all while Match13 has asked this computer to wait.
+ExecStart=/opt/teletraan/computer/scripts/match13-sync.sh
+TimeoutStartSec=15min
