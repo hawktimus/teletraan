@@ -1001,7 +1001,7 @@ test('the screen starts on the team the settings ask for, at once: the twelve co
     world.teams.useTeams(teamContent('nova'), new Date(noon));
 
     assert.deepEqual(world.root.properties, {
-      '--team-primary': '#D4A017', '--team-plate': '#6B4C08', '--team-accent': '#C86BFF', '--team-neon': '#B23CFF',
+      '--team-primary': '#D4A017', '--team-plate': '#6B4C08', '--team-accent': '#C86BFF', '--team-neon': '#8C44DC',
       '--team-pink': '#D4A017', '--team-background': '#17110A', '--team-text': '#FFFFFF', '--team-body': '#241A04', '--team-label': '#D9A6FF',
       '--team-header-ink': '#1A1200', '--team-dark': '#3D2A05', '--team-retro': '#E0A400',
     });

@@ -39,7 +39,7 @@ export const standardTeams = {
       primary: '#D4A017',
       plate: '#6B4C08',
       accent: '#C86BFF',
-      neon: '#B23CFF',
+      neon: '#8C44DC',
       pink: '#D4A017',
       background: '#17110A',
       text: '#FFFFFF',

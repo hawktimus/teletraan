@@ -14,7 +14,7 @@ const read = file => fs.readFileSync(root + file, 'utf8');
 const seeded = read('docs/seed/teams.ndjson').split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
 const sample = JSON.parse(read('dashboard/data/sample/content.json')).teams;
 const wanted = {
-  primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#B23CFF',
+  primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#8C44DC',
   pink: '#D4A017', background: '#17110A', label: '#D9A6FF', text: '#FFFFFF',
   headerInk: '#1A1200', dark: '#3D2A05', retro: '#E0A400',
 };

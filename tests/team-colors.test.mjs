@@ -333,7 +333,7 @@ test('the sample content, the seed file and the built-in team have the colors, t
   const seeded = read('docs/seed/teams.ndjson').split('\n').filter(line => line.trim() !== '').map(line => JSON.parse(line));
   const wanted = {
     prime: { primary: '#6C18B6', plate: '#3B2A7A', body: '#1A0F2E', accent: '#FACA2A', neon: '#FACA2A', pink: '#B23CFF', label: '#FACA2A', metal: 'gold', glow: false },
-    nova: { primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#B23CFF', pink: '#D4A017', label: '#D9A6FF', metal: 'gold', glow: true, background: '#17110A' },
+    nova: { primary: '#D4A017', plate: '#6B4C08', body: '#241A04', accent: '#C86BFF', neon: '#8C44DC', pink: '#D4A017', label: '#D9A6FF', metal: 'gold', glow: true, background: '#17110A' },
   };
 
   Object.keys(wanted).forEach(code => {
@@ -394,7 +394,7 @@ test('in Cybertron and Minimal the edge gradient and the body color are not the 
 
     // the neon and the conduit, the page grid, the digits and the label are the team's
     assert.equal(lower(prime.html['--style-neon']), '#faca2a');
-    assert.equal(lower(nova.html['--style-neon']), '#b23cff');
+    assert.equal(lower(nova.html['--style-neon']), '#8c44dc');
     assert.equal(lower(prime.html['--style-pink']), '#b23cff', style + ': a purple conduit for Prime');
     assert.equal(lower(nova.html['--style-pink']), '#d4a017', style + ': a gold conduit for Nova');
     assert.equal(lower(prime.html['--team-label']), '#faca2a');
@@ -402,7 +402,7 @@ test('in Cybertron and Minimal the edge gradient and the body color are not the 
   });
 
   assert.equal(lower(pageWith('prime', 'minimal').html['--style-digits']), '#faca2a', 'the digits of Minimal are the team\'s neon');
-  assert.equal(lower(pageWith('nova', 'minimal').html['--style-digits']), '#b23cff');
+  assert.equal(lower(pageWith('nova', 'minimal').html['--style-digits']), '#8c44dc');
   assert.equal(lower(pageWith('prime', 'cybertron').html['--style-grid-opacity']), '.07', 'the page grid is the neon at .07');
 });
 
@@ -498,7 +498,7 @@ test('the glow: a team with it has a neon line of 5 px and the two wider lines o
     assert.deepEqual([nova.wideOne.display, nova.wideOne['stroke-width'], nova.wideOne['stroke-opacity']], ['inline', '12px', '.35'], style + ': the first wider line');
     assert.deepEqual([nova.wideTwo.display, nova.wideTwo['stroke-width'], nova.wideTwo['stroke-opacity']], ['inline', '26px', '.12'], style + ': the second');
     assert.deepEqual([nova.headerGlow.display, nova.headerGlow['stroke-width'], nova.headerGlow['stroke-opacity']], ['inline', '12px', '.35'], style + ': and the same behind the header line');
-    [nova.line, nova.wideOne, nova.wideTwo].forEach(computed => assert.equal(lower(computed.stroke), '#b23cff', 'the same color as the line'));
+    [nova.line, nova.wideOne, nova.wideTwo].forEach(computed => assert.equal(lower(computed.stroke), '#8c44dc', 'the same color as the line'));
     assert.equal(prime.line.stroke, '#FACA2A');
 
     // the flat finish has none of it, whatever the team
