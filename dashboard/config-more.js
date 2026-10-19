@@ -18,9 +18,14 @@ export const demoPlaceholderText = '[DEMO ANNOUNCEMENT]';
 
 // A hidden transition pushed from the Studio waits for the next page change of the large panel. When
 // that is more than this many seconds away the screen asks for the page change at once instead.
-// A push is only played while it is less than demoWindowSeconds old and is not the one handled
-// before, the same guard as the demo (shouldRunDemo in core/demo.js).
+// A push is played once, and only while it is less than hiddenWindowSeconds old and is not the one handled
+// before. A request older than that is ignored, and the wall says so in its report.
 export const hiddenAdvanceSeconds = 20;
+export const hiddenWindowSeconds = 300;
+
+// A push that has not reached a page change by now is played without one, as soon as nothing else has the screen.
+// A held panel, a paused rotation or a long panel would otherwise let it run out unseen.
+export const hiddenForceSeconds = 15;
 
 // After a hidden transition has played, none comes about by chance for this many hours. A push from the Studio
 // and the ?hidden= switch ignore it. core/hidden.js keeps the time of the last one.

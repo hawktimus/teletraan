@@ -40,6 +40,7 @@ export { backgrounds } from './config-lists.js';
 export { defaultSettings, defaultThemeSettings } from './config-settings.js';
 export {
   demoWindowSeconds, demoSkewSeconds, demoMaxSteps, demoDefaultSeconds, demoPlaceholderText, hiddenAdvanceSeconds,
+  hiddenWindowSeconds, hiddenForceSeconds,
   hiddenGapHours, previewSeconds, defaultDemo, defaultPerson, talkStatuses, defaultTalk, filterActions,
   defaultFilter, calendarKinds, noCalendarKind, teamTrim, teamMetals, teamPalettes, glowClass, defaultTeam,
   primeTeam, invertedHeaderInk, invertedColors,
