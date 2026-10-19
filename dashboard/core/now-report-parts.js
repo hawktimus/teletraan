@@ -37,6 +37,7 @@ export function cleanReport(raw, now = new Date()) {
     page: text(source.page, 10),
     hold: text(source.hold, 60),
     pause: source.pause === true,
+    heldNote: text(source.heldNote, 200),
     dots: dots,
   };
 }

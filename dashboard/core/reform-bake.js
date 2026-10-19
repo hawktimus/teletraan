@@ -57,6 +57,8 @@ const initialValues = {
 // breaks into, the glint, and anything that only exists to move
 const defaultSkip = 'svg.plate:not(.fills), svg.plate.piece, script, style, [data-reform-skip]';
 const skipKeepingEdges = 'svg.plate.piece, script, style, [data-reform-skip]';
+const marginedTags = /^(H[1-6]|P|UL|OL|DL|DD|BLOCKQUOTE|FIGURE|PRE|FORM|HR)$/i;
+
 const edgeSelector = 'svg.plate:not(.fills)';
 
 export function screenOrigin() {
@@ -115,6 +117,9 @@ function copyStyle(copy, style, parentStyle) {
     const value = style.getPropertyValue(name);
     if (value !== initialValues[name]) write(name, value);
   }
+  // An element whose browser style gives it a margin (a heading, a paragraph) is copied with the margin it really has: a margin of
+  // 0 is the initial value and is not written above, so the copy would have had the browser's own, which moved the team name down
+  if (marginedTags.test(copy.tagName)) ['top', 'right', 'bottom', 'left'].forEach(side => write('margin-' + side, style.getPropertyValue('margin-' + side)));
   write('animation', 'none');
   write('transition', 'none');
   if (style.display !== 'inline' && style.display !== 'contents') write('flex', '0 0 auto');

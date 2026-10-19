@@ -105,6 +105,7 @@ export function nowCardHtml(now, at = new Date()) {
     row('Team', esc(report.team || 'both')) +
     row('Page', esc(report.page || '1')) +
     row('Hold', esc(report.hold || (report.pause ? 'rotation paused' : 'none'))) +
+    (report.heldNote ? row('Held view', esc(report.heldNote)) : '') +
     row('Build', esc(report.build || 'not known')) +
     row('Last report', esc(agoText(now.receivedAt, at))) + '</dl>' +
     (rows ? '<ul class="rows">' + rows + '</ul>' : ''));
