@@ -154,12 +154,12 @@ function makeLookAction(kind, noun, id, name, fields) {
 
     return {
       label: label,
-      title: 'Show the ' + name + ' ' + noun + ' on the screen for ' + previewMinutes + ' minutes, then go back to the schedule. No saved setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over. Back to the schedule ends it at once.',
+      title: 'Show the ' + name + ' ' + noun + ' on the screen for ' + previewMinutes + ' minutes, then go back to the schedule. No saved setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over. Back to the schedule ends it at once.' + (noun === 'view' ? ' A view with no data cannot show: Condensed has only Monday cards, so it stays on the schedule while no Monday task is on the TV, and the Now showing tab of the control page says so.' : ''),
       disabled: Boolean(patch.disabled),
       dialog: note.dialog,
       onHandle: () => {
         sendWithOperations(patch, publish, fields());
-        note.show('The wall shows ' + name + ' for ' + previewMinutes + ' minutes.' + (noun === 'view' ? ' A view with no data cannot show: Condensed has only Monday cards, so it stays on the schedule while no Monday task is on the TV.' : ''));
+        note.show('The wall shows ' + name + ' for ' + previewMinutes + ' minutes');
       },
     };
   }
