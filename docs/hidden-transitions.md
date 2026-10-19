@@ -245,7 +245,7 @@ from the control page at once.
 3. Look at the TV.
 
 A theme or view button writes `previewTheme` or `showView`, with the id and an end time 10 minutes ahead, and
-publishes the page for you. These are the same fields in the same shape as the Now showing tab of the control
+publishes the page for you. These are the same fields in the same shape as the Status tab of the control
 page writes (docs/control-page.md), so the screen has one way to read both
 (`activeRequests` in `dashboard/core/screen-requests.js`). The fields are hidden in Studio, but their values stay
 in the page. The pack button writes the kind and the time now into `previewRequest`, which has two fields, `kind`

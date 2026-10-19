@@ -189,7 +189,7 @@ test('the status document has the three Drive fields, and nginx keeps the manife
 
 test('the guide exists and names the steps in order', () => {
   const guide = read('docs/photos-drive.md');
-  ['Google Cloud console', 'Google Drive API', 'API key', 'Anyone with the link', 'Keys tab', 'GOOGLE_API_KEY', 'Photos'].forEach(word => assert.ok(guide.includes(word), word));
+  ['Google Cloud console', 'Google Drive API', 'API key', 'Anyone with the link', 'Keys section', 'GOOGLE_API_KEY', 'Photos'].forEach(word => assert.ok(guide.includes(word), word));
   assert.ok(!guide.includes('—') && !guide.includes('–'), 'no em or en dash');
 });
 

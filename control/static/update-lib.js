@@ -1,4 +1,4 @@
-// The parts of the Update tab that need no page: reading the git head of a picked folder, naming the folder
+// The parts of the Update section of Settings that need no page: reading the git head of a picked folder, naming the folder
 // against the releases on the Teletraan computer, and the "v14 · a1b2c3d" label. The tests run this file in Node.
 
 import { isExcluded } from './tree-hash.js';

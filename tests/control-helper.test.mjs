@@ -44,9 +44,22 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'mirror-start', 'mirror-watch', 'mirror-status']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
+});
+
+test('log-bundle reads the journal of each teletraan unit as the login user, with no sudo', () => {
+  const h = setup();
+  fs.writeFileSync(path.join(h.bin, 'systemctl'), '#!/bin/sh\necho "teletraan-kiosk.service enabled"\necho "teletraan-monday.timer enabled"\n', { mode: 0o755 });
+  fs.writeFileSync(path.join(h.bin, 'journalctl'), '#!/bin/sh\necho "journalctl $*" >> "' + path.join(h.root, 'calls.log') + '"\necho "a journal line"\n', { mode: 0o755 });
+  const answer = h.ask('log-bundle\n');
+  assert.equal(answer.status, 'ok');
+  assert.ok(answer.output.includes('---- journal teletraan-kiosk.service (last 300 lines) ----') && answer.output.includes('---- journal teletraan-monday.timer'));
+  assert.ok(answer.output.includes('a journal line') && answer.output.includes('---- docker ps ----'));
+  assert.ok(answer.calls.includes('journalctl -u teletraan-kiosk.service -n 300 --no-pager'));
+  assert.ok(!answer.calls.includes('sudo'), 'nothing was run as root');
+  assert.equal(h.ask('log-bundle now\n').status, 'refused');
 });
 
 test('restart-kiosk restarts the screen service and nothing else, and the log has a line with the time', () => {

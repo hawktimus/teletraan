@@ -1,4 +1,4 @@
-// The "From GitHub" card at the top of the Update tab: what is newest on GitHub, what is on the wall, and one
+// The "From GitHub" card at the top of the Update section of Settings: what is newest on GitHub, what is on the wall, and one
 // button that installs it. The steps are shown the same way as for a folder.
 
 import { api } from './api.js';

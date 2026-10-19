@@ -1,4 +1,4 @@
-// The Live preview card of the Now showing tab. It shows a moving picture of the TV when the mirror runs on the
+// The Live preview card of the Status tab. It shows a moving picture of the TV when the mirror runs on the
 // Teletraan computer (computer/scripts/mirror.py), and falls back to a still copy of the dashboard that follows the
 // TV's report when the mirror cannot start.
 //
@@ -71,6 +71,7 @@ export function wirePreview(root) {
 
   function draw() {
     off.hidden = Boolean(frame || picture);
+    root.dataset.on = active ? 'yes' : 'no';
     toggle.textContent = active ? 'Hide live preview' : 'Show live preview';
     toggle.setAttribute('aria-pressed', String(active));
   }

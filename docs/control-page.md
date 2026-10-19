@@ -6,25 +6,44 @@ Address: `http://teletraan.local:3229/`. It opens a small page with two big butt
 
 The Studio has two ways in: the Studio button on the landing page and in the header of the control page (both open `/studio/` on port 3229), and port 3426, which goes straight to the Studio: `http://teletraan.local:3426/`. Port 3426 serves the Studio and nothing else.
 
-The page has five tabs: Update, Now showing, Status, Keys and Log. This page covers the service itself and the Update tab. The other tabs have their own notes in the page. The Now showing tab has a Play announcement button, which plays the announcements of Dashboard Settings through the request route, and a box to post a short announcement.
+The page has two tabs, Status and Settings, and the Studio button in the header.
+
+Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has three folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open.
+
+### Two layouts, one page
+
+The page measures its width and sets a word on the root: wide (900 px and up), medium (600 to 899 px) or narrow (under 600 px). The code is the same for all three (`control/static/tabs/status.js`), and `tabs/tabs.css` does the rest with a grid.
+
+- Wide: two columns. The left column stays in view while the page scrolls and holds Now on the wall and the Live preview. The right column holds the controls in plain cards: Playlist, Theme and view, Hold a panel and Messages. The health blocks are in a grid below both columns.
+- Medium and narrow: one column. The Now card is first and the Live preview is closed behind Show live preview (nothing loads until it is tapped, so a phone is not loaded with the whole dashboard). Each group of controls folds, and one group is open at a time. Health is closed under its own heading. A bar at the bottom keeps the three most used buttons in reach: Next, Pause or Resume, and Reset to today's schedule. The page keeps clear of the notch and the home bar, and every field is 16 px or more so iPhone does not zoom.
+
+The groups, in the order of the page:
+
+- Playlist: Next, one button that is Pause rotation or Resume rotation (it shows what a press does, and the line under it says what the rotation is doing now) and Back to schedule.
+- Theme and view: the line Today the schedule uses Cybertron (from the saved schedule and the time zone of the Look page), the big button Reset to today's schedule, then Theme and View.
+- Hold a panel, and Messages (Play announcement, Post an announcement and Run presentation test).
+
+The line above the Now card says who decides what the wall shows: Following the schedule, or Held by you: theme Retro until reset, view Nova until 14:32.
 
 ## Holding a panel
 
-On the Now showing tab, Hold this panel has a button, Hold 1 minute, and a field for whole minutes from 1 to 60 (it starts at 10) with the button Hold for that many minutes. The service refuses anything else with a plain sentence, and the hold ends by itself at that time. Show a view has the same kind of field, from 10 to 120 minutes. No other button has one.
+In the Hold a panel group there is a button, Hold 1 minute, and a field for whole minutes from 1 to 60 (it starts at 10) with the button Hold for that many minutes. The service refuses anything else with a plain sentence, and the hold ends by itself at that time. The view has a field of its own, from 10 to 120 minutes, and the theme has one under More, also from 10 to 120.
 
 ## Previewing a theme or a view
 
-The Now showing tab has two cards for this. Show a view picks Robotics, Prime, Nova or Condensed. Preview a theme picks Original, Cybertron, Retro or Foundry, and its button says Preview this theme for 10 minutes. Both cards have a Back to schedule button that ends the preview at once. The same four themes and four views are in the menu beside Publish on Dashboard Settings in the Studio (docs/switch-the-look.md), and both write the same fields in the same shape (`previewTheme { theme, until }` and `showView { key, until }`), so the screen reads them in one place (`activeRequests` in `dashboard/core/screen-requests.js`). The lists come from that file, so the page, the service and the screen cannot disagree. A view button is for 30 minutes unless the minutes field says otherwise.
+The Theme and view group has the pieces for this. Theme picks Original, Cybertron, Retro or Foundry. Switch to this theme stays until you reset it, or 24 hours. Preview for 10 minutes ends by itself (the field under More makes it 10 to 120 minutes). View picks Robotics, Prime, Nova or Condensed. Switch to this view stays until you reset it, or 24 hours, and Show for a time takes 10 to 120 minutes. Reset to today's schedule ends all of it at once (the theme, the view, a held panel and the pause) and says in one line what it cleared. The same four themes and four views are in the menu beside Publish on Dashboard Settings in the Studio (docs/switch-the-look.md), and both write the same fields in the same shape (`previewTheme { theme, until }` and `showView { key, until }`), so the screen reads them in one place (`activeRequests` in `dashboard/core/screen-requests.js`). The lists come from that file, so the page, the service and the screen cannot disagree.
 
-When a view that was asked for has nothing to show (Condensed has only Monday cards, and none is on the TV), the wall stays on the schedule and says so in the report (`heldNote`), and the Now showing card shows it as the Held view line under Hold.
+A switch that stays is the same request with an end time 24 hours ahead. The service takes `hours` (1 to 24) or `until` (no more than 24 hours ahead) for a theme or a view, and refuses more with A theme or a view can stay for 24 hours at most. The screen obeys an end time up to 24 hours ahead (`longestMinutes` in `screen-requests.js`) and ignores one further off. A timed button keeps its rule: 10 to 120 minutes. The theme of today comes from `themeByWeekday` of Dashboard Settings and the time zone of the Look page; the views have no view of the day, they follow each other in `viewOrder`, so the page lists them. `GET /control/api/request` returns `todayTheme`, `todayViews` and the requests that run now.
 
-After a press the card shows a line, Previewing Cybertron until 14:32 with the minutes and seconds left. The page then asks what the wall reports every 3 seconds for a minute. When the report shows the theme or the view it asked for, the page says The wall shows Cybertron now. If the report still shows another one after 20 seconds, the page says The wall has not changed yet. It checks every 10 seconds. The TV reports every 10 seconds, and it asks for requests every 10 seconds, so a change normally shows within about 20 seconds. A change waits while an alert, a talk or the night screen has the screen.
+When a view that was asked for has nothing to show (Condensed has only Monday cards, and none is on the TV), the wall stays on the schedule and says so in the report (`heldNote`), and the Now on the wall card shows it as the Held view line under Hold.
+
+After a press the group shows a line, Previewing Cybertron until 14:32 with the minutes and seconds left (Cybertron stays until you reset it, for a switch). The page then asks what the wall reports every 3 seconds for a minute. When the report shows the theme or the view it asked for, the page says The wall shows Cybertron now. If the report still shows another one after 20 seconds, the page says The wall has not changed yet. It checks every 10 seconds. The TV reports every 10 seconds, and it asks for requests every 10 seconds, so a change normally shows within about 20 seconds. A change waits while an alert, a talk or the night screen has the screen.
 
 On the wall a theme request has its own place in `dashboard/core/style.js` (`requestStyle`), so it wins over the theme of the day, over the rotation and over an older Preview button. A view request plays all the blocks of that view in the rotation list, one after the other. Condensed has no block in the list, so it plays the rows of its own document. When the request ends the screen goes back to the schedule in a swap.
 
 ## The Live preview
 
-The Now showing tab has a Live preview card under the card of the wall. It shows the TV moving, as a picture the Teletraan computer makes of the TV's own browser (the mirror, below). When the mirror cannot start, it shows a copy of the dashboard in a frame that follows the TV, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
+The Status tab has a Live preview card under the card of the wall. It shows the TV moving, as a picture the Teletraan computer makes of the TV's own browser (the mirror, below). When the mirror cannot start, it shows a copy of the dashboard in a frame that follows the TV, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
 
 ### The mirror
 
@@ -105,7 +124,10 @@ The top of the Update tab is the card From GitHub. It needs no login and no key,
 
 If GitHub answers too often the card says "GitHub is limiting requests. Try again in a few minutes." If the computer is offline it says it could not reach GitHub. Only one update runs at a time. The control container needs outbound HTTPS to `api.github.com` and `codeload.github.com`. No compose or nginx change is needed, because the control service makes the calls itself. The code is `control/lib/github.js` and `control/routes/github.js`; the repository, the branch and the addresses are the constants at the top of the first.
 
-## The Update tab
+## The Update section
+
+It is the first section of Settings.
+
 
 The folder upload sits below the GitHub card, headed From a folder on this computer.
 
@@ -141,13 +163,13 @@ What the errors mean:
 - `The install needs the sudoers rule. Run the installer again from the Mac tool (menu 1).`: the sudoers line is not there yet. Run the update once.
 - `teletraan-install.conf is missing` or `sudo: a password is required` with no wrapper: the same cause.
 - `the staging folder ...` or `the commit is not a short hash`: the wrapper refused its arguments. The hook always gives it good ones, so this means something else called it.
-- `The install stopped. The wall is unchanged.`: the install itself failed. The lines above it say why, and the Log tab has the rest.
+- `The install stopped. The wall is unchanged.`: the install itself failed. The lines above it say why, and Settings, Log has the rest.
 
 On a new computer: `git clone <user>@<host>:/srv/teletraan.git teletraan`. This needs an SSH key. docs/new-mac.md says when you do not need one.
 
 ## When the page cannot be reached
 
-The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the same install as the Update tab, and `tools/teletraan/teletraan-tool restart` restarts the screen. Both need SSH.
+The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the same install as Settings, Update, and `tools/teletraan/teletraan-tool restart` restarts the screen. Both need SSH.
 
 ## The helper and restarts
 
@@ -159,10 +181,10 @@ The control container mounts `/opt/teletraan` (read and write, which includes `l
 
 ## When a button does nothing
 
-Every button on the Now showing, Status and Log tabs shows a line under it: Done in green, or the reason in red. A reboot or a services restart cuts the page's own connection, so those show an amber line that says to wait a minute and reload.
+Every button on the Status tab and in Settings, Log shows a line under it: Done in green, or the reason in red. A reboot or a services restart cuts the page's own connection, so those show an amber line that says to wait a minute and reload.
 
 - "The control page could not reach the helper on this computer. Run the installer again." The socket `/run/teletraan/control.sock` is missing or the control container cannot use it. Run `sudo computer/install.sh` again (from the Mac tool, choose 1).
-- "Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab." The key is missing the write right, or is wrong.
+- "Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys." The key is missing the write right, or is wrong.
 - "Run presentations is switched off" means the screen would ignore the test.
 - "The helper did not finish (failed 1). sudo: a password is required" means the sudoers file does not allow the command. Run the installer again.
 
@@ -187,3 +209,9 @@ To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/
 - `control/static/`: the pages. A file named `tab-<name>.js`, and each file in `control/static/tabs/` that calls `registerTab`, is a tab and registers itself.
 - `computer/install.sh`, `computer/git/post-receive`, `computer/sudoers/`, `computer/systemd/teletraan-control.socket` and `teletraan-control@.service`: the installer and the host side.
 - `control/bin/install-tree.js`: the install steps from a folder. The installer and the git hook run it in the Node image.
+
+## The log and the download
+
+Settings, Log shows the last 200 lines of the control log and of the helper log. Verbose shows the last 1000. Refresh reads them again. Download the verbose log saves one text file, `teletraan-log-<date>.txt`, from `GET /control/api/log/download` (it needs the PIN). The file holds a header (release, uptime, disk), the control log, the helper log and what the helper reads from the computer: the python3 version, `docker ps` when the login user may run it without sudo, and the last 300 lines of the journal of each `teletraan-*` unit. The helper word is `log-bundle`; it uses no sudo, so the journal is complete only when the login user may read it (a member of the `systemd-journal` group).
+
+Keys and calendar links are hidden in this file. It is safe to send to a coach. Every line goes through `control/lib/redact.js`, which replaces the value after `SANITY_WRITE_TOKEN=`, `MONDAY_API_TOKEN=`, `TBA_AUTH_KEY=`, `GOOGLE_API_KEY=`, `CONTROL_PIN=` and `CALENDAR_*_URL=` (and any other setting whose name ends in TOKEN, SECRET, PASSWORD or API_KEY), any Bearer token, any JWT, any run of 40 or more letters and digits (so a full 40 character commit id is hidden too) and any calendar link with `<hidden>`. `tests/control-log.test.mjs` plants each kind in the logs and checks the file.

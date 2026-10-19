@@ -6,7 +6,7 @@
 
 import assert from 'node:assert/strict';
 import * as request from '../control/routes/request.js';
-import { buildRequest, mutationsFor } from '../control/support/requests.js';
+import { buildRequest, mutationsFor, todayThemeOf, todayViewsOf } from '../control/support/requests.js';
 import { activeRequests, longestMinutes, stillRunning, tidyScreenRequests } from '../dashboard/core/screen-requests.js';
 import { cleanReport, isLocalHost, makeReport } from '../dashboard/core/now-report-parts.js';
 import { defaultSettings } from '../dashboard/config.js';
@@ -141,7 +141,7 @@ await check('a bad request is refused before Sanity is asked, and Sanity refusin
   world.ctx.fetch = async () => ({ ok: false, status: 401, json: async () => ({}) });
   const refused = await world.router.call('POST', '/request', { body: { action: 'next' } });
   assert.equal(refused.status, 502);
-  assert.equal(refused.json.error, 'Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab.');
+  assert.equal(refused.json.error, 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.');
 });
 
 await check('GET request gives the views with the names of the Team documents, the themes and the panels of the large frame', async () => {
@@ -161,7 +161,53 @@ await check('GET request gives the views with the names of the Team documents, t
   assert.equal(options.canWrite, true);
 });
 
-await check('the screen reads a request only until its time, and not a time more than two hours off', () => {
+await check('Switch to this theme and Switch to this view stay for hours (up to 24), and more than that is refused in plain words', () => {
+  assert.deepEqual(buildRequest('theme', { theme: 'retro', hours: 24 }, at).set.previewTheme, { theme: 'retro', until: plus(24 * 60) });
+  assert.deepEqual(buildRequest('view', { key: 'nova', hours: 24 }, at).set.showView, { key: 'nova', until: plus(24 * 60) });
+  assert.equal(buildRequest('theme', { theme: 'retro', hours: 2 }, at).set.previewTheme.until, plus(120));
+  assert.equal(buildRequest('theme', { theme: 'retro', until: plus(24 * 60) }, at).set.previewTheme.until, plus(24 * 60));
+  const tooLong = /^A theme or a view can stay for 24 hours at most\. Reset it to the schedule when you are done\.$/;
+  assert.throws(() => buildRequest('theme', { theme: 'retro', hours: 25 }, at), error => error.status === 400 && tooLong.test(error.message));
+  assert.throws(() => buildRequest('view', { key: 'nova', hours: 48 }, at), error => error.status === 400 && tooLong.test(error.message));
+  assert.throws(() => buildRequest('theme', { theme: 'retro', until: plus(24 * 60 + 5) }, at), error => error.status === 400 && tooLong.test(error.message));
+  assert.throws(() => buildRequest('theme', { theme: 'retro', until: plus(-5) }, at), error => error.status === 400);
+  assert.throws(() => buildRequest('theme', { theme: 'retro', hours: 'many' }, at), error => error.status === 400);
+});
+
+await check('the timed buttons keep their rules: a theme takes 10 to 120 minutes (10 when none), a view 10 to 120 (30 when none)', () => {
+  assert.equal(buildRequest('theme', { theme: 'retro' }, at).set.previewTheme.until, plus(10));
+  assert.equal(buildRequest('theme', { theme: 'retro', minutes: 45 }, at).set.previewTheme.until, plus(45));
+  [9, 121].forEach(minutes => {
+    assert.throws(() => buildRequest('theme', { theme: 'retro', minutes: minutes }, at), error => error.status === 400 && error.message === 'Minutes should be from 10 to 120.');
+    assert.throws(() => buildRequest('view', { key: 'nova', minutes: minutes }, at), error => error.status === 400 && error.message === 'Minutes should be from 10 to 120.');
+  });
+});
+
+await check('the theme and the views of today come from the saved schedule in the time zone of the Look page', () => {
+  const saved = { themeByWeekday: { sunday: 'retro', monday: 'foundry' } };
+  // Sunday evening in New York is already Monday in UTC
+  assert.equal(todayThemeOf(saved, 'America/New_York', new Date('2026-10-19T02:00:00Z')), 'retro');
+  assert.equal(todayThemeOf(saved, 'UTC', new Date('2026-10-19T02:00:00Z')), 'foundry');
+  assert.equal(todayThemeOf({}, 'America/New_York', new Date('2026-10-20T16:00:00Z')), 'cybertron', 'the starting schedule when nothing is saved');
+  assert.equal(todayThemeOf({ themeByWeekday: { tuesday: 'neon' } }, 'Nowhere/Land', new Date('2026-10-20T16:00:00Z')), 'cybertron');
+  assert.deepEqual(todayViewsOf({ viewOrder: ['nova', 'bogus', 'nova', 'general'] }), ['nova', 'general']);
+  assert.deepEqual(todayViewsOf(null), ['general', 'prime', 'nova', 'family']);
+});
+
+await check('GET request gives todayTheme, todayViews and the requests that run now', async () => {
+  const answers = { 'team"': { result: { teams: [], live: 0, talks: [], requests: { showView: { key: 'nova', until: '2026-10-20T16:00:00Z' } }, today: { themeByWeekday: { monday: 'foundry' }, viewOrder: ['prime', 'nova'], timeZone: 'UTC' } } } };
+  const world = await makeWorld([request], { answers: answers });
+  const options = (await world.router.call('GET', '/request')).json;
+  assert.equal(typeof options.todayTheme, 'string');
+  assert.deepEqual(options.todayViews, ['prime', 'nova']);
+  assert.equal(options.requests.showView.key, 'nova');
+  assert.ok(!isNaN(Date.parse(options.serverTime)));
+  const posted = await world.router.call('POST', '/request', { body: { action: 'theme', theme: 'retro', hours: 24 } });
+  assert.equal(posted.status, 200);
+  assert.ok(Date.parse(posted.json.until) - Date.now() > 23.9 * 3600 * 1000);
+});
+
+await check('the screen reads a request only until its time, and not a time more than 24 hours off', () => {
   const settings = {
     holdPanel: { panel: 'tasks', until: plus(10) },
     showView: { key: 'nova', until: plus(30) },
@@ -173,8 +219,10 @@ await check('the screen reads a request only until its time, and not a time more
   assert.deepEqual(activeRequests(settings, later), { holdPanel: '', showView: 'nova', previewTheme: '', pauseRotation: true });
   assert.deepEqual(activeRequests(settings, new Date(at.getTime() + 61 * 60000)), { holdPanel: '', showView: '', previewTheme: '', pauseRotation: false });
 
+  assert.equal(longestMinutes, 24 * 60);
   assert.equal(stillRunning(plus(longestMinutes), at), true);
   assert.equal(stillRunning(plus(longestMinutes + 5), at), false);
+  assert.equal(stillRunning(plus(23 * 60), at), true, 'a theme that stays until reset is obeyed by the wall');
   assert.equal(stillRunning(plus(0), at), false);
   assert.equal(stillRunning('', at), false);
   assert.equal(stillRunning('soon', at), false);

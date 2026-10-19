@@ -1,9 +1,8 @@
-// The Now showing tab: what is on the wall, and the buttons that change it. The card refreshes every
+// The Now on the wall card, the live preview and the controls of the Status tab: what is on the wall, and the buttons that change it. The card refreshes every
 // 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
-import { registerTab } from '../tabs.js';
 import { api, showResult, useStyles } from './api.js';
-import { nowCardHtml, nowControlsHtml, outcome, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
+import { heldLine, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 import { wirePreview } from './preview.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
@@ -86,7 +85,24 @@ function makeWatcher(root, options) {
   };
 }
 
-function wire(root, watcher) {
+// Every Pause or Resume button (the group and the bar at the bottom of a phone) says what a press does
+function setPaused(root, paused) {
+  root.querySelectorAll('[data-toggle-pause]').forEach(toggle => {
+    toggle.dataset.action = paused ? 'resume' : 'pause';
+    toggle.textContent = paused ? 'Resume rotation' : 'Pause rotation';
+  });
+  root.querySelectorAll('[data-pause-state]').forEach(line => { line.textContent = paused ? pauseStateWords.paused : pauseStateWords.running; });
+}
+
+// A press is shown at once, and a report of the wall that is older than the press must not turn it back
+const pressed = { at: 0 };
+
+function pausedBy(requests, now = new Date()) {
+  const until = requests && requests.pauseRotation && requests.pauseRotation.until;
+  return Boolean(until) && Date.parse(until) > now.getTime();
+}
+
+function wire(root, watcher, afterPress) {
   root.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
@@ -98,6 +114,7 @@ function wire(root, watcher) {
     // A fixed button has its minutes in data-minutes; the other one reads the field named in data-minutes-from
     if (action === 'hold') body.panel = value('panel');
     if (action === 'view') body.key = value('view');
+    if (button.dataset.hours) body.hours = Number(button.dataset.hours);
     if (button.dataset.minutes) body.minutes = Number(button.dataset.minutes);
     if (button.dataset.minutesFrom) {
       const field = root.querySelector('[name="' + button.dataset.minutesFrom + '"]');
@@ -113,50 +130,74 @@ function wire(root, watcher) {
     const result = await api('POST', '/request', body);
     button.disabled = false;
     const shown = outcome(result, action, body);
-    showResult(button, shown.state, shown.words);
+    // The bar at the bottom of a phone has room for one word; the longer sentence is in the group above
+    const inBar = Boolean(button.closest('[data-quickbar]'));
+    showResult(button, shown.state, inBar && shown.state === 'done' ? 'Done.' : shown.words);
+    if (result.ok) afterPress();
     if (result.ok && (action === 'theme' || action === 'view')) watcher.asked(action, body, result.data && result.data.until);
-    if (result.ok && action === 'schedule') watcher.cleared();
+    if (result.ok && action === 'schedule') { watcher.cleared(); setPaused(root, false); pressed.at = Date.now(); }
+    if (result.ok && (action === 'pause' || action === 'resume')) { setPaused(root, action === 'pause'); pressed.at = Date.now(); }
+    // The words under the bar at the bottom of a phone go away by themselves
+    if (button.closest('[data-quickbar]')) setTimeout(() => { const line = button.closest('.buttons').nextElementSibling; if (line && line.classList.contains('result')) line.textContent = ''; }, 6000);
   });
 }
 
-registerTab({
-  id: 'now',
-  title: 'Now showing',
-  order: 20,
-  async render(container) {
-    useStyles();
-    container.innerHTML = '<div class="tab"><div data-card></div><div data-preview-card></div><div data-controls></div></div>';
-    const cardBox = container.querySelector('[data-card]');
-    const previewBox = container.querySelector('[data-preview-card]');
-    previewBox.innerHTML = previewCardHtml();
-    let stopPreview = wirePreview(previewBox);
-    let timer = null;
-    let left = false;
-    let ticker = null;
-    const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); if (stopPreview) stopPreview(); stopPreview = null; };
+// Puts the card, the live preview and the buttons into the three boxes it is given. Returns the function that stops it.
+export async function mountNow(boxes) {
+  useStyles();
+  const { cardBox, previewBox, controls, root, heldBox } = boxes;
+  previewBox.innerHTML = previewCardHtml();
+  let stopPreview = wirePreview(previewBox);
+  let timer = null;
+  let left = false;
+  let ticker = null;
+  let heldTimer = null;
+  const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); clearInterval(heldTimer); if (stopPreview) stopPreview(); stopPreview = null; };
 
-    const controls = container.querySelector('[data-controls]');
-    const options = await api('GET', '/request');
-    if (left) return leave;
-    controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
-    const watcher = makeWatcher(controls, options.ok && options.data ? options.data : {});
-    wire(controls, watcher);
-    watcher.tick(0);
-    let ticks = 0;
-    ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
+  const options = await api('GET', '/request');
+  if (left) return leave;
+  controls.innerHTML = nowControlsHtml(options.ok ? options.data : null);
+  const watcher = makeWatcher(controls, options.ok && options.data ? options.data : {});
+  let askAgain = () => {};
+  wire(root, watcher, () => askAgain());
+  setPaused(root, pausedBy(options.ok && options.data ? options.data.requests : null));
+  watcher.tick(0);
+  let ticks = 0;
+  ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
 
-    // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
-    let last = '';
-    async function refresh() {
-      const answer = await api('GET', '/now');
-      if (left) return;
-      const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
-      if (html === last) return;
-      last = html;
-      cardBox.innerHTML = html;
-    }
-    await refresh();
-    if (!left) timer = setInterval(refresh, 10000);
-    return leave;
-  },
-});
+  // Who decides what the wall shows: the requests that run now, asked again with every report
+  const names = { theme: options.ok && options.data ? options.data.themeNames || {} : {}, view: {} };
+  ((options.ok && options.data && options.data.views) || []).forEach(view => { names.view[view.key] = view.name; });
+  let requests = options.ok && options.data ? options.data.requests : null;
+  const drawHeld = () => {
+    const words = heldLine(requests, names, new Date());
+    heldBox.textContent = words;
+    heldBox.dataset.held = words === 'Following the schedule.' ? 'no' : 'yes';
+  };
+  drawHeld();
+  heldTimer = setInterval(drawHeld, 5000);
+  askAgain = () => askRequests();
+  async function askRequests() {
+    const answer = await api('GET', '/request');
+    if (left || !answer.ok || !answer.data) return;
+    requests = answer.data.requests;
+    drawHeld();
+    if (Date.now() - pressed.at > 15000) setPaused(root, pausedBy(requests));
+  }
+
+  // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
+  let last = '';
+  async function refresh() {
+    askRequests();
+    const answer = await api('GET', '/now');
+    if (left) return;
+    if (answer.ok && wallReport(answer.data) && Date.now() - pressed.at > 15000) setPaused(root, wallReport(answer.data).pause === true);
+    const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
+    if (html === last) return;
+    last = html;
+    cardBox.innerHTML = html;
+  }
+  await refresh();
+  if (!left) timer = setInterval(refresh, 10000);
+  return leave;
+}

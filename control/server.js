@@ -123,7 +123,7 @@ export async function createService(config, overrides = {}) {
 
   // The tab files in static/: tab-*.js here and the tabs of the other pages in tabs/
   function tabFiles() {
-    const found = fs.readdirSync(staticFolder).filter(name => /^tab-[a-z-]+\.js$/.test(name));
+    const found = fs.readdirSync(staticFolder).filter(name => /^tab-[a-z-]+\.js$/.test(name) && fs.readFileSync(path.join(staticFolder, name), 'utf8').includes('registerTab('));
     const folder = path.join(staticFolder, 'tabs');
     if (fs.existsSync(folder)) {
       fs.readdirSync(folder).filter(name => name.endsWith('.js')).forEach(name => {

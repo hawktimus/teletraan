@@ -142,7 +142,7 @@ Starts at (docs/presentations.md).
 
 ## Trying the screen
 
-The Start here page has no buttons. A coach can try the screen from the control page (docs/control-page.md), on the Now showing tab:
+The Start here page has no buttons. A coach can try the screen from the control page (docs/control-page.md), on the Status tab:
 
 - **Play announcement:** plays every full-screen announcement that is switched on, once.
 - **Post an announcement:** puts a short notice in the bar under the banner. It starts now and ends in two hours.

@@ -147,7 +147,7 @@ The Look page has a picker for each day, Monday to Sunday (the field Theme of ea
 
 A view with no main panel rows is filled once from the Screens that were in use before the views: rows of Prime go to Prime, rows of Nova to Nova and rows with no team to Robotics. A view that finds no rows starts with the starting rows in `studio/tools/view-defaults.js`. Click Publish all afterwards. The old Screens (now in Old screens (not used)), the Panel order, Styles by day, Team order and Monday style in Dashboard Settings are hidden, with what was saved in them, and the screen does not read them for the rows.
 
-To see a theme or a team for 2 minutes without saving anything, open the menu next to Publish on Dashboard Settings (the three dots) and click one of the Preview buttons (docs/hidden-transitions.md, "Preview a look"). The Now showing tab of the control page can also show a view, hold a panel or try a theme for a few minutes (docs/control-page.md).
+To see a theme or a team for 2 minutes without saving anything, open the menu next to Publish on Dashboard Settings (the three dots) and click one of the Preview buttons (docs/hidden-transitions.md, "Preview a look"). The Status tab of the control page can also switch a theme or a view until you reset it, show one for a few minutes, hold a panel, and reset everything to today's schedule with one button (docs/control-page.md).
 
 ### Putting a team's standard colors back
 
@@ -211,7 +211,7 @@ does not, and has a Show and Hide switch for that one event. Past events are not
 listed. A switch makes a draft, so click Publish all to apply it. The page also
 says when the calendars were last downloaded, whether each one works, and lists the
 Calendar filters in plain sentences under Rules. The calendar links are not here:
-they live on the control page, Keys tab.
+they live on the control page, Settings, Keys section.
 
 - A red line is a problem. "Download failed, the server said no" usually means BAND
   gave the calendar a new link (docs/calendar-links.md, "Change a link"). The TV

@@ -72,7 +72,7 @@ After the copy the tool gives the installer the short hash of this repository. T
 
 The tool refuses to copy from a folder that is not the Teletraan repository, and from a copy that still has a `deploy/` folder: "This copy is older than round 6; update it." Nothing is copied then. The password is asked before anything is copied, so a wrong one costs nothing: "That password was wrong. Choose the same thing again to try another."
 
-The first update that has the mirror (the moving Live preview) needs this tool once, because it adds a unit file, `teletraan-mirror.service`, which only the installer copies into place. The control page's Update tab does not copy unit files. After that, updates from the control page are enough. The installer checks `python3 --version` and skips the unit with a note when python3 is missing. The existing sudoers rule already lets the helper start `teletraan-*.service` units, so nothing in sudoers needs to change.
+The first update that has the mirror (the moving Live preview) needs this tool once, because it adds a unit file, `teletraan-mirror.service`, which only the installer copies into place. The control page's Settings, Update section does not copy unit files. After that, updates from the control page are enough. The installer checks `python3 --version` and skips the unit with a note when python3 is missing. The existing sudoers rule already lets the helper start `teletraan-*.service` units, so nothing in sudoers needs to change.
 
 A computer that pulls from GitHub by itself with the pull timer should not also get files from this tool. Use one. To make the Teletraan computer a copy-only computer, turn the timer off on the computer:
 
@@ -205,7 +205,7 @@ Choices 3 and `c` stay in the menu, because they ask questions.
 | a question needed an answer and none came | The command had nobody to ask. Add `--yes` to `update`, or run the update by hand and answer. |
 | A calendar was added and the screen shows nothing from it | It needs a row in Dashboard Settings, Calendars, with the code the tool printed. |
 | `git push teletraan main` says the install needs the sudoers rule, or permission denied for docker | The push hook gets its root helper and sudoers line from `computer/install.sh`. Choose 1 once, then push again (docs/control-page.md, "The git path"). |
-| The Reboot or Run presentation test button on the control page does nothing | The Update tab and Update from GitHub do not touch the sudoers file, the unit files or the compose file. They come from `computer/install.sh`. Choose 1 once so that the computer has the newest ones (the reboot rule, port 3426, the landing page and the keys folder). Then read `docs/control-page.md`, "When a button does nothing". |
+| The Reboot or Run presentation test button on the control page does nothing | Settings, Update and Update from GitHub do not touch the sudoers file, the unit files or the compose file. They come from `computer/install.sh`. Choose 1 once so that the computer has the newest ones (the reboot rule, port 3426, the landing page and the keys folder). Then read `docs/control-page.md`, "When a button does nothing". |
 | macOS will not open the .command file | Right-click it, choose Open, and choose Open again. |
 
 ## Changing the settings

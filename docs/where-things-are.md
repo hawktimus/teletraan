@@ -404,8 +404,8 @@ editors can sign in from anywhere.
                               config.js. helpers/script-parts.mjs gives a test the parts of a split script
       control-auth, control-keys, control-pages, control-releases, control-request, control-status,
       control-zip-hash, control-helper (.test.mjs)
-                              check the control service: the PIN, cookie and lockout, the Keys tab, the text of
-                              the tabs, releases and installs, the Now showing requests, the status routes, the
+                              check the control service: the PIN, cookie and lockout, the Keys section, the text of
+                              the tabs, releases and installs, the Status requests, the status routes, the
                               zip check and tree hash, and the host helper (docs/control-page.md)
       install-sh.test.mjs     checks computer/install.sh: it refuses a tree with deploy/, moves an old tree into
                               releases/1, installs the helper socket and the sudoers file

@@ -1,4 +1,4 @@
-// Tests for the text of the four tabs (control/static/tabs/render.js) and that every tab file is
+// Tests for the text of the two tabs (control/static/tabs/render.js) and that every tab file is
 // well formed and registers itself. The tabs are phone first with 44px targets.
 //
 //   node tests/control-pages.test.mjs
@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, statusHtml, wallCheck } from '../control/static/tabs/render.js';
+import { doneWords, heldLine, todayLine, pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, statusHtml, wallCheck } from '../control/static/tabs/render.js';
 
 let passed = 0;
 function check(name, test) {
@@ -44,14 +44,23 @@ check('the card is grey with the number of seconds when the wall has gone quiet'
 
 check('the Now showing buttons are all there', () => {
   const html = nowControlsHtml({ views: [{ key: 'general', name: 'General' }], themes: ['original'], panels: ['tasks'], talks: [], liveAnnouncements: 1, canWrite: true });
-  ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
+  ['next', 'pause', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
+  ['Playlist', 'Theme and view', 'Hold a panel', 'Messages'].forEach(title => assert.ok(html.includes('<summary>' + title + '</summary>'), title));
+  assert.equal((html.match(/data-toggle-pause/g) || []).length, 1, 'Pause and Resume are one button');
+  assert.ok(pauseToggleHtml(true).includes('data-action="resume"') && pauseToggleHtml(true).includes('Resume rotation'));
+  assert.ok(pauseToggleHtml(false).includes('data-action="pause"'));
+  const bar = quickBarHtml();
+  ['next', 'pause', 'schedule'].forEach(action => assert.ok(bar.includes('data-action="' + action + '"'), 'bar ' + action));
+  assert.ok(bar.includes('Reset to today&#39;s schedule'));
   assert.ok(html.includes('Hold 1 minute') && html.includes('data-minutes="1"'));
   assert.ok(!html.includes('data-minutes="10"') && !html.includes('data-minutes="30"'), 'the two fixed hold buttons are gone');
   assert.match(html, /name="hold-minutes" type="number" inputmode="numeric" min="1" max="60" step="1" value="10"/);
   assert.match(html, /data-minutes-from="hold-minutes">Hold for that many minutes</);
   assert.match(html, /name="view-minutes" type="number" inputmode="numeric" min="10" max="120" step="1" value="30"/);
-  assert.match(html, /data-minutes-from="view-minutes">Show for that many minutes</);
-  assert.equal((html.match(/type="number"/g) || []).length, 2, 'no other control has a minutes field');
+  assert.match(html, /data-minutes-from="view-minutes">Show for a time</);
+  assert.match(html, /name="theme-minutes" type="number" inputmode="numeric" min="10" max="120" step="1" value="10"/);
+  assert.equal((html.match(/type="number"/g) || []).length, 3, 'three minutes fields: hold, view, and the theme one under More');
+  assert.ok(html.indexOf('<summary>More</summary>') < html.indexOf('name="theme-minutes"'), 'the theme minutes are kept under More');
   assert.ok(html.includes('maxlength="90"'));
   assert.ok(nowControlsHtml({ canWrite: false }).includes('SANITY_WRITE_TOKEN'));
 });
@@ -74,11 +83,15 @@ check('the Keys tab never holds a value, only the mask, and has a field and a cl
 });
 
 check('each tab file registers itself with an id and a title, and parses', () => {
-  const expected = { 'now.js': 'Now showing', 'status.js': 'Status', 'keys.js': 'Keys', 'log.js': 'Log' };
-  Object.keys(expected).forEach(file => {
+  const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
+  const sections = ['now.js', 'health.js', 'keys.js', 'log.js'];
+  sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
+  [...Object.keys(expected), ...sections].forEach(file => {
     const text = fs.readFileSync(path.join(folder, file), 'utf8');
-    assert.match(text, /registerTab\(\{/);
-    assert.ok(text.includes("title: '" + expected[file] + "'"), file);
+    if (expected[file]) {
+      assert.match(text, /registerTab\(\{/);
+      assert.ok(text.includes("title: '" + expected[file] + "'"), file);
+    }
     const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-tab-')), file.replace('.js', '.mjs'));
     fs.writeFileSync(copy, text);
     const checked = spawnSync(process.execPath, ['--check', copy], { encoding: 'utf8' });
@@ -94,16 +107,37 @@ check('buttons and fields are 44px high or more, and the tabs are one column unt
   assert.match(css, /@media \(min-width: 900px\)[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/);
 });
 
-check('the theme card says what a press does, and the lists come from the service in one table', () => {
-  const html = nowControlsHtml({ views: [{ key: 'general', name: 'Robotics' }, { key: 'family', name: 'Condensed' }], themes: ['original', 'cybertron', 'retro', 'foundry'], themeNames: { cybertron: 'Cybertron' }, panels: [], talks: [], canWrite: true });
-  assert.ok(html.includes('Preview this theme for 10 minutes'));
+check('the theme and view group says what a press does, and the lists come from the service in one table', () => {
+  const html = nowControlsHtml({ views: [{ key: 'general', name: 'Robotics' }, { key: 'family', name: 'Condensed' }], themes: ['original', 'cybertron', 'retro', 'foundry'], themeNames: { cybertron: 'Cybertron' }, panels: [], talks: [], canWrite: true, todayTheme: 'cybertron', todayViews: ['general', 'family'] });
+  assert.ok(html.includes('Switch to this theme') && html.includes('Switch to this view') && html.includes('Preview for 10 minutes') && html.includes('Show for a time'));
+  assert.equal((html.match(/data-hours="24"/g) || []).length, 2, 'the two switch buttons ask for 24 hours');
+  assert.ok(html.includes('Stays until you reset it, or 24 hours.'));
+  assert.ok(html.includes("Reset to today&#39;s schedule") && html.includes('data-big'));
+  assert.ok(html.includes('Today the schedule uses Cybertron. The views play in turn: Robotics, Condensed.'));
   assert.ok(html.includes('<option value="cybertron">Cybertron</option>') && html.includes('<option value="foundry">Foundry</option>'));
   assert.ok(html.includes('<option value="general">Robotics</option>') && html.includes('<option value="family">Condensed</option>'));
   assert.ok(html.includes('data-left="theme"') && html.includes('data-wall="theme"') && html.includes('data-wall="view"'));
-  const themeCard = html.slice(html.indexOf('Preview a theme'));
-  assert.ok(themeCard.includes('Back to schedule') && themeCard.includes('data-action="schedule"'), 'the theme card has Back to schedule');
-  const viewCard = html.slice(html.indexOf('Show a view'), html.indexOf('Preview a theme'));
-  assert.ok(viewCard.includes('Back to schedule'), 'the view card has Back to schedule');
+});
+
+check('the held line says who decides what the wall shows', () => {
+  const at = new Date('2026-10-18T10:00:00Z');
+  const plus = minutes => new Date(at.getTime() + minutes * 60000).toISOString();
+  const names = { theme: { retro: 'Retro' }, view: { nova: 'Nova' } };
+  assert.equal(heldLine(null, names, at), 'Following the schedule.');
+  assert.equal(heldLine({ previewTheme: { theme: '', until: '' }, showView: { key: '', until: '' } }, names, at), 'Following the schedule.');
+  assert.equal(heldLine({ previewTheme: { theme: 'retro', until: plus(24 * 60) } }, names, at), 'Held by you: theme Retro until reset.');
+  assert.match(heldLine({ showView: { key: 'nova', until: plus(30) } }, names, at), /^Held by you: view Nova until \d\d:\d\d\.$/);
+  assert.match(heldLine({ previewTheme: { theme: 'retro', until: plus(24 * 60) }, holdPanel: { panel: 'tasks', until: plus(10) }, pauseRotation: { until: plus(60) } }, names, at), /^Held by you: theme Retro until reset, panel tasks until \d\d:\d\d, rotation paused until \d\d:\d\d\.$/);
+  assert.equal(heldLine({ previewTheme: { theme: 'retro', until: plus(-1) } }, names, at), 'Following the schedule.', 'a request that ended is not held');
+  assert.equal(todayLine({}), '');
+});
+
+check('a request of a day says it stays until a reset, not minutes and seconds', () => {
+  const at = new Date('2026-10-18T10:00:00Z');
+  const until = new Date(at.getTime() + 24 * 3600 * 1000).toISOString();
+  assert.equal(previewLine('theme', { theme: 'retro', until: until }, { retro: 'Retro' }, at), 'Retro stays until you reset it.');
+  assert.ok(doneWords('theme', { hours: 24 }).startsWith('The theme stays until you reset it, or 24 hours.'));
+  assert.ok(doneWords('schedule').includes('follows today'));
 });
 
 check('a preview shows its end time and what is left, and says nothing when it has run out', () => {
@@ -131,6 +165,15 @@ check('after a press the page says what the wall reports, and after 20 seconds w
   assert.equal(notChangedWords, 'The wall has not changed yet. It checks every 10 seconds.');
   assert.equal(wallCheck('theme', 'cybertron', { theme: 'cybertron' }, 40, names).state, 'done', 'a late change is still reported');
   assert.equal(wallCheck('view', 'nova', { view: 'nova' }, 4, {}).words, 'The wall shows Nova now.');
+});
+
+check('the old addresses land on Status or on a section of Settings', async () => {
+  const { resolveAddress } = await import('../control/static/tabs.js');
+  assert.deepEqual(resolveAddress('now'), { id: 'status', section: '' });
+  assert.deepEqual(resolveAddress('status'), { id: 'status', section: '' });
+  ['update', 'keys', 'log'].forEach(name => assert.deepEqual(resolveAddress(name), { id: 'settings', section: name }));
+  assert.deepEqual(resolveAddress('settings/log'), { id: 'settings', section: 'log' });
+  assert.deepEqual(resolveAddress(''), { id: '', section: '' });
 });
 
 console.log(passed + ' of ' + passed + ' checks passed.');

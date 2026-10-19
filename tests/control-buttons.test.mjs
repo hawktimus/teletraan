@@ -60,8 +60,8 @@ test('a helper that answers ok, failed or refused is told apart, and its reason 
 test('Run presentation test: a missing key, a refused key, no network and an empty answer each give their own sentence', async () => {
   const cases = [
     { name: 'no key', env: '', status: 503, words: /SANITY_WRITE_TOKEN is not set/ },
-    { name: 'refused', reply: { ok: false, status: 401 }, status_: 502, words: /^Sanity refused the write\. Check SANITY_WRITE_TOKEN on the Keys tab\.$/ },
-    { name: 'forbidden', reply: { ok: false, status: 403 }, status_: 502, words: /^Sanity refused the write\. Check SANITY_WRITE_TOKEN on the Keys tab\.$/ },
+    { name: 'refused', reply: { ok: false, status: 401 }, status_: 502, words: /^Sanity refused the write\. Check SANITY_WRITE_TOKEN in Settings, Keys\.$/ },
+    { name: 'forbidden', reply: { ok: false, status: 403 }, status_: 502, words: /^Sanity refused the write\. Check SANITY_WRITE_TOKEN in Settings, Keys\.$/ },
     { name: 'server error', reply: { ok: false, status: 500 }, status_: 502, words: /could not take the change \(500\)/ },
     { name: 'offline', offline: true, status_: 502, words: /could not reach Sanity/ },
     { name: 'nothing written', reply: { ok: true, status: 200, results: [] }, status_: 502, words: /changed no document/ },
@@ -126,7 +126,7 @@ test('every action and every helper word has words for Done, and a failure shows
   ['restart-kiosk', 'restart-services', 'reboot', 'sync-now', 'refresh'].forEach(word => assert.notEqual(doneWords(word, { target: 'frc' }), 'It worked.', word));
   assert.equal(doneWords('hold', { minutes: 1 }).startsWith('The panel is held for 1 minute.'), true);
   assert.deepEqual(outcome({ ok: true }, 'next'), { state: 'done', words: 'Done. ' + doneWords('next') });
-  assert.deepEqual(outcome({ ok: false, error: 'Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab.' }, 'presentation-test'), { state: 'bad', words: 'Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab.' });
+  assert.deepEqual(outcome({ ok: false, error: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' }, 'presentation-test'), { state: 'bad', words: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' });
   assert.equal(outcome({ ok: false }, 'next').state, 'bad');
   assert.ok(outcome({ ok: false }, 'next').words.length > 20, 'even a failure with no reason says something');
 });
@@ -152,7 +152,7 @@ test('the page turns a lost network, an empty 502 and a refused PIN into plain s
     globalThis.fetch = async () => ({ ok: false, status: 502, json: async () => { throw new Error('html'); } });
     assert.match((await api('POST', '/request', {})).error, /control service on the Teletraan computer is not answering/);
 
-    globalThis.fetch = async () => ({ ok: false, status: 502, json: async () => ({ error: 'Sanity refused the write. Check SANITY_WRITE_TOKEN on the Keys tab.' }) });
+    globalThis.fetch = async () => ({ ok: false, status: 502, json: async () => ({ error: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' }) });
     assert.match((await api('POST', '/request', {})).error, /^Sanity refused the write/);
 
     globalThis.fetch = async () => ({ ok: false, status: 401, json: async () => ({}) });
@@ -187,8 +187,8 @@ test('the result goes in a line right under the buttons that were pressed, and i
   }
 });
 
-test('every button of the three tabs reports through the result line, and the CSS colors it', () => {
-  ['now.js', 'status.js', 'log.js'].forEach(file => {
+test('every button of the Status tab and the Log section reports through the result line, and the CSS colors it', () => {
+  ['now.js', 'health.js', 'log.js'].forEach(file => {
     const text = read('control/static/tabs/' + file);
     assert.ok(text.includes('showResult(') && text.includes('outcome('), file);
     assert.ok(!text.includes('say('), file + ' still has the quiet note');

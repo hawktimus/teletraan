@@ -40,7 +40,7 @@ test('the frame is made on demand, lazy, in a 16 by 9 box, and taken out on leav
   assert.ok(now.includes('return leave;'), 'the tab hands back a function that removes the frame');
   assert.ok(/aspect-ratio: 16 \/ 9/.test(read('control/static/tabs/tabs.css')));
   assert.ok(read('control/static/app.js').includes('Promise.resolve(result)'), 'an async tab is still told when it is left');
-  assert.ok(read('control/static/tabs/status.js').includes('clearInterval(timer)'));
+  assert.ok(read('control/static/tabs/health.js').includes('clearInterval(timer)'));
 });
 
 test('no script reloads the page on a timer, and no page has a meta refresh', () => {

@@ -611,8 +611,8 @@ test('the card words: live with a rate, the two fallbacks, the picture address a
   assert.equal(pictureFacts(39321, 960, 540), 'Last picture: 38.4 KB, 960 by 540 pixels');
   assert.equal(pictureFacts(0, 960, 540), 'Last picture: 960 by 540 pixels');
   assert.equal(pictureFacts(100, 0, 0), '');
-  assert.equal(pictureErrorLine(403), 'The picture could not be loaded: the server answered 403. See the Log tab.');
-  assert.equal(pictureErrorLine(0), 'The picture could not be loaded: the server did not answer. See the Log tab.');
+  assert.equal(pictureErrorLine(403), 'The picture could not be loaded: the server answered 403. See Settings, Log.');
+  assert.equal(pictureErrorLine(0), 'The picture could not be loaded: the server did not answer. See Settings, Log.');
   const card = previewCardHtml();
   assert.ok(card.includes('data-preview-error') && card.includes('Open the picture in a new tab') && card.includes('href="/mirror/frame.jpg"') && card.includes('data-preview-facts'));
   assert.ok(previewCardHtml().includes('data-preview-mode') && !previewCardHtml().includes('<img'));

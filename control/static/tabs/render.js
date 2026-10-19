@@ -1,4 +1,4 @@
-// The text of the four tabs (Now showing, Status, Keys, Log) as HTML strings. They take the answers
+// The text of the Status and Settings tabs as HTML strings. They take the answers
 // of the control API and give markup, with every value from the Teletraan computer escaped. The tab files
 // (now.js, status.js, keys.js, log.js) put the markup in the page and wire the buttons. Nothing
 // here touches the page, so Node can try it.
@@ -177,7 +177,7 @@ export function pictureFacts(bytes, width, height) {
 // status is the number a HEAD of the same address answered, or 0 when nothing answered
 export function pictureErrorLine(status) {
   const answer = Number(status) > 0 ? 'the server answered ' + Number(status) : 'the server did not answer';
-  return 'The picture could not be loaded: ' + answer + '. See the Log tab.';
+  return 'The picture could not be loaded: ' + answer + '. See Settings, Log.';
 }
 
 export function mirrorPictureAddress(counter) {
@@ -239,8 +239,10 @@ function button(action, label, data = '', kind = '') {
   return '<button type="button" class="act ' + kind + '" data-action="' + esc(action) + '"' + data + '>' + esc(label) + '</button>';
 }
 
-function choice(name, items, label) {
+// A choice that sits under a heading of its own names itself for a screen reader and shows no second label
+function choice(name, items, label, plain = false) {
   const list = items.map(item => '<option value="' + esc(item.value) + '">' + esc(item.label) + '</option>').join('');
+  if (plain) return '<label class="pick"><select name="' + esc(name) + '" aria-label="' + esc(label) + '">' + list + '</select></label>';
   return '<label class="pick"><span>' + esc(label) + '</span><select name="' + esc(name) + '">' + list + '</select></label>';
 }
 
@@ -253,6 +255,9 @@ function minuteField(name, label, usual, least, most) {
 // show). These are plain functions with no page in them.
 
 export const previewMinutes = 10;
+// A request with more than this left runs until a reset (the timed buttons end within 2 hours)
+export const stayAfterSeconds = 2 * 60 * 60 + 60;
+export const stayHours = 24;
 export const wallChecks = { answerSeconds: 15, notChangedSeconds: 20, stopSeconds: 60 };
 export const notChangedWords = 'The wall has not changed yet. It checks every 10 seconds.';
 
@@ -285,6 +290,7 @@ export function previewLine(kind, request, names, now = new Date()) {
   if (!id || !left.running) return '';
 
   const name = (names && names[id]) || words(id);
+  if (left.seconds > stayAfterSeconds) return name + ' stays until you reset it.';
   return 'Previewing ' + name + ' until ' + left.endsAt + ' (' + left.text + ' left).';
 }
 
@@ -300,8 +306,60 @@ export function wallCheck(kind, wanted, report, after, names) {
   return { state: 'wait', words: 'Waiting for the wall. It reports every 10 seconds' + (shown ? ' and now shows ' + (names && names[shown] || words(shown)) : '') + '.' };
 }
 
+// The line that says who decides what the wall shows. requests is the answer of GET request; names maps ids to words.
+export function heldLine(requests, names = {}, now = new Date()) {
+  const r = requests && typeof requests === 'object' ? requests : {};
+  const live = until => {
+    const end = Date.parse(until);
+    return !isNaN(end) && end > now.getTime() ? { seconds: Math.ceil((end - now.getTime()) / 1000), end: new Date(end) } : null;
+  };
+  const ending = found => found.seconds > stayAfterSeconds ? 'until reset' : 'until ' + clockText(found.end);
+  const parts = [];
+
+  const theme = r.previewTheme && r.previewTheme.theme && live(r.previewTheme.until);
+  if (theme) parts.push('theme ' + ((names.theme && names.theme[r.previewTheme.theme]) || words(r.previewTheme.theme)) + ' ' + ending(theme));
+  const view = r.showView && r.showView.key && live(r.showView.until);
+  if (view) parts.push('view ' + ((names.view && names.view[r.showView.key]) || words(r.showView.key)) + ' ' + ending(view));
+  const panel = r.holdPanel && r.holdPanel.panel && live(r.holdPanel.until);
+  if (panel) parts.push('panel ' + r.holdPanel.panel + ' ' + ending(panel));
+  const pause = r.pauseRotation && live(r.pauseRotation.until);
+  if (pause) parts.push('rotation paused ' + ending(pause));
+
+  return parts.length === 0 ? 'Following the schedule.' : 'Held by you: ' + parts.join(', ') + '.';
+}
+
+// What the schedule plays today: "Today the schedule uses Cybertron. The views play in turn: Robotics, Prime."
+export function todayLine(options) {
+  const o = options || {};
+  if (!o.todayTheme) return '';
+  const themeNamesOf = o.themeNames || {};
+  const viewNamesOf = {};
+  (o.views || []).forEach(view => { viewNamesOf[view.key] = view.name; });
+  const turn = (o.todayViews || []).map(key => viewNamesOf[key] || words(key)).join(', ');
+  return 'Today the schedule uses ' + (themeNamesOf[o.todayTheme] || words(o.todayTheme)) + '.' + (turn ? ' The views play in turn: ' + turn + '.' : '');
+}
+
 function previewBlock(kind) {
   return '<p class="note" data-left="' + kind + '" role="status"></p><p class="note" data-wall="' + kind + '" role="status"></p>';
+}
+
+// A group of controls. On a wide screen every group is open and plain; on a phone the groups fold and one is open at a time
+// (tabs/status.js).
+function group(id, title, body, open = false) {
+  return '<details class="group" data-group="' + id + '" data-fold="' + (open ? 'open' : 'closed') + '"' + (open ? ' open' : '') + '><summary>' + esc(title) + '</summary><div class="group-body">' + body + '</div></details>';
+}
+
+// The one button for Pause and Resume. It says what a press does, and the line under it says what the rotation is doing.
+// tabs/now.js swaps the two as the state changes.
+export function pauseToggleHtml(paused, kind = '') {
+  return '<button type="button" class="act ' + kind + '" data-toggle-pause data-action="' + (paused ? 'resume' : 'pause') + '">' + (paused ? 'Resume rotation' : 'Pause rotation') + '</button>';
+}
+
+export const pauseStateWords = { paused: 'The rotation is paused.', running: 'The rotation is running.' };
+
+// The three buttons that stay at the bottom of a phone
+export function quickBarHtml() {
+  return '<div class="quickbar" data-quickbar><div class="buttons">' + button('next', 'Next') + pauseToggleHtml(false) + button('schedule', 'Reset to today\'s schedule', '', 'quiet') + '</div></div>';
 }
 
 export function nowControlsHtml(options) {
@@ -312,21 +370,33 @@ export function nowControlsHtml(options) {
   const panels = (o.panels || []).map(panel => ({ value: panel, label: panel }));
   const talks = (o.talks || []).map(talk => '<li>' + esc(talk.name || talk.topic || 'Talk') + ', ' + esc(talk.start) + '</li>').join('');
   const live = o.liveAnnouncements === null || o.liveAnnouncements === undefined ? 'not known' : o.liveAnnouncements;
-  const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it on the Keys tab, then these buttons work.</p>' : '';
+  const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it in Settings, Keys, then these buttons work.</p>' : '';
 
-  return '<div class="grid">' + blocked +
-    card('Move on', '<div class="buttons">' + button('next', 'Next') + button('pause', 'Pause rotation') + button('resume', 'Resume rotation') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>') +
-    card('Hold this panel', choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
-      minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>') +
-    card('Show a view', choice('view', views, 'View') + '<div class="buttons">' + button('view', 'Show this view') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' + previewBlock('view') +
-      minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for that many minutes', ' data-minutes-from="view-minutes"') + '</div>') +
-    card('Preview a theme', choice('theme', themes, 'Theme') + '<div class="buttons">' + button('theme', 'Preview this theme for ' + previewMinutes + ' minutes') + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' + previewBlock('theme') +
-      '<p class="note">The theme goes on the wall in a swap within about 20 seconds. After ' + previewMinutes + ' minutes the wall goes back to its schedule.</p>') +
-    card('Announcements', '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
-      '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
-      '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>') +
-    card('Presentation', (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>') +
-    '</div>';
+  const playlist = '<div class="buttons">' + button('next', 'Next') + pauseToggleHtml(false) + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' +
+    '<p class="note" data-pause-state>' + pauseStateWords.running + '</p>';
+
+  const stays = '<p class="note">Stays until you reset it, or ' + stayHours + ' hours.</p>';
+  const themeAndView = '<p class="note" data-today>' + esc(todayLine(o)) + '</p>' +
+    '<div class="buttons">' + button('schedule', 'Reset to today\'s schedule', ' data-big') + '</div>' +
+    '<h3>Theme</h3>' + choice('theme', themes, 'Theme', true) +
+    '<div class="buttons">' + button('theme', 'Switch to this theme', ' data-hours="' + stayHours + '"') + '</div>' + stays +
+    '<div class="buttons">' + button('theme', 'Preview for ' + previewMinutes + ' minutes', '', 'quiet') + '</div>' + previewBlock('theme') +
+    '<details class="more"><summary>More</summary>' + minuteField('theme-minutes', 'Minutes (10 to 120)', previewMinutes, 10, 120) +
+    '<div class="buttons">' + button('theme', 'Preview for that many minutes', ' data-minutes-from="theme-minutes"', 'quiet') + '</div></details>' +
+    '<h3>View</h3>' + choice('view', views, 'View', true) +
+    '<div class="buttons">' + button('view', 'Switch to this view', ' data-hours="' + stayHours + '"') + '</div>' + stays + previewBlock('view') +
+    minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for a time', ' data-minutes-from="view-minutes"', 'quiet') + '</div>';
+
+  const hold = choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
+    minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>';
+
+  const messages = '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
+    '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
+    '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>' +
+    (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>';
+
+  return blocked + group('playlist', 'Playlist', playlist) + group('theme-view', 'Theme and view', themeAndView, true) +
+    group('hold', 'Hold a panel', hold) + group('messages', 'Messages', messages);
 }
 
 // The Keys tab. describe is GET env.
@@ -352,31 +422,33 @@ export function keysHtml(data) {
 }
 
 // The Log tab. lines is GET log.
-export function logHtml(lines) {
+export function logHtml(lines, title = 'Log') {
   const list = Array.isArray(lines) ? lines : [];
-  if (list.length === 0) return card('Log', '<p>The log is empty.</p>');
-  return card('Log', '<pre class="log">' + list.map(esc).join('\n') + '</pre>');
+  if (list.length === 0) return card(title, '<p>The log is empty.</p>');
+  return card(title, '<pre class="log">' + list.map(esc).join('\n') + '</pre>');
 }
 
 // What a button says when it is done. Every button shows a result: Done in green, or the reason in red.
 // body is what was sent. A helper word has a name of its own in the first argument.
+const syncNames = { calendars: 'calendars', monday: 'Monday', frc: 'competition', 'photos-drive': 'Drive photos' };
+
 export function doneWords(action, body = {}) {
   const minutes = body.minutes ? ' for ' + body.minutes + (body.minutes === 1 ? ' minute' : ' minutes') : '';
   const words = {
     next: 'The screen moves to its next panel within about 10 seconds.',
     pause: 'The rotation is paused.',
     resume: 'The rotation runs again.',
-    schedule: 'The screen goes back to its schedule.',
+    schedule: 'The theme, the view, the held panel and the pause are cleared. The wall follows today\'s schedule again within about 20 seconds.',
     hold: 'The panel is held' + minutes + '. The screen takes it in within about 10 seconds.',
-    view: 'The view is shown' + minutes + '. The wall takes it in within about 20 seconds.',
-    theme: 'The theme is previewed for ' + previewMinutes + ' minutes. The wall takes it in within about 20 seconds.',
+    view: (body.hours ? 'The view stays until you reset it, or ' + body.hours + ' hours.' : 'The view is shown' + minutes + '.') + ' The wall takes it in within about 20 seconds.',
+    theme: (body.hours ? 'The theme stays until you reset it, or ' + body.hours + ' hours.' : 'The theme is previewed for ' + (body.minutes || previewMinutes) + ' minutes.') + ' The wall takes it in within about 20 seconds.',
     announce: 'The announcements play within about 10 seconds. They wait if something else has the screen.',
     'post-announcement': 'The announcement is posted for two hours.',
     'presentation-test': 'The test talk starts within about 10 seconds. It waits if something else has the screen.',
     'restart-kiosk': 'The screen is restarting.',
     'restart-services': 'The services restarted.',
     reboot: 'The Teletraan computer is rebooting. This page is back in about a minute.',
-    'sync-now': 'The ' + (body.target || 'sync') + ' sync has started.',
+    'sync-now': 'The ' + (syncNames[body.target] || 'sync') + ' sync has started.',
     refresh: 'The log is up to date.',
   };
   return words[action] || 'It worked.';
@@ -389,5 +461,5 @@ export function outcome(result, action, body = {}) {
   if (result && result.unreachable && ['reboot', 'restart-services'].includes(action)) {
     return { state: 'wait', words: 'Sent. The connection dropped, which is normal while the computer restarts. Wait about a minute, then reload this page.' };
   }
-  return { state: 'bad', words: (result && result.error) || 'That did not work, and the Teletraan computer gave no reason. The Log tab may have one.' };
+  return { state: 'bad', words: (result && result.error) || 'That did not work, and the Teletraan computer gave no reason. Settings, Log may have one.' };
 }

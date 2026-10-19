@@ -81,7 +81,7 @@ export function mount(router, ctx, method, path, handler, options = {}) {
     } catch (error) {
       if (error instanceof Refusal) return send(res, error.status, { error: error.message });
       if (typeof ctx.log === 'function') ctx.log('error in ' + method + ' ' + path + ': ' + String(error && error.message).slice(0, 200));
-      send(res, 500, { error: 'Something went wrong on the Teletraan computer. The Log tab has the reason.' });
+      send(res, 500, { error: 'Something went wrong on the Teletraan computer. Settings, Log has the reason.' });
     }
   });
 }
