@@ -312,28 +312,25 @@ test('the slashes are left out of a header whose words need their room, and a se
   assert.ok(card('47 HR OLD').includes('<span class="tag-text">47 HR OLD</span>'));
 });
 
-test('the Monday header keeps the words beside a chip for the bar layout, where the header is as wide as the panel, and the title stays before the line', () => {
-  const status = { lastSyncAt: '2026-10-12T15:56:00Z' };
+test('the Monday header has the team and the age at its right end, the slashes when they fit, and the title stays before the line', () => {
+  const content = { monday: { lastSyncAt: '2026-10-12T15:56:00Z' }, settings: { mondayEveryMinutes: 30 } };
   const now = new Date('2026-10-12T16:00:00Z');
 
-  // 4 MIN AGO is 237 wide: it fits in the 289 alone, and not beside the chip of 178
-  const chipped = draw.headerMarkup('MILESTONES', 'PRIME', status, now);
-  assert.ok(chipped.includes('<div class="tag tag-with-chip" data-slat="tag"><span class="ago">4 MIN AGO</span><span class="team-chip">PRIME</span>'));
-  assert.ok(chipped.includes('class="double-slash"'), 'the slashes fit beside the chip');
+  const both = draw.boardHeader('BUILD TASKS', '', content, now);
+  assert.ok(both.includes('<div class="tag" data-slat="tag"><span class="ago">4 MIN AGO</span>'), both);
+  assert.equal(both.includes('class="double-slash"'), false, '4 MIN AGO is 237 wide, so the slashes do not fit beside it in the 289');
+  const prime = draw.boardHeader('BUILD TASKS', 'PRIME', content, now);
+  assert.ok(prime.includes('<span class="ago">PRIME · 4 MIN AGO</span>'));
+  assert.equal(draw.boardHeader('BUILD TASKS', '', { monday: { sample: true } }, now).includes('class="double-slash"'), true, 'SAMPLE is short, so the slashes come after it');
 
-  const both = draw.headerMarkup('MILESTONES', '', status, now);
-  assert.ok(both.includes('<div class="tag" data-slat="tag"><span class="ago">4 MIN AGO</span>') && !both.includes('class="double-slash"'), 'the words of a card of both teams have the room, and the slashes do not');
-  assert.equal(draw.headerMarkup('MILESTONES', 'PRIME', null, now).includes('class="ago"'), false);
-
-  const css = withoutComments(read('dashboard/monday.css'));
-  assert.ok(/\.monday \.tag-with-chip \.ago \{ display: none; \}/.test(css), 'in a header 1152 wide the words beside the chip are hidden');
-  assert.ok(/html\[data-layout="bar"\] \.monday \.tag-with-chip \.ago \{ display: inline; \}/.test(css), 'and shown in the bar layout');
+  // the longest titles fit before the line at one of the three sizes
+  ['PROGRAMMING TASKS', 'OPERATIONS DONE', 'STATUS BY DEPARTMENT', 'OVERALL PROGRESS'].forEach(title => {
+    const size = { title: 60, 'title title-tight': 56, 'title title-tighter': 44 }[teamTitle.smallTitleClass(title)];
+    assert.ok(textWidth(title, 700, size) <= 656, title + ' at ' + size);
+  });
 
   const bar = withoutComments(read('dashboard/layouts/bar.css'));
   assert.ok(/html\[data-layout="bar"\] \.area\[data-area="grid1"\] \.page \.header \{\s*width: var\(--bar-area-width\);\s*\}/.test(bar), 'the header of the main panel is as wide as the panel');
-
-  // beside a chip in the bar layout: the chip and the words and the gap fit in the header that is 275 wider
-  assert.ok(teamTitle.chipWidth('PRIME') + 20 + textWidth('59 MIN AGO', 600, 44) <= wordsRoom + 275);
 });
 
 test('Neon Prime puts the row of ticks to the right of the notch, and stops it before the mark', () => {

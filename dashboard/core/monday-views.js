@@ -1,425 +1,283 @@
-// What each panel of the one task board draws, worked out and with no markup: the plain functions that
-// tests/monday-panels.test.mjs runs. A panel (panels/monday-tasks, monday-done, monday-status-depts,
-// monday-overall, monday-timeline and monday-board) asks for its view, and draws it with core/monday-draw.js.
-// The rules that say which task is where are in core/monday.js. A view is null when the panel has nothing to show,
-// and the Screens leave the row out then.
+// What the two Monday panels draw, worked out with no markup, so tests/monday-panels.test.mjs can run it with node:
+// Department tasks (panels/monday-department) and the TV charts (panels/monday-charts). A view is null when the panel has
+// nothing to show, and the rotation leaves the row out then (stepsOfRow in core/screens-plan.js).
 //
-// The page a panel is given is { team, department, turn }: the code of the team of the row, the id of the Team lead
-// of the row and, for the board, which time in a row that the panel runs twice in a row it is, counting from 1.
-// An empty team is the team on the screen. An empty department is the first one with tasks. A number is the
-// page of an older row, the nth department with tasks.
+// The tasks are the documents the board sync writes (computer/scripts/monday-sync.sh, docs/monday.md). Each has a
+// department (one of the nine), a list (open or done), a status (up-next, in-progress, in-review, blocked or done), a team
+// code or none (General), a contact first name, a priority, dueDate (the estimated completion date), startDate, completedOn
+// and estHours. The page a panel is given is what its row says: { team, department, list, chart }, where team is prime,
+// nova, or '' for both teams.
 
+import { mondayDepartments } from '../config.js';
 import { todayOf } from './competition.js';
 import { isVisible } from './content.js';
-import { bothTeamDepartments, designDepartment } from '../config.js';
-import { dayNumber, forTeam, nextMilestones, milestoneProgress, overdue, plainDateOf, progressHours, rank, visibleTasks } from './monday.js';
-import { teamsOf } from './screens.js';
+import { dayNumber } from './monday.js';
+import { isFromBoard } from './task-source.js';
 import { teamNameOf } from './team-title.js';
-import { wantedTeam } from './teams.js';
-import { hasText } from './text.js';
-import { firstNameOf } from './sanity.js';
-import { pieSlices } from './monday-pie.js';
+import { hasText, isRecord } from './text.js';
 
-const mostTaskRows = 10;
-export const rowsPerPage = 5;
-const doneRows = 6;
-const statusRowsMost = 8;
-const timelineRowsMost = 6;
-const timelineWeeks = 8;
-const boardCardsPerColumn = 2;
+// Four rows are in view at a time, and a list stops at 20 rows: five pages of four
+export const rowsPerPage = 4;
+export const mostRows = 20;
 
-const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+// The order of the open list, and the words of each status
+export const openOrder = ['in-progress', 'in-review', 'blocked', 'up-next'];
+export const statusWords = { 'up-next': 'TO DO', 'in-progress': 'IN PROGRESS', 'in-review': 'IN REVIEW', blocked: 'STUCK', done: 'DONE' };
+const priorityWords = { high: 'High', medium: 'Medium', low: 'Low' };
 
-// A plain date as it reads on a panel, OCT 17. Nothing for a date that is not one.
+// What a row says for a value the board does not have
+export const emptyWords = { contact: 'Unassigned', priority: 'No Priority', date: 'No Date' };
+
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const plainDate = /^\d{4}-\d{2}-\d{2}$/;
+
+// A plain date as it reads on the panel, Oct 17. Nothing for a date that is not one.
 export function dateWords(date) {
-  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
+  if (typeof date !== 'string' || !plainDate.test(date)) return '';
   return months[Number(date.slice(5, 7)) - 1] + ' ' + Number(date.slice(8, 10));
 }
 
+export function departmentTitle(value) {
+  const found = mondayDepartments.find(entry => entry.value === value);
+  return found ? found.title : '';
+}
+
+// The words for the team a row names: the short name of its Team document, or nothing for both teams
+function teamWords(content, code) {
+  if (code === '') return '';
+  const found = (Array.isArray(content && content.teams) ? content.teams : []).find(team => team && team.code === code);
+  return found ? teamNameOf(found) : code.toUpperCase();
+}
+
 function pageOptions(page) {
-  if (typeof page === 'number') return { team: '', department: '', number: page, turn: 1 };
-
-  const source = page && typeof page === 'object' ? page : {};
+  const source = isRecord(page) ? page : {};
   return {
-    team: typeof source.team === 'string' ? source.team : '',
-    department: typeof source.department === 'string' ? source.department : '',
-    number: 1,
-    turn: typeof source.turn === 'number' && source.turn > 1 ? Math.floor(source.turn) : 1,
+    team: source.team === 'prime' || source.team === 'nova' ? source.team : '',
+    department: mondayDepartments.some(entry => entry.value === source.department) ? source.department : '',
+    list: source.list === 'done' ? 'done' : 'open',
+    chart: source.chart === 'progress' || source.chart === 'timeline' ? source.chart : 'status',
   };
 }
 
-// The team of a page: its code, its short name in capitals (the chip) and its Team document
-function teamOfPage(content, options) {
-  const code = options.team !== '' && options.team !== 'both' ? options.team : wantedTeam().code;
-  const found = (Array.isArray(content && content.teams) ? content.teams : []).find(team => team.code === code);
-  const team = found || (code === wantedTeam().code ? wantedTeam() : null);
-
-  return { code: code, name: team ? teamNameOf(team) : String(code).toUpperCase(), team: team };
+// The tasks the Monday panels may draw: from the board, switched on in the Studio (show, Show on TV and the expiry), shown on
+// the board (Show on TV? is not Hide) and with one of the nine departments
+export function boardTasks(content, now = new Date()) {
+  return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task =>
+    isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && departmentTitle(task.department) !== '');
 }
 
-// The Team lead entries that can be a department: shown, with a name and an id, in the order of the Team leads list
-export function departmentEntries(content, now) {
-  return (Array.isArray(content && content.subteams) ? content.subteams : []).filter(entry => isVisible(entry, now) && hasText(entry.name) && hasText(entry.id));
+// The tasks of a team: General (no team) counts for both teams, and no team means every task
+export function ofTeam(tasks, team) {
+  return team === '' ? tasks.slice() : tasks.filter(task => !hasText(task.team) || task.team === team);
 }
 
-// Design and CNC are one department on the screen, DESIGN · CNC
-function isDesignOrCnc(name) {
-  const text = String(name).trim().toLowerCase();
-  return text === 'design' || text === 'cnc' || (/\bdesign\b/.test(text) && /\bcnc\b/.test(text));
+// The list a task is in. A task the older sync wrote has no list, and its status says it.
+export function listOf(task) {
+  if (task.list === 'open' || task.list === 'done') return task.list;
+  return task.status === 'done' ? 'done' : 'open';
 }
 
-// True for a department that belongs to both teams (Business, Operations, Marketing): its panels sit in the Robotics view
-export function isBothTeamDepartment(name) {
-  return bothTeamDepartments.includes(String(name).trim().toLowerCase());
+function dateOf(task, name) {
+  return typeof task[name] === 'string' && plainDate.test(task[name]) ? task[name] : '';
 }
 
-// The departments of the Team leads list as they are on the screen: { id, ids, name, entry }. Design and CNC are one, with
-// the id of the first and the ids of both.
-function groupedEntries(entries) {
-  const groups = [];
-  let design = null;
-
-  entries.forEach(entry => {
-    if (!isDesignOrCnc(entry.name)) {
-      groups.push({ id: entry.id, ids: [entry.id], name: String(entry.name).trim(), entry: entry });
-    } else if (design) {
-      design.ids.push(entry.id);
-    } else {
-      design = { id: entry.id, ids: [entry.id], name: designDepartment, entry: entry };
-      groups.push(design);
-    }
-  });
-  return groups;
+// Two plain dates, earliest first or newest first, and a task with no date after the ones that have one
+function byDate(a, b, newestFirst) {
+  if (a === b) return 0;
+  if (a === '') return 1;
+  if (b === '') return -1;
+  return (a < b ? -1 : 1) * (newestFirst ? -1 : 1);
 }
 
-// The tasks of a department as departmentsOf gives it: the tasks of any of its ids
-export function tasksOfDepartment(tasks, department) {
-  return tasks.filter(task => department.ids.includes(task.subteamId));
+function byTitle(a, b) {
+  const first = String(a.title || '').toLowerCase();
+  const second = String(b.title || '').toLowerCase();
+  return first === second ? 0 : first < second ? -1 : 1;
 }
 
-// The departments that have tasks among the ones given, as { id, ids, name }, in the order of the Team leads list
-export function departmentsOf(content, tasks, now) {
-  return groupedEntries(departmentEntries(content, now))
-    .filter(group => tasksOfDepartment(tasks, group).length > 0)
-    .map(group => ({ id: group.id, ids: group.ids, name: group.name }));
+function openRank(task) {
+  const at = openOrder.indexOf(task.status);
+  return at === -1 ? openOrder.length - 1 : at;
 }
 
-// The department a row names, among the ones given: it can be the id of a Team lead of the department, or its name in any
-// case (build, electrical, design). Design and CNC name the one department DESIGN · CNC. Null when none matches.
-export function departmentIn(departments, value) {
-  const wanted = String(value || '').trim().toLowerCase();
-  if (wanted === '') return null;
-
-  return departments.find(entry => entry.ids.includes(value)) ||
-    departments.find(entry => (isDesignOrCnc(wanted) ? entry.name === designDepartment : entry.name.toLowerCase() === wanted)) ||
-    null;
+// Open: In Progress, In Review, Stuck, To Do, and in each the earliest estimated completion date first. Done: the newest
+// date completed first. The list given is not changed.
+export function sortTasks(tasks, list) {
+  return tasks.slice().sort((a, b) => (list === 'done'
+    ? byDate(dateOf(a, 'completedOn'), dateOf(b, 'completedOn'), true) || byTitle(a, b)
+    : openRank(a) - openRank(b) || byDate(dateOf(a, 'dueDate'), dateOf(b, 'dueDate'), false) || byTitle(a, b)));
 }
 
-// The tasks a card of a team (and perhaps one department) draws, with the department. A row with a department and no team is
-// for both teams. { team, tasks, department } where department is null when the page names none, and tasks is null when it
-// names one that has no visible task.
-export function pageTasks(content, now, options) {
-  const team = teamOfPage(content, options);
-  const bothTeams = options.team === '' && options.department !== '';
-  const tasks = forTeam(visibleTasks(content, now), bothTeams ? '' : team.code);
-  if (options.department === '') return { team: team, tasks: tasks, department: null, bothTeams: false };
-
-  const department = departmentIn(departmentsOf(content, tasks, now), options.department);
-  return { team: team, tasks: department ? tasksOfDepartment(tasks, department) : null, department: department, bothTeams: bothTeams };
-}
-
-// The name of the department of each id, for the cards that name the department of a task
-function departmentNames(content, now, shape) {
-  const names = {};
-  groupedEntries(departmentEntries(content, now)).forEach(group => group.ids.forEach(id => {
-    names[id] = shape(group.name);
-  }));
-  return names;
-}
-
-// The tasks of a team that a panel may draw, and the department the page asks for
-function teamTasks(content, now, code) {
-  return forTeam(visibleTasks(content, now), code);
-}
-
-// The person to ask about a task: a first name, and never anything else. The board may hold a whole name.
-function pocOf(task) {
-  return firstNameOf(task.contact);
+// The status a row shows: a task of the open list is never DONE (it sits in the open list only while it is not done), and
+// one of the done list always is
+function shownStatus(task, list) {
+  if (list === 'done') return 'done';
+  return openOrder.includes(task.status) ? task.status : 'up-next';
 }
 
 
-// Tasks by team and department
+// Department tasks
 
-export function tasksView(content, now, page) {
+// { title, team, rows, pages, counts } for a page, or null when the department has nothing in the list. A row is
+// { status, statusWord, project, contact, priority, date }, every value a word: an empty one reads Unassigned, No Priority or
+// No Date. counts are the open and done tasks of the department for the team.
+export function departmentView(content, now, page) {
   const options = pageOptions(page);
-  const team = teamOfPage(content, options);
-  // a row with a department and no team is a department of both teams: all its tasks, with no team in the title
-  const bothTeams = options.team === '' && options.department !== '';
-  const tasks = teamTasks(content, now, bothTeams ? '' : team.code);
-  const departments = departmentsOf(content, tasks, now);
-  const department = options.department !== '' ? departmentIn(departments, options.department) : departments[options.number - 1];
-  if (!department) return null;
+  if (options.department === '') return null;
 
-  const own = tasksOfDepartment(tasks, department);
-  const today = todayOf(content, now);
-  const ranked = rank(own).slice(0, mostTaskRows);
-  const open = own.filter(task => task.status !== 'done');
+  const own = ofTeam(boardTasks(content, now), options.team).filter(task => task.department === options.department);
+  const listed = sortTasks(own.filter(task => listOf(task) === options.list), options.list);
+  if (listed.length === 0) return null;
 
-  return {
-    team: team,
-    department: department,
-    title: department.name.toUpperCase() + ' TASKS',
-    rows: ranked.map(task => ({
-      status: task.status,
-      title: task.title || '',
-      poc: pocOf(task),
-      due: dateWords(plainDateOf(task, 'dueDate')),
-      overdue: overdue(task, today),
-      priority: task.priority || '',
-    })),
-    counts: { overdue: open.filter(task => overdue(task, today)).length, open: open.length, done: own.length - open.length },
-    pages: Math.max(1, Math.ceil(ranked.length / rowsPerPage)),
-  };
-}
-
-
-// Done by team
-
-export function doneView(content, now, page) {
-  const options = pageOptions(page);
-  const picked = pageTasks(content, now, options);
-  const team = picked.team;
-  if (picked.tasks === null) return null;
-
-  const today = todayOf(content, now);
-  const done = rank(picked.tasks.filter(task => task.status === 'done'));
-  if (done.length === 0) return null;
-
-  const names = departmentNames(content, now, name => name);
-  const week = done.filter(task => {
-    const gone = dayNumber(today) - dayNumber(plainDateOf(task, 'completedOn'));
-    return gone >= 0 && gone < 7;
+  const rows = listed.slice(0, mostRows).map(task => {
+    const status = shownStatus(task, options.list);
+    return {
+      status: status,
+      statusWord: statusWords[status],
+      project: String(task.title || '').trim(),
+      contact: hasText(task.contact) ? String(task.contact).trim().split(/\s+/)[0] : emptyWords.contact,
+      priority: priorityWords[task.priority] || emptyWords.priority,
+      priorityLevel: priorityWords[task.priority] ? task.priority : 'none',
+      date: dateWords(dateOf(task, 'dueDate')) || emptyWords.date,
+    };
   });
 
+  const name = departmentTitle(options.department).toUpperCase();
   return {
-    team: team,
-    title: picked.department ? picked.department.name.toUpperCase() + ' DONE' : 'DONE',
-    rows: done.slice(0, doneRows).map(task => ({ department: names[task.subteamId] || '', title: task.title || '', poc: pocOf(task), date: dateWords(plainDateOf(task, 'completedOn')) })),
-    counts: {
-      week: week.length,
-      season: done.length,
-      hours: Math.round(done.reduce((sum, task) => sum + (typeof task.estHours === 'number' && task.estHours > 0 ? task.estHours : 0), 0)),
-    },
+    title: name + (options.list === 'done' ? ' DONE' : ' TASKS'),
+    team: teamWords(content, options.team),
+    rows: rows,
+    more: listed.length - rows.length,
+    pages: Math.max(1, Math.ceil(rows.length / rowsPerPage)),
+    counts: { open: own.filter(task => listOf(task) === 'open').length, done: own.filter(task => listOf(task) === 'done').length },
   };
 }
 
 
-// Status by department
+// The TV charts
 
-export const statusOrder = ['up-next', 'in-progress', 'in-review', 'blocked', 'done'];
-
-function countStatuses(tasks) {
-  const counts = {};
-  statusOrder.forEach(status => {
-    counts[status] = tasks.filter(task => task.status === status).length;
-  });
-  return counts;
+// The three parts of a bar of the status chart. In review and stuck are counted with in progress.
+function partOf(task) {
+  if (listOf(task) === 'done') return 'done';
+  return task.status === 'up-next' ? 'todo' : 'progress';
 }
 
-// One row for each department that has a visible task, both teams together (General once), at most eight; the
-// departments after the eighth are one row, OTHER.
-export function statusView(content, now) {
-  const tasks = visibleTasks(content, now);
-  const departments = departmentsOf(content, tasks, now);
-  const shown = tasks.filter(task => departments.some(entry => entry.ids.includes(task.subteamId)));
-  if (shown.length === 0) return null;
+// Status by department: one row for each department with tasks, in the order of the nine, with the counts of Done, In
+// Progress and To Do. longest is the most tasks of any row, which the bars are drawn against.
+export function statusChart(tasks) {
+  const rows = mondayDepartments.map(entry => {
+    const own = tasks.filter(task => task.department === entry.value);
+    const counts = { done: 0, progress: 0, todo: 0 };
+    own.forEach(task => { counts[partOf(task)] += 1; });
+    return { name: entry.title.toUpperCase(), done: counts.done, progress: counts.progress, todo: counts.todo, total: own.length };
+  }).filter(row => row.total > 0);
 
-  const rows = departments.map(entry => ({ name: entry.name.toUpperCase(), tasks: tasksOfDepartment(shown, entry) }));
-  if (rows.length > statusRowsMost) {
-    const rest = rows.splice(statusRowsMost - 1);
-    rows.push({ name: 'OTHER', tasks: [].concat(...rest.map(row => row.tasks)) });
-  }
-
-  const sized = rows.map(row => ({ name: row.name, counts: countStatuses(row.tasks), total: row.tasks.length, done: row.tasks.filter(task => task.status === 'done').length }));
-  const today = todayOf(content, now);
-  return {
-    rows: sized,
-    longest: Math.max(...sized.map(row => row.total)),
-    totals: { tasks: shown.length, stuck: shown.filter(task => task.status === 'blocked').length, overdue: shown.filter(task => overdue(task, today)).length },
-  };
+  return rows.length === 0 ? null : { chart: 'status', rows: rows, longest: Math.max(...rows.map(row => row.total)) };
 }
 
-
-// Overall progress
-
-function hoursOfTeam(tasks) {
-  const hours = progressHours(tasks);
-  return { done: Math.round(hours.done), total: Math.round(hours.total), percent: hours.percent };
+function hoursOf(task) {
+  return typeof task.estHours === 'number' && isFinite(task.estHours) && task.estHours > 0 ? task.estHours : 0;
 }
 
-export function overallView(content, now) {
-  const tasks = visibleTasks(content, now).filter(task => hasText(task.subteamId));
+// Overall progress: the estimated hours of the done tasks over the hours of every task. When no task has hours it is the
+// done tasks over every task. { percent, done, total, unit, tasks: { done, open } }
+export function progressChart(tasks) {
   if (tasks.length === 0) return null;
 
-  const today = todayOf(content, now);
-  const hours = progressHours(tasks);
+  const done = tasks.filter(task => listOf(task) === 'done');
+  const allHours = tasks.reduce((sum, task) => sum + hoursOf(task), 0);
+  const byHours = allHours > 0;
+  const part = byHours ? done.reduce((sum, task) => sum + hoursOf(task), 0) : done.length;
+  const whole = byHours ? allHours : tasks.length;
 
   return {
-    percent: hours.percent,
-    hours: { done: Math.round(hours.done), total: Math.round(hours.total), unestimated: hours.unestimated },
-    teams: teamsOf(content).map(team => ({ code: team.code, name: teamNameOf(team), team: team, hours: hoursOfTeam(tasks.filter(task => task.team === team.code)) })),
-    milestones: nextMilestones(content, null, 3).map(milestone => {
-      const progress = milestoneProgress(milestone, tasks, today);
-      return { name: milestone.name, date: dateWords(milestone.targetDate), daysLeft: progress.daysLeft, percent: progress.percent };
+    chart: 'progress',
+    percent: Math.round(part / whole * 100),
+    done: Math.round(part),
+    total: Math.round(whole),
+    unit: byHours ? 'HOURS' : 'TASKS',
+    tasks: { done: done.length, open: tasks.length - done.length },
+  };
+}
+
+// The first day of a month, as a plain date, months after the month of a plain date
+function monthStart(date, months) {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7)) - 1 + months;
+  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+}
+
+// How many departments the timeline has room for, and the lanes a department's bars are put in
+export const timelineRowsMost = 7;
+const lanesMost = 3;
+
+// Timeline: the tasks with a start and an end, in the window of this month and the two after it, grouped by department.
+// A bar is { title, part, from, to, lane } where from and to are fractions of the window. A task that would need a fourth
+// lane is left out of the drawing, and counted in hidden. { months, todayAt, rows, hidden, without }
+export function timelineChart(tasks, today) {
+  const first = monthStart(today, 0);
+  const end = monthStart(today, 3);
+  const start = dayNumber(first);
+  const days = dayNumber(end) - start;
+
+  const dated = tasks.filter(task => dateOf(task, 'startDate') !== '' && dateOf(task, 'dueDate') !== '');
+  const inside = dated.filter(task => dayNumber(task.dueDate) >= start && dayNumber(task.startDate) < start + days);
+  let hidden = 0;
+
+  const rows = mondayDepartments.map(entry => {
+    const lanes = [];
+    const bars = [];
+    inside
+      .filter(task => task.department === entry.value)
+      .sort((a, b) => dayNumber(a.startDate) - dayNumber(b.startDate) || dayNumber(a.dueDate) - dayNumber(b.dueDate))
+      .forEach(task => {
+        const from = Math.max(dayNumber(task.startDate), start);
+        const to = Math.min(dayNumber(task.dueDate) + 1, start + days);
+        let lane = lanes.findIndex(last => last <= from);
+        if (lane === -1 && lanes.length < lanesMost) lane = lanes.push(-Infinity) - 1;
+        if (lane === -1) {
+          hidden += 1;
+          return;
+        }
+        lanes[lane] = to;
+        bars.push({ title: String(task.title || ''), part: partOf(task), from: (from - start) / days, to: (to - start) / days, lane: lane });
+      });
+    return { name: entry.title.toUpperCase(), bars: bars, lanes: Math.max(1, lanes.length) };
+  }).filter(row => row.bars.length > 0);
+
+  if (rows.length === 0) return null;
+  const shown = rows.slice(0, timelineRowsMost);
+  rows.slice(timelineRowsMost).forEach(row => { hidden += row.bars.length; });
+
+  return {
+    chart: 'timeline',
+    months: [0, 1, 2].map(step => {
+      const day = monthStart(today, step);
+      return { name: months[Number(day.slice(5, 7)) - 1].toUpperCase(), from: (dayNumber(day) - start) / days };
     }),
-    counts: { done: tasks.filter(task => task.status === 'done').length, total: tasks.length, overdue: tasks.filter(task => overdue(task, today)).length, stuck: tasks.filter(task => task.status === 'blocked').length },
+    todayAt: (dayNumber(today) - start) / days,
+    rows: shown,
+    hidden: hidden,
+    without: tasks.length - dated.length,
   };
 }
 
-// The words for the days left of a milestone
-export function daysWords(daysLeft) {
-  if (!isFinite(daysLeft)) return '';
-  if (daysLeft < 0) return 'LATE';
-  return daysLeft === 1 ? '1 DAY' : daysLeft + ' DAYS';
-}
+const chartTitles = { status: 'STATUS BY DEPARTMENT', progress: 'OVERALL PROGRESS', timeline: 'TIMELINE' };
 
-
-// Timeline by team
-
-// The day number of the Monday on or before a plain date
-export function mondayBefore(today) {
-  const day = dayNumber(today);
-  return day - ((new Date(day * 86400000).getUTCDay() + 6) % 7);
-}
-
-export function timelineView(content, now, page) {
+// { title, team, chart, ... } for a page of the TV charts, or null when the chart has nothing to draw
+export function chartsView(content, now, page) {
   const options = pageOptions(page);
-  const picked = pageTasks(content, now, options);
-  const team = picked.team;
-  if (picked.tasks === null) return null;
+  const tasks = ofTeam(boardTasks(content, now), options.team);
+  const drawn = options.chart === 'progress' ? progressChart(tasks) : options.chart === 'timeline' ? timelineChart(tasks, todayOf(content, now)) : statusChart(tasks);
+  if (drawn === null) return null;
 
-  const tasks = picked.tasks;
-  const today = todayOf(content, now);
-  const first = mondayBefore(today);
-  const days = timelineWeeks * 7;
-
-  const drawn = tasks.filter(task => plainDateOf(task, 'startDate') !== '' && plainDateOf(task, 'dueDate') !== '');
-  const without = tasks.length - drawn.length;
-  const inside = drawn.filter(task => dayNumber(task.dueDate) >= first && dayNumber(task.startDate) < first + days);
-  const rows = departmentsOf(content, inside, now).slice(0, timelineRowsMost).map(entry => ({
-    id: entry.id,
-    name: entry.name.toUpperCase(),
-    bars: laneBars(tasksOfDepartment(inside, entry), first, days),
-  }));
-
-  const weeks = [];
-  for (let week = 0; week < timelineWeeks; week++) weeks.push(dateWords(new Date((first + week * 7) * 86400000).toISOString().slice(0, 10)));
-
-  return rows.length === 0 && without === 0 ? null : { team: team, title: picked.department ? picked.department.name.toUpperCase() + ' TIMELINE' : 'TIMELINE', weeks: weeks, rows: rows, without: without, todayAt: (dayNumber(today) - first) / days, days: days, first: first };
-}
-
-// Where each bar of a department goes, as fractions of the eight weeks, and in which of two lanes. A task that
-// would lie over both lanes is left out.
-function laneBars(tasks, first, days) {
-  const lanes = [-Infinity, -Infinity];
-  const bars = [];
-
-  tasks
-    .slice()
-    .sort((a, b) => dayNumber(a.startDate) - dayNumber(b.startDate) || dayNumber(a.dueDate) - dayNumber(b.dueDate))
-    .forEach(task => {
-      const start = Math.max(dayNumber(task.startDate), first);
-      const end = Math.min(dayNumber(task.dueDate) + 1, first + days);
-      const lane = lanes.findIndex(last => last <= start);
-      if (lane === -1 || end <= start) return;
-
-      lanes[lane] = end;
-      bars.push({ title: task.title || '', status: task.status, from: (start - first) / days, to: (end - first) / days, lane: lane });
-    });
-
-  const used = bars.some(bar => bar.lane === 1) ? 2 : 1;
-  bars.forEach(bar => {
-    bar.lanes = used;
-  });
-  return bars;
+  return Object.assign({ title: chartTitles[options.chart], team: teamWords(content, options.team) }, drawn);
 }
 
 
-// Board by team
-
-// The four columns: To Do, In Progress, Review (with the stuck tasks, which rank first there) and Done. A column
-// has its count, two cards for the turn it is, and how many more there are. The second time the panel runs in a
-// row, cards three and four.
-export function boardView(content, now, page) {
-  const options = pageOptions(page);
-  const picked = pageTasks(content, now, options);
-  const team = picked.team;
-  if (picked.tasks === null || picked.tasks.length === 0) return null;
-
-  const tasks = picked.tasks;
-
-  const names = departmentNames(content, now, name => name.toUpperCase());
-  const ranked = rank(tasks);
-  const columns = [
-    { id: 'up-next', name: 'TO DO', list: ranked.filter(task => task.status === 'up-next') },
-    { id: 'in-progress', name: 'IN PROGRESS', list: ranked.filter(task => task.status === 'in-progress') },
-    { id: 'in-review', name: 'REVIEW', list: ranked.filter(task => task.status === 'in-review' || task.status === 'blocked') },
-    { id: 'done', name: 'DONE', list: ranked.filter(task => task.status === 'done') },
-  ];
-  const skip = (options.turn - 1) * boardCardsPerColumn;
-
-  return {
-    team: team,
-    title: picked.department ? picked.department.name.toUpperCase() + ' BOARD' : 'BOARD',
-    columns: columns.map(column => {
-      const cards = column.list.slice(skip, skip + boardCardsPerColumn);
-      return {
-        id: column.id,
-        name: column.name,
-        count: column.list.length,
-        more: Math.max(0, column.list.length - skip - cards.length),
-        cards: cards.map(task => ({ department: names[task.subteamId] || '', title: task.title || '', poc: pocOf(task), stuck: task.status === 'blocked' })),
-      };
-    }),
-  };
-}
-
-
-// Status pie of a team, or of one department of it
-
-export const pieGeometry = { cx: 240, cy: 240, outer: 230, inner: 130 };
-const pieWords = { 'up-next': 'TO DO', 'in-progress': 'IN PROGRESS', 'in-review': 'REVIEW', blocked: 'STUCK', done: 'DONE' };
-
-export function pieView(content, now, page) {
-  const options = pageOptions(page);
-  const picked = pageTasks(content, now, options);
-  if (picked.tasks === null || picked.tasks.length === 0) return null;
-
-  const counts = countStatuses(picked.tasks);
-  const all = statusOrder.map(status => ({ status: status, name: pieWords[status], count: counts[status] }));
-  const slices = pieSlices(all, pieGeometry.cx, pieGeometry.cy, pieGeometry.outer, pieGeometry.inner);
-
-  return {
-    team: picked.team,
-    title: picked.department ? picked.department.name.toUpperCase() + ' STATUS' : 'STATUS',
-    total: picked.tasks.length,
-    legend: all.map(item => Object.assign({ percent: (slices.find(slice => slice.status === item.status) || { percent: 0 }).percent }, item)),
-    slices: slices,
-  };
-}
-
-
-// The view of a panel by its id, or null when it has nothing to show. The Screens ask it before they make a step of a Monday row,
-// so a row for a department with no visible task, or a team with no task, is left out as an empty row always was.
+// The view of a panel by its id, or null when it has nothing to show. The rotation asks it before it makes a step of a row.
 export function viewOf(panelId, content, now, page) {
-  if (panelId === 'monday-tasks') return tasksView(content, now, page);
-  if (panelId === 'monday-done') return doneView(content, now, page);
-  if (panelId === 'monday-status-depts') return statusView(content, now);
-  if (panelId === 'monday-overall') return overallView(content, now);
-  if (panelId === 'monday-timeline') return timelineView(content, now, page);
-  if (panelId === 'monday-pie') return pieView(content, now, page);
-  if (panelId !== 'monday-board') return null;
-
-  const view = boardView(content, now, page);
-  return view && view.columns.some(column => column.cards.length > 0) ? view : null;
+  if (panelId === 'monday-department') return departmentView(content, now, page);
+  if (panelId === 'monday-charts') return chartsView(content, now, page);
+  return null;
 }

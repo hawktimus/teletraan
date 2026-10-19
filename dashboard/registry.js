@@ -20,19 +20,14 @@
 //   competition  a competition card (core/competition.js). It is not in Panel order or in the
 //             rotation lists of config.js: the Competition tab of Dashboard Settings switches it,
 //             and core/competition.js puts the cards that are due in the large panel's rotation.
-//   older     an older Monday card: it is registered so a saved row keeps working, and the Studio does not offer it
-//             (a saved row that names it plays as the tasks panel, core/screens.js)
 //   placeholder  a panel that draws its title and a dashed frame and is designed later (core/placeholder.js). It is a row of
 //             the Rotation list and in no older list (Panel order, the rows of a Screen)
 //   rotationOnly  a panel that is drawn only when a row of the rotation names it (core/rotation.js), as a large panel or as the side
 //             of a row. It is not a spare for the small frame, not in Panel order and not in the rows of a Screen
-//   monday    a Monday card (core/monday.js). It is not in Panel order and not in the rotation lists of
-//             config.js: the cards are Monday rows of a Screen (core/screens.js). A row names the card and a team,
-//             or both teams for the milestones and progress cards, and plays when the team has board tasks. The
-//             tasks card has one page for each Team lead entry that has tasks. A saved Panel order that still
-//             names one is ignored (core/panel-order.js). The cards have a topic of their own, as the competition
-//             cards do: a Monday row has nothing else to show, so it must not wait for the small frame to leave
-//             the topic tasks.
+//   monday    a Monday panel (docs/monday.md): Department tasks (monday-department) and the TV charts (monday-charts).
+//             A row of the rotation names the department, the list, the chart and the team, and the row is skipped while
+//             the panel has nothing to show. They are not in Panel order and have a topic of their own, as the
+//             competition cards do. The eleven Monday panels of the older sync are gone (retiredMondayPanels in config.js).
 //
 // A panel in grid1, grid2 or ticker draws only its page. The area it is shown
 // in supplies the frame and the page change (core/areas.js). The banner, the
@@ -77,17 +72,8 @@ export const panels = [
   { id: 'competition-recap', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-forecast', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-qualify', region: 'grid1', topic: 'competition', competition: true },
-  { id: 'monday-tasks', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-done', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-status-depts', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-overall', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-timeline', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-board', region: 'grid1', topic: 'monday', monday: true },
-  { id: 'monday-milestones', region: 'grid1', topic: 'monday', monday: true, older: true },
-  { id: 'monday-progress', region: 'grid1', topic: 'monday', monday: true, older: true },
-  { id: 'monday-milestones-both', region: 'grid1', topic: 'monday', monday: true, older: true },
-  { id: 'monday-progress-both', region: 'grid1', topic: 'monday', monday: true, older: true },
-  { id: 'monday-pie', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-department', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-charts', region: 'grid1', topic: 'monday', monday: true },
 
   { id: 'task-counts', region: 'grid2', topic: 'tasks' },
   { id: 'next-event', region: 'grid2', topic: 'events' },

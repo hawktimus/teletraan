@@ -7,8 +7,8 @@ import { drawing } from './lib/harness.mjs';
 
 // Each theme, and Minimal, which is the bar layout in the Original theme
 const looks = ['original', 'cybertron', 'retro', 'minimal'];
-// A large panel, a Monday card, the photo panel, a small panel and the countdown
-const panels = ['tasks', 'monday-tasks', 'photo', 'task-counts', 'countdown'];
+// A large panel, a Monday panel, the photo panel, a small panel and the countdown
+const panels = ['tasks', 'monday-department', 'photo', 'task-counts', 'countdown'];
 const sizes = [{ name: '1920', width: 1920, height: 1080 }, { name: '3840', width: 3840, height: 2160 }];
 const round = value => Math.round(value * 10) / 10;
 

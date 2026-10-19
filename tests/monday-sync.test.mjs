@@ -591,15 +591,23 @@ test('monday-status: last read, the error in plain words or none, the reads, the
 });
 
 test('how often: a run before the setting ends without a word; the Sync Monday now file reads at once', () => {
-  const place = setup('every', { tools: true });
-  world(place, { every: 30, known: { lastSyncAt: '2027-01-12T14:50:00Z', callsToday: 3, callsDate: todayText } });
+  // The file of the control page is moved into the folder of this test, so another test that writes the real one changes nothing here
+  const force = path.join(work, 'every-force');
+  const place = setup('every', { tools: true, edits: [['/tmp/teletraan-monday-force', force]] });
+  const known = { lastSyncAt: '2027-01-12T14:50:00Z', callsToday: 3, callsDate: todayText };
+  world(place, { every: 30, known: known });
   const early = place.run();
   assert.equal(early.status, 0);
   assert.equal(early.text, '');
   assert.deepEqual(requestsOf(early.calls), ['sanity-query']);
   assert.ok(textOf(syncFile).includes('/tmp/teletraan-monday-force -mmin -2'), 'the force file of the control page');
 
-  world(place, { every: 5, known: { lastSyncAt: '2027-01-12T14:50:00Z', callsToday: 3, callsDate: todayText } });
+  fs.writeFileSync(force, '');
+  world(place, { every: 30, known: known });
+  assert.deepEqual(requestsOf(place.run().calls), sequence, 'Sync Monday now reads at once');
+  fs.rmSync(force);
+
+  world(place, { every: 5, known: known });
   assert.deepEqual(requestsOf(place.run().calls), sequence, 'ten minutes old with a setting of 5 reads');
 });
 

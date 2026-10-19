@@ -1,6 +1,5 @@
 // Text fits. Every chip, label and header is measured with the font that draws it, and has to fit its box with 8px to
-// spare. The countdown title wraps by its own rule and is never cut off, and the department labels of the Monday panels
-// fit the longest department name.
+// spare. The countdown title wraps by its own rule and is never cut off.
 
 import { titleLines } from '../../dashboard/core/countdown-title.js';
 import { titleRooms, titleSpacing } from '../../dashboard/core/countdown-title.js';
@@ -13,9 +12,8 @@ const round = value => Math.round(value * 10) / 10;
 
 const looks = ['original', 'cybertron', 'retro', 'minimal'];
 // The panels of the large and small areas and the Monday cards. The other looks see the ones that differ most.
-const panels = ['tasks', 'events', 'leadership', 'team-leads', 'roster', 'spotlight', 'sponsor-feature', 'photo', 'next-event', 'task-counts', 'forecast', 'safety-days', 'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-milestones-both', 'monday-progress-both'];
-const otherLooks = ['tasks', 'events', 'leadership', 'monday-tasks', 'monday-board', 'monday-status-depts'];
-const mondayPanels = panels.filter(panel => panel.startsWith('monday-'));
+const panels = ['tasks', 'events', 'leadership', 'team-leads', 'roster', 'spotlight', 'sponsor-feature', 'photo', 'next-event', 'task-counts', 'forecast', 'safety-days', 'monday-department', 'monday-charts'];
+const otherLooks = ['tasks', 'events', 'leadership', 'monday-department', 'monday-charts'];
 // The widest department there is, according to dashboard/core/header-room.js
 const longestDepartment = 'Programming';
 
@@ -37,9 +35,7 @@ async function readPanel(ctx, panel, look, departments) {
 
 // What the order sets and the rule cannot both have. Each one is a line in the README and the report, and it holds only
 // up to the amount, so that it cannot grow unseen.
-const knownTight = [
-  { panel: 'monday-tasks', name: '.chip-overdue', kind: 'parent', most: 24, reason: 'the order sets the due column at 290px and OVERDUE with the date needs 313px' },
-];
+const knownTight = [];
 
 function fitLines(found, panel) {
   return found
@@ -58,16 +54,6 @@ function panelRules() {
           return found.error ? [found.error] : fitLines(found, panel);
         },
       });
-      // The labels of departments are the elements with the word department in their class
-      if (panel.startsWith('monday-')) {
-        rules.push({
-          name: 'monday-departments/' + look + '/' + panel,
-          async run(ctx) {
-            const found = await ctx.scenario('departments ' + look + ' ' + panel, () => readPanel(ctx, panel, look, true));
-            return found.error ? [found.error] : fitLines(found, panel);
-          },
-        });
-      }
     });
   });
   return rules;

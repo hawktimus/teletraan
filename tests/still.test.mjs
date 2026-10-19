@@ -54,12 +54,12 @@ test('a panel without still keeps the motion it was given', () => {
   assert.equal(useStillSwitches(new URLSearchParams('?panel=tasks'), readStill('?panel=tasks')).has('motion'), false);
 });
 
-test('the row for a Monday panel carries the team and the department', () => {
-  const row = stillRow(readStill('?panel=monday-tasks&team=prime&dept=abc'));
-  assert.equal(row.panel, 'monday-tasks');
-  assert.equal(row.team, 'prime');
-  assert.equal(row.department, 'abc');
-  assert.equal('department' in stillRow(readStill('?panel=monday-done&team=prime')), false);
+test('the row for a Monday panel carries the team, the department, the list and the chart', () => {
+  const row = stillRow(readStill('?panel=monday-department&team=prime&dept=build&list=done'));
+  assert.deepEqual([row.panel, row.team, row.department, row.list], ['monday-department', 'prime', 'build', 'done']);
+  assert.equal('department' in stillRow(readStill('?panel=monday-charts&team=prime')), false);
+  assert.equal(stillRow(readStill('?panel=monday-charts&chart=timeline')).chart, 'timeline');
+  assert.equal('list' in readStill('?panel=monday-charts'), false, 'an address without them reads as it did');
 });
 
 test('the clock draws once when asked and then holds', () => {
@@ -79,13 +79,13 @@ test('the clock draws once when asked and then holds', () => {
 });
 
 test('the Studio address names the panel, the team, the department, the Screen and still', () => {
-  assert.equal(preview.previewAddress('monday-tasks', 'prime', 'lead 1', 'cybertron'), '/dashboard/index.html?panel=monday-tasks&team=prime&dept=lead%201&screen=cybertron&still=1');
-  assert.equal(preview.previewAddress('monday-overall', '', '', 'nope'), '/dashboard/index.html?panel=monday-overall&screen=original&still=1');
+  assert.equal(preview.previewAddress('monday-department', 'prime', 'build', 'cybertron', '', { list: 'done' }), '/dashboard/index.html?panel=monday-department&team=prime&dept=build&list=done&screen=cybertron&still=1');
+  assert.equal(preview.previewAddress('monday-charts', '', '', 'nope', '', { chart: 'timeline' }), '/dashboard/index.html?panel=monday-charts&chart=timeline&screen=original&still=1');
 });
 
 test('the Studio lists twenty panels, each id once, at half size', () => {
-  assert.equal(preview.previewPanels.length, 20, 'the 17 Monday and small panels, and the three Before and after cards');
-  assert.equal(new Set(preview.previewPanels.map(item => item.id)).size, 20);
+  assert.equal(preview.previewPanels.length, 12, 'the 9 Monday, Drive hours, news and small panels, and the three Before and after cards');
+  assert.equal(new Set(preview.previewPanels.map(item => item.id)).size, 12);
   assert.equal(preview.previewAddress('competition-recap', 'prime', '', 'original', 'recap'), '/dashboard/index.html?panel=competition-recap&team=prime&screen=original&competition=1&phase=recap&still=1');
   assert.equal(preview.frameSize.width * 2, preview.frameSize.canvasWidth);
   assert.equal(preview.frameSize.height * 2, preview.frameSize.canvasHeight);

@@ -3,7 +3,7 @@
 // the three kinds of mark. With ?sample=1 the sample tag is there, which shows that the look can see one.
 
 // The panels that can write a mark when they have no content, and the whole screen
-const panels = ['', 'safety-days', 'photo', 'team-leads', 'leadership', 'roster', 'spotlight', 'sponsor-feature', 'sponsor-logo', 'tasks', 'events', 'next-event', 'task-counts', 'forecast', 'monday-tasks', 'monday-done', 'monday-board', 'competition-rank'];
+const panels = ['', 'safety-days', 'photo', 'team-leads', 'leadership', 'roster', 'spotlight', 'sponsor-feature', 'sponsor-logo', 'tasks', 'events', 'next-event', 'task-counts', 'forecast', 'monday-department', 'monday-charts', 'competition-rank'];
 
 // Placeholder markers are words in square brackets, and the sample tags say SAMPLE
 const placeholder = /\[[^\]\n]{1,60}\]/;

@@ -1,0 +1,111 @@
+/* Department tasks (panels/monday-department). The header, the body, the status chip and the numbers are in monday.css.
+   The body is the names of the five columns, a window of four rows of 84 and, under it, the open and done counts and the
+   page. The Project column takes the room the other four leave, so it is widest in the bar layout. A long project name
+   is at 44px on two lines. A value the board does not have (Unassigned, No Priority, No Date) is in the quiet colour. */
+.monday-department { --scroll-step: 336px; }
+
+.monday-department .columns,
+.monday-department .row {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr) 240px 240px 250px;
+  column-gap: 14px;
+  align-items: center;
+}
+
+/* The main panel of the standard layout is about 1100 wide, so Contact and Priority are narrower there (Priority keeps the 176 of its name), the project is
+   always on two lines at 44px, and No Priority and No Date may take two lines too. The date keeps 240, the width of
+   COMPLETION in its name. The Robotics view plays this panel in the bar layout, so this is only for a view set to
+   the standard layout. */
+html[data-layout="standard"] .monday-department .columns,
+html[data-layout="standard"] .monday-department .row {
+  grid-template-columns: 232px minmax(0, 1fr) 200px 180px 240px;
+  column-gap: 8px;
+}
+html[data-layout="standard"] .monday-department .project {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  font: 500 var(--size-label)/38px var(--font-text);
+}
+html[data-layout="standard"] .monday-department .priority,
+html[data-layout="standard"] .monday-department .date {
+  white-space: normal;
+  line-height: 40px;
+}
+
+/* Estimated Completion Date takes three lines at 36px, so the other names sit on the bottom line with it */
+.monday-department .columns {
+  height: 108px;
+  align-items: end;
+  white-space: normal;
+  color: var(--yellow);
+  font: 600 36px/36px var(--font-display);
+}
+
+.monday-department .rows-window {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 112px;
+  height: 336px;
+  overflow: hidden;
+}
+
+.monday-department .row {
+  box-sizing: border-box;
+  height: 84px;
+  border-bottom: 3px solid var(--plate);
+}
+
+.monday-department .chip { width: 232px; }
+
+.monday-department .project {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 var(--size-body)/64px var(--font-text);
+}
+.monday-department .project-long {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  font: 500 var(--size-label)/38px var(--font-text);
+}
+
+.monday-department .contact,
+.monday-department .priority,
+.monday-department .date {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+.monday-department .priority-high { color: var(--danger); font-weight: 700; }
+.monday-department .priority-medium { color: var(--yellow); }
+.monday-department .none,
+.monday-department .priority-none { color: var(--lilac); }
+
+/* The counts end at 528, inside the body of Cybertron (532), which ends above the slashes at the foot of its frame */
+.monday-department .facts { top: 452px; }
+
+/* The place of the page, at the right of the counts. Only the one of the page in view is shown. */
+.monday-department .marker {
+  position: absolute;
+  right: 68px;
+  top: 458px;
+  display: flex;
+  gap: 32px;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 600 var(--size-label)/52px var(--font-display);
+}
+.monday-department .place { display: none; }
+.monday-department[data-scroll-page="1"] .place-1,
+.monday-department[data-scroll-page="2"] .place-2,
+.monday-department[data-scroll-page="3"] .place-3,
+.monday-department[data-scroll-page="4"] .place-4,
+.monday-department[data-scroll-page="5"] .place-5 { display: block; }
