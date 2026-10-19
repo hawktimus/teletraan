@@ -6,7 +6,7 @@ Address: `http://teletraan.local:3229/`. It opens a small page with two big butt
 
 The Studio has two ways in: the Studio button on the landing page and in the header of the control page (both open `/studio/` on port 3229), and port 3426, which goes straight to the Studio: `http://teletraan.local:3426/`. Port 3426 serves the Studio and nothing else.
 
-The page has two tabs, Status and Settings, and the Studio button in the header.
+The page has three tabs, Status, Display and Settings, and the Studio button in the header. Display is where the team builds the order the wall plays (see The Display tab below).
 
 Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has three folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open.
 
@@ -97,6 +97,22 @@ The copy is a still picture of the same panel in the same team, theme, view and 
 Some things cannot be copied. A takeover (alert, announcement, talk) or a stand-in has no panel to hold, so the copy shows the Tonight panel and the line says so. A Monday card is copied without its department, and the line says so. The view and the bar layout are written on the copy but the mirror of the Family view is not.
 
 The copy does not report to the control page: the dashboard reports only when its address is `localhost` or `127.0.0.1`, and port 3229 refuses a report from any other address. The addresses `view=` and `layout=bar` are read only together with `panel=` and `still=1`. The `screen=` address also takes the themes Retro and Foundry.
+
+## The Display tab
+
+Display is the Rotation board for a phone, with the theme of each weekday under it. The Studio stays the source of truth: the tab reads Dashboard Settings from Sanity every time it opens, and again with Refresh from Sanity, and it writes the same stored fields the Studio writes. The Studio Rotation board and the Look page stay fully editable, and a change in either shows in the other after a refresh.
+
+What it shows. Each row of the rotation list is a card with its number, its panel, a View select (Robotics, Prime or Nova), a Panel select, Seconds, and Show on screen. Rows that follow each other in one view are one group, as on the Studio board, with the time of the group. Up and Down move a row. Copy, Delete (it asks you to press again), Add a row, Undo (the last 20 changes) and Fill from the standard order (it asks you to press again) work as they do in the Studio. A Photo row has Photos and Seconds per photo. A row's Department, Page and Small panel are shown as words and kept as they are; change those in the Studio. Under the rows, Theme of each weekday has a theme for each day, the banner title for Robotics and the transition length.
+
+What it writes. Save to draft writes only the fields you changed, to the draft of Dashboard Settings: `rotationRows`, and `themeByWeekday`, `generalViewTitle` and `transitionSeconds`. No stored name is changed. The draft is made from the published document when there is none, as the Studio does, so the other fields are kept. Save never touches the published document. Publish to the wall is a separate button, and it publishes the whole draft, so any waiting edit made in the Studio goes on the wall with it. The control service writes with `SANITY_WRITE_TOKEN` from `local.env` at the moment of the write. The key never reaches the browser. Without it the tab can read but not save, and says so.
+
+Two people at once. The page remembers the revision it loaded. Before every save and every publish the service reads Dashboard Settings again and compares. When the Studio changed it in between, nothing is written and the page asks: Replace the Studio copy, Refresh from Sanity and drop my changes, or Keep editing. The write also names the revision it replaces, so a Studio edit in the last second is caught by Sanity itself. While the tab is open it checks the revision every minute and says when the Studio copy is newer.
+
+What the wall would do with each row. Under each row the tab says Will show now, Skipped now with the reason, or Off, and lists the items it would draw: Monday tasks, FRC news posts, events and, for the Competition: Rank row, the TBA rank and next match. The answer is not a copy of the rules. The service builds the content the way the wall does (the same query and cleaning in `dashboard/core/sanity.js`), asks `viewSteps` for the steps of the row and the `hasContent` of the panel, which are the functions the wall asks, so a rule changed in the dashboard changes the tab too. The checks use the published content, with the row as it is on the page. It is read again at most once a minute.
+
+Where the data is. Monday tasks, FRC news and the TBA data (the `frc-status` document) are Sanity documents the Teletraan computer writes, so the service reads them from Sanity as the wall does. The calendar files and `match13.json` are files in the data folder, which the control service has read only. Competition data at the foot of the tab lists the TBA ranks and the Match13 matches. Match13 never goes to Sanity: the service reads `match13.json` and sends it only to this page, behind the PIN. `tests/control-display.test.mjs` checks that a save and a publish carry none of it.
+
+The calls are `GET /control/api/display`, `GET /control/api/display/rev`, `POST /control/api/display/check`, `POST /control/api/display/save` and `POST /control/api/display/publish`.
 
 ## On a phone
 
@@ -222,6 +238,7 @@ To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/
 ## Where the code is
 
 - `control/server.js`, `control/lib/` and `control/routes/`: the service. Every file in `routes/` is loaded by name order, so a new route needs only a new file.
+- `control/routes/display.js`, `control/support/display.js` and `control/support/display-wall.js`: the Display tab (reading, checking and writing Dashboard Settings, and the wall check). `control/static/tabs/display.js`, `display-parts.js` and `control/static/display-rows.js`: the page. `display-rows.js` copies the row rules of `studio/tools/rotation-board.js`, and `tests/control-display.test.mjs` runs both on the same rows.
 - `control/static/`: the pages. A file named `tab-<name>.js`, and each file in `control/static/tabs/` that calls `registerTab`, is a tab and registers itself.
 - `computer/install.sh`, `computer/git/post-receive`, `computer/sudoers/`, `computer/systemd/teletraan-control.socket` and `teletraan-control@.service`: the installer and the host side.
 - `control/bin/install-tree.js`: the install steps from a folder. The installer and the git hook run it in the Node image.

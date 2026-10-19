@@ -3,6 +3,8 @@
 Rotation is the first line under SCREEN in the Studio sidebar. It is a table of every row the wall plays, top to bottom.
 Change a row and the change is saved as a draft at once. Click Publish all in the top bar to put it on the screen.
 
+The Display tab of the control page edits this same list from a phone (docs/control-page.md, The Display tab). It saves to the same draft, so the board and the tab show each other's changes after a refresh.
+
 ## What the wall plays now
 
 The first line under the intro says, for example, Right now the loop has 80 rows shown, 3 skipped (no data), 24 switched off.
