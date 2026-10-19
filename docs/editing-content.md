@@ -63,23 +63,9 @@ The agenda, the talks and the meeting days open from the links at the foot of th
   or move a talk (docs/presentations.md).
 - Meeting days: which days have talk slots and when they start. A day with no
   Meeting day has no slots.
-- Monday Tasks: what the team is working on, from its Monday boards. It is a folder
-  with two lists, On the TV and Hidden, and it has no plus button, because the Teletraan computer
-  makes the tasks. A task has a name, a subteam, an optional point of contact, an
-  optional priority (High, Medium or Low), an optional due date, a status (In progress,
-  Up next or Done) and the name of its board. The point of contact is a first name, up
-  to 12 characters, with no last name. A task opens read only, and Show on TV is the
-  one thing you can change. The task leaves the screen after the number of days set in
-  Dashboard Settings. See "What the Tasks panel shows" below.
-  - On the TV: the tasks from the board that are switched on, sorted by board. See
-    "Tasks from the team board" below.
-  - Hidden: every task that is not on the TV, because Show on TV is off, Show on
-    screen is off or the Hide after time has passed. It also holds the tasks typed by
-    hand before the board was connected, marked Manual (not shown), which the screen
-    never shows. A task is in one list only.
-- Monday Boards: a page of the boards the computer can see, with their items and when
-  each was read. The name of a chosen board opens its tasks, and Choose boards opens
-  Dashboard Settings, where the Monday tab has the board rows.
+- Monday: what the team is working on, from its Monday boards Robotics Tasks and Completed Tasks. The page is
+  read only, a table for each department, because the Teletraan computer makes the tasks. Change a task in
+  Monday. A department goes on the TV with a Department tasks row on the Rotation board (docs/monday.md).
 - Extra panels, under Coaches only, builds a panel from blocks (heading, text, number, list,
   image address, progress bar, countdown). About 3 blocks fit. A block that does not fit is
   left out. The title shows in capital letters, 7 at most.
@@ -269,25 +255,19 @@ many pages there are. Inside a status, tasks keep the order of the Order field.
 
 ## Tasks from the team board
 
-A task from the team board is made by the board sync, not typed in the Studio. It
-opens read only, with this line at the top: "This task comes from the team board.
-Change it there. Use Show on TV to hide it here." The one thing you can change is
-Show on TV. Turn it off and the task leaves the TV and moves to the Hidden list.
-Turn it on and it comes back. The board sync keeps your choice the next time it runs.
+A task from the team board is made by the board sync, not typed in the Studio, and the Monday page shows it read
+only. Change it in Monday.
 
-The Teletraan computer makes these tasks from the task board chosen on the Monday tab of Dashboard
-Settings, as often as How often says (docs/monday.md). Besides the fields above, a task from
-the board has a start date, hours, a completed day, milestones and a reason it is hidden, which
-open read only too. The computer writes the name (up to 22 characters), the team, the Team lead
-of the department, the status, the priority, the dates, the hours and the contact. A task with
-no department is hidden, and so is a task whose Show on TV? column holds Hide. An item that is deleted on the board is not deleted here: its task is
-switched off and moves to the Hidden list. A status of To Do is Up next, In Review is In review, and Stuck is Blocked.
+The Teletraan computer reads Robotics Tasks and Completed Tasks, as often as How often on the Monday tab of
+Dashboard Settings says (docs/monday.md). It writes the project name (up to 40 characters), the department (the
+group, or the Department column), the list (Open or Done), the status, the team, the first name of the first
+person in Assigned, the priority, the Timeline dates, the hours and the day completed. A task with no department
+is left out, a task whose Show on TV? column holds Hide is kept off the TV, and a task whose item is deleted on the
+board is deleted here too. A status of To Do is Up next, In Review is In review, and Stuck is Blocked.
 
-Show on TV is a second switch beside Show on screen. A task is on the TV only when both
-are on and it has not expired. A task made before Show on TV existed counts as on, and the
-switch is drawn as on. The screen shows only tasks from the board. A task typed by hand
-stays in the dataset, in Hidden, and is never drawn. A list line says the status, the
-priority when there is one, the owner, the due date and the board.
+Show on TV is a second switch beside Show on screen, kept from the older Monday page. A task is on the TV only when
+both are on and it has not expired. The screen shows only tasks from the board. A task typed by hand stays in the
+dataset and is never drawn.
 
 ## Places
 

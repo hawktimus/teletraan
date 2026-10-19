@@ -7,15 +7,15 @@ The screen plays three views: Robotics, Prime and Nova. Robotics is the new name
 | View | Layout | Team | Minutes | Starting panels |
 |------|--------|------|---------|-----------------|
 | General | standard | none | 6 | Daily Agenda 45 s, Events 60 s, Leadership 20 s, Photos 4 x 10 s, Sponsors 15 s. Small panel: Next event 30 s, Task counts 20 s, Safety days 20 s, Weather 15 s, Sponsor logo 15 s |
-| Prime | bar | Prime | 6 | Monday tasks, Done, Timeline and Board, 30 s each |
+| Prime | bar | Prime | 6 | TV charts: Status by department and Overall progress, 30 s each |
 | Nova | bar, mirrored | Nova | 6 | The same for Nova |
-| Family | bar | none | 2 | Overall progress and Status by department (fixed) |
+| Family | bar | none | 2 | TV charts: Status by department (fixed) |
 
 The bar layout has no small panel. Nova is mirrored because the Nova team has Mirror switched on.
 
 ## Where the older panels are
 
-The starting rows hold the panels listed above and no more. Other panels are not in a starting row, so they appear only when a row for them is added to a view in the Studio: Tasks, Team leads, Subteam spotlight, Roster, the Monday milestone and progress cards, Extra panels, the Season timeline and the team tile. Competition cards are not rows. They are mixed into the large panel of the view on the screen when they are due, in the team of that view. The announcement plate and the alert, talk and night screens come over any view. `tools/screenshots.mjs` takes each view in each theme with each team (`view-<view>-<theme>-<team>.png`).
+The starting rows hold the panels listed above and no more. Other panels are not in a starting row, so they appear only when a row for them is added to a view in the Studio: Tasks, Team leads, Subteam spotlight, Roster, Department tasks, Extra panels, the Season timeline and the team tile. Competition cards are not rows. They are mixed into the large panel of the view on the screen when they are due, in the team of that view. The announcement plate and the alert, talk and night screens come over any view. `tools/screenshots.mjs` takes each view in each theme with each team (`view-<view>-<theme>-<team>.png`).
 
 ## The rotation
 
@@ -32,22 +32,22 @@ One ordered list says what the large panel plays: Dashboard Settings, Look tab, 
 
 ## The default rotation
 
-An untouched Studio plays this list, and it is what the Rotation list is filled with the first time Dashboard Settings is opened with the list empty. The screen plays it too whenever the list has no row that is Shown. It is in `config-rotation.js` (`defaultRotationRows`) and in `studio/tools/default-rotation.js`, and `tests/default-rotation.test.mjs` pins both. A panel that has nothing to show right now is skipped with no change, so a department with no tasks leaves its Monday rows out.
+An untouched Studio plays this list, and it is what the Rotation list is filled with the first time Dashboard Settings is opened with the list empty. The screen plays it too whenever the list has no row that is Shown. It is in `config-rotation.js` (`defaultRotationRows`) and in `studio/tools/default-rotation.js`, and `tests/default-rotation.test.mjs` pins both. A panel that has nothing to show right now is skipped with no change, so a department with nothing in its list leaves its Department tasks row out.
 
 | Block | View | Rows, in order |
 |-------|------|----------------|
-| 1 | Robotics | Six pairs of the split layout, large panel and small panel: Leadership with Sponsor logo, Events part 1 with Task counts, Events part 2 with Weather forecast, Sponsor feature with Next event, Subteam spotlight with Mini panel idea 1, Photos with Parts request. Then the wide layout: Business tasks and done, Operations tasks and done, Marketing tasks and done, and one roster for Business and Marketing |
-| 2 | Prime | Team leads page 1 and 2, then the seven rows of Build |
+| 1 | Robotics | Six pairs of the split layout, large panel and small panel: Leadership with Sponsor logo, Events part 1 with Task counts, Events part 2 with Weather forecast, Sponsor feature with Next event, Subteam spotlight with Mini panel idea 1, Photos with Parts request. Then the wide layout: Department tasks, open, for each of the nine departments (Build, Electrical, Programming, Design, CNC, Strategy, Operations, Business, Marketing), the three TV charts (Status by department, Overall progress, Timeline), and one roster for Business and Marketing |
+| 2 | Prime | Team leads page 1 and 2, then the two roster rows of Build |
 | 3 | Nova | The same for Nova |
-| 4, 5 | Prime, Nova | The seven rows of Electrical |
-| 6 | Robotics | The six pairs of block 1, with no Business rows |
-| 7, 8 | Prime, Nova | The seven rows of Programming |
-| 9, 10 | Prime, Nova | The seven rows of Design and CNC (one department, DESIGN · CNC) |
+| 4, 5 | Prime, Nova | The two roster rows of Electrical |
+| 6 | Robotics | The six pairs of block 1, with no Monday rows |
+| 7, 8 | Prime, Nova | The two roster rows of Programming |
+| 9, 10 | Prime, Nova | The two roster rows of Design and CNC (one department of the Team leads, DESIGN · CNC) |
 | 11 | Robotics | The six pairs again |
-| 12, 13 | Prime, Nova | The seven rows of Strategy |
+| 12, 13 | Prime, Nova | The two roster rows of Strategy |
 | 14, 15 | Prime, Nova | Robot status, 3D view, Drive hours, Competition rank |
 
-The seven rows of a department are, in order: Tasks in progress (`monday-tasks`), Tasks to do and done (`monday-done`), Team roster part 1 and part 2 (`roster`), Team kanban chart (`monday-board`), Team status pie chart (`monday-pie`) and Team milestones chart (`monday-timeline`). The row names its department (`department`, a Team lead name in any case, or two with a comma) and the team comes from the view.
+The two rows of a department of a team view are Team roster part 1 and part 2 (`roster`). The row names its department (`department`, a Team lead name in any case, or two with a comma) and the team comes from the view. A Department tasks row (`monday-department`) names one of the nine departments, a list (`list`, open or done) and a team (`team`, prime, nova, or none for both teams), and a TV charts row (`monday-charts`) names a chart (`chart`, status, progress or timeline) and a team (docs/monday.md).
 
 | Named panel | Registry id |
 |-------------|-------------|
@@ -60,7 +60,7 @@ The seven rows of a department are, in order: Tasks in progress (`monday-tasks`)
 | QR Code for Parts Request | `qrParts`, see below |
 | Team Leads, Team Leads 2 | `team-leads`, `part` 1 and 2 |
 | Team Roster 1, Team Roster 2 (Scroll) | `roster`, `part` 1 (six people) and 2 (the people after them, scrolled six at a time) |
-| Team Status Pie Chart | `monday-pie`, new |
+| Department tasks, TV Charts | `monday-department`, `monday-charts` |
 | Total Robot Status, 3D Wireframe of Robot | `robotStatus`, `wireframe` |
 | Drive Hours Recorded | `driveHours`, new |
 | Prime FRC Ranking, Nova FRC Ranking | `competition-rank`, in the team of the view |
@@ -76,20 +76,20 @@ The seven rows of a department are, in order: Tasks in progress (`monday-tasks`)
 
 - The banner title is HAWKTIMUS ROBOTICS (Look tab, Title of the Robotics view; the older default title reads as the new one). The team plate shows both numbers, Prime first and then Nova, from the Team documents (`teamNumbersOf` in `core/teams.js`): one wide plate reading TEAM 3229 & TEAM 3426 in the standard layout, and two lines at 30px in the side column of the bar layout, the first in the label color and the second in the second accent. With one Team document it shows one number. The Prime view shows the number of Prime and the Nova view the number of Nova. The page chooses the plate from `html[data-view]` in `family-line.css`, so a change of view never leaves a wrong plate. While the sample content is on, its label sits over the hawk on this view.
 - The look is the Prime look: its logo and colors. Items that are for one team show for Prime and the shared ones for both.
-- Two layouts, chosen for each row by its panel (`roboticsWidePanels` in `config-rotation.js`). Split is the standard layout: the main panel at the left, the Gamedrop countdown with its red clock frame at the top right and Panel B at the bottom right. Wide is the bar layout: the countdown in the banner and the side column at the left. The Monday cards, the roster and the two placeholders are wide, and every other panel is split. A change of layout between two rows is a swap.
+- Two layouts, chosen for each row by its panel (`roboticsWidePanels` in `config-rotation.js`). Split is the standard layout: the main panel at the left, the Gamedrop countdown with its red clock frame at the top right and Panel B at the bottom right. Wide is the bar layout: the countdown in the banner and the side column at the left. The two Monday panels, the roster and the two placeholders are wide, and every other panel is split. A change of layout between two rows is a swap.
 - Prime and Nova keep their structure. Nova is mirrored.
 - There are no view chips, and a team's name is in the banner once on a page: the panel titles do not repeat it (BUILD TASKS, DONE, TIMELINE, BOARD) and the panels draw no team chip. The stored `viewTag` and `teamChip` fields are hidden and not read.
 - Daily Agenda is the first row of every Robotics block that the migration makes.
 
 ## Departments, rosters and placeholders
 
-- Design and CNC are one department on the screen, DESIGN · CNC, with the tasks of both Team leads. Business, Operations and Marketing are departments of both teams: a Monday tasks row of the Robotics view with no department plays each of them that has tasks, with no team in the title. A team view leaves them out.
-- The roster comes from the Monday board, not from Sanity: the people are the owners of a department's tasks (the person column) and their hours are the hours of those tasks (the hours number column), shared equally when a task has several owners. A page is one department and six rows. Only while the board has no owner at all does the roster show the older Team leads pages.
+- On the roster, Design and CNC are one department, DESIGN · CNC, with the tasks of both Team leads. Department tasks keeps Design and CNC apart, as the board does.
+- The roster comes from the Monday board, not from Sanity: the people are the contacts of a department's tasks (the first person of the Assigned column) and their hours are the hours of those tasks (the Estimated Hours column). A page is one department and six rows. Only while the board has no owner at all does the roster show the older Team leads pages.
 - Robot status (ROBOT STATUS) and Wireframe view (3D VIEW) are panels of the Rotation list that draw their title and a dashed inner frame, until they are designed.
 
 ## Monday rows
 
-A Monday tasks row of a team view with no department stands for every Team lead that has tasks for the team. A Team lead with `monday: false` is left out, and one with no mark is on. It is worked out each time the list is read, so a new department needs no edit. A department with no tasks is left out. A row with a department of its own plays that department only.
+A Department tasks row plays one department, one list and both teams or one, and is left out while it has nothing to show. A row with no department plays nothing. A row of one of the eleven retired Monday panels plays nothing; an older tasks row with one of the nine departments plays as Department tasks, open, in the team of its view. The Team lead switch On the Monday board (`monday: false`) is hidden and not read any more: a row names its department.
 
 ## Names and the tag
 

@@ -15,7 +15,7 @@ Every change has three steps: open a line in the sidebar, make the change, click
 | Events | Calendars, which shows what each BAND calendar brings in and lets you show or hide each coming event, and Calendar filters, which are rules that hide events or keep them |
 | People | Leadership, Team leads and Sponsors |
 | Photos | The pictures for the Photo panel: upload a series, or take them from a Google Drive folder |
-| Monday | The Monday boards the computer can see, a preview of their items, and the Show on TV switch for each task (written by the Monday lane) |
+| Monday | What the computer read from Robotics Tasks and Completed Tasks, read only: the last read, then a table for each department with Status, Project, Contact, Priority and Estimated Completion Date, and the open and done counts. A department goes on the TV with a Department tasks row on the Rotation board (docs/monday.md) |
 | Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
 | Look | The theme of each weekday, the background, the seasonal decorations, motion, frame polish, and the logo and name effects, on one page |
 | Competition | The competition cards: the mode (Before and after, Auto, Always or Off), and one switch for each of the twelve cards. Below them the FRC news section: the headlines from the FIRST blog with a Show switch each, the news switches and the categories |
@@ -44,7 +44,8 @@ Under Coaches only:
 | Hide a repeating meeting | Events, Calendars, or Calendar filters |
 | Add a leader, a lead or a sponsor | People |
 | Add a photo | Photos |
-| Hide a task from the TV | Monday |
+| Hide a task from the TV | In Monday: set Show on TV? to Hide |
+| Put a department's tasks on the TV | Rotation: add a row of Monday: Department tasks and pick the Department, List and Team in Details |
 | Change the team name, number, logo or metal | Teams and views, then the team |
 | Put the standard colors back on a team | Teams and views, open the team, open Colors, click Use the standard colors for this team |
 | Change the arrangement of a view | Teams and views, Views |
@@ -62,7 +63,7 @@ Under Coaches only:
 ## Things to know
 
 - Each Team document keeps its own colors. A new default in the code never reaches a team already saved. To reset one, open the team, open Colors and click Use the standard colors for this team. The button shows what it would change and writes to the draft only. Nothing reaches the TV until you click Publish.
-- A page in the sidebar that is not a document (Start here, Rotation, Today, Look, Competition, Calendars, Monday) saves what you change as a draft of the document it shows. Click Publish all to put it on the screen.
+- A page in the sidebar that is not a document (Start here, Rotation, Today, Look, Competition, Calendars) saves what you change as a draft of the document it shows. Click Publish all to put it on the screen. The Monday page writes nothing.
 - Dashboard Settings still holds every setting it ever had. The ones the pages took over (the alert, the messages, the look, the competition cards and the team fallback) are hidden there, with their stored values. The ones the old Screens left behind say Not used any more.
 - Anything under Coaches only is for a coach.
 - Events are not typed in the Studio. They come from the BAND calendars.
