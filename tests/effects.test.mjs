@@ -2301,11 +2301,11 @@ test('a push from the Studio ignores the chance, and plays once the screen is fr
   });
 });
 
-test('a push plays only while it is a minute old at most, only once, and only if its kind is one the screen has', () => {
+test('a push plays only while it is five minutes old at most, only once, and only if its kind is one the screen has', () => {
   const settingsWith = (kind, requestedAt) => hiddenSettings({ desktopChance: 0, redEyesChance: 0, hiddenRequest: { kind: kind, requestedAt: requestedAt } });
 
-  [0, 1, 30, 59, 60].forEach(age => assert.equal(hiddenAt(0.9, settingsWith('desktop', secondsAgo(age))).choice.how, 'push', age + ' seconds old'));
-  [61, 120, 3600].forEach(age => assert.equal(hiddenAt(0.9, settingsWith('desktop', secondsAgo(age))).choice, null, age + ' seconds old'));
+  [0, 1, 30, 59, 60, 61, 120, 300].forEach(age => assert.equal(hiddenAt(0.9, settingsWith('desktop', secondsAgo(age))).choice.how, 'push', age + ' seconds old'));
+  [301, 600, 3600].forEach(age => assert.equal(hiddenAt(0.9, settingsWith('desktop', secondsAgo(age))).choice, null, age + ' seconds old'));
 
   // the one handled before does not play again, a newer one does
   const request = secondsAgo(10);
@@ -2455,8 +2455,8 @@ test('the registry and the plain functions import nothing from the page, so they
 
   assert.deepEqual(importsOf(read('core/hidden-transitions.js')), []);
   assert.deepEqual(importsOf(read('core/hidden.js')), [
-    "import { defaultSettings, hiddenGapHours, limits, speeds } from '../config.js';",
-    "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
+    "import { defaultSettings, demoSkewSeconds, hiddenGapHours, hiddenWindowSeconds, limits, speeds } from '../config.js';",
+    "import { readHandled, rememberHandled } from './demo.js';",
     "import { hiddenTransitions } from './hidden-transitions.js';",
     "import { isRecord } from './text.js';",
   ]);
@@ -2559,7 +2559,7 @@ test('every set the transitions name is one that has pictures, and the pictures 
     'assets/hidden/blue-screen-2.png',
   ]);
   const run = readModule(path.join(dashboardFolder, 'core/hidden-run.js'), 'utf8');
-  assert.ok(run.includes('preloadImages(pictures.map(pictureAddress))'), 'all four are preloaded');
+  assert.ok(run.includes('allPictures().forEach(picture => {') && run.includes('loadPicture(pictureAddress(picture))'), 'all four are loaded');
   assert.ok(run.indexOf('loadPictures();') !== -1 && run.indexOf('loadPictures();') < run.indexOf('setHiddenOffer(offer);'), 'when the hidden transitions start, before any can play');
 });
 
@@ -2671,13 +2671,13 @@ test('the runner skips a picture that is not loaded, still waits the step, and p
   // only a picture that loaded has an element, and only those can be chosen
   assert.ok(code.includes('pictureElements[picture.file] = image;'));
   assert.ok(code.includes('if (!result.ok) {'), 'a failure is skipped, with a note in the console');
-  assert.ok(code.includes('chooser.next(set, file => pictureElements[file] !== undefined)'));
-  assert.ok(/if \(!picture\) return;/.test(code), 'no picture: the backdrop stays as it is');
+  assert.ok(code.includes('const ready = pictureElements[file] !== undefined;'));
+  assert.ok(code.includes("noteStep('picture none, plain backdrop');"), 'no picture: the backdrop stays as it is, and the log says so');
   assert.ok(/const pictureElements = \{\};/.test(code));
 
   // the steps wait their seconds whatever was shown, so the transition keeps its time and rebuild comes
-  assert.ok(/async pictureIn\(set, seconds\) \{[^}]*showPicture\(set, 'in'\);\s*await sleep\(seconds\);\s*if \(hiddenState\.showing\) hiddenState\.showing\.dataset\.state = 'on';/.test(code));
-  assert.ok(/async pictureCut\(set, seconds\) \{\s*showPicture\(set, 'on'\);\s*await sleep\(seconds\);\s*\}/.test(code), 'the cut shows the picture in its final state in one go, then holds');
+  assert.ok(/async pictureIn\(set, seconds\) \{[^}]*showPicture\(set, 'in'\);\s*await sleep\(seconds\);\s*noteOnScreen\(\);\s*if \(hiddenState\.showing\) hiddenState\.showing\.dataset\.state = 'on';/.test(code));
+  assert.ok(/async pictureCut\(set, seconds\) \{\s*showPicture\(set, 'on'\);\s*const look = Math.min\(0\.2, seconds\);\s*await sleep\(look\);\s*noteOnScreen\(\);\s*await sleep\(seconds - look\);\s*\}/.test(code), 'the cut shows the picture in its final state in one go, then holds');
   assert.ok(/async pictureOut\(seconds\) \{[^}]*if \(hiddenState\.showing\) hiddenState\.showing\.dataset\.state = 'out';\s*await sleep\(seconds\);/.test(code));
 
   // the backdrop is given the picture's own colour in the same step, so the cut is one frame with no black bars

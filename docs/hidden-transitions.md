@@ -19,6 +19,8 @@ change, the whole screen does something else. There are two:
   4. A cut, with no fade, to a blue screen picture. It stays for 3 seconds.
   5. A cube rises, turns, pulses and shrinks to a point, and the pieces rise from the pile to their
      places. The content fades in.
+     The blue screen picture stays behind all of this, so it is on the screen for about 7 seconds
+     in all: the 3 second hold, the cube and the rise of the pieces.
 - **Red eyes.** The screen glitches with flat red flashes, then the frames collapse into a pile
   and the screen goes black. A picture of two glowing red eyes fades in, stays
   for 2.5 seconds and fades out. The cube and the rise of the pieces follow, as in the desktop reveal.
@@ -59,8 +61,11 @@ two transitions keep their own place.
 **They are loaded when the screen starts**, all four, and wait hidden in the backdrop, so the
 cut to the blue screen is one frame. If one fails to load (a missing or damaged file) a note
 goes to the browser console, the other picture of its set is used every time, and if none of
-the set loads the step just waits its seconds over the plain backdrop. The transition still
-ends and the screen comes back.
+the set loads the step just waits its seconds over the plain backdrop (deep blue for the desktop
+reveal, black for red eyes). The transition still ends and the screen comes back. A picture that
+failed is asked for once more, for 4 seconds at most, right before a transition begins, so one bad
+moment of the web server does not cost the picture. Why a picture failed is in the run log (see
+"What the wall reports").
 
 ### Swapping a picture for another
 
@@ -77,6 +82,36 @@ ends and the screen comes back.
    checks that every file exists and is the size the list says.
 4. Try it with `?hidden=desktop` or `?hidden=redEyes` in the address (see "Try one"). The
    address always plays the next picture, so add it twice to see both.
+
+## What the wall reports
+
+The wall keeps a short run log of the last hidden transition and sends it to the control page with
+its Now report every 10 seconds (`hiddenRun`, 400 characters at most; the code is
+`dashboard/core/hidden-log.js` and `hidden-load.js`). The Status tab of the control page shows it
+under Messages, as Last hidden transition (docs/control-page.md). The lines of a run:
+
+- `pile 1.7s`: how long the frames took to fall.
+- `picture blue-screen-1.png loaded 700x394 after 40ms`: the picture that was shown, its size as
+  the browser read it, and how long it took to load.
+- `picture blue-screen-1.png FAILED: error 0, http 404`: a picture that could not be used. The
+  first words are the browser's error and the size it read (0 means it read nothing). The last
+  words are what the web server says about the file (404 is a missing file; 200 with image/png
+  means the file is there and the browser could not read it).
+- `picture none, plain backdrop`: no picture of the set could be used, so the effect ran over the plain backdrop.
+- `on screen 1920x1080 opacity 1.0`: how large the picture was on the screen and how solid. The
+  words NOT VISIBLE follow when it was hidden or see-through.
+- `effect shown 3.0s`: how long the picture was up.
+- `rebuild ok` and `total 9.4s`. A run that was cut short says `stopped: <what took the screen>`
+  or `failed: <message>`.
+
+A request that did not play replaces the log with the reason: `request older than 5 min` (and what
+held it), `Allow hidden transitions is off`, `motion is calm or none, not full`, or `the areas did not
+come to rest within 3 s`. A push that waited for an alert, a talk, a demo, night mode or another
+transition and then ran out of time says which one held it.
+
+The report also says whether the browser of the wall can read a PNG and a WebP, which it finds by
+loading one tiny picture of each kind when the screen starts. Red eyes uses WebP. If the browser
+cannot read WebP, the red eyes pictures fail and the effect runs over black.
 
 ## The hidden transition settings
 
@@ -104,7 +139,7 @@ announcement, a demo, a talk and calm motion do not count, because nothing is ro
 then. A row with seconds of its own in the Screen tab changes the time for that one page,
 so the hours are about right and not exact.
 
-A hidden transition that is due goes before every other change of the large panel: the swap into a new look or team, and the panel and view transitions. A look that was waiting goes on at the next page change. Without this a push from the Studio, which lasts one minute, could miss every page change in that minute.
+A hidden transition that is due goes before every other change of the large panel: the swap into a new look or team, and the panel and view transitions. A look that was waiting goes on at the next page change. Without this a push from the Studio, which lasts five minutes, could miss every page change in that time.
 
 After any hidden transition has played, none comes about by chance for 4 hours. The 4 is
 `hiddenGapHours` in `dashboard/config.js`. The time it played is kept in the browser's
@@ -127,6 +162,9 @@ can say. The Studio starts a new settings page at 60 hours for both.
    or **Play red eyes**.
 3. Look at the TV. It plays within about 20 seconds.
 
+The control page has the same two buttons under Messages on the Status tab, and under them the
+block Last hidden transition, which says what the wall did (see "What the wall reports").
+
 The menu has two more buttons that are not transitions, Play announcements and Run presentation test (see below).
 Each of the two buttons above writes the kind and the time now into Last push and
 publishes the page for you, so you do not click Publish. Any other change you had not published yet is
@@ -141,13 +179,18 @@ What the screen does with a push:
 - It plays once. The screen keeps the push it handled last in the browser's storage
   (`localStorage`, under `teletraan-hidden-handled`), so a computer that restarts never
   plays it again.
-- It plays only while it is less than 60 seconds old, the same rule as the demo
-  (docs/demo.md). The Teletraan computer's clock must be right: if it is more than a minute out,
-  a push never plays.
-- It waits for an alert, an announcement, a demo or the night screen to be over, if
-  that happens inside the minute. Otherwise it is dropped.
+- It plays only while it is less than 5 minutes old (`hiddenWindowSeconds` in
+  `dashboard/config.js`). A request older than that is ignored. The Teletraan computer's clock must be
+  right: if it is more than 5 seconds ahead of the Studio's clock, or more than 5 minutes behind, a push never plays.
+- If no page change of the large panel comes within 15 seconds (`hiddenForceSeconds`), because the
+  panel stays long, a panel is held from the control page or the rotation is paused, it plays without
+  one: the frames fall, the picture shows and the cube puts the same page back. It starts as soon as
+  nothing else has the screen, so it plays within about 20 seconds.
+- It waits for an alert, an announcement, a talk, a demo or the night screen to be over, if
+  that happens inside the 5 minutes. Otherwise it is dropped, and the run log says so (see
+  "What the wall reports").
 - It never plays with Allow hidden transitions off, or in calm or no motion. A push is
-  not kept for later: after 60 seconds it is too old, so turning the switch on after
+  not kept for later: after 5 minutes it is too old, so turning the switch on after
   that does not play it.
 - While a page shows sample content (`?sample=1` on its address) it reads
   the settings from `dashboard/data/sample/content.json`, not from Studio, so a push

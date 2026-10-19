@@ -14,15 +14,15 @@
 //   2. Someone can also push one from the Studio ("Play desktop reveal",
 //      "Play red eyes"). That writes hiddenRequest into Dashboard Settings. A
 //      push ignores the chances and the gap, but not the rules in holdReason below, and it
-//      plays only once and only while it is less than a minute old, the same
-//      guard as a demo (shouldRunDemo in core/demo.js). The one handled before
-//      is kept in localStorage, so a computer that restarts never plays it again.
+//      plays only once and only while it is less than five minutes old
+//      (hiddenWindowSeconds). The one handled before is kept in localStorage, so a
+//      computer that restarts never plays it again.
 //   3. It replaces the normal page change. It never plays in calm or no
 //      motion, with the master switch off, or while an alert, an announcement,
 //      a demo, night mode or another hidden transition has the screen.
 
-import { defaultSettings, hiddenGapHours, limits, speeds } from '../config.js';
-import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';
+import { defaultSettings, demoSkewSeconds, hiddenGapHours, hiddenWindowSeconds, limits, speeds } from '../config.js';
+import { readHandled, rememberHandled } from './demo.js';
 import { hiddenTransitions } from './hidden-transitions.js';
 import { isRecord } from './text.js';
 
@@ -87,13 +87,25 @@ export function rememberHandledRequest(storage, requestedAt) {
   return rememberHandled(storage, requestedAt, handledKey);
 }
 
+// True when the request is not the one handled before and is no more than hiddenWindowSeconds old. It may be
+// a few seconds in the future, which only means the clock that wrote it is a little ahead.
+export function shouldRunHidden(requestedAt, lastHandled, now) {
+  if (typeof requestedAt !== 'string' || requestedAt === '' || requestedAt === lastHandled) return false;
+
+  const when = Date.parse(requestedAt);
+  if (isNaN(when)) return false;
+
+  const age = now.getTime() - when;
+  return age <= hiddenWindowSeconds * 1000 && age >= -demoSkewSeconds * 1000;
+}
+
 // The kind that a push from the Studio asks for, or '' when there is none that
 // should play: no push, an old one, one that was handled before, or one with a
 // kind the screen does not have.
 export function pushedKind(request, handled, now) {
   const tidy = tidyHiddenRequest(request);
   if (tidy.kind === '') return '';
-  return shouldRunDemo(tidy.requestedAt, handled, now) ? tidy.kind : '';
+  return shouldRunHidden(tidy.requestedAt, handled, now) ? tidy.kind : '';
 }
 
 // Why a hidden transition may not play now, or '' when it may.
