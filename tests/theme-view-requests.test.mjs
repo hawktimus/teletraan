@@ -139,7 +139,8 @@ config.themeIds.forEach(theme => {
     const after = new Date(monday12.getTime() + 11 * 60000);
     world.log.length = 0;
     world.seconds(after);
-    assert.equal(chosen(after), 'original', 'the theme of the day comes back');
+    // The screen asks for the theme of the day with the clock of the machine, so the test does the same: a fixed 'original' only held on the days the schedule gives Original
+    assert.equal(chosen(after), views.dayThemeFor(world.content, new Date()), 'the theme of the day comes back');
     assert.ok(world.log.includes('checkTheme') && world.log.includes('moveOn grid1'), 'and goes on in a swap');
   });
 });

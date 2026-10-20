@@ -139,6 +139,7 @@ function jolt() {
 
 export const kit = Object.assign({}, originalKit, {
   id: 'foundry',
+  lockParts: false, // its own deadbolts, rams and gauges already fill the frame
   draw: role => pieces[role] === undefined ? originalKit.draw(role) : pieces[role],
   extras: extras,
   partsOf: partsOf,

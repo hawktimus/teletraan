@@ -15,9 +15,9 @@
 //   always  every card that is switched on and has something to show, whatever the date
 //   around  Before and after: the cards play only in two phases of an event, and not while it is on. The preview is
 //           from 14 days before its first day to the day before it, and the recap is from the day after its last
-//           day for 7 days. The three newer cards (competition-preview, competition-matches and
-//           competition-recap) come in this mode and in Always only. The cards that follow the match by match
-//           course of an event (next match, rank, results, alliance) are marked during and never play in this mode.
+//           day for 7 days. The newer cards (competition-preview, competition-matches, competition-recap and the two
+//           metrics cards, competition-team-metrics and competition-compare) come in this mode and in Always
+//           only. The cards that follow the match by match course of an event (next match, rank, results, alliance) are marked during and never play in this mode.
 //
 // A card with nothing to show is not due, so a screen with no key on the Teletraan computer shows no
 // competition card at all. The cards still say so in one plain sentence when they are asked
@@ -30,6 +30,7 @@
 import { competitionLeadDays, competitionModes, competitionPreviewDays, competitionPreviewSeconds, competitionRecapDays, defaultSettings } from '../config.js';
 import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
 import { hasForecast, hasQualify, setMatch13Preview } from './match13.js';
+import { compareTeams, hasMetrics } from './team-metrics.js';
 import { dateIn, timeZoneOf } from './theme.js';
 import { parseLocalDateTime } from './time.js';
 
@@ -54,6 +55,10 @@ export const cards = [
   // The two Match13 cards take their numbers from core/match13.js and not from frc-status
   { id: 'competition-forecast', setting: 'competitionForecast', window: facts => facts.near, around: () => true, data: () => hasForecast() },
   { id: 'competition-qualify', setting: 'competitionQualify', window: facts => facts.started, around: () => true, data: () => hasQualify() },
+  // The two metrics cards join frc-status and the Match13 file (core/team-metrics.js): one for the team on the screen and one for both.
+  // They are season context and not the course of a match, so they come in Before and after and in Always, and not in Auto.
+  { id: 'competition-team-metrics', setting: 'competitionTeamMetrics', phased: true, window: () => true, around: () => true, data: facts => hasMetrics(facts.frc, facts.entry.team) },
+  { id: 'competition-compare', setting: 'competitionCompare', phased: true, window: () => true, around: () => true, data: facts => compareTeams(facts.frc).some(team => hasMetrics(facts.frc, team.team)) },
 ];
 
 export function isCard(id) {
@@ -249,7 +254,7 @@ export function competitionPlan(content, now = new Date()) {
 
   const today = todayOf(content, now);
   const phases = eventPhases(entry.events, today);
-  const facts = Object.assign({ entry: entry, markers: timelineMarkers(content, entry, now), mode: mode, today: today, phases: phases }, eventFacts(entry, today));
+  const facts = Object.assign({ entry: entry, frc: frcOf(content, now), markers: timelineMarkers(content, entry, now), mode: mode, today: today, phases: phases }, eventFacts(entry, today));
   const inPhase = phases.preview !== null || phases.recap !== null;
 
   const due = cards.filter(card => {

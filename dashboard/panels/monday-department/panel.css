@@ -7,7 +7,7 @@
 .monday-department .columns,
 .monday-department .row {
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr) 240px 240px 250px;
+  grid-template-columns: 232px minmax(0, 1fr) 240px 190px 250px;
   column-gap: 14px;
   align-items: center;
 }
@@ -72,7 +72,7 @@ html[data-layout="standard"] .monday-department .date {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   white-space: normal;
-  font: 500 var(--size-label)/38px var(--font-text);
+  font: 500 var(--size-label)/40px var(--font-text);
 }
 
 .monday-department .contact,
@@ -84,7 +84,14 @@ html[data-layout="standard"] .monday-department .date {
   white-space: nowrap;
   font: 500 var(--size-label)/48px var(--font-text);
 }
-.monday-department .priority-high { color: var(--danger); font-weight: 700; }
+/* No Priority and No Date may take two lines, as they do in the standard layout */
+.monday-department .priority,
+.monday-department .date {
+  white-space: normal;
+  line-height: 40px;
+}
+/* The bright red: the plain danger red is 3.1 to 1 on the Retro plate. The word High is there too, for anyone who cannot tell reds. */
+.monday-department .priority-high { color: var(--danger-bright); font-weight: 700; }
 .monday-department .priority-medium { color: var(--yellow); }
 .monday-department .none,
 .monday-department .priority-none { color: var(--lilac); }

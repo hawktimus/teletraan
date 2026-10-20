@@ -83,7 +83,7 @@ export async function startSampleContent(onChange) {
   async function readFile() {
     try {
       const response = await fetch(sampleFolder + 'content.json', { cache: 'no-store' });
-      if (!response.ok) throw new Error('Could not load content (status ' + response.status + ')');
+      if (!response.ok) throw new Error('Could not load dashboard/data/sample/content.json (status ' + response.status + '). Is the file there, and is the server running?');
 
       content = normalizeSample(await response.json());
       offline = false;
@@ -120,7 +120,7 @@ function readSavedCopy() {
     if (!text) return null;
 
     const saved = JSON.parse(text);
-    if (!saved || !saved.raw || typeof saved.raw !== 'object') return null;
+    if (!saved || !saved.raw || typeof saved.raw !== 'object' || Array.isArray(saved.raw)) return null;
 
     const savedAt = typeof saved.savedAt === 'number' ? saved.savedAt : null;
     return { content: normalizeContent(saved.raw), savedAt: savedAt };
@@ -338,7 +338,9 @@ export async function startSanityContent(onChange) {
     }, waitForMoreEdits);
   }
 
-  // Only the request fields, every 10 seconds (core/request-poll.js). A failure is left to the full read to report.
+  // Only the request fields, every 10 seconds (core/request-poll.js). A failure is reported by the full read, which
+  // is asked for now when the last one worked and is over a minute old: without it the screen would not notice an
+  // outage for up to five minutes, and the minute keeps a poll that always fails from making a full read every 10 seconds.
   async function pollRequests() {
     if (stopped || busy || !latestRaw) return;
 
@@ -346,6 +348,7 @@ export async function startSanityContent(onChange) {
     try {
       found = await fetchRequests(sanity);
     } catch (error) {
+      if (!failed && !busy && Date.now() - updated > 60 * 1000) refresh();
       return;
     }
     if (!found || stopped || busy || sameRequests(found, latestRaw.settings)) return;

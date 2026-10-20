@@ -89,9 +89,11 @@ export function planShots(panels) {
 
   // The three newer cards are taken in the phase they belong to (?phase= moves the dates, core/competition-address.js)
   const phaseOf = { 'competition-preview': 'preview', 'competition-matches': 'matches', 'competition-recap': 'recap' };
+  // The two metrics cards are taken on the first event of the sample, which has the next match and the results they join with Match13
+  const eventOf = { 'competition-team-metrics': '2027ncsa1', 'competition-compare': '2027ncsa1' };
   usable.filter(panel => panel.competition).forEach(panel => {
     screens.forEach(screen => teams.forEach(team => {
-      shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team, competition: '1', phase: phaseOf[panel.id] || '' }) });
+      shots.push({ name: fileId(panel.id) + '-' + screen + '-' + team, kind: 'still', url: address({ panel: panel.id, screen: screen, team: team, competition: '1', phase: phaseOf[panel.id] || '', event: eventOf[panel.id] || '' }) });
     }));
   });
 

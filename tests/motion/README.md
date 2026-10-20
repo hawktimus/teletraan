@@ -37,6 +37,7 @@ If Playwright is not installed the runner prints one line, `skip  motion tests`,
 | `seams.mjs` | The pieces of every frame overlap by a pixel at 1920 x 1080 and at 3840 x 2160. |
 | `text.mjs` | Chips, labels and headers fit their box with 8px to spare. The countdown title wraps by `core/countdown-title.js` and is never cut. The department labels of the Monday panels fit the widest department. |
 | `marks.mjs` | Placeholder markers, sample tags and plate ids appear only with `?sample=1`. |
+| `leaks.mjs` | Thirty row changes of the large panel leave no more timers, listeners, running animations, page elements or JS memory than six did (docs/performance.md). About three minutes. |
 
 ## Where a rule is looser than the order
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=Wake the scheduled reboot every 5 minutes
+
+[Timer]
+# The script itself decides whether it is time: it reads the Scheduled reboot settings of Dashboard Settings
+# (off, the time, the days) and ends quietly when nothing is due. Changing those needs no change here.
+# Not Persistent: a slot that was missed because the computer was off is not made up later in the day.
+OnBootSec=15min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

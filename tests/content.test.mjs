@@ -2039,10 +2039,12 @@ test('sanity: the request fields alone are read every 10 seconds, and a new requ
     await world.advance(30 * second);
     assert.equal(world.changes.length, 1, 'the same request again is not a change');
 
+    // A failed poll is quiet, and asks for a full read once the last one is a minute old, which reports a failure itself (tests/outage.test.mjs)
+    const readsBefore = world.fetches.length;
     world.pollHandler = () => unreachable();
     await world.advance(30 * second);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.errors.length, 0, 'a failed poll is quiet; the full read reports failures');
+    assert.equal(world.fetches.length, readsBefore + 1, 'one full read, not one for every failed poll');
+    assert.equal(world.errors.length, 0);
     assert.equal(world.changes.every(change => change.status.offline === false), true);
   });
 });

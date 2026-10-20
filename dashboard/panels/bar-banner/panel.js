@@ -6,7 +6,7 @@
 // second time (panels/countdown, "The war clock"). The clock, the date, the weather,
 // the TEAM plate, the school and the logo are in the side column (panels/bar-column).
 
-import { nameMarkup } from '../../core/name.js';
+import { fitNameWhenFontsLoad, nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup } from '../../core/plate.js';
 import { shapesNow } from '../../core/style.js';
 import { teamShown, trimNow } from '../../core/teams.js';
@@ -36,8 +36,8 @@ export function mount(host, content) {
 
 // The name is made of letters so the name effect can split each one. It is only
 // rebuilt when the name changes, because a rebuild in the middle of the effect would
-// start it again. It is one line: a name too long for its slot squeezes its letters
-// together (panels/bar-banner/panel.css), so the war clock never moves.
+// start it again. It is one line: a name too long for its slot is drawn narrower
+// (fitName in core/name.js), so the war clock never moves.
 export function update(element, content) {
   updateWar(element.querySelector('.war-clock'), content);
 
@@ -48,4 +48,5 @@ export function update(element, content) {
 
   heading.dataset.name = name;
   heading.innerHTML = nameMarkup(name);
+  fitNameWhenFontsLoad(heading);
 }

@@ -22,9 +22,11 @@ services:
       # 127.0.0.1 keeps the dashboard reachable from this computer only
       - "127.0.0.1:${TELETRAAN_PORT:-8080}:80"
       # The landing page, the control page, the Studio and a read only copy of the dashboard, for the WiFi and for Tailscale
-      - "3229:3229"
+      # TELETRAAN_LISTEN in local.env limits them to one address of this computer (its Tailscale address, for example). Without
+      # it they answer on every address, and Docker lets them past the firewall of the computer (docs/security-review.md).
+      - "${TELETRAAN_LISTEN:-0.0.0.0}:3229:3229"
       # The Studio alone
-      - "3426:3426"
+      - "${TELETRAAN_LISTEN:-0.0.0.0}:3426:3426"
     volumes:
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/dashboard:/srv/web/dashboard:ro
       # The Studio built by the last install (control/lib/studio-build.js)

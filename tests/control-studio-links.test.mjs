@@ -24,7 +24,8 @@ function serverBlock(nginx, port) {
 
 test('the web container publishes 3229 and 3426, and mounts the landing page read only', () => {
   const compose = read('computer/docker-compose.yml');
-  assert.ok(compose.includes('- "3229:3229"') && compose.includes('- "3426:3426"'));
+  // The address in front is TELETRAAN_LISTEN, or every address when it is not set (docs/security-review.md)
+  assert.ok(compose.includes(':-0.0.0.0}:3229:3229"') && compose.includes(':-0.0.0.0}:3426:3426"'));
   assert.ok(/landing\.html:\/srv\/landing\/index\.html:ro/.test(compose));
 });
 

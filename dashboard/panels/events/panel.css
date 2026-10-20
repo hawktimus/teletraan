@@ -24,7 +24,7 @@
   position: absolute;
   left: 0;
   top: 124px;
-  width: 1152px;
+  width: var(--page-width, 1152px);
   height: 576px;
   overflow: hidden;
 }
@@ -47,6 +47,9 @@
 /* The cut corner at the bottom right crosses the end of the second line of the row at the foot of the
    window, the fourth of a page, so that row stops sooner. */
 .events .row:nth-child(4n) { padding-right: 88px; }
+
+/* The date starts at the edge of the page, which the thicker metal of the bar frame would touch */
+html[data-layout="bar"] .events .row { padding-left: 16px; }
 
 /* The weekday and the month and day sit in a column of their own, centred.
    The widest date at this size, MAR 30, is 224px, so the column has room to spare. */

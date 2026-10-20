@@ -9,7 +9,7 @@
 import { bake, rectOf, screenOrigin } from './reform-bake.js';
 import { drawRun, fillCover, fillSquares, revealSquares } from './reform-draw.js';
 import { hiddenStops, reformTimes, windowOf } from './reform-plan.js';
-import { kitNow, markReady, mount, nextFrame, playTracks, scaleNow, takeRun, until } from './reform-run.js';
+import { kitNow, markReady, reformIsLite, mount, nextFrame, playTracks, scaleNow, takeRun, until } from './reform-run.js';
 
 const turnMs = 4; // milliseconds of one turn of the copying, so that no frame is long
 const squaresMs = 4; // milliseconds of one turn of giving the squares their content and showing them
@@ -31,7 +31,7 @@ export async function playPanel(swapPage, context) {
     if (context.busyNow()) return 0;
 
     const rect = before.rect;
-    const drawn = drawRun([{ role: 'main', from: rect, to: rect, grid: 'main', seed: Math.floor(Math.random() * 4294967296) }], { from: windowOf(rect), to: windowOf(rect) }, kit);
+    const drawn = drawRun([{ role: 'main', from: rect, to: rect, grid: 'main', seed: Math.floor(Math.random() * 4294967296) }], { from: windowOf(rect), to: windowOf(rect) }, kit, reformIsLite());
     fillCover(drawn, 'old', before);
     cleanup = mount(drawn);
 

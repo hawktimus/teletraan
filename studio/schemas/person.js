@@ -1,4 +1,6 @@
 import { defineType, defineField } from 'sanity';
+import { limits } from './limits.js';
+import { firstNameOnlyWarning, noContact } from '../tools/content-rules.js';
 import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 const roles = [
@@ -27,21 +29,21 @@ export default defineType({
       title: 'Name',
       type: 'string',
       description: 'Type the name as it should appear on the screen. Up to 17 characters fit.',
-      validation: Rule => [Rule.required().error('Add a name.'), tooLong(Rule, 17)],
+      validation: Rule => [Rule.required().error('Add a name.'), tooLong(Rule, limits.personName), Rule.custom(noContact).warning(), Rule.custom(firstNameOnlyWarning).warning()],
     }),
     defineField({
       name: 'title',
       title: 'Role',
       type: 'string',
       description: roleHelp,
-      validation: Rule => [Rule.required().error(roleHelp), tooLong(Rule, 22)],
+      validation: Rule => [Rule.required().error(roleHelp), tooLong(Rule, limits.personRole), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'line',
       title: 'Line under the title',
       type: 'string',
       description: 'One short line under the name, such as a year, a department, or a note. Leave blank to hide. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
-      validation: Rule => tooLong(Rule, 48),
+      validation: Rule => [tooLong(Rule, limits.personLine), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'photo',
@@ -49,6 +51,7 @@ export default defineType({
       type: 'image',
       description: 'A square photo with a plain background. Put the first name only in Name. Drag the circle onto the face so the screen crops around it.',
       options: { hotspot: true, accept: 'image/*' },
+      validation: Rule => Rule.custom((photo, context) => (photo || (context.document && context.document.showPhoto === false) ? true : 'No photo yet. The screen shows a plain silhouette until you add one.')).warning(),
     }),
     defineField({
       name: 'showPhoto',

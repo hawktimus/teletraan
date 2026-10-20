@@ -1,23 +1,28 @@
 # Adding a field
 
 For the students who maintain the Studio and the dashboard. The example adds
-an optional "Room" field to tasks, up to 12 characters. Do the five steps in
-order.
+an optional "Sponsor since" field to sponsors, up to 4 characters, and shows it
+on the Sponsor panel. docs/your-first-change.md does the same example with the
+panel code, in the order you would type it. Do the six steps in order. Tasks are
+not a good example any more: they are made by the Monday sync and not typed
+(docs/monday.md), so a field on a task is a change to the sync as well.
 
 ## 1. The schema
 
-Open studio/schemas/task.js and add a field to the `fields` list:
+Open studio/schemas/sponsor.js and add a field to the `fields` list:
 
     defineField({
-      name: 'room',
-      title: 'Room',
+      name: 'since',
+      title: 'Sponsor since',
       type: 'string',
-      description: 'Where the work happens. Optional. Up to 12 characters fit.',
-      validation: Rule => tooLong(Rule, 12),
+      description: 'The year the sponsor joined the team, such as 2019. Optional. Up to 4 characters fit.',
+      validation: Rule => tooLong(Rule, 4),
     }),
 
-- `name` is what the dashboard reads. Use camelCase and never change it later.
-  Content already saved stays under the old name.
+- `name` is what the dashboard reads and what Sanity stores. Use camelCase and
+  never change it later. Content already saved stays under the old name, and the
+  screen would no longer find it. tests/stored-names.test.mjs fails when a stored
+  name is renamed or removed (step 6).
 - `title` and `description` are what editors read. Plain words, one line.
 - A text field must have a limit. Look at the panel to see how much text fits,
   use `tooLong(Rule, n)`, and write the number in the description as "Up to n
@@ -34,22 +39,27 @@ Open studio/schemas/task.js and add a field to the `fields` list:
 The dashboard reads content shaped like dashboard/data/sample/content.json.
 Add the name to a sample item with a marked placeholder:
 
-    { "title": "[Task in progress]", "room": "[Room]", ... }
+    { "name": "[Sponsor name]", "since": "[Year]", ... }
 
-dashboard/core/sanity.js turns Sanity documents into this shape. Every field
-of a task, sponsor, tip, subteam, person, plan (Daily Agenda) or extra panel
-comes through without any change there. A field nobody has filled in is missing, so every
+dashboard/core/sanity.js and the parts that start with sanity- (sanity-query.js has the
+query, sanity-content.js, sanity-people.js, sanity-settings.js and sanity-tasks.js
+tidy what comes back) turn Sanity documents into this shape. Every field
+of a sponsor, tip, subteam, person, plan (Daily Agenda) or extra panel
+comes through without any change there. A task goes through normalizeTask in
+sanity-tasks.js, which cleans the board fields, so read it before you add a task
+field. A field nobody has filled in is missing, so every
 panel must cope with that. There are three exceptions. A person's photo is not a
 plain value. Its query line in `contentQuery` asks for the picture's address,
 size, crop and hotspot, and `normalizePerson` cleans it. dashboard/core/images.js
 builds the address the screen asks for. A new picture field would be done the
 same way. A Photo document (the Photos list) is tidied in `normalizePhoto` in
-dashboard/core/sanity.js, which copies only the fields it knows, so a new field
-on a photo must be added to its part of `contentQuery` and to `normalizePhoto`.
+dashboard/core/sanity-people.js, which copies only the fields it knows, so a new field
+on a photo must be added to its part of `contentQuery` and to `normalizePhoto`. `contentQuery` is in
+dashboard/core/sanity-query.js, and `normalizePerson` is in sanity-people.js too.
 
 ## 3. The panel
 
-Open the panel that uses the content, here dashboard/panels/tasks/panel.js,
+Open the panel that uses the content, here dashboard/panels/sponsor-feature/panel.js,
 and show the field.
 
 - Pass editor text through `escapeHtml` before it goes into a template.
@@ -58,25 +68,25 @@ and show the field.
 
 ## 4. The check
 
-Open tests/schemas.test.mjs and add the field to the contract:
+Open tests/schemas.test.mjs and add the field to the contract, after the line that
+starts `sponsor: withFlags({`:
 
-    task: withFlags({ title: text(22), room: text(12), ... }),
+    sponsor: withFlags({ name: text(19), tier: text(12), since: text(4), ... }),
 
-Then run this in the studio folder:
+Then run this in the top folder of the repository:
 
-    node tests/schemas.test.mjs
+    node tests/run.mjs schemas
 
-Every line must say PASS. It fails if a field has no description, a limit is
+Every file must say ok. It fails if a field has no description, a limit is
 missing or different from the contract, or the dashboard reads a name that has
-no field. It also runs `tests/check-themes.test.mjs`, the colour check, and fails if
-that fails.
+no field. The colour check is its own file, tests/check-themes.test.mjs.
 
 ## 5. The CSV templates
 
 The CSV templates in docs/content-templates/ are made from the schemas, so the
-new field needs a new column. Still in the studio folder, run:
+new field needs a new column. In the top folder, run:
 
-    node scripts/make-templates.mjs
+    node studio/scripts/make-templates.mjs
 
 A field that editors must fill in (`Rule.required()`) also needs a sample value
 in `examples` in studio/scripts/make-templates.mjs, under the field's name, or
@@ -86,8 +96,19 @@ folder. It fails if the templates are out of date. docs/importing-from-csv.md
 explains the templates.
 
 A new kind of content (a new file in `studio/schemas/`) also needs a line in
-the sidebar, in `studio/structure.js`. `node tests/schemas.test.mjs` fails until it
+the sidebar, in `studio/structure.js`. `node tests/run.mjs schemas` fails until it
 has one. See docs/reordering-the-sidebar.md.
+
+## 6. The list of stored names
+
+Record the new name, so that nobody removes or renames it by accident later:
+
+    node tests/stored-names.test.mjs --add
+
+It writes the names the list does not have yet into tests/data/stored-names.txt and
+never removes one. Commit that file with your change. To stop using a field, keep it
+in the schema with `hidden: true` (see Settings fields, below). A removed name fails
+`node tests/run.mjs stored-names` with a message that names it.
 
 ## Where defaults live
 
@@ -118,8 +139,12 @@ studio/schemas/settingsPresentations.js. So are the mode and the minutes of Alte
 studio/schemas/settingsTeams.js. The lists of panels and announcements have their own
 files, settingsRotation.js and settingsAnnouncements.js. A new field inside one
 of those two lists must also be added to normalizeRotation or
-normalizeAnnouncements in dashboard/core/sanity.js, which copy only the fields
-they know.
+normalizeAnnouncements in dashboard/core/sanity-settings.js, which copy only the fields
+they know. The rotation board has its own list of rows, rotationRows
+(settingsRotationRows.js). A new field in one of its rows is kept by
+tidyRotationRow in dashboard/core/rotation.js, which copies only the fields it
+knows, and the default rows are in dashboard/config-rotation.js and, a second time,
+in studio/tools/default-rotation.js (tests/default-rotation.test.mjs compares them).
 
 Which content the screen shows is not a setting. It always shows what the
 editors published, and `?sample=1` on the address shows the sample content for
@@ -177,6 +202,11 @@ status called `review`, change all of these:
 9. The content shape: sanity.js passes the status through as plain text, so
    nothing changes there. Add a task with the new status to
    dashboard/data/sample/content.json so you can see it.
+10. The sync: a task is made from the Monday board, so the new status needs a label of the
+    board's Status column. computer/scripts/monday-contract.sh has the table `status`, which
+    turns the number of a label into the status word, and docs/monday.md says which label is
+    which. A task typed by hand has no place on the screen, so a status that no board label
+    reaches never shows.
 
 The order of `groups` matters. A page of the panel is three rows, a row holds
 the tasks of one status, and a status with many tasks takes several rows. The

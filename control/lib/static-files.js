@@ -34,7 +34,7 @@ export function staticHeaders(file, bytes) {
     'Content-Type': types[extension] || 'application/octet-stream',
     'Cache-Control': cacheControl(extension),
     'X-Content-Type-Options': 'nosniff',
-    'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
+    'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'",
   };
   if (cacheControl(extension) !== 'no-store') headers.ETag = etagOf(bytes);
   return headers;

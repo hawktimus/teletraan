@@ -59,6 +59,17 @@
 .reform-square[hidden] {
   display: none;
 }
+/* the cell a square sits in, with the lock pin and the hinge barrel (core/reform-plan.js, lockMs) */
+.reform-cell {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.reform-cell[hidden] {
+  display: none;
+}
+.reform-pin {
+  transform-origin: 100% 50%;
+}
 .reform-face,
 .reform-back {
   position: absolute;

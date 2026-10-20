@@ -15,18 +15,19 @@ Every change has three steps: open a line in the sidebar, make the change, click
 | Events | Calendars, which shows what each BAND calendar brings in and lets you show or hide each coming event, and Calendar filters, which are rules that hide events or keep them |
 | People | Leadership, Team leads and Sponsors |
 | Photos | The pictures for the Photo panel: upload a series, or take them from a Google Drive folder |
-| Monday | What the computer read from Robotics Tasks and Completed Tasks, read only: the last read, then a table for each department with Status, Project, Contact, Priority and Estimated Completion Date, and the open and done counts. A department goes on the TV with a Department tasks row on the Rotation board (docs/monday.md) |
+| Monday | What the computer read from Robotics Tasks and Completed Tasks, read only. The last read and whether it worked, a Team picker (Both, Prime, Nova), and for each of the nine departments the To Do and In Progress tasks and the Done tasks with Status, Project, Contact, Priority and Estimated Completion Date and their counts. An empty department is greyed. What the TV shows draws the first page of a Department tasks row. A department goes on the TV with a Department tasks row on the Rotation board (docs/monday.md) |
 | Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
 | Look | The theme of each weekday, the background, the seasonal decorations, motion, frame polish, and the logo and name effects, on one page |
 | Competition | The competition cards: the mode (Before and after, Auto, Always or Off), and one switch for each of the twelve cards. Below them the FRC news section: the headlines from the FIRST blog with a Show switch each, the news switches and the categories |
-| Coaches only | A heading. Under it: Dashboard Settings, Extra panels and Kept data |
+| Coaches only | A heading. Under it: Dashboard Settings, Extra panels, Check the screen and Kept data |
 
 Under Coaches only:
 
 | Line | What it is |
 |------|------------|
-| Dashboard Settings | The settings that are set once, in five tabs: Timing, Countdown, Monday, Calendars and Advanced. Presentations, Night mode and Hidden transitions are sections of Advanced |
+| Dashboard Settings | The settings that are set once, in five tabs: Timing, Countdown, Monday, Calendars and Advanced. Presentations, Night mode, Scheduled reboot and Hidden transitions are sections of Advanced. Scheduled reboot has the next and last reboot at the top, then the switch, the time, the days and the skip rule; the control page, Settings, shows the same values |
 | Extra panels | A panel you build from blocks |
+| Check the screen | A read only report of what would make the TV look bad or show nothing: text too long for its panel, private details in text, photos that are small or tall, missing credits, portraits or logos, items past their dates, Rotation rows that will be skipped, two panels on one topic, and team colors that are hard to read. Drafts are checked too. Each finding has a level, a plain fix and a link to the document |
 | Kept data | The old Screens, the Condensed view and the old events calendar type. The wall does not use them. Do not delete them: some old values are read when a new list is empty |
 
 ## Where do I change
@@ -58,6 +59,7 @@ Under Coaches only:
 | Hide an FRC news headline, or choose the news categories | Competition, FRC news |
 | Change the countdown dates | Dashboard Settings, Countdown tab |
 | Change how long a page stays | Dashboard Settings, Timing tab |
+| See what is wrong before a meeting | Coaches only, Check the screen |
 | Find an old Screen | Coaches only, Kept data |
 
 ## Things to know

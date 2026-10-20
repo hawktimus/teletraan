@@ -168,7 +168,22 @@ async function playOnceForLooks(ctx, scene) {
         return { plates: document.querySelectorAll('#reform .reform-plate').length, left: box ? box.left : 0, top: box ? box.top : 0, right: box ? box.right : 0, bottom: box ? box.bottom : 0 };
       })));
     }
+    // the cells of a kit with lock parts: how far outside the canvas they go on the way, and where they are and how big when the run ends
+    const cellsAt = () => Array.from(document.querySelectorAll('#reform .reform-cell')).map(cell => {
+      const box = cell.getBoundingClientRect();
+      return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, home: cell.offsetLeft + ',' + cell.offsetTop + ',' + cell.offsetWidth + ',' + cell.offsetHeight };
+    });
+    held.cellCount = await page.evaluate(() => document.querySelectorAll('#reform .reform-cell').length);
+    held.partCount = await page.evaluate(() => document.querySelectorAll('#reform .reform-cell .reform-part').length);
+    held.cellOutside = 0;
+    for (let ms = 1100; ms <= 2000 && held.cellCount > 0; ms += 100) {
+      await page.evaluate(time => window.__reformHeld.forEach(animation => { animation.currentTime = time; }), ms);
+      const boxes = await page.evaluate(cellsAt);
+      boxes.forEach(box => { held.cellOutside = Math.max(held.cellOutside, -box.left, -box.top, box.right - 1920, box.bottom - 1080); });
+    }
     const atEnd = await at(held.duration);
+    held.cellsAtEnd = await page.evaluate(cellsAt);
+    held.partsAtEnd = await page.evaluate(() => Array.from(document.querySelectorAll('#reform .reform-cell .reform-part')).map(part => part.getBoundingClientRect().width));
     held.endsAt = held.duration;
 
     // let the run go to its end at once, and look at the real page straight away
@@ -310,6 +325,37 @@ function rules(theme, kind) {
   ];
 }
 
+// A kit with lock parts (the Original panel): every cell has a part, there are hundreds of moving parts, none goes off the canvas, and at the end
+// every cell is back on its place with its part gone and no two cells overlap
+function lockRule() {
+  const name = 'reform/original/panel/every-cell-is-locked-at-the-end';
+  return {
+    name: name,
+    async run(ctx) {
+      const found = await ctx.scenario('reform original panel looks', () => playForLooks(ctx, scenes['original panel']));
+      if (found.error) return [found.error];
+      const held = found.held;
+      const lines = [];
+
+      if (held.cellCount < 60) lines.push('the Original panel transition drew only ' + held.cellCount + ' cells');
+      if (held.partCount !== held.cellCount) lines.push(held.partCount + ' parts for ' + held.cellCount + ' cells');
+      if (held.animated < 300) lines.push('only ' + held.animated + ' animated parts, the order is for hundreds');
+      if (held.cellOutside > 0.5) lines.push('a cell goes ' + Math.round(held.cellOutside) + 'px outside the canvas');
+      held.partsAtEnd.forEach((width, index) => { if (width > 0.5) lines.push('part ' + index + ' is still ' + round(width) + 'px wide at the end'); });
+      held.cellsAtEnd.forEach((box, index) => {
+        const [, , w, h] = box.home.split(',').map(Number);
+        if (Math.abs(box.right - box.left - w) > 0.5 || Math.abs(box.bottom - box.top - h) > 0.5) lines.push('cell ' + index + ' is ' + round(box.right - box.left) + 'x' + round(box.bottom - box.top) + ' at the end, its size is ' + w + 'x' + h);
+        held.cellsAtEnd.slice(index + 1).forEach((other, offset) => {
+          const across = Math.min(box.right, other.right) - Math.max(box.left, other.left);
+          const down = Math.min(box.bottom, other.bottom) - Math.max(box.top, other.top);
+          if (across > 1.5 && down > 1.5) lines.push('cells ' + index + ' and ' + (index + 1 + offset) + ' overlap by ' + round(across) + 'x' + round(down) + 'px at the end');
+        });
+      });
+      return lines.slice(0, 20);
+    },
+  };
+}
+
 function hawkRule(theme) {
   return {
     name: 'reform/' + theme + '/view/the-hawk-stays-on-the-canvas',
@@ -328,4 +374,4 @@ function hawkRule(theme) {
   };
 }
 
-export const tests = Object.keys(looksOf).reduce((all, theme) => all.concat(rules(theme, 'panel'), rules(theme, 'view'), [hawkRule(theme)]), []);
+export const tests = Object.keys(looksOf).reduce((all, theme) => all.concat(rules(theme, 'panel'), rules(theme, 'view'), [hawkRule(theme)]), []).concat([lockRule()]);

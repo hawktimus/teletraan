@@ -26,7 +26,7 @@ export const placeholderPanels = [
 
 // The panels a row of the rotation can name that no older list holds: the competition rank card, which the row plays for the team
 // of its view, Drive hours, FRC news, and the two small panels that only a row can pair with a large one (rotationOnly in dashboard/registry.js)
-export const rotationPanels = [{ title: 'Competition: Rank', value: 'competition-rank' }, { title: 'Drive hours', value: 'driveHours' }, { title: 'FRC news', value: 'frc-news' }];
+export const rotationPanels = [{ title: 'Competition: Rank', value: 'competition-rank' }, { title: 'Competition: Team metrics', value: 'competition-team-metrics' }, { title: 'Drive hours', value: 'driveHours' }, { title: 'FRC news', value: 'frc-news' }];
 export const pairedPanels = [
   { title: 'Mini panel idea 1', value: 'miniIdea1' },
   { title: 'Parts request (QR code)', value: 'qrParts' },

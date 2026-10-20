@@ -22,7 +22,7 @@
   position: absolute;
   left: 0;
   top: 142px;
-  width: 1152px;
+  width: var(--page-width, 1152px);
   height: 550px;
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@
   position: relative;
   flex: none;
   box-sizing: border-box;
-  width: 1096px;
+  width: calc(var(--page-width, 1152px) - 56px);
   height: 128px;
   margin-left: 28px;
   padding: 0 24px;

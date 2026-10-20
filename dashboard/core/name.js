@@ -63,3 +63,23 @@ export function nameLinesMarkup(name) {
     return `<span class="name-line">${letters}</span>`;
   }).join('');
 }
+
+// A name wider than its slot is drawn narrower, all of it by the same amount, so the letters keep their space
+// between them. Squeezing the letters closer together made them run into each other. --name-fit is read by
+// the stylesheet (panels/banner/panel.css, panels/bar-banner/panel.css). The slot is the heading's own box,
+// which a transform does not change, and the letters are measured in their own boxes for the same reason.
+export function fitName(heading) {
+  if (!heading || !heading.offsetWidth) return;
+
+  let natural = 0;
+  heading.querySelectorAll('.letter').forEach(letter => { natural += letter.offsetWidth; });
+  const fit = natural > heading.offsetWidth ? (heading.offsetWidth / natural) : 1;
+  const text = fit < 1 ? fit.toFixed(3) : '1';
+  if (heading.style.getPropertyValue('--name-fit') !== text) heading.style.setProperty('--name-fit', text);
+}
+
+// The fonts may arrive after the name is drawn, and the letters are wider or narrower then
+export function fitNameWhenFontsLoad(heading) {
+  fitName(heading);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitName(heading));
+}

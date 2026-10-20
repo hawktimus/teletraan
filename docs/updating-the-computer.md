@@ -63,7 +63,7 @@ calendars serves both computers, and a save goes to the Teletraan computer you p
 One run, one password. The tool copies this repository to `~/teletraan-staging` on the Teletraan computer with `rsync`, then runs one root shell on the computer that does all of this in order:
 
 1. `computer/install.sh`. It makes the files the next release (docs/control-page.md, "How releases work"), builds the Studio, starts the containers and turns on the nightly timer. It pulls the Node image or the web server image first when the computer does not have it (a download from the internet, which the installer says). On a computer that has no control page yet it also makes the move to the releases layout, which is why this is the first install.
-2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh` and `install-nightly.sh`, one after another. They turn on the timers (the watchdog, the nightly backup and the nightly restart among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
+2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-nightly.sh` and `install-reboot.sh`, one after another. They turn on the timers (the watchdog, the nightly backup, the nightly restart and the scheduled reboot among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
 3. A restart of the screen, which is black for about ten seconds.
 
 The live tree is never written to, and the last five releases stay on the computer for a rollback. The copy leaves out `.git`, `local.env`, `.env`, `node_modules`, `.DS_Store`, `studio/dist`, `studio/.sanity`, `_inputs` and `_outputs`, so the keys on the computer are never touched or overwritten.
@@ -207,6 +207,16 @@ Choices 3 and `c` stay in the menu, because they ask questions.
 | `git push teletraan main` says the install needs the sudoers rule, or permission denied for docker | The push hook gets its root helper and sudoers line from `computer/install.sh`. Choose 1 once, then push again (docs/control-page.md, "The git path"). |
 | The Reboot or Run presentation test button on the control page does nothing | Settings, Update and Update from GitHub do not touch the sudoers file, the unit files or the compose file. They come from `computer/install.sh`. Choose 1 once so that the computer has the newest ones (the reboot rule, port 3426, the landing page and the keys folder). Then read `docs/control-page.md`, "When a button does nothing". |
 | macOS will not open the .command file | Right-click it, choose Open, and choose Open again. |
+
+## Turn on the scheduled reboot
+
+Choosing 1 (Install everything) copies the units of the scheduled reboot and runs `install-reboot.sh`, so the timer is on after any update that has it. It reboots nothing yet, because Scheduled reboot is off to start with.
+
+1. The timer needs `curl`, `jq` and Node 18 or newer (`docs/rebuilding-the-computer.md`, step 19). If `install-reboot.sh` stops with `These packages are not installed`, ask the team mentor, run the `apt install` line it prints, and choose 1 again, or run `sudo /opt/teletraan/computer/scripts/install-reboot.sh` on the computer.
+2. Choose 1 once if the computer has an older sudoers file, so that the reboot rule is there (the control page's Reboot button needs the same rule).
+3. Turn it on in the Studio (Dashboard Settings, Advanced, Scheduled reboot) or on the control page (Settings, Scheduled reboot): pick the time and the days, click Publish all or Publish, and read `Next reboot` on the same card. The computer reads the setting within 5 minutes.
+
+`teletraan-tool status` does not show it. Read the line the timer writes with `journalctl -u teletraan-reboot.service -n 20` on the computer. docs/control-page.md, "The Scheduled reboot section", says how it decides and what stops a loop.
 
 ## Changing the settings
 

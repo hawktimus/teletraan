@@ -125,9 +125,31 @@ If you are not a coach, leave these alone and ask a coach.
 - Competition: the mode of the competition cards and a switch for each card (docs/frc-feed.md).
 - Dashboard Settings: the settings that are set once, in five tabs, described below.
 - Extra panels, under Coaches only: see above.
+- Check the screen: a read only page that lists what would make the TV look bad or show nothing
+  (see "Check the screen" below).
 - Kept data: the old Screens (Original, Cybertron, Minimal), the Condensed view and the old
   events calendar type. The wall does not use them. Do not delete: some old values are read
   when a new list is empty.
+
+### Check the screen
+
+Under Coaches only. Open it before a meeting or after Publish all. It reads everything in
+the Studio, drafts too, and lists what is wrong, grouped by area. Each finding has a level, a
+plain sentence about what is wrong, a fix, and an Open link to the document. It changes nothing.
+
+- A problem means the TV shows nothing, shows the wrong thing, or shows something private. Fix
+  it first. Examples: a web address, an email address or a phone number in any text (the
+  dataset is public), an announcement that ends before it starts, a Rotation row the wall will
+  skip because there is nothing to show, a calendar filter that hides every event, a team color
+  that cannot be seen on its background.
+- A warning means it shows, but looks bad. Examples: a line longer than what fits, a photo that is
+  small or taller than it is wide, a photo with no first name credit, a leader with no photo, a sponsor
+  with no logo, an agenda item with no date, an item whose Hide after has passed, two items that
+  say the same thing, and a large panel and a small panel on one Rotation row that show the same topic.
+
+The same rules warn while you type: a yellow message under the field, and you can still Publish.
+The numbers of characters that fit are in `studio/schemas/limits.js`. The checks are plain
+functions in `studio/tools/content-check.js`, so the control page can run them later.
 
 Three kinds of content are in the Studio but have no line in the list: Events
 Calendar entries (on Kept data), Places and Demo. They are explained below.

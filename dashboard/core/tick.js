@@ -58,7 +58,7 @@ export function makeSecondTimer(clock) {
       try {
         entry.listener(now);
       } catch (error) {
-        console.error(error);
+        console.error('Something that updates each second failed. The other clocks go on.', error);
       }
     });
   }

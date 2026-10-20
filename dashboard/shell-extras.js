@@ -238,6 +238,8 @@ function watchVersion() {
       if (!response.ok) return;
 
       const version = (await response.text()).trim();
+      // An empty answer is a file caught while it is written, not a new version
+      if (version === '') return;
       if (known === null) {
         known = version;
       } else if (version !== known && !takeoverRunning()) {
@@ -310,7 +312,7 @@ export function fitToScreen() {
 
 // A wall display must never sit blank without saying why
 export function showFatal(error) {
-  console.error(error);
+  console.error('Teletraan I could not start. The error below says which file and line. The page tries again in 30 seconds.', error);
 
   const message = document.createElement('div');
   message.style.cssText = 'position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 100;' +

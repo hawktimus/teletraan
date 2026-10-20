@@ -2,9 +2,13 @@
 // read and the table of each department. monday-page.js draws them. tests/monday-page.test.mjs reads this file with node, so
 // nothing here imports React or sanity. The page writes nothing.
 //
-// The rules of the tables are the ones of the Department tasks panel (departmentView in dashboard/core/monday-views.js): the
-// Studio cannot import from the dashboard folder, so they are copied here, and the test runs both on the same tasks.
+// The rows and the order of every table are the ones of the Department tasks panel: the page imports departmentView and its
+// helpers from dashboard/core/monday-views.js and does not copy them, so the page and the TV cannot disagree. The Studio
+// reaches the dashboard folder through the Vite setting in sanity.cli.js.
 
+import { mondayDepartments } from '../../dashboard/config.js';
+import { boardTasks, departmentView, ofTeam, rowsPerPage } from '../../dashboard/core/monday-views.js';
+import { hasText } from '../../dashboard/core/text.js';
 import { ageText } from './time-text.js';
 import { isRecord, sentence } from './plain-values.js';
 import { checkAddress } from '../tools/monday-check.js';
@@ -19,29 +23,41 @@ export const rotationPath = '/structure/rotation';
 
 export const words = {
   title: 'Monday',
-  intro: 'The Teletraan computer reads two Monday boards, Robotics Tasks and Completed Tasks, and this is what it read. Nothing here can be changed: change a task in Monday. The group of a task is its department, and a task in the Done group or on Completed Tasks is done.',
+  intro: 'This is what the Teletraan computer read from the Monday boards Robotics Tasks and Completed Tasks. Pick a team to see the tasks of each department that are to do or in progress, and the ones that are done. Nothing here can be changed: change a task in Monday.',
   reading: 'Reading the Monday tasks.',
   unreadable: 'The Monday tasks could not be read. Refresh the page to try again.',
   neverRead: 'The Teletraan computer has not read Monday yet. Open the control page, Settings, Monday, and press Sync Monday now.',
   control: 'Open the control page, Settings, Monday',
   rotation: 'Add a Department tasks row on the Rotation board',
-  none: 'Nothing on the TV for this department.',
+  teamLabel: 'Team',
+  teamHelp: 'A task with no team is for both teams, so it shows under Prime and under Nova.',
+  openTitle: 'To Do and In Progress',
+  doneTitle: 'Done',
+  none: 'No tasks.',
+  emptyDepartment: 'No tasks for this department and team.',
+  emptyList: 'Nothing here.',
+  previewTitle: 'What the TV shows',
+  previewHelp: 'The first page of a Department tasks row, drawn with the same rules as the TV. Pick the Department, List and Team of the row.',
+  departmentLabel: 'Department',
+  listLabel: 'List',
+  previewTeamLabel: 'Team',
+  previewSkipped: 'The TV leaves this row out, because nothing is in this list.',
   columns: ['Status', 'Project', 'Contact', 'Priority', 'Estimated Completion Date'],
 };
 
 // The nine departments of the boards, in the order of the panels (mondayDepartments in dashboard/config-lists.js)
-export const departments = [
-  { value: 'build', title: 'Build' }, { value: 'electrical', title: 'Electrical' }, { value: 'programming', title: 'Programming' },
-  { value: 'design', title: 'Design' }, { value: 'cnc', title: 'CNC' }, { value: 'strategy', title: 'Strategy' },
-  { value: 'operations', title: 'Operations' }, { value: 'business', title: 'Business' }, { value: 'marketing', title: 'Marketing' },
-];
+export const departments = mondayDepartments;
 
-// What the page reads: the status the Teletraan computer wrote and the tasks it made, published only
+export const teamChoices = [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }, { value: 'nova', title: 'Nova' }];
+export const listChoices = [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }];
+
+// What the page reads: the status the Teletraan computer wrote, the tasks it made and the teams, published only
 export const question = `{
   "status": *[_id == $statusId][0] { lastSyncAt, lastError },
   "tasks": *[_type == "task" && source == "monday" && !(_id in path("drafts.**"))] {
-    title, department, list, status, "team": team->code, contact, priority, dueDate, completedOn, showOnBoard, showOnTv, show, expires
-  }
+    title, source, department, list, status, "team": team->code, contact, priority, dueDate, completedOn, showOnBoard, showOnTv, show, expires
+  },
+  "teams": *[_type == "team" && !(_id in path("drafts.**"))] { code, name, shortName }
 }`;
 
 // The one line about the last read: when, and that it worked, or the problem in plain words
@@ -55,90 +71,52 @@ export function lastReadLine(status, now) {
     : { ok: true, text: when + 'It worked.' };
 }
 
-// The copy of the rules of the panel
-
-const statusWords = { 'up-next': 'To Do', 'in-progress': 'In Progress', 'in-review': 'In Review', blocked: 'Stuck', done: 'Done' };
-const openOrder = ['in-progress', 'in-review', 'blocked', 'up-next'];
-const priorityWords = { high: 'High', medium: 'Medium', low: 'Low' };
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const plainDate = /^\d{4}-\d{2}-\d{2}$/;
-
-function dateOf(task, name) {
-  return typeof task[name] === 'string' && plainDate.test(task[name]) ? task[name] : '';
+// The tasks and teams the question found, in the shape the dashboard code reads
+export function contentOf(found) {
+  const source = isRecord(found) ? found : {};
+  return { tasks: Array.isArray(source.tasks) ? source.tasks.filter(isRecord) : [], teams: Array.isArray(source.teams) ? source.teams.filter(isRecord) : [] };
 }
 
-function dateWords(date) {
-  return date === '' ? '' : months[Number(date.slice(5, 7)) - 1] + ' ' + Number(date.slice(8, 10));
-}
-
-export function listOf(task) {
-  if (task.list === 'open' || task.list === 'done') return task.list;
-  return task.status === 'done' ? 'done' : 'open';
-}
-
-// On the TV: switched on in the Studio, not past its expiry, and not hidden by the Show on TV? column of the board
-export function onTv(task, now) {
-  if (task.show === false || task.showOnTv === false || task.showOnBoard === false) return false;
-  return !task.expires || Date.parse(task.expires) > now.getTime();
-}
-
-function byDate(a, b, newestFirst) {
-  if (a === b) return 0;
-  if (a === '') return 1;
-  if (b === '') return -1;
-  return (a < b ? -1 : 1) * (newestFirst ? -1 : 1);
-}
-
-function byTitle(a, b) {
-  const first = String(a.title || '').toLowerCase();
-  const second = String(b.title || '').toLowerCase();
-  return first === second ? 0 : first < second ? -1 : 1;
-}
-
-function openRank(task) {
-  const at = openOrder.indexOf(task.status);
-  return at === -1 ? openOrder.length - 1 : at;
-}
-
-export function sortTasks(tasks, list) {
-  return tasks.slice().sort((a, b) => (list === 'done'
-    ? byDate(dateOf(a, 'completedOn'), dateOf(b, 'completedOn'), true) || byTitle(a, b)
-    : openRank(a) - openRank(b) || byDate(dateOf(a, 'dueDate'), dateOf(b, 'dueDate'), false) || byTitle(a, b)));
-}
-
-function rowOf(task, list) {
-  const status = list === 'done' ? 'done' : openOrder.includes(task.status) ? task.status : 'up-next';
-  return {
-    status: statusWords[status],
-    project: String(task.title || '').trim(),
-    contact: typeof task.contact === 'string' && task.contact.trim() !== '' ? task.contact.trim().split(/\s+/)[0] : 'Unassigned',
-    priority: priorityWords[task.priority] || 'No Priority',
-    date: dateWords(dateOf(task, 'dueDate')) || 'No Date',
-    team: task.team === 'prime' ? 'Prime' : task.team === 'nova' ? 'Nova' : '',
-  };
-}
-
-// One entry for each of the nine departments: { value, title, open, done, hidden, rows } where rows are the open tasks in
-// the order of the TV and then the done ones, newest first. hidden counts the tasks of the department that are not on the TV.
-export function departmentTables(tasks, now = new Date()) {
-  const all = (Array.isArray(tasks) ? tasks : []).filter(isRecord);
+// One entry for each of the nine departments, for a team ('' is both): { value, title, open, done, empty, openRows,
+// doneRows, openMore, doneMore }. The rows are the ones of the TV, up to the 20 it holds, and more counts the rest.
+export function departmentTables(content, team, now = new Date()) {
   return departments.map(entry => {
-    const own = all.filter(task => task.department === entry.value);
-    const shown = own.filter(task => onTv(task, now));
-    const open = sortTasks(shown.filter(task => listOf(task) === 'open'), 'open');
-    const done = sortTasks(shown.filter(task => listOf(task) === 'done'), 'done');
+    const ask = list => departmentView(content, now, { team: team, department: entry.value, list: list });
+    const open = ask('open');
+    const done = ask('done');
+    const counts = (open || done || { counts: { open: 0, done: 0 } }).counts;
     return {
       value: entry.value,
       title: entry.title,
-      open: open.length,
-      done: done.length,
-      hidden: own.length - shown.length,
-      rows: open.map(task => rowOf(task, 'open')).concat(done.map(task => rowOf(task, 'done'))),
+      open: counts.open,
+      done: counts.done,
+      empty: counts.open + counts.done === 0,
+      openRows: open ? open.rows : [],
+      doneRows: done ? done.rows : [],
+      openMore: open ? open.more : 0,
+      doneMore: done ? done.more : 0,
     };
   });
 }
 
-// The counts of a department in words, such as "4 open, 2 done, 1 hidden"
+// The tasks of the board that have a department and are not on the TV (Show on TV? says Hide, or the Studio switch is off)
+export function hiddenCount(content, now = new Date()) {
+  const known = content.tasks.filter(task => departments.some(entry => entry.value === task.department));
+  return known.length - boardTasks(content, now).length;
+}
+
+// The tasks on the TV that have no team: they count for both teams
+export function generalCount(content, now = new Date()) {
+  return boardTasks(content, now).filter(task => !hasText(task.team)).length;
+}
+
+// What a Department tasks row draws on its first page, or null when the TV leaves the row out
+export function tvPreview(content, now, choice) {
+  const view = departmentView(content, now, choice);
+  return view === null ? null : Object.assign({}, view, { rows: view.rows.slice(0, rowsPerPage) });
+}
+
+// The counts of a department in words, such as "4 to do, 2 done"
 export function countLine(table) {
-  return [table.open + ' open', table.done + ' done'].concat(table.hidden > 0 ? [table.hidden + ' hidden from the TV'] : []).join(', ');
+  return table.open + ' to do, ' + table.done + ' done';
 }

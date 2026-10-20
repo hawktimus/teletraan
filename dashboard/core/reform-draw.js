@@ -17,7 +17,7 @@
 
 import { slice } from './reform-bake.js';
 import {
-  chainsOf, chassisStops, coverEdgesStops, coverNewStops, coverOldStops, easePop, hardwareList, isStrip, jointShadeStops, jointStops, movedStops, reformTimes, relocateMs,
+  barrelStops, cellStops, chainsOf, chassisStops, coverEdgesStops, coverNewStops, coverOldStops, drawOutOf, easePop, hardwareList, isStrip, jointShadeStops, jointStops, movedStops, pinStops, reformTimes, relocateMs,
   squareShadeStops, squareStops, squaresOf, windowOf,
 } from './reform-plan.js';
 
@@ -132,7 +132,14 @@ function hardwareOf(from, to, tracks, kit, strip) {
 
 // A run
 
-function squaresFor(region, tracks, kit) {
+// A square sits in a cell that slides out and back with it, with a lock pin and a hinge barrel on the cell (core/reform-plan.js,
+// lockMs). A run made lite has the squares alone: no cell and no parts.
+const barrelSize = square => Math.round(Math.max(10, Math.min(22, Math.min(square.w, square.h) * 0.16)));
+
+function squaresFor(region, tracks, kit, runLite) {
+  // Only a kit that asks for it (lockParts) gets cells and parts, and only on the large panel. The other kits draw more layers of their
+  // own, and the view transition draws five more regions; both lost frames on the test machine with the cells on (docs/animation-review.md).
+  const lite = runLite || kit.lockParts !== true || region.grid !== 'main';
   const to = squaresOf(region.to, region.grid, region.seed);
   const from = squaresOf(region.from, region.grid, region.seed);
 
@@ -146,18 +153,32 @@ function squaresFor(region, tracks, kit) {
     const shade = make('reform-shade');
 
     element.append(face, back, shade);
-    element.hidden = true; // it is shown when it has its content (fillSquares), a few at a time
+    const cell = lite ? element : make('reform-cell', box(square));
+    if (!lite) {
+      // the cell has the place of the square, and the square fills it
+      element.style.cssText = 'left:0;top:0;width:100%;height:100%;';
+      // one part to a cell, the two kinds in a checkerboard: each costs an animation, and the old computer pays for every one
+      const hinged = (square.col + square.row) % 2 === 0;
+      const size = px(barrelSize(square));
+      const part = hinged
+        ? make('reform-part reform-barrel', 'left:4px;top:4px;width:' + size + ';height:' + size + ';', kit.draw('barrel'))
+        : make('reform-part reform-pin', 'left:' + px(square.w * 0.35) + ';top:' + px(square.h - 7) + ';width:' + px(square.w * 0.3) + ';height:6px;', kit.draw('pin'));
+      cell.append(element, part);
+      tracks.add(cell, 'transform', cellStops(square, drawOutOf(square, region.to)));
+      tracks.add(part, 'transform', hinged ? barrelStops(square) : pinStops(square));
+    }
+    cell.hidden = true; // it is shown when it has its content (fillSquares), a few at a time
     // a kit may turn its squares its own way: { transform, shade } (styles/cybertron/transitions.js)
     const own = kit.squares ? kit.squares(square, move) : null;
     tracks.add(element, 'transform', own ? own.transform : squareStops(square, move));
     tracks.add(shade, 'opacity', own ? own.shade : squareShadeStops(square));
-    return { square: square, before: before, element: element, face: face, back: back };
+    return { square: square, before: before, element: cell, face: face, back: back };
   });
 }
 
 // The static parts of a whole transition. The covers, the faces and the backs get their content later (the fill functions
 // below). cover is { from, to }: the rectangle each flat copy fills.
-export function drawRun(regions, cover, kit) {
+export function drawRun(regions, cover, kit, lite = false) {
   const tracks = makeTracks();
   const back = make('reform-layer-back');
   const front = make('reform-layer-front');
@@ -173,7 +194,7 @@ export function drawRun(regions, cover, kit) {
     // behind the squares, and larger by the depth, so that it covers the window as the squares do
     const chassis = make('reform-chassis', box(wide) + 'transform-origin:' + px(cameraOrigin.x - wide.x) + ' ' + px(cameraOrigin.y - wide.y) + ';transform:translateZ(' + -chassisDepth + 'px) scale(' + round((1600 + chassisDepth) / 1600) + ');', kit.draw('chassis'));
     tracks.add(chassis, 'opacity', chassisStops());
-    const squares = squaresFor(region, tracks, kit);
+    const squares = squaresFor(region, tracks, kit, lite);
     const grid = make('reform-grid');
 
     squares.forEach(item => grid.appendChild(item.element));

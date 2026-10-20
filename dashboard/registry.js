@@ -72,6 +72,8 @@ export const panels = [
   { id: 'competition-recap', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-forecast', region: 'grid1', topic: 'competition', competition: true },
   { id: 'competition-qualify', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-team-metrics', region: 'grid1', topic: 'competition', competition: true },
+  { id: 'competition-compare', region: 'grid1', topic: 'competition', competition: true },
   { id: 'monday-department', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-charts', region: 'grid1', topic: 'monday', monday: true },
 

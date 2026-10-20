@@ -39,7 +39,7 @@
   position: absolute;
   left: 28px;
   top: 144px;
-  width: 1096px;
+  width: calc(var(--page-width, 1152px) - 56px);
   height: 516px;
   display: flex;
   justify-content: center;
@@ -75,7 +75,7 @@
 /* The roster from the Monday board: up to six rows, the person at the left and the hours at the right. The rows are 80px
    high, so six fill 480 of the 516 in the body, clear of the cut corner of the frame. */
 .roster-board .body { justify-content: center; }
-.roster-board .people { width: 880px; }
+.roster-board .people { width: calc(var(--page-width, 1152px) - 272px); }
 .roster-board .person {
   display: flex;
   justify-content: space-between;

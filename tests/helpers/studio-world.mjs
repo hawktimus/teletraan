@@ -85,7 +85,11 @@ function iconImportsOf(source) {
 }
 
 export async function openStudio() {
-  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-page-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-page-'));
+  const folder = path.join(root, 'studio');
+  fs.mkdirSync(folder);
+  // The Monday page imports the rules of the TV from ../dashboard, so the copy of the Studio sits in a folder beside a link to it
+  fs.symlinkSync(path.join(here, '..', 'dashboard'), path.join(root, 'dashboard'));
   ['schemas', 'structure.js', 'inputs', 'tools', 'project.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
@@ -112,7 +116,7 @@ export async function openStudio() {
     folder: folder,
     load: file => import(pathToFileURL(path.join(folder, file)).href),
     source: file => fs.readFileSync(path.join(here, file), 'utf8'),
-    close: () => fs.rmSync(folder, { recursive: true, force: true }),
+    close: () => fs.rmSync(root, { recursive: true, force: true }),
 
     // Draws a component the way Studio does, and again after every change of state. settle() runs the effects that
     // are waiting and draws until nothing changes.

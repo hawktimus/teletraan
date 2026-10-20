@@ -39,4 +39,4 @@
 }
 .task-counts .line-in-progress { color: var(--status-progress); }
 .task-counts .line-up-next { color: var(--status-next); }
-.task-counts .line-blocked { color: var(--status-blocked); }
+.task-counts .line-blocked { color: var(--danger-bright); } /* the status red is 3.7 to 1 on the Retro plate */

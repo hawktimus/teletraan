@@ -17,10 +17,14 @@ const pieces = {
   gear: '<svg viewBox="0 0 40 40"><circle class="rk-teeth" cx="20" cy="20" r="16"/><circle class="rk-rim" cx="20" cy="20" r="13"/><circle class="rk-metal" cx="20" cy="20" r="10"/><circle class="rk-slot" cx="20" cy="20" r="4"/></svg>',
   piston: '<svg viewBox="0 0 40 40" preserveAspectRatio="none"><rect class="rk-rim" x="0" y="0" width="40" height="40"/><rect class="rk-metal" x="2" y="5" width="36" height="30"/></svg>',
   tooth: '<svg viewBox="0 0 40 40" preserveAspectRatio="none"><path class="rk-rim" d="M4 40 L8 4 L32 4 L36 40 Z"/><path class="rk-metal" d="M10 40 L12 9 L28 9 L30 40 Z"/></svg>',
+  pin: '<svg viewBox="0 0 40 12" preserveAspectRatio="none"><rect class="rk-rim" x="0" y="0" width="40" height="12" rx="3"/><rect class="rk-metal" x="2" y="3" width="30" height="6"/><rect class="rk-lit" x="32" y="2" width="6" height="8"/></svg>',
+  barrel: '<svg viewBox="0 0 40 40"><circle class="rk-rim" cx="20" cy="20" r="19"/><circle class="rk-metal" cx="20" cy="20" r="14"/><path class="rk-slot" d="M20 4V36M4 20H36" stroke="none"/><rect class="rk-slot" x="18" y="4" width="4" height="32"/><rect class="rk-slot" x="4" y="18" width="32" height="4"/></svg>',
   chassis: '',
 };
 
 export const kit = {
   id: 'original',
+  lockParts: true, // cells with lock pins and hinge barrels (core/reform-draw.js); a kit that draws more of its own leaves this off
+
   draw: role => pieces[role] === undefined ? '' : pieces[role],
 };

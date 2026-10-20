@@ -47,6 +47,8 @@ const cards = [
   { name: 'competitionRecap', title: 'Event recap', description: 'The final rank, record, awards and the change in EPA. In Before and after it shows for 7 days after an event.' },
   { name: 'competitionForecast', title: 'Event forecast (Match13)', description: 'Where Match13 expects each team to finish the event. Needs the Match13 key. In Auto it shows from two days before an event.' },
   { name: 'competitionQualify', title: 'Championship chances (Match13)', description: 'The chance of the District and World Championship. Needs the Match13 key. In Auto it shows once the first event has started.' },
+  { name: 'competitionTeamMetrics', title: 'Team metrics (Match13 and TBA)', description: 'Record, rank, Match13 rating, next match and last matches of the team on screen. Needs the Match13 key. In Before and after and in Always, not in Auto.' },
+  { name: 'competitionCompare', title: 'Both teams side by side', description: 'Prime and Nova next to each other, each in its own color: record, rank, rating and next match. In Before and after and in Always, not in Auto.' },
 ];
 
 export function competitionFields() {

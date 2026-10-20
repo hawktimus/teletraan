@@ -6,6 +6,8 @@
 
 import { defineType, defineField } from 'sanity';
 import { showField, expiresField, tooLong, subtitleFor, firstNameOnly } from './fields.js';
+import { limits } from './limits.js';
+import { noContact, photoTrouble } from '../tools/content-rules.js';
 
 // The credit is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
@@ -34,21 +36,31 @@ export default defineType({
       type: 'image',
       description: 'Upload a photo. Wide photos fill the screen best. Drag the circle onto the main subject so the screen keeps it in view when the photo is cut to fill the panel.',
       options: { hotspot: true, accept: 'image/*' },
-      validation: Rule => Rule.required().error('Add a picture.'),
+      validation: Rule => [
+        Rule.required().error('Add a picture.'),
+        Rule.custom((image, context) => {
+          const found = photoTrouble(image, context.document && context.document.fit, undefined)[0];
+          return found ? found.message : true;
+        }).warning(),
+      ],
     }),
     defineField({
       name: 'caption',
       title: 'Caption',
       type: 'string',
       description: 'Optional. A short line on a plate at the lower left of the photo. No last names. Up to 36 characters fit.',
-      validation: Rule => tooLong(Rule, 36),
+      validation: Rule => [tooLong(Rule, limits.photoCaption), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'credit',
       title: 'Credit',
       type: 'string',
       description: 'Optional. The first name of the person who took it, with no last name. The screen shows Photo: and the name under the caption. Up to 14 characters fit.',
-      validation: Rule => [tooLong(Rule, 14), Rule.custom(firstNameOnly)],
+      validation: Rule => [
+        tooLong(Rule, limits.photoCredit),
+        Rule.custom(firstNameOnly),
+        Rule.custom(noContact).warning(),
+      ],
     }),
     defineField({
       name: 'fit',

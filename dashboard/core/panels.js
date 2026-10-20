@@ -11,7 +11,7 @@ const modules = {};
 
 function findPanel(id) {
   const panel = panels.find(item => item.id === id);
-  if (!panel) throw new Error('No panel called "' + id + '" in registry.js');
+  if (!panel) throw new Error('No panel called "' + id + '" in registry.js. Check the spelling, or add a line for it to dashboard/registry.js.');
   return panel;
 }
 
@@ -38,7 +38,7 @@ export async function loadPanel(panel) {
   const stylesheetDone = new Promise(resolve => {
     link.onload = resolve;
     link.onerror = () => {
-      console.error('Could not load ' + panel.style);
+      console.error('Could not load the stylesheet ' + panel.style + '. Check that the file is there and that registry.js spells its folder the same way.');
       resolve();
     };
   });
@@ -48,7 +48,7 @@ export async function loadPanel(panel) {
     // paths in registry.js are relative to the dashboard folder, which is where the page is
     modules[panel.id] = await import(new URL(panel.script, document.baseURI).href);
   } catch (error) {
-    console.error('Could not load panel "' + panel.id + '"', error);
+    console.error('Could not load panel "' + panel.id + '". Check that dashboard/panels/' + panel.id + '/panel.js exists and has no typing mistake. The error says which line.', error);
   }
   await stylesheetDone;
 }
@@ -83,13 +83,13 @@ export function canShow(id, content, page = 1) {
 export function buildPage(id, content, page = 1, step = undefined) {
   const panel = findPanel(id);
   const module = modules[id];
-  if (!module) throw new Error('Panel "' + id + '" is not loaded');
+  if (!module) throw new Error('Panel "' + id + '" is not loaded. Its panel.js did not load, and an error above says why.');
 
   const workbench = document.createElement('div');
   module.mount(workbench, content, page, step);
 
   const element = workbench.firstElementChild;
-  if (!element) throw new Error('Panel "' + id + '" drew nothing');
+  if (!element) throw new Error('Panel "' + id + '" drew nothing. mount(host, content) must put one <section> in host.innerHTML (docs/adding-a-panel.md, step 3).');
   element.dataset.panel = id; // updatePanel finds the panel by this
 
   frame.numberSlats(element); // a panel with no slats, such as the banner, has nothing to number

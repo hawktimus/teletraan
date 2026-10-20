@@ -32,6 +32,19 @@ if [ -f "$repo/.git/index.lock" ]; then
   exit 1
 fi
 
+# A merge that runs out of room stops half way and leaves a mix of old and new files, so with less than 200 MB
+# free nothing is pulled. The screen keeps the files it has, and the control page shows the free space.
+free_kb=$(df -Pk "$repo" 2> /dev/null | awk 'NR == 2 { print $4 }' || true)
+case $free_kb in
+  ''|*[!0-9]*) ;;
+  *)
+    if [ "$free_kb" -lt 204800 ]; then
+      echo "Less than 200 MB of the disk is free ($((free_kb / 1024)) MB), so nothing was pulled. Free some space, then the next pull goes ahead." >&2
+      exit 1
+    fi
+    ;;
+esac
+
 # A merge that cannot fast-forward stops without touching a file. A merge
 # that works replaces files one by one, so a screen that starts during it can
 # see a mix of old and new files, and reloads when version.txt changes.

@@ -107,7 +107,11 @@ const examples = {
 // The real sanity package is not installed here, so a copy of the schemas is
 // loaded next to a stand-in whose functions hand back what they are given.
 export async function loadSchemas() {
-  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-templates-'));
+  const folder = path.join(root, 'studio');
+  fs.mkdirSync(folder);
+  // The Monday page imports the rules of the TV from ../dashboard
+  fs.symlinkSync(path.join(studioFolder, '..', 'dashboard'), path.join(root, 'dashboard'));
   try {
     ['schemas', 'structure.js', 'inputs', 'tools'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
@@ -139,7 +143,7 @@ export async function loadSchemas() {
     const structure = await import(pathToFileURL(path.join(folder, 'structure.js')).href);
     return { types: schemas.schemaTypes, singletons: structure.singletonTypes };
   } finally {
-    fs.rmSync(folder, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
   }
 }
 

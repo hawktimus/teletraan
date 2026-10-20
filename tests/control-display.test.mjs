@@ -15,6 +15,7 @@ import * as rows from '../control/static/display-rows.js';
 import * as studio from '../studio/tools/rotation-board.js';
 import { defaultRotationRows } from '../dashboard/config-rotation.js';
 import { normalizeSample } from '../dashboard/core/sanity.js';
+import { tidyMatch13 } from '../dashboard/core/match13.js';
 import { makeWorld, repo } from './helpers/control-world.mjs';
 
 let passed = 0;
@@ -321,6 +322,17 @@ await check('saving never writes to the published document, and never sends Matc
 });
 
 // ----- what the wall would do -----
+
+await check('a Team metrics row says what the card holds for its team, with the Match13 numbers when the file is there', async () => {
+  const match13 = tidyMatch13(JSON.parse(sampleMatch13));
+  const world = { content: normalizeSample(sample), now: new Date(), match13: match13, problem: '' };
+  const nova = await checkRow({ view: 'nova', panel: 'competition-team-metrics', team: 'nova', shown: true }, world);
+  assert.equal(nova.state, 'show');
+  assert.ok(nova.items.some(line => /^THE SEASON|^\[Event one\]: SEASON RECORD 6-6-0/.test(line)), nova.items.join(' | '));
+  assert.ok(nova.items.some(line => line.startsWith('MATCH13 RATINGS: xP RATING 44.2')), 'the rating of Nova is from the file');
+  const without = await checkRow({ view: 'nova', panel: 'competition-team-metrics', team: 'nova', shown: true }, Object.assign({}, world, { match13: null }));
+  assert.ok(!without.items.some(line => line.startsWith('MATCH13')), 'without the file there is no rating line');
+});
 
 await check('the wall check asks the same functions the wall asks, row by row', async () => {
   const world = { content: normalizeSample(sample), now: new Date(), match13: null, problem: '' };

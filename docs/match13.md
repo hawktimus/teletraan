@@ -22,6 +22,27 @@ its last day. Chances comes once the first event of the season has begun. Each h
 Studio, and Preview competition shows both on sample data (`dashboard/data/sample/match13.json`, marked SAMPLE).
 A card with no numbers is not shown at all.
 
+## The metrics cards
+
+Two more cards, Team metrics (one team, a page at a time) and Compare (Prime and Nova side by side), join this file with frc-status
+(docs/frc-feed.md, "The two metrics cards"). They come in Before and after and in Always, and Team metrics can also be a row. The Match13
+numbers on them, with the field of the file they come from:
+
+| Metric | Field |
+|--------|-------|
+| xP rating | `teams.<number>.xp` |
+| Among all teams: TOP 32% | `100 - teams.<number>.percentile`, rounded |
+| Season rank | `teams.<number>.rank` |
+| At the event: 6TH OF 36 | the place of the team in `events.<key>.field.top`, by xP, and `field.teamCount` |
+| Auto, teleop and endgame points | `xAuto`, `xTele` and `xEnd` |
+| OPR, DPR and EPA | `opr`, `dpr` and `epa` |
+| Win chance and expected score of the next match | `events.<key>.matches[].pred` (`winProb`, `redScore`, `blueScore`), for the alliance the team is on |
+| Partner and opponent average | `events.<key>.matches[].teams.<number>` (xP before the match) when it is there for every team, otherwise the EPA of frc-status |
+| Events of the season | `teams.<number>.history[]`: `xpStart`, `xpEnd` and `districtPoints` |
+
+A number Match13 did not send is left out and the card says NOT YET. The sample file has made up numbers for the sample teams and says SAMPLE.
+The team that plays a match is found in frc-status, because this file does not say which alliance a team is on.
+
 ## Where it is stored, and why not in Sanity
 
 The Sanity dataset is public: anyone who knows the project can read it. Match13 marks its answers private

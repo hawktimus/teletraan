@@ -5,7 +5,7 @@ import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
-import { nameMarkup } from '../../core/name.js';
+import { fitName, fitNameWhenFontsLoad, nameMarkup } from '../../core/name.js';
 import { frameKind, plateMarkup, teamPlateMarkup } from '../../core/plate.js';
 import { themeArtMarkup } from '../../core/theme-art.js';
 import { layoutNow } from '../../core/layout.js';
@@ -69,12 +69,14 @@ export function mount(host, content) {
   // minute is a different one. The minute is counted from the clock itself, so
   // a new day, or the clock being set, always counts as a different minute.
   let shownMinute = null;
+  const heading = element.querySelector('.team-name');
   const showClock = now => {
     const minute = Math.floor(now.getTime() / 60000);
     if (minute === shownMinute) return;
 
     shownMinute = minute;
     drawClock(element, now);
+    fitName(heading); // the width of the time sets the room the name has
   };
   showClock(new Date());
   frame.onSecond(showClock, element);
@@ -94,6 +96,7 @@ function setName(element, name) {
 
   heading.dataset.name = name;
   heading.innerHTML = nameMarkup(name);
+  fitNameWhenFontsLoad(heading);
 }
 
 // New content: the team, the weather, the banner line and whether it is the sample. The

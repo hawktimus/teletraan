@@ -1,5 +1,7 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { showField, expiresField, teamField, tooLong, subtitleFor } from './fields.js';
+import { limits } from './limits.js';
+import { noContact } from '../tools/content-rules.js';
 import { dayWords } from './presentationTimes.js';
 
 const rowFields = [
@@ -8,21 +10,21 @@ const rowFields = [
     title: 'Time',
     type: 'string',
     description: 'When it starts, for example 6:00 PM. Up to 9 characters fit.',
-    validation: Rule => tooLong(Rule, 9),
+    validation: Rule => tooLong(Rule, limits.planRowTime),
   }),
   defineField({
     name: 'text',
     title: 'What happens',
     type: 'string',
     description: 'What is planned for this time. Up to 18 characters fit.',
-    validation: Rule => [Rule.required().error('Say what happens.'), tooLong(Rule, 18)],
+    validation: Rule => [Rule.required().error('Say what happens.'), tooLong(Rule, limits.planRowText), Rule.custom(noContact).warning()],
   }),
   defineField({
     name: 'lead',
     title: 'Who leads it',
     type: 'string',
     description: 'Optional. The name of the person in charge. Up to 10 characters fit.',
-    validation: Rule => tooLong(Rule, 10),
+    validation: Rule => tooLong(Rule, limits.planRowLead),
   }),
 ];
 
@@ -36,7 +38,7 @@ export default defineType({
       title: 'Heading',
       type: 'string',
       description: 'The heading, such as the kind of meeting. Up to 26 characters fit.',
-      validation: Rule => [Rule.required().error('Add a heading.'), tooLong(Rule, 26)],
+      validation: Rule => [Rule.required().error('Add a heading.'), tooLong(Rule, limits.planHeading), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'date',
@@ -49,7 +51,7 @@ export default defineType({
       title: 'Location',
       type: 'string',
       description: 'Where the meeting is, such as a room. Up to 30 characters fit.',
-      validation: Rule => tooLong(Rule, 30),
+      validation: Rule => tooLong(Rule, limits.planLocation),
     }),
     defineField({
       name: 'rows',
@@ -69,7 +71,7 @@ export default defineType({
           },
         }),
       ],
-      validation: Rule => Rule.max(5).error('Only 5 rows fit on the screen. Remove one.'),
+      validation: Rule => Rule.max(limits.planRows).error('Only 5 rows fit on the screen. Remove one.'),
     }),
     teamField(),
     showField(),

@@ -1,8 +1,9 @@
 // The PIN, the cookie and the lockout. The page accepts the two PINs in fixedPins and nothing else. If
 // CONTROL_PIN is in local.env (typed by hand over SSH, 4 to 12 digits), the page accepts only that one.
 // A good PIN gives a signed cookie (HMAC-SHA-256) that lasts 30 days. Six wrong tries from one address in
-// ten minutes block that address for an hour. The secret is made on the first start and kept in a file
-// with mode 600.
+// ten minutes block that address for an hour. The tries are kept in a file (options.stateFile), so a restart of the
+// service or of the computer does not give an attacker six fresh tries. The secret is made on the first start and
+// kept in a file with mode 600.
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -35,6 +36,42 @@ export function createAuth(options) {
   const failures = new Map();
   const blocked = new Map();
   let secret = null;
+
+  // The tries and blocks survive a restart. A file that is missing or damaged means a clean start, and a file that
+  // cannot be written must not stop a sign-in.
+  function loadTries() {
+    if (!options.stateFile) return;
+    try {
+      const saved = JSON.parse(fs.readFileSync(options.stateFile, 'utf8'));
+      Object.keys(saved.blocked || {}).forEach(address => {
+        if (Number(saved.blocked[address]) > now()) blocked.set(address, Number(saved.blocked[address]));
+      });
+      Object.keys(saved.failures || {}).forEach(address => {
+        const recent = (Array.isArray(saved.failures[address]) ? saved.failures[address] : []).map(Number).filter(time => time > now() - triesWindow);
+        if (recent.length) failures.set(address, recent);
+      });
+    } catch (error) {
+      // no saved tries
+    }
+  }
+
+  function saveTries() {
+    if (!options.stateFile) return;
+    try {
+      const recent = {};
+      failures.forEach((times, address) => {
+        const live = times.filter(time => time > now() - triesWindow);
+        if (live.length) recent[address] = live;
+      });
+      const saved = { blocked: Object.fromEntries(blocked), failures: recent };
+      fs.mkdirSync(path.dirname(options.stateFile), { recursive: true });
+      fs.writeFileSync(options.stateFile + '.new', JSON.stringify(saved), { mode: 0o600 });
+      fs.renameSync(options.stateFile + '.new', options.stateFile);
+    } catch (error) {
+      // the tries still count in memory
+    }
+  }
+  loadTries();
 
   function readSecret() {
     if (secret) return secret;
@@ -99,6 +136,7 @@ export function createAuth(options) {
     if (!until) return 0;
     if (until <= now()) {
       blocked.delete(address);
+      saveTries();
       return 0;
     }
     return Math.ceil((until - now()) / 1000);
@@ -115,7 +153,7 @@ export function createAuth(options) {
       if (same(typed, real)) match = real;
     });
     if (match) {
-      failures.delete(address);
+      if (failures.delete(address)) saveTries();
       return { ok: true, cookie: makeCookie(match) };
     }
     const recent = (failures.get(address) || []).filter(time => time > now() - triesWindow);
@@ -124,8 +162,10 @@ export function createAuth(options) {
     if (recent.length >= triesAllowed) {
       blocked.set(address, now() + blockTime);
       failures.delete(address);
+      saveTries();
       return { ok: false, blockedSeconds: Math.ceil(blockTime / 1000), triesLeft: 0 };
     }
+    saveTries();
     return { ok: false, triesLeft: triesAllowed - recent.length };
   }
 
@@ -141,4 +181,20 @@ export function clientAddress(req) {
   const real = req.headers && req.headers['x-real-ip'];
   if (real && /^[0-9a-fA-F:.]{3,45}$/.test(real)) return real;
   return (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+// A call that changes something must come from the page itself. A browser sends Origin on every POST and names the
+// site that made the call; when it is another address than the one asked, the call is refused. A call with no
+// Origin (the Mac tool, curl) is not made by a web page, and still needs the cookie.
+export function sameOrigin(req) {
+  const headers = req.headers || {};
+  const site = headers['sec-fetch-site'];
+  if (site === 'cross-site') return false;
+  const origin = headers.origin;
+  if (origin === undefined) return true;
+  try {
+    return new URL(origin).host === String(headers.host || '');
+  } catch (error) {
+    return false;
+  }
 }

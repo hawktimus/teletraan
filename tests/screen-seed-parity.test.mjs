@@ -119,7 +119,8 @@ test('lists that were saved empty stay empty on both sides, and a list that was 
   assert.deepEqual(empty.dashboard.sideRows, []);
 
   const largeOnly = compare({ order: [], grid1: shown(['photo']) }, [prime]);
-  assert.deepEqual(words(largeOnly.dashboard.sideRows), ['task-counts', 'next-event', 'forecast', 'safety-days', 'sponsor-logo']);
+  // every small panel the Studio offers, in its order, so a new small panel does not need a change here
+  assert.deepEqual(words(largeOnly.dashboard.sideRows), studioPanels.smallPanels.map(panel => panel.value));
 });
 
 test('a row that is switched off is not seeded, in either list', () => {

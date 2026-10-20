@@ -3,6 +3,7 @@
 // where it is done (its location), on a line of its own under its name.
 
 import { rowBarMarkup } from '../../core/plate.js';
+import { pageWidth } from '../../core/page-width.js';
 import { doubleSlash, statusMark } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
@@ -98,7 +99,7 @@ function rowMarkup(row, isLast) {
 
   return `
     <div class="row status-${row.group.status}" data-slat="item">
-      ${isLast ? '' : rowBarMarkup(1124)}
+      ${isLast ? '' : rowBarMarkup(pageWidth() - 28)}
       <div class="row-mark">${statusMark(row.group.status)}</div>
       <div class="row-text">
         <div class="row-label">${row.group.label}</div>

@@ -176,6 +176,7 @@ export function trackAt(stops, ms) {
 
 export const easeStandard = 'cubic-bezier(.45,0,.2,1)';
 export const easePop = 'cubic-bezier(.5,0,.3,1)';
+export const slamEase = 'cubic-bezier(.7,0,1,.5)'; // a part driven home: slow start, fast end
 
 // A track that holds a value from the start to the end of the skeleton and has stops in between. Missing ends are filled in.
 function closed(stops, rest) {
@@ -210,6 +211,70 @@ export function squareStops(square, from = { dx: 0, dy: 0, sx: 1, sy: 1 }) {
     [square.startMs + squareTurnMs, at(0, 180, 1, 0)],
     [reformTimes.totalMs, at(0, 180, 1, 0)],
   ];
+}
+
+// The squares come apart and lock again. Each square sits in a cell. While its turn runs the cell slides out from the middle of the
+// window along the line to its own middle (the squares part like plates drawn out of a rack), a lock pin on its lower edge draws
+// back and a hinge barrel on its corner turns a full turn. At the end of the turn the cell slides back past its place by a few
+// pixels, the pin is driven home and the cell settles: the seat. All of it runs on the clock of the square (startMs).
+export const lockMs = { out: 110, hold: 270, home: 340, settle: 400, gone: 470 };
+export const exploded = { distance: 18, shrink: 0.95, overshoot: 3 };
+
+// Where a square's cell slides to: away from the middle of the window, farther for the squares at the edges
+export function drawOutOf(square, rect) {
+  const box = windowOf(rect);
+  const dx = square.x + square.w / 2 - (box.x + box.w / 2);
+  const dy = square.y + square.h / 2 - (box.y + box.h / 2);
+  const length = Math.hypot(dx, dy) || 1;
+  const reach = Math.hypot(box.w / 2, box.h / 2) || 1;
+  const push = exploded.distance * (0.4 + 0.6 * Math.min(1, length / reach));
+
+  return { x: Math.round(dx / length * push * 100) / 100, y: Math.round(dy / length * push * 100) / 100 };
+}
+
+export function cellStops(square, out) {
+  const at = (x, y, size) => 'translate(' + x + 'px,' + y + 'px) scale(' + size + ')';
+  const over = exploded.overshoot / (Math.hypot(out.x, out.y) || 1);
+  const start = square.startMs;
+
+  return closed([
+    [start, at(0, 0, 1), easePop],
+    [start + lockMs.out, at(out.x, out.y, exploded.shrink), 'ease-in-out'],
+    [start + lockMs.hold, at(out.x, out.y, exploded.shrink), slamEase],
+    [start + lockMs.home, at(-out.x * over, -out.y * over, 1.012), 'ease-out'],
+    [start + lockMs.settle, at(0, 0, 1)],
+  ], at(0, 0, 1));
+}
+
+// The lock pin: out of its socket as the cell parts, driven home with the cell
+export function pinStops(square) {
+  const at = (slide, size) => 'translateX(' + slide + 'px) scaleX(' + size + ')';
+  const start = square.startMs;
+  const draw = -Math.round(square.w * 0.3);
+
+  return closed([
+    [start, at(0, 0), easePop],
+    [start + 50, at(0, 1)],
+    [start + lockMs.out, at(draw, 1), 'ease-out'],
+    [start + lockMs.hold, at(draw, 1), slamEase],
+    [start + lockMs.home, at(4, 1), 'ease-out'],
+    [start + lockMs.settle, at(0, 1)],
+    [start + lockMs.gone, at(0, 0)],
+  ], at(0, 0));
+}
+
+// The hinge barrel: grows on the corner of the cell, turns once while the square turns, and is gone when the square is locked
+export function barrelStops(square) {
+  const at = (turn, size) => 'rotate(' + turn + 'deg) scale(' + size + ')';
+  const start = square.startMs;
+
+  return closed([
+    [start, at(0, 0), easePop],
+    [start + 60, at(0, 1), 'ease-in-out'],
+    [start + lockMs.home, at(360, 1), 'ease-out'],
+    [start + lockMs.settle, at(380, 1)],
+    [start + lockMs.gone, at(380, 0)],
+  ], at(0, 0));
 }
 
 // The shade of a square: dark as it turns away, clear as it faces back

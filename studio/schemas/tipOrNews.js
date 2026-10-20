@@ -1,6 +1,8 @@
 import { defineType, defineField } from 'sanity';
 import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, titleOf, subtitleFor } from './fields.js';
 import { clockIn, fallbackTimeZone } from './presentationTimes.js';
+import { limits } from './limits.js';
+import { noContact } from '../tools/content-rules.js';
 
 const kinds = [
   { title: 'Tip', value: 'tip' },
@@ -27,7 +29,7 @@ export default defineType({
       title: 'Line',
       type: 'string',
       description: 'The line shown on the ticker at the bottom of the screen. Up to 52 characters fit.',
-      validation: Rule => [Rule.required().error('Write the line.'), tooLong(Rule, 52)],
+      validation: Rule => [Rule.required().error('Write the line.'), tooLong(Rule, limits.tickerLine), Rule.custom(noContact).warning()],
     }),
     teamField(),
     orderField(),

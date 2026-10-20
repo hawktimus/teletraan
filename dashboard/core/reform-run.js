@@ -59,6 +59,20 @@ export function screenIsSlow() {
   return sorted[Math.floor(sorted.length / 2)] > 40;
 }
 
+// A screen that holds 25 frames a second but not 40 (a median frame over 26 ms) gets the squares without the cells, pins and barrels,
+// which are a third of what a run draws. ?reform=lite on the address asks for the same.
+export function reformIsLite() {
+  try {
+    if (new URLSearchParams(window.location.search).get('reform') === 'lite') return true;
+  } catch (error) {
+    // no address, no choice
+  }
+  if (lastFrames.length < 30) return false;
+
+  const sorted = lastFrames.slice().sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] > 26;
+}
+
 export function reformRunning() {
   return running;
 }

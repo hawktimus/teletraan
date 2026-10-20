@@ -2,6 +2,7 @@
 // for today share the lines that the plan leaves free.
 
 import { rowBarMarkup, cardMarkup } from '../../core/plate.js';
+import { pageWidth } from '../../core/page-width.js';
 import { markBeside } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { textWidth } from '../../core/text-width.js';
@@ -121,7 +122,7 @@ export function mount(host, content) {
       </div>
 
       <div class="plan" data-slat="item">
-        ${cardMarkup(1096, 140)}
+        ${cardMarkup(pageWidth() - 56, 140)}
         <div class="heading">${escapeHtml(plan.heading)}</div>
         <div class="location">${escapeHtml(plan.location)}</div>
       </div>
@@ -133,7 +134,7 @@ export function mount(host, content) {
 // Every row is a slat, and the thin metal bar under it turns over with it.
 // The last row has no bar under it, because the frame is there.
 function rowMarkup(row, isLast) {
-  const bar = isLast ? '' : rowBarMarkup(1124);
+  const bar = isLast ? '' : rowBarMarkup(pageWidth() - 28);
   if (row.kind === 'talk') return talkMarkup(row, bar);
   if (row.kind === 'more') return moreMarkup(row, bar);
 

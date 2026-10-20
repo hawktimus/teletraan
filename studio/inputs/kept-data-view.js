@@ -19,7 +19,7 @@ function groupBlock(group, ChildLink) {
     { key: group.id, 'data-block': group.id },
     h('h2', { style: styles.subheading }, group.title),
     h('p', { style: styles.muted }, group.says),
-    h('ul', { style: styles.list }, group.items.map(item => h('li', { key: item.id }, ChildLink ? h(ChildLink, { childId: item.id }, words.open + ' ' + item.title) : item.title)))
+    h('ul', { style: styles.list }, group.items.map(item => h('li', { key: item.id, style: { padding: '10px 0' } },ChildLink ? h(ChildLink, { childId: item.id }, words.open + ' ' + item.title) : item.title)))
   );
 }
 

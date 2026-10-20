@@ -92,9 +92,22 @@ Department tasks, Open, for that department.
 
 ## The Monday page
 
-Monday in the Studio sidebar shows what the computer read. It is read only: one line about the last read, then
-a small table for each department with the same five columns and the open and done counts. To change a task,
-change it in Monday.
+Monday in the Studio sidebar shows what the computer read, and answers one question: for a team, what is to do and
+what is done in each department. It is read only. To change a task, change it in Monday.
+
+- The first line says when the computer last read Monday and whether it worked, or the problem in plain words.
+- Pick a Team: Both, Prime or Nova. A task with no team is for both teams, so it shows under Prime and under Nova.
+- A tile for each of the nine departments says how many tasks are to do and how many are done. A department with
+  nothing in it is greyed and says so, and is not hidden.
+- Below, each department has a table of the To Do and In Progress tasks and a table of the Done tasks, with the
+  five columns of the TV: Status, Project, Contact, Priority and Estimated Completion Date. A table stops at the 20
+  rows the TV holds and says how many more are in Monday. A phone shows each row as a small card.
+- What the TV shows draws the first page (four rows) of one Department tasks row. Pick the Department, the List and
+  the Team, as in a Rotation row. It says when the TV would leave the row out.
+
+The page imports `departmentView` and its helpers from `dashboard/core/monday-views.js`, so the rows and their order
+are the ones of the TV and cannot drift. The Studio dev server may read the dashboard folder because of the `vite`
+line in `studio/sanity.cli.js`.
 
 ## How often it reads
 

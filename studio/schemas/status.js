@@ -45,6 +45,11 @@ export default defineType({
     textField('match13State', 'Match13 state', 'How the last read of Match13 went: ok, no-key, bad-key, limit or down. The Teletraan computer writes this.'),
     defineField({ name: 'match13Count', title: 'Match13 teams', type: 'number', description: 'How many teams the Match13 file held at the last read. The Teletraan computer writes this.' }),
     // The FIRST news headlines (computer/scripts/news-sync.sh, status-write.sh news)
+    // The scheduled reboot (computer/scripts/scheduled-reboot.sh, status-write.sh reboot)
+    timeField('nextRebootAt', 'Next reboot', 'When the scheduled reboot is next due, or empty when none is planned. The computer writes this.'),
+    textField('nextRebootText', 'Next reboot (words)', 'The next scheduled reboot as the screen counts it, such as Tue 03:30. The computer writes this.'),
+    timeField('lastRebootAt', 'Last scheduled reboot', 'When the Teletraan computer last rebooted on its schedule. The computer writes this.'),
+    textField('lastRebootWhy', 'Last reboot reason', 'Why it last rebooted, such as Tue 03:30, as scheduled. The computer writes this.'),
     timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
     defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],

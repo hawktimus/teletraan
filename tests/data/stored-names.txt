@@ -1,0 +1,1220 @@
+# Every name stored in Sanity: a type, a field of it, the rows inside a list, and the choices of a field.
+# A name is added with: node tests/stored-names.test.mjs --add
+# A name is never removed or renamed: content that editors typed would be lost (docs/adding-a-field.md).
+announcement
+announcement.end
+announcement.level
+announcement.level = important
+announcement.level = notice
+announcement.start
+announcement.team
+announcement.text
+calendarFilter
+calendarFilter.action
+calendarFilter.action = hide
+calendarFilter.action = show
+calendarFilter.calendar
+calendarFilter.days
+calendarFilter.days = 0
+calendarFilter.days = 1
+calendarFilter.days = 2
+calendarFilter.days = 3
+calendarFilter.days = 4
+calendarFilter.days = 5
+calendarFilter.days = 6
+calendarFilter.eventCalendar
+calendarFilter.eventStart
+calendarFilter.eventTitle
+calendarFilter.expires
+calendarFilter.force
+calendarFilter.fromDate
+calendarFilter.name
+calendarFilter.scope
+calendarFilter.scope = many
+calendarFilter.scope = one
+calendarFilter.show
+calendarFilter.toDate
+calendarFilter.words
+calendarStatus
+calendarStatus.calendars
+calendarStatus.calendars.<object>
+calendarStatus.calendars.<object>.code
+calendarStatus.calendars.<object>.error
+calendarStatus.calendars.<object>.eventCount
+calendarStatus.calendars.<object>.fetchedAt
+calendarStatus.calendars.<object>.hiddenCount
+calendarStatus.calendars.<object>.occurrences
+calendarStatus.calendars.<object>.occurrences.<object>
+calendarStatus.calendars.<object>.occurrences.<object>.date
+calendarStatus.calendars.<object>.occurrences.<object>.day
+calendarStatus.calendars.<object>.occurrences.<object>.end
+calendarStatus.calendars.<object>.occurrences.<object>.rule
+calendarStatus.calendars.<object>.occurrences.<object>.shown
+calendarStatus.calendars.<object>.occurrences.<object>.start
+calendarStatus.calendars.<object>.occurrences.<object>.time
+calendarStatus.calendars.<object>.occurrences.<object>.title
+calendarStatus.eventsNote
+calendarStatus.updatedAt
+countdownBlock
+countdownBlock.label
+countdownBlock.target
+customPanel
+customPanel.blocks
+customPanel.blocks.<countdownBlock>
+customPanel.blocks.<headingBlock>
+customPanel.blocks.<imageBlock>
+customPanel.blocks.<listBlock>
+customPanel.blocks.<progressBlock>
+customPanel.blocks.<statBlock>
+customPanel.blocks.<textBlock>
+customPanel.expires
+customPanel.order
+customPanel.show
+customPanel.team
+customPanel.title
+dashboardSettings
+dashboardSettings.alert
+dashboardSettings.alert.headline
+dashboardSettings.alert.message
+dashboardSettings.alert.on
+dashboardSettings.alert.until
+dashboardSettings.alternateMinutes
+dashboardSettings.announceRequest
+dashboardSettings.announceRequest.requestedAt
+dashboardSettings.announcements
+dashboardSettings.announcements.<object>
+dashboardSettings.announcements.<object>.days
+dashboardSettings.announcements.<object>.days = 0
+dashboardSettings.announcements.<object>.days = 1
+dashboardSettings.announcements.<object>.days = 2
+dashboardSettings.announcements.<object>.days = 3
+dashboardSettings.announcements.<object>.days = 4
+dashboardSettings.announcements.<object>.days = 5
+dashboardSettings.announcements.<object>.days = 6
+dashboardSettings.announcements.<object>.followUp
+dashboardSettings.announcements.<object>.followUpSeconds
+dashboardSettings.announcements.<object>.show
+dashboardSettings.announcements.<object>.time
+dashboardSettings.announcements.<object>.title
+dashboardSettings.announcements.<object>.titleSeconds
+dashboardSettings.background
+dashboardSettings.background = blueprint
+dashboardSettings.background = embers
+dashboardSettings.background = rays
+dashboardSettings.background = spotlight
+dashboardSettings.background = sweep
+dashboardSettings.breakSeconds
+dashboardSettings.calendars
+dashboardSettings.calendars.<object>
+dashboardSettings.calendars.<object>.id
+dashboardSettings.calendars.<object>.kind
+dashboardSettings.calendars.<object>.kind = competitions
+dashboardSettings.calendars.<object>.kind = deadlines
+dashboardSettings.calendars.<object>.kind = meetings
+dashboardSettings.calendars.<object>.kind = other
+dashboardSettings.calendars.<object>.kind = outreach
+dashboardSettings.calendars.<object>.name
+dashboardSettings.calendars.<object>.show
+dashboardSettings.competitionAlliance
+dashboardSettings.competitionDistrict
+dashboardSettings.competitionForecast
+dashboardSettings.competitionLastSeason
+dashboardSettings.competitionMatches
+dashboardSettings.competitionMode
+dashboardSettings.competitionMode = always
+dashboardSettings.competitionMode = around
+dashboardSettings.competitionMode = auto
+dashboardSettings.competitionMode = off
+dashboardSettings.competitionNextMatch
+dashboardSettings.competitionPreview
+dashboardSettings.competitionPreviewRequest
+dashboardSettings.competitionPreviewRequest.requestedAt
+dashboardSettings.competitionQualify
+dashboardSettings.competitionRank
+dashboardSettings.competitionRecap
+dashboardSettings.competitionResults
+dashboardSettings.competitionTimeline
+dashboardSettings.contentSource
+dashboardSettings.contentSource = production
+dashboardSettings.contentSource = sample
+dashboardSettings.countdown
+dashboardSettings.countdown.kickoff
+dashboardSettings.countdown.kickoffLabel
+dashboardSettings.countdown.rollout
+dashboardSettings.countdown.rolloutLabel
+dashboardSettings.crt
+dashboardSettings.crt.durationSeconds
+dashboardSettings.crt.everySeconds
+dashboardSettings.crt.on
+dashboardSettings.cycleNote
+dashboardSettings.dailyStyles
+dashboardSettings.desktopChance
+dashboardSettings.desktopEveryHours
+dashboardSettings.doneDays
+dashboardSettings.frameFinish
+dashboardSettings.frameFinish = alternate
+dashboardSettings.frameFinish = gold
+dashboardSettings.frameFinish = mostly-gold
+dashboardSettings.frameFinish = silver
+dashboardSettings.frameMetal
+dashboardSettings.frameMetal = gold
+dashboardSettings.frameMetal = silver
+dashboardSettings.frcConnection
+dashboardSettings.generalViewName
+dashboardSettings.generalViewTitle
+dashboardSettings.glint
+dashboardSettings.graceMinutes
+dashboardSettings.groupEventsByKind
+dashboardSettings.hiddenEnabled
+dashboardSettings.hiddenRequest
+dashboardSettings.hiddenRequest.kind
+dashboardSettings.hiddenRequest.kind = desktop
+dashboardSettings.hiddenRequest.kind = redEyes
+dashboardSettings.hiddenRequest.requestedAt
+dashboardSettings.holdPanel
+dashboardSettings.holdPanel.panel
+dashboardSettings.holdPanel.until
+dashboardSettings.leadershipPortrait
+dashboardSettings.logoAnimations
+dashboardSettings.logoEntrance
+dashboardSettings.logoHawk
+dashboardSettings.logoHawkDuration
+dashboardSettings.logoHawkEvery
+dashboardSettings.logoSpin
+dashboardSettings.logoSpinDuration
+dashboardSettings.logoSpinEvery
+dashboardSettings.look
+dashboardSettings.look = flat
+dashboardSettings.look = plain
+dashboardSettings.look = polished
+dashboardSettings.lookNote
+dashboardSettings.lookSwap
+dashboardSettings.lookSwap = assemble
+dashboardSettings.lookSwap = cut
+dashboardSettings.lookSwap = slats
+dashboardSettings.miniStatus
+dashboardSettings.mondayBoards
+dashboardSettings.mondayBoards.<object>
+dashboardSettings.mondayBoards.<object>.backlogLabel
+dashboardSettings.mondayBoards.<object>.boardId
+dashboardSettings.mondayBoards.<object>.doneLabel
+dashboardSettings.mondayBoards.<object>.dueColumn
+dashboardSettings.mondayBoards.<object>.ownerColumn
+dashboardSettings.mondayBoards.<object>.priorityColumn
+dashboardSettings.mondayBoards.<object>.priorityHigh
+dashboardSettings.mondayBoards.<object>.priorityLow
+dashboardSettings.mondayBoards.<object>.priorityMedium
+dashboardSettings.mondayBoards.<object>.progressLabel
+dashboardSettings.mondayBoards.<object>.statusColumn
+dashboardSettings.mondayBoards.<object>.statusFrom
+dashboardSettings.mondayBoards.<object>.statusFrom = column
+dashboardSettings.mondayBoards.<object>.statusFrom = groups
+dashboardSettings.mondayBoards.<object>.team
+dashboardSettings.mondayBoards.<object>.teamColumn
+dashboardSettings.mondayConnection
+dashboardSettings.mondayEveryMinutes
+dashboardSettings.mondayMilestoneBoard
+dashboardSettings.mondayMilestoneBoard.boardId
+dashboardSettings.mondayMilestoneBoard.dateColumn
+dashboardSettings.mondayMilestoneBoard.departmentColumn
+dashboardSettings.mondayMilestoneBoard.departmentLabels
+dashboardSettings.mondayMilestoneBoard.departmentLabels.<object>
+dashboardSettings.mondayMilestoneBoard.departmentLabels.<object>.index
+dashboardSettings.mondayMilestoneBoard.departmentLabels.<object>.name
+dashboardSettings.mondayMilestoneBoard.departmentLabels.<object>.subteam
+dashboardSettings.mondayMilestoneBoard.statusColumn
+dashboardSettings.mondayMilestoneBoard.statusIndexes
+dashboardSettings.mondayMilestoneBoard.statusIndexes.atRisk
+dashboardSettings.mondayMilestoneBoard.statusIndexes.done
+dashboardSettings.mondayMilestoneBoard.statusIndexes.notStarted
+dashboardSettings.mondayMilestoneBoard.statusIndexes.onTrack
+dashboardSettings.mondayMilestoneBoard.teamColumn
+dashboardSettings.mondayMilestoneBoard.teamLabels
+dashboardSettings.mondayMilestoneBoard.teamLabels.<object>
+dashboardSettings.mondayMilestoneBoard.teamLabels.<object>.index
+dashboardSettings.mondayMilestoneBoard.teamLabels.<object>.team
+dashboardSettings.mondayShowOwners
+dashboardSettings.mondayStyle
+dashboardSettings.mondayStyle = cybertron
+dashboardSettings.mondayStyle = minimal
+dashboardSettings.mondayStyle = original
+dashboardSettings.mondayTaskBoard
+dashboardSettings.mondayTaskBoard.assignedColumn
+dashboardSettings.mondayTaskBoard.boardId
+dashboardSettings.mondayTaskBoard.completedColumn
+dashboardSettings.mondayTaskBoard.departmentColumn
+dashboardSettings.mondayTaskBoard.departmentLabels
+dashboardSettings.mondayTaskBoard.departmentLabels.<object>
+dashboardSettings.mondayTaskBoard.departmentLabels.<object>.index
+dashboardSettings.mondayTaskBoard.departmentLabels.<object>.name
+dashboardSettings.mondayTaskBoard.departmentLabels.<object>.neverShown
+dashboardSettings.mondayTaskBoard.departmentLabels.<object>.subteam
+dashboardSettings.mondayTaskBoard.hideLabel
+dashboardSettings.mondayTaskBoard.hoursColumn
+dashboardSettings.mondayTaskBoard.milestoneColumn
+dashboardSettings.mondayTaskBoard.pocColumn
+dashboardSettings.mondayTaskBoard.priorityColumn
+dashboardSettings.mondayTaskBoard.priorityIndexes
+dashboardSettings.mondayTaskBoard.priorityIndexes.high
+dashboardSettings.mondayTaskBoard.priorityIndexes.low
+dashboardSettings.mondayTaskBoard.priorityIndexes.medium
+dashboardSettings.mondayTaskBoard.showColumn
+dashboardSettings.mondayTaskBoard.statusColumn
+dashboardSettings.mondayTaskBoard.statusIndexes
+dashboardSettings.mondayTaskBoard.statusIndexes.done
+dashboardSettings.mondayTaskBoard.statusIndexes.inProgress
+dashboardSettings.mondayTaskBoard.statusIndexes.inReview
+dashboardSettings.mondayTaskBoard.statusIndexes.stuck
+dashboardSettings.mondayTaskBoard.statusIndexes.todo
+dashboardSettings.mondayTaskBoard.teamColumn
+dashboardSettings.mondayTaskBoard.teamLabels
+dashboardSettings.mondayTaskBoard.teamLabels.<object>
+dashboardSettings.mondayTaskBoard.teamLabels.<object>.index
+dashboardSettings.mondayTaskBoard.teamLabels.<object>.team
+dashboardSettings.mondayTaskBoard.timelineColumn
+dashboardSettings.mondayTokenTest
+dashboardSettings.motion
+dashboardSettings.motion = calm
+dashboardSettings.motion = full
+dashboardSettings.nameDuration
+dashboardSettings.nameEvery
+dashboardSettings.nameTransform
+dashboardSettings.newsCategories
+dashboardSettings.newsEnabled
+dashboardSettings.newsHiddenLinks
+dashboardSettings.newsInTicker
+dashboardSettings.nextLookRequest
+dashboardSettings.nextLookRequest.requestedAt
+dashboardSettings.nightEnabled
+dashboardSettings.nightEnd
+dashboardSettings.nightLogoWidth
+dashboardSettings.nightPreview
+dashboardSettings.nightSpeed
+dashboardSettings.nightSpeed = fast
+dashboardSettings.nightSpeed = normal
+dashboardSettings.nightSpeed = slow
+dashboardSettings.nightStart
+dashboardSettings.nightStyle
+dashboardSettings.nightStyle = black
+dashboardSettings.nightStyle = bounce
+dashboardSettings.noShowMinutes
+dashboardSettings.pageChangeStyle
+dashboardSettings.pageChangeStyle = alternate
+dashboardSettings.pageChangeStyle = mechanical
+dashboardSettings.pageChangeStyle = slat
+dashboardSettings.pageSeconds
+dashboardSettings.partsRequestUrl
+dashboardSettings.pauseRotation
+dashboardSettings.pauseRotation.until
+dashboardSettings.photoDriveFolder
+dashboardSettings.photoFit
+dashboardSettings.photoFit = fill
+dashboardSettings.photoFit = whole
+dashboardSettings.photoOrder
+dashboardSettings.photoOrder = newest-first
+dashboardSettings.photoOrder = random
+dashboardSettings.photoScale
+dashboardSettings.photoSeconds
+dashboardSettings.photoSource
+dashboardSettings.photoSource = both
+dashboardSettings.photoSource = drive
+dashboardSettings.photoSource = upload
+dashboardSettings.portraitFrame
+dashboardSettings.portraitFrame = line
+dashboardSettings.portraitFrame = metal
+dashboardSettings.portraitFrame = none
+dashboardSettings.portraitScale
+dashboardSettings.portraitShape
+dashboardSettings.portraitShape = circle
+dashboardSettings.portraitShape = rounded
+dashboardSettings.portraitShape = square
+dashboardSettings.presentationTestRequest
+dashboardSettings.presentationTestRequest.requestedAt
+dashboardSettings.presentationsEnabled
+dashboardSettings.previewRequest
+dashboardSettings.previewRequest.kind
+dashboardSettings.previewRequest.kind = cybertron
+dashboardSettings.previewRequest.kind = minimal
+dashboardSettings.previewRequest.kind = next-pack
+dashboardSettings.previewRequest.kind = nova
+dashboardSettings.previewRequest.kind = prime
+dashboardSettings.previewRequest.requestedAt
+dashboardSettings.previewTheme
+dashboardSettings.previewTheme.theme
+dashboardSettings.previewTheme.until
+dashboardSettings.redEyesChance
+dashboardSettings.redEyesEveryHours
+dashboardSettings.rosterPortrait
+dashboardSettings.rotation
+dashboardSettings.rotation.grid1
+dashboardSettings.rotation.grid1.<object>
+dashboardSettings.rotation.grid1.<object>.panel
+dashboardSettings.rotation.grid1.<object>.panel = custom
+dashboardSettings.rotation.grid1.<object>.panel = events
+dashboardSettings.rotation.grid1.<object>.panel = leadership
+dashboardSettings.rotation.grid1.<object>.panel = photo
+dashboardSettings.rotation.grid1.<object>.panel = roster
+dashboardSettings.rotation.grid1.<object>.panel = sponsor-feature
+dashboardSettings.rotation.grid1.<object>.panel = spotlight
+dashboardSettings.rotation.grid1.<object>.panel = tasks
+dashboardSettings.rotation.grid1.<object>.panel = team-leads
+dashboardSettings.rotation.grid1.<object>.panel = tonight
+dashboardSettings.rotation.grid1.<object>.seconds
+dashboardSettings.rotation.grid1.<object>.show
+dashboardSettings.rotation.grid2
+dashboardSettings.rotation.grid2.<object>
+dashboardSettings.rotation.grid2.<object>.panel
+dashboardSettings.rotation.grid2.<object>.panel = forecast
+dashboardSettings.rotation.grid2.<object>.panel = next-event
+dashboardSettings.rotation.grid2.<object>.panel = safety-days
+dashboardSettings.rotation.grid2.<object>.panel = sponsor-logo
+dashboardSettings.rotation.grid2.<object>.panel = task-counts
+dashboardSettings.rotation.grid2.<object>.seconds
+dashboardSettings.rotation.grid2.<object>.show
+dashboardSettings.rotation.order
+dashboardSettings.rotation.order.<object>
+dashboardSettings.rotation.order.<object>.panel
+dashboardSettings.rotation.order.<object>.panel = custom
+dashboardSettings.rotation.order.<object>.panel = events
+dashboardSettings.rotation.order.<object>.panel = forecast
+dashboardSettings.rotation.order.<object>.panel = leadership
+dashboardSettings.rotation.order.<object>.panel = next-event
+dashboardSettings.rotation.order.<object>.panel = photo
+dashboardSettings.rotation.order.<object>.panel = roster
+dashboardSettings.rotation.order.<object>.panel = safety-days
+dashboardSettings.rotation.order.<object>.panel = sponsor-feature
+dashboardSettings.rotation.order.<object>.panel = sponsor-logo
+dashboardSettings.rotation.order.<object>.panel = spotlight
+dashboardSettings.rotation.order.<object>.panel = task-counts
+dashboardSettings.rotation.order.<object>.panel = tasks
+dashboardSettings.rotation.order.<object>.panel = team-leads
+dashboardSettings.rotation.order.<object>.panel = tonight
+dashboardSettings.rotation.order.<object>.seconds
+dashboardSettings.rotation.order.<object>.show
+dashboardSettings.rotation.tickerSeconds
+dashboardSettings.rotationRows
+dashboardSettings.rotationRows.<object>
+dashboardSettings.rotationRows.<object>.chart
+dashboardSettings.rotationRows.<object>.chart = progress
+dashboardSettings.rotationRows.<object>.chart = status
+dashboardSettings.rotationRows.<object>.chart = timeline
+dashboardSettings.rotationRows.<object>.department
+dashboardSettings.rotationRows.<object>.list
+dashboardSettings.rotationRows.<object>.list = done
+dashboardSettings.rotationRows.<object>.list = open
+dashboardSettings.rotationRows.<object>.panel
+dashboardSettings.rotationRows.<object>.panel = competition-rank
+dashboardSettings.rotationRows.<object>.panel = custom
+dashboardSettings.rotationRows.<object>.panel = driveHours
+dashboardSettings.rotationRows.<object>.panel = events
+dashboardSettings.rotationRows.<object>.panel = frc-news
+dashboardSettings.rotationRows.<object>.panel = leadership
+dashboardSettings.rotationRows.<object>.panel = monday-board
+dashboardSettings.rotationRows.<object>.panel = monday-charts
+dashboardSettings.rotationRows.<object>.panel = monday-department
+dashboardSettings.rotationRows.<object>.panel = monday-done
+dashboardSettings.rotationRows.<object>.panel = monday-milestones
+dashboardSettings.rotationRows.<object>.panel = monday-milestones-both
+dashboardSettings.rotationRows.<object>.panel = monday-overall
+dashboardSettings.rotationRows.<object>.panel = monday-pie
+dashboardSettings.rotationRows.<object>.panel = monday-progress
+dashboardSettings.rotationRows.<object>.panel = monday-progress-both
+dashboardSettings.rotationRows.<object>.panel = monday-status-depts
+dashboardSettings.rotationRows.<object>.panel = monday-tasks
+dashboardSettings.rotationRows.<object>.panel = monday-timeline
+dashboardSettings.rotationRows.<object>.panel = photo
+dashboardSettings.rotationRows.<object>.panel = robotStatus
+dashboardSettings.rotationRows.<object>.panel = roster
+dashboardSettings.rotationRows.<object>.panel = sponsor-feature
+dashboardSettings.rotationRows.<object>.panel = spotlight
+dashboardSettings.rotationRows.<object>.panel = tasks
+dashboardSettings.rotationRows.<object>.panel = team-leads
+dashboardSettings.rotationRows.<object>.panel = tonight
+dashboardSettings.rotationRows.<object>.panel = wireframe
+dashboardSettings.rotationRows.<object>.part
+dashboardSettings.rotationRows.<object>.photoCount
+dashboardSettings.rotationRows.<object>.seconds
+dashboardSettings.rotationRows.<object>.secondsPerPhoto
+dashboardSettings.rotationRows.<object>.shown
+dashboardSettings.rotationRows.<object>.side
+dashboardSettings.rotationRows.<object>.side = forecast
+dashboardSettings.rotationRows.<object>.side = miniIdea1
+dashboardSettings.rotationRows.<object>.side = next-event
+dashboardSettings.rotationRows.<object>.side = qrParts
+dashboardSettings.rotationRows.<object>.side = safety-days
+dashboardSettings.rotationRows.<object>.side = sponsor-logo
+dashboardSettings.rotationRows.<object>.side = task-counts
+dashboardSettings.rotationRows.<object>.team
+dashboardSettings.rotationRows.<object>.team = nova
+dashboardSettings.rotationRows.<object>.team = prime
+dashboardSettings.rotationRows.<object>.view
+dashboardSettings.rotationRows.<object>.view = nova
+dashboardSettings.rotationRows.<object>.view = prime
+dashboardSettings.rotationRows.<object>.view = robotics
+dashboardSettings.safetyDaysSince
+dashboardSettings.screenSchedule
+dashboardSettings.screenSchedule.friday
+dashboardSettings.screenSchedule.friday = cybertron
+dashboardSettings.screenSchedule.friday = minimal
+dashboardSettings.screenSchedule.friday = original
+dashboardSettings.screenSchedule.monday
+dashboardSettings.screenSchedule.monday = cybertron
+dashboardSettings.screenSchedule.monday = minimal
+dashboardSettings.screenSchedule.monday = original
+dashboardSettings.screenSchedule.saturday
+dashboardSettings.screenSchedule.saturday = cybertron
+dashboardSettings.screenSchedule.saturday = minimal
+dashboardSettings.screenSchedule.saturday = original
+dashboardSettings.screenSchedule.sunday
+dashboardSettings.screenSchedule.sunday = cybertron
+dashboardSettings.screenSchedule.sunday = minimal
+dashboardSettings.screenSchedule.sunday = original
+dashboardSettings.screenSchedule.thursday
+dashboardSettings.screenSchedule.thursday = cybertron
+dashboardSettings.screenSchedule.thursday = minimal
+dashboardSettings.screenSchedule.thursday = original
+dashboardSettings.screenSchedule.tuesday
+dashboardSettings.screenSchedule.tuesday = cybertron
+dashboardSettings.screenSchedule.tuesday = minimal
+dashboardSettings.screenSchedule.tuesday = original
+dashboardSettings.screenSchedule.wednesday
+dashboardSettings.screenSchedule.wednesday = cybertron
+dashboardSettings.screenSchedule.wednesday = minimal
+dashboardSettings.screenSchedule.wednesday = original
+dashboardSettings.showConnectionStatus
+dashboardSettings.showView
+dashboardSettings.showView.key
+dashboardSettings.showView.until
+dashboardSettings.silverChance
+dashboardSettings.speed
+dashboardSettings.speed = fast
+dashboardSettings.speed = normal
+dashboardSettings.speed = slow
+dashboardSettings.speed = very-slow
+dashboardSettings.style
+dashboardSettings.style = cybertron
+dashboardSettings.style = minimal
+dashboardSettings.style = original
+dashboardSettings.team
+dashboardSettings.team.name
+dashboardSettings.team.number
+dashboardSettings.team.school
+dashboardSettings.teamMode
+dashboardSettings.teamMode = alternate
+dashboardSettings.teamMode = nova
+dashboardSettings.teamMode = prime
+dashboardSettings.teamOrder
+dashboardSettings.teamOrder.<reference>
+dashboardSettings.themeByWeekday
+dashboardSettings.themeByWeekday.friday
+dashboardSettings.themeByWeekday.friday = cybertron
+dashboardSettings.themeByWeekday.friday = foundry
+dashboardSettings.themeByWeekday.friday = original
+dashboardSettings.themeByWeekday.friday = retro
+dashboardSettings.themeByWeekday.monday
+dashboardSettings.themeByWeekday.monday = cybertron
+dashboardSettings.themeByWeekday.monday = foundry
+dashboardSettings.themeByWeekday.monday = original
+dashboardSettings.themeByWeekday.monday = retro
+dashboardSettings.themeByWeekday.saturday
+dashboardSettings.themeByWeekday.saturday = cybertron
+dashboardSettings.themeByWeekday.saturday = foundry
+dashboardSettings.themeByWeekday.saturday = original
+dashboardSettings.themeByWeekday.saturday = retro
+dashboardSettings.themeByWeekday.sunday
+dashboardSettings.themeByWeekday.sunday = cybertron
+dashboardSettings.themeByWeekday.sunday = foundry
+dashboardSettings.themeByWeekday.sunday = original
+dashboardSettings.themeByWeekday.sunday = retro
+dashboardSettings.themeByWeekday.thursday
+dashboardSettings.themeByWeekday.thursday = cybertron
+dashboardSettings.themeByWeekday.thursday = foundry
+dashboardSettings.themeByWeekday.thursday = original
+dashboardSettings.themeByWeekday.thursday = retro
+dashboardSettings.themeByWeekday.tuesday
+dashboardSettings.themeByWeekday.tuesday = cybertron
+dashboardSettings.themeByWeekday.tuesday = foundry
+dashboardSettings.themeByWeekday.tuesday = original
+dashboardSettings.themeByWeekday.tuesday = retro
+dashboardSettings.themeByWeekday.wednesday
+dashboardSettings.themeByWeekday.wednesday = cybertron
+dashboardSettings.themeByWeekday.wednesday = foundry
+dashboardSettings.themeByWeekday.wednesday = original
+dashboardSettings.themeByWeekday.wednesday = retro
+dashboardSettings.transitionSeconds
+dashboardSettings.viewOrder
+demo
+demo.announcementText
+demo.requestedAt
+demo.steps
+demo.steps.<object>
+demo.steps.<object>.screen
+demo.steps.<object>.screen = all-announcements
+demo.steps.<object>.screen = announcement
+demo.steps.<object>.screen = night-mode
+demo.steps.<object>.seconds
+extraEvent
+extraEvent.endDate
+extraEvent.endTime
+extraEvent.location
+extraEvent.show
+extraEvent.startDate
+extraEvent.startTime
+extraEvent.team
+extraEvent.title
+frcNews
+frcNews.hiddenItems
+frcNews.hiddenItems.<object>
+frcNews.hiddenItems.<object>.categories
+frcNews.hiddenItems.<object>.date
+frcNews.hiddenItems.<object>.link
+frcNews.hiddenItems.<object>.source
+frcNews.hiddenItems.<object>.systemcore
+frcNews.hiddenItems.<object>.title
+frcNews.items
+frcNews.items.<object>
+frcNews.items.<object>.categories
+frcNews.items.<object>.date
+frcNews.items.<object>.link
+frcNews.items.<object>.source
+frcNews.items.<object>.systemcore
+frcNews.items.<object>.title
+frcNews.lastError
+frcNews.lastSyncAt
+frcStatus
+frcStatus.districtEvents
+frcStatus.districtEvents.<object>
+frcStatus.districtEvents.<object>.championship
+frcStatus.districtEvents.<object>.city
+frcStatus.districtEvents.<object>.endDate
+frcStatus.districtEvents.<object>.key
+frcStatus.districtEvents.<object>.name
+frcStatus.districtEvents.<object>.shortName
+frcStatus.districtEvents.<object>.startDate
+frcStatus.lastError
+frcStatus.lastSyncAt
+frcStatus.notes
+frcStatus.season
+frcStatus.teams
+frcStatus.teams.<object>
+frcStatus.teams.<object>.alliance
+frcStatus.teams.<object>.alliance.event
+frcStatus.teams.<object>.alliance.number
+frcStatus.teams.<object>.alliance.picks
+frcStatus.teams.<object>.alliance.picks.<object>
+frcStatus.teams.<object>.alliance.picks.<object>.epa
+frcStatus.teams.<object>.alliance.picks.<object>.nickname
+frcStatus.teams.<object>.alliance.picks.<object>.number
+frcStatus.teams.<object>.awards
+frcStatus.teams.<object>.awards.<object>
+frcStatus.teams.<object>.awards.<object>.event
+frcStatus.teams.<object>.awards.<object>.name
+frcStatus.teams.<object>.districtPoints
+frcStatus.teams.<object>.districtPoints.cutoff
+frcStatus.teams.<object>.districtPoints.rank
+frcStatus.teams.<object>.districtPoints.total
+frcStatus.teams.<object>.epa
+frcStatus.teams.<object>.events
+frcStatus.teams.<object>.events.<object>
+frcStatus.teams.<object>.events.<object>.city
+frcStatus.teams.<object>.events.<object>.endDate
+frcStatus.teams.<object>.events.<object>.epa
+frcStatus.teams.<object>.events.<object>.key
+frcStatus.teams.<object>.events.<object>.matchesPlayed
+frcStatus.teams.<object>.events.<object>.name
+frcStatus.teams.<object>.events.<object>.rank
+frcStatus.teams.<object>.events.<object>.rankingPoints
+frcStatus.teams.<object>.events.<object>.record
+frcStatus.teams.<object>.events.<object>.record.losses
+frcStatus.teams.<object>.events.<object>.record.ties
+frcStatus.teams.<object>.events.<object>.record.wins
+frcStatus.teams.<object>.events.<object>.shortName
+frcStatus.teams.<object>.events.<object>.startDate
+frcStatus.teams.<object>.events.<object>.teamsRanked
+frcStatus.teams.<object>.field
+frcStatus.teams.<object>.field.event
+frcStatus.teams.<object>.field.teams
+frcStatus.teams.<object>.field.teams.<object>
+frcStatus.teams.<object>.field.teams.<object>.epa
+frcStatus.teams.<object>.field.teams.<object>.nickname
+frcStatus.teams.<object>.field.teams.<object>.number
+frcStatus.teams.<object>.focusEvent
+frcStatus.teams.<object>.key
+frcStatus.teams.<object>.lastSeason
+frcStatus.teams.<object>.lastSeason.events
+frcStatus.teams.<object>.lastSeason.events.<object>
+frcStatus.teams.<object>.lastSeason.events.<object>.city
+frcStatus.teams.<object>.lastSeason.events.<object>.endDate
+frcStatus.teams.<object>.lastSeason.events.<object>.epa
+frcStatus.teams.<object>.lastSeason.events.<object>.key
+frcStatus.teams.<object>.lastSeason.events.<object>.matchesPlayed
+frcStatus.teams.<object>.lastSeason.events.<object>.name
+frcStatus.teams.<object>.lastSeason.events.<object>.rank
+frcStatus.teams.<object>.lastSeason.events.<object>.rankingPoints
+frcStatus.teams.<object>.lastSeason.events.<object>.record
+frcStatus.teams.<object>.lastSeason.events.<object>.record.losses
+frcStatus.teams.<object>.lastSeason.events.<object>.record.ties
+frcStatus.teams.<object>.lastSeason.events.<object>.record.wins
+frcStatus.teams.<object>.lastSeason.events.<object>.shortName
+frcStatus.teams.<object>.lastSeason.events.<object>.startDate
+frcStatus.teams.<object>.lastSeason.events.<object>.teamsRanked
+frcStatus.teams.<object>.lastSeason.season
+frcStatus.teams.<object>.nextMatch
+frcStatus.teams.<object>.nextMatch.alliance
+frcStatus.teams.<object>.nextMatch.blue
+frcStatus.teams.<object>.nextMatch.blue.<object>
+frcStatus.teams.<object>.nextMatch.blue.<object>.epa
+frcStatus.teams.<object>.nextMatch.blue.<object>.nickname
+frcStatus.teams.<object>.nextMatch.blue.<object>.number
+frcStatus.teams.<object>.nextMatch.label
+frcStatus.teams.<object>.nextMatch.level
+frcStatus.teams.<object>.nextMatch.match
+frcStatus.teams.<object>.nextMatch.number
+frcStatus.teams.<object>.nextMatch.red
+frcStatus.teams.<object>.nextMatch.red.<object>
+frcStatus.teams.<object>.nextMatch.red.<object>.epa
+frcStatus.teams.<object>.nextMatch.red.<object>.nickname
+frcStatus.teams.<object>.nextMatch.red.<object>.number
+frcStatus.teams.<object>.nextMatch.redWinProbability
+frcStatus.teams.<object>.nextMatch.time
+frcStatus.teams.<object>.number
+frcStatus.teams.<object>.ranking
+frcStatus.teams.<object>.ranking.event
+frcStatus.teams.<object>.ranking.matchesPlayed
+frcStatus.teams.<object>.ranking.rank
+frcStatus.teams.<object>.ranking.rankingPoints
+frcStatus.teams.<object>.ranking.record
+frcStatus.teams.<object>.ranking.record.losses
+frcStatus.teams.<object>.ranking.record.ties
+frcStatus.teams.<object>.ranking.record.wins
+frcStatus.teams.<object>.ranking.teamsRanked
+frcStatus.teams.<object>.results
+frcStatus.teams.<object>.results.<object>
+frcStatus.teams.<object>.results.<object>.alliance
+frcStatus.teams.<object>.results.<object>.label
+frcStatus.teams.<object>.results.<object>.match
+frcStatus.teams.<object>.results.<object>.scoreAgainst
+frcStatus.teams.<object>.results.<object>.scoreFor
+frcStatus.teams.<object>.results.<object>.won
+frcStatus.teams.<object>.schedule
+frcStatus.teams.<object>.schedule.event
+frcStatus.teams.<object>.schedule.matches
+frcStatus.teams.<object>.schedule.matches.<object>
+frcStatus.teams.<object>.schedule.matches.<object>.alliance
+frcStatus.teams.<object>.schedule.matches.<object>.label
+frcStatus.teams.<object>.schedule.matches.<object>.match
+frcStatus.teams.<object>.schedule.matches.<object>.number
+frcStatus.teams.<object>.schedule.matches.<object>.opponents
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.epa
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.nickname
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.number
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.record
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.record.losses
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.record.ties
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.record.wins
+frcStatus.teams.<object>.schedule.matches.<object>.opponents.<object>.trend
+frcStatus.teams.<object>.schedule.matches.<object>.partners
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.epa
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.nickname
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.number
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.record
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.record.losses
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.record.ties
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.record.wins
+frcStatus.teams.<object>.schedule.matches.<object>.partners.<object>.trend
+frcStatus.teams.<object>.schedule.matches.<object>.time
+frcStatus.teams.<object>.schedule.matches.<object>.winProbability
+frcStatus.teams.<object>.snapshots
+frcStatus.teams.<object>.snapshots.<object>
+frcStatus.teams.<object>.snapshots.<object>.date
+frcStatus.teams.<object>.snapshots.<object>.districtPoints
+frcStatus.teams.<object>.snapshots.<object>.epa
+frcStatus.teams.<object>.team
+headingBlock
+headingBlock.text
+imageBlock
+imageBlock.address
+listBlock
+listBlock.items
+milestone
+milestone.name
+milestone.show
+milestone.status
+milestone.status = at-risk
+milestone.status = done
+milestone.status = not-started
+milestone.status = on-track
+milestone.subteam
+milestone.targetDate
+milestone.team
+mondayStatus
+mondayStatus.boards
+mondayStatus.boards.<object>
+mondayStatus.boards.<object>.columns
+mondayStatus.boards.<object>.columns.<object>
+mondayStatus.boards.<object>.columns.<object>.id
+mondayStatus.boards.<object>.columns.<object>.title
+mondayStatus.boards.<object>.columns.<object>.type
+mondayStatus.boards.<object>.hierarchy
+mondayStatus.boards.<object>.id
+mondayStatus.boards.<object>.itemCount
+mondayStatus.boards.<object>.name
+mondayStatus.callsDate
+mondayStatus.callsToday
+mondayStatus.connectedAs
+mondayStatus.departments
+mondayStatus.departments.<object>
+mondayStatus.departments.<object>.done
+mondayStatus.departments.<object>.name
+mondayStatus.departments.<object>.open
+mondayStatus.hiddenUnassigned
+mondayStatus.lastError
+mondayStatus.lastSyncAt
+mondayStatus.readings
+mondayStatus.readings.<object>
+mondayStatus.readings.<object>.boardId
+mondayStatus.readings.<object>.boardName
+mondayStatus.readings.<object>.itemsRead
+mondayStatus.readings.<object>.note
+mondayStatus.readings.<object>.readAt
+mondayStatus.snapshots
+mondayStatus.snapshots.<object>
+mondayStatus.snapshots.<object>.date
+mondayStatus.snapshots.<object>.open
+mondayStatus.taskCount
+person
+person.expires
+person.line
+person.name
+person.order
+person.photo
+person.role
+person.role = Captain
+person.role = Coach
+person.role = Mentor
+person.show
+person.showPhoto
+person.team
+person.title
+photo
+photo.caption
+photo.credit
+photo.expires
+photo.fit
+photo.fit = fill
+photo.fit = setting
+photo.fit = whole
+photo.image
+photo.show
+place
+place.name
+place.show
+plan
+plan.date
+plan.expires
+plan.heading
+plan.location
+plan.rows
+plan.rows.<object>
+plan.rows.<object>.lead
+plan.rows.<object>.text
+plan.rows.<object>.time
+plan.show
+plan.team
+presentation
+presentation.deckLink
+presentation.minutes
+presentation.name
+presentation.start
+presentation.status
+presentation.status = cancelled
+presentation.status = done
+presentation.status = scheduled
+presentation.status = skipped
+presentation.subteam
+presentation.subteam = Build
+presentation.subteam = Business
+presentation.subteam = Design
+presentation.subteam = Electrical
+presentation.subteam = Other
+presentation.subteam = Outreach
+presentation.subteam = Programming
+presentation.team
+presentation.topic
+presentationDay
+presentationDay.closeMinutesBefore
+presentationDay.firstSlotAt
+presentationDay.lastSlotAt
+presentationDay.open
+presentationDay.slotMinutes
+presentationDay.team
+progressBlock
+progressBlock.label
+progressBlock.percent
+screen
+screen.bannerTeam
+screen.countdownShown
+screen.hawkEveryMinutes
+screen.mainRows
+screen.mainRows.<object>
+screen.mainRows.<object>.department
+screen.mainRows.<object>.panel
+screen.mainRows.<object>.panel = custom
+screen.mainRows.<object>.panel = events
+screen.mainRows.<object>.panel = leadership
+screen.mainRows.<object>.panel = monday-charts
+screen.mainRows.<object>.panel = monday-department
+screen.mainRows.<object>.panel = photo
+screen.mainRows.<object>.panel = roster
+screen.mainRows.<object>.panel = sponsor-feature
+screen.mainRows.<object>.panel = spotlight
+screen.mainRows.<object>.panel = tasks
+screen.mainRows.<object>.panel = team-leads
+screen.mainRows.<object>.panel = tonight
+screen.mainRows.<object>.photoCount
+screen.mainRows.<object>.photoTotal
+screen.mainRows.<object>.seconds
+screen.mainRows.<object>.secondsPerPhoto
+screen.mainRows.<object>.team
+screen.mondayStyle
+screen.mondayStyle = cybertron
+screen.mondayStyle = minimal
+screen.mondayStyle = original
+screen.nameEffectEveryMinutes
+screen.sideRows
+screen.sideRows.<object>
+screen.sideRows.<object>.panel
+screen.sideRows.<object>.panel = forecast
+screen.sideRows.<object>.panel = next-event
+screen.sideRows.<object>.panel = safety-days
+screen.sideRows.<object>.panel = sponsor-logo
+screen.sideRows.<object>.panel = task-counts
+screen.sideRows.<object>.seconds
+screen.swapSeconds
+screen.tickerLink
+sponsor
+sponsor.blurb
+sponsor.expires
+sponsor.logoAddress
+sponsor.name
+sponsor.order
+sponsor.show
+sponsor.team
+sponsor.thankYou
+sponsor.tier
+statBlock
+statBlock.label
+statBlock.value
+status
+status.buildBranch
+status.buildCommit
+status.buildDate
+status.buildVersion
+status.kioskRestarts
+status.kioskStartedAt
+status.lastBackupAt
+status.lastCalendarSyncAt
+status.lastContentSeenAt
+status.lastFrcSyncAt
+status.lastKioskRestartAt
+status.lastMondaySyncAt
+status.lastSlidesFetchAt
+status.match13At
+status.match13Count
+status.match13State
+status.newsAt
+status.newsCount
+status.photosDriveAt
+status.photosDriveCount
+status.photosDriveState
+subteam
+subteam.expires
+subteam.lead
+subteam.line
+subteam.members
+subteam.monday
+subteam.name
+subteam.order
+subteam.photo
+subteam.show
+subteam.showPhoto
+subteam.spotlight
+subteam.spotlightHeadline
+subteam.spotlightText
+subteam.team
+subtheme
+subtheme.assets
+subtheme.assets.subthemeAsset
+subtheme.assets.subthemeAsset.image
+subtheme.assets.subthemeAsset.slot
+subtheme.enabled
+subtheme.end
+subtheme.name
+subtheme.preset
+subtheme.preset = 
+subtheme.preset = halloween
+subtheme.preset = kickoff
+subtheme.preset = winter
+subtheme.priority
+subtheme.rules
+subtheme.rules.subthemeRule
+subtheme.rules.subthemeRule.anchor
+subtheme.rules.subthemeRule.anchor = banner-left
+subtheme.rules.subthemeRule.anchor = banner-right
+subtheme.rules.subthemeRule.anchor = countdown-top
+subtheme.rules.subthemeRule.anchor = main-corner
+subtheme.rules.subthemeRule.anchor = side-bottom
+subtheme.rules.subthemeRule.anchor = ticker-end
+subtheme.rules.subthemeRule.motion
+subtheme.rules.subthemeRule.motion = blink
+subtheme.rules.subthemeRule.motion = drift
+subtheme.rules.subthemeRule.motion = fall
+subtheme.rules.subthemeRule.motion = none
+subtheme.rules.subthemeRule.size
+subtheme.rules.subthemeRule.slot
+subtheme.rules.subthemeRule.theme
+subtheme.rules.subthemeRule.theme = 
+subtheme.rules.subthemeRule.theme = cybertron
+subtheme.rules.subthemeRule.theme = foundry
+subtheme.rules.subthemeRule.theme = original
+subtheme.rules.subthemeRule.theme = retro
+subtheme.rules.subthemeRule.view
+subtheme.rules.subthemeRule.view = 
+subtheme.rules.subthemeRule.view = family
+subtheme.rules.subthemeRule.view = general
+subtheme.rules.subthemeRule.view = nova
+subtheme.rules.subthemeRule.view = prime
+subtheme.start
+task
+task.boardNote
+task.completedOn
+task.contact
+task.department
+task.department = build
+task.department = business
+task.department = cnc
+task.department = design
+task.department = electrical
+task.department = marketing
+task.department = operations
+task.department = programming
+task.department = strategy
+task.dueDate
+task.estHours
+task.expires
+task.finishedOn
+task.hiddenReason
+task.hiddenReason = unassigned
+task.list
+task.list = done
+task.list = open
+task.location
+task.manualNote
+task.milestoneIds
+task.mondayBoardId
+task.mondayBoardName
+task.mondayId
+task.order
+task.owners
+task.priority
+task.priority = high
+task.priority = low
+task.priority = medium
+task.show
+task.showOnBoard
+task.showOnTv
+task.source
+task.source = manual
+task.source = monday
+task.startDate
+task.status
+task.status = blocked
+task.status = done
+task.status = in-progress
+task.status = in-review
+task.status = up-next
+task.subteam
+task.team
+task.title
+team
+team.active
+team.bolts
+team.bolts = hex
+team.bolts = round
+team.code
+team.colors
+team.colors.accent
+team.colors.background
+team.colors.body
+team.colors.dark
+team.colors.headerInk
+team.colors.label
+team.colors.neon
+team.colors.pink
+team.colors.plate
+team.colors.primary
+team.colors.retro
+team.colors.text
+team.cornerCut
+team.cornerCut = tl-br
+team.cornerCut = tr-bl
+team.countAccent
+team.countAccent = neon
+team.countAccent = red
+team.glow
+team.grid
+team.grid = dots
+team.grid = lines
+team.headerNotch
+team.headerNotch = slant
+team.headerNotch = step
+team.logo
+team.logoPose
+team.logoPose = auto
+team.logoPose = flight
+team.metal
+team.metal = gold
+team.metal = purple
+team.metal = steel
+team.mirror
+team.name
+team.nameStyle
+team.nameStyle = outline
+team.nameStyle = solid
+team.number
+team.order
+team.outlinedName
+team.palette
+team.palette = inverted
+team.palette = standard
+team.shortName
+team.tickerLabel
+team.tickerLabel = bar
+team.tickerLabel = plate
+textBlock
+textBlock.text
+theme
+theme.defaultTheme
+theme.defaultTheme = alternate
+theme.defaultTheme = hawktimus
+theme.defaultTheme = neon-prime
+theme.schedule
+theme.schedule.rule
+theme.schedule.rule.bannerLine
+theme.schedule.rule.cornerArt
+theme.schedule.rule.cornerArt = fireworks
+theme.schedule.rule.cornerArt = gears
+theme.schedule.rule.cornerArt = leaves
+theme.schedule.rule.cornerArt = none
+theme.schedule.rule.cornerArt = snowflakes
+theme.schedule.rule.endDate
+theme.schedule.rule.kind
+theme.schedule.rule.kind = overlay
+theme.schedule.rule.kind = theme
+theme.schedule.rule.name
+theme.schedule.rule.overlay
+theme.schedule.rule.overlay = christmas
+theme.schedule.rule.overlay = competition-day
+theme.schedule.rule.overlay = example
+theme.schedule.rule.overlay = halloween
+theme.schedule.rule.overlay = new-years
+theme.schedule.rule.overlay = summer-break
+theme.schedule.rule.overlay = thanksgiving
+theme.schedule.rule.overlay = valentines-day
+theme.schedule.rule.repeatsEveryYear
+theme.schedule.rule.startDate
+theme.schedule.rule.subtheme
+theme.schedule.rule.subtheme = halloween
+theme.schedule.rule.subtheme = kickoff
+theme.schedule.rule.subtheme = none
+theme.schedule.rule.subtheme = winter
+theme.schedule.rule.theme
+theme.schedule.rule.theme = alternate
+theme.schedule.rule.theme = hawktimus
+theme.schedule.rule.theme = neon-prime
+theme.schedule.rule.tickerPrefix
+theme.seasonOverPanels
+theme.settingsNote
+theme.timeZone
+theme.useNow
+theme.useNow.overlay
+theme.useNow.overlay = christmas
+theme.useNow.overlay = competition-day
+theme.useNow.overlay = example
+theme.useNow.overlay = halloween
+theme.useNow.overlay = new-years
+theme.useNow.overlay = none
+theme.useNow.overlay = summer-break
+theme.useNow.overlay = thanksgiving
+theme.useNow.overlay = valentines-day
+theme.useNow.theme
+theme.useNow.theme = alternate
+theme.useNow.theme = hawktimus
+theme.useNow.theme = neon-prime
+theme.useNow.until
+tipOrNews
+tipOrNews.expires
+tipOrNews.kind
+tipOrNews.kind = news
+tipOrNews.kind = reminder
+tipOrNews.kind = tip
+tipOrNews.order
+tipOrNews.show
+tipOrNews.team
+tipOrNews.text
+view
+view.colors
+view.colors = general
+view.colors = team
+view.countdownIn
+view.countdownIn = banner
+view.countdownIn = side
+view.countdownShown
+view.key
+view.key = family
+view.key = general
+view.key = nova
+view.key = prime
+view.layout
+view.layout = bar
+view.layout = standard
+view.minutes
+view.mirror
+view.panels
+view.panels.<object>
+view.panels.<object>.department
+view.panels.<object>.panel
+view.panels.<object>.panel = custom
+view.panels.<object>.panel = events
+view.panels.<object>.panel = leadership
+view.panels.<object>.panel = monday-charts
+view.panels.<object>.panel = monday-department
+view.panels.<object>.panel = photo
+view.panels.<object>.panel = roster
+view.panels.<object>.panel = sponsor-feature
+view.panels.<object>.panel = spotlight
+view.panels.<object>.panel = tasks
+view.panels.<object>.panel = team-leads
+view.panels.<object>.panel = tonight
+view.panels.<object>.photoCount
+view.panels.<object>.photoTotal
+view.panels.<object>.seconds
+view.panels.<object>.secondsPerPhoto
+view.panels.<object>.team
+view.rotationNote
+view.sidePanels
+view.sidePanels.<object>
+view.sidePanels.<object>.panel
+view.sidePanels.<object>.panel = forecast
+view.sidePanels.<object>.panel = next-event
+view.sidePanels.<object>.panel = safety-days
+view.sidePanels.<object>.panel = sponsor-logo
+view.sidePanels.<object>.panel = task-counts
+view.sidePanels.<object>.seconds
+view.team
+view.teamChip
+view.tickerLink
+view.title
+view.viewTag

@@ -111,7 +111,9 @@ export async function runTests() {
       console.log('ok    ' + item.name);
     } catch (error) {
       console.log('FAIL  ' + item.name);
-      console.log(error && error.stack ? error.stack : String(error));
+      // The message first, then only the two lines of the stack that say where, so the message is not pushed off the screen
+      console.log(error && error.message ? error.message : String(error));
+      String((error && error.stack) || '').split('\n').filter(line => /^\s+at /.test(line)).slice(0, 2).forEach(line => console.log(line));
     }
   }
   console.log('\n' + passed + ' of ' + tests.length + ' passed');

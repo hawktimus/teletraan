@@ -120,16 +120,16 @@ test('two events close together: the recap of the first and the preview of the s
 // Which cards are due in each mode, with the sample's events: the first on 2027-03-11 to 13, the second on 2027-04-01 to 03
 const aroundByDay = [
   ['2027-02-24', 'more than 14 days before the first event', []],
-  ['2027-02-25', '14 days before: the preview opens', ['timeline', 'last-season', 'preview', 'matches']],
-  ['2027-03-10', 'the day before the first event', ['timeline', 'last-season', 'preview', 'matches']],
+  ['2027-02-25', '14 days before: the preview opens', ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare']],
+  ['2027-03-10', 'the day before the first event', ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare']],
   ['2027-03-11', 'the first day of the event: nothing', []],
   ['2027-03-12', 'the middle of the event: nothing', []],
   ['2027-03-13', 'the last day: nothing', []],
-  ['2027-03-14', 'the day after: the recap, with the cards of the whole season', ['timeline', 'district', 'recap']],
-  ['2027-03-17', 'the second event is 15 days away: only the recap', ['timeline', 'district', 'recap']],
-  ['2027-03-18', 'the second event is 14 days away: both the recap and the preview', ['timeline', 'district', 'preview', 'recap']],
-  ['2027-03-20', '7 days after the first event: both', ['timeline', 'district', 'preview', 'recap']],
-  ['2027-03-21', '8 days after the first event: only the preview of the second', ['timeline', 'district', 'preview']],
+  ['2027-03-14', 'the day after: the recap, with the cards of the whole season', ['timeline', 'district', 'recap', 'team-metrics', 'compare']],
+  ['2027-03-17', 'the second event is 15 days away: only the recap', ['timeline', 'district', 'recap', 'team-metrics', 'compare']],
+  ['2027-03-18', 'the second event is 14 days away: both the recap and the preview', ['timeline', 'district', 'preview', 'recap', 'team-metrics', 'compare']],
+  ['2027-03-20', '7 days after the first event: both', ['timeline', 'district', 'preview', 'recap', 'team-metrics', 'compare']],
+  ['2027-03-21', '8 days after the first event: only the preview of the second', ['timeline', 'district', 'preview', 'team-metrics', 'compare']],
 ];
 
 test('Before and after: the preview, nothing while an event is on, the recap, and never the cards of the match by match course', () => {
@@ -141,7 +141,7 @@ test('Before and after: the preview, nothing while an event is on, the recap, an
     ['next-match', 'rank', 'results', 'alliance'].forEach(name => assert.ok(!idsOf(plan).includes(name), name + ' on ' + entry[0]));
   });
   // the cards come in the order of competition.cards: the timeline and last season before the newer cards
-  assert.deepEqual(idsOf(competition.competitionPlan(content, noon('2027-03-10'))), ['timeline', 'last-season', 'preview', 'matches']);
+  assert.deepEqual(idsOf(competition.competitionPlan(content, noon('2027-03-10'))), ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare']);
 });
 
 test('Auto keeps today: the newer cards never come in it, and the older ones are as they were', () => {
@@ -155,7 +155,7 @@ test('Auto keeps today: the newer cards never come in it, and the older ones are
 
 test('Always shows the newer cards that have data, Off shows none, and a switch takes a card out', () => {
   const always = contentWith(raw => { raw.settings.competitionMode = 'always'; });
-  assert.deepEqual(idsOf(competition.competitionPlan(always, noon('2027-02-01'))), ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district', 'last-season', 'preview', 'matches', 'recap']);
+  assert.deepEqual(idsOf(competition.competitionPlan(always, noon('2027-02-01'))), ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district', 'last-season', 'preview', 'matches', 'recap', 'team-metrics', 'compare']);
 
   const off = contentWith(raw => { raw.settings.competitionMode = 'off'; });
   ['2027-03-10', '2027-03-15'].forEach(date => assert.deepEqual(competition.competitionPlan(off, noon(date)), { cards: [], priority: false }, date));
@@ -918,9 +918,9 @@ test('Preview competition shows the three newer cards after the others, on the s
   competition.previewCompetition(sample, start.getTime() + config.competitionPreviewSeconds * 1000);
   try {
     const steps = competition.withCompetition([{ panel: 'tasks', show: true }], content, start);
-    assert.deepEqual(steps.slice(-5).map(step => step.panel), ['competition-preview', 'competition-matches', 'competition-recap', 'competition-forecast', 'competition-qualify']);
-    assert.equal(steps.length, 12);
-    assert.ok(steps.every(step => step.seconds === 10));
+    assert.deepEqual(steps.slice(-7).map(step => step.panel), ['competition-preview', 'competition-matches', 'competition-recap', 'competition-forecast', 'competition-qualify', 'competition-team-metrics', 'competition-compare']);
+    assert.equal(steps.length, 14);
+    assert.ok(steps.every(step => step.seconds === 8));
     // on the day the preview is asked for, the cards still have an event to write about: the first that is not over, and the latest that has data
     const preview = panels.preview.markupFor({ frc: sample, settings: {}, theme: {} }, start);
     assert.ok(preview.includes('Event one') && preview.includes('SAMPLE'));

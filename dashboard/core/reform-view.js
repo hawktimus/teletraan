@@ -139,7 +139,7 @@ export async function playView(swapPage, context) {
     const newLogo = logoBox(origin);
     const newTeam = newLogo ? teamOfLogo(newLogo.element) : oldTeam;
 
-    const drawn = drawRun(regionsOf(rolesBefore, rolesAfter, seed), cover, kit);
+    const drawn = drawRun(regionsOf(rolesBefore, rolesAfter, seed), cover, kit, true);
     const extra = [{ element: stage, property: 'opacity', stops: stageStops() }];
     if (hawkOld && newLogo) {
       const hawk = drawHawk({ x: hawkOld.rect.x, y: hawkOld.rect.y, w: hawkOld.rect.w }, { x: newLogo.rect.x, y: newLogo.rect.y, w: newLogo.rect.w }, hawkOld.team, newTeam);

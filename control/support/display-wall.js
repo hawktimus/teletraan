@@ -22,7 +22,8 @@ import { photosToShow } from '../../dashboard/core/photos.js';
 import { recordText, teamEntry } from '../../dashboard/core/frc.js';
 import { chartsView, departmentTitle, departmentView } from '../../dashboard/core/monday-views.js';
 import { retiredWords } from '../../dashboard/config-lists.js';
-import { match13Stale, matchForecastFor, tidyMatch13 } from '../../dashboard/core/match13.js';
+import { match13Stale, matchForecastFor, setMatch13, tidyMatch13 } from '../../dashboard/core/match13.js';
+import { metricsFor, pagesOf } from '../../dashboard/core/team-metrics.js';
 import { timeZoneOf } from '../../dashboard/core/theme.js';
 import { panels } from '../../dashboard/registry.js';
 
@@ -198,6 +199,20 @@ function rankLines(content, step, match13) {
   return lines;
 }
 
+// One line for each page of the team metrics card, with the first three numbers on it, so the tab says what the card holds. The
+// card reads the Match13 file the page holds, which this process gives it for the time of the question.
+function metricsLines(content, step, match13) {
+  const entry = asTeam(step.team, () => teamEntry(content.frc));
+  if (!entry) return [];
+
+  setMatch13(match13 || null, null);
+  try {
+    return pagesOf(metricsFor(content.frc, entry.team)).map(page => page.sub + ': ' + page.rows.filter(item => item.value !== null).slice(0, 3).map(item => item.label + ' ' + item.value).join(', '));
+  } finally {
+    setMatch13(null, null);
+  }
+}
+
 function lineCount(count, noun) {
   return count + ' ' + noun + (count === 1 ? '' : 's');
 }
@@ -208,6 +223,7 @@ async function itemsFor(step, content, now, match13) {
   else if (step.panel === 'monday-department' || step.panel === 'monday-charts') lines = mondayLines(content, step, now);
   else if (step.panel === 'frc-news') lines = newsItems(content, now).map(item => item.title);
   else if (step.panel === 'competition-rank') lines = rankLines(content, step, match13);
+  else if (step.panel === 'competition-team-metrics') lines = metricsLines(content, step, match13);
   else if (step.panel === 'photo') {
     const count = photosToShow(content, now).length;
     lines = [lineCount(count, 'photo') + ' visible'];

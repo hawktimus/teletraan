@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -12,6 +12,8 @@
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh news       the FIRST news headlines were read: sends when and how many (newsAt, newsCount),
 #                              from news/status.json, which news-sync.sh made in the data folder
+#   status-write.sh reboot     sends the next and the last scheduled reboot (nextRebootAt, nextRebootText, lastRebootAt,
+#                              lastRebootWhy), from reboot/status.json, which scheduled-reboot.sh made in the data folder
 #   status-write.sh kiosk      the screen started
 #   status-write.sh version    the build on the wall: the version, the short hash, the date and the branch
 #                              (buildVersion, buildCommit, buildDate, buildBranch). From RELEASE.json of the
@@ -44,7 +46,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|restart N" >&2
   exit 2
 }
 
@@ -64,6 +66,7 @@ case $1 in
   monday) field=lastMondaySyncAt ;;
   frc) field=lastFrcSyncAt ;;
   news) field=newsAt ;;
+  reboot) field=nextRebootAt ;;
   kiosk) field=kioskStartedAt ;;
   version) field=version ;;
   backup) field=lastBackupAt ;;
@@ -260,6 +263,40 @@ elif [ "$field" = match13At ]; then
   fi
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"match13At":"%s","match13State":"%s","match13Count":%s}}}]}' \
     "$document" "$document" "$at" "$state" "$count")
+elif [ "$field" = nextRebootAt ]; then
+  # The line scheduled-reboot.sh wrote. A part that is empty (no reboot planned, none yet) is removed from the
+  # document. Each part is checked, because it goes into a JSON body.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/reboot/status.json"
+  [ -f "$file" ] || exit 0
+  text=$(head -c 600 "$file")
+  next_at=$(printf '%s' "$text" | sed -n 's/.*"nextRebootAt":"\([^"]*\)".*/\1/p')
+  next_text=$(printf '%s' "$text" | sed -n 's/.*"nextRebootText":"\([^"]*\)".*/\1/p')
+  last_at=$(printf '%s' "$text" | sed -n 's/.*"lastRebootAt":"\([^"]*\)".*/\1/p')
+  last_why=$(printf '%s' "$text" | sed -n 's/.*"lastRebootWhy":"\([^"]*\)".*/\1/p')
+  # printf '%s\n', because grep sees no line at all in an empty string, and an empty part is allowed
+  if ! printf '%s\n' "$next_at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
+    ! printf '%s\n' "$last_at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
+    ! printf '%s\n' "$next_text" | grep -Eq '^[A-Za-z0-9 :]{0,20}$' ||
+    ! printf '%s\n' "$last_why" | grep -Eq "^[A-Za-z0-9 :,.()'-]{0,120}\$"; then
+    echo "status: reboot/status.json is not the line scheduled-reboot.sh writes, so nothing was written." >&2
+    exit 1
+  fi
+  set_list=""
+  unset_list=""
+  for pair in "nextRebootAt:$next_at" "nextRebootText:$next_text" "lastRebootAt:$last_at" "lastRebootWhy:$last_why"; do
+    name=${pair%%:*}
+    value=${pair#*:}
+    if [ -n "$value" ]; then
+      set_list="$set_list${set_list:+,}\"$name\":\"$value\""
+    else
+      unset_list="$unset_list${unset_list:+,}\"$name\""
+    fi
+  done
+  patch="\"id\":\"$document\""
+  [ -z "$set_list" ] || patch="$patch,\"set\":{$set_list}"
+  [ -z "$unset_list" ] || patch="$patch,\"unset\":[$unset_list]"
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
 elif [ "$field" = newsAt ]; then
   # The line news-sync.sh wrote after a good run. Nothing is sent when it is not there. Each part is
   # checked, because it goes into a JSON body.

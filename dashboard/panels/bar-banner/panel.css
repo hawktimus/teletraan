@@ -24,9 +24,9 @@ html[data-layout="bar"] .bar-banner {
 
 /* The name is a row of letters (core/name.js), so the name effect can split each
    one. Nothing is cut off, because the effect moves pieces of letters outside the
-   line. A name too long for its slot squeezes its letters closer together instead,
-   so the war clock never moves. The slot is 986 wide, and HAWKTIMUS PRIME is 984.6
-   at the heading size. */
+   line. A name too long for its slot is drawn narrower, all of it by --name-fit
+   (fitName in core/name.js), so the war clock never moves and the letters keep their
+   space. The slot is 986 wide, and HAWKTIMUS PRIME is 984.6 at the heading size. */
 html[data-layout="bar"] .bar-name {
   position: relative;
   display: flex;
@@ -35,11 +35,13 @@ html[data-layout="bar"] .bar-name {
   height: var(--size-heading);
   margin: 0;
   font: 700 var(--size-heading)/var(--size-heading) var(--font-display);
+  transform: scaleX(var(--name-fit, 1));
+  transform-origin: 0 50%;
 }
+html.mirrored[data-layout="bar"] .bar-name { transform-origin: 100% 50%; }
 html[data-layout="bar"] .bar-name .letter {
   position: relative;
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: none;
 }
 
 html[data-layout="bar"] .bar-war {

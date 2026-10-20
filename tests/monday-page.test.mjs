@@ -24,7 +24,7 @@ function test(name, run) {
 
 const now = new Date('2026-10-17T15:00:00.000Z');
 const ago = minutes => new Date(now.getTime() - minutes * 60000).toISOString();
-const task = fields => Object.assign({ title: '[Task]', department: 'build', list: 'open', status: 'up-next', contact: 'Robin', priority: 'medium', dueDate: '2026-10-30', showOnBoard: true }, fields);
+const task = fields => Object.assign({ source: 'monday', title: '[Task]', department: 'build', list: 'open', status: 'up-next', contact: 'Robin', priority: 'medium', dueDate: '2026-10-30', showOnBoard: true }, fields);
 
 test('the line about the last read says when, and that it worked or the problem in plain words', () => {
   assert.deepEqual(parts.lastReadLine({ lastSyncAt: ago(11), lastError: '' }, now), { ok: true, text: 'Last read 11 minutes ago. It worked.' });
@@ -34,28 +34,56 @@ test('the line about the last read says when, and that it worked or the problem 
   assert.equal(parts.lastReadLine({ lastError: 'Daily read limit reached. Reads start again at midnight.' }, now).text, 'The last read did not work: Daily read limit reached. Reads start again at midnight.');
 });
 
-test('a table for each of the nine departments, in the order of the panels, with its open and done counts', () => {
-  const tables = parts.departmentTables([task({}), task({ department: 'cnc', list: 'done', status: 'done' }), task({ department: 'cnc', showOnBoard: false })], now);
+const teams = [{ code: 'prime', name: 'Hawktimus Prime', shortName: 'Prime' }, { code: 'nova', name: 'Hawktimus Nova', shortName: 'Nova' }];
+const content = tasks => parts.contentOf({ tasks: tasks, teams: teams });
+
+test('a table for each of the nine departments, in the order of the panels, with its to do and done counts', () => {
+  const tables = parts.departmentTables(content([task({}), task({ department: 'cnc', list: 'done', status: 'done' }), task({ department: 'cnc', showOnBoard: false })]), '', now);
   assert.deepEqual(tables.map(table => table.title), ['Build', 'Electrical', 'Programming', 'Design', 'CNC', 'Strategy', 'Operations', 'Business', 'Marketing']);
   const cnc = tables.find(table => table.value === 'cnc');
-  assert.deepEqual([cnc.open, cnc.done, cnc.hidden], [0, 1, 1]);
-  assert.equal(parts.countLine(cnc), '0 open, 1 done, 1 hidden from the TV');
-  assert.equal(parts.countLine(tables[0]), '1 open, 0 done');
-  assert.equal(tables[1].rows.length, 0);
+  assert.deepEqual([cnc.open, cnc.done, cnc.empty], [0, 1, false]);
+  assert.equal(parts.countLine(cnc), '0 to do, 1 done');
+  assert.equal(parts.countLine(tables[0]), '1 to do, 0 done');
+  assert.deepEqual([tables[1].empty, tables[1].openRows.length, tables[1].doneRows.length], [true, 0, 0], 'an empty department is listed, and empty');
+  assert.equal(parts.hiddenCount(content([task({}), task({ showOnBoard: false })]), now), 1);
 });
 
-test('a row has the five columns, open rows first in the order of the panel, done rows after them, and the words of an empty value', () => {
-  const tables = parts.departmentTables([
+test('a team shows its own tasks and the tasks with no team, and Both shows every task', () => {
+  const list = content([task({ title: '[prime]', team: 'prime' }), task({ title: '[nova]', team: 'nova' }), task({ title: '[general]' })]);
+  const names = team => parts.departmentTables(list, team, now)[0].openRows.map(row => row.project).sort();
+  assert.deepEqual(names('prime'), ['[general]', '[prime]']);
+  assert.deepEqual(names('nova'), ['[general]', '[nova]']);
+  assert.deepEqual(names(''), ['[general]', '[nova]', '[prime]']);
+  assert.equal(parts.generalCount(list, now), 1);
+});
+
+test('a row has the five columns of the TV, open rows in the order of the panel and done rows apart, with the words of an empty value', () => {
+  const table = parts.departmentTables(content([
     task({ title: '[done]', list: 'done', status: 'done', completedOn: '2026-10-02' }),
     task({ title: '[todo]' }),
     task({ title: '[stuck]', status: 'blocked', contact: undefined, priority: undefined, dueDate: undefined, team: 'nova' }),
-  ], now);
+  ]), '', now)[0];
   assert.deepEqual(parts.words.columns, ['Status', 'Project', 'Contact', 'Priority', 'Estimated Completion Date']);
-  assert.deepEqual(tables[0].rows, [
-    { status: 'Stuck', project: '[stuck]', contact: 'Unassigned', priority: 'No Priority', date: 'No Date', team: 'Nova' },
-    { status: 'To Do', project: '[todo]', contact: 'Robin', priority: 'Medium', date: 'Oct 30', team: '' },
-    { status: 'Done', project: '[done]', contact: 'Robin', priority: 'Medium', date: 'Oct 30', team: '' },
-  ]);
+  const five = row => [row.statusWord, row.project, row.contact, row.priority, row.date];
+  assert.deepEqual(table.openRows.map(five), [['STUCK', '[stuck]', 'Unassigned', 'No Priority', 'No Date'], ['TO DO', '[todo]', 'Robin', 'Medium', 'Oct 30']]);
+  assert.deepEqual(table.doneRows.map(five), [['DONE', '[done]', 'Robin', 'Medium', 'Oct 30']]);
+});
+
+test('What the TV shows is the first page of a Department tasks row, from the dashboard code, and null when the TV leaves the row out', () => {
+  const many = [];
+  for (let at = 1; at <= 9; at++) many.push(task({ title: '[task ' + at + ']', dueDate: '2026-10-' + String(10 + at) }));
+  const view = parts.tvPreview(content(many), now, { team: '', department: 'build', list: 'open' });
+  assert.equal(view.title, 'BUILD TASKS');
+  assert.equal(view.rows.length, 4);
+  assert.equal(view.pages, 3);
+  assert.equal(parts.tvPreview(content(many), now, { team: '', department: 'build', list: 'done' }), null);
+  assert.equal(parts.tvPreview(content(many), now, { team: 'nova', department: 'electrical', list: 'open' }), null);
+});
+
+test('the page imports the rules of the TV and does not copy them', () => {
+  assert.ok(/from '\.\.\/\.\.\/dashboard\/core\/monday-views\.js'/.test(partsSource));
+  assert.ok(!/function sortTasks|function rowOf|function onTv|const openOrder/.test(partsSource), 'no copy of the sort or the filter');
+  assert.ok(/allow: \['\.\.'\]/.test(fs.readFileSync(path.join(studio, 'sanity.cli.js'), 'utf8')), 'the dev server may read the dashboard folder');
 });
 
 test('the page asks for published tasks of the board only, and writes nothing', () => {
@@ -64,12 +92,14 @@ test('the page asks for published tasks of the board only, and writes nothing', 
   assert.ok(!/\.patch\(|\.create\(|\.createIfNotExists\(|\.createOrReplace\(|\.delete\(|\.mutate\(|\.transaction\(|useDocumentOperation|\.publish\(/.test(viewSource + partsSource), 'the page writes nothing');
 });
 
-test('the page has no board picker, no token button and no tabs, only a link to the control page and to the Rotation board', () => {
-  assert.ok(!/<button|'button'|tabButton|BoardCard|saveBoardChoice|setShowOnTv|PreviewPanelsView/.test(viewSource), 'no button and no tab');
+test('the page has a Team picker and three pickers for the preview, and no button that writes, no token button and no tabs', () => {
+  assert.ok(!/tabButton|BoardCard|saveBoardChoice|setShowOnTv|PreviewPanelsView|Sync Monday now'/.test(viewSource), 'no write button and no tab');
+  assert.deepEqual(parts.teamChoices.map(choice => choice.title), ['Both', 'Prime', 'Nova']);
   assert.equal(parts.controlLink, 'http://teletraan.local:3229/control/#settings/monday');
   assert.equal(parts.rotationPath, '/structure/rotation');
   assert.ok(/id: 'rotation'/.test(structureSource), 'the Rotation board is the line with the id rotation');
   assert.equal(parts.words.rotation, 'Add a Department tasks row on the Rotation board');
+  assert.equal(parts.words.previewTitle, 'What the TV shows');
   assert.ok(/title: 'Monday', id: 'monday', icon: ThListIcon, component: MondayPage \}/.test(structureSource), 'one Monday line, with no pane behind it');
   ['monday-boards-view.js', 'monday-boards-parts.js', 'monday-pickers.js', 'monday-token-input.js', 'monday-status-input.js', 'preview-panels-view.js']
     .forEach(file => assert.equal(fs.existsSync(path.join(studio, 'inputs', file)), false, file + ' is gone'));
@@ -80,9 +110,9 @@ test('the page keeps to the rules for a phone: a 16 pixel gutter, wrapping text,
   assert.ok(/minHeight: 44/.test(viewSource));
   (viewSource.match(/\bwidth: [3-9]\d\d\b/g) || []).forEach(found => assert.fail('a fixed width that does not fit a phone: ' + found));
   (viewSource.match(/min[Ww]idth: \d+/g) || []).forEach(found => assert.ok(Number(found.replace(/\D/g, '')) < 300, found));
-  assert.ok(/overflowX: 'auto'/.test(viewSource), 'a table scrolls inside its box on a phone');
   assert.ok(/overflowWrap: 'anywhere'/.test(viewSource));
   assert.ok(!/nowrap|textOverflow|ellipsis/.test(viewSource), 'a project name is never cut');
+  assert.ok(/@media \(max-width: 640px\)/.test(viewSource), 'a table becomes cards on a phone');
 });
 
 test('the words are plain: no dash, no exclamation mark, no emoji, no filler, and each sentence ends with a stop', () => {
@@ -96,7 +126,7 @@ test('the words are plain: no dash, no exclamation mark, no emoji, no filler, an
     assert.ok(!/[\u{1F300}-\u{1FAFF}☀-➿]/u.test(text), 'no emoji in: ' + text);
     assert.ok(!/\b(simply|just|basically|really|very|actually|easily)\b/i.test(text), 'no filler word in: ' + text);
   });
-  [parts.words.intro, parts.words.unreadable, parts.words.neverRead, parts.words.none].forEach(text => assert.ok(/\.$/.test(text), 'ends with a full stop: ' + text));
+  [parts.words.intro, parts.words.unreadable, parts.words.neverRead, parts.words.none, parts.words.emptyDepartment, parts.words.emptyList, parts.words.previewHelp, parts.words.previewSkipped, parts.words.teamHelp].forEach(text => assert.ok(/\.$/.test(text), 'ends with a full stop: ' + text));
 });
 
 let failures = 0;

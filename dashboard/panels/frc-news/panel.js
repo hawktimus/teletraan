@@ -5,6 +5,7 @@
 // An amber STALE chip shows when the list was last written more than 12 hours ago.
 
 import { rowBarMarkup } from '../../core/plate.js';
+import { pageWidth } from '../../core/page-width.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { fitHeadlines, newsDateLabel, newsIsStale, newsItems } from '../../core/news.js';
@@ -19,7 +20,7 @@ function rowMarkup(row, last, zone) {
 
   return `
     <div class="row${row.big ? ' row-big' : ''}" data-slat="item">
-      ${last ? '' : rowBarMarkup(1124)}
+      ${last ? '' : rowBarMarkup(pageWidth() - 28)}
       <div class="date">${escapeHtml(newsDateLabel(row.item.date, zone))}</div>
       <div class="headline">${escapeHtml(row.title)}${chip}</div>
     </div>`;

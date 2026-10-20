@@ -130,8 +130,10 @@ if [ "$kept_stopped" = 1 ]; then
   exit 0
 fi
 
-# Only the restarts of the last hour matter
-recent=$(printf '%s\n' "$kept_restarts" | awk -v now="$now" -v hour="$hour" '$1 ~ /^[0-9]+$/ && now - $1 < hour { print $1 }')
+# Only the restarts of the last hour matter. One stamped after now was written before the clock was set back
+# (a computer that boots with a wrong clock and then asks the network for the time), and would otherwise
+# hold every restart off until the clock caught up with it.
+recent=$(printf '%s\n' "$kept_restarts" | awk -v now="$now" -v hour="$hour" '$1 ~ /^[0-9]+$/ && $1 <= now && now - $1 < hour { print $1 }')
 in_hour=$(printf '%s\n' "$recent" | awk 'NF { n++ } END { print n + 0 }')
 newest=$(printf '%s\n' "$recent" | awk 'NF && $1 > m { m = $1 } END { print m + 0 }')
 

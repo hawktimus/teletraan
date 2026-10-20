@@ -220,7 +220,7 @@
 
 html[data-layout="bar"] .war-clock {
   --war-ink: var(--style-digits);
-  --war-dim: .75; /* the date and the small labels, a little fainter than the digits */
+  --war-dim: .88; /* the date and the small labels, a little fainter than the digits. .75 was 4.1 to 1 on the armor */
   --lines-top: 14px;
   --lines-height: 34px;
   --lines-leading: 34px;
@@ -433,7 +433,7 @@ html[data-layout="bar"] .war-cell .unit {
 
 .war-clock.war-wide {
   --war-ink: var(--style-digits, var(--war-ink-start));
-  --war-dim: .75; /* the date and the labels, a little fainter than the digits */
+  --war-dim: .88; /* the date and the labels, a little fainter than the digits */
   --lines-height: 44px;
   --lines-leading: 44px;
   --status-top: 33px;

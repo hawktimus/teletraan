@@ -9,18 +9,25 @@ long as the screen is up. A panel does not draw a frame. It draws its page,
 and the frame stays while the page is swapped. How that works is in "The frame
 and the page change" below.
 
-A new panel touches four places: its own folder, `registry.js`, `config.js`
-and the Studio's list of panels. A check tells you when they disagree. Do the
-steps in order. The competition cards (docs/frc-feed.md) are the exception:
-they are in `registry.js` with `competition: true` and are not in the other
-two lists, because the Competition tab of Dashboard Settings switches them.
+A new panel touches four places: its own folder, `registry.js`,
+`config-settings.js` and the Studio's list of panels. A check tells you when they
+disagree (`node tests/run.mjs schemas`). Do the steps in order.
+docs/your-first-change.md, step 6, does these steps for a small panel in a few
+minutes. Some panels are the exception: the competition cards (docs/frc-feed.md)
+and the Monday panels (docs/monday.md) are in `registry.js` with
+`competition: true` or `monday: true` and are not in the other two lists, because
+Dashboard Settings and the Rotation page switch them in their own way. Steps 7 and 8
+say which flag does what.
 
 ## 1. Pick the details
 
 - **id**: lowercase with dashes, for example `my-panel`. It is the folder
   name. The two files in it are always called `panel.js` and `panel.css`.
 - **region**: `grid1` is the large panel on the left (1152 x 708). `grid2` is
-  the small one under the countdown (656 x 372). The ticker is 1840 x 72.
+  the small one under the countdown (656 x 372). The ticker is 1840 x 72. The
+  banner, the countdown, the side column (`column`) and the overlays (`overlay`)
+  draw their own frame and are not for a new page of content; the top of
+  `registry.js` says what each region is.
 - **topic**: what it is about. Grid 1 and Grid 2 never show the same topic at
   once, so Tasks and the task counts both use `tasks`. Give a new panel its
   own topic unless it repeats another.
@@ -31,7 +38,11 @@ two lists, because the Competition tab of Dashboard Settings switches them.
     dashboard/panels/my-panel/panel.css
 
 Every selector in the stylesheet starts with the panel's own class, such as
-`.my-panel .row`, so it cannot touch another panel.
+`.my-panel .row`, so it cannot touch another panel. A panel folder holds only these
+two files: `tests/house-rules.test.mjs` fails on a missing file, on a stray file and on
+a folder that `registry.js` does not list. The quickest start is a copy of a panel
+that is close to yours (`cp -R dashboard/panels/next-event dashboard/panels/my-panel`),
+with its id replaced inside both files.
 
 The page fills its area, so the stylesheet does not give the panel a size.
 Positions inside it count from the top left corner of the area, and the
@@ -204,6 +215,26 @@ content, so the frame is never empty (docs/layouts.md, "Panel B, the small frame
 order, in `config.js` or in the Studio's list, and `tests/schemas.test.mjs` leaves it out of the comparison.
 It needs no `hasContent`, because it always has something to show.
 
+A line may also have `rotationOnly: true`. The panel is drawn only when a row of the
+rotation names it (as a large panel, or as the small panel beside a row). It is not a spare
+for the small frame, not in Panel order and not in the lists of the Studio that the checks
+compare with the registry. `driveHours`, `frc-news` and `qrParts` have it.
+
+A line may also have `placeholder: true`. The panel draws its title and a dashed frame and
+is designed later (`core/placeholder.js`). `robotStatus` and `wireframe` are placeholders,
+and a row of the rotation can name one before it exists.
+
+A line may also have `monday: true`. It is one of the two Monday panels,
+`monday-department` and `monday-charts` (docs/monday.md). A row of the rotation names the
+department, the list, the chart and the team, and the row is skipped while the panel has
+nothing to show. The eleven Monday panels of the older sync are gone. Their ids are in
+`retiredMondayPanels` in `config-lists.js` and in `olderMondayPanels` in
+`studio/inputs/screen-panels.js`, so a stored row that still names one keeps its place, plays
+nothing and says Retired. Do not reuse one of those ids for a new panel.
+
+A line may also have `testOnly: true`. It is used only by the hardware test (`?stress`) and
+is in no list. `stand-in-tile` and `stand-in-ticker` are the two.
+
 A line may also have `pages: 2`. The panel then comes round that many times in a
 row, once for each page, and `hasContent` and `mount` get the page as a second
 argument, counting from 1. A page with nothing on it is skipped. No panel has it
@@ -219,12 +250,20 @@ scroll five rows at a time. The rotation list in Studio has one row for the pane
 ## 8. Put it in the rotation
 
 The panel's id is written in two more places. They have to match
-`registry.js`, and `tests/schemas.test.mjs` fails when they do not.
+`registry.js`, and `tests/schemas.test.mjs` fails when they do not and names the
+list that is missing it. A panel with `rotationOnly`, `placeholder`, `monday`,
+`competition`, `lastResort` or `testOnly` is left out of both lists. A `rotationOnly` panel
+is offered in a list of its own in `studio/inputs/screen-panels.js`: `pairedPanels` for a
+small panel that a row pairs with a large one, `rotationPanels` for a large one.
+`tests/rotation-panels-explained.test.mjs` fails and says which file to change when a
+registered panel is offered nowhere. A `rotationOnly` panel is the safe way to add one: it
+changes nothing the TV plays until an editor adds a row for it, and it is not a spare for the
+small frame, so the tests that count the spares do not change.
 
-1. `dashboard/config.js`, in `defaultSettings.rotation`, in the list for its
-   region. A row has no seconds: it follows Seconds per page in Dashboard
-   Settings (a large panel stays that long, a small panel three quarters of
-   it). Editors can give one row its own seconds in the Studio.
+1. `dashboard/config-settings.js` (`config.js` re-exports it), in
+   `defaultSettings.rotation`, in the list for its region. A row has no seconds: it
+   follows Seconds per page in Dashboard Settings (a large panel stays that long, a small
+   panel three quarters of it). Editors can give one row its own seconds in the Studio.
 
        { panel: 'my-panel', show: true },
 
@@ -233,38 +272,43 @@ The panel's id is written in two more places. They have to match
 
        { title: 'My panel', value: 'my-panel' },
 
-Put both lines at the same position in their lists. The pickers of a row in a
-Screen use these lists, and the check compares them with `config.js` and
-`registry.js`.
+Put both lines at the same position in their lists. The pickers of a row in the
+Rotation page use these lists, and the check compares them with `config-settings.js`
+and `registry.js`. A panel needs a title in plain words there, because editors read it.
 
-A view that already has rows keeps them, so the new panel stays off the screen
-until an editor opens the Rotation page, adds a row (or opens Views, clicks D on the map and
-uses "Add item" for a small panel), picks the panel and moves the row into place. If the panel is for one
-team (its items have a Team field), add its name to `teamSpecificPanels` in the same
-file and to the list of the same name in the dashboard, so that the first rows of a
-view put it with the right team (`studio/tools/view-seed.js`).
+The screen plays the rotation, one list of rows (docs/rotation-board.md). The default rows
+are `defaultRotationRows` in `dashboard/config-rotation.js`, written a second time in
+`studio/tools/default-rotation.js`, and `tests/default-rotation.test.mjs` fails when the two
+differ. A new panel is not in the default rows, so it stays off the screen until an editor
+opens Rotation in the Studio, adds a row, picks the panel (and the small panel beside it, for
+a Robotics row), and moves the row into place. To put it in the default rotation too, add a
+row to both default files. If the panel is for one team (its items have a Team field), add its name to
+`teamSpecificPanels` in `studio/inputs/screen-panels.js`, so that the rows a Screen is filled
+with put it with the right team (`studio/tools/screen-seed.js`).
 
-Then run this in the `studio` folder. It needs nothing installed:
+Then run this in the top folder. It needs nothing installed:
 
-    node tests/schemas.test.mjs
+    node tests/run.mjs schemas
 
-Every line must say PASS. A FAIL line names the list that is missing the
-panel.
+Every file must say ok. A FAIL line names the list that is missing the
+panel. Run `node tests/run.mjs --quick` as well: it runs every test that is fast, which
+includes the house rules (docs/your-first-change.md, step 7).
 
-Editors can hide the panel, reorder it or change its seconds in Dashboard
-Settings, on the Screen tab. Two things have to happen first:
+Editors hide the panel, reorder it or change its seconds on the Rotation page. Two
+things have to happen first:
 
 - Run `npm run deploy` in the `studio` folder so the editors' copy of the
-  Studio has the new panel (see Going live in docs/adding-a-field.md).
-- If Dashboard Settings already has a saved list, an editor adds a row for the
-  panel there. A saved list replaces the one in `config.js`, so until then the
+  Studio has the new panel (see Going live in docs/adding-a-field.md). The Ship app
+  does this (docs/shipping-from-the-mac.md).
+- If the editors already saved a rotation, an editor adds a row for the panel there. A
+  saved list replaces the default one in `config-rotation.js`, so until then the
   panel is not on the TV.
 
 ## 9. Test it
 
 Start the server with `python3 tools/serve.py` and open:
 
-    http://localhost:8080/dashboard/?show=my-panel
+    http://localhost:8080/dashboard/?sample=1&night=off&show=my-panel
 
 It shows your panel in its frame, with the banner and the countdown. The frame
 assembles, the page is held for 30 seconds, and then the page turns over and
@@ -273,8 +317,9 @@ page fade instead of turn, and `&speed=very-slow` to see everything at half
 speed. Then check:
 
 - the browser console shows no errors from your files. It does show a 404
-  line for `data/live/version.txt`. That is expected: the Teletraan computer writes that
-  file, so your computer does not have it. While the screen is on sample
+  line for `build.js` and one for `data/live/version.txt`. That is expected: the Teletraan
+  computer writes those files, so your computer does not have them. A page with no `show=` also
+  gets a 501 for a POST to `control/api/now`, which only the Teletraan computer answers. While the screen is on sample
   content (`?sample=1`) it reads only `data/sample/`. On production content it also looks for
   the computer's calendar files in `data/live/`, and a missing one is a 404 too.
 - no text is smaller than 44px
@@ -429,3 +474,9 @@ small panel or the ticker never needs any of this.
   long line with `overflow: hidden; text-overflow: ellipsis`, as `panels/tasks/panel.css`
   does, or set `white-space: normal` on a box that should wrap.
 - **Placeholders** go in [square brackets]. Never invent names or numbers.
+
+`tests/house-rules.test.mjs` checks the rules above that a program can check: no timer, no
+`@keyframes`, no `transition`, no `animation` in a panel folder, no text under 44px in a
+panel stylesheet except the sizes the house rules name, no shadow, blend mode, 3D or video, and a
+folder that agrees with `registry.js`. `tests/graphics.test.mjs` checks that no color code is
+written outside the token files. Each failure names the file and the line and says what to do.

@@ -402,7 +402,8 @@ test('in Cybertron and Minimal the edge gradient and the body color are not the 
   });
 
   assert.equal(lower(pageWith('prime', 'minimal').html['--style-digits']), '#faca2a', 'the digits of Minimal are the team\'s neon');
-  assert.equal(lower(pageWith('nova', 'minimal').html['--style-digits']), '#8c44dc');
+  // Nova's neon purple was 2.5 to 3.5 on the war clock plate, so its digits read in the label color (docs/accessibility.md)
+  assert.equal(lower(pageWith('nova', 'minimal').html['--style-digits']), '#d9a6ff', 'the digits of Nova are its label color');
   assert.equal(lower(pageWith('prime', 'cybertron').html['--style-grid-opacity']), '.07', 'the page grid is the neon at .07');
 });
 

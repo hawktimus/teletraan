@@ -3,7 +3,7 @@
 // page cannot be reached.
 
 import { api, useStyles } from './api.js';
-import { keysHtml } from './render.js';
+import { esc, keysHtml } from './render.js';
 
 function collect(root) {
   const body = { keys: {}, calendars: [] };
@@ -35,7 +35,7 @@ export async function mountKeys(container) {
 
   async function load() {
     const answer = await api('GET', '/env');
-    root.innerHTML = answer.ok ? keysHtml(answer.data) : '<section class="card"><h2>Keys</h2><p>' + answer.error + '</p></section>';
+    root.innerHTML = answer.ok ? keysHtml(answer.data) : '<section class="card"><h2>Keys</h2><p>' + esc(answer.error) + '</p></section>';
   }
   await load();
 

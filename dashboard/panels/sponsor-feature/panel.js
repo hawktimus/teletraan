@@ -2,6 +2,7 @@
 // time the panel comes round it is the next sponsor in the list.
 
 import { cardMarkup } from '../../core/plate.js';
+import { pageWidth } from '../../core/page-width.js';
 import { markBeside } from '../../core/marks.js';
 import { escapeHtml, hasText } from '../../core/text.js';
 import { textWidth } from '../../core/text-width.js';
@@ -34,7 +35,7 @@ export function mount(host, content) {
 
       <div class="story">
         <div class="name" data-slat="item">
-          ${cardMarkup(1096, 128)}
+          ${cardMarkup(pageWidth() - 56, 128)}
           <div class="name-text">${escapeHtml(sponsor.name)}</div>
         </div>
         <div class="lower">

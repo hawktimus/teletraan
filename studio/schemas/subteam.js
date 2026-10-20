@@ -1,4 +1,6 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
+import { limits } from './limits.js';
+import { firstNameOnlyWarning, noContact } from '../tools/content-rules.js';
 import { showField, expiresField, orderField, teamField, tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 
 // The two spotlight fields only matter when the spotlight is on
@@ -34,14 +36,14 @@ export default defineType({
       title: 'Subteam name',
       type: 'string',
       description: 'The name of the subteam. Up to 11 characters fit.',
-      validation: Rule => [Rule.required().error('Give the subteam a name.'), tooLong(Rule, 11)],
+      validation: Rule => [Rule.required().error('Give the subteam a name.'), tooLong(Rule, limits.leadDepartment)],
     }),
     defineField({
       name: 'lead',
       title: 'Lead',
       type: 'string',
       description: 'Who leads the subteam. Up to 17 characters fit.',
-      validation: Rule => tooLong(Rule, 17),
+      validation: Rule => [tooLong(Rule, limits.leadName), Rule.custom(noContact).warning(), Rule.custom(firstNameOnlyWarning).warning()],
     }),
     defineField({
       name: 'photo',
@@ -62,7 +64,7 @@ export default defineType({
       title: 'Line under the lead',
       type: 'string',
       description: 'One short line under TEAM LEAD, such as a year or a note. Leave blank to show the subteam name. Up to 48 characters fit. Shown on pages of 3 people or fewer.',
-      validation: Rule => tooLong(Rule, 48),
+      validation: Rule => [tooLong(Rule, limits.leadLine), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'members',
@@ -72,11 +74,11 @@ export default defineType({
       of: [
         defineArrayMember({
           type: 'string',
-          validation: Rule => [Rule.required().error('Type a name, or remove the empty line.'), tooLong(Rule, 12), Rule.custom(checkMember)],
+          validation: Rule => [Rule.required().error('Type a name, or remove the empty line.'), tooLong(Rule, limits.leadMember), Rule.custom(checkMember), Rule.custom(noContact).warning(), Rule.custom(firstNameOnlyWarning).warning()],
         }),
       ],
       initialValue: [],
-      validation: Rule => [Rule.max(24).error('Only 24 names fit on the screen. Remove one.'), Rule.custom(checkNoRepeats)],
+      validation: Rule => [Rule.max(limits.leadMembers).error('Only 24 names fit on the screen. Remove one.'), Rule.custom(checkNoRepeats)],
     }),
     defineField({
       name: 'spotlight',
@@ -91,7 +93,7 @@ export default defineType({
       type: 'string',
       description: 'A headline for the spotlight, such as what the subteam did this week. Up to 40 characters fit.',
       hidden: spotlightOff,
-      validation: Rule => tooLong(Rule, 40),
+      validation: Rule => tooLong(Rule, limits.spotlightHeadline),
     }),
     defineField({
       name: 'spotlightText',
@@ -100,7 +102,7 @@ export default defineType({
       rows: 3,
       description: "Two or three short sentences about the subteam's work. Up to 100 characters fit.",
       hidden: spotlightOff,
-      validation: Rule => tooLong(Rule, 100),
+      validation: Rule => [tooLong(Rule, limits.spotlightText), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'monday',

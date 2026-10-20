@@ -44,6 +44,12 @@ styles/foundry/transitions.js is the Original kit with pieces added to every reg
 
 A thin strip (the banner and the ticker) keeps the deadbolts and the wheel and has no rams or gauges. The kit uses two optional hooks of core/reform-draw.js: `kit.extras(region, tracks, strip)` gives the element with its parts and their tracks, and `kit.jolt()` returns the stops of a transform that shakes the layers. The deadbolts and the wheel are not on the Foundry frame at rest (core/theme-art.js draws a bolt flange, gears and pistons), so they appear with the transition. The panel transition has about 265 elements with an animation of their own in Foundry (245 in Original) and the view transition about 606 (545).
 
+## The cells
+
+In the panel transition of a kit that asks for it (`lockParts: true`, the Original kit), each square sits in a cell (`.reform-cell`) that also holds one small part: a hinge barrel on the squares of a checkerboard and a lock pin on the others. While the square turns (its `startMs` to 470 ms later, `lockMs` in core/reform-plan.js) the cell slides out from the middle of the window by up to 18 pixels and shrinks a little, so the squares part and the chassis shows in the gaps; the pin draws back and the barrel turns a full turn. Then the cell slides back past its place by 3 pixels, the pin is driven home and the cell settles. The parts end at nothing and every cell ends on its place, so the page at the end is the real page. It is transform only, about 140 more animated elements, on the same clock as everything else.
+
+The view transition and the other kits draw no cells: they lost frames in the motion tests (docs/animation-review.md). A screen whose median frame is over 26 ms, and `?reform=lite`, draw the panel transition without cells. A kit that wants cells gives `draw('pin')` and `draw('barrel')` in its own style and sets `lockParts: true`.
+
 ## The hawk
 
 The view transition draws the hawk on its own, at the size of the logo on the screen, as the four plates of core/logo.js (`hawkPieces`), each with the colors of the team it was on the front and the colors of the team it becomes on the back. It uses the robot of the logo: the wings swing down into legs and the body and the head lift (0.80 to 1.15), every plate turns over on its own hinge (to 1.45), the robot rides across to the new place of the logo, and stands up as the other hawk (by 2.05). A back face turns on the same point as its plate.

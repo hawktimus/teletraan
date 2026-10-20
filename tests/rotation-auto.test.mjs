@@ -21,10 +21,10 @@ test('the lead days and the modes are the ones of the dashboard', () => {
   assert.deepEqual(auto.competitionModes, dashboardLists.competitionModes);
 });
 
-test('there is a card for each competition card of the registry, and only competition-rank can also be a row', () => {
+test('there is a card for each competition card of the registry, and only competition-rank and competition-team-metrics can also be a row', () => {
   const registered = registry.panels.filter(panel => panel.competition).map(panel => panel.id).sort();
   assert.deepEqual(auto.autoCards.map(card => card.id).sort(), registered);
-  assert.deepEqual(auto.allAutoCards.filter(auto.canBeRow).map(card => card.id), ['competition-rank']);
+  assert.deepEqual(auto.allAutoCards.filter(auto.canBeRow).map(card => card.id), ['competition-rank', 'competition-team-metrics']);
   auto.autoCards.forEach(card => {
     assert.ok(card.shows && card.when, card.id + ' says what it shows and when it appears');
     assert.ok(/2 days|season|started|Before|Once/.test(card.when), card.id + ' says when in words');
@@ -63,7 +63,7 @@ test('the section draws a card for each thing, the mode with a link to the Compe
   const link = nodesWhere(page, node => node.type === 'Link')[0];
   assert.equal(link.props.href, '/structure/competition');
   assert.equal(textOf(page).split('Added by the wall, not a row.').length - 1, auto.allAutoCards.length, 'every card says so');
-  assert.equal(textOf(page).split('Can also be a row: yes').length - 1, 1);
+  assert.equal(textOf(page).split('Can also be a row: yes').length - 1, 2);
   assert.match(textOf(page), /sit on top of everything/);
   assert.match(textOf(page), /Not panels/);
   assert.equal(nodesWhere(page, node => node.type === 'details').length, 1, 'it can be closed, and a phone opens it closed');

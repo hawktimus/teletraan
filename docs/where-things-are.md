@@ -32,8 +32,10 @@ shows on the screen. Nothing in Studio switches it, and `core/source.js` is the
 one place that decides. Until the CORS origin is added in the Sanity project (docs/control-page.md,
 First time, step 4), which is what lets the screen read Sanity, the screen has nothing
 to show on production, so use `?sample=1`. A Studio with nothing published
-shows an empty production screen. The browser console shows a 404 line for
-`data/live/version.txt`. That is expected: the Teletraan computer writes that file.
+shows an empty production screen. The browser console shows 404 lines for
+`build.js` and `data/live/version.txt`. That is expected: the Teletraan computer writes those
+files. The screen is dark from 11:30 pm to 11:30 am (night mode), so add `&night=off` to see it in the morning.
+docs/your-first-change.md walks through a first change on this page.
 
 A small text at the bottom right of the screen says when Sanity has been out
 of reach for over two minutes, and why (core/connection.js). Its last two lines
@@ -65,7 +67,11 @@ editors can sign in from anywhere.
       registry.js             the list of every panel
       package.json            tells Node that the .js files here are modules, so the calendar scripts on the
                               computer can read them (docs/calendars-page.md). Browsers do not use it
-      config.js               the weather location, the Sanity project, the fallback content flag, the speeds, the defaults
+      config.js               the weather location, the Sanity project, the fallback content flag, the speeds, the defaults.
+                              It re-exports its parts: config-lists.js (the lists of choices and the views), config-settings.js
+                              (defaultSettings, which hold the rotation lists of the panels, and the Look defaults),
+                              config-more.js (teams, trim, the filters and the demo) and config-rotation.js
+                              (defaultRotationRows: the default rotation, written a second time in studio/tools/default-rotation.js)
       frame.js, frame.css     everything that moves: the page change (the slat change and the mechanical
                               change, docs/page-transitions.md), the screws, the logo's entrance, spin and
                               flying hawk, the name effect, the screen glitch and the scheduler that says
@@ -74,6 +80,15 @@ editors can sign in from anywhere.
                               frame.js has pause(reason) and resume(reason) too, the one hold a talk takes on
                               the whole screen: the pages, the effects, the hidden transitions, night mode and
                               the announcements wait until it is let go
+      shell-*.js              the parts of shell.js: shell-content.js (reading the content, choosing the team, rebuilding and
+                              drawing the panels), shell-extras.js (the events, the kit, the style, the view, the decorations, the
+                              demo and the fit to the screen) and shell-state.js, the state they share
+      frame-*.js              the parts of frame.js: frame-pages.js (the slats and the page change), frame-acts.js (the acts of the
+                              logo), frame-effects.js (the effects that play now and then, and their timing), frame-kit.js (the
+                              glitch and burst of the neon kit), frame-logo.js and frame-play.js (playing them),
+                              frame-sequences.js (how each whole panel is put together, part by part) and frame-state.js (what they share)
+      notice.css, family-line.css, reform.css, reform-kit.css  the stylesheet of the announcement bar, of the team plate of the
+                              Robotics view, and of the reform transitions (docs/announcements.md, docs/transitions.md)
       neon-kit.css            the moving neon of Neon Prime, the kit: its lines, ticks and brackets and every
                               keyframe they use (docs/layouts.md, "The kit"). frame.js has the part of it that
                               is timed (the name glitch and the burst at a page change)
@@ -245,17 +260,58 @@ editors can sign in from anywhere.
         time.js               turns dates into the text on the screen and reads typed dates
         weather.js            the weather from Open-Meteo, kept for two hours; weather-icons.js draws
                               the pictures
-      panels/                 one folder per panel: a script and a stylesheet. panels/side is the whole
-                              column of the sidebar layout, in place of the banner and the countdown
-                              (docs/layouts.md, "The sidebar"). panels/bar-banner and panels/bar-column are
-                              the banner and the side column of the bar layout (docs/layouts.md, "The bar
-                              layout"). The war clock in that banner is drawn by panels/countdown, as a
-                              second rendering of the countdown (docs/layouts.md, "The war clock").
-                              panels/tonight is the Daily Agenda panel, headed AGENDA (docs/up-next.md).
-                              panels/competition-* are the ten competition cards, each plain SVG
-                              (docs/frc-feed.md). panels/monday-department and panels/monday-charts are the two Monday
-                              panels (docs/monday.md, docs/layouts.md, "The Monday panels"). panels/team-tile is the small frame's last
-                              resort (docs/layouts.md, "Panel B, the small frame")
+      core/ (more files)
+        panels.js             loads the panels of registry.js and builds their pages (buildPage). A panel that
+                              fails to load or to draw is skipped and reported in the console
+        schedule-run.js       the rotation itself: a page stays, leaves and the next arrives. schedule-hold.js
+                              holds, skips and restarts it (both are parts of schedule.js), and held-note.js is the line
+                              the report to the control page carries when a view has nothing to show
+        text.js               escapeHtml: every piece of text an editor typed goes through it before it is
+                              written into a page
+        content-source.js     reads the content from Sanity, from the sample (?sample=1) or from the copy kept in the
+                              browser, and listens for changes. content-tidy.js (a part of content.js) holds the defaults, the ranges and
+                              the settings tidy functions.
+                              sanity-query.js, sanity-content.js, sanity-people.js, sanity-settings.js and
+                              sanity-tasks.js are the parts of sanity.js: the query, and the cleaning of each kind of content
+        page-refresh.js       draws the page on screen again when new content arrives, and only when it reads differently
+        request-poll.js       a request written by a Studio button or the control page counts for one minute
+        names.js              the old word and the new word for the same thing (screen and view, pass and
+                              step), so that new code and Studio titles use the new word and stored values keep the old
+        lead-departments.js   the departments of the Team leads, which the roster and Drive hours group the board tasks by
+        placeholder.js        the title and dashed frame of the placeholder panels
+        qr.js                 a small QR code encoder for the parts request panel
+        photos-drive.js       the photos of a Google Drive folder, read from the manifest the computer writes
+                              (docs/photos-drive.md)
+        match13.js, match13-draw.js  the Match13 forecasts and what the two forecast cards share (docs/match13.md)
+        hidden-load.js, hidden-log.js  loading a picture of a hidden transition, and what the wall remembers about the last
+                              one, for the control page (docs/hidden-transitions.md)
+        reform-*.js           the panel transition and the view transition (docs/transitions.md): reform-plan.js says where
+                              each part is, reform-draw.js makes the parts, reform-run.js is what the two share,
+                              reform-panel.js and reform-view.js play them, reform-hawk.js turns the logo of one team into the
+                              other and reform-bake.js makes the frozen copy of a part of the page. transition-kinds.js lists the kinds
+        theme-art.js, theme-bg.js  the drawing the Retro and Foundry themes put on the frames, and the background behind the stage
+        svg-pieces.js         small helpers that write svg for the seasonal pieces
+        test-hook.js          the hook of the motion tests. It does nothing unless the address has ?sample=1 and ?clock=fixed
+      panels/                 one folder per panel, holding panel.js and panel.css and nothing else. registry.js lists them,
+                              and tests/house-rules.test.mjs fails when the folders and the list disagree
+                              (docs/adding-a-panel.md). In groups:
+                              the large panel (grid1): tasks, events, tonight (the Daily Agenda panel, headed AGENDA,
+                              docs/up-next.md), spotlight, sponsor-feature, photo, leadership, team-leads, roster, custom
+                              (the Extra panels), frc-news, driveHours, and the placeholders robotStatus and wireframe
+                              (a title and a dashed frame, designed later, core/placeholder.js).
+                              panels/monday-department and panels/monday-charts are the two Monday panels (docs/monday.md,
+                              docs/layouts.md, "The Monday panels"). The eleven Monday panels of the older sync are gone:
+                              retiredMondayPanels in config-lists.js lists their ids, and a stored row that names one plays nothing.
+                              panels/competition-* are the twelve competition cards, each plain SVG (docs/frc-feed.md).
+                              The small panel (grid2): task-counts, next-event, forecast, safety-days, sponsor-logo, miniIdea1
+                              (a placeholder), qrParts (the parts request QR code) and team-tile, the small frame's last
+                              resort (docs/layouts.md, "Panel B, the small frame").
+                              The panels that draw their own frame: banner, countdown, ticker, alert, announcement and talk.
+                              panels/side is the whole column of the sidebar layout, in place of the banner and the countdown
+                              (docs/layouts.md, "The sidebar"). panels/bar-banner and panels/bar-column are the banner and the side
+                              column of the bar layout (docs/layouts.md, "The bar layout"). The war clock in that banner is drawn by
+                              panels/countdown, as a second rendering of the countdown (docs/layouts.md, "The war clock").
+                              stand-in-tile and stand-in-ticker are for the hardware test (?stress) only
       fonts/, assets/         fonts and pictures, all served from here
       data/sample/            sample content with marked placeholders, and a sample talk with six slides
                               (slides/presentation-sample)
@@ -320,6 +376,19 @@ editors can sign in from anywhere.
                               preview-panels-view.js and row-preview-input.js the panel previews,
                               inputs/note-field.js the one line notes in a form, and tools/add-templates.js what
                               a plus button makes
+      more files              inputs/photos-view.js is the Photos page, with its words in photos-parts.js. The pages whose
+                              parts need no Studio are drawn by a -view.js file and read by a -parts.js file: calendars-list-parts.js and
+                              calendars-hide-rules.js (the Calendars page), competition-parts.js, kept-data-parts.js, look-parts.js,
+                              today-parts.js and rotation-auto-parts.js. field-editor-parts.js is the plain field editor, page-styles.js the
+                              styles the pages share, plain-values.js two checks the status pages share, look-previews.js the theme and view
+                              previews, match13-status-input.js the Match13 block, rotation-input.js the input of the Rotation list,
+                              show-on-tv-input.js the Show on TV switch of a task and background-ids.js the backgrounds of Original.
+                              schemas/plan.js is the Daily Agenda, milestone.js a milestone made by the computer, driveFolder.js the link of a
+                              Drive folder, settingsRotationRows.js the Rotation list, settingsBackground.js, settingsCalendars.js and
+                              settingsCountdown.js the fields of those tabs, and settingsMondayBoards.js the rows of the older Monday tab,
+                              which are hidden. tools/rotation-board.js, rotation-find.js, rotation-auto.js, rotation-titles.js and
+                              rotation-migrate.js are the plain functions of the Rotation board (docs/rotation-board.md), and
+                              tools/default-rotation.js is the default rotation, the same list as dashboard/config-rotation.js
     control/                  the control page service (docs/control-page.md). server.js starts it and
                               lib/ holds the router, auth (PIN, cookie, lockout), releases, the install steps,
                               the zip reader, the tree hash, the local.env merge, the Studio build, the
@@ -382,6 +451,10 @@ editors can sign in from anywhere.
                               /etc/issue and turns on teletraan-console.service, which shows the shutdown
                               drawing. The two drawings are console/startup.txt and console/shutdown.txt
                               (docs/rebuilding-the-computer.md, step 13).
+                              scripts/match13-sync.sh reads the Match13 forecasts and install-match13.sh turns on its
+                              timer (docs/match13.md). scripts/photos-drive-sync.sh copies the pictures of a Google Drive folder and
+                              install-photos-drive.sh turns on its timer (docs/photos-drive.md). scripts/mirror.py makes the picture of
+                              the TV that the control page shows, and runs only while someone looks (teletraan-mirror.service)
     tools/
       serve.py                the server above
       screenshots.mjs         takes a picture of every panel in each view and theme, into _outputs/screens
@@ -407,7 +480,19 @@ editors can sign in from anywhere.
     tests/                  every test, one file for each module or script (<module>.test.mjs). run.mjs runs them all:
                               node tests/run.mjs, or node tests/run.mjs <word> for the files with the word in the name.
                               A test of a shell script is a Node file that runs the script with fakes in a temporary folder.
-      run.mjs                 the runner: three files at a time, one line each, a total, and sh -n and bash -n on every shell file
+      run.mjs                 the runner: three files at a time, one line each, a total, and sh -n and bash -n on every shell file.
+                              node tests/run.mjs --quick leaves out the slow tests (the list slowTests in run.mjs, and any test that takes more
+                              than 25 seconds) and the motion tests, for the edit loop (docs/your-first-change.md, step 7)
+      house-rules.test.mjs    the guards of the house rules that no other test holds: no animation code in a panel folder, no framework, build
+                              file or dependency in dashboard/, no text under 44px in a panel stylesheet (except the sizes the rules name), no
+                              shadow, blend mode, 3D or video, a panel folder that agrees with registry.js, and no file that configures a code writing tool in the
+                              repository. Each failure names the file and the line and says what to do instead. house-rules-fail.test.mjs
+                              breaks each rule in a copy and checks the message. helpers/house-rules.mjs writes the messages
+      stored-names.test.mjs   fails when a name stored in Sanity (a type, a field, a choice) is removed or renamed in a schema. The list is
+                              data/stored-names.txt, and node tests/stored-names.test.mjs --add records new names. stored-names-fail.test.mjs
+                              tries it on a copy of the Studio
+      no-secrets.test.mjs     fails when a key, a token, a private calendar address or a value of local.env or secrets.env is in a file of the
+                              repository. It never writes a value, only the name of the key. no-secrets-fail.test.mjs tries it on a small repository
       computer-scripts.test.mjs   checks that every script in computer/scripts starts the same way (bash, a usage line,
                               set -euo pipefail, lib.sh) and that lib.sh holds the only readers of local.env and
                               config.js. helpers/script-parts.mjs gives a test the parts of a split script
@@ -655,7 +740,16 @@ editors can sign in from anywhere.
                               importing-from-csv.md, presentations.md, up-next.md, calendar-filters.md,
                               calendar-links.md, calendars-page.md, hide-a-repeating-meeting.md, switch-the-look.md,
                               add-the-nova-team.md, team-on-an-item.md, frc-feed.md, monday.md, updating-the-computer.md,
-                              shipping-from-the-mac.md and laptop-setup.md.
+                              shipping-from-the-mac.md, laptop-setup.md, technical-deep-dive.md (the whole system for an engineer who has
+                              never seen it, checked against the code, with the places where docs and code disagree) and
+                              technical-deep-dive-short.md (the same in about 900 words).
+                              shipping-from-the-mac.md and laptop-setup.md. your-first-change.md is the one for a new student: a color, a
+                              ticker line, seconds, a field, a new panel, the tests and shipping, with every command.
+                              rotation-board.md is the Rotation page, transitions.md the panel and view transitions, match13.md the
+                              Match13 forecasts, photos-drive.md the photos from Google Drive, new-mac.md a new Mac, paths.md where
+                              every file moved to, dashboard-content-map.md what the TV shows and where it is changed, and changelog.md what each
+                              round changed. This page is the long map.
+                              shipping-from-the-mac.md, laptop-setup.md and reliability-drill.md.
                               seed/ has content to import into the Studio: places.ndjson, the three
                               starting places, teams.ndjson, the two starting teams, and extra-events.ndjson, the
                               old Events Calendar entries, which the screen no longer reads. content-templates/ has one CSV template for each
@@ -1132,8 +1226,10 @@ Run these in the terminal, from this folder. They need Node.js, the same
 version as the Studio (22.12 or newer), and nothing else installed. The
 exceptions are `slides-sync.test.mjs`, `frc-sync.test.mjs`, `monday-sync.test.mjs` and `backup-dataset.test.mjs`, which need `jq`.
 
-    node tests/run.mjs             every test, three at a time, and the syntax of every shell file
+    node tests/run.mjs             every test, three at a time, and the syntax of every shell file (several minutes)
+    node tests/run.mjs --quick     the edit loop: every test but the slow ones, in about half a minute (docs/your-first-change.md, step 7)
     node tests/run.mjs calendar    only the tests with "calendar" in the file name
+    node tests/run.mjs motion      only the motion tests, which need Playwright (tests/motion/README.md)
 
 A test of a shell script is a Node file that runs the script with fake `curl`, `ssh` and the like. Each file can also be run by itself:
 

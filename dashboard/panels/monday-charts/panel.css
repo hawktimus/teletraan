@@ -2,7 +2,18 @@
    are the status colours of the theme: Done, In Progress (with In Review and Stuck) and To Do. Nothing here moves. */
 .monday-charts .part-done { background: var(--status-done); }
 .monday-charts .part-progress { background: var(--status-progress); }
-.monday-charts .part-todo { background: var(--status-next); }
+/* To Do is an outline and the other two are solid. In Progress and To Do are the same color to a person with
+   protanopia (1 to 1 apart), so the shape tells them apart where the color cannot. */
+.monday-charts .part-todo {
+  box-sizing: border-box;
+  border: 4px solid var(--status-next);
+  background: none;
+}
+.monday-charts .segment.part-todo {
+  color: var(--status-next);
+  line-height: 36px; /* the border takes 8 of the 44 */
+}
+.monday-charts .bar.part-todo { border-width: 3px; }
 
 /* The legend along the top of the status chart and the timeline: a square and the word of each part, at 36px */
 .monday-charts .legend {

@@ -32,8 +32,8 @@ test('no stored name of Dashboard Settings changed: all of them are still fields
   const now = settings.fields.map(field => field.name);
   assert.deepEqual(storedNames.filter(name => now.indexOf(name) === -1), []);
   assert.equal(settings.name, 'dashboardSettings');
-  // The Photos page added the first two, the FRC news section the next four, and the Before and after cards the last three switches. Each is hidden here
-  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
+  // The Photos page added the first two, the Scheduled reboot section the next six (seen in Advanced), the Before and after cards the five switches after them and the FRC news section the last four. The rest are hidden here
+  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionTeamMetrics', 'competitionCompare', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
 });
 
 test('there are five tabs at most, in the order of the content map, and Timing opens first', () => {
@@ -47,14 +47,14 @@ test('what a coach can still see is short and has no field the pages took over',
   const visible = settings.fields.filter(field => field.hidden !== true).map(field => field.name).sort();
   assert.deepEqual(visible, [
     'miniStatus', 'generalViewTitle', 'countdown', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince', 'photoOrder', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame',
-    'nightEnabled', 'nightStyle', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'hiddenEnabled', 'desktopEveryHours', 'redEyesEveryHours', 'hiddenRequest', 'presentationsEnabled',
+    'nightEnabled', 'nightStyle', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'hiddenEnabled', 'desktopEveryHours', 'redEyesEveryHours', 'hiddenRequest', 'presentationsEnabled',
     'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayEveryMinutes', 'showConnectionStatus',
   ].sort());
 });
 
 test('each section has a title and a one line description, and every field in it exists', () => {
   const names = settings.fields.map(field => field.name);
-  ['timing', 'banner', 'portraits', 'presentations', 'night', 'hiddenTransitions', 'other'].forEach(name => {
+  ['timing', 'banner', 'portraits', 'presentations', 'night', 'reboot', 'hiddenTransitions', 'other'].forEach(name => {
     const set = settings.fieldsets.filter(item => item.name === name)[0];
     assert.ok(set, name + ' should be a section');
     assert.ok(set.title && set.description && set.description.length <= 160 && set.description.indexOf('\n') === -1, name + ' needs a title and a one line description');
@@ -65,10 +65,10 @@ test('each section has a title and a one line description, and every field in it
   assert.ok(names.length > 0);
 });
 
-test('Presentations, Night mode and Hidden transitions are sections of Advanced, in that order', () => {
+test('Presentations, Night mode, Scheduled reboot and Hidden transitions are sections of Advanced, in that order', () => {
   const order = [];
   settings.fields.filter(field => field.group === 'advanced' && field.fieldset).forEach(field => { if (order.indexOf(field.fieldset) === -1) order.push(field.fieldset); });
-  assert.deepEqual(order.slice(0, 3), ['presentations', 'night', 'hiddenTransitions']);
+  assert.deepEqual(order.slice(0, 4), ['presentations', 'night', 'reboot', 'hiddenTransitions']);
   assert.equal(order[order.length - 1], 'other');
 });
 
@@ -85,7 +85,7 @@ test('the fields the Today, Look, Competition and team pages took over are hidde
   ['pageSeconds', 'doneDays', 'countdown', 'calendars', 'mondayEveryMinutes', 'nightEnabled'].forEach(name => assert.notEqual(fieldNamed(name).hidden, true, name + ' stays'));
 });
 
-test('the Competition page shows the connection, the Match13 block, the modes and twelve switches, and writes only the field changed', async () => {
+test('the Competition page shows the connection, the Match13 block, the modes and fourteen switches, and writes only the field changed', async () => {
   globalThis.studioClient = fakeClient([{ _id: 'dashboardSettings', _type: 'dashboardSettings', competitionMode: 'auto', motion: 'calm' }]);
   const page = studio.mount(view.CompetitionView);
   await page.settle();
@@ -94,7 +94,7 @@ test('the Competition page shows the connection, the Match13 block, the modes an
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'connection').length === 1);
   const rows = nodesWhere(page.tree(), node => node.props && node.props['data-field']).map(node => node.props['data-field']);
   assert.deepEqual(rows, parts.fieldNames);
-  assert.equal(parts.cardNames.length, 12);
+  assert.equal(parts.cardNames.length, 14);
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'match13').length === 1, 'the Match13 block');
   assert.ok(nodesWhere(page.tree(), node => node.props && node.props['data-block'] === 'modes').length === 1, 'the modes are described in plain words');
   assert.match(wordsIn(page.tree()), /Before and after \(recommended\)/);

@@ -1,0 +1,13 @@
+[Unit]
+Description=Reboot the Teletraan computer at the time set in Dashboard Settings
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-reboot.sh with the account that owns the repository. The script reboots with
+# sudo systemctl reboot, which computer/sudoers/teletraan-control allows for that account, and holds no key.
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/scheduled-reboot.sh
+# Each request gives up after 20 seconds. This is for the whole run.
+TimeoutStartSec=3min

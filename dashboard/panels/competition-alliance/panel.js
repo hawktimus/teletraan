@@ -4,11 +4,11 @@
 
 import { cardState, chartMarkup, cut, emptyMarkup, epaOf, numberFor, pageMarkup, tagTextFor, textAt } from '../../core/competition-draw.js';
 
-// The teams are listed to the right of the number, four at most, in rows of 100 px: the number and
-// the EPA on one line and the nickname under them
+// The teams are listed to the right of the number, four at most, in rows of 110 px: the number and
+// the EPA on one line and the nickname under them (64px and 44px). Four rows still end above the event name at the foot of the card
 const LIST_LEFT = 420;
-const ROW_FIRST = 16;
-const ROW_HEIGHT = 100;
+const ROW_FIRST = 8;
+const ROW_HEIGHT = 110;
 const MOST = 4;
 const NICKNAME_FITS = 20;
 const EVENT_FITS = 36;
@@ -23,10 +23,10 @@ function rowParts(person, index, entry) {
   const epa = epaOf(person, entry);
   const parts = [];
 
-  if (person.number === entry.number) parts.push(`<rect class="ours" x="${LIST_LEFT - 16}" y="${top + 2}" width="${1096 - LIST_LEFT + 16}" height="${ROW_HEIGHT - 4}"/>`);
-  parts.push(textAt(LIST_LEFT, top + 56, person.number, 'team'));
-  if (epa !== null) parts.push(textAt(1096 - 12, top + 54, numberFor(epa), 'epa', 'end'));
-  if (person.nickname) parts.push(textAt(LIST_LEFT, top + 92, cut(person.nickname, NICKNAME_FITS), 'nickname'));
+  if (person.number === entry.number) parts.push(`<rect class="ours" x="${LIST_LEFT - 16}" y="${top - 8}" width="${1096 - LIST_LEFT + 16}" height="${ROW_HEIGHT + 6}"/>`);
+  parts.push(textAt(LIST_LEFT, top + 52, person.number, 'team'));
+  if (epa !== null) parts.push(textAt(1096 - 12, top + 50, numberFor(epa), 'epa', 'end'));
+  if (person.nickname) parts.push(textAt(LIST_LEFT, top + 98, cut(person.nickname, NICKNAME_FITS), 'nickname'));
   return parts;
 }
 

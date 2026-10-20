@@ -5,6 +5,7 @@
 // core/event-pages.js from the list in core/events.js, already filtered and sorted.
 
 import { rowBarMarkup } from '../../core/plate.js';
+import { pageWidth } from '../../core/page-width.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { eventDate, timeText } from '../../core/events.js';
@@ -85,7 +86,7 @@ function rowMarkup(row, atFoot, timeZone) {
 
   return `
     <div class="row" data-slat="item">
-      ${atFoot ? '' : rowBarMarkup(1124)}
+      ${atFoot ? '' : rowBarMarkup(pageWidth() - 28)}
       <div class="date">
         <div class="day-name">${date.weekday}</div>
         <div class="month-day">${date.monthDay}</div>

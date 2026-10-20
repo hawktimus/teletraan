@@ -180,6 +180,9 @@ html[data-style="foundry"] .tag-plate .edge-face { stroke: url(#theme-steel); }
 html[data-style="foundry"] .banner .team-plate span,
 html[data-style="foundry"] .banner .team-plate b,
 html[data-style="foundry"] .ticker .tag span { color: var(--style-header-ink); }
+/* The team plate of the sidebar is drawn in the main color too */
+html[data-style="foundry"][data-layout="sidebar"] .side-team span,
+html[data-style="foundry"][data-layout="sidebar"] .side-team b { color: var(--style-header-ink); }
 
 /* The background: a dark floor with a grain, the work light, two creeping bands of hazard stripes along the top and
    the bottom edge, six specks of dust and a hook that crosses the rail now and then */
@@ -264,3 +267,4 @@ html:not([data-motion="full"]) .art-foundry .fa-piston-rod { animation: none; }
 /* The header plate of Foundry is steel, not the main color of the team, so the title keeps the team's text color:
    the header ink of a team (dark on Nova's gold) is for the plates that are drawn in the main color. */
 html[data-style="foundry"] .area .header .title { color: var(--team-text); }
+html[data-style="foundry"][data-layout="standard"] .area .page > .label { color: var(--team-text); }

@@ -10,6 +10,7 @@ import { logoFields } from './settingsLogo.js';
 import { transitionsFields } from './settingsTransitions.js';
 import { photosFields, portraitFieldsets } from './settingsPhotos.js';
 import { nightFields } from './settingsNight.js';
+import { rebootFields } from './settingsReboot.js';
 import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields } from './settingsTeams.js';
@@ -49,6 +50,7 @@ const sectionFieldsets = [
   { name: 'banner', title: 'Banner', description: 'The big title across the banner while the Robotics rows play.', options: open },
   { name: 'presentations', title: 'Presentations', description: 'Booked talks take the whole screen at their start time. Turn them off to keep the screen as it is.', options: open },
   { name: 'night', title: 'Night mode', description: 'The screen at night, from 23:30 to 11:30: a bouncing logo or a dark screen.', options: open },
+  { name: 'reboot', title: 'Scheduled reboot', description: 'Reboot the Teletraan computer at a time of day. The control page, Settings, shows the same values.', options: open },
   { name: 'hiddenTransitions', title: 'Hidden transitions', description: 'The desktop reveal and the red eyes, which come about once every few hours of screen time.', options: open },
   { name: 'other', title: 'Other', description: 'The connection text at the bottom of the screen, and fields kept for the older versions.', options: open },
 ];
@@ -59,6 +61,7 @@ const sectionOf = {};
 sectionOf.generalViewTitle = 'banner';
 presentationsFields().concat([presentationTestRequestField()]).forEach(field => { sectionOf[field.name] = 'presentations'; });
 nightFields().forEach(field => { sectionOf[field.name] = 'night'; });
+rebootFields().forEach(field => { sectionOf[field.name] = 'reboot'; });
 hiddenFields().forEach(field => { sectionOf[field.name] = 'hiddenTransitions'; });
 ['rotationRows', 'showConnectionStatus', 'contentSource'].forEach(name => { sectionOf[name] = 'other'; });
 
@@ -444,6 +447,7 @@ export default defineType({
     ...presentationsFields(),
     presentationTestRequestField(),
     ...nightFields(),
+    ...rebootFields(),
     ...hiddenFields(),
     calendarsField,
     groupEventsByKindField,

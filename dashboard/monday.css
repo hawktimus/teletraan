@@ -84,7 +84,10 @@
    width, and the rule here says it for the cards. styles/minimal.css leaves out the weld seam, which
    stands where the narrow page ends. The standard layout and the sidebar layout have no rule here. */
 html[data-layout="bar"] .monday .header { width: var(--bar-area-width); }
-html[data-layout="bar"] .monday .body { width: calc(var(--bar-area-width) - 48px); }
+html[data-layout="bar"] .monday .body {
+  left: 40px; /* the metal of this frame is thicker than the standard one, and 24 left a bolt over the numbers at the right */
+  width: calc(var(--bar-area-width) - 80px);
+}
 
 /* The status chip in the five status colours. In review is the gold that the Prime tag has, and stuck is the red. The
    30px text of a chip is the one size under 44px that a chip has, and the word is there for anyone who cannot tell the

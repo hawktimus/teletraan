@@ -52,6 +52,15 @@
      "xpMax": 85.78,
      "sos": 0.97,
      "districtPoints": 60
+    },
+    {
+     "eventKey": "2027ncsa1",
+     "xpStart": 52.5,
+     "xpEnd": 61.17,
+     "xpMean": 57.0,
+     "xpMax": 61.17,
+     "sos": 0.33,
+     "districtPoints": 47
     }
    ]
   },
@@ -68,7 +77,17 @@
    "epa": 44.0,
    "opr": 40.0,
    "dpr": 50.0,
-   "history": []
+   "history": [
+    {
+     "eventKey": "2027ncsa1",
+     "xpStart": 38.0,
+     "xpEnd": 44.2,
+     "xpMean": 41.5,
+     "xpMax": 44.2,
+     "sos": 0.4,
+     "districtPoints": 21
+    }
+   ]
   }
  },
  "events": {
@@ -385,6 +404,93 @@
       "6908": 13.04,
       "7918": 50.71,
       "11417": 28.89
+     }
+    }
+   ],
+   "notes": []
+  },
+  "2027ncsa1": {
+   "sim": null,
+   "field": {
+    "teamCount": 36,
+    "average": 38.4,
+    "top": [
+     {
+      "teamNumber": 3229,
+      "xp": 61.17,
+      "xAuto": 11.81,
+      "xTele": 48.88,
+      "xEnd": 0.49,
+      "epa": 57.71,
+      "sos": 0.33,
+      "rank": 6
+     },
+     {
+      "teamNumber": 3426,
+      "xp": 44.2,
+      "xAuto": 9.0,
+      "xTele": 35.0,
+      "xEnd": 0.2,
+      "epa": 44.0,
+      "sos": 0.4,
+      "rank": 17
+     }
+    ]
+   },
+   "matches": [
+    {
+     "key": "2027ncsa1_qm13",
+     "unplayed": true,
+     "pred": {
+      "winProb": 0.46,
+      "redScore": 58.2,
+      "blueScore": 61.7,
+      "redRp1": 0.3,
+      "redRp2": 0.1,
+      "redRp3": 0.0,
+      "blueRp1": 0.4,
+      "blueRp2": 0.1,
+      "blueRp3": 0.0
+     },
+     "teams": {
+      "3426": 44.2
+     }
+    },
+    {
+     "key": "2027ncsa1_qm14",
+     "unplayed": true,
+     "pred": {
+      "winProb": 0.64,
+      "redScore": 71.5,
+      "blueScore": 55.9,
+      "redRp1": 0.5,
+      "redRp2": 0.1,
+      "redRp3": 0.0,
+      "blueRp1": 0.2,
+      "blueRp2": 0.0,
+      "blueRp3": 0.0
+     },
+     "teams": {
+      "3229": 61.17,
+      "3426": 44.2
+     }
+    },
+    {
+     "key": "2027ncsa1_sf2m1",
+     "unplayed": true,
+     "pred": {
+      "winProb": 0.55,
+      "redScore": 88.0,
+      "blueScore": 79.4,
+      "redRp1": null,
+      "redRp2": null,
+      "redRp3": null,
+      "blueRp1": null,
+      "blueRp2": null,
+      "blueRp3": null
+     },
+     "teams": {
+      "3229": 61.17
      }
     }
    ],

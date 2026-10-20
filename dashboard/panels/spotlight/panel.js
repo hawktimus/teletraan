@@ -2,6 +2,7 @@
 // it has been doing. Each time the panel comes round it is the next subteam.
 
 import { cardMarkup } from '../../core/plate.js';
+import { pageWidth } from '../../core/page-width.js';
 import { doubleSlash } from '../../core/marks.js';
 import { escapeHtml } from '../../core/text.js';
 import { visibleItems } from '../../core/content.js';
@@ -32,7 +33,7 @@ export function mount(host, content) {
 
       <div class="story">
         <div class="name" data-slat="item">
-          ${cardMarkup(1096, 128)}
+          ${cardMarkup(pageWidth() - 56, 128)}
           <div class="name-text">${escapeHtml(subteam.name)}</div>
         </div>
         <div class="details">

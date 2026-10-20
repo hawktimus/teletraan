@@ -8,7 +8,7 @@ The Studio has two ways in: the Studio button on the landing page and in the hea
 
 The page has three tabs, Status, Display and Settings, and the Studio button in the header. Display is where the team builds the order the wall plays (see The Display tab below).
 
-Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has four folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links), Monday (Check the token, and Monday debug, which shows how Monday answers for one board number) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open.
+Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has five folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links), Monday (Check the token, and Monday debug, which shows how Monday answers for one board number), Scheduled reboot (the time of day the computer reboots, below) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open, and so does `#settings/reboot`.
 
 ### Two layouts, one page
 
@@ -110,11 +110,39 @@ What it writes. Save to draft writes only the fields you changed, to the draft o
 
 Two people at once. The page remembers the revision it loaded. Before every save and every publish the service reads Dashboard Settings again and compares. When the Studio changed it in between, nothing is written and the page asks: Replace the Studio copy, Refresh from Sanity and drop my changes, or Keep editing. The write also names the revision it replaces, so a Studio edit in the last second is caught by Sanity itself. While the tab is open it checks the revision every minute and says when the Studio copy is newer.
 
-What the wall would do with each row. Under each row the tab says Will show now, Skipped now with the reason, or Off, and lists the items it would draw: Monday tasks, FRC news posts, events and, for the Competition: Rank row, the TBA rank and next match. The answer is not a copy of the rules. The service builds the content the way the wall does (the same query and cleaning in `dashboard/core/sanity.js`), asks `viewSteps` for the steps of the row and the `hasContent` of the panel, which are the functions the wall asks, so a rule changed in the dashboard changes the tab too. The checks use the published content, with the row as it is on the page. It is read again at most once a minute.
+What the wall would do with each row. Under each row the tab says Will show now, Skipped now with the reason, or Off, and lists the items it would draw: Monday tasks, FRC news posts, events and, for the Competition: Rank row, the TBA rank and next match, and for the Competition: Team metrics row one line for each page of the card with its first numbers. The answer is not a copy of the rules. The service builds the content the way the wall does (the same query and cleaning in `dashboard/core/sanity.js`), asks `viewSteps` for the steps of the row and the `hasContent` of the panel, which are the functions the wall asks, so a rule changed in the dashboard changes the tab too. The checks use the published content, with the row as it is on the page. It is read again at most once a minute.
 
 Where the data is. Monday tasks, FRC news and the TBA data (the `frc-status` document) are Sanity documents the Teletraan computer writes, so the service reads them from Sanity as the wall does. The calendar files and `match13.json` are files in the data folder, which the control service has read only. Competition data at the foot of the tab lists the TBA ranks and the Match13 matches. Match13 never goes to Sanity: the service reads `match13.json` and sends it only to this page, behind the PIN. `tests/control-display.test.mjs` checks that a save and a publish carry none of it.
 
 The calls are `GET /control/api/display`, `GET /control/api/display/rev`, `POST /control/api/display/check`, `POST /control/api/display/save` and `POST /control/api/display/publish`.
+
+## The Scheduled reboot section
+
+Settings has a section, Scheduled reboot, for the reboot of the Teletraan computer at a time of day. It is off to start with. The card shows two lines at the top, `Next reboot: Tue 03:30` and `Last reboot: 3 hours ago (Tue 03:30, as scheduled)`, then Reboot on a schedule (the switch), Reboot at (the time, 24 hour), Reboot on (the days, Sunday to Saturday), Not while a talk, an alert or an announcement is playing, and Wait up to (minutes), then reboot anyway (1 to 120, 30 to start with). The time is read in the time zone of the Look page.
+
+The Studio is the source of truth, and the card shows the same values: Dashboard Settings, Advanced, Scheduled reboot has the same five fields, with the same two lines at the top. Both write the same stored fields of Dashboard Settings (`rebootEnabled`, `rebootTime`, `rebootDays`, `rebootSkipBusy` and `rebootWaitMinutes`), so a change in one shows in the other. The card follows the pattern of the Display tab:
+
+- Save to draft writes only these fields to the draft of Dashboard Settings. It checks the revision first and asks before it replaces a newer Studio edit.
+- Publish asks first, because a publish puts every waiting change of Dashboard Settings on the wall, including edits made in the Studio. The service refuses a publish that does not say `confirm: true`. The page, not the service, asks the owner.
+- The timer reads the published setting, so nothing changes on the computer until it is published.
+
+`GET /control/api/reboot`, `POST /control/api/reboot/save` and `POST /control/api/reboot/publish` are the calls (`control/routes/reboot.js`). The write key stays on the Teletraan computer and is never in an answer.
+
+### How the computer decides
+
+`teletraan-reboot.timer` wakes `computer/scripts/scheduled-reboot.sh` every 5 minutes. The script reads the five fields, the time zone of the Look page and what could hold the screen (an alert, an announcement that is up, a booked talk) from Sanity, which is public and needs no key. It keeps the last good setting in `reboot/setting.json` in the data folder, so when Sanity cannot be reached it goes on with the last known setting. When Sanity cannot be asked what is playing, the reboot goes ahead on schedule. `computer/scripts/reboot-plan.mjs` decides, and the script reboots with `sudo systemctl reboot`, the command the helper uses and the sudoers file allows.
+
+- The slot is the scheduled time of the day on a ticked day, worked out in the time zone of the screen, so the time holds across the days the clocks change.
+- A slot is acted on within 10 minutes of its time. A slot that was missed because the computer was off is not made up.
+- The setting has to have been in effect before the slot. A time published at 03:36 does not reboot for the 03:30 of that day.
+- With the skip rule on, a talk (from 10 minutes before it starts to the end of its minutes plus the wait and the overrun), an alert or an announcement makes the run wait, and it reboots anyway after the wait.
+- Guards: a slot is used once, and the state file is written before the reboot. No reboot within 10 minutes of boot, and none within 6 hours of the last reboot, whoever made it (the uptime counts, so the Sunday reboot of `nightly.sh` is also a gap). A reboot the system refuses is not tried again every 5 minutes.
+- One plain line goes to the journal for each run: `scheduled reboot: rebooting for Tue 03:30.` Read it with `journalctl -u teletraan-reboot.service`.
+- The next and the last reboot go to the document `status-mini` (`nextRebootAt`, `nextRebootText`, `lastRebootAt`, `lastRebootWhy`) by `status-write.sh reboot`, and only when they changed.
+
+The Sunday reboot at 04:10 that `nightly.sh` makes is a separate thing and stays. Pick a time for the scheduled reboot that is not 04:10 on a Sunday. If the two fall within 6 hours of each other, the later one is skipped.
+
+To turn it on, see docs/updating-the-computer.md ("Turn on the scheduled reboot").
 
 ## On a phone
 
@@ -132,7 +160,7 @@ Do these once, in this order. The team mentor says yes to the Docker downloads i
    - starts the web server and the control service with `docker compose`, run as root, and turns on the nightly timer.
 
    The tool then installs the services and timers and restarts the screen (docs/updating-the-computer.md).
-2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. If you open the Studio on port 3426, add `http://teletraan.local:3426` and `http://<tailscale name>:3426` too, because Sanity checks the address exactly as the browser shows it. The Status tab says "CORS origin missing" until this is done, and then names the 3426 address as well.
+2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. If you open the Studio on port 3426, add `http://teletraan.local:3426` and `http://<tailscale name>:3426` too, because Sanity checks the address exactly as the browser shows it. The Status tab says "CORS origin missing" until this is done, and then names the 3426 address as well. On a shared Wi-Fi, leave Allow credentials off for the teletraan.local addresses and use the Tailscale name: a page on plain HTTP can be changed on the way, and with credentials allowed it could act as the signed-in editor (docs/security-review.md).
 3. Open the address above and type the PIN: 3229 or 3426. Nothing has to be set up for it.
 
 Release 1 is the old tree. It stays in the list as a record. It cannot be switched back to, because its folders are from before round 6.

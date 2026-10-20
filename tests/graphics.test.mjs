@@ -266,7 +266,7 @@ await test('a hex color is written in the tokens, the tokens of a theme, a theme
       // a link to an id, such as url(#edge-gold) or href="#screw-shape", is not a color
       const before = text.slice(Math.max(0, match.index - 8), match.index);
       if (/url\(['"]?$|href=["']$|&$/.test(before)) continue;
-      problems.push(relative(file) + ':' + lineOf(text, match.index) + ' writes ' + match[0] + '. Add it to tokens.css as a variable');
+      problems.push(relative(file) + ':' + lineOf(text, match.index) + ' writes the color ' + match[0] + '. Colors are written only in the token files. Use var(--name) of a token that is there (dashboard/tokens.css, dashboard/themes/hawktimus.css), or add a token to the token file and use that');
     }
   });
   assert.deepEqual(problems, []);

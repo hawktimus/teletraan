@@ -1,6 +1,7 @@
 // Runs every test of the repository and prints one line for each file and a total.
 //
 //   node tests/run.mjs            every tests/**/*.test.mjs, the syntax of every shell file, and the motion tests
+//   node tests/run.mjs --quick    the edit loop: every test except the slow ones, in about 30 seconds (docs/your-first-change.md)
 //   node tests/run.mjs calendar   only the files whose path holds "calendar"
 //   node tests/run.mjs motion     only the motion tests (tests/motion/README.md)
 //
@@ -15,10 +16,23 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const testsFolder = path.join(root, 'tests');
-const filter = process.argv[2] || '';
+const quick = process.argv.includes('--quick');
+const filter = process.argv.slice(2).filter(word => !word.startsWith('--'))[0] || '';
 const most = 3;
 const timeLimit = 600 * 1000;
+const quickLimit = 25 * 1000; // --quick stops a test that is slower than this and says it was left out
 const motionTimeLimit = 3600 * 1000; // a real browser plays every transition
+
+// What --quick leaves out: the tests that take 2.5 seconds or more, which build a fake Mini, copy the dashboard or run the
+// sync scripts. They check the Mini and the Studio's pages, not the files a student edits on the dashboard. The seconds are
+// from a full run on a Mac. A new test that is slow (more than 2.5 seconds on its own) is added here.
+const slowTests = [
+  'backup-dataset', 'build-version', 'calendar-status', 'check-calendars', 'check-connection', 'control-helper', 'display', 'effects',
+  'frc-event', 'frc-field', 'frc-sync', 'git-hook', 'install-calendars', 'install-console', 'install-sh', 'layouts', 'match13-sync',
+  'mirror', 'monday-sync', 'news-sync', 'nightly', 'no-old-code', 'panel-b', 'photos-drive', 'seasons', 'ship', 'slides-sync',
+  'status-write', 'swap-smooth', 'sweep', 'team-colors', 'team-name', 'teletraan-tool', 'teletraan-tool-commands', 'templates',
+  'theme-view-requests', 'watchdog',
+].map(name => name + '.test.mjs');
 
 function walk(folder, found, skip) {
   for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
@@ -42,20 +56,35 @@ function passCount(text) {
   return lines.filter(line => /^(ok|PASS)\b/.test(line)).length;
 }
 
+// The lines of a failing test worth reading: each FAIL line with the lines under it, up to the next ok, PASS or FAIL line or
+// ten lines (the message comes first), 24 lines in all. A test that prints no FAIL line shows its last 12 lines.
+function failureLines(output) {
+  const lines = output.trim().split('\n');
+  const wanted = new Set();
+  lines.forEach((line, index) => {
+    if (!/^(FAIL|not ok)\b/.test(line)) return;
+    for (let at = index; at < Math.min(index + 10, lines.length) && !(at > index && /^(ok|PASS|FAIL)\b/.test(lines[at])); at++) wanted.add(at);
+  });
+  return wanted.size > 0 ? lines.filter((line, index) => wanted.has(index)).slice(0, 24) : lines.slice(-12);
+}
+
 function runTest(file, limit = timeLimit) {
   return new Promise(resolve => {
     const started = Date.now();
-    const child = spawn(process.execPath, [file], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+    // TELETRAAN_RUNNER makes the tests of the house rules write only the first problems of a rule
+    const child = spawn(process.execPath, [file], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: Object.assign({}, process.env, { TELETRAAN_RUNNER: '1' }) });
     let output = '';
+    let timedOut = false;
     child.stdout.on('data', chunk => { output += chunk; });
     child.stderr.on('data', chunk => { output += chunk; });
     const timer = setTimeout(() => {
+      timedOut = true;
       output += '\nStopped after ' + limit / 1000 + ' seconds.\n';
       child.kill('SIGKILL');
     }, limit);
     child.on('close', code => {
       clearTimeout(timer);
-      resolve({ name: path.relative(testsFolder, file), code: code, output: output, seconds: (Date.now() - started) / 1000 });
+      resolve({ name: path.relative(testsFolder, file), code: code, output: output, seconds: (Date.now() - started) / 1000, timedOut: timedOut });
     });
   });
 }
@@ -134,30 +163,34 @@ async function main() {
   const motionOnly = filter === 'motion';
   const files = motionOnly ? [] : walk(testsFolder, [], ['helpers', 'data'])
     .filter(file => file.endsWith('.test.mjs') && path.relative(testsFolder, file).includes(filter))
+    .filter(file => !quick || !slowTests.includes(path.basename(file)))
     .sort();
   const wide = Math.max(...files.map(file => path.relative(testsFolder, file).length), 30);
   const queue = files.slice();
   const results = [];
   let failed = 0;
   let checks = 0;
+  const skipped = [];
 
   function report(result) {
     const name = result.name.padEnd(wide);
-    if (result.code === 0) {
+    if (quick && result.timedOut) {
+      skipped.push(result.name);
+      console.log('skip  ' + name + '  slower than ' + quickLimit / 1000 + 's, left out of --quick. Add it to slowTests in tests/run.mjs');
+    } else if (result.code === 0) {
       const passed = passCount(result.output);
       checks += passed;
       console.log('ok    ' + name + '  ' + String(passed).padStart(5) + ' passed  ' + result.seconds.toFixed(1) + 's');
     } else {
       failed++;
       console.log('FAIL  ' + name + '  exit ' + result.code + '  ' + result.seconds.toFixed(1) + 's');
-      const last = result.output.trim().split('\n').slice(-12);
-      last.forEach(line => console.log('      ' + line));
+      failureLines(result.output).forEach(line => console.log('      ' + line));
     }
   }
 
   async function worker() {
     while (queue.length > 0) {
-      const result = await runTest(queue.shift());
+      const result = await runTest(queue.shift(), quick ? quickLimit : timeLimit);
       results.push(result);
       report(result);
     }
@@ -177,7 +210,7 @@ async function main() {
     }
   }
 
-  if (filter === '' || motionOnly) {
+  if ((filter === '' && !quick) || motionOnly) {
     const motion = await runMotion(wide);
     failed += motion.failed;
     checks += motion.checks;
@@ -186,6 +219,7 @@ async function main() {
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
   console.log('');
   console.log(results.length + ' files, ' + checks + ' checks passed, ' + failed + ' failed, ' + seconds + 's');
+  if (quick) console.log('Quick run: ' + (slowTests.length + skipped.length) + ' slow tests and the motion tests were left out. Run node tests/run.mjs before you ship.');
   process.exit(failed > 0 ? 1 : 0);
 }
 

@@ -675,14 +675,19 @@ little under the 1484 of the panel. The area is what is scaled, and not
 their own and would drop a scale set on it.
 
 The panels keep their rows, their line limits and their rules, and show no more
-content than they did: only the text is bigger, by 3.95 percent. **No panel stretches
-to the extra width, except the Monday cards.** The page keeps the width it was written for, 1152, which is 1197
-on the screen, at the left of the panel, and the 286 px at the right of it are used by nothing but the header of every panel
-and the Monday cards. This is the least invasive way, because no panel has to change, and
-it is the only one that never shows a panel in two widths. The Monday cards are the one
-exception, because the owner asked for them to fill the panel: see "The Monday panels" below. A width variable could
-stretch a panel's boxes, but every panel has a part that is drawn by the code at a
-fixed length, and a variable cannot reach that:
+content than they did: only the text is bigger, by 3.95 percent.
+
+**Which panels fill the width.** The pages used to keep the width they were written for, 1152, and
+leave the 286 px at the right of the panel empty. Now the panels made of rows (Tasks, Events, Agenda,
+FRC news, Leadership, Team leads, Roster) and the two story panels (Spotlight, Sponsor) fill the
+panel, and so do the Monday cards. The width they use is `--page-width` (`layouts/bar.css`): the width of the area less 32, so the rows stop clear of
+the metal at the right end. In the standard layout it is 1152 and nothing changes. A bar or a card
+that the code draws takes its length from `pageWidth()` in `core/page-width.js`. The cards of the
+competition and the Extra panels are drawn at a fixed size, so they stand in the middle of the panel. The weld
+seam that used to mark the end of the 1152 is not drawn, because no page ends there now.
+
+The table says where each panel fixed its lengths. The panels named above now take those lengths
+from `--page-width` and `pageWidth()`, and the others keep them:
 
 | Panel | Fixed in the stylesheet | Fixed in the code |
 |-------|-------------------------|-------------------|

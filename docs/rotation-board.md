@@ -77,6 +77,9 @@ in, and whether the same panel can also be a row.
 - The seven competition cards: Next match, Live rank, Results strip (the last matches, also called Match Statistics), Alliance
   board, Season timeline, District points and Last season at a glance. In Auto they come in from 2 days before an event. Only
   Live rank can also be a row (Competition: Rank).
+- Three more cards: Team metrics (one team, a page at a time: the season, the Match13 rating, the next match, the last results),
+  Compare (Prime and Nova side by side) and the Match13 cards. Team metrics, Compare, Event preview, Our matches and Event recap come in
+  Before and after and in Always, and not in Auto. Team metrics can also be a row (Competition: Team metrics), with the team of the row.
 - Above them, the mode of Dashboard Settings (Auto, Always or Off) with a link to the Competition page, and one line from the
   frc-status document the Mini writes, such as Next event: Wake on 12 March 2027: the cards start on 10 March 2027. With no
   event ahead it says No event is coming up: the cards are off.

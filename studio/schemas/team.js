@@ -16,6 +16,8 @@
 // Bird pose is hidden too and the screen ignores it: the icon is always the usual mark, whatever a team stored.
 
 import { defineType, defineField } from 'sanity';
+import { limits } from './limits.js';
+import { colorTrouble } from '../tools/content-rules.js';
 import { tooLong, byOrder, aToZ, subtitleFor } from './fields.js';
 import { TeamColorsInput } from '../inputs/team-colors-input.js';
 
@@ -90,14 +92,14 @@ export default defineType({
       title: 'Team name',
       type: 'string',
       description: 'The team name shown in the banner, for example Team Name. Up to 20 characters fit.',
-      validation: Rule => [Rule.required().error('Give the team a name.'), tooLong(Rule, 20)],
+      validation: Rule => [Rule.required().error('Give the team a name.'), tooLong(Rule, limits.teamName)],
     }),
     defineField({
       name: 'number',
       title: 'Team number',
       type: 'string',
       description: 'Optional. The FRC team number, for example 1234. Up to 6 characters fit.',
-      validation: Rule => tooLong(Rule, 6),
+      validation: Rule => tooLong(Rule, limits.teamNumber),
     }),
     defineField({
       name: 'logo',
@@ -216,6 +218,11 @@ export default defineType({
       validation: Rule => Rule.integer().error('Use a whole number such as 1, 2 or 3.'),
     }),
   ],
+  // Colors that cannot be read from across the room are a warning on the Colors box, not a refusal
+  validation: Rule => Rule.custom(team => {
+    const found = colorTrouble(team && team.colors)[0];
+    return found ? { message: found.message, paths: [['colors', found.field]] } : true;
+  }).warning(),
   orderings: [byOrder, aToZ('name')],
   preview: {
     select: { title: 'name', number: 'number', mirror: 'mirror', active: 'active', media: 'logo' },

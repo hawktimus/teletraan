@@ -330,15 +330,15 @@ test('the Studio and the control page have the same department, list, chart and 
   });
 });
 
-test('the tables of the Monday page in the Studio list the open tasks in the order of the panel', async () => {
+test('the tables of the Monday page in the Studio are the rows of the panel, from the same code', async () => {
   const page = await studio('inputs/monday-page-parts.js');
   const tasks = [
     task({ title: '[a]', status: 'up-next', dueDate: '2026-10-16' }), task({ title: '[b]', status: 'blocked' }), task({ title: '[c]', status: 'in-progress', dueDate: undefined }),
     task({ title: '[d]', status: 'in-review', contact: undefined, priority: undefined }), task({ title: '[e]', list: 'done', status: 'done', completedOn: '2026-10-02' }),
   ];
   const wall = views.departmentView(contentOf(tasks), now, { department: 'build', list: 'open' }).rows;
-  const table = page.departmentTables(tasks, now).find(entry => entry.value === 'build');
-  assert.deepEqual(table.rows.slice(0, 4).map(row => [row.project, row.contact, row.priority, row.date]), wall.map(row => [row.project, row.contact, row.priority, row.date]));
+  const table = page.departmentTables(page.contentOf({ tasks: tasks }), '', now).find(entry => entry.value === 'build');
+  assert.deepEqual(table.openRows, wall);
   assert.deepEqual([table.open, table.done], [4, 1]);
 });
 

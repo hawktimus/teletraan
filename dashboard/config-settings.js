@@ -265,6 +265,8 @@ export const defaultSettings = {
   competitionRecap: true,
   competitionForecast: true,
   competitionQualify: true,
+  competitionTeamMetrics: true,
+  competitionCompare: true,
   // The FRC news (the FRC news section of the Competition page in the Studio, core/news.js, docs/frc-news.md).
   //   newsEnabled       the FRC news panel plays when a Rotation row names it, and the Teletraan computer reads the blog
   //   newsCategories    the headlines kept: those with any of these categories of the FIRST blog (the computer applies it)

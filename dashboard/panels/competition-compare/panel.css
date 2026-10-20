@@ -1,0 +1,101 @@
+/* The header sits on top of the two header plates of the area's frame */
+.competition-compare .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.competition-compare .title {
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.competition-compare .tag {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--yellow);
+  font: 600 var(--size-label)/44px var(--font-display);
+}
+/* The words are cut off with an ellipsis before they can reach the notch in the middle of the header. */
+.competition-compare .tag-text {
+  min-width: 0;
+  max-width: 289px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.competition-compare .tag .double-slash { flex: none; }
+
+/* The body is 1096 x 512, 28px in from the frame and 136px down, the room the Extra panels have. The chart
+   in it is an SVG of the same size, so a font size here is the size on the screen. */
+.competition-compare .body {
+  position: absolute;
+  left: 28px;
+  top: 136px;
+  width: 1096px;
+  height: 512px;
+}
+.competition-compare .chart { display: block; }
+
+/* One sentence in place of the chart, when there is nothing to show */
+.competition-compare .empty {
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  color: var(--lilac);
+  font: 500 var(--size-body)/72px var(--font-text);
+}
+
+
+/* Pages one above the other. The window shows one, and frame.js (scrollCard) moves the list up by 512px to show the next. */
+.competition-compare { --scroll-step: 512px; }
+.competition-compare .window {
+  width: 1096px;
+  height: 512px;
+  overflow: hidden;
+}
+
+/* The line under the title, then rows of a label on the left and a number on the right. A missing number says NOT YET. */
+.competition-compare .sub {
+  fill: var(--yellow);
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-compare .label {
+  fill: var(--lilac);
+  font: 600 var(--size-label)/48px var(--font-display);
+}
+.competition-compare .none {
+  fill: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+
+/* Each team's numbers are in its own color: the page sets --compare-first and --compare-second from the Team documents
+   (mount in panel.js), and the accent of the team on the screen is what shows until it has. */
+.competition-compare .first {
+  fill: var(--compare-first, var(--yellow));
+  font: 700 var(--size-body)/60px var(--font-display);
+}
+.competition-compare .second {
+  fill: var(--compare-second, var(--white));
+  font: 700 var(--size-body)/60px var(--font-display);
+}
+/* The names of the teams above their columns */
+.competition-compare .head-first {
+  fill: var(--compare-first, var(--yellow));
+  font: 700 var(--size-label)/48px var(--font-display);
+}
+.competition-compare .head-second {
+  fill: var(--compare-second, var(--white));
+  font: 700 var(--size-label)/48px var(--font-display);
+}

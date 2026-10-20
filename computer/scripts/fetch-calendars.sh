@@ -129,6 +129,25 @@ fetch_one() {
     return 1
   fi
 
+  # The file is served to anyone on the Wi-Fi, and the screen reads only the title, place, times and repeat rules.
+  # Notes, guest lists, organizers and links never leave this computer. A folded line (one that starts with a space or
+  # a tab) goes with the property above it.
+  stripped=$(mktemp "$folder/.download.XXXXXX")
+  chmod 644 "$stripped"
+  if awk '
+    /^[ \t]/ { if (!skip) print; next }
+    { name = $0; sub(/[;:].*/, "", name); sub(/\r$/, "", name); name = toupper(name)
+      skip = (name ~ /^(DESCRIPTION|ATTENDEE|ORGANIZER|ATTACH|CONTACT|URL|COMMENT|X-ALT-DESC|CONFERENCE|IMAGE|GEO|RELATED-TO|X-GOOGLE-CONFERENCE)$/)
+      if (!skip) print }
+  ' "$temp" > "$stripped" && grep -q 'END:VCALENDAR' "$stripped"; then
+    mv -f "$stripped" "$temp"
+  else
+    rm -f "$stripped"
+    reason="the calendar could not be cleaned"
+    echo "calendar $id: $reason. Keeping the old file." >&2
+    return 1
+  fi
+
   mv -f "$temp" "$folder/$id.ics"
   echo "calendar $id: updated"
 }

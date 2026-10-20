@@ -13,6 +13,8 @@ const jwt = /\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g;
 const calendarLink = /\b(?:webcal:\/\/\S+|https?:\/\/\S*(?:\.ics|calendar|band\.us)\S*)/gi;
 // A secret in the query of a link
 const queryKey = /([?&](?:token|key|api_key|apikey|secret|auth|sig|signature|password)=)[^&\s"']+/gi;
+// Keys that carry their kind in their first letters: Google, AWS and GitHub, shorter than a long token
+const providerKey = /\b(?:AIza[0-9A-Za-z_-]{30,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,})/g;
 // Any long run of letters, digits, dashes and underscores looks like a token
 const longToken = /\b[A-Za-z0-9_-]{40,}\b/g;
 
@@ -23,6 +25,7 @@ export function redactLine(line) {
     .replace(calendarLink, hidden)
     .replace(queryKey, '$1' + hidden)
     .replace(jwt, hidden)
+    .replace(providerKey, hidden)
     .replace(longToken, hidden);
 }
 

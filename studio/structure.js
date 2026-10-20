@@ -1,6 +1,6 @@
 // The sidebar. To change the order, move a line in sidebarEntries below. It goes by what is on the screen: Start here,
 // Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition, and under the heading
-// COACHES ONLY Dashboard Settings, Extra panels and Kept data. docs/studio-map.md says what lives where.
+// COACHES ONLY Dashboard Settings, Extra panels, Check the screen and Kept data. docs/studio-map.md says what lives where.
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
 // here either: they come from the team's Monday boards, and the Monday page shows them, read only. The task and
@@ -42,6 +42,7 @@ import { BellIcon } from '@sanity/icons/Bell';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
+import { CheckmarkCircleIcon } from '@sanity/icons/CheckmarkCircle';
 import { CubeIcon } from '@sanity/icons/Cube';
 import { DesktopIcon } from '@sanity/icons/Desktop';
 import { DiamondIcon } from '@sanity/icons/Diamond';
@@ -72,6 +73,7 @@ import { screenType, screenStyles, screenIdOf } from './inputs/screen-ids.js';
 import { LookView } from './inputs/look-view.js';
 import { CompetitionView } from './inputs/competition-view.js';
 import { KeptDataView } from './inputs/kept-data-view.js';
+import { CheckScreenView } from './inputs/check-screen-view.js';
 import { targetOf as keptTargetOf } from './inputs/kept-data-parts.js';
 import { RotationView } from './inputs/rotation-board-view.js';
 import { TodayView } from './inputs/today-view.js';
@@ -188,6 +190,7 @@ export const sidebarEntries = [
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
+  { kind: 'component', title: 'Check the screen', id: 'checkScreen', icon: CheckmarkCircleIcon, component: CheckScreenView },
   { kind: 'component', title: 'Kept data', id: 'keptData', icon: StackIcon, component: KeptDataView, children: keptChildren },
 ];
 

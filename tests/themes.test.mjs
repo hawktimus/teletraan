@@ -162,6 +162,25 @@ test('dateIn gives the year, month and day in a zone, and isTimeZone knows the n
   assert.equal(tidyTheme({ timeZone: 'Asia/Tokyo' }).timeZone, 'Asia/Tokyo');
 });
 
+test('dateIn makes one formatter for a zone and not one for each call (the screen asks every second)', () => {
+  const RealFormat = Intl.DateTimeFormat;
+  let made = 0;
+  Intl.DateTimeFormat = function (...args) {
+    made += 1;
+    return new RealFormat(...args);
+  };
+  try {
+    for (let i = 0; i < 50; i++) dateIn('Pacific/Auckland', new Date(2026, 5, 1 + (i % 20)));
+    assert.equal(made, 1);
+    dateIn('Pacific/Auckland', new Date());
+    assert.equal(made, 1, 'the same zone again');
+    assert.throws(() => dateIn('Nowhere/Land', new Date()));
+    assert.throws(() => dateIn('Nowhere/Land', new Date()), 'a bad name is not kept');
+  } finally {
+    Intl.DateTimeFormat = RealFormat;
+  }
+});
+
 test('a rule that repeats every year matches by month and day, whatever the year', () => {
   const schedule = [rule('overlay', anOverlay, '2025-12-01', '2025-12-10', true)];
   const withOverlay = { theme: defaultTheme, overlay: anOverlay };

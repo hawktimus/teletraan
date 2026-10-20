@@ -3,6 +3,7 @@
 import { defineField } from 'sanity';
 import { TeamInput } from '../inputs/team-input.js';
 import { NoteField } from '../inputs/note-field.js';
+import { isPast } from '../tools/content-rules.js';
 
 export function showField() {
   return defineField({
@@ -20,6 +21,7 @@ export function expiresField() {
     title: 'Hide after',
     type: 'datetime',
     description: 'Optional. After this date and time the item hides itself. Leave empty to keep it showing.',
+    validation: Rule => Rule.custom(value => (isPast(value) ? 'This date has passed, so the screen does not show the item. Pick a later date, or delete the item.' : true)).warning(),
   });
 }
 

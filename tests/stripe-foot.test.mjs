@@ -158,8 +158,8 @@ const panels = {
   },
 };
 
-// The twelve cards of the competition (the last two are the Match13 cards) and the five of Monday
-['alliance', 'district', 'last-season', 'matches', 'next-match', 'preview', 'rank', 'recap', 'results', 'timeline', 'forecast', 'qualify'].forEach(card => {
+// The fourteen cards of the competition (forecast and qualify are Match13 cards; the last two are the team metrics and the comparison) and the five of Monday
+['alliance', 'district', 'last-season', 'matches', 'next-match', 'preview', 'rank', 'recap', 'results', 'timeline', 'forecast', 'qualify', 'team-metrics', 'compare'].forEach(card => {
   const name = 'competition-' + card;
   panels[name] = style => {
     const top = pixels(valueIn(style, panelCss(name), '.' + name + ' .body', 'top'));

@@ -218,7 +218,7 @@ Until then `cutoff` is empty and nothing is shown.
 ## The cards on the screen
 
 The screen reads the document `frc-status` with the rest of the content, and draws
-it as twelve cards in the large panel. Each card is a panel in
+it as fourteen cards in the large panel. Each card is a panel in
 `dashboard/panels/competition-*`, drawn as plain SVG at the size of the large
 panel, with no text under 44px and no line thinner than 3px. A card shows the
 data of the team that is on the screen. A team that the Teletraan computer did not read has no
@@ -236,6 +236,8 @@ left out, and a sentence says so.
 | District points | DISTRICT | The points, the rank and a bar that fills toward the cutoff for the state championship. | All season once the first event has started, when the computer has the points. |
 | Event preview | PREVIEW | Page one: the event, its city and days, the time left to its first day, how many teams come and a line for each of our teams, such as "Prime would rank 7th of 42 by EPA". Page two: the best eight teams by EPA with ours marked in their colors, and the average EPA of the field. Page three: the EPA of the team over the season. | Not in Auto. In Before and after, from 14 days before an event to the day before it. |
 | Our matches | MATCHES | Page one: the first match, the time left, the expected record, the hardest and the easiest match. Page two: those two matches in full, our alliance against the opponents with the EPA of each team, and a line about the best opponent. Then the qualification matches in time order, six to a page. | Not in Auto. In Before and after, in the preview days once the schedule is posted, and in the last 2 days before an event even when it is not. |
+| Team metrics | the team, PRIME or NOVA | The team on the screen, a page at a time: the season record, rank, ranking points, average score and win streak, then the Match13 rating, then the Match13 points a match in auto, teleop and endgame, then the next match with its win chance, then the matches still to play, then the last three results with their margin, and the events of the season. A number that is not there yet says NOT YET. | Not in Auto. In Before and after with the preview and the recap, and in Always. It can also be a row of the Rotation, with the team of the row. |
+| Compare | COMPARE | Prime and Nova side by side, each team's numbers in its own color: the season, the Match13 rating, the points a match, the next match and the matches still to play. | Not in Auto. In Before and after with the preview and the recap, and in Always. |
 | Event recap | RECAP | Page one: the final rank, the record, the ranking points, the change in EPA over the event and the district points gained. Page two: the awards, when there are any. The last page: the EPA over the season. | Not in Auto. In Before and after, for 7 days from the day after the event. |
 
 The days of an event are in the time zone on the Look page, from the first day to
@@ -373,6 +375,27 @@ When Match13 has numbers (docs/match13.md), the cards use them first and Statbot
 - One small line on the card says where the ratings come from: "Ratings: Match13" or "Ratings: Statbotics".
 - The two Match13 cards, Forecast and Chances, follow the same phase rule in Before and after: they play in the preview and
   recap days and not while an event is on. In Auto they come as before.
+
+## The two metrics cards
+
+Team metrics and Compare (docs/match13.md, "The metrics cards", says which field each number is) join two sources that the screen
+already holds: `frc-status` from The Blue Alliance and Statbotics, and the Match13 file of the Teletraan computer. They add nothing to the
+data that is read, and nothing from Match13 goes to Sanity.
+
+- From frc-status: the season record (the records of all events of the season added), the rank and ranking points at the event
+  that is on or the latest that has one, the average score and the win streak of the last 8 results, the last three results with their
+  margin, the district points and rank, the next match, and the qualification matches still to play with the EPA of each team.
+- From Match13: the xP rating, its place among all teams as a top share, its place at the event, the split into auto, teleop and
+  endgame, OPR, DPR, EPA, the chance and the expected score of the next match, and xP before and after each event with its district
+  points.
+- A partner and opponent average uses one rating for all the teams it averages: xP when Match13 has it for every team, EPA when
+  Statbotics has it for every team, and no number (NOT YET) when neither is complete, so two sources are never mixed.
+- The chance of the next match is Match13's when it has the match, then Statbotics', then the estimate of the Our matches card, which
+  says ESTIMATE.
+- Not on the cards because no field gives it: head to head against the next opponents (neither source keeps the past matches between two
+  teams) and the schedule strength of Match13 (`sos` is kept in the file, but its scale is not described in the API, so it is not drawn).
+  Where the team has no match yet, the card says NOT YET.
+- Header: SAMPLE for the sample data, how old the competition data is, and STALE when the Match13 file is more than 12 hours old.
 
 ## Preview competition
 

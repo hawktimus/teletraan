@@ -71,9 +71,16 @@ html[data-layout="bar"] #region-grid1 {
   height: var(--bar-main-height);
 }
 html[data-layout="bar"] .area[data-area="grid1"] {
+  --page-width: calc(var(--bar-area-width) - 32px); /* the rows and cards of the panels fill the panel, clear of its edge (core/page-width.js) */
   width: var(--bar-area-width);
   transform: scale(var(--bar-scale));
   transform-origin: 0 0;
+}
+
+/* Cards drawn at a fixed size (the competition cards, the Extra panels) stand in the middle of the panel */
+html[data-layout="bar"] .area[data-area="grid1"] .page[class*="competition-"] > .body,
+html[data-layout="bar"] .area[data-area="grid1"] .custom .blocks {
+  left: calc(28px + (var(--page-width, 1152px) - 1152px) / 2);
 }
 
 /* The header of the main panel is as wide as the panel, and not 1152 like the page it sits on, so what is at its

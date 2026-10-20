@@ -6,6 +6,8 @@
 import { defineType, defineField } from 'sanity';
 import { teamField, tooLong, titleOf } from './fields.js';
 import { clockIn, fallbackTimeZone } from './presentationTimes.js';
+import { limits } from './limits.js';
+import { noContact } from '../tools/content-rules.js';
 
 const levels = [
   { title: 'Notice', value: 'notice' },
@@ -46,7 +48,7 @@ export default defineType({
       title: 'Text',
       type: 'string',
       description: 'The line on the bar under the banner. Up to 90 characters. About 45 fit at full size, and a longer line is drawn smaller.',
-      validation: Rule => [Rule.required().error('Write the text.'), tooLong(Rule, 90)],
+      validation: Rule => [Rule.required().error('Write the text.'), tooLong(Rule, limits.announcementText), Rule.custom(noContact).warning()],
     }),
     defineField({
       name: 'start',

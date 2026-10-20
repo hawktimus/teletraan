@@ -98,7 +98,7 @@ migrate() {
     say "Already on the releases layout."
     return 0
   fi
-  if [ -z "$(find "$root" -mindepth 1 -maxdepth 1 ! -name local.env ! -name logs ! -name cache ! -name control-secret 2> /dev/null | head -n 1)" ]; then
+  if [ -z "$(find "$root" -mindepth 1 -maxdepth 1 ! -name local.env ! -name logs ! -name cache ! -name control-secret ! -name control-lockout.json 2> /dev/null | head -n 1)" ]; then
     say "Nothing is installed in $root yet, so there is nothing to move."
     mkdir -p "$root/releases"
     return 0
@@ -112,7 +112,7 @@ migrate() {
   for entry in "$root"/* "$root"/.[!.]*; do
     [ -e "$entry" ] || [ -L "$entry" ] || continue
     case $(basename "$entry") in
-      releases|local.env|logs|cache|control-secret) continue ;;
+      releases|local.env|logs|cache|control-secret|control-lockout.json) continue ;;
     esac
     mv "$entry" "$root/releases/1/"
   done

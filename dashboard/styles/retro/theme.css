@@ -82,6 +82,8 @@ html[data-style="retro"][data-layout="standard"] .banner .banner-text { position
 /* The title of a panel is dark ink on the accent plate. The panel's other text keeps the colors it has. The // mark at
    the end of a header is left off, where a star stands. */
 html[data-style="retro"][data-layout="standard"] .area .header .title { color: var(--style-ink); }
+/* The label of a small panel sits on the same plate, so it is ink too (white on the yellow plate was 1.5 to 1) */
+html[data-style="retro"][data-layout="standard"] .area .page > .label { color: var(--style-ink); }
 html[data-style="retro"][data-layout="standard"] .header svg.double-slash { display: none; }
 
 /* The thin bars between rows are lines of ink */
@@ -126,6 +128,9 @@ html[data-style="retro"] .tag-plate .edge-rim {
 html[data-style="retro"] .banner .team-plate span,
 html[data-style="retro"] .banner .team-plate b,
 html[data-style="retro"] .ticker .tag span { color: var(--style-header-ink); }
+/* The team plate of the sidebar is drawn in the main color too */
+html[data-style="retro"][data-layout="sidebar"] .side-team span,
+html[data-style="retro"][data-layout="sidebar"] .side-team b { color: var(--style-header-ink); }
 
 /* The background: a sky that is lighter at the foot, the stars, and the sunburst */
 html[data-style="retro"] #theme-bg .bg-retro { display: block; }

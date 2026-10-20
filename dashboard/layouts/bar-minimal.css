@@ -73,6 +73,13 @@ html[data-layout="bar"] .photo .card-fill { fill: none; }
    plates */
 html[data-layout="bar"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
 
+/* Nova's neon purple is 2.5 to 3.5 on the war clock plate and its plate color is 2.6 under the accent, so the inverted
+   palette reads its digits in the label color and fills its cards and TEAM plate with the dark shade of the plate */
+html[data-layout="bar"].palette-inverted { --style-digits: var(--team-label); }
+html[data-layout="bar"].palette-inverted .team-fill,
+html[data-layout="bar"].palette-inverted .tag-fill,
+html[data-layout="bar"].palette-inverted .card-fill { fill: var(--team-dark); }
+
 
 /* The rivets are the Original style's (base.css, plate.js): they are in the markup of every
    frame that has them, and are shown here and for Original only */
@@ -102,10 +109,10 @@ html[data-layout="bar"] .art-weld-light {
   stroke-opacity: .2;
   stroke-width: 3px;
 }
-/* The weld seam stands 36px past the 1152 the pages are written for. A Monday card is as wide as the area and
-   has no such place, so the seam is not drawn while one is on screen (core/areas.js writes the panel in data-page). */
-html[data-layout="bar"] .area[data-page^="monday-"] .art-weld-dark,
-html[data-layout="bar"] .area[data-page^="monday-"] .art-weld-light { display: none; }
+/* The weld seam stood 36px past the 1152 the pages are written for. The pages now fill the area or stand in the middle of it
+   (core/page-width.js, layouts/bar.css), so no page has a place for it and it is not drawn. */
+html[data-layout="bar"] .art-weld-dark,
+html[data-layout="bar"] .art-weld-light { display: none; }
 html[data-layout="bar"] .art-header-line {
   fill: none;
   stroke: var(--style-neon);

@@ -51,7 +51,7 @@ html[data-layout="bar"] .frc-news .tag-stale .ago { display: inline; }
   position: absolute;
   left: 0;
   top: 136px;
-  width: 1152px;
+  width: var(--page-width, 1152px);
   height: 528px;
   overflow: hidden;
 }

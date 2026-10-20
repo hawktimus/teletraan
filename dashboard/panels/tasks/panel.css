@@ -21,7 +21,7 @@
   position: absolute;
   left: 0;
   top: 124px;
-  width: 1152px;
+  width: var(--page-width, 1152px);
   height: 576px;
 }
 .tasks .row {
@@ -49,11 +49,11 @@
   height: 80px;
 }
 
-.tasks .row-text { width: 960px; }
+.tasks .row-text { width: calc(var(--page-width, 1152px) - 192px); }
 
 /* The cut corner at the bottom right crosses the last line of the third
    row, so that row is shorter and its text stays clear of the frame. */
-.tasks .row:nth-child(3) .row-text { width: 900px; }
+.tasks .row:nth-child(3) .row-text { width: calc(var(--page-width, 1152px) - 252px); }
 
 .tasks .row-label { font: 600 var(--size-label)/46px var(--font-display); }
 

@@ -64,7 +64,8 @@ function test(name, run) {
 }
 
 const idsOf = steps => steps.map(step => step.panel);
-const smallPanels = ['task-counts', 'next-event', 'forecast', 'safety-days', 'sponsor-logo'];
+// the small panels the editors can pick, from the registry, so a new small panel does not need a change here
+const smallPanels = panels.filter(panel => panel.region === 'grid2' && !panel.testOnly && !panel.lastResort && !panel.placeholder && !panel.rotationOnly).map(panel => panel.id);
 
 
 // The panel that is always there

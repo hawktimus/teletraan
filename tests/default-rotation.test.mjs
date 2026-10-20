@@ -107,7 +107,15 @@ test('the panels the team named are these registered ones', () => {
 });
 
 test('the Studio default is the same list as the screen default, with a key on every row, and it is what a new list is filled with', () => {
-  assert.deepEqual(studioDefault.defaultRotationRows(), config.defaultRotationRows());
+  // The same list is written twice, once for the screen and once for the Studio. A difference is named row by row,
+  // so a student who changed the seconds of one row in only one file sees which row and which file.
+  const screenRows = config.defaultRotationRows();
+  const studioRows = studioDefault.defaultRotationRows();
+  assert.equal(studioRows.length, screenRows.length, 'dashboard/config-rotation.js has ' + screenRows.length + ' rows and studio/tools/default-rotation.js has ' + studioRows.length + '. Make both lists the same');
+  screenRows.forEach((row, index) => {
+    assert.equal(JSON.stringify(studioRows[index]), JSON.stringify(row), 'Row ' + (index + 1) + ' (' + row.panel + ') is different in the two files. dashboard/config-rotation.js says ' + JSON.stringify(row) + ' and studio/tools/default-rotation.js says ' + JSON.stringify(studioRows[index]) + '. Change both files so they match');
+  });
+  assert.deepEqual(studioRows, screenRows);
   const filled = studio.migrateRotationRows();
   assert.deepEqual(filled.map(item => { const { _key, ...rest } = item; return rest; }), config.defaultRotationRows());
   assert.equal(new Set(filled.map(item => item._key)).size, filled.length);

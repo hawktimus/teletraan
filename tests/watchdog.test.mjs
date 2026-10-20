@@ -277,6 +277,16 @@ test('restarts older than an hour do not count toward the cap, and a new day sta
   assert.equal((place.stateText().match(/restart=/g) || []).length, 1, 'only the new restart is kept');
 });
 
+test('a restart stamped in the future (the clock was set back) does not hold the next one off', () => {
+  const place = setup();
+  place.page(heartbeatTitle(-10));
+  place.writeState({ boot: 'boot-one', day: new Date().toISOString().slice(0, 10), today: 1 }, [-7200]);
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.equal(result.restarted, true, result.text);
+  assert.equal((place.stateText().match(/restart=/g) || []).length, 1, 'the future stamp is dropped');
+});
+
 test('a state file that cannot be written means no restart, so the limits can never be skipped', () => {
   const place = setup({ noData: true });
   place.page(heartbeatTitle(-10));

@@ -253,4 +253,28 @@ await test('the transition code is in the order the docs say, and the docs name 
   assert.ok(read('core/views-run.js').includes('startReforms(() => transitionSecondsOf(getContent()), transitionKindNow)'), 'the views give the length and the kind');
 });
 
+await test('the cells draw out from the middle, lock past their place and settle, and every cell part ends gone and seated', () => {
+  const squares = plan.squaresOf(main, 'main', 7);
+  squares.forEach(square => {
+    const out = plan.drawOutOf(square, main);
+    assert.ok(Math.hypot(out.x, out.y) <= plan.exploded.distance + 0.01, 'a cell is drawn out no farther than the limit');
+    [plan.cellStops(square, out), plan.pinStops(square), plan.barrelStops(square)].forEach(stops => {
+      const times = stops.map(stop => stop[0]);
+      assert.deepEqual(times, times.slice().sort((a, b) => a - b), 'stops are in time order');
+      assert.ok(plan.framesOf('transform', stops).length > 2);
+      assert.ok(square.startMs + plan.lockMs.gone <= plan.reformTimes.coverNewIn[1], 'the lock is done before the new copy is in');
+    });
+    const cell = plan.cellStops(square, out);
+    assert.equal(cell[cell.length - 1][1], 'translate(0px,0px) scale(1)', 'the cell ends on its place at full size');
+    assert.ok(/scaleX\(0\)$/.test(plan.pinStops(square).slice(-1)[0][1]) && /scale\(0\)$/.test(plan.barrelStops(square).slice(-1)[0][1]), 'the parts end at nothing');
+  });
+});
+
+await test('only a kit that asks for lock parts gets cells, and the views draw none', () => {
+  assert.ok(read('styles/original/transitions.js').includes('lockParts: true'));
+  assert.ok(read('styles/foundry/transitions.js').includes('lockParts: false'));
+  assert.ok(read('core/reform-view.js').includes('cover, kit, true)'), 'the view transition is drawn lite');
+  assert.ok(read('core/reform-draw.js').includes("kit.lockParts !== true"));
+});
+
 console.log('\n' + passed + ' passed');

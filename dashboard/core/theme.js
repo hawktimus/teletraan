@@ -45,16 +45,24 @@ export function isKnownOverlay(id) {
 
 // Dates and time zones
 
+// Making a formatter is slow and the same few time zones are asked for every second, so each is made once.
+// A name Intl does not know throws here and is not kept.
+const dateFormatters = new Map();
+
+function dateFormatter(timeZone) {
+  let formatter = dateFormatters.get(timeZone);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('en-CA', { timeZone: timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+    dateFormatters.set(timeZone, formatter);
+  }
+  return formatter;
+}
+
 // The date today in a time zone, written 2026-12-31. en-CA is used because
 // it puts the year, month and day in the order we want. The parts are read by
 // name, never by position, and never in the browser's own time zone.
 export function dateIn(timeZone, now) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(now);
+  const parts = dateFormatter(timeZone).formatToParts(now);
 
   const get = type => parts.filter(part => part.type === type)[0].value;
   return get('year') + '-' + get('month') + '-' + get('day');

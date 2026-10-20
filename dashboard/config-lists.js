@@ -136,6 +136,8 @@ export const competitionSwitches = [
   'competitionRecap',
   'competitionForecast',
   'competitionQualify',
+  'competitionTeamMetrics',
+  'competitionCompare',
 ];
 
 // Auto brings the cards about an event this many days before its first day

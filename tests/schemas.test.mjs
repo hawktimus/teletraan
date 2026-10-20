@@ -265,6 +265,8 @@ const contract = {
     competitionRecap: 'boolean',
     competitionForecast: 'boolean',
     competitionQualify: 'boolean',
+    competitionTeamMetrics: 'boolean',
+    competitionCompare: 'boolean',
     newsEnabled: 'boolean',
     newsCategories: strings(30, 12),
     newsInTicker: 'boolean',
@@ -382,6 +384,12 @@ const studioOnlyFields = {
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
   'view.rotationNote': 'the note on the Main panel tab of a view, which points to the Rotation list. It stores nothing',
   'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
+  'dashboardSettings.rebootStatus': 'the next and last reboot line at the top of the Scheduled reboot section. It stores nothing',
+  'dashboardSettings.rebootEnabled': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
+  'dashboardSettings.rebootTime': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
+  'dashboardSettings.rebootDays': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
+  'dashboardSettings.rebootSkipBusy': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
+  'dashboardSettings.rebootWaitMinutes': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.mondayConnection': 'the block at the top of the Monday tab. It stores nothing',
   'dashboardSettings.mondayTokenTest': 'the note and the link to the Monday check on the control page, on the Monday tab. It stores nothing',
   'dashboardSettings.frcConnection': 'the block at the top of the Competition tab. It stores nothing',
@@ -536,7 +544,7 @@ const typeTitles = {
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition',
-  'COACHES ONLY: Dashboard Settings, Extra panels, Kept data',
+  'COACHES ONLY: Dashboard Settings, Extra panels, Check the screen, Kept data',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
@@ -635,7 +643,11 @@ function iconImportsOf(source) {
 }
 
 function makeSandbox() {
-  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-studio-'));
+  const folder = path.join(root, 'studio');
+  fs.mkdirSync(folder);
+  // The Monday page imports the rules of the TV from ../dashboard, so the copy of the Studio sits in a folder beside a link to it
+  fs.symlinkSync(path.join(here, '..', 'dashboard'), path.join(root, 'dashboard'));
   ['schemas', 'structure.js', 'inputs', 'tools', 'project.js', 'sanity.config.js', 'sanity.cli.js'].forEach(name => {
     fs.cpSync(path.join(here, name), path.join(folder, name), { recursive: true });
   });
@@ -1198,6 +1210,7 @@ function checkLogoTab(problems) {
 // number fields and their limits are compared with config.js in checkLookAndTiming.
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
 const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
+const rebootNames = ['rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
@@ -4326,7 +4339,7 @@ function checkTeamsTab() {
 // fields they show stay in the schema, hidden. Presentations, Night mode and Hidden transitions are sections of Advanced.
 const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanced'];
 const logoNames = logoSwitches.concat(logoNumbers);
-const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify'];
+const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify', 'competitionTeamMetrics', 'competitionCompare'];
 const settingsTabs = {
   screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
@@ -4334,7 +4347,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, rebootNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {
@@ -4524,7 +4537,7 @@ function checkCompetitionTab() {
   need(problems, mode && /Auto/.test(mode.description || '') && /Always/.test(mode.description || '') && /Off/.test(mode.description || '') && /Before and after/.test(mode.description || ''), 'the competitionMode description should say what Before and after, Auto, Always and Off do');
 
   // One switch for each card, in this order, all on to start with, in the names of config.js
-  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points', 'Event preview', 'Our matches', 'Event recap', 'Event forecast (Match13)', 'Championship chances (Match13)'];
+  const titles = ['Season timeline', 'Last season at a glance', 'Live rank', 'Next match', 'Results strip', 'Alliance board', 'District points', 'Event preview', 'Our matches', 'Event recap', 'Event forecast (Match13)', 'Championship chances (Match13)', 'Team metrics (Match13 and TBA)', 'Both teams side by side'];
   need(problems, config.competitionSwitches.join() === competitionNames.join(), 'competitionSwitches in config.js should be the switches of the Competition tab, in order: ' + competitionNames.join(', '));
   competitionNames.forEach((name, index) => {
     const field = at(name);
@@ -5615,6 +5628,57 @@ function checkTeamTrim() {
   return problems;
 }
 
+// The Scheduled reboot section of Dashboard Settings (schemas/settingsReboot.js): a status line and five fields that start as
+// the defaults of computer/scripts/reboot-plan.mjs, which the timer and the control page use.
+function checkRebootFields() {
+  const problems = [];
+  const plan = world.rebootPlan;
+  const settings = typeByName('dashboardSettings');
+  const at = name => fieldAt('dashboardSettings.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const inSection = fieldsIn(settings).filter(field => field.fieldset === 'reboot').map(field => field.name);
+
+  need(problems, inSection.join() === rebootNames.join(), 'the Scheduled reboot section should hold ' + rebootNames.join(', ') + ', in that order, not ' + inSection.join());
+  rebootNames.forEach(name => {
+    const field = at(name);
+    need(problems, field && field.group === 'advanced' && !field.hidden, name + ' should be seen in the Advanced tab');
+    need(problems, field && typeof field.description === 'string' && field.description.length > 0 && field.description.indexOf('\n') === -1, name + ' needs a one line description');
+  });
+
+  const status = at('rebootStatus');
+  need(problems, status && status.type === 'string' && status.readOnly === true && status.initialValue === undefined && !status.validation, 'rebootStatus should be a read only string that stores nothing');
+  need(problems, status && status.components && typeof status.components.input === 'function', 'rebootStatus should have an input component (reboot-status-input.js)');
+  need(problems, !/onChange|\bset\(|unset\(|patch/.test(readModule(path.join(here, 'inputs', 'reboot-status-input.js'), 'utf8')), 'reboot-status-input.js should never change the value');
+
+  const enabled = at('rebootEnabled');
+  need(problems, enabled && enabled.type === 'boolean' && enabled.initialValue === plan.defaults.rebootEnabled && plan.defaults.rebootEnabled === false, 'rebootEnabled should be a switch that starts off, as in reboot-plan.mjs');
+  const time = at('rebootTime');
+  need(problems, time && time.type === 'string' && time.initialValue === plan.defaults.rebootTime && plan.defaults.rebootTime === '03:30', 'rebootTime should start at 03:30, as in reboot-plan.mjs');
+  const pattern = constraintNamed(rulesOf(time), 'regex');
+  need(problems, pattern && ['00:00', '03:30', '23:59'].every(good => pattern.args[0].test(good)) && ['24:00', '3:30', '03:60', ''].every(bad => !pattern.args[0].test(bad)), 'rebootTime should accept 24 hour time with two digits and nothing else');
+  const days = at('rebootDays');
+  const list = days && days.options && days.options.list ? days.options.list : [];
+  need(problems, days && days.type === 'array' && days.of && days.of[0].type === 'number' && list.map(item => item.value).join() === '0,1,2,3,4,5,6', 'rebootDays should be a checkbox list of 0 (Sunday) to 6 (Saturday)');
+  need(problems, days && JSON.stringify(days.initialValue) === JSON.stringify(plan.defaults.rebootDays) && constraintNamed(rulesOf(days), 'min') && constraintNamed(rulesOf(days), 'min').args[0] === 1, 'rebootDays should start on every day and need at least one');
+  const skip = at('rebootSkipBusy');
+  need(problems, skip && skip.type === 'boolean' && skip.initialValue === plan.defaults.rebootSkipBusy, 'rebootSkipBusy should be a switch that starts as in reboot-plan.mjs');
+  const wait = at('rebootWaitMinutes');
+  need(problems, wait && wait.type === 'number' && wait.initialValue === plan.defaults.rebootWaitMinutes && plan.defaults.rebootWaitMinutes === 30, 'rebootWaitMinutes should start at 30, as in reboot-plan.mjs');
+  ['min', 'max'].forEach(name => need(problems, constraintNamed(rulesOf(wait), name) && constraintNamed(rulesOf(wait), name).args[0] === plan.waitRange[name], 'rebootWaitMinutes needs ' + name + ' ' + plan.waitRange[name]));
+
+  // The status document carries the four lines that the timer writes, and status-write.sh writes the same names
+  const names = ['nextRebootAt', 'nextRebootText', 'lastRebootAt', 'lastRebootWhy'];
+  const statusFields = fieldsIn(typeByName('status')).map(field => field.name);
+  names.forEach(name => {
+    need(problems, statusFields.indexOf(name) !== -1, 'the status document needs ' + name);
+    need(problems, textOf(path.join(here, '..', 'computer', 'scripts', 'status-write.sh')).indexOf(name) !== -1, 'status-write.sh should write ' + name);
+    need(problems, world.rebootScript.indexOf(name) !== -1, 'scheduled-reboot.sh should write ' + name + ' to status.json');
+  });
+  ['rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes'].forEach(name => need(problems, world.rebootScript.indexOf(name) !== -1, 'scheduled-reboot.sh should ask Sanity for ' + name));
+  need(problems, !/SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|local\.env/.test(world.rebootScript), 'scheduled-reboot.sh should never name a key or local.env');
+  return problems;
+}
+
 // The Monday tab of Dashboard Settings (schemas/settingsMonday.js): a note and how often the Teletraan computer reads. The boards
 // are read by their numbers (computer/scripts/monday-contract.sh), so the board blocks, the token link, the owner switch and the
 // older board rows are hidden and kept, so that nothing typed is lost and the page still publishes.
@@ -5778,7 +5842,7 @@ function checkScreenType() {
   const rulesOf = field => (field ? constraintsOf(field) : []);
   const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly).map(panel => panel.id);
   const listOf = pathText => choicesOf(pathText).map(item => item.value + '=' + item.title).join();
-  const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id]);
+  const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id] || world.screenPanels.panelTitle(id)); // a new panel is titled in studio/inputs/screen-panels.js
   const monday = ['monday-department=Monday: Department tasks', 'monday-charts=Monday: TV charts'];
 
   // the tabs are the five letters of the map, in order
@@ -6024,7 +6088,7 @@ async function checkScreenForm() {
   const kept = owners('original', { sideRows: [{ _key: 's', panel: 'forecast' }], mondayStyle: 'original' }, false);
   need(problems, !patchOf(kept, 'sideRows') && !patchOf(kept, 'mondayStyle') && patchOf(kept, 'mainRows'), 'side rows and a Monday style that are there already should be kept');
   const empty = owners('original', {}, false, { settings: null, teams: [], unreadable: false });
-  need(problems, patchOf(empty, 'mainRows') && patchOf(empty, 'mainRows').value.length === 11 && patchOf(empty, 'sideRows') && patchOf(empty, 'sideRows').value.length === 5 && patchOf(empty, 'mondayStyle').value === 'minimal', 'with no Dashboard Settings and no team document the Screen should be filled with every panel for the built-in team, and the Monday style minimal');
+  need(problems, patchOf(empty, 'mainRows') && patchOf(empty, 'mainRows').value.length === 11 && patchOf(empty, 'sideRows') && patchOf(empty, 'sideRows').value.length === world.screenPanels.smallPanels.length && patchOf(empty, 'mondayStyle').value === 'minimal', 'with no Dashboard Settings and no team document the Screen should be filled with every panel for the built-in team, and the Monday style minimal');
 
   // the form: switch, map and the usual form. Opened on an empty Original Screen with a client that answers.
   resetGlobals();
@@ -6600,6 +6664,9 @@ async function main() {
     world.noteField = await load(path.join(folder, 'inputs', 'note-field.js'));
     world.showOnTvInput = await load(path.join(folder, 'inputs', 'show-on-tv-input.js'));
     world.statusInput = await load(path.join(folder, 'inputs', 'status-input.js'));
+    world.rebootStatusInput = await load(path.join(folder, 'inputs', 'reboot-status-input.js'));
+    world.rebootPlan = await load(path.join(here, '..', 'computer', 'scripts', 'reboot-plan.mjs'));
+    world.rebootScript = textOf(path.join(here, '..', 'computer', 'scripts', 'scheduled-reboot.sh'));
     world.frcStatusInput = await load(path.join(folder, 'inputs', 'frc-status-input.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = readModule(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
@@ -6633,7 +6700,7 @@ async function main() {
     world.calendarStatusScript = readModule(path.join(here, '..', 'computer', 'scripts', 'calendar-status.sh'), 'utf8');
     world.calendarStatusHelper = readModule(path.join(here, '..', 'computer', 'scripts', 'calendar-status.mjs'), 'utf8');
   } finally {
-    fs.rmSync(folder, { recursive: true, force: true });
+    fs.rmSync(path.dirname(folder), { recursive: true, force: true });
   }
 
   check('every type has a name and a title', checkNamesAndTitles);
@@ -6711,6 +6778,7 @@ async function main() {
   results.push({ name: 'the Calendars page asks for the published documents by their ids, and survives a client that fails', problems: await checkCalendarsRead().catch(error => ['the check stopped: ' + error.message]) });
   check('the one event rules the Calendars switch makes are accepted by the Calendar filters schema, and the kinds are the ones of Dashboard Settings', checkCalendarsHide);
   results.push({ name: 'the Hide buttons make a rule once with createIfNotExists, Show again deletes the rule and its draft, and the rules made on the page are read by their id', problems: await checkCalendarsHideWrite().catch(error => ['the check stopped: ' + error.message]) });
+  check('the Scheduled reboot section has a status line and five fields that start as in reboot-plan.mjs, and the timer writes the status fields the Studio and the control page read', checkRebootFields);
   check('the Monday tab has the connection block, up to 10 board entries with pickers and a choice of group names or a status column, the labels for in progress and done (the Backlog label is hidden and ignored) and the owner switch, as in dashboard/config.js', checkMondayTab);
   check('the Monday data document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
   check('the Photo fit setting and the Fit of a photo agree with dashboard/config.js, start as fill and as the setting, and the sample shows both on photos of different shapes', checkPhotoFit);

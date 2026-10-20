@@ -180,12 +180,12 @@ test('the docs are plain: no em or en dash, no exclamation mark, no emoji, no fi
     assert.ok(!emoji.test(text), file + ' has an emoji');
     assert.ok(!text.includes('!'), file + ' has an exclamation mark');
     assert.ok(!filler.test(text), file + ' has a filler word');
-    assert.ok(!traces.test(text), file + ' mentions a tool');
+    assert.ok(!traces.test(text), file + ' has a word that does not belong in the docs: "' + (text.match(traces) || [''])[0] + '" (line ' + (text.slice(0, text.search(traces)).split('\n').length) + '). Write the thing itself, such as a code writing tool, and name no product');
   });
   ['README.md', 'computer/README.md', 'docs/where-things-are.md'].forEach(file => {
     const text = read(file);
     assert.ok(!dashes.test(text), file + ' has an em or en dash');
-    assert.ok(!traces.test(text), file + ' mentions a tool');
+    assert.ok(!traces.test(text), file + ' has a word that does not belong in the docs: "' + (text.match(traces) || [''])[0] + '" (line ' + (text.slice(0, text.search(traces)).split('\n').length) + '). Write the thing itself, such as a code writing tool, and name no product');
   });
   assert.ok(!filler.test(read('computer/README.md')), 'computer/README.md has a filler word');
   const self = fs.readFileSync(new URL(import.meta.url), 'utf8');

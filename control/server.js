@@ -7,7 +7,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRouter, sendJson, readJson } from './lib/router.js';
-import { createAuth, clientAddress } from './lib/auth.js';
+import { createAuth, clientAddress, sameOrigin } from './lib/auth.js';
 import { parseEnv } from './lib/env-merge.js';
 import { createReleases } from './lib/releases.js';
 import { createHelper } from './lib/helper-client.js';
@@ -32,6 +32,7 @@ export function readConfig(env = process.env) {
     dataDir: env.CONTROL_DATA || '/var/lib/teletraan/data',
     envFile: env.CONTROL_ENV_FILE || path.join(root, 'local.env'),
     secretFile: env.CONTROL_SECRET_FILE || path.join(root, 'control-secret'),
+    lockoutFile: env.CONTROL_LOCKOUT_FILE || path.join(root, 'control-lockout.json'),
     socket: env.CONTROL_SOCKET || '/run/teletraan/control.sock',
     logFile: env.CONTROL_LOG_FILE || path.join(root, 'logs', 'control.log'),
   };
@@ -74,7 +75,7 @@ export async function createService(config, overrides = {}) {
   };
 
   const env = () => parseEnv(readText(config.envFile));
-  const auth = createAuth({ getOverride: () => env().CONTROL_PIN, secretFile: config.secretFile });
+  const auth = createAuth({ getOverride: () => env().CONTROL_PIN, secretFile: config.secretFile, stateFile: config.lockoutFile });
   const project = readProject(config.rootDir);
 
   const ctx = {
@@ -200,6 +201,10 @@ export async function createService(config, overrides = {}) {
         // The routes are written after /control/api. The dashboard's own report (POST /now) carries no PIN; its
         // route accepts it only when nginx says it came from this computer (X-Real-IP).
         const route = pathname.slice('/control/api'.length);
+        if (req.method !== 'GET' && req.method !== 'HEAD' && !sameOrigin(req)) {
+          sendJson(res, 403, { error: 'That call did not come from this page.' });
+          return;
+        }
         const open = (req.method === 'GET' && route === '/session') || (req.method === 'POST' && (route === '/login' || route === '/logout' || route === '/now'));
         if (!open && !(await ctx.pinCheck(req))) {
           sendJson(res, 401, { error: 'Sign in with the PIN first.' });
