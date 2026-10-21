@@ -43,8 +43,8 @@ test('the Robotics view shows both team numbers on the team plate, in both layou
     assert.ok(code.includes('teamNumbersOf(content)') && code.includes('number-second'), file + ' has both numbers');
   });
   const css = read('family-line.css');
-  assert.ok(/html\[data-view="general"\] \.banner\[data-plate="two"\] \.team-plate \{ width: 940px; \}/.test(css), 'one wide plate in the standard layout');
-  assert.ok(/html\[data-view="general"\] \.bar-column\[data-plate="two"\]/.test(css), 'two lines in the side column');
+  assert.ok(/html:is\(\[data-view="general"\], \[data-view="family"\]\) \.banner\[data-plate="two"\] \.team-plate \{ width: 940px; \}/.test(css), 'one wide plate in the standard layout');
+  assert.ok(/html:is\(\[data-view="general"\], \[data-view="family"\]\) \.bar-column\[data-plate="two"\]/.test(css), 'two lines in the side column');
   assert.equal(config.roboticsPlate, undefined, 'there are no words for the plate in config');
 });
 

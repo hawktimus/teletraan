@@ -115,6 +115,11 @@ test('the small panel column is for a Robotics row that is split, and the wide l
   const filled = cells.filter(node => node.children.length > 0);
   assert.equal(cells.length, 6, 'every row keeps its place in the grid');
   assert.equal(filled.length, 3, 'only the three split Robotics rows draw the picker');
+  assert.equal(nodesWhere(page, node => node.props['data-condensed'] !== undefined).length, 0, 'the sample has no Monday row of Robotics');
+  const mondayRows = board.withKeys([row('robotics', 'monday-department', { department: 'build' }), row('robotics', 'monday-tasks', { department: 'marketing' }), row('prime', 'monday-department', { department: 'build' })]);
+  const mondayPage = parts.tableOf(state(mondayRows), noActions);
+  assert.equal(nodesWhere(mondayPage, node => node.props['data-condensed'] !== undefined).length, 2, 'a Monday row of Robotics, an older one included, says it plays in the Condensed view');
+  assert.match(textOf(mondayPage), /Plays in the Condensed view/);
   const headings = nodesWhere(page, node => node.props.role === 'columnheader').map(textOf);
   assert.deepEqual(headings.filter(Boolean), ['#', 'View', 'Panel', 'Small panel', 'Seconds', 'Show on screen', 'Details']);
 });

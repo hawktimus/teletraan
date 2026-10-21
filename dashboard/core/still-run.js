@@ -59,7 +59,8 @@ export async function holdPanel(ask, getContent) {
     }
     // the banner and the countdown are fixed panels that are on the page already
 
-    if (region === 'grid1' && ask.small) {
+    // the bar layout has no small panel
+    if (region === 'grid1' && ask.small && ask.layout !== 'bar') {
       try {
         await holdSide(ask, getContent);
       } catch (error) {

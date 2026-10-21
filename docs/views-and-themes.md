@@ -1,6 +1,6 @@
 # Rotation, views and themes in the Studio
 
-The wall plays one list, the Rotation. Each row of it is a panel in a view, for some seconds. A view is Robotics, Prime or Nova. A theme is a style, and every view looks the same in every theme. The sidebar is in docs/studio-map.md.
+The wall plays one list, the Rotation. Each row of it is a panel in a view, for some seconds. A view is Robotics, Prime or Nova. A theme is a style, and every view looks the same in every theme. A Monday board of a Robotics row plays in the Condensed view (the thin bar layout) and the wall returns to Robotics after it (docs/views.md). The sidebar is in docs/studio-map.md.
 
 ## Rotation
 

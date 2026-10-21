@@ -138,9 +138,10 @@ function begin(step) {
   const view = placed(step).view;
   const moved = heldView() !== '' && view !== heldView();
 
-  noteTransition({ view: heldView() }, { view: view });
-  if (pairSide(step)) moveOn(['grid2']);
   const layout = layoutOfStep(getContent(), placed(step));
+
+  noteTransition({ view: heldView() }, { view: view });
+  if (pairSide(placed(step), layout)) moveOn(['grid2']);
   const reshaped = heldLayout !== '' && layout !== heldLayout;
 
   heldLayout = layout;

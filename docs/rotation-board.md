@@ -30,7 +30,7 @@ for that.
 - View: Robotics, Prime or Nova.
 - Panel: what the row plays, with the plain title, grouped by kind.
 - Small panel: only for a Robotics row in the split layout. It names the small panel beside the row. Empty follows the small
-  panels of the view. Rows in the wide layout and rows of Prime and Nova have no small panel, so the cell is empty.
+  panels of the view. Rows in the wide layout and rows of Prime and Nova have no small panel, so the cell is empty. A Monday row of Robotics (Department tasks, TV charts, or an older tasks row that plays as Department tasks) says Plays in the Condensed view there, because the wall plays a Monday board in the Condensed view and the bar layout has no small panel.
 - Seconds: how long the row stays, 6 to 120. Empty uses Seconds per page of Dashboard Settings. A Photos row shows its
   photos times seconds each.
 - Show on screen: off keeps the row in its place and the wall skips it.

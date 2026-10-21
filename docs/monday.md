@@ -75,6 +75,8 @@ list moves up four rows at a time, and stops at 20 rows.
 
 A row whose panel has nothing to show is skipped, and the Rotation board says why under the row.
 
+Whenever a Monday board is on the screen the wall plays it in the Condensed view, which is the thin bar layout with the countdown across the top and no small panel. A Robotics row swaps into Condensed when the board starts and back to Robotics when the next row is not a Monday board, and two Monday rows in a row stay in Condensed with no swap between them. A Monday row of Prime or Nova stays in the Prime or Nova view. The Rotation board and the Display tab say Plays in the Condensed view on these rows, in place of the small panel. An alert, an announcement or a talk covers the screen first, as for any view change.
+
 ## Putting a department on the TV
 
 Open Rotation in the Studio sidebar. Add a row with the panel Monday: Department tasks, open Details and pick:

@@ -11,6 +11,7 @@
 // rotation, the takeovers, the hidden effects, the night screen, the heartbeat and the report to the control page.
 
 import { viewKeys, viewTeams } from '../config.js';
+import { upgradeMondayRow } from './rotation.js';
 
 export const rowPreviewName = 'rowpreview';
 export const longestRow = 1500;
@@ -58,14 +59,16 @@ export function readRowPreview(search) {
 // so the code after this needs nothing new. A row that cannot be read asks for a panel that does not exist, and the page
 // writes the reason where the screenshot tool reads it (core/still-run.js).
 export function useRowPreview(params, read) {
-  const row = read.row || { panel: unreadablePanel };
-  const view = viewOfRow[row.view] || '';
+  // An older Monday row is drawn as the Department tasks row the wall plays, and a Monday row of Robotics in the Condensed view
+  const row = upgradeMondayRow(read.row || { panel: unreadablePanel });
+  const monday = row.panel.indexOf('monday-') === 0;
+  const view = monday && viewOfRow[row.view] === 'general' ? 'family' : viewOfRow[row.view] || '';
 
   params.set('panel', row.panel);
   params.set('still', '1');
   params.set('small', '1');
   // A team view gives its team to the row. A Monday row names the team of its tasks in row.team, as the wall does
-  const team = row.panel.indexOf('monday-') === 0 || !view ? (row.team || '') : viewTeams[view] || '';
+  const team = monday || !view ? (row.team || '') : viewTeams[view] || '';
   if (team !== '') params.set('team', team);
   if (view !== '' && viewKeys.includes(view)) params.set('view', view);
   if (row.department) params.set('dept', row.department);

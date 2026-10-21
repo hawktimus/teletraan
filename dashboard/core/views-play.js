@@ -39,6 +39,14 @@ function playOrder(content) {
   return blocks.map(item => item.key).filter((key, at, all) => all.indexOf(key) === at);
 }
 
+// The view a step plays in. A Monday panel in a Robotics block plays in the Condensed view (family, the bar layout) for the
+// length of the step, and the next step that is not a Monday panel plays in Robotics again, so the view change is the swap
+// into the board and the swap out of it. A Monday panel in a Prime or Nova block stays in that team's view. The team and the
+// block of the step stay the ones of the row: only the view that is drawn changes.
+export function playViewOf(key, panel) {
+  return key === 'general' && isMondayPanel(panel) ? 'family' : key;
+}
+
 // The steps of the large panel of a view, in order, as { panel, show, team, seconds, row, view }. The team of a step is
 // the team of the view for a team view, and the team of the row otherwise. A step is left out when its row is for a team
 // that is not switched on or for another team than ?team= asks for, and a Monday row while it has nothing to show.
@@ -55,7 +63,7 @@ export function viewSteps(content, key, now = new Date(), block = -1, ownRows = 
     if (isTeamCode(row.team) && (!teams.includes(row.team) || (only !== '' && row.team !== only))) return;
 
     stepsOfRow(row, index, rows, content, now).forEach(step => {
-      steps.push(Object.assign(step, { row: index, view: key, team: view.team !== '' ? view.team : key === 'general' ? teams[0] : step.team }));
+      steps.push(Object.assign(step, { row: index, view: playViewOf(key, step.panel), team: view.team !== '' ? view.team : key === 'general' ? teams[0] : step.team }));
     });
   });
   return steps;
@@ -121,6 +129,7 @@ export function viewLayoutOf(content, key) {
 // roboticsWidePanels, and split (the standard layout) for the others. The other views have the layout of their document.
 export function layoutOfStep(content, step) {
   const key = viewKeys.includes(step.view) ? step.view : '';
+  // a Monday panel is wide in Robotics too, in case a step names it with the Robotics view (playViewOf makes it Condensed)
   if (key === 'general') return roboticsWidePanels.includes(step.panel) ? 'bar' : 'standard';
 
   return key === '' ? 'standard' : viewLayoutOf(content, key);
@@ -140,7 +149,9 @@ export function drawStyleFor(layout, monday, plan) {
 export function stepInView(step, content, fallbackKey) {
   if (viewKeys.includes(step.view)) return step;
 
-  const key = viewKeys.includes(fallbackKey) ? fallbackKey : playOrder(content)[0];
+  // the Condensed view the Monday panels play in is not the view the rotation is in: a card after them plays in Robotics again
+  const back = fallbackKey === 'family' && viewKeys.includes(cycle.key) && cycle.key !== 'family' ? cycle.key : fallbackKey;
+  const key = viewKeys.includes(back) ? back : playOrder(content)[0];
   return Object.assign({}, step, { view: key, team: isTeamCode(step.team) ? step.team : resolveView(content, key).team });
 }
 
@@ -221,8 +232,9 @@ const paired = { panel: '', seconds: 0 };
 
 // A step of the large panel has been chosen. Returns true when the small panel has to change with it: the step has a side, or
 // the one before it did. The side stays longer than the step, because the next step moves it on.
-export function pairSide(step) {
-  const side = step && typeof step.side === 'string' ? step.side : '';
+export function pairSide(step, layout = 'standard') {
+  // the bar layout has no small panel, so a side named by a row there is never drawn
+  const side = layout !== 'bar' && step && typeof step.side === 'string' ? step.side : '';
   const moves = side !== '' || paired.panel !== '';
 
   paired.panel = side;
@@ -386,8 +398,9 @@ export function holdBootView(content, now = new Date()) {
   if (isRecord(content)) {
     const { key, block } = firstUnit(content, now);
     startView(key, block);
-    holdView(key);
-    rotateLayout(layoutOfStep(content, Object.assign({ view: key }, firstStepOf(content, key, block, now))));
+    const first = Object.assign({ view: key }, firstStepOf(content, key, block, now));
+    holdView(first.view);
+    rotateLayout(layoutOfStep(content, first));
   }
   holdScreenLook(look);
   return look;
