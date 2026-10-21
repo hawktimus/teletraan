@@ -37,7 +37,7 @@ await check('the spec comes from the Studio schemas, and the write key is not in
   const world = await worldWith([published]);
   const answer = await call(world, 'GET', '/spec');
   assert.equal(answer.status, 200);
-  assert.deepEqual(answer.json.documents.map(doc => doc.type), ['dashboardSettings', 'theme', 'view', 'team', 'customPanel', 'subtheme', 'tipOrNews', 'rosterPerson']);
+  assert.deepEqual(answer.json.documents.map(doc => doc.type), ['dashboardSettings', 'theme', 'view', 'team', 'customPanel', 'subtheme', 'tipOrNews', 'rosterPerson', 'announcement', 'photo']);
   assert.ok(answer.json.skipped.length > 30);
   assert.ok(!answer.text.includes('skFAKEtoken'));
   assert.ok(!answer.text.includes('customs'));
