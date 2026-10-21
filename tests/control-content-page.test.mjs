@@ -32,8 +32,8 @@ const ref = id => ({ _type: 'reference', _ref: id });
 const event = (title, start, extra = {}) => Object.assign({ _key: title, title: title, date: 'DATE', day: iso(start).slice(0, 10), time: '6:00 PM', shown: true, rule: '', start: iso(start), end: iso(start + 2 * hour) }, extra);
 
 function documents() {
-  const soon = Date.now() + 26 * hour;
-  const later = Date.now() + 50 * hour;
+  const soon = Math.floor(Date.now() / (24 * hour) + 1) * 24 * hour + 18 * hour;
+  const later = soon + 24 * hour;
   const seeded = seedDocuments().map(doc => (doc._id === 'dashboardSettings' ? Object.assign({}, doc, { newsInTicker: true, photoSource: 'both', photoDriveFolder: 'https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOp' }) : doc));
   return seeded.concat([
     { _id: 'tip-1', _type: 'tipOrNews', kind: 'tip', text: 'Wear safety glasses in the shop.', order: 10, show: true },

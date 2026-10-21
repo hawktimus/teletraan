@@ -17,8 +17,9 @@ async function check(name, test) {
 }
 
 const hour = 3600000;
-const soon = Date.now() + 26 * hour;
-const later = Date.now() + 50 * hour;
+const tomorrowStart = Math.floor(Date.now() / (24 * hour) + 1) * 24 * hour;
+const soon = tomorrowStart + 18 * hour;
+const later = soon + 24 * hour;
 const iso = time => new Date(time).toISOString();
 const dayOf = time => iso(time).slice(0, 10);
 
