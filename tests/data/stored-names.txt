@@ -853,6 +853,30 @@ presentationDay.team
 progressBlock
 progressBlock.label
 progressBlock.percent
+rosterPerson
+rosterPerson.department
+rosterPerson.department = build
+rosterPerson.department = business
+rosterPerson.department = cnc
+rosterPerson.department = design
+rosterPerson.department = electrical
+rosterPerson.department = marketing
+rosterPerson.department = operations
+rosterPerson.department = programming
+rosterPerson.department = strategy
+rosterPerson.expires
+rosterPerson.firstName
+rosterPerson.jobTitle
+rosterPerson.order
+rosterPerson.portrait
+rosterPerson.role
+rosterPerson.role = coach
+rosterPerson.role = leadership
+rosterPerson.role = mentor
+rosterPerson.role = parent
+rosterPerson.role = student
+rosterPerson.show
+rosterPerson.team
 screen
 screen.bannerTeam
 screen.countdownShown

@@ -414,6 +414,7 @@ const studioOnlyFields = {
 const studioOnlyTypes = {
   status: 'the Teletraan computer writes it for the status block, and the dashboard never reads it',
   calendarStatus: 'the Teletraan computer writes it for the Calendars page, and the dashboard never reads it',
+  rosterPerson: 'the roster is shown on the Control page, and no panel of the screen reads it yet (docs/roster.md)',
 };
 
 // Types the Teletraan computer writes and the dashboard reads as a whole. Their fields are checked together in
@@ -424,7 +425,7 @@ const writtenByTheComputer = {
   frcNews: 'the Teletraan computer writes it, the FRC news section of the Competition page lists it, and the dashboard reads its headlines for the FRC news panel and the ticker',
 };
 
-const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'photo', 'customPanel'];
+const itemTypes = ['task', 'plan', 'sponsor', 'tipOrNews', 'subteam', 'person', 'rosterPerson', 'photo', 'customPanel'];
 
 const choices = {
   'task.status': ['blocked', 'in-progress', 'in-review', 'up-next', 'done'],
@@ -482,6 +483,7 @@ const listSort = {
   tipOrNews: 'order',
   subteam: 'order',
   person: 'order',
+  rosterPerson: 'order',
   team: 'order',
   photo: '_createdAt',
   customPanel: 'order',
@@ -524,6 +526,7 @@ const sidebarTitles = {
   plan: 'Agenda items',
   calendarFilter: 'Calendar filters',
   subteam: 'Team leads',
+  rosterPerson: 'Roster',
   customPanel: 'Extra panels',
   presentationDay: 'Meeting days',
   theme: 'Look',
@@ -535,6 +538,7 @@ const typeTitles = {
   plan: 'Agenda item',
   presentation: 'Presentation',
   subteam: 'Team lead',
+  rosterPerson: 'Roster person',
   customPanel: 'Extra panel',
   theme: 'Look',
   place: 'Places',
@@ -552,7 +556,7 @@ const sidebarGroups = [
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
 const folderLines = {
   'Events': 'Calendars, Calendar filters',
-  'People': 'Leadership, Team leads, Sponsors',
+  'People': 'Leadership, Roster, Team leads, Sponsors',
   'Teams and views': 'Hawktimus Prime, Hawktimus Nova, Views (Robotics, Prime, Nova)',
   'Views': 'Robotics, Prime, Nova',
 };
@@ -2726,7 +2730,7 @@ function checkOldTitles() {
   });
 
   // The title of a type or a line is never one the sidebar used to have
-  const oldNames = ['Subteams', 'Subteam', 'Roster', 'Locations', 'Up Next', 'Custom Panels', 'Custom Panel', 'Theme', 'Test the screen'];
+  const oldNames = ['Subteams', 'Subteam', 'Locations', 'Up Next', 'Custom Panels', 'Custom Panel', 'Theme', 'Test the screen'];
   world.types.forEach(type => need(problems, oldNames.indexOf(type.title) === -1, 'the type ' + type.name + ' is still titled ' + type.title));
   allLines(world.structure.sidebarEntries).forEach(entry => need(problems, oldNames.indexOf(entry.title) === -1, 'the sidebar still has a line titled ' + entry.title));
   return problems;
@@ -4178,7 +4182,7 @@ function checkTeamSeed(type) {
 // The Team field: the same on every kind of content that can be for one team. It is
 // optional and has no starting value, so empty means Both, and every item that exists
 // keeps showing with no change. It uses the radio in team-input.js.
-const teamTypes = ['task', 'milestone', 'plan', 'subteam', 'person', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'announcement', 'extraEvent'];
+const teamTypes = ['task', 'milestone', 'plan', 'subteam', 'person', 'rosterPerson', 'sponsor', 'presentation', 'presentationDay', 'customPanel', 'tipOrNews', 'announcement', 'extraEvent'];
 
 function checkTeamField() {
   const problems = [];
@@ -4993,6 +4997,7 @@ const listAdds = {
   Ticker: 'newTip',
   'Calendar filters': 'newCalendarFilter',
   Leadership: 'newPerson',
+  Roster: 'newRosterPerson',
   'Team leads': 'newSubteam',
   Sponsors: 'newSponsor',
   'Extra panels': null,

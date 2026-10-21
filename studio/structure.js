@@ -41,6 +41,7 @@ import { ArchiveIcon } from '@sanity/icons/Archive';
 import { BellIcon } from '@sanity/icons/Bell';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
+import { ClipboardIcon } from '@sanity/icons/Clipboard';
 import { ColorWheelIcon } from '@sanity/icons/ColorWheel';
 import { CheckmarkCircleIcon } from '@sanity/icons/CheckmarkCircle';
 import { CubeIcon } from '@sanity/icons/Cube';
@@ -168,6 +169,7 @@ export const sidebarEntries = [
     id: 'people',
     entries: [
       { kind: 'list', title: 'Leadership', icon: StarIcon, type: 'person', sort: byOrder, add: ['newPerson'] },
+      { kind: 'list', title: 'Roster', icon: ClipboardIcon, type: 'rosterPerson', sort: byOrder, add: ['newRosterPerson'] },
       { kind: 'list', title: 'Team leads', icon: UsersIcon, type: 'subteam', sort: byOrder, add: ['newSubteam'] },
       { kind: 'list', title: 'Sponsors', icon: HeartIcon, type: 'sponsor', sort: byOrder, add: ['newSponsor'] },
     ],

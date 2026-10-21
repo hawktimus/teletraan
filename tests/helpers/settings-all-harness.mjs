@@ -2,7 +2,7 @@
 // control/static, and answers /control/api/* with the real settings routes (control/routes/settings-doc.js) over a fake Sanity that
 // remembers (tests/helpers/fake-sanity.mjs). The page is /harness.html. Nothing leaves the process.
 //
-//   const harness = await startHarness();
+//   const harness = await startHarness();            options: documents, routes (route modules, the settings routes by default), body (the page body)
 //   harness.url + '/harness.html'
 //   harness.sanity.touch('dashboardSettings', { pageSeconds: 33 });
 //   await harness.close();
@@ -52,13 +52,13 @@ export async function startHarness(options = {}) {
   const sanity = makeFakeSanity(options.documents || seedDocuments());
   const ctx = { root: repo.replace(/\/$/, ''), dataDir: root, envFile: envFile, state: {}, log: () => {}, fetch: sanity.fetch, pinCheck: () => true };
   const router = createRouter();
-  settingsRoutes.register(router, ctx);
+  (options.routes || [settingsRoutes]).forEach(module => module.register(router, ctx));
 
   const staticFolder = path.join(repo, 'control', 'static');
   const page = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<title>Settings harness</title><link rel="stylesheet" href="/control/style.css"><link id="tabs-css" rel="stylesheet" href="/control/tabs/tabs.css"></head>' +
-    '<body><main id="page" style="padding:16px"><div class="settings-page"><div id="settings-all"></div></div></main>' +
-    '<script type="module">import { mountSettingsAll } from "/control/tabs/settings-all.js"; window.ready = mountSettingsAll(document.getElementById("settings-all"), { documentId: new URLSearchParams(location.search).get("doc") || "" });</script></body></html>';
+    (options.body || '<body><main id="page" style="padding:16px"><div class="settings-page"><div id="settings-all"></div></div></main>' +
+    '<script type="module">import { mountSettingsAll } from "/control/tabs/settings-all.js"; window.ready = mountSettingsAll(document.getElementById("settings-all"), { documentId: new URLSearchParams(location.search).get("doc") || "" });</script></body>') + '</html>';
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://local');
