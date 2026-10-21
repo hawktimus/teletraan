@@ -2039,13 +2039,16 @@ What each theme draws:
   behind, white strokes at the top left, a halftone shade at the bottom right, small stars, and a flat header plate
   in the accent with the title inked dark. The team name is white with an ink outline. The background is a deep blue
   sky with eleven twinkling stars and a sunburst that turns once in 180 seconds.
-- Foundry draws a steel rim, a bolt flange, weld stitches, a hazard strip, a caution plate, a steel header with an
-  accent bar, gears behind the corner cuts (90 seconds, 67.5 for the one that meshes the other way, 120 for the far
+- Foundry draws dark gunmetal armor like a wall of a fort: a steel rim with a lit edge on its upper left and a dark one
+  on its lower right, armor plates split by seams, a row of hex bolts, steel brackets in the square corners and plates
+  along the cut ones, clamps across the top and the bottom, hinge knuckles on the left and lock catches with a deadbolt
+  on the right (the tip is the accent of the team), a hazard strip, a caution plate, a steel header with an accent bar
+  and a hazard line, gears behind the corner cuts (90 seconds, 67.5 for the one that meshes the other way, 120 for the far
   one) and pistons that stroke every 6 to 7.5 seconds. The background is a dark shop floor with a work light that
   pans over 70 seconds, creeping hazard bands, six specks of dust and a hook on a rail that crosses once in 150
   seconds. Foundry is not in the starting week.
 
-Retro and Foundry are drawn by `core/theme-art.js`, which adds the markup to every frame of the standard layout for
+Retro is drawn by `core/theme-art.js` and Foundry by `core/theme-art-foundry.js`, which add the markup to every frame of the standard layout for
 every theme, and the stylesheet of the theme shows it. The bar layout still draws Minimal's frames in every theme;
 the background of the theme reaches it. All of it moves with transform and opacity only, and calm and no motion draw
 it still.

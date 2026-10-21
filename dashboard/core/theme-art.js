@@ -1,6 +1,6 @@
 // The drawing that the Retro and Foundry themes put on the frames of the standard layout. The Original and
-// Cybertron themes draw their frames in plate.js; these two are drawn here, as small hand written svg, and
-// plate.js adds the markup after the frame of each area (areas.js) and the banner adds it before its text.
+// Cybertron themes draw their frames in plate.js; Retro is drawn here and Foundry in theme-art-foundry.js, as small hand
+// written svg, and plate.js adds the markup after the frame of each area (areas.js) and the banner adds it before its text.
 //
 // The markup is always in the page, for every theme, and a stylesheet shows it only while its theme is on
 // (styles/retro/theme.css and styles/foundry/theme.css). That is how the rivets of Original work too, and it
@@ -18,6 +18,8 @@
 //
 // The gears and the pistons are svg elements of their own, so that the browser moves each as a picture and does
 // not draw the frame again. Only transform moves (styles/foundry/frame.css).
+
+import { foundryMarkup } from './theme-art-foundry.js';
 
 const boxes = {
   grid1: { width: 1152, height: 708, header: 120, tab: 780, cut: 54 },
@@ -54,57 +56,6 @@ function star(cx, cy, outer) {
     points.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
   }
   return `<polygon class="ra-star" points="${list(points)}"/>`;
-}
-
-// A gear as one closed path: teeth that are trapezoids on a round body, a hole for the hub and three round
-// holes. The center is 0,0, so the element can turn about its middle. outer is the radius at the tips.
-function gearPath(teeth, outer) {
-  const root = outer * 0.82;
-  const step = Math.PI * 2 / teeth;
-  const points = [];
-  for (let index = 0; index < teeth; index++) {
-    const start = index * step;
-    [[0.1, root], [0.22, outer], [0.5, outer], [0.62, root]].forEach(mark => {
-      const angle = start + mark[0] * step;
-      points.push([mark[1] * Math.cos(angle), mark[1] * Math.sin(angle)]);
-    });
-  }
-  const holes = [0, 1, 2].map(index => {
-    const angle = index * Math.PI * 2 / 3;
-    const cx = outer * 0.5 * Math.cos(angle);
-    const cy = outer * 0.5 * Math.sin(angle);
-    const r = outer * 0.14;
-    return `M${number(cx - r)} ${number(cy)}a${number(r)} ${number(r)} 0 1 0 ${number(r * 2)} 0a${number(r)} ${number(r)} 0 1 0 ${number(-r * 2)} 0Z`;
-  }).join('');
-  return 'M' + points.map(point => number(point[0]) + ' ' + number(point[1])).join('L') + 'Z' + holes;
-}
-
-function gear(name, cx, cy, outer, teeth, seconds, direction) {
-  const half = outer + 4;
-  return `<svg class="fa-gear fa-gear-${name}" style="left: ${number(cx - half)}px; top: ${number(cy - half)}px; --gear-turn: ${seconds}s; --gear-way: ${direction};" width="${half * 2}" height="${half * 2}" viewBox="${-half} ${-half} ${half * 2} ${half * 2}">
-      <path class="fa-gear-body" d="${gearPath(teeth, outer)}"/>
-      <circle class="fa-gear-hub" r="${number(outer * 0.17)}"/>
-    </svg>`;
-}
-
-// A piston: a cylinder that stays and a rod that strokes in and out by a few pixels. side is -1 for the left
-// edge of the frame and 1 for the right edge. seconds is how long one stroke back and forth takes.
-// The rod is an svg of its own, because a transform that moves a shape inside an svg makes the browser lay the whole page out
-// again on every frame, and one that moves an svg is only a move of its picture.
-function piston(x, y, side, seconds, delay) {
-  const place = `style="left: ${number(x)}px; top: ${number(y)}px; --stroke: ${seconds}s; --wait: ${delay}s;" width="22" height="150"`;
-  return `<svg class="fa-piston" ${place} viewBox="0 0 22 150">
-      <rect class="fa-piston-body" x="${side < 0 ? 4 : 2}" y="0" width="16" height="96" rx="3"/>
-    </svg><svg class="fa-piston fa-piston-moving" ${place} viewBox="0 0 22 150">
-      <rect class="fa-piston-rod" x="${side < 0 ? 8 : 6}" y="70" width="8" height="70"/>
-    </svg>`;
-}
-
-// The points of a frame that has two corners cut. turned is true when the top right and bottom left are cut, the
-// way a team with that trim has it (core/teams.js, data-corners)
-function cutOutline(left, top, right, bottom, cut, turned) {
-  if (turned) return [[left, top], [right - cut, top], [right, top + cut], [right, bottom], [left + cut, bottom], [left, bottom - cut]];
-  return [[left, top + cut], [left + cut, top], [right, top], [right, bottom - cut], [right - cut, bottom], [left, bottom]];
 }
 
 // The retro frame of a region: a cel with round corners, an ink line and a hard offset of ink behind it
@@ -148,85 +99,6 @@ function retroMarkup(region, box, size) {
   svg += star(width - inset - spot, inset + spot, region === 'ticker' ? 14 : 20);
   if (region === 'grid1' || region === 'grid2') svg += star(inset + spot, height - inset - spot, 16);
   return svg + '\n    </svg>';
-}
-
-// The foundry frame of a region: a steel rim with cut corners, a bolt flange along the top and the bottom, weld
-// stitches down the sides, a hazard strip along the foot, the caution plate at the bottom right, the steel header
-// with its accent bar, gears behind the cuts and pistons at the sides
-function foundryMarkup(region, box, size, turned) {
-  const { width, height } = size;
-  const thin = region === 'ticker' || region === 'banner';
-  const rim = thin ? 14 : 22;
-  const inset = rim / 2;
-  const cut = box.cut;
-  const outline = cutOutline(inset, inset, width - inset, height - inset, cut, turned);
-  const inside = cutOutline(rim, rim, width - rim, height - rim, Math.max(cut - 10, 8), turned);
-  const along = [inset + cut + 14, width - inset - cut - 14];
-  // The bolt flange is two lines of round dots, one along the top and one along the bottom of the rim. A line with a
-  // dash of no length and round ends draws a dot, so the row is two elements and not a bolt each
-  const flange = `M${along[0]} ${inset}H${along[1]}M${along[0]} ${height - inset}H${along[1]}`;
-
-  let svg = '';
-  if (!thin) {
-    // The gears stand behind the frame, so only what the cuts leave open shows
-    const edge = turned ? width - 22 : 22;
-    const far = turned ? 24 : width - 24;
-    const bigR = region === 'grid1' ? 56 : 42;
-    const smallR = region === 'grid1' ? 40 : 30;
-    // the two that mesh stand a little less than the sum of their radii apart, so the teeth go between each other
-    const apart = Math.round((bigR + smallR) * 0.91);
-    svg += gear('big', edge, 22, bigR, 12, 90, 1);
-    svg += gear('small', turned ? width - 22 - apart : 22 + apart, 14, smallR, 9, 67.5, -1);
-    svg += gear('far', far, height - 24, region === 'grid1' ? 48 : 36, 10, 120, 1);
-  }
-
-  svg += `<svg class="fa-frame" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <polygon class="fa-shadow" points="${list(outline)}"/>
-      <polygon class="fa-body" points="${list(inside)}"/>
-      <polygon class="fa-grain" points="${list(inside)}"/>`;
-
-  if (box.header > 0) {
-    const bottom = box.header;
-    const left = rim;
-    const tabTop = box.tab;
-    const head = turned ?
-      [[left, rim], [tabTop, rim], [tabTop - 34, bottom], [left, bottom]] :
-      [[left, rim + cut - 10], [left + cut - 10, rim], [tabTop, rim], [tabTop - 34, bottom], [left, bottom]];
-    svg += `
-      <polygon class="fa-header" points="${list(head)}"/>
-      <polygon class="fa-header-grain" points="${list(head)}"/>
-      <path class="fa-header-line" d="M${left} ${bottom}H${width - rim}"/>
-      <rect class="fa-accent" x="${tabTop + 20}" y="${bottom - 28}" width="${width - rim - tabTop - 48}" height="10"/>`;
-  }
-
-  svg += `
-      <polygon class="fa-rim-dark" points="${list(outline)}"/>
-      <polygon class="fa-rim" points="${list(outline)}"/>
-      <polygon class="fa-rim-light" points="${list(outline)}"/>
-      <path class="fa-flange" d="${flange}"/>
-      <path class="fa-flange-face" d="${flange}"/>`;
-
-  if (!thin) {
-    const stitchTop = rim + cut + 24;
-    const stitchBottom = height - rim - cut - 24;
-    svg += `
-      <path class="fa-stitch" d="M${inset} ${stitchTop}V${stitchBottom}M${width - inset} ${stitchTop}V${stitchBottom}"/>
-      <rect class="fa-hazard" x="${turned ? along[0] + 160 : along[0] + 10}" y="${height - rim - 2}" width="${along[1] - along[0] - 230}" height="10"/>`;
-    // The caution plate sits at the foot, the side the cut corner is not on, and is line art: no letters
-    const plateX = turned ? rim + cut + 20 : width - rim - cut - 150;
-    svg += `
-      <rect class="fa-caution" x="${plateX}" y="${height - rim - 6}" width="130" height="18" rx="2"/>
-      <path class="fa-caution-mark" d="M${plateX + 55} ${height - rim - 2}H${plateX + 75}L${plateX + 65} ${height - rim + 8}Z"/>`;
-  }
-  svg += '\n    </svg>';
-
-  if (!thin) {
-    // Pistons stroke on the sides of the frame, one a little off the other
-    const stroke = region === 'grid1' ? 6.4 : 7.4;
-    svg += piston(-16, height * 0.46, -1, stroke, 0);
-    svg += piston(width - 6, height * 0.3, 1, region === 'grid1' ? 7.4 : 6.2, 1.5);
-  }
-  return svg;
 }
 
 // The markup that goes after the frame of the area, or in the banner. kind is a frame kind of plate.js (grid1,

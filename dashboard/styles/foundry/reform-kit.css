@@ -1,87 +1,167 @@
-/* The Foundry kit of the reform transitions (styles/foundry/transitions.js, core/reform-draw.js). The folding straps, the hardware
-   and the plates are all drawn in the blued steel of this theme whatever the metal of the team is, the chassis behind the squares is
-   a steel floor with hazard stripes, and the pieces of the kit (bolts, hasps, cogs, deadbolts, hand wheel, rams, gauges) are classes
-   here. Every rule starts with the theme or with a class of the kit, so no other theme sees it. Every color is a token of tokens.css
-   in this folder. Only transform and opacity are ever animated. */
+/* The Foundry kit of the reform transitions (styles/foundry/transitions.js, core/reform-draw.js). It is the machinery of a fort: dark
+   gunmetal with a lit line on the upper left of every part and a dark one on the lower right, hazard yellow for the parts that
+   lock, and no shadow or blur anywhere (the bevel is a line or a gradient). The folding straps, the hardware, the shutters and the
+   plates are drawn in the steel of this theme whatever the metal of the team is, the chassis behind the squares is a bulkhead of
+   armor plates with hazard stripes, and the pieces of the kit (bolts, hooks, cogs, deadbolts, hand wheel, clamp ring, rams, gauges)
+   are classes here. Every rule starts with the theme or with a class of the kit, so no other theme sees it. Every color is a token
+   of tokens.css in this folder. Only transform and opacity are ever animated. */
 
-/* the folding edges: steel with a hazard stripe along the inside and a steel pin at each joint */
+/* the folding edges: gunmetal with a hazard stripe along the inside, a dark line along the outside and a steel pin at each joint */
 html[data-style="foundry"] .reform-seg {
   background-color: transparent;
+  box-shadow: 0 0 0 0 var(--style-seam);
   background-image:
-    radial-gradient(circle at calc(100% - 6px) 50%, var(--style-steel-dark) 0 3px, var(--style-steel-5) 3px 6px, transparent 6px),
-    linear-gradient(180deg, var(--style-steel-hi), var(--style-steel-6) 28%, var(--style-steel-3) 52%, var(--style-steel-6) 76%, var(--style-steel-1));
+    radial-gradient(circle at calc(100% - 6px) 50%, var(--style-steel-dark) 0 3px, var(--style-steel-6) 3px 6px, transparent 6px),
+    linear-gradient(var(--style-seam), var(--style-seam)),
+    linear-gradient(var(--style-hazard-dim), var(--style-hazard-dim)),
+    linear-gradient(180deg, var(--style-steel-6), var(--style-steel-2) 24%, var(--style-steel-3) 58%, var(--style-steel-4));
+  background-position: 0 0, 0 0, 0 100%, 0 0;
+  background-size: 100% 100%, 100% 2px, 100% 4px, 100% 100%;
+  background-repeat: no-repeat;
 }
 html[data-style="foundry"] .reform-chain-h .reform-seg[style*="right:"] {
   background-image:
-    radial-gradient(circle at 6px 50%, var(--style-steel-dark) 0 3px, var(--style-steel-5) 3px 6px, transparent 6px),
-    linear-gradient(180deg, var(--style-steel-hi), var(--style-steel-6) 28%, var(--style-steel-3) 52%, var(--style-steel-6) 76%, var(--style-steel-1));
+    radial-gradient(circle at 6px 50%, var(--style-steel-dark) 0 3px, var(--style-steel-6) 3px 6px, transparent 6px),
+    linear-gradient(var(--style-seam), var(--style-seam)),
+    linear-gradient(var(--style-hazard-dim), var(--style-hazard-dim)),
+    linear-gradient(180deg, var(--style-steel-6), var(--style-steel-2) 24%, var(--style-steel-3) 58%, var(--style-steel-4));
 }
 html[data-style="foundry"] .reform-chain-v .reform-seg {
   background-image:
-    radial-gradient(circle at 50% calc(100% - 6px), var(--style-steel-dark) 0 3px, var(--style-steel-5) 3px 6px, transparent 6px),
-    linear-gradient(90deg, var(--style-steel-hi), var(--style-steel-6) 28%, var(--style-steel-3) 52%, var(--style-steel-6) 76%, var(--style-steel-1));
+    radial-gradient(circle at 50% calc(100% - 6px), var(--style-steel-dark) 0 3px, var(--style-steel-6) 3px 6px, transparent 6px),
+    linear-gradient(var(--style-seam), var(--style-seam)),
+    linear-gradient(var(--style-hazard-dim), var(--style-hazard-dim)),
+    linear-gradient(90deg, var(--style-steel-6), var(--style-steel-2) 24%, var(--style-steel-3) 58%, var(--style-steel-4));
+  background-position: 0 0, 0 0, 100% 0, 0 0;
+  background-size: 100% 100%, 2px 100%, 4px 100%, 100% 100%;
 }
 html[data-style="foundry"] .reform-chain-v .reform-seg[style*="bottom:"] {
   background-image:
-    radial-gradient(circle at 50% 6px, var(--style-steel-dark) 0 3px, var(--style-steel-5) 3px 6px, transparent 6px),
-    linear-gradient(90deg, var(--style-steel-hi), var(--style-steel-6) 28%, var(--style-steel-3) 52%, var(--style-steel-6) 76%, var(--style-steel-1));
+    radial-gradient(circle at 50% 6px, var(--style-steel-dark) 0 3px, var(--style-steel-6) 3px 6px, transparent 6px),
+    linear-gradient(var(--style-seam), var(--style-seam)),
+    linear-gradient(var(--style-hazard-dim), var(--style-hazard-dim)),
+    linear-gradient(90deg, var(--style-steel-6), var(--style-steel-2) 24%, var(--style-steel-3) 58%, var(--style-steel-4));
 }
 
-/* the drawing of the hardware: bolts, hasps, straps, rivets, cogs, pistons and teeth */
-.fk-rim { fill: var(--style-steel-dark); }
-.fk-steel { fill: var(--style-steel-6); }
-.fk-hi { fill: var(--style-steel-hi); }
-.fk-dark { fill: var(--style-steel-dark); }
+/* the drawing of the hardware: bolts, hooks, straps, rivets, cogs, rams and teeth. A part has a dark outline (rim), a face of
+   gunmetal and a lit line along the edges that face up and left */
+.fk-rim { fill: var(--style-seam); }
+.fk-face { fill: url(#theme-steel); }
+.fk-plate { fill: url(#theme-steel); }
+.fk-dark { fill: var(--style-seam); }
 .fk-hazard { fill: var(--style-hazard); }
-
-/* the Light doors: two steel plates with a hazard stripe across them, and a dark rim */
-html[data-style="foundry"] .reform-light-plate {
-  background-color: var(--style-steel-4);
-  background-image: repeating-linear-gradient(135deg, transparent 0 34px, var(--style-hazard-dim) 34px 44px);
-  box-shadow: inset 0 0 0 4px var(--style-steel-dark);
+.fk-lit {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .75;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.fk-light-gear { transform-origin: 50% 50%; }
+.fk-seam {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-width: 2px;
+}
+.fk-slot {
+  fill: none;
+  stroke: var(--style-steel-6);
+  stroke-width: 2px;
+}
+.fk-hub {
+  fill: var(--style-hazard);
+  stroke: var(--style-seam);
+  stroke-width: 1.5px;
+}
+.fk-hook {
+  fill: url(#theme-steel);
+  stroke: var(--style-seam);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.fk-cap {
+  fill: var(--style-hazard);
+  stroke: var(--style-seam);
+  stroke-width: 1.5px;
+}
 
-/* the chassis: a dark steel floor, hazard stripes at a slant and a seam every 150 pixels */
+/* the Light shutters and the shutters of the large panel: two leaves of armor with a lip of hazard stripes along the edge where they
+   meet, a lit line on that edge, a dark seam line every 150 pixels and a row of bolts along the top and the bottom. The leaf is a clip
+   (.reform-leaf) and the plate slides in it. The leaf of the right is the left one turned across. */
+html[data-style="foundry"] {
+  --fk-bolt: radial-gradient(circle at 32px 14px, var(--style-bolt-hi) 0 1.5px, var(--style-bolt) 1.5px 6px, var(--style-seam) 6px 8px, transparent 8.5px);
+}
+html[data-style="foundry"] .reform-light-plate,
+html[data-style="foundry"] .reform-leaf .fk-leaf-plate {
+  background-color: var(--style-steel-4);
+  box-shadow: 0 0 0 0 var(--style-seam);
+  background-size: 2px 100%, 30px 100%, 3px 100%, 64px 28px, 64px 28px, 100% 100%, 100% 100%;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat-x, repeat-x, no-repeat, no-repeat;
+}
+html[data-style="foundry"] .reform-light-left,
+html[data-style="foundry"] .reform-leaf .fk-leaf-plate {
+  background-image:
+    linear-gradient(var(--style-steel-hi), var(--style-steel-hi)),
+    repeating-linear-gradient(135deg, var(--style-hazard) 0 12px, var(--style-hazard-ink) 12px 24px),
+    linear-gradient(var(--style-seam), var(--style-seam)),
+    var(--fk-bolt),
+    var(--fk-bolt),
+    repeating-linear-gradient(180deg, transparent 0 146px, var(--style-seam) 146px 150px),
+    linear-gradient(90deg, var(--style-steel-3), var(--style-steel-5) 70%, var(--style-steel-2));
+  background-position: 100% 0, 100% 0, calc(100% - 30px) 0, 0 6px, 0 calc(100% - 6px), 0 0, 0 0;
+}
+html[data-style="foundry"] .reform-light-right,
+html[data-style="foundry"] .reform-leaf.reform-right .fk-leaf-plate {
+  background-image:
+    linear-gradient(var(--style-steel-hi), var(--style-steel-hi)),
+    repeating-linear-gradient(135deg, var(--style-hazard) 0 12px, var(--style-hazard-ink) 12px 24px),
+    linear-gradient(var(--style-seam), var(--style-seam)),
+    var(--fk-bolt),
+    var(--fk-bolt),
+    repeating-linear-gradient(180deg, transparent 0 146px, var(--style-seam) 146px 150px),
+    linear-gradient(270deg, var(--style-steel-3), var(--style-steel-5) 70%, var(--style-steel-2));
+  background-position: 0 0, 0 0, 30px 0, 0 6px, 0 calc(100% - 6px), 0 0, 0 0;
+}
+html[data-style="foundry"] .reform-leaf {
+  overflow: hidden;
+}
+.fk-leaf-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+.fk-light-gear,
+.fk-light-wheel { transform-origin: 50% 50%; }
+
+/* the chassis: the bulkhead behind the squares, armor plates split by seams, hazard stripes at a slant */
 html[data-style="foundry"] .reform-chassis {
   background-color: var(--style-steel-4);
   background-image:
     repeating-linear-gradient(135deg, transparent 0 34px, var(--style-hazard-dim) 34px 44px),
-    repeating-linear-gradient(0deg, transparent 0 150px, var(--style-steel-dark) 150px 158px);
+    repeating-linear-gradient(0deg, transparent 0 150px, var(--style-seam) 150px 158px),
+    repeating-linear-gradient(90deg, transparent 0 190px, var(--style-seam) 190px 196px);
 }
 
-/* the straps carry a stripe of hazard along their inner edge */
-html[data-style="foundry"] .reform-chain-h .reform-seg {
-  box-shadow: inset 0 0 0 2px var(--style-steel-dark), inset 0 -4px 0 var(--style-hazard-dim);
-}
-html[data-style="foundry"] .reform-chain-v .reform-seg {
-  box-shadow: inset 0 0 0 2px var(--style-steel-dark), inset -4px 0 0 var(--style-hazard-dim);
-}
-
-/* the deadbolt: a steel bar with a hazard cap at the end it is held by */
-.fk-bolt-rim { fill: var(--style-steel-dark); }
-.fk-bolt-body { fill: var(--style-steel-hi); }
-.fk-bolt-cap {
-  fill: var(--style-hazard);
-  stroke: var(--style-steel-dark);
-  stroke-width: 2px;
-}
+/* the deadbolt: a steel bar with grooves and a hazard cap at the end it is held by */
+.fk-bar { fill: var(--style-steel-6); }
 
 /* the hand wheel */
 .reform-wheel { transform-origin: 50% 50%; }
 .fk-wheel-rim {
   fill: none;
-  stroke: var(--style-steel-hi);
+  stroke: var(--style-steel-6);
   stroke-width: 9px;
 }
 .fk-wheel-ring {
   fill: none;
-  stroke: var(--style-steel-dark);
+  stroke: var(--style-seam);
   stroke-width: 2px;
 }
 .fk-wheel-inner {
   fill: none;
-  stroke: var(--style-steel-dark);
+  stroke: var(--style-seam);
   stroke-width: 2px;
 }
 .fk-wheel-spoke {
@@ -91,31 +171,48 @@ html[data-style="foundry"] .reform-chain-v .reform-seg {
 }
 .fk-wheel-hub {
   fill: var(--style-hazard);
-  stroke: var(--style-steel-dark);
+  stroke: var(--style-seam);
   stroke-width: 2px;
 }
 
-/* a ram turns about the point where its body meets the corner */
-.reform-ram { transform-origin: 23px 24px; }
+/* the clamp ring round the wheel: a ring of steel with an ear that holds the bolt of the clamp */
+.reform-ring { transform-origin: 50% 50%; }
+.fk-ring-dark {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-width: 13px;
+}
+.fk-ring {
+  fill: none;
+  stroke: var(--style-steel-5);
+  stroke-width: 8px;
+}
+.fk-ring-ear {
+  fill: url(#theme-steel);
+  stroke: var(--style-seam);
+  stroke-width: 2px;
+}
+
+/* a ram is a cylinder that turns about the point where it meets the corner, and a rod that is pushed out of it */
+.reform-ram,
+.reform-rod { transform-origin: 23px 24px; }
 .fk-ram-body {
-  fill: var(--style-steel-1);
-  stroke: var(--style-steel-dark);
+  fill: url(#theme-steel);
+  stroke: var(--style-seam);
   stroke-width: 2px;
 }
 .fk-ram-rod {
   fill: var(--style-steel-hi);
-  stroke: var(--style-steel-dark);
+  stroke: var(--style-seam);
   stroke-width: 2px;
 }
 
 /* a gauge: a face that stays and a needle that sweeps over it */
-.fk-gauge-rim {
-  fill: var(--style-steel-dark);
-}
-.fk-gauge-face { fill: var(--style-steel-hi); }
+.fk-gauge-rim { fill: var(--style-seam); }
+.fk-gauge-face { fill: var(--style-steel-3); }
 .fk-gauge-ticks {
   fill: none;
-  stroke: var(--style-steel-dark);
+  stroke: var(--style-steel-hi);
   stroke-width: 2px;
 }
 .fk-needle {
@@ -123,4 +220,4 @@ html[data-style="foundry"] .reform-chain-v .reform-seg {
   stroke: var(--style-hazard);
   stroke-width: 3px;
 }
-.fk-needle-hub { fill: var(--style-steel-dark); }
+.fk-needle-hub { fill: var(--style-seam); }

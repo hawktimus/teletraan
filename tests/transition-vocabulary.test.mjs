@@ -37,7 +37,7 @@ async function test(name, run) {
 
 // The drawing classes (the ones with a kit prefix) in some markup
 const classesOf = markup => (String(markup).match(/class="[^"]*"/g) || []).flatMap(text => text.slice(7, -1).split(/\s+/)).filter(Boolean);
-const roles = ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth', 'pin', 'barrel', 'chassis', 'deadbolt', 'wheel', 'ram', 'gauge', 'needle'];
+const roles = ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth', 'pin', 'barrel', 'chassis', 'deadbolt', 'wheel', 'ram', 'gauge', 'needle', 'ring', 'rod', 'cog', 'cogs', 'leaf', 'seam'];
 const prefixes = Object.values(prefixOf);
 
 await test('the drawing of every piece of a kit has the classes of its own theme and of no other', () => {
@@ -79,6 +79,21 @@ await test('a Light run draws a small, fixed number of parts for each kit, on a 
     const total = ['main', 'side', 'banner', 'ticker'].reduce((sum, role) => sum + 2 + kits[theme].light(1000, role === 'main' ? 700 : 160, role).length, 0);
     assert.ok(total <= 40, theme + ' animates ' + total + ' elements in a view');
   });
+});
+
+await test('the Foundry Light transition has the vocabulary of the heavy one: deadbolts that seat and settle, a hand wheel and cogs in mesh, and shutters with a hazard lip', () => {
+  const big = kits.foundry.light(1532, 736, 'main');
+  const strip = kits.foundry.light(1856, 160, 'banner');
+  const classes = list => list.map(part => part.cls);
+  assert.deepEqual(classes(big), ['fk-light-bolt', 'fk-light-bolt', 'fk-light-wheel', 'fk-light-gear', 'fk-light-gear']);
+  assert.deepEqual(classes(strip), ['fk-light-bolt', 'fk-light-bolt', 'fk-light-gear']);
+  big.filter(part => part.cls === 'fk-light-bolt').forEach(part => {
+    assert.ok(part.close.some(frame => frame.transform === 'translateX(4px) scaleX(1)'), 'the bolt goes on by 4 pixels when it seats');
+    assert.equal(part.close[part.close.length - 1].transform, 'translateX(0px) scaleX(1)', 'and settles');
+  });
+  const css = noComments(read('styles/foundry/reform-kit.css'));
+  assert.ok(/\.reform-light-left[\s\S]*?repeating-linear-gradient\(135deg, var\(--style-hazard\)/.test(css), 'a hazard lip on the plates');
+  assert.ok(!/box-shadow:\s*(inset|[1-9-])/.test(css), 'no shadow on the plates');
 });
 
 await test('a theme without a kit plays the plain kit, which draws nothing and has no look of any theme', () => {

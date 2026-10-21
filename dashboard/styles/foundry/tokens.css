@@ -1,23 +1,30 @@
 /* The custom properties of the Foundry theme. What each one is for is listed at the top of theme.css.
-   A color is written here and nowhere else. */
+   A color is written here and nowhere else.
+
+   The metal is dark gunmetal armor, like a fort. The lit tones (1, 6 and hi) only show as thin bevel lines and
+   as the highlight of a part. The plates themselves are the dark tones (3, 4 and 5). */
 
 html[data-style="foundry"] {
-  --style-ink: #05060a;
-  --style-steel-dark: #0a0c10;
-  --style-steel-1: #9aa4b2;
-  --style-steel-2: #5c6775;
-  --style-steel-3: #2c333d;
-  --style-steel-4: #171b21;
-  --style-steel-5: #4c5663;
-  --style-steel-6: #8a95a3;
-  --style-steel-hi: #c9d2dd;
-  --style-plate: #262b33;
-  --style-panel: #13161b;
-  --style-bolt: #3a3f47;
+  --style-ink: #040507;
+  --style-steel-dark: #06080b;
+  --style-steel-1: #6c7887;
+  --style-steel-2: #485261;
+  --style-steel-3: #2b323c;
+  --style-steel-4: #1a1f26;
+  --style-steel-5: #39414d;
+  --style-steel-6: #6b7684;
+  --style-steel-hi: #aab6c4;
+  --style-plate: #1b2027;
+  --style-plate-hi: #282f39;
+  --style-plate-lo: #12151a;
+  --style-panel: #0e1116;
+  --style-bolt: #343c47;
+  --style-bolt-hi: #7c8896;
+  --style-seam: #040608;
   --style-hazard: #f0b400;
-  --style-hazard-dim: #b48a00;
+  --style-hazard-dim: #a77e00;
   --style-hazard-ink: #0b0c0f;
-  --style-floor: #0a0b0d;
+  --style-floor: #08090b;
   --style-grain: rgba(255, 255, 255, .03);
   --style-floor-light: rgba(255, 255, 255, .05);
   --style-floor-shade: rgba(0, 0, 0, .55);
@@ -27,4 +34,7 @@ html[data-style="foundry"] {
   --style-chain: #3a4150;
   --style-trolley: #4c5663;
   --style-header-ink: var(--team-header-ink, #ffffff);
+  --style-sheen: rgba(255, 255, 255, .16);
+  --style-sheen-soft: rgba(255, 255, 255, .06);
+  --style-dusk: rgba(0, 0, 0, .34);
 }
