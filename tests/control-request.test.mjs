@@ -29,11 +29,11 @@ await check('Next, Play announcement and the presentation test write the time no
 });
 
 await check('Hold this panel takes a whole number of minutes from 1 to 60 and a panel id, and ends by itself', () => {
-  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 10 }, at).set, { holdPanel: { panel: 'tasks', until: plus(10) } });
-  assert.deepEqual(buildRequest('hold', { panel: 'monday-board', minutes: 30 }, at).set, { holdPanel: { panel: 'monday-board', until: plus(30) } });
-  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 1 }, at).set, { holdPanel: { panel: 'tasks', until: plus(1) } });
-  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 60 }, at).set, { holdPanel: { panel: 'tasks', until: plus(60) } });
-  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: '45' }, at).set, { holdPanel: { panel: 'tasks', until: plus(45) } });
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 10 }, at).set, { holdPanel: { panel: 'tasks', until: plus(10) }, holdRow: '' });
+  assert.deepEqual(buildRequest('hold', { panel: 'monday-board', minutes: 30 }, at).set, { holdPanel: { panel: 'monday-board', until: plus(30) }, holdRow: '' });
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 1 }, at).set, { holdPanel: { panel: 'tasks', until: plus(1) }, holdRow: '' });
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: 60 }, at).set, { holdPanel: { panel: 'tasks', until: plus(60) }, holdRow: '' });
+  assert.deepEqual(buildRequest('hold', { panel: 'tasks', minutes: '45' }, at).set, { holdPanel: { panel: 'tasks', until: plus(45) }, holdRow: '' });
   [0, 61, 120, -5, 1.5, 'abc', '', null, true, undefined].forEach(minutes => {
     assert.throws(() => buildRequest('hold', { panel: 'tasks', minutes: minutes }, at), error => error.status === 400 && error.message === 'Hold a panel for a whole number of minutes from 1 to 60.', String(minutes));
   });
@@ -60,7 +60,7 @@ await check('Show view takes the four views for 30 minutes unless told, and Prev
 });
 
 await check('Back to schedule empties all four holds at once', () => {
-  assert.deepEqual(buildRequest('schedule', {}, at).set, { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } });
+  assert.deepEqual(buildRequest('schedule', {}, at).set, { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } });
 });
 
 await check('Post an announcement makes a published announcement for both teams, two hours, 90 characters at most', () => {
@@ -214,10 +214,10 @@ await check('the screen reads a request only until its time, and not a time more
     previewTheme: { theme: 'retro', until: plus(10) },
     pauseRotation: { until: plus(60) },
   };
-  assert.deepEqual(activeRequests(settings, at), { holdPanel: 'tasks', showView: 'nova', previewTheme: 'retro', pauseRotation: true });
+  assert.deepEqual(activeRequests(settings, at), { holdPanel: 'tasks', heldRow: null, heldRowView: '', showView: 'nova', previewTheme: 'retro', pauseRotation: true });
   const later = new Date(at.getTime() + 11 * 60000);
-  assert.deepEqual(activeRequests(settings, later), { holdPanel: '', showView: 'nova', previewTheme: '', pauseRotation: true });
-  assert.deepEqual(activeRequests(settings, new Date(at.getTime() + 61 * 60000)), { holdPanel: '', showView: '', previewTheme: '', pauseRotation: false });
+  assert.deepEqual(activeRequests(settings, later), { holdPanel: '', heldRow: null, heldRowView: '', showView: 'nova', previewTheme: '', pauseRotation: true });
+  assert.deepEqual(activeRequests(settings, new Date(at.getTime() + 61 * 60000)), { holdPanel: '', heldRow: null, heldRowView: '', showView: '', previewTheme: '', pauseRotation: false });
 
   assert.equal(longestMinutes, 24 * 60);
   assert.equal(stillRunning(plus(longestMinutes), at), true);
@@ -235,7 +235,7 @@ await check('a forgotten hold ends on its own, and nothing wrong in the stored f
   assert.equal(activeRequests({ showView: { key: 'minimal', until: plus(10) } }, at).showView, '');
   assert.equal(activeRequests({ previewTheme: { theme: 'neon', until: plus(10) } }, at).previewTheme, '');
   assert.equal(activeRequests({ holdPanel: 'tasks', pauseRotation: [1] }, at).pauseRotation, false);
-  assert.deepEqual(activeRequests(null, at), { holdPanel: '', showView: '', previewTheme: '', pauseRotation: false });
+  assert.deepEqual(activeRequests(null, at), { holdPanel: '', heldRow: null, heldRowView: '', showView: '', previewTheme: '', pauseRotation: false });
 });
 
 await check('the fields are always complete after tidying, and the defaults in config.js are the empty ones', () => {

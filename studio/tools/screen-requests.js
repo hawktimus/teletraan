@@ -58,7 +58,7 @@ export function showViewRequest(key, minutes, now = new Date()) {
 
 // Back to the schedule: every hold and preview of the control page is cleared
 export function backToScheduleRequest() {
-  return { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
+  return { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
 }
 
 // For an action. patch and publish are the document operations Studio gives it

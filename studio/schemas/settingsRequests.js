@@ -99,9 +99,25 @@ function wordField(name, title, list) {
   });
 }
 
+// The row the held panel plays, as JSON. Empty when the hold has none, and then the wall plays the first row of the Rotation
+// with that panel. The control page writes it and clears it with the hold.
+function holdRowField() {
+  return defineField({
+    name: 'holdRow',
+    title: 'Hold row',
+    type: 'string',
+    group: 'screen',
+    hidden: true,
+    readOnly: true,
+    description: 'Filled in by the control page. The row the held panel plays, up to 400 characters. Do not edit it.',
+    validation: rule => rule.max(400).error('Use 400 characters or fewer.'),
+  });
+}
+
 export function screenRequestFields() {
   return [
     controlField('holdPanel', 'Hold panel', 'The large frame keeps one panel.', [wordField('panel', 'Panel')]),
+    holdRowField(),
     controlField('showView', 'Show view', 'The screen shows one view.', [wordField('key', 'View', ['general', 'prime', 'nova', 'family'])]),
     controlField('previewTheme', 'Preview theme', 'The screen shows one theme.', [wordField('theme', 'Theme', ['original', 'cybertron', 'retro', 'foundry'])]),
     controlField('pauseRotation', 'Pause rotation', 'The rotation stops.', []),

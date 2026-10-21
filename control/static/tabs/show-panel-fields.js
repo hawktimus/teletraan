@@ -30,12 +30,13 @@ export function panelFieldsOf(panel, values, choices) {
   return [];
 }
 
-// The picked settings that count for this panel: only the names it has a menu for, and none that are empty
+// The picked settings that count for this panel: only the names it has a menu for. An empty one is kept, because it is a pick
+// (Both teams, All departments) that takes the setting off the row of the Rotation.
 export function settingsOf(panel, picked, choices) {
   const names = panelFieldsOf(panel, picked, choices).map(item => item.field);
   const kept = {};
   names.forEach(name => {
-    if (picked && picked[name] !== undefined && picked[name] !== '') kept[name] = picked[name];
+    if (picked && typeof picked[name] === 'string') kept[name] = picked[name];
   });
   return kept;
 }

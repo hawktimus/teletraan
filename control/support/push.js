@@ -8,6 +8,8 @@
 
 import { Refusal } from './http.js';
 import { hiddenKinds, noticeLongest, settingsId, themeIds, viewKeys } from './requests.js';
+import { tidyRotationRow } from '../../dashboard/core/rotation.js';
+import { longestHoldRow, tidyHoldRow } from '../../dashboard/core/screen-requests.js';
 
 export const pushMinutes = { least: 1, most: 60, usual: 15, choices: [1, 5, 15, 30, 60] };
 export const noticeId = 'push-notice';
@@ -19,7 +21,7 @@ export const hiddenWindowSeconds = 120;
 const empty = {
   theme: { previewTheme: { theme: '', until: '' } },
   view: { showView: { key: '', until: '' } },
-  panel: { holdPanel: { panel: '', until: '' } },
+  panel: { holdPanel: { panel: '', until: '' }, holdRow: '' },
   pause: { pauseRotation: { until: '' } },
 };
 
@@ -46,6 +48,30 @@ export function noticeTextOf(input) {
   return text;
 }
 
+// The row a panel push carries, as the text stored in holdRow: the row the picture showed, cleaned by the same function the
+// wall cleans a row of the Rotation with, so a menu that is not a choice of the panel never reaches the wall. The view is kept as
+// the page named it (Condensed is family) and left out when the page named none. A push with no row stores an empty text, and
+// the wall then plays the first row of the Rotation that has the panel.
+export function holdRowText(input, panel) {
+  if (input === undefined || input === null || input === '') return '';
+  if (typeof input !== 'object' || Array.isArray(input)) throw new Refusal(400, 'The row to show should be a row of the Rotation.');
+
+  const named = typeof input.view === 'string' ? input.view.trim().toLowerCase() : '';
+  const given = Object.assign({}, input, { shown: true });
+  if (named === '') delete given.view;
+  const tidy = tidyRotationRow(Object.assign({ view: 'robotics' }, given));
+  if (tidy === null || tidy.retired === true || tidy.panel !== panel) throw new Refusal(400, 'The row to show does not match the panel. Pick the panel again.');
+
+  const row = Object.assign({}, tidy);
+  delete row.shown;
+  if (named === '') delete row.view;
+  else row.view = named === 'general' ? 'robotics' : named;
+  const text = JSON.stringify(row);
+  if (text.length > longestHoldRow) throw new Refusal(400, 'The row to show is too long.');
+  if (tidyHoldRow(text, panel) === null) throw new Refusal(400, 'The wall cannot read that row. Pick the panel again.');
+  return text;
+}
+
 // What a push changes: { set } for a patch of Dashboard Settings, or { notice } for the announcement document.
 // teamId is the _id of the Team document for an announcement, found by the route from the code in the body.
 export function buildPush(kind, input, now = new Date(), teamId = '') {
@@ -62,7 +88,7 @@ export function buildPush(kind, input, now = new Date(), teamId = '') {
 
     case 'panel':
       if (typeof body.panel !== 'string' || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(body.panel)) throw new Refusal(400, 'Pick a panel from the list.');
-      return { set: { holdPanel: { panel: body.panel, until: later(now, minutesOf(body.minutes)) } } };
+      return { set: { holdPanel: { panel: body.panel, until: later(now, minutesOf(body.minutes)) }, holdRow: holdRowText(body.row, body.panel) } };
 
     case 'pause':
       return { set: { pauseRotation: { until: later(now, minutesOf(body.minutes)) } } };
@@ -140,7 +166,11 @@ export function pushesOf(settings, notice, now = new Date()) {
   const view = source.showView;
   if (view && view.key && running(view.until, now)) found.push({ kind: 'view', id: view.key, until: view.until });
   const panel = source.holdPanel;
-  if (panel && panel.panel && running(panel.until, now)) found.push({ kind: 'panel', id: panel.panel, until: panel.until });
+  if (panel && panel.panel && running(panel.until, now)) {
+    // row is the row the hold plays (null when it has none), so the page can name it in words
+    const held = tidyHoldRow(source.holdRow, panel.panel);
+    found.push({ kind: 'panel', id: panel.panel, until: panel.until, row: held ? JSON.parse(source.holdRow) : null });
+  }
   const pause = source.pauseRotation;
   if (pause && running(pause.until, now)) found.push({ kind: 'pause', id: '', until: pause.until });
   if (notice && typeof notice.text === 'string' && running(notice.end, now) && Date.parse(notice.start) <= new Date(now).getTime()) {

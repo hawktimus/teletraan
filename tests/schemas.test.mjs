@@ -236,6 +236,7 @@ const contract = {
     nextLookRequest: object({ requestedAt: 'datetime' }),
     competitionPreviewRequest: object({ requestedAt: 'datetime' }),
     holdPanel: object({ panel: text(60), until: 'plainString' }),
+    holdRow: text(400),
     showView: object({ key: 'plainString', until: 'plainString' }),
     previewTheme: object({ theme: 'plainString', until: 'plainString' }),
     pauseRotation: object({ until: 'plainString' }),
@@ -1980,7 +1981,7 @@ function checkPreviewButtons() {
   // Back to the schedule clears the four fields of the control page
   const back = buttons.filter(candidate => candidate.action === 'backToSchedule')[0];
   const cleared = press(back, null);
-  need(problems, cleared.state.label === 'Back to the schedule' && JSON.stringify(setOf(cleared)) === JSON.stringify({ holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } }), 'Back to the schedule should clear holdPanel, showView, previewTheme and pauseRotation');
+  need(problems, cleared.state.label === 'Back to the schedule' && JSON.stringify(setOf(cleared)) === JSON.stringify({ holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } }), 'Back to the schedule should clear holdPanel, holdRow, showView, previewTheme and pauseRotation');
   need(problems, cleared.calls.length === 2 && cleared.calls[1].publish === true && cleared.toasts.length === 1, 'Back to the schedule should publish and show a toast');
 
   // The Studio lists are the same as the dashboard's and the control page's
@@ -4360,7 +4361,7 @@ const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanc
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify', 'competitionTeamMetrics', 'competitionCompare'];
 const settingsTabs = {
-  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'motionOnKiosk', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
+  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'motionOnKiosk', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'holdRow', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
   countdown: ['countdown'],
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],

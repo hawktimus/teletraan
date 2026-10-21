@@ -2,6 +2,8 @@
 // week, and the row the large picture draws for a push that has not been sent. No page is touched here, so
 // tests/control-push.test.mjs can read it with node. The page code is tabs/push.js and the pieces of markup are tabs/push-parts.js.
 
+import { mondayFieldsOf, playsIn } from './display-rows.js';
+
 export const holdChoices = [1, 5, 15, 30, 60];
 export const usualHold = 15;
 
@@ -37,13 +39,36 @@ export function leftWords(until, nowMilliseconds) {
   return minutes + (minutes === 1 ? ' minute ' : ' minutes ') + seconds + (seconds === 1 ? ' second left' : ' seconds left');
 }
 
+// A held row in words: Monday: Department tasks, Build, Open, Prime view. names is { panels, views, choices } as namesOf gives them.
+// The team of a Monday row or a roster row is told by the view it plays in, so it has no words of its own. The view is the one the
+// wall plays the row in (the same rule as playsIn), and a row that names none has no view in its words.
+export function rowWords(row, names) {
+  const source = row && typeof row === 'object' ? row : {};
+  const panel = String(source.panel || '');
+  const views = (names && names.views) || {};
+  const parts = [(names && names.panels && names.panels[panel]) || panel];
+
+  const choices = names && names.choices;
+  mondayFieldsOf(source, choices && choices.monday).forEach(item => {
+    if (item.field === 'team' || item.value === '') return;
+    const picked = item.choices.find(choice => choice.value === item.value);
+    parts.push(picked ? picked.title : item.value);
+  });
+
+  const key = { robotics: 'general', general: 'general', prime: 'prime', nova: 'nova', family: 'family' }[source.view] || '';
+  const plays = playsIn(Object.assign({}, source, { view: source.view === 'family' ? 'robotics' : source.view }));
+  const shown = source.view === 'family' ? 'family' : plays === 'condensed' ? 'family' : plays || key;
+  if (shown !== '') parts.push((views[shown] || shown) + ' view');
+  return (panel.indexOf('monday-') === 0 ? 'Monday: ' : '') + parts.join(', ');
+}
+
 // names: { themes: {id: title}, views: {key: name}, panels: {id: title}, hidden: {id: title} }
 export function pushWords(push, names) {
   const pick = (table, id) => (table && table[id]) || id;
   switch (push.kind) {
     case 'theme': return { title: 'Theme', detail: pick(names.themes, push.id) };
     case 'view': return { title: 'View', detail: pick(names.views, push.id) };
-    case 'panel': return { title: 'Panel', detail: pick(names.panels, push.id) };
+    case 'panel': return { title: 'Panel', detail: push.row ? rowWords(push.row, names) : pick(names.panels, push.id) };
     case 'pause': return { title: 'Rotation paused', detail: 'The panel on the wall stays where it is.' };
     case 'announcement': return { title: 'Announcement', detail: push.id };
     case 'hidden': return { title: 'Hidden transition', detail: pick(names.hidden, push.id) + ' was sent to the wall.' };
@@ -114,7 +139,8 @@ export function previewTarget(draft, rows, selectedRow, titles, names) {
   else row = copy(selectedRow || list.find(item => item.panel) || {});
   row.panel = draft.panel || row.panel || '';
   // The menus picked under Show a panel (department, list, chart, team) go on top of the settings of the first row
-  if (draft.panel && draft.settings) Object.keys(draft.settings).forEach(name => { if (draft.settings[name] !== '') row[name] = draft.settings[name]; });
+  // An empty menu (Both teams, All departments) takes the setting off the row, so the picture follows the menu
+  if (draft.panel && draft.settings) Object.keys(draft.settings).forEach(name => { if (draft.settings[name] === '') delete row[name]; else row[name] = draft.settings[name]; });
   if (draft.view) row.view = rowViewOf[draft.view] || row.view;
 
   const parts = [];
@@ -122,4 +148,16 @@ export function previewTarget(draft, rows, selectedRow, titles, names) {
   if (draft.view) parts.push((names && names.views && names.views[draft.view]) || draft.view);
   if (draft.theme) parts.push((names && names.themes && names.themes[draft.theme]) || draft.theme);
   return { row: row, theme: draft.theme || '', words: 'Previewing ' + parts.join(', ') + '. This is not on the wall until you send it.' };
+}
+
+// The row a panel push sends to the wall: the row the picture draws (previewTarget), so the wall plays what the picture showed,
+// with the seconds of the first row of the Rotation that has the panel. null when no panel is picked. The service cleans it
+// again with the function the wall uses for a row of the Rotation (control/support/push.js, holdRowText).
+export function pushRow(draft, rows, selectedRow) {
+  if (!draft || !draft.panel) return null;
+  const target = previewTarget(draft, rows, selectedRow, {}, {});
+  const first = (Array.isArray(rows) ? rows : []).find(item => item.panel === draft.panel);
+  const row = Object.assign({}, target.row);
+  if (first && Number.isInteger(first.seconds) && first.seconds > 0) row.seconds = first.seconds;
+  return row;
 }

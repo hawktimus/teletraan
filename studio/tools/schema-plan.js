@@ -38,6 +38,7 @@ const settingsSkip = {
   rebootStatus: 'A status line that the Teletraan computer fills in. It is not a setting.',
   miniStatus: 'The status of the Teletraan computer, written by the Mini. It is not a setting.',
   holdPanel: oneTime,
+  holdRow: oneTime,
   showView: oneTime,
   previewTheme: oneTime,
   pauseRotation: oneTime,

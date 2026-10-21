@@ -205,6 +205,7 @@ export function resetViews() {
   holdView('');
   rotateLayout('');
   heldPanel = '';
+  heldRow = null;
   paired.panel = '';
 }
 
@@ -215,6 +216,14 @@ export function holdPanelId(id) {
   heldPanel = typeof id === 'string' ? id : '';
 }
 
+// The row the control page holds that panel with (holdRow of Dashboard Settings, tidy by core/screen-requests.js), or null.
+// With one, the large panel plays that row and not the first row of the Rotation that has the panel.
+let heldRow = null;
+
+export function holdRowOf(row) {
+  heldRow = row && typeof row === 'object' ? row : null;
+}
+
 // The first view in the order that has a step of this panel, or ''
 export function findViewWithPanel(content, panel, now = new Date()) {
   return playOrder(content).find(key => viewSteps(content, key, now).some(step => step.panel === panel)) || '';
@@ -223,6 +232,16 @@ export function findViewWithPanel(content, panel, now = new Date()) {
 // The steps of the large panel: the view the clock is on
 export function viewPlaylist(content, now = new Date()) {
   const key = listedView(content);
+  if (heldPanel !== '' && heldRow !== null && heldRow.panel === heldPanel) {
+    // The same steps a row of the Rotation makes, so the view rule of the Monday panels, the layout and the skip of a row with
+    // nothing to show all apply. A Monday panel with no data gives no step, and the large frame then has nothing to show until
+    // the hold ends, as it did before a row was held.
+    // The row plays in the view the clock is on, which is the view the row names while the hold is on
+    const inView = Object.assign({}, heldRow, { view: key === 'prime' || key === 'nova' ? key : 'robotics' });
+    const own = tidyMainRow(mainRowOf(inView, content), key === 'general', true);
+    return own === null ? [] : viewSteps(content, key, now, cycle.block, [own]);
+  }
+
   const steps = viewSteps(content, key, now, cycle.block);
   if (heldPanel === '') return steps;
 

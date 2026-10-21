@@ -79,7 +79,7 @@ function holdMinutesOf(input) {
   return wanted;
 }
 
-const nothing = { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
+const nothing = { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
 
 // The change to Dashboard Settings that an action makes, as { set } for a patch, or { create } for a new document
 export function buildRequest(action, input, now = new Date()) {
@@ -98,7 +98,8 @@ export function buildRequest(action, input, now = new Date()) {
     case 'hold': {
       const minutes = holdMinutesOf(body.minutes);
       if (typeof body.panel !== 'string' || !/^[a-z0-9][a-z0-9-]{0,59}$/.test(body.panel)) throw new Refusal(400, 'Pick a panel to hold from the list.');
-      return { set: { holdPanel: { panel: body.panel, until: later(now, minutes) } } };
+      // the row of an earlier push is cleared, so this hold plays the first row of the Rotation with the panel
+      return { set: { holdPanel: { panel: body.panel, until: later(now, minutes) }, holdRow: '' } };
     }
 
     case 'view':
