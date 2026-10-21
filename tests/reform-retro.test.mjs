@@ -13,6 +13,9 @@ const read = file => fs.readFileSync(root + file, 'utf8');
 const noComments = text => text.replace(/\/\*[\s\S]*?\*\//g, '');
 const load = file => import(pathToFileURL(root + file).href);
 
+// The kit makes elements for its parts, so the test gives it a stand in for the page
+globalThis.document = { createElement: () => ({ className: '', style: { cssText: '' }, children: [], appendChild(child) { this.children.push(child); return child; }, after() {} }) };
+
 const { kit: original } = await load('dashboard/styles/original/transitions.js');
 const { kit } = await load('dashboard/styles/retro/transitions.js');
 const plan = await load('dashboard/core/reform-plan.js');
@@ -81,38 +84,114 @@ function fake(className, parent) {
   return { classList: { contains: name => names.includes(name) }, parentElement: parent || null, closest: () => parent && parent.chain ? parent.chain : null };
 }
 
-await test('every joint swings past its fold and springs back, folding and unfolding, by rotation only', () => {
+await test('every joint winds up, swings past its fold and bounces back with smaller overshoots, folding and unfolding, by rotation only', () => {
   const chain = fake('reform-chain reform-chain-h');
   const first = fake('reform-seg', chain);
   const second = Object.assign(fake('reform-seg', first), { closest: () => chain });
   first.closest = () => chain;
-  const tracks = { list: [{ element: second, property: 'transform', stops: plan.jointStops('h', 1) }] };
-  assert.equal(kit.extras({ role: 'side' }, tracks, false, { chassis: {} }), null);
+  const tracks = { list: [{ element: second, property: 'transform', stops: plan.jointStops('h', 1) }], add() {} };
+  const layer = kit.extras({ role: 'side', from: { x: 40, y: 40, w: 300, h: 700 }, to: { x: 40, y: 40, w: 300, h: 700 }, grid: 'side' }, tracks, false, { chassis: {} });
+  assert.ok(layer, 'the other regions of a run have poofs');
 
   const values = tracks.list[0].stops.map(stop => stop[1]);
-  assert.ok(values.includes('rotateY(206deg)'), 'no overshoot of the fold');
-  assert.ok(values.includes('rotateY(180deg)'));
-  assert.ok(values.includes('rotateY(-26deg)'), 'no overshoot of the unfold');
+  const degrees = values.map(value => Number(/\((-?[\d.]+)deg\)/.exec(value)[1]));
   values.forEach(value => assert.match(value, /^rotateY\(-?\d+deg\)$/));
+  assert.ok(degrees.includes(-14), 'no wind-up before the fold');
+  assert.ok(degrees.includes(208) && degrees.includes(-28), 'no overshoot of the fold and of the unfold');
+  // each bounce past 180 (and past 0) is smaller than the one before
+  const swings = degrees.slice(0, 8).map((value, index) => (index > 0 && index < 7 && (value - degrees[index - 1]) * (degrees[index + 1] - value) < 0 ? value : null)).filter(value => value !== null);
+  const away = swings.filter(value => value > 100).map(value => Math.abs(value - 180));
+  assert.ok(away.length >= 3 && away.every((value, index) => index === 0 || value <= away[index - 1] + 0.5), 'the fold does not settle with smaller bounces: ' + away);
   const times = tracks.list[0].stops.map(stop => stop[0]);
   assert.deepEqual(times, times.slice().sort((a, b) => a - b));
   assert.ok(times.at(-1) <= plan.reformTimes.totalMs);
 });
 
-await test('a square squashes before its flip and stretches after it, and keeps the move of a region that changes place', () => {
+await test('a square winds up squashed, stretches while it turns, lands squashed and bounces to rest, and keeps the move of a region that changes place', () => {
   const square = { axis: 'y', startMs: 1300 };
   const move = { dx: 40, dy: -12, sx: 1.5, sy: 0.8 };
   const original = plan.squareStops(square, move);
   const stops = kit.squares(square, move).transform;
   const values = stops.map(stop => stop[1]);
-  assert.ok(values.some(value => value.includes('rotateY(0deg)') && value.endsWith('scale(1.12,0.84)')), 'no squash before the flip');
-  assert.ok(values.some(value => value.includes('rotateY(180deg)') && value.endsWith('scale(0.84,1.14)')), 'no stretch after the flip');
-  assert.equal(values.at(-1), original.at(-1)[1].replace(/scale\(1\)$/, 'scale(1,1)'));
+  assert.ok(values.some(value => value.includes('rotateY(0deg)') && value.endsWith('scale(1.16,0.8)')), 'no squash before the flip');
+  assert.ok(values.some(value => value.includes('rotateY(90deg)') && value.endsWith('scale(0.8,1.22)')), 'no stretch while it turns');
+  assert.ok(values.some(value => value.includes('rotateY(180deg)') && value.endsWith('scale(1.2,0.78)')), 'no squash on landing');
+  // after the landing every squash is smaller than the one before
+  const landed = values.filter(value => value.includes('rotateY(180deg)')).map(value => /scale\(([\d.]+),([\d.]+)\)$/.exec(value)).map(found => Math.abs(Number(found[1]) - 1));
+  assert.ok(landed.length >= 5 && landed.every((value, index) => index === 0 || value <= landed[index - 1] + 0.001), 'the landing does not settle with smaller bounces: ' + landed);
+  assert.equal(values.at(-1), original.at(-1)[1].replace(/scale\(1\)$/, 'scale(1,1)').replace(/ rotateY/, ' rotateZ(0deg) rotateY'));
   assert.ok(values.some(value => value.startsWith('translate3d(' + move.dx)), 'the move of the region is lost');
-  values.forEach(value => assert.match(value, /^translate3d\([^)]*\) rotateY\(-?[\d.]+deg\) scale\([^)]*\) scale\([\d.,]+\)$/));
+  values.forEach(value => assert.match(value, /^translate3d\([^)]*\) rotateZ\(-?[\d.]+deg\) rotateY\(-?[\d.]+deg\) scale\([^)]*\) scale\([\d.,]+\)$/));
   const times = stops.map(stop => stop[0]);
   assert.deepEqual(times, times.slice().sort((a, b) => a - b));
   assert.equal(times.at(-1), plan.reformTimes.totalMs);
+});
+
+await test('the stage wobbles on the wind-up, the launch and the landing, by transform only, and rests at both ends', () => {
+  const stops = kit.jolt();
+  const times = stops.map(stop => stop[0]);
+  assert.deepEqual(times, times.slice().sort((a, b) => a - b));
+  assert.equal(times.at(-1), plan.reformTimes.totalMs);
+  assert.equal(stops[0][1], stops.at(-1)[1]);
+  stops.forEach(stop => assert.match(stop[1], /^translate\(0px,-?[\d.]+px\) scale\([\d.]+,[\d.]+\) rotate\(-?[\d.]+deg\)$/));
+  const moving = ms => stops.some(stop => stop[0] > ms[0] && stop[0] < ms[1] && stop[1] !== stops[0][1]);
+  [[100, 500], [1200, 1500], [1850, 2000], [2650, 2900]].forEach(window => assert.ok(moving(window), 'no wobble from ' + window[0] + ' to ' + window[1]));
+});
+
+await test('the screws dip before they pop, and the rest of the hardware pops on the spring ease', () => {
+  const screw = kit.hardware({ role: 'screw', stops: [] });
+  assert.ok(screw[1][1].includes('scale(0.8)'), 'no dip before the screw pops');
+  assert.equal(screw.at(-1)[1], screw[0][1]);
+  assert.ok(screw.filter(stop => stop[0] < 2740).at(-1)[1] === screw[0][1], 'the screw is not seated before the parts shrink');
+  const rivet = kit.hardware({ role: 'rivet', stops: plan.rivetStops(0) });
+  assert.ok(rivet.some(stop => /cubic-bezier\(\.34,1\.56/.test(stop[2] || '')), 'no spring ease');
+  assert.ok(!rivet.some(stop => stop[2] === plan.easePop));
+});
+
+await test('the cartoon parts are drawn as line art in tokens: a jagged burst, scalloped poof clouds, spinning stars and a scalloped curtain', () => {
+  const made = [];
+  const tracks = { list: [], add: (element, property, stops) => made.push({ element, property, stops }) };
+  const chassis = { after: () => {} };
+  const rect = { x: 380, y: 240, w: 1500, h: 740 };
+  const layer = kit.extras({ role: 'main', from: rect, to: rect, grid: 'main' }, tracks, false, { chassis });
+  const names = made.map(item => item.element.className);
+  const count = name => names.filter(item => item.includes(name)).length;
+  assert.equal(count('rr-poof'), 4);
+  assert.equal(count('rr-flystar'), 4);
+  assert.ok(count('rr-speed') >= 10, 'speed lines and motion streaks');
+  assert.equal(count('rr-band'), 1);
+  assert.equal(count('rr-star'), 1);
+  assert.ok(count('rr-sparkle') >= 6);
+  assert.ok(made.length <= 40, 'a panel adds ' + made.length + ' animated parts');
+  made.forEach(item => assert.equal(item.property, 'transform'));
+  made.forEach(item => assert.ok(item.stops.at(-1)[0] <= plan.reformTimes.totalMs));
+  // a view keeps fewer of them, so that it stays inside its budget
+  const lean = [];
+  kit.extras({ role: 'main', from: rect, to: rect, grid: 'view-main' }, { list: [], add: (element) => lean.push(element.className) }, false, { chassis });
+  assert.ok(lean.length < made.length);
+  assert.ok(lean.filter(name => name.includes('rr-poof')).length === 2);
+  assert.ok(layer);
+});
+
+await test('the Light curtains close with a squash and a rebound, open with a wind-up, rest in the same place and stay inside the region', () => {
+  const parts = kit.light(1532, 736, 'main');
+  const curtains = parts.filter(item => item.cls.includes('rr-light-curtain'));
+  assert.equal(curtains.length, 2);
+  assert.equal(parts.filter(item => item.cls === 'rr-light-star').length, 1);
+  assert.ok(parts.length <= 5);
+  curtains.forEach(item => {
+    assert.ok(item.markup.includes('rr-scallop'), 'no scalloped edge');
+    assert.ok(item.x >= 0 && item.x + item.w <= 1533);
+    assert.equal(item.close.at(-1).transform, item.open[0].transform);
+    assert.equal(item.close.at(-1).transform, 'translateX(0px) scale(1,1)');
+    // it passes the middle and comes back: one overshoot, then a smaller one
+    const sides = item.close.map(frame => Number(/translateX\((-?\d+)px\)/.exec(frame.transform)[1]));
+    const sign = item.cls.includes('left') ? 1 : -1;
+    assert.ok(sides.some(value => value * sign > 15), 'it does not overshoot the middle');
+    assert.ok(sides.some(value => value * sign < -5), 'it does not rebound');
+    assert.ok(item.close.some(frame => /scale\(0\.9\d?,1\.0\d\)/.test(frame.transform)), 'no squash on the slam');
+    assert.ok(item.open.some(frame => /scale\(0\.95,1\.04\)/.test(frame.transform)), 'no wind-up before it opens');
+  });
 });
 
 console.log('\n' + passed + ' passed');

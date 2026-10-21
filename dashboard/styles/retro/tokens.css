@@ -19,6 +19,7 @@ html[data-style="retro"] {
   --retro-paper: #ffffff;
   --retro-dots: var(--team-plate, #3b2a7a);
   --retro-ground: #120c33;
+  --retro-hot: var(--team-primary, #e8432f);
 }
 
 /* Nova's plate color is a light brown gold, too light under its accent, its label and the status colors (2.6 to 4.1 to 1).

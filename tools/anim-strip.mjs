@@ -4,6 +4,7 @@
 //   node tools/anim-strip.mjs                     every theme, panel and view, into _outputs/anim/<label>/
 //   node tools/anim-strip.mjs --label after       the folder name (default: now)
 //   node tools/anim-strip.mjs --only original     only the sheets whose name has this text
+//   node tools/anim-strip.mjs --times 100,200,...  eight times in milliseconds of the skeleton, in place of the usual ones
 //   node tools/anim-strip.mjs --motion light      the Light transitions: played at a tenth of the speed and photographed on a timer
 //
 // Needs Playwright (tools/package.json). Never runs on the Teletraan computer.
@@ -24,6 +25,7 @@ const argOf = name => (args.indexOf(name) >= 0 ? args[args.indexOf(name) + 1] : 
 const label = argOf('--label') || new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
 const only = argOf('--only');
 const light = argOf('--motion') === 'light';
+const ownTimes = argOf('--times') ? argOf('--times').split(',').map(Number) : null;
 
 async function sheet(ctx, name, look, play, options, times) {
   const page = await ctx.open({}, undefined, { look: look, settleMs: 3500 });
@@ -37,8 +39,16 @@ async function sheet(ctx, name, look, play, options, times) {
       window.teletraanTest.play(what, extra);
     }, [play, options]);
     await page.waitForFunction(() => { const layer = document.getElementById('reform'); return layer && layer.dataset.ready === '1'; }, null, { timeout: 40000, polling: 100 });
+    // a view draws its parts after the layer says it is ready, so the list is taken when it has stopped growing
+    for (let last = -1, same = 0; same < 3;) {
+      await page.waitForTimeout(400);
+      const count = await page.evaluate(() => document.getAnimations().filter(animation => animation.id === 'reform').length);
+      same = count > 0 && count === last ? same + 1 : 0;
+      last = count;
+    }
     await page.evaluate(() => {
-      window.__reformHeld = window.__motion.created.filter(item => item.animation.id === 'reform' && item.element.isConnected).map(item => item.animation);
+      // a view is built after a page change, which the collecting wrapper of the probe misses, so the page is asked for its animations
+      window.__reformHeld = document.getAnimations().filter(animation => animation.id === 'reform');
       window.__reformHeld.forEach(animation => animation.pause());
     });
     // a panel is photographed close up: the rectangle of its region
@@ -134,8 +144,8 @@ async function main() {
         if (only && !name.includes(only)) continue;
         const look = looks[theme][kind === 'panel' ? 0 : 1];
         const options = kind === 'view' ? { view: 'nova' } : {};
-        const pictures = light ? await lightSheet(ctx, look, 'reform-' + kind, options) : await sheet(ctx, name, look, 'reform-' + kind, options, timesOf[kind]);
-        const labels = light ? [0, 450, 900, 1350, 1800, 2250, 2700, 3150] : timesOf[kind];
+        const pictures = light ? await lightSheet(ctx, look, 'reform-' + kind, options) : await sheet(ctx, name, look, 'reform-' + kind, options, ownTimes || timesOf[kind]);
+        const labels = light ? [0, 450, 900, 1350, 1800, 2250, 2700, 3150] : ownTimes || timesOf[kind];
         fs.writeFileSync(path.join(folder, name + '.png'), await join(browser, pictures, labels));
         console.log('wrote ' + path.relative(repoRoot, path.join(folder, name + '.png')));
       }

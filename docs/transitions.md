@@ -102,17 +102,22 @@ A kit file may not use 3D (tests/house-rules.test.mjs lists the files that may).
 
 Retro runs on the same skeleton and the same times as Original. Only the kit differs (styles/retro/transitions.js and styles/retro/reform-kit.css, colors in styles/retro/tokens.css as --retro-*).
 
-- Every joint of a folding edge swings 26 degrees past its fold and springs back, folding and unfolding.
-- Bolts pop with a burst of action lines at the corners as the screws come out (0.12 to 0.30) and again as they go in (2.70 to 3.00).
-- Speed lines streak out of both sides of the frame while the edges fold (0.35 to 1.06) and while they unfold (1.95 to 2.71).
-- A spiky star flashes behind the squares as they flip (1.05 to 1.70).
-- Each square squashes flat before its flip, turns on a spring and ends stretched, then settles (`squares`).
-- Four sparkles pop around the frame as it locks (2.50 to 2.90).
-- The chassis is a halftone, a sheet of dots, instead of the strut lattice. The hardware is flat color with a thick ink line, in the accent color of the team.
+Retro moves like a classic cartoon. Hard surface rules do not apply to it. The vocabulary, in the order a cartoon uses it (times are of the skeleton, in seconds):
 
-The bolts, speed lines, star and sparkles are the `extras` of the large panel. The star has to lie behind the squares, so `extras` gets a fourth argument, `behind`, with the chassis element, and the star is put after it. The joints are changed in the tracks list that `extras` gets (each is changed once).
+- **Anticipation.** The whole stage squashes down a few pixels and then stretches up as the screws pop (0.30 to 0.52). The screws dip small before they pop out (0.07) and rise before they go in (2.45 to 2.66). Each joint winds back 14 degrees before it folds or unfolds. Each square squashes down and leans back before it turns.
+- **Squash and stretch.** A square squashes wide (1.16 by 0.80), turns stretched tall (0.80 by 1.22), lands squashed (1.20 by 0.78) and bounces to rest, each bounce smaller than the one before (`squares`). The stage squashes as the squares land (1.83 to 2.04) and as the frame locks (2.64 to 2.88), and jiggles a quarter of a degree on the launch (`jolt`, a few pixels, transform only).
+- **Bounce with decreasing overshoot.** A joint swings 28 degrees past its fold, then 8, 7 and 3 and rests. The screws, braces and rivets use the spring ease (`cubic-bezier(.34,1.56,.64,1)`). The star pops 1.3, 0.86, 1.1, 0.97, 1.02 and rests.
+- **Poof clouds.** A cloud with a scalloped edge and a hot core pops at each corner of the large panel as the screws come out (0 to 0.5) and again as they go in (2.64 to 3.0). The other regions of a view have two.
+- **Jagged starburst.** Fourteen spikes of uneven length, in ink, pop color, the hot color and paper, behind the squares (1.04 to 1.80), wobbling while it holds.
+- **Spinning stars.** Four five point stars spin out of the burst and back (1.10 to 1.85).
+- **Speed lines and motion streaks.** Speed lines streak from both sides of the frame while the edges fold and unfold. Four streaks race across the panel as the squares turn (1.16 to 1.90). Both are the class `rr-speed`.
+- **Curtain wipe.** A band with a scalloped edge pulls back, then sweeps across the panel inside a clip of the size of the panel (1.06 to 1.76).
+- **Sparkles.** Six sparkles twinkle around the frame as it locks (2.50 to 2.90).
+- The chassis is a halftone, a sheet of dots. The hardware is flat color with a thick ink line, in the accent color of the team. The hot color is `--retro-hot`, the primary color of the team.
 
-The Retro panel transition has about 260 animated elements (Original about 245) and the view transition about 565 (Original about 545). The Retro page itself costs more to draw than the Original page (its background moves), so check `?perf` on the Mini.
+The kit hooks it uses: `squares`, `hardware` (own stops for the screws, the spring ease for the rest), `jolt`, `extras` and `light`. The poofs, burst, stars, streaks, curtain and sparkles are the `extras` of the large panel; the burst has to lie behind the squares, so `extras` gets a fourth argument, `behind`, with the chassis element, and the burst is put after it. The joints are changed in the tracks list that `extras` gets (each is changed once). A view draws fewer of them (two stars, two poofs, no streaks, four sparkles on the main panel, two poofs on each other region) to stay inside its budget.
+
+The Retro panel transition has about 273 animated elements (Original about 245) and the view transition about 453 (the limit is 500). Measured at 4 times slower, before and after this change, Retro has the same share of frames over 34 ms inside the noise of the test machine (the panel about 8 to 12 percent, the view 20 to 30 percent); both rules of tests/motion/reform.mjs were already marginal for Retro and still are. Check `?perf` on the Teletraan computer, which plays Light.
 
 ## One vocabulary for each theme
 
@@ -134,7 +139,7 @@ The setting Motion (Dashboard Settings, stored as `motion`) has three values. Th
 |-------|--------|-------|
 | Original | Gold plates in the metal of the team | Four screws that turn in at the corners, a lock pin across the seam |
 | Cybertron | Gunmetal with a neon edge | A neon line down the seam, two power cores, a scan bar on the large panel |
-| Retro | Pop color with ink lines and dots | A spiky star where they meet, two speed lines |
+| Retro | Two curtains in pop color with ink lines and dots, each with a scalloped edge. They slam shut with a squash and a rebound, and open with a wind-up | A jagged starburst that pops where they meet |
 | Foundry | Steel doors with hazard stripes | Two deadbolts across the seam, two cogs |
 
 In Light there is no swap either: a theme that goes on, a preview or a Monday card changes under the plates of the view transition (`kindToPlay` in core/reform-plan.js, `light`). The slow screen guard (`screenIsSlow`) and `?reform=off` still give the plain change.
