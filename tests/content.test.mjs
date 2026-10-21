@@ -107,7 +107,7 @@ const { withDefaults, isVisible, visibleItems, startContent, startSanityContent,
 const { askForSample, chosenSource } = live.source;
 const { escapeHtml, hasText } = live.text;
 const { pageSwitchesFor } = live.look;
-const { tidyDevice, deviceLines, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
+const { tidyDevice, deviceLines, repairText, repairLine, loginAddress, showDeviceInfo, deviceFile, refreshSeconds } = live.device;
 const { classifyFailure, connectionLines, itemCounts, reasonText, reasons, drawConnection } = live.connection;
 const { mergeEvents, rangeLabel, eventDate, timeText } = live.events;
 const eventsPanel = live.eventsPanel;
@@ -4954,6 +4954,28 @@ test('deviceLines leaves out what is empty, and gives no ssh line when both addr
   assert.deepEqual(deviceLines({ hostname: 'hawktimus-mini', wifi: '', tailscale: '' }), ['hawktimus-mini']);
   assert.deepEqual(deviceLines({ hostname: '', wifi: '', tailscale: '100.64.0.9' }), ['Tailscale 100.64.0.9', 'ssh hawktimus@100.64.0.9']);
   assert.deepEqual(deviceLines({ hostname: '', wifi: '', tailscale: '' }), []);
+});
+
+test('the banner says the computer is fixing the network only after 10 minutes down, and only when the watchdog has taken a step', () => {
+  const since = '2026-10-21T17:00:00Z';
+  const at = minutes => new Date(Date.parse(since) + minutes * 60000);
+  const down = Object.assign({}, fullDevice, { networkDownSince: since, networkLastStep: '2 reconnect' });
+  assert.equal(repairLine, 'The Teletraan computer is trying to fix this by itself');
+  assert.equal(repairText(down, at(9)), '', 'under 10 minutes');
+  assert.equal(repairText(down, at(10)), '', 'exactly 10 minutes is not more than 10');
+  assert.equal(repairText(down, at(11)), repairLine);
+  assert.equal(repairText(Object.assign({}, down, { networkLastStep: '' }), at(30)), '', 'no step yet');
+  assert.equal(repairText(Object.assign({}, down, { networkDownSince: '' }), at(30)), '', 'the network works');
+  assert.equal(repairText(fullDevice, at(30)), '', 'an older device.json has neither field');
+  assert.equal(repairText(Object.assign({}, down, { networkLastStep: '<b>x</b>' }), at(30)), '', 'only a step name is accepted');
+  assert.equal(repairText(Object.assign({}, down, { networkDownSince: 'soon' }), at(30)), '');
+  assert.deepEqual(deviceLines(down, at(30)), [repairLine, 'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103', 'ssh hawktimus@100.101.102.103']);
+  assert.deepEqual(deviceLines(down, at(5)), deviceLines(fullDevice));
+  const lines = connectionLines({ status: { source: 'sanity', updated: new Date(Date.UTC(2026, 9, 21, 17, 12)), offline: true, reason: 'network' }, always: false, content: {}, calendarsReadAt: null, deviceLines: deviceLines(down, at(30)) });
+  assert.equal(lines[0], 'SANITY UNREACHABLE: NETWORK DOWN');
+  assert.equal(lines[1], 'Check the cable and the router of the Teletraan computer');
+  assert.ok(lines[2].startsWith('Last good read '));
+  assert.equal(lines[3], repairLine);
 });
 
 test('deviceLines gives nothing for a file that is not an object, and tidyDevice drops values that are not names or addresses', () => {

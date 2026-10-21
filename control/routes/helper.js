@@ -5,7 +5,7 @@
 
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'cleanup-preview', 'cleanup-delete'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'cleanup-preview', 'cleanup-delete'];
 const syncTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 
 // These stop or restart something people are watching, so the request must say it was confirmed
@@ -40,6 +40,6 @@ export function register(router, ctx) {
       if (typeof ctx.log === 'function') ctx.log('helper ' + word + ' failed' + (error && error.code ? ' (' + error.code + ')' : '') + ': ' + String(error && error.message).slice(0, 200));
       throw new Refusal(502, String((error && error.message) || 'The helper did not answer.'));
     }
-    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, word === 'monday-debug' ? 8000 : word.startsWith('cleanup-') ? 20000 : 2000) });
+    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, word === 'monday-debug' ? 8000 : word === 'network-info' ? 6000 : word.startsWith('cleanup-') ? 20000 : 2000) });
   });
 }

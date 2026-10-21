@@ -67,6 +67,8 @@ export async function mountSync(container) {
   container.innerHTML = '<div class="tab sync-section" data-root>' +
     syncCardHtml(off) +
     '<div class="grid"><div data-reads></div><div data-dots></div></div>' +
+    '<section class="card"><h2>Network</h2><p class="note">Check the network now prints the connection, the signal, the address, the gateway, the last lines of the network log and what the network watchdog has done. It changes nothing.</p>' +
+    '<div class="buttons"><button type="button" class="act" data-network>Check the network now</button></div><pre class="log" data-network-answer hidden></pre></section>' +
     '<section class="card"><h2>Restart</h2><p class="note">Each one waits 10 seconds first, so you can cancel.</p><div class="buttons" data-restarts></div></section>' +
     '</div>';
   const root = container.querySelector('[data-root]');
@@ -86,6 +88,19 @@ export async function mountSync(container) {
     button.textContent = item.label;
     button.addEventListener('click', () => run(button, 'sync-now', { target: item.target }, 'Syncing ' + item.name));
     singles.appendChild(button);
+  });
+
+  const networkButton = root.querySelector('[data-network]');
+  const networkAnswer = root.querySelector('[data-network-answer]');
+  networkButton.addEventListener('click', async () => {
+    showResult(networkButton, 'working', 'Looking at the network.');
+    networkAnswer.hidden = true;
+    const result = await api('POST', '/helper/network-info', {});
+    showResult(networkButton, result.ok ? 'done' : 'bad', result.ok ? 'Done. Copy the text below and send it to a coach if the screen keeps losing the network.' : result.error);
+    if (result.ok) {
+      networkAnswer.textContent = String((result.data && result.data.output) || '');
+      networkAnswer.hidden = false;
+    }
   });
 
   const big = root.querySelector('[data-restarts]');

@@ -192,4 +192,21 @@ await check('buildStatus shows a part it could not read as not known, and lineSt
   assert.equal(lineStarting('a: 1\nkiosk: up\n', 'kiosk'), 'up');
 });
 
+await check('buildStatus reads the network lines that the helper prints (from the watchdog record, not from Sanity)', async () => {
+  const host = 'kiosk: active\nnetworkState: down\nnetworkLastOkAt: 2026-10-21T11:00:00Z\nnetworkDownSince: 2026-10-21T11:30:00Z\nnetworkLastProblemAt: 2026-10-21T11:30:00Z\nnetworkLastStep: 2 reconnect\nnetworkRecoveries: 3\n';
+  const built = buildStatus({ host: host }, new Date());
+  assert.deepEqual(built.network, { state: 'down', lastOkAt: '2026-10-21T11:00:00Z', downSince: '2026-10-21T11:30:00Z', lastProblemAt: '2026-10-21T11:30:00Z', lastStep: '2 reconnect', recoveries: 3 });
+  const none = buildStatus({ host: 'kiosk: active\n' }, new Date());
+  assert.equal(none.network.state, 'not known');
+  assert.equal(none.network.recoveries, null);
+});
+
+await check('the helper route takes network-info with no argument, and the client has the same word', async () => {
+  const world = await makeWorld([helper], {});
+  const answer = await world.router.call('POST', '/helper/network-info', {});
+  assert.equal(answer.status, 200);
+  assert.deepEqual(world.helped.map(item => item.word), ['network-info']);
+  assert.ok(helper.words.includes('network-info'));
+});
+
 console.log(passed + ' of ' + passed + ' checks passed.');

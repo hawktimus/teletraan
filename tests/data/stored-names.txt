@@ -988,6 +988,11 @@ status.lastSlidesFetchAt
 status.match13At
 status.match13Count
 status.match13State
+status.networkDownSince
+status.networkLastOkAt
+status.networkLastProblemAt
+status.networkLastStep
+status.networkRecoveries
 status.newsAt
 status.newsCount
 status.nextRebootAt

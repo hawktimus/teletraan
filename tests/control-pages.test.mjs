@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { doneWords, heldLine, todayLine, pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, wallCheck } from '../control/static/tabs/render.js';
-import { dotsHtml, healthHtml, readsHtml, uptimeText } from '../control/static/tabs/render-health.js';
+import { dotsHtml, healthHtml, networkWords, readsHtml, uptimeText } from '../control/static/tabs/render-health.js';
 
 let passed = 0;
 function check(name, test) {
@@ -94,6 +94,26 @@ check('the health block of Status has the release, uptime, disk, page loads, mem
   assert.equal(uptimeText(2400), '40 minutes');
   assert.equal(uptimeText(null), 'not known');
   assert.ok(healthHtml(null).includes('did not answer'));
+});
+
+check('the health block has a Network line: ok with the last problem and the recoveries, down with the step, or not known', () => {
+  const at = new Date('2026-10-21T12:00:00Z');
+  const ok = { state: 'ok', lastOkAt: '2026-10-21T11:58:00Z', downSince: '', lastProblemAt: '2026-10-18T12:00:00Z', lastStep: '3 service', recoveries: 2 };
+  assert.equal(networkWords(ok, at), 'ok, last problem 3 days ago, 2 recoveries in 24 hours');
+  assert.equal(networkWords(Object.assign({}, ok, { recoveries: 1 }), at), 'ok, last problem 3 days ago, 1 recovery in 24 hours');
+  assert.equal(networkWords(Object.assign({}, ok, { lastProblemAt: '', recoveries: 0 }), at), 'ok, no problem seen, 0 recoveries in 24 hours');
+  assert.equal(networkWords({ state: 'down', downSince: '2026-10-21T11:40:00Z', lastStep: '2 reconnect' }, at), 'down since 20 minutes ago, last repair step 2 reconnect');
+  assert.equal(networkWords({ state: 'down', downSince: '2026-10-21T11:55:00Z', lastStep: '' }, at), 'down since 5 minutes ago, no repair step yet');
+  assert.ok(networkWords({ state: 'not known' }, at).startsWith('not known yet'));
+  assert.ok(networkWords(undefined, at).startsWith('not known yet'));
+  const html = healthHtml({ versions: {}, mini: {}, sanity: {}, lastErrors: [], network: ok }, null, at);
+  assert.ok(html.includes('Network</dt><dd>ok, last problem 3 days ago, 2 recoveries in 24 hours'), html);
+});
+
+check('Settings, Sync and restart has the Check the network now button, and it asks for the network-info word', async () => {
+  const fs = await import('node:fs');
+  const text = fs.readFileSync(new URL('../control/static/tabs/settings-sync.js', import.meta.url), 'utf8');
+  assert.ok(text.includes('Check the network now') && text.includes("'/helper/network-info'"));
 });
 
 check('the card of the wall names the build, view, theme, layout, team, panel, page and the age of the report', () => {

@@ -208,6 +208,81 @@ await Promise.all([1, 2, 3].map(async () => {
   await context.close();
 }
 
+// The network goes away for 30 minutes and comes back (docs/reliability-drill.md, "The network goes away when idle"). The clock
+// is the fake one of Playwright and jumps 35 seconds at a time, so every timer that is due fires once, as in a real half hour.
+// The banner must come up, say that the computer is fixing it once device.json has a step, and go away within 30 seconds of the
+// network returning, with the new content on screen and without the page being reloaded.
+{
+  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, timezoneId: 'America/New_York' });
+  const page = await context.newPage();
+  page.thrown = [];
+  page.on('pageerror', error => page.thrown.push(error.message));
+  const world = { up: true, tips: 'first tip', device: false, started: Date.now() };
+  await page.route('**/control/api/**', route => route.fulfill({ status: 204 }));
+  await page.route('**/data/live/**', route => route.fulfill({ status: 404 }));
+  await page.route('**/data/live/device.json', route => route.fulfill({
+    status: 200,
+    json: { hostname: 'hawktimus-mini', wifi: '10.0.137.149', tailscale: '', time: 'x', networkDownSince: world.device ? new Date(world.started + 5 * 60000).toISOString() : '', networkLastStep: world.device ? '2 reconnect' : '' },
+  }));
+  await page.route('https://*.api.sanity.io/**', route => {
+    const url = route.request().url();
+    if (url.includes('/data/live/events')) return route.abort('connectionrefused');
+    if (!world.up) return route.abort('internetdisconnected');
+    if (!url.includes('/data/query/')) return route.fulfill({ status: 200, body: 'x' });
+    const raw = clone(sample);
+    raw.tipsAndNews = [{ _id: 'tip-one', text: world.tips, show: true }];
+    return route.fulfill({ status: 200, json: { result: raw } });
+  });
+  await page.route('https://api.open-meteo.com/**', route => route.fulfill({ status: 200, body: '{"current":null}' }));
+  await page.route('https://cdn.sanity.io/**', route => route.abort());
+  await page.clock.install({ time: world.started });
+  await page.goto(base + '/index.html?motion=full&night=off', { waitUntil: 'load' });
+  await page.waitForTimeout(2500);
+  let loads = 0;
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) loads += 1; });
+  const bannerText = () => page.evaluate(() => { const box = document.getElementById('connection-status'); return box && !box.hidden ? box.innerText : ''; });
+  const jump = async seconds => {
+    for (let spent = 0; spent < seconds; spent += 35) {
+      await page.clock.fastForward(35000);
+      await page.waitForTimeout(120);
+    }
+  };
+  const problems = [];
+
+  world.up = false;
+  await jump(5 * 60);
+  const early = await bannerText();
+  if (!early.includes('SANITY UNREACHABLE: NETWORK DOWN') || !early.includes('Check the cable and the router of the Teletraan computer') || !early.includes('Last good read')) problems.push('the banner after 5 minutes: ' + early.slice(0, 120));
+  if (early.includes('trying to fix this by itself')) problems.push('the repair line came before the watchdog took a step');
+  world.device = true;
+  await jump(12 * 60);
+  const middle = await bannerText();
+  if (!middle.includes('The Teletraan computer is trying to fix this by itself')) problems.push('no repair line after 17 minutes down with a step: ' + middle.slice(0, 200));
+  await jump(13 * 60);
+  if (!(await bannerText()).includes('SANITY UNREACHABLE')) problems.push('the banner was gone while still down at 30 minutes');
+
+  world.up = true;
+  world.device = false;
+  world.tips = 'tip after the outage';
+  await jump(35);
+  await page.waitForTimeout(400);
+  const after = await bannerText();
+  const tipSeen = await page.evaluate(() => (localStorage.getItem('teletraan-last-content') || '').includes('tip after the outage'));
+  if (after.includes('SANITY UNREACHABLE')) problems.push('the banner is still up 35 seconds after the network returned: ' + after.slice(0, 120));
+  if (!tipSeen) problems.push('the new content was not read within 35 seconds of the network returning');
+  if (loads !== 0) problems.push('the page reloaded ' + loads + ' times');
+  page.thrown.slice(0, 2).forEach(message => problems.push('the page threw: ' + message.slice(0, 120)));
+  finished += 1;
+  if (problems.length === 0) {
+    console.log('ok    after 30 minutes without the network the banner shows the repair line, and the wall recovers by itself with no reload');
+  } else {
+    failures += 1;
+    console.log('FAIL  after 30 minutes without the network');
+    problems.forEach(line => console.log('      ' + line));
+  }
+  await context.close();
+}
+
 await browser.close();
 await server.close();
 console.log('\n' + (finished - failures) + ' of ' + finished + ' passed');

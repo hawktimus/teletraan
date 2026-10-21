@@ -498,7 +498,7 @@ test('the status document and the fields in the script are the ones the Studio h
   // photosDriveAt is written by the job photos-drive, which has its own test (tests/photos-drive.test.mjs),
   // newsAt by the job news (tests/news-sync.test.mjs), nextRebootAt and lastRebootAt by the job reboot (tests/scheduled-reboot.test.mjs),
   // and lastCleanupAt by the job cleanup (tests/expired-cleanup.test.mjs)
-  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt']).sort());
+  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt', 'networkLastOkAt', 'networkDownSince', 'networkLastProblemAt']).sort());
 
   const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));
@@ -565,6 +565,35 @@ test('the dashboard never reads the status document: its id, its fields and its 
     const allowed = dotFiles.includes(file) ? ['status-mini', 'lastCalendarSyncAt'] : [];
     words.filter(word => !allowed.includes(word)).forEach(word => assert.ok(!text.includes(word), path.relative(repo, file) + ' mentions ' + word));
   });
+});
+
+test('network sends the five fields of network/status.json, removes the empty ones, and refuses a file that is not the watchdog\'s', () => {
+  const data = path.join(work, 'network-data');
+  fs.mkdirSync(path.join(data, 'network'), { recursive: true });
+  const t = setup('network', { localEnv: goodEnv + "TELETRAAN_DATA='" + data + "'\n" });
+  const file = path.join(data, 'network/status.json');
+  assert.equal(t.run(['network']).status, 0, 'no file, nothing to say');
+  assert.ok(!t.hasBody());
+
+  fs.writeFileSync(file, '{"networkLastOkAt":"2026-10-21T17:00:00Z","networkDownSince":"","networkRecoveries":2,"networkLastStep":"3 service","networkLastProblemAt":"2026-10-20T03:10:00Z"}\n');
+  const done = t.run(['network']);
+  assert.equal(done.status, 0, done.errors);
+  const patch = t.body().mutations[1].patch;
+  assert.deepEqual(patch.set, { networkRecoveries: 2, networkLastOkAt: '2026-10-21T17:00:00Z', networkLastProblemAt: '2026-10-20T03:10:00Z', networkLastStep: '3 service' });
+  assert.deepEqual(patch.unset, ['networkDownSince']);
+  assert.equal(patch.id, 'status-mini');
+
+  fs.writeFileSync(file, '{"networkLastOkAt":"2026-10-21T17:00:00Z","networkDownSince":"2026-10-21T16:00:00Z","networkRecoveries":1,"networkLastStep":"","networkLastProblemAt":"2026-10-21T16:00:00Z"}\n');
+  t.run(['network']);
+  const down = t.body().mutations[1].patch;
+  assert.equal(down.set.networkDownSince, '2026-10-21T16:00:00Z');
+  assert.deepEqual(down.unset, ['networkLastStep']);
+
+  fs.writeFileSync(file, '{"networkLastOkAt":"yesterday","networkDownSince":"","networkRecoveries":1,"networkLastStep":"","networkLastProblemAt":""}\n');
+  const bad = t.run(['network']);
+  assert.equal(bad.status, 1);
+  assert.ok(bad.errors.includes('is not the file network-watchdog.sh writes'));
+  assert.equal(t.run(['network', 'x']).status, 2);
 });
 
 let failures = 0;

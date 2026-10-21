@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -17,6 +17,9 @@
 #   status-write.sh cleanup    sends when the clean up of expired items last ran, how many documents were on its list, how many it
 #                              deleted and why it stopped, if it did (lastCleanupAt, cleanupWouldDelete, cleanupDeleted,
 #                              cleanupError), from cleanup/status.json, which expired-cleanup.sh made in the data folder
+#   status-write.sh network    sends what the network watchdog knows (networkLastOkAt, networkDownSince, networkRecoveries,
+#                              networkLastStep, networkLastProblemAt), from network/status.json, which network-watchdog.sh
+#                              made in the data folder. Only times, a count and the name of a step.
 #   status-write.sh kiosk      the screen started
 #   status-write.sh version    the build on the wall: the version, the short hash, the date and the branch
 #                              (buildVersion, buildCommit, buildDate, buildBranch). From RELEASE.json of the
@@ -49,7 +52,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|cleanup|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|cleanup|network|restart N" >&2
   exit 2
 }
 
@@ -71,6 +74,7 @@ case $1 in
   news) field=newsAt ;;
   reboot) field=nextRebootAt ;;
   cleanup) field=lastCleanupAt ;;
+  network) field=networkLastOkAt ;;
   kiosk) field=kioskStartedAt ;;
   version) field=version ;;
   backup) field=lastBackupAt ;;
@@ -325,6 +329,40 @@ elif [ "$field" = lastCleanupAt ]; then
   else
     patch="$patch},\"unset\":[\"cleanupError\"]"
   fi
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
+elif [ "$field" = networkLastOkAt ]; then
+  # The file network-watchdog.sh wrote. A part that is empty (no outage now, none yet) is removed from the document. Each
+  # part is checked, because it goes into a JSON body.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/network/status.json"
+  [ -f "$file" ] || exit 0
+  text=$(head -c 600 "$file")
+  ok_at=$(printf '%s' "$text" | sed -n 's/.*"networkLastOkAt":"\([^"]*\)".*/\1/p')
+  down_at=$(printf '%s' "$text" | sed -n 's/.*"networkDownSince":"\([^"]*\)".*/\1/p')
+  problem_at=$(printf '%s' "$text" | sed -n 's/.*"networkLastProblemAt":"\([^"]*\)".*/\1/p')
+  step_text=$(printf '%s' "$text" | sed -n 's/.*"networkLastStep":"\([^"]*\)".*/\1/p')
+  recoveries=$(printf '%s' "$text" | sed -n 's/.*"networkRecoveries":\([0-9]*\).*/\1/p')
+  if ! printf '%s\n' "$ok_at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
+    ! printf '%s\n' "$down_at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
+    ! printf '%s\n' "$problem_at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
+    ! printf '%s\n' "$step_text" | grep -Eq '^[A-Za-z0-9 ]{0,40}$' ||
+    ! printf '%s' "$recoveries" | grep -Eq '^[0-9]{1,4}$'; then
+    echo "status: network/status.json is not the file network-watchdog.sh writes, so nothing was written." >&2
+    exit 1
+  fi
+  set_list="\"networkRecoveries\":$recoveries"
+  unset_list=""
+  for pair in "networkLastOkAt:$ok_at" "networkDownSince:$down_at" "networkLastProblemAt:$problem_at" "networkLastStep:$step_text"; do
+    name=${pair%%:*}
+    value=${pair#*:}
+    if [ -n "$value" ]; then
+      set_list="$set_list,\"$name\":\"$value\""
+    else
+      unset_list="$unset_list${unset_list:+,}\"$name\""
+    fi
+  done
+  patch="\"id\":\"$document\",\"set\":{$set_list}"
+  [ -z "$unset_list" ] || patch="$patch,\"unset\":[$unset_list]"
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
 elif [ "$field" = newsAt ]; then
   # The line news-sync.sh wrote after a good run. Nothing is sent when it is not there. Each part is
