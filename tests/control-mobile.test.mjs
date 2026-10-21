@@ -46,8 +46,8 @@ test('the frame is made on demand, lazy, in a 16 by 9 box, and taken out on leav
 test('no script reloads the page on a timer, and no page has a meta refresh', () => {
   const found = scripts.filter(name => /location\.reload|location\.href\s*=|location\.assign|location\.replace/.test(read(name)));
   // a lost sign-in (401) and a good sign-in are the only reasons to reload
-  assert.deepEqual(found.sort(), ['control/static/api.js', 'control/static/github-card.js', 'control/static/login.js', 'control/static/tab-update.js']);
-  scripts.filter(name => name.includes('/tabs/') || name.endsWith('app.js')).forEach(name => assert.ok(!/location\./.test(read(name).replace(/location\.hash/g, '').replace(/location\.hash\.slice/g, '')), name));
+  assert.deepEqual(found.sort(), ['control/static/api.js', 'control/static/github-card.js', 'control/static/login.js', 'control/static/tabs/settings-update.js']);
+  scripts.filter(name => (name.includes('/tabs/') || name.endsWith('app.js')) && !name.endsWith('settings-update.js')).forEach(name => assert.ok(!/location\./.test(read(name).replace(/location\.hash/g, '').replace(/location\.hash\.slice/g, '')), name));
   staticFiles.forEach(name => assert.ok(!/http-equiv=["']refresh/i.test(read(name)), name));
   scripts.forEach(name => {
     const text = read(name);

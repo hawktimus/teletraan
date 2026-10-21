@@ -6,7 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { mount, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
-import { buildStatus, lineStarting, statusQuery } from '../support/status-parts.js';
+import { buildStatus, errorLines, lastLines, lineStarting, statusQuery } from '../support/status-parts.js';
+import { redactLine } from '../lib/redact.js';
 
 // The releases that are kept, newest first, and the one that runs. The release code (lane CA)
 // may offer them as ctx.listReleases(); otherwise the folders under releasesDir are read.
@@ -63,6 +64,17 @@ function tailscaleFrom(hostText) {
   return address ? address.address : '';
 }
 
+// The last failures in the control log, with keys and calendar links taken out
+async function recentErrors(ctx) {
+  try {
+    const file = ctx.logFile || path.join(ctx.dataDir, 'control.log');
+    const lines = typeof ctx.logLines === 'function' ? await ctx.logLines(400) : lastLines(fs.readFileSync(file, 'utf8'), 400);
+    return errorLines(lines.map(redactLine));
+  } catch (error) {
+    return [];
+  }
+}
+
 export async function gather(ctx) {
   let host = '';
   try {
@@ -89,6 +101,7 @@ export async function gather(ctx) {
     cors: corsFacts(ctx),
     disk: diskFacts(ctx),
     tailscale: tailscaleFrom(host),
+    errors: await recentErrors(ctx),
   }, new Date());
 }
 

@@ -187,8 +187,8 @@ test('the result goes in a line right under the buttons that were pressed, and i
   }
 });
 
-test('every button of the Status tab and the Log section reports through the result line, and the CSS colors it', () => {
-  ['now.js', 'health.js', 'log.js'].forEach(file => {
+test('every button of the Display controls, Sync and restart and Logs reports through the result line, and the CSS colors it', () => {
+  ['now.js', 'settings-sync.js', 'settings-log.js'].forEach(file => {
     const text = read('control/static/tabs/' + file);
     assert.ok(text.includes('showResult(') && text.includes('outcome('), file);
     assert.ok(!text.includes('say('), file + ' still has the quiet note');

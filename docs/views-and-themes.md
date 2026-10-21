@@ -39,7 +39,7 @@ Look links to the dated rules: the color themes (Hawktimus, Neon Prime), the sea
 
 ## Check the token
 
-Dashboard Settings, Monday tab, Check the token is a note and a link. The check runs on the control page (`http://teletraan.local:3229/control/`, Settings, Monday), which asks for the PIN, because the Studio cannot reach the helper of the Teletraan computer. Check the token shows the account name or the error. Monday debug on the same page shows how Monday answers for one board.
+Dashboard Settings, Monday tab, Check the token is a note and a link. The check runs on the control page (`http://teletraan.local:3229/control/`, Settings, Monitor Monday), which asks for the PIN, because the Studio cannot reach the helper of the Teletraan computer. Check the token shows the account name or the error. Monday debug on the same page shows how Monday answers for one board.
 
 ## Not used any more
 

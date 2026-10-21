@@ -15,7 +15,7 @@ import { checkAddress } from '../tools/monday-check.js';
 
 export const mondayStatusId = 'monday-status';
 
-// Settings, Monday on the control page, where Sync Monday now, Check the token and Monday debug are
+// Settings, Monitor Monday on the control page has Check the token and Monday debug; Sync Monday now is under Settings, Sync and restart
 export const controlLink = checkAddress;
 
 // The Rotation board in the sidebar (structure.js)
@@ -26,8 +26,8 @@ export const words = {
   intro: 'This is what the Teletraan computer read from the Monday boards Robotics Tasks and Completed Tasks. Pick a team to see the tasks of each department that are to do or in progress, and the ones that are done. Nothing here can be changed: change a task in Monday.',
   reading: 'Reading the Monday tasks.',
   unreadable: 'The Monday tasks could not be read. Refresh the page to try again.',
-  neverRead: 'The Teletraan computer has not read Monday yet. Open the control page, Settings, Monday, and press Sync Monday now.',
-  control: 'Open the control page, Settings, Monday',
+  neverRead: 'The Teletraan computer has not read Monday yet. Open the control page, Settings, Sync and restart, and press Sync Monday now.',
+  control: 'Open the control page, Settings, Monitor Monday',
   rotation: 'Add a Department tasks row on the Rotation board',
   teamLabel: 'Team',
   teamHelp: 'A task with no team is for both teams, so it shows under Prime and under Nova.',

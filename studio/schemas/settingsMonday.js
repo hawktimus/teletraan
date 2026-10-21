@@ -257,10 +257,10 @@ const milestoneBoardBlock = defineField({
 
 export function mondayFields() {
   return [
-    Object.assign(noteField('mondayConnection', 'Robotics Tasks and Completed Tasks are read by number. See the Monday page, the Rotation board, and the control page, Settings, Monday.', 'monday'), { title: 'Monday' }),
+    Object.assign(noteField('mondayConnection', 'Robotics Tasks and Completed Tasks are read by number. See the Monday page, the Rotation board, and the control page, Settings, Monitor Monday.', 'monday'), { title: 'Monday' }),
 
     // Kept, and hidden: it was a link and stored nothing
-    defineField({ name: 'mondayTokenTest', title: 'Check the token', type: 'string', group: 'monday', readOnly: true, hidden: true, description: 'Not used any more. The token is checked on the control page, Settings, Monday.' }),
+    defineField({ name: 'mondayTokenTest', title: 'Check the token', type: 'string', group: 'monday', readOnly: true, hidden: true, description: 'Not used any more. The token is checked on the control page, Settings, Monitor Monday.' }),
 
     defineField({
       name: 'mondayEveryMinutes',

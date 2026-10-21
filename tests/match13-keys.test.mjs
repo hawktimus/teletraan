@@ -82,7 +82,7 @@ test('the helper word sync-now takes match13 in the route, the helper and the bu
   assert.ok(helperWords.includes('sync-now'));
   assert.ok(read('control/routes/helper.js').includes("'match13']"));
   assert.ok(read('computer/scripts/control-helper.sh').includes('calendars|monday|frc|news|photos-drive|match13)'));
-  assert.ok(read('control/static/tabs/health.js').includes("{ target: 'match13', label: 'Sync Match13 now' }"));
+  assert.ok(read('control/static/tabs/settings-sync.js').includes("{ target: 'match13', label: 'Sync Match13 now'"));
   assert.ok(read('control/static/tabs/render.js').includes("match13: 'Match13'"));
 });
 
@@ -98,7 +98,7 @@ test('status-write.sh sends the Match13 time, state and count, and Studio and th
   ['match13At', 'match13State', 'match13Count'].forEach(name => assert.ok(read('studio/schemas/status.js').includes(name), name));
   assert.ok(read('studio/inputs/status-input.js').includes("{ field: 'match13At', label: 'Last Match13 read' }"));
   assert.ok(read('control/support/status-parts.js').includes('match13: text(mini.match13At)'));
-  assert.ok(read('control/static/tabs/render.js').includes("row('Last Match13 read'"));
+  assert.ok(read('control/static/tabs/render-health.js').includes("row('Match13'"));
   assert.equal(spawnSync('bash', ['-n', path.join(repo, 'computer/scripts/status-write.sh')]).status, 0);
 });
 

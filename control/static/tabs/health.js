@@ -1,66 +1,21 @@
-// The health blocks of the Status tab: the three dots with their reasons, what runs, and the restart and sync buttons.
+// The health block at the bottom of the Status tab. It only shows: the buttons that restart or sync are in
+// Settings, Sync and restart (settings-sync.js).
 
-import { api, confirmed, showResult, useStyles } from './api.js';
-import { esc, outcome, statusHtml } from './render.js';
+import { api, useStyles } from './api.js';
+import { esc } from './render.js';
+import { healthHtml } from './render-health.js';
 
-const restarts = [
-  { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
-  { word: 'restart-services', label: 'Restart services', doing: 'Restarting the services' },
-  { word: 'reboot', label: 'Reboot the computer', doing: 'Rebooting the Teletraan computer' },
-];
-const syncs = [
-  { target: 'calendars', label: 'Sync calendars now' },
-  { target: 'monday', label: 'Sync Monday now' },
-  { target: 'frc', label: 'Sync competition now' },
-  { target: 'news', label: 'Sync news now' },
-  { target: 'photos-drive', label: 'Copy Drive photos now' },
-  { target: 'match13', label: 'Sync Match13 now' },
-];
-
-function buttons(box) {
-  const run = async (button, word, body, doing) => {
-    showResult(button, 'working', doing + '.');
-    const result = await api('POST', '/helper/' + word, body);
-    const shown = outcome(result, word, body);
-    showResult(button, shown.state, shown.words);
-  };
-
-  const big = document.createElement('div');
-  big.className = 'buttons';
-  restarts.forEach(item => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'act';
-    button.textContent = item.label;
-    big.appendChild(button);
-    confirmed(button, 10, item.doing, () => run(button, item.word, { confirmed: true }, item.doing));
-  });
-
-  const small = document.createElement('div');
-  small.className = 'buttons small';
-  syncs.forEach(item => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'act quiet';
-    button.textContent = item.label;
-    button.addEventListener('click', () => run(button, 'sync-now', { target: item.target }, 'Syncing ' + item.target));
-    small.appendChild(button);
-  });
-  box.append(big, small);
-}
-
-// Fills the two boxes: body gets the health cards, buttonsBox the restart and sync buttons. Returns the function that stops it.
-export async function mountHealth(body, buttonsBox) {
+// Fills the box. Returns the function that stops it.
+export async function mountHealth(body) {
   useStyles();
-  buttons(buttonsBox);
 
   // Only redrawn when the words changed, so the scroll position stays
   let last = '';
   let left = false;
   async function refresh() {
-    const answer = await api('GET', '/status');
+    const [answer, wall] = await Promise.all([api('GET', '/status'), api('GET', '/now')]);
     if (left) return;
-    const html = answer.ok ? statusHtml(answer.data) : '<section class="card"><h2>Health</h2><p>' + esc(answer.error) + '</p></section>';
+    const html = answer.ok ? healthHtml(answer.data, wall.ok ? wall.data : null) : '<section class="card"><h2>Health</h2><p>' + esc(answer.error) + '</p></section>';
     if (html === last) return;
     last = html;
     body.innerHTML = html;

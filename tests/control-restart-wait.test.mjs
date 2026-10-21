@@ -30,7 +30,7 @@ test('it gives up after the tries, and says so plainly', async () => {
 });
 
 test('both update paths use the wait only after the switch step is done', () => {
-  ['control/static/github-card.js', 'control/static/tab-update.js'].forEach(file => {
+  ['control/static/github-card.js', 'control/static/tabs/settings-update.js'].forEach(file => {
     const code = fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8');
     assert.ok(code.includes("event.step === 'switch' && event.state === 'done'"), file + ' notes the switch');
     assert.ok(code.includes('waitUntilBack()') && code.includes('if (switched)'), file + ' waits only when the switch is done');

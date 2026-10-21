@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
 import { studioOrigin, createCorsCheck } from '../control/lib/cors.js';
-import { statusHtml } from '../control/static/tabs/render.js';
+import { healthHtml } from '../control/static/tabs/render-health.js';
+import { controlAddress, controlSections } from '../studio/inputs/control-address.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(repo + name, 'utf8');
@@ -71,7 +72,7 @@ test('a missing origin says to add the 3426 address too, and an allowed one says
   const missing = await createCorsCheck(Object.assign({ fetch: async () => ({ headers: headers(null) }) }, options)).check('http://teletraan.local:3229');
   assert.equal(missing.message, 'CORS origin missing');
   assert.equal(missing.also, 'http://teletraan.local:3426');
-  const html = statusHtml({ cors: missing, mini: {} }, new Date());
+  const html = healthHtml({ cors: missing, mini: {} }, null, new Date());
   assert.ok(html.includes('http://teletraan.local:3229') && html.includes('port 3426') && html.includes('http://teletraan.local:3426'));
   const allowed = await createCorsCheck(Object.assign({ fetch: async () => ({ headers: headers('http://teletraan.local:3229') }) }, options)).check('http://teletraan.local:3229');
   assert.equal(allowed.also, undefined);
@@ -80,6 +81,22 @@ test('a missing origin says to add the 3426 address too, and an allowed one says
 test('the control page doc names the landing page, port 3426 and the extra CORS origin', () => {
   const text = read('docs/control-page.md');
   ['http://teletraan.local:3426', 'Control page and Studio', 'Studio button'].forEach(words => assert.ok(text.includes(words), words));
+});
+
+test('the Studio links name tabs and sections the control page has, and the older addresses still reach them', async () => {
+  const { resolveAddress } = await import('../control/static/tabs.js');
+  const settings = fs.readFileSync(repo + 'control/static/tabs/settings.js', 'utf8');
+  const known = { status: ['status'], display: ['display'], settings: ['settings'] };
+  Object.values(controlSections).forEach(address => {
+    assert.ok(address.startsWith(controlAddress + '#'), address);
+    const found = resolveAddress(address.slice(controlAddress.length + 1));
+    assert.ok(known[found.id], 'the control page has a tab ' + found.id);
+  });
+  assert.deepEqual(resolveAddress('settings/monday'), { id: 'settings', section: 'monday' });
+  assert.deepEqual(resolveAddress('settings/sync'), { id: 'settings', section: 'sync' });
+  ['keys', 'monday', 'sync'].forEach(id => assert.ok(settings.includes("{ id: '" + id + "'"), 'Settings has a section ' + id));
+  const monday = fs.readFileSync(repo + 'studio/tools/monday-check.js', 'utf8');
+  assert.ok(monday.includes("controlAddress + '#settings/monday'"));
 });
 
 await finish();

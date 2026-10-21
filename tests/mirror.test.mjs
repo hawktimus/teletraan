@@ -611,8 +611,8 @@ test('the card words: live with a rate, the two fallbacks, the picture address a
   assert.equal(pictureFacts(39321, 960, 540), 'Last picture: 38.4 KB, 960 by 540 pixels');
   assert.equal(pictureFacts(0, 960, 540), 'Last picture: 960 by 540 pixels');
   assert.equal(pictureFacts(100, 0, 0), '');
-  assert.equal(pictureErrorLine(403), 'The picture could not be loaded: the server answered 403. See Settings, Log.');
-  assert.equal(pictureErrorLine(0), 'The picture could not be loaded: the server did not answer. See Settings, Log.');
+  assert.equal(pictureErrorLine(403), 'The picture could not be loaded: the server answered 403. See Settings, Logs.');
+  assert.equal(pictureErrorLine(0), 'The picture could not be loaded: the server did not answer. See Settings, Logs.');
   const card = previewCardHtml();
   assert.ok(card.includes('data-preview-error') && card.includes('Open the picture in a new tab') && card.includes('href="/mirror/frame.jpg"') && card.includes('data-preview-facts'));
   assert.ok(previewCardHtml().includes('data-preview-mode') && !previewCardHtml().includes('<img'));
@@ -627,7 +627,7 @@ test('the page: one request in flight, renews every 30 seconds, gives up after 1
   assert.ok(text.includes("method: 'HEAD'") && text.includes('pictureErrorLine(status)') && !text.includes('createObjectURL'));
   assert.ok(text.includes('mirrorFrameWait') && read('control/static/tabs/render.js').includes('export const mirrorFrameWait = 10000'));
   assert.ok(text.includes('if (!document.hidden)') && text.includes('document.addEventListener(\'visibilitychange\''));
-  assert.ok(text.includes("api('GET', '/mirror/status')") && text.includes("'/helper/restart-kiosk'") && text.includes('mirrorWords.black'), 'the black message has a Restart screen button');
+  assert.ok(text.includes("api('GET', '/mirror/status')") && !text.includes('restart-kiosk') && text.includes('mirrorWords.black') && previewCardHtml().includes('href="#settings/sync"'), 'Status only shows: the black message points to Settings, Sync and restart');
   assert.ok(text.includes('let wanted = wide();') && text.includes('if (wanted) load(); else unload();'), 'a phone loads only on the tap');
 });
 

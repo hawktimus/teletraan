@@ -21,72 +21,29 @@ export function agoText(iso, now = new Date()) {
   return Math.round(hours / 24) + ' days ago';
 }
 
-function bytesText(bytes) {
+export function bytesText(bytes) {
   if (typeof bytes !== 'number') return 'not known';
   const gigabytes = bytes / (1024 * 1024 * 1024);
   return gigabytes >= 10 ? Math.round(gigabytes) + ' GB' : gigabytes.toFixed(1) + ' GB';
 }
 
-function row(label, value) {
+export function row(label, value) {
   return '<div class="row"><dt>' + esc(label) + '</dt><dd>' + value + '</dd></div>';
 }
 
-function card(title, body, extra = '') {
+export function card(title, body, extra = '') {
   return '<section class="card ' + extra + '"><h2>' + esc(title) + '</h2>' + body + '</section>';
 }
 
 const colorWords = { green: 'Up to date', amber: 'Late', red: 'Failed' };
 
-function dotRow(name, dot) {
+export function dotRow(name, dot) {
   const color = dot && dot.color ? dot.color : 'amber';
   return '<div class="dot-row"><span class="dot" data-color="' + esc(color) + '"></span>' +
     '<div><strong>' + esc(name) + '</strong> <span class="word">' + esc(colorWords[color] || '') + '</span>' +
     '<p>' + esc(dot ? dot.reason : 'Not known.') + '</p></div></div>';
 }
 
-// The Status tab
-export function statusHtml(data, now = new Date()) {
-  if (!data) return card('Status', '<p>The Teletraan computer did not answer.</p>');
-  const mini = data.mini || {};
-  const previous = data.versions && data.versions.previous && data.versions.previous.length ? data.versions.previous.map(n => 'v' + n).join(', ') : 'none kept';
-  const current = data.versions && data.versions.current !== null && data.versions.current !== undefined ? 'v' + data.versions.current : 'not known';
-  const cors = data.cors ? (data.cors.ok ? 'Allowed' : 'Blocked: ' + esc(data.cors.message || 'Studio cannot reach this page') + (data.cors.also ? '. Add ' + esc(data.cors.origin) + '. If you open the Studio on port 3426, add ' + esc(data.cors.also) + ' too' : '')) : 'Not checked';
-  const disk = data.disk ? bytesText(data.disk.freeBytes) + ' free of ' + bytesText(data.disk.totalBytes) : 'not known';
-
-  const dots = card('The three dots on the TV',
-    dotRow('Monday', data.dots && data.dots.monday) + dotRow('Band (calendars)', data.dots && data.dots.band) + dotRow('Sanity (content)', data.dots && data.dots.sanity));
-
-  const running = card('Running', '<dl>' +
-    row('Release', esc(current)) +
-    row('Earlier releases', esc(previous)) +
-    row('Screen', esc(data.kiosk || 'not known')) +
-    row('Display', esc(data.display || 'not known')) +
-    row('Screen restarts today', esc(data.kioskRestarts === null || data.kioskRestarts === undefined ? 'not known' : data.kioskRestarts)) +
-    row('Last restart', esc(agoText(data.lastKioskRestartAt, now))) + '</dl>');
-
-  const reads = card('Last reads', '<dl>' +
-    row('Content', esc(agoText(mini.content, now))) +
-    row('Calendars', esc(agoText(mini.calendars, now))) +
-    row('Slides', esc(agoText(mini.slides, now))) +
-    row('Monday', esc(agoText(mini.monday, now))) +
-    row('Monday reads today', esc(data.mondayCallsToday === null || data.mondayCallsToday === undefined ? 'not known' : data.mondayCallsToday)) +
-    row('Competition data', esc(agoText(mini.frc, now))) +
-    row('Last Match13 read', esc(agoText(mini.match13, now))) +
-    row('FRC news', esc(agoText(mini.news, now) + (mini.news && typeof mini.newsCount === 'number' ? ', ' + mini.newsCount + (mini.newsCount === 1 ? ' headline' : ' headlines') : ''))) +
-    row('Last Match13 read', esc(agoText(mini.match13, now))) +
-    row('Screen started', esc(agoText(mini.screenStarted, now))) +
-    row('Last backup', esc(agoText(data.lastBackupAt, now))) + '</dl>');
-
-  const around = card('The Teletraan computer', '<dl>' +
-    row('Sanity', data.sanity && data.sanity.reachable ? 'Reachable' : 'Not reachable' + (data.sanity && data.sanity.error ? ': ' + esc(data.sanity.error) : '')) +
-    row('Studio can reach this page', cors) +
-    row('Disk', esc(disk)) +
-    row('Tailscale address', esc(data.tailscale || 'not known')) + '</dl>');
-
-  return '<div class="grid">' + dots + running + reads + around + '</div>';
-}
-
-// The Now showing tab: the card of the wall, then the buttons. options is GET request.
 // The report of the wall from the answer of GET /now, or null when there is none or the wall has gone quiet. The
 // card and the Live preview both ask this, so they never disagree about whether the TV has reported.
 export function wallReport(now) {
@@ -167,15 +124,16 @@ export function nowCardHtml(now, at = new Date()) {
   const report = now.report;
   const rows = (now.rows || []).map(line => '<li>' + esc(line) + '</li>').join('');
   return card('Now on the wall', '<dl>' +
+    row('Build', esc(report.build || 'not known')) +
     row('View', esc(report.view || 'not known')) +
     row('Theme', esc(report.theme || 'not known')) +
+    row('Layout', esc(report.layout || 'standard')) +
     row('Panel', esc(report.panel || 'not known')) +
     row('Team', esc(report.team || 'both')) +
     row('Page', esc(report.page || '1')) +
     row('Hold', esc(report.hold || (report.pause ? 'rotation paused' : 'none'))) +
     (report.heldNote ? row('Held view', esc(report.heldNote)) : '') +
-    row('Build', esc(report.build || 'not known')) +
-    row('Last report', esc(agoText(now.receivedAt, at))) + '</dl>' +
+    row('Age of this report', esc(agoText(now.receivedAt, at))) + '</dl>' +
     (rows ? '<ul class="rows">' + rows + '</ul>' : ''));
 }
 
@@ -205,7 +163,7 @@ export function previewCardHtml() {
     '<p class="note" data-preview-facts></p>' +
     '<p class="note bad" data-preview-error hidden></p>' +
     '<p class="note" data-preview-open hidden><a href="/mirror/frame.jpg" target="_blank" rel="noopener">Open the picture in a new tab</a></p>' +
-    '<div class="buttons" data-preview-black hidden><button type="button" class="act" data-preview-restart>Restart screen</button></div>' +
+    '<p class="note" data-preview-black hidden>Status only shows. To restart the screen, open <a href="#settings/sync">Settings, Sync and restart</a>.</p>' +
     '<p class="note" data-preview-line hidden></p>' +
     '<p class="note" data-preview-follow-note hidden>' + esc(followNote) + '</p>');
 }
@@ -245,7 +203,7 @@ export function pictureFacts(bytes, width, height) {
 // status is the number a HEAD of the same address answered, or 0 when nothing answered
 export function pictureErrorLine(status) {
   const answer = Number(status) > 0 ? 'the server answered ' + Number(status) : 'the server did not answer';
-  return 'The picture could not be loaded: ' + answer + '. See Settings, Log.';
+  return 'The picture could not be loaded: ' + answer + '. See Settings, Logs.';
 }
 
 export function mirrorPictureAddress(counter) {

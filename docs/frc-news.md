@@ -38,7 +38,7 @@ When the blog cannot be read, the old list stays and `lastError` says why. A blo
 1. The timer is installed by the update from the Mac tool (`tools/teletraan/teletraan-tool update`, which runs `install-news.sh` with the others). By hand: `sudo /opt/teletraan/computer/scripts/install-news.sh`. It installs no package. The computer needs `SANITY_WRITE_TOKEN` in `local.env`, the same key the other timers use.
 2. In Studio open Competition. Under FRC news check Read FRC news and the categories. Click Publish all.
 3. Open Rotation and add a row with the panel FRC news (group Competition, news, drive and robot). Click Publish all.
-4. To read the blog now, open the control page, Status, and click Sync news now. The Last reads card says FRC news with the time and the number of headlines. Studio's status block says Last news read.
+4. To read the blog now, open the control page, Settings, Sync and restart, and click Sync news now. The Last reads card says FRC news with the time and the number of headlines. Studio's status block says Last news read.
 
 ## Hide a headline
 
@@ -54,7 +54,7 @@ The categories are the ones the blog puts on a post, such as FRC, FTC, Control S
 |--------------|------------|
 | The panel is not in the rotation | Add it to a row of the Rotation, and check that Read FRC news is on |
 | No headlines yet | Wait up to 2 hours, or click Sync news now. Check that the categories match the ones on the blog |
-| STALE in the header | The computer has not read the blog for 12 hours. Check Status, Last reads, and Last error under FRC news in Studio |
+| STALE in the header | The computer has not read the blog for 12 hours. Check Settings, Sync and restart, Last reads, and Last error under FRC news in Studio |
 | Last error says it could not find the server | The network is down. The old list stays and the next read is in 2 hours |
 | Last error says the answer is not the feed | The blog changed its address or its form. Check the address in `news-sync.sh` (`feed_url`) |
 | Nothing on the control page | The timer is not installed. Run `install-news.sh` |

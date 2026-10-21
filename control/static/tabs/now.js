@@ -1,9 +1,8 @@
-// The Now on the wall card, the live preview and the controls of the Status tab: what is on the wall, and the buttons that change it. The card refreshes every
-// 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
+// The Now on the wall card of Status (it only shows) and the controls of the Display tab (they change what the wall shows). The
+// card refreshes every 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
 import { api, showResult, useStyles } from './api.js';
-import { heldLine, hiddenRunHtml, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewCardHtml, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
-import { wirePreview } from './preview.js';
+import { heldLine, hiddenRunHtml, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
 function fieldProblem(field) {
@@ -143,17 +142,60 @@ function wire(root, watcher, afterPress) {
   });
 }
 
-// Puts the card, the live preview and the buttons into the three boxes it is given. Returns the function that stops it.
-export async function mountNow(boxes) {
+// The line that says who decides what the wall shows: the requests that run now, drawn again every 5 seconds so a
+// request that ended goes away. options is the answer of GET request. Returns { set(requests), stop() }.
+function makeHeld(heldBox, options) {
+  const data = options.ok && options.data ? options.data : {};
+  const names = { theme: data.themeNames || {}, view: {} };
+  (data.views || []).forEach(view => { names.view[view.key] = view.name; });
+  let requests = data.requests || null;
+  const draw = () => {
+    const words = heldLine(requests, names, new Date());
+    heldBox.textContent = words;
+    heldBox.dataset.held = words === 'Following the schedule.' ? 'no' : 'yes';
+  };
+  draw();
+  const timer = setInterval(draw, 5000);
+  return { set(next) { requests = next; draw(); }, stop() { clearInterval(timer); } };
+}
+
+// Status: the line of who decides, and the card of the wall. Nothing here writes. Returns the function that stops it.
+export async function mountCard(boxes) {
   useStyles();
-  const { cardBox, previewBox, controls, root, heldBox } = boxes;
-  previewBox.innerHTML = previewCardHtml();
-  let stopPreview = wirePreview(previewBox);
+  const { cardBox, heldBox } = boxes;
+  let left = false;
+  let timer = null;
+  let held = null;
+  const leave = () => { left = true; clearInterval(timer); if (held) held.stop(); };
+
+  // Only the card is redrawn, and only when its words changed, so the scroll position stays
+  let last = '';
+  async function refresh() {
+    const [answer, asked] = await Promise.all([api('GET', '/now'), api('GET', '/request')]);
+    if (left) return;
+    if (held && asked.ok && asked.data) held.set(asked.data.requests);
+    const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
+    if (html === last) return;
+    last = html;
+    cardBox.innerHTML = html;
+  }
+  held = makeHeld(heldBox, await api('GET', '/request'));
+  if (left) return leave;
+  await refresh();
+  if (!left) timer = setInterval(refresh, 10000);
+  return leave;
+}
+
+// Display: the buttons that change what the wall shows. boxes are root (holds the groups and the bar), controls and
+// heldBox. Returns the function that stops it.
+export async function mountControls(boxes) {
+  useStyles();
+  const { controls, root, heldBox } = boxes;
   let timer = null;
   let left = false;
   let ticker = null;
-  let heldTimer = null;
-  const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); clearInterval(heldTimer); if (stopPreview) stopPreview(); stopPreview = null; };
+  let held = null;
+  const leave = () => { left = true; clearInterval(timer); clearInterval(ticker); if (held) held.stop(); };
 
   const options = await api('GET', '/request');
   if (left) return leave;
@@ -166,24 +208,13 @@ export async function mountNow(boxes) {
   let ticks = 0;
   ticker = setInterval(() => { ticks += 1; watcher.tick(ticks); }, 1000);
 
-  // Who decides what the wall shows: the requests that run now, asked again with every report
-  const names = { theme: options.ok && options.data ? options.data.themeNames || {} : {}, view: {} };
-  ((options.ok && options.data && options.data.views) || []).forEach(view => { names.view[view.key] = view.name; });
-  let requests = options.ok && options.data ? options.data.requests : null;
-  const drawHeld = () => {
-    const words = heldLine(requests, names, new Date());
-    heldBox.textContent = words;
-    heldBox.dataset.held = words === 'Following the schedule.' ? 'no' : 'yes';
-  };
-  drawHeld();
-  heldTimer = setInterval(drawHeld, 5000);
+  held = makeHeld(heldBox, options);
   askAgain = () => askRequests();
   async function askRequests() {
     const answer = await api('GET', '/request');
     if (left || !answer.ok || !answer.data) return;
-    requests = answer.data.requests;
-    drawHeld();
-    if (Date.now() - pressed.at > 15000) setPaused(root, pausedBy(requests));
+    held.set(answer.data.requests);
+    if (Date.now() - pressed.at > 15000) setPaused(root, pausedBy(answer.data.requests));
   }
 
   // The last hidden transition, under the buttons. Redrawn only when its words changed.
@@ -196,18 +227,12 @@ export async function mountNow(boxes) {
     box.innerHTML = html;
   }
 
-  // Only the card of the wall is redrawn, and only when its words changed, so the scroll position stays
-  let last = '';
   async function refresh() {
     askRequests();
     const answer = await api('GET', '/now');
     if (left) return;
     if (answer.ok && wallReport(answer.data) && Date.now() - pressed.at > 15000) setPaused(root, wallReport(answer.data).pause === true);
     drawHiddenRun(answer.ok ? wallReport(answer.data) : null);
-    const html = nowCardHtml(answer.ok ? answer.data : { message: answer.error });
-    if (html === last) return;
-    last = html;
-    cardBox.innerHTML = html;
   }
   await refresh();
   if (!left) timer = setInterval(refresh, 10000);

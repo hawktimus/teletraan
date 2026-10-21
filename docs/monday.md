@@ -137,7 +137,7 @@ Daily read limit reached. Reads start again at midnight.
 3. If it says Monday gave no items for a board, share the board with the account of the token.
 4. If a department is empty, check the task: a parent item, in a department group, Show on TV? not Hide.
 5. Press Sync Monday now on the control page, wait a minute and look again.
-6. Still nothing: press Monday debug on the control page, Settings, Monday, with the board number, and send
+6. Still nothing: press Monday debug on the control page, Settings, Monitor Monday, with the board number, and send
    the answer to a coach. It shows how Monday answers for two items, with no token and no names of people.
 
 On the computer, `computer/scripts/monday-sync.sh --check` checks the token, and

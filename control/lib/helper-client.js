@@ -10,7 +10,7 @@ export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', '
 export function createHelper(socketPath, timeout = 30000, connect = net.createConnection) {
   return function helper(word, args = [], body = '') {
     return new Promise((resolve, reject) => {
-      if (!words.includes(word) || !args.every(arg => /^[a-z0-9]{1,20}$/.test(arg))) {
+      if (!words.includes(word) || !args.every(arg => /^[a-z0-9-]{1,20}$/.test(arg))) {
         reject(new Error('That is not a word the helper knows.'));
         return;
       }

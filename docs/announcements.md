@@ -10,12 +10,12 @@ The Teletraan has two things that are called announcements. They are not the sam
 
 - **Announcements on the bar (this page).** A thin bar under the banner. The panels stay on
   the screen and get a little smaller while the bar is up. You make one in Studio on the Today
-  page, under Announcements on the bar, or with the box on the Status tab of the control page.
+  page, under Announcements on the bar, or with the box on the Display tab of the control page.
 - **Full screen messages at set times.** On the Today page too, under Full screen messages at set times. A full-screen card with a title and a follow-up line
   that plays at a time of day. The Play announcements button plays them. They cover the whole
   screen. See docs/hidden-transitions.md, "Play announcements".
 
-The Play announcement button on the Status tab of the control page plays the full-screen kind at once. The box on the same tab posts the bar kind for two hours.
+The Play announcement button on the Display tab of the control page plays the full-screen kind at once. The box on the same tab posts the bar kind for two hours.
 
 ## Post one
 

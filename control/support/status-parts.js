@@ -17,6 +17,18 @@ function number(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+// A number the helper printed as text ("uptime: 5231.77"), or null when the line is empty or not a number
+export function numberFrom(hostText, label) {
+  const told = lineStarting(hostText, label);
+  const value = told === '' ? NaN : Number(told);
+  return Number.isFinite(value) ? value : null;
+}
+
+// Lines of a log that tell of something that went wrong, newest last, at most `count`
+export function errorLines(lines, count = 5) {
+  return (Array.isArray(lines) ? lines : []).filter(line => /fail|error|refus|could not|cannot|denied/i.test(line)).slice(-count).map(line => String(line).slice(0, 300));
+}
+
 // The first line of text that starts with a label, such as "display: output HDMI-1, mode ..."
 export function lineStarting(hostText, label) {
   const found = String(hostText || '').split('\n').find(line => line.startsWith(label + ':'));
@@ -33,6 +45,7 @@ export function lineStarting(hostText, label) {
 //   cors          the result of the CORS check, or null
 //   disk          { freeBytes, totalBytes }, or null
 //   tailscale     the address, or ''
+//   errors        the last lines of the control log that tell of a failure
 export function buildStatus(facts, now = new Date()) {
   const f = facts || {};
   const data = f.data || {};
@@ -69,12 +82,18 @@ export function buildStatus(facts, now = new Date()) {
       news: text(mini.newsAt),
       newsCount: number(mini.newsCount),
       screenStarted: text(mini.kioskStartedAt),
+      photos: text(mini.photosDriveAt),
     },
     mondayCallsToday: number(monday.callsToday),
     mondayCallsDate: text(monday.callsDate, 10),
     lastBackupAt: text(mini.lastBackupAt),
     kioskRestarts: number(mini.kioskRestarts),
     lastKioskRestartAt: text(mini.lastKioskRestartAt),
+    uptimeSeconds: numberFrom(f.host, 'uptime'),
+    memory: numberFrom(f.host, 'memTotalKb') && numberFrom(f.host, 'memAvailableKb') !== null
+      ? { totalKb: numberFrom(f.host, 'memTotalKb'), availableKb: numberFrom(f.host, 'memAvailableKb') } : null,
+    temperatureC: numberFrom(f.host, 'tempC'),
+    lastErrors: Array.isArray(f.errors) ? f.errors : [],
     sanity: { reachable: Boolean(sanity.ok), error: sanity.ok ? '' : text(sanity.error) },
     cors: f.cors || null,
     disk: f.disk || null,

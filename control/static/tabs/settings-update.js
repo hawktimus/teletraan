@@ -1,9 +1,9 @@
 // The Update section of Settings: pick the repository folder on this computer, see how it compares with the wall, push it, and roll back.
 
-import { api, shortDate } from './api.js';
-import { treeHashOfFiles } from './tree-hash.js';
-import { githubCard } from './github-card.js';
-import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit, restartWords, waitUntilBack } from './update-lib.js';
+import { api, shortDate } from '../api.js';
+import { treeHashOfFiles } from '../tree-hash.js';
+import { githubCard } from '../github-card.js';
+import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit, restartWords, waitUntilBack } from '../update-lib.js';
 
 const stepNames = {
   download: 'Download from GitHub',
@@ -28,7 +28,7 @@ function element(tag, text, className) {
 async function makeZip(files) {
   let fflate;
   try {
-    fflate = await import('./vendor/fflate.js');
+    fflate = await import('../vendor/fflate.js');
   } catch (error) {
     throw new Error('The zip library is missing.');
   }

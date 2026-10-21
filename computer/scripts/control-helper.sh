@@ -109,6 +109,9 @@ case $word in
     echo "kiosk: $(systemctl is-active teletraan-kiosk.service 2> /dev/null || true)"
     echo "uptime: $(cut -d' ' -f1 /proc/uptime 2> /dev/null || true)"
     echo "diskFreeKb: $(df -Pk "$root" 2> /dev/null | awk 'NR == 2 { print $4 }')"
+    echo "memTotalKb: $(awk '/^MemTotal:/ { print $2 }' /proc/meminfo 2> /dev/null || true)"
+    echo "memAvailableKb: $(awk '/^MemAvailable:/ { print $2 }' /proc/meminfo 2> /dev/null || true)"
+    echo "tempC: $(awk '{ printf "%d", $1 / 1000 }' /sys/class/thermal/thermal_zone0/temp 2> /dev/null || true)"
     echo "tailscale: $(tailscale ip -4 2> /dev/null | head -n 1 || true)"
     echo "display: $(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | sed 's/^.*display: //' | cut -c 1-200)"
     finish 0

@@ -122,6 +122,10 @@ button.link { background: none; border: 0; color: var(--purple-dark); text-decor
 
 @media (max-width: 600px) {
   header h1 { font-size: 22px; }
+  /* The three tabs share one row of 44px targets, and the Studio button goes under them */
+  nav { flex-basis: 100%; flex-wrap: nowrap; }
+  nav button { flex: 1 1 0; min-width: 0; padding: 0 8px; }
+  .studio { margin-bottom: 8px; }
   .card { padding: 12px; }
   button.action, label.action { white-space: normal; text-align: center; }
 }
