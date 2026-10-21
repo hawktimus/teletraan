@@ -35,7 +35,7 @@ function clean() {
   const docs = [
     { _id: 't1', _type: 'tipOrNews', kind: 'tip', text: 'Check your battery before a match' },
     { _id: 't2', _type: 'tipOrNews', kind: 'news', text: 'Practice moves to the lab on Friday', expires: '2026-12-01T00:00:00Z' },
-    { _id: 'a1', _type: 'announcement', text: 'Pizza in the lab at 6', start: '2026-10-20T10:00:00Z', end: '2026-10-21T10:00:00Z' },
+    { _id: 'a1', _type: 'announcement', text: 'Pizza in the lab at 6', start: new Date(Date.now() - 2 * 3600000).toISOString(), end: new Date(Date.now() + 20 * 3600000).toISOString() },
     { _id: 'pl1', _type: 'plan', heading: 'Build meeting', date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10), location: 'Lab', rows: [{ time: '6:00 PM', text: 'Wiring', lead: 'Sam' }, { time: '7:00 PM', text: 'Cleanup', lead: 'Ana' }] },
     { _id: 'pr1', _type: 'presentation', name: 'Sam', topic: 'Swerve drive', start: '2026-10-25T22:00:00Z', minutes: 10, status: 'scheduled', deckLink: 'https://docs.google.com/presentation/d/abc/edit' },
     { _id: 'p1', _type: 'person', role: 'Coach', name: 'Pat', title: 'Head Coach', photo: picture('image-aaa-800x800-jpg') },
@@ -206,7 +206,7 @@ test('an announcement that ends before it starts, never starts or is over is fou
     { _id: 'a2', _type: 'announcement', text: 'Backwards', start: '2026-10-22T10:00:00Z', end: '2026-10-21T10:00:00Z' },
     { _id: 'a3', _type: 'announcement', text: 'No end', start: '2026-10-22T10:00:00Z' },
     { _id: 'a4', _type: 'announcement', text: 'Last week', start: '2026-10-01T10:00:00Z', end: '2026-10-02T10:00:00Z' },
-    { _id: 'a5', _type: 'announcement', text: 'Call 919 555 0143', start: '2026-10-20T10:00:00Z', end: '2026-10-21T10:00:00Z' },
+    { _id: 'a5', _type: 'announcement', text: 'Call 919 555 0143', start: new Date(Date.now() - 2 * 3600000).toISOString(), end: new Date(Date.now() + 20 * 3600000).toISOString() },
   ]));
   const has = (id, code) => found.some(item => item.doc.id === id && item.code === code);
   assert.ok(has('a2', 'end-before-start') && has('a3', 'no-end') && has('a4', 'over') && has('a5', 'public-contact'));
