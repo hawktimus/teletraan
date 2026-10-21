@@ -5,10 +5,9 @@
 import { blocksOf, condensedWords, countWhere, missingCharts, missingDepartments, retiredCount, durationWords, isNovaRow, isShown, mondayFieldsOf, playsCondensed, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
 import { thumbHtml } from './display-preview-parts.js';
-import { weekStripHtml } from './push-parts.js';
+import { dayWords, rowViewOf, weekDates } from '../push-lib.js';
 
 const stateWords = { show: 'Will show', skip: 'Skipped', off: 'Off', unknown: 'Not known' };
-const dayWords = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
 
 // The title of every panel in the choices, by id
 export function titlesOf(choices) {
@@ -205,20 +204,59 @@ export function addRowHtml(choices) {
 
 // ----- the theme and view settings -----
 
-// info is { today, timeZone } from the push state: the strip marks today and the time zone is shown. Both are empty until it is read.
+// info is { today, timeZone, serverTime } from the push state: today is marked, the next date of each weekday is counted from the
+// clock of the Teletraan computer, and the time zone is shown. All three are empty until the first answer is read.
 export function themeHtml(theme, choices, info = {}) {
-  const titles = {};
-  choices.themes.forEach(item => { titles[item.value] = item.title; });
-  const days = choices.weekdays.map(day => field(dayWords[day] || day, '<select data-theme-day="' + esc(day) + '">' + options(choices.themes, theme.themeByWeekday[day]) + '</select>')).join('');
+  const dates = weekDates(info.serverTime || '', info.timeZone || '');
+  const days = choices.weekdays.map(day => {
+    const when = dates[day] || { date: '', today: false };
+    const isToday = when.today || (!info.serverTime && day === info.today);
+    return '<label class="trow" data-day="' + esc(day) + '"' + (isToday ? ' data-today="yes"' : '') + '>' +
+      '<span class="tname">' + esc(dayWords[day] || day) + '</span>' +
+      '<span class="tdate">' + esc(when.date) + (isToday ? ' <span class="dnow">today</span>' : '') + '</span>' +
+      '<select data-theme-day="' + esc(day) + '" aria-label="Theme for ' + esc(dayWords[day] || day) + '">' + options(choices.themes, theme.themeByWeekday[day]) + '</select></label>';
+  }).join('');
   return '<section class="card theme-card" data-theme-card><h2>Theme rotation (which theme plays each day)</h2>' +
     '<p class="word">The wall changes theme at midnight in the time zone of the Look page' + (info.timeZone ? ': ' + esc(info.timeZone) : '') + '. Change that on the Look page in the Studio.</p>' +
-    '<div data-week-strip>' + weekStripHtml(theme.themeByWeekday, info.today || '', titles) + '</div>' +
-    '<div class="fields">' + days + '</div>' +
+    '<div class="trows">' + days + '</div>' +
     '<h3>Names and timing</h3><div class="fields">' +
     field('Banner title for Robotics (up to 28 characters)', '<input type="text" maxlength="28" data-theme-title value="' + esc(theme.generalViewTitle) + '">') +
     field('Seconds for each transition (2 to 4)', '<input type="number" inputmode="decimal" min="2" max="4" step="0.5" data-theme-transition value="' + esc(theme.transitionSeconds === null ? '' : theme.transitionSeconds) + '">') +
     '</div><p class="note">The names of the Prime and Nova views are the names of their Team documents. The view of a row is in its card in the rotation above.</p>' +
-    '<div data-controls></div><p class="result" role="status" data-flash></p></section>';
+    '<p class="note">Save to draft and Publish to the wall are under the preview, and they save these too.</p></section>';
+}
+
+// ----- the playlist -----
+
+// The row the wall plays now, found from its report (panel and view), and the shown row after it. Rows that are off are passed over.
+// A report that matches no row (a pushed panel, a card the wall adds) gives no position, and the card then says only what the wall shows.
+export function playlistPosition(rows, report) {
+  const shown = rows.filter(isShown);
+  if (!report || !report.panel || shown.length === 0) return { now: null, next: null };
+  const view = rowViewOf[report.view] || report.view || '';
+  let at = shown.findIndex(row => row.panel === report.panel && (view === '' || row.view === view));
+  if (at < 0) at = shown.findIndex(row => row.panel === report.panel);
+  if (at < 0) return { now: null, next: null };
+  return { now: shown[at], next: shown.length > 1 ? shown[(at + 1) % shown.length] : null };
+}
+
+function rowName(row, titles) {
+  return (titles[row.panel] || row.panel || 'Panel not chosen') + ' (' + (viewWords[row.view] || 'no view') + ')';
+}
+
+// What the playlist is doing: what plays now, what comes next, how long a loop is. paused and report come from the push state and the
+// wall report. The Edit button jumps to the Rotation rows.
+export function playlistHtml(page, report, paused, titles) {
+  const place = playlistPosition(page.rows, report);
+  const shown = page.rows.filter(isShown);
+  const playing = place.now ? rowName(place.now, titles) : report && report.panel ? (titles[report.panel] || String(report.panel).replace(/-/g, ' ')) + ' (not a row of the list)' : 'not known yet';
+  const next = place.next ? rowName(place.next, titles) : place.now ? 'the same row again' : 'not known yet';
+  const loop = shown.length === 0 ? 'No row is on, so the wall plays the standard order.' : shown.length + (shown.length === 1 ? ' row is on' : ' rows are on') + ', and a full loop takes ' + durationWords(loopSeconds(page.rows, page.pageSeconds)) + '.';
+  return '<section class="card playlist-card" data-playlist-card><h2>Playlist</h2>' +
+    (paused ? '<p class="warn" data-state="skip">The rotation is paused. The wall keeps the panel it shows.</p>' : '') +
+    '<dl class="facts"><div><dt>Playing now</dt><dd data-play-now>' + esc(playing) + '</dd></div><div><dt>Next</dt><dd data-play-next>' + esc(next) + '</dd></div><div><dt>Loop</dt><dd>' + esc(loop) + '</dd></div></dl>' +
+    '<div class="buttons"><button type="button" class="act" data-action="edit-rows">Edit</button></div>' +
+    '<p class="note">Edit goes to the Rows below. Next, Pause and Back to schedule are in the card after this one.</p></section>';
 }
 
 // ----- motion (a section of its own) -----
@@ -238,23 +276,4 @@ export function motionHtml(motion) {
     field('Motion', '<select data-motion-field="motion">' + options(motionWords, motion.motion) + '</select>') +
     field('Motion on the TV computer', '<select data-motion-field="motionOnKiosk">' + options(kioskWords, motion.motionOnKiosk) + '</select>') +
     '</div><p class="note">Full plays every movement. Light plays one simple change at each panel and view change. Calm only fades. The TV computer plays Light when Motion is Full, unless the second box says Full, so that it does not freeze. Add ?motion=full to the address of one computer to try Full there.</p></section>';
-}
-
-// ----- what the wall adds by itself -----
-
-export function extrasHtml(extras, now = new Date()) {
-  if (!extras || (!extras.tba && !extras.match13)) return '<section class="card"><h2>Competition data</h2><p class="word">No competition data was read.</p></section>';
-  let html = '<section class="card"><h2>Competition data</h2><p class="word">The wall adds the competition cards by itself, so they are not rows. This is the data behind them.</p>';
-
-  if (extras.tba) {
-    const teams = extras.tba.teams.map(team => '<li>' + esc(team.team + (team.number ? ' ' + team.number : '')) + ': ' +
-      esc(team.rank === null ? 'no rank yet' : 'rank ' + team.rank + (team.of ? ' of ' + team.of : '')) + (team.nextMatch ? ', next match ' + esc(team.nextMatch) : '') + '</li>').join('');
-    html += '<h3>TBA (the frc-status document)</h3><p class="word">Read ' + esc(agoText(extras.tba.lastSyncAt, now)) + '.' + (extras.tba.lastError ? ' Last problem: ' + esc(extras.tba.lastError) : '') + '</p>' + (teams ? '<ul class="items">' + teams + '</ul>' : '');
-  }
-  if (extras.match13) {
-    html += '<h3>Match13</h3><p class="word">Read ' + esc(agoText(extras.match13.generatedAt, now)) + (extras.match13.stale ? '. This is old.' : '.') + ' This stays on the Teletraan computer and is not saved to Sanity.</p>';
-    html += extras.match13.events.map(event => '<h4>' + esc(event.key) + '</h4>' + (event.matches.length ? '<ul class="items">' + event.matches.map(match =>
-      '<li>' + esc(match.key) + (match.redWin === null ? '' : ': red wins ' + match.redWin + ' percent') + (match.redScore === null ? '' : ', expected ' + Math.round(match.redScore) + ' to ' + Math.round(match.blueScore)) + (match.played ? ', played' : '') + '</li>').join('') + '</ul>' : '<p class="word">No matches yet.</p>')).join('');
-  }
-  return html + '</section>';
 }

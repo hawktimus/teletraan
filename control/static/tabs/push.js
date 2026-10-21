@@ -12,7 +12,9 @@ import { clockOffset, holdWords, leftWords, previewTarget, secondsLeft, usualHol
 const pollSeconds = 15;
 const reportSeconds = 10;
 
-// hooks: { choices(), rows(), selectedRow(), pictures(), onState(state) } give the rotation and the large picture of the page.
+const pausedIn = state => (state.pushes || []).some(push => push.kind === 'pause');
+
+// hooks: { choices(), rows(), selectedRow(), pictures(), onState(state), onReport(report) } give the rotation and the large picture of the page.
 // boxes: { now, push } are the two places the markup goes. Returns { start, destroy }.
 export function startPush(root, boxes, hooks) {
   let state = null;
@@ -54,6 +56,7 @@ export function startPush(root, boxes, hooks) {
       return;
     }
     const first = state === null;
+    const before = state;
     state = answer.data;
     offset = clockOffset(state.serverTime, Date.now());
     endingSoon = false;
@@ -63,6 +66,8 @@ export function startPush(root, boxes, hooks) {
     } else {
       names = namesOf(state, titlesOf(hooks.choices()));
       paintActive();
+      // The page hears of a new day or a pause, so the Theme rotation and the Playlist stay right
+      if (hooks.onState && (before.today !== state.today || before.timeZone !== state.timeZone || pausedIn(before) !== pausedIn(state))) hooks.onState(state);
       const source = root.querySelector('[data-now-theme-source]');
       const name = root.querySelector('[data-now-theme-name]');
       const pushedTheme = state.pushes.find(push => push.kind === 'theme');
@@ -79,6 +84,7 @@ export function startPush(root, boxes, hooks) {
     const line = root.querySelector('[data-now-view]');
     const report = answer.ok && answer.data && answer.data.report && !answer.data.quiet ? answer.data.report : null;
     if (line) line.textContent = nowLine(report);
+    if (hooks.onReport) hooks.onReport(report);
   }
 
   // Once a second: the words left on each push. A push that has run out is dropped from the list after a short wait.
@@ -86,7 +92,7 @@ export function startPush(root, boxes, hooks) {
     if (!state) return;
     const now = nowMs();
     let over = false;
-    root.querySelectorAll('[data-left]').forEach(element => {
+    root.querySelectorAll('.left[data-left]').forEach(element => {
       const until = element.dataset.left;
       if (until === '') return;
       if (secondsLeft(until, now) === 0) over = true;

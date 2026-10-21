@@ -39,6 +39,7 @@ const oldAddresses = {
   restart: ['settings', 'sync'],
   reboot: ['settings', 'reboot'],
   log: ['settings', 'log'],
+  competition: ['settings', 'competition'],
   playlist: ['display', ''],
   hold: ['display', ''],
   messages: ['display', ''],
