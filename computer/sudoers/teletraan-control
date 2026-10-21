@@ -16,7 +16,8 @@ Cmnd_Alias TELETRAAN_TIMERS = \
   /usr/bin/systemctl restart teletraan-slides.timer, \
   /usr/bin/systemctl restart teletraan-watchdog.timer, \
   /usr/bin/systemctl restart teletraan-nightly.timer, \
-  /usr/bin/systemctl restart teletraan-reboot.timer
+  /usr/bin/systemctl restart teletraan-reboot.timer, \
+  /usr/bin/systemctl restart teletraan-network.timer
 
 Cmnd_Alias TELETRAAN_SYNCS = \
   /usr/bin/systemctl start teletraan-calendars.service, \
@@ -25,6 +26,17 @@ Cmnd_Alias TELETRAAN_SYNCS = \
   /usr/bin/systemctl start teletraan-news.service, \
   /usr/bin/systemctl start teletraan-photos-drive.service, \
   /usr/bin/systemctl start teletraan-match13.service
+
+# The network watchdog restarts the network service of the computer (network-watchdog.sh). The commands that name an
+# interface are in /etc/sudoers.d/teletraan-network, which install-network.sh writes with the names found on the computer.
+# The journal line is how network-info reads why the network dropped: the login user is not in the systemd-journal group
+# (that would let it read every log), so this one command with these arguments is allowed instead.
+Cmnd_Alias TELETRAAN_NETWORK = \
+  /usr/bin/systemctl restart NetworkManager.service, \
+  /usr/bin/systemctl restart systemd-networkd.service, \
+  /usr/bin/systemctl restart systemd-resolved.service, \
+  /usr/bin/systemctl restart networking.service, \
+  /usr/bin/journalctl -u NetworkManager.service -u wpa_supplicant.service -u systemd-networkd.service --no-pager -n 60 -o short-iso
 
 Cmnd_Alias TELETRAAN_WEB = \
   /usr/bin/docker restart teletraan-web
@@ -35,7 +47,7 @@ Cmnd_Alias TELETRAAN_REBOOT = \
   /usr/sbin/reboot, \
   /sbin/reboot
 
-ACCOUNT ALL=(root) NOPASSWD: TELETRAAN_SCREEN, TELETRAAN_TIMERS, TELETRAAN_SYNCS, TELETRAAN_WEB, TELETRAAN_REBOOT
+ACCOUNT ALL=(root) NOPASSWD: TELETRAAN_SCREEN, TELETRAAN_TIMERS, TELETRAAN_SYNCS, TELETRAAN_NETWORK, TELETRAAN_WEB, TELETRAAN_REBOOT
 
 # The git hook runs the install as root through this wrapper, which checks its two arguments itself (computer/git/install-tree-as-root.sh).
 # With no argument list in the rule, sudo allows any arguments, so the wrapper is the check. Only this path may run.

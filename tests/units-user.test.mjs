@@ -48,7 +48,7 @@ check('every service runs as ACCOUNT, and the ones that run as root are on the a
 });
 
 check('the watchdog and nightly services run as ACCOUNT and do not block sudo', () => {
-  ['teletraan-watchdog.service', 'teletraan-nightly.service'].forEach(name => {
+  ['teletraan-watchdog.service', 'teletraan-nightly.service', 'teletraan-network.service'].forEach(name => {
     const text = fs.readFileSync(path.join(units, name), 'utf8');
     assert.equal(setting(text, 'User'), 'ACCOUNT', name);
     assert.equal(setting(text, 'NoNewPrivileges'), null, name + ' needs sudo');
@@ -65,7 +65,7 @@ check('a root unit that runs a script of /opt/teletraan is not allowed: the tree
 });
 
 check('the installers fill in ACCOUNT, refuse root, and say when they replace a unit that ran as root', () => {
-  ['watchdog', 'nightly', 'reboot', 'cleanup', 'backup', 'calendars'].forEach(name => {
+  ['watchdog', 'nightly', 'reboot', 'cleanup', 'backup', 'calendars', 'network'].forEach(name => {
     const text = fs.readFileSync(path.join(repo, 'computer/scripts/install-' + name + '.sh'), 'utf8');
     assert.ok(text.includes('s/^User=ACCOUNT\\$/User=$account/'), name);
     assert.ok(text.includes('"$account" = root'), name + ' refuses root');
@@ -80,7 +80,7 @@ check('the installers fill in ACCOUNT, refuse root, and say when they replace a 
 });
 
 check('install-watchdog.sh and install-nightly.sh replace an old root unit with one that runs as the account', () => {
-  ['watchdog', 'nightly'].forEach(name => {
+  ['watchdog', 'nightly', 'network'].forEach(name => {
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-units-'));
     try {
       const old = path.join(folder, 'teletraan-' + name + '.service');

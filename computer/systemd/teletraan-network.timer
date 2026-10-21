@@ -1,0 +1,10 @@
+[Unit]
+Description=Check the network of the Teletraan I computer every 2 minutes
+
+[Timer]
+# A boot gets 5 minutes to bring the network up before the first check
+OnBootSec=5min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target

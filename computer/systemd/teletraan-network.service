@@ -1,0 +1,14 @@
+[Unit]
+Description=Check the network of the Teletraan I computer and repair it when it is down
+After=network.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-network.sh and install.sh with the account that owns the repository. The script checks the Sanity host,
+# the gateway and the name lookup, and climbs a ladder of repairs after 3 failed checks (network-watchdog.sh explains the limits).
+# The repairs go through sudo, which computer/sudoers/teletraan-control and /etc/sudoers.d/teletraan-network allow command by
+# command. Do not add NoNewPrivileges here: sudo would stop working.
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/network-watchdog.sh
+# Each check gives up after 10 seconds, and a step waits up to 30 seconds to see whether it helped
+TimeoutStartSec=3min
