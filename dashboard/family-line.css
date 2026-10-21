@@ -11,15 +11,15 @@
 .banner .team-plate svg:nth-of-type(2),
 .bar-column .bar-team .team-both { display: none; }
 
-html[data-view="general"] .banner[data-plate="two"] .team-plate { width: 940px; }
-html[data-view="general"] .banner[data-plate="two"] .team-plate svg:nth-of-type(1),
-html[data-view="general"] .banner[data-plate="two"] .team-plate .team-line,
-html[data-view="general"] .bar-column[data-plate="two"] .bar-team .team-line { display: none; }
-html[data-view="general"] .banner[data-plate="two"] .team-plate svg:nth-of-type(2) { display: block; }
-html[data-view="general"] .banner[data-plate="two"] .team-plate .team-both { display: flex; }
+html:is([data-view="general"], [data-view="family"]) .banner[data-plate="two"] .team-plate { width: 940px; }
+html:is([data-view="general"], [data-view="family"]) .banner[data-plate="two"] .team-plate svg:nth-of-type(1),
+html:is([data-view="general"], [data-view="family"]) .banner[data-plate="two"] .team-plate .team-line,
+html:is([data-view="general"], [data-view="family"]) .bar-column[data-plate="two"] .bar-team .team-line { display: none; }
+html:is([data-view="general"], [data-view="family"]) .banner[data-plate="two"] .team-plate svg:nth-of-type(2) { display: block; }
+html:is([data-view="general"], [data-view="family"]) .banner[data-plate="two"] .team-plate .team-both { display: flex; }
 /* The wide plate leaves no room beside it for SAMPLE CONTENT, so on this view the badge sits over the hawk in two lines, as
    it does in the side column of the bar layout. */
-html[data-view="general"] .banner[data-plate="two"] .sample-badge {
+html:is([data-view="general"], [data-view="family"]) .banner[data-plate="two"] .sample-badge {
   left: -250px;
   top: 76px;
   z-index: 1;
@@ -33,7 +33,7 @@ html[data-view="general"] .banner[data-plate="two"] .sample-badge {
 .banner .team-both i.second { margin-left: 22px; }
 .banner .team-both i.second b { margin-left: 16px; }
 
-html[data-view="general"] .bar-column[data-plate="two"] .bar-team .team-both {
+html:is([data-view="general"], [data-view="family"]) .bar-column[data-plate="two"] .bar-team .team-both {
   display: flex;
   flex-direction: column;
   justify-content: center;

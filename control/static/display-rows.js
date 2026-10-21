@@ -33,6 +33,18 @@ export function mondayFieldsOf(row, monday) {
   return [];
 }
 
+// A Monday row of the Robotics view plays in the Condensed view (dashboard/core/views-play.js, playViewOf), and its small panel is
+// never drawn. An older monday-tasks row with a department plays as Department tasks, so it is the same. The nine departments are
+// those of mondayDepartments in dashboard/config-lists.js.
+export const condensedWords = 'Plays in the Condensed view';
+const mondayDepartmentIds = ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing'];
+
+export function playsCondensed(row) {
+  if (row.view !== 'robotics') return false;
+  const older = row.panel === 'monday-tasks' && mondayDepartmentIds.indexOf(String(row.department || '').trim().toLowerCase()) !== -1;
+  return older || row.panel === 'monday-department' || row.panel === 'monday-charts';
+}
+
 export function newKey() {
   return Math.random().toString(16).slice(2, 14).padEnd(12, '0');
 }

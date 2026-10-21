@@ -10,7 +10,8 @@
 //   screen  the Screen or theme whose style the panel is drawn in, passed on to the ?style= switch
 //   view    general, prime, nova or family: the view key written on the page, for a copy that follows the TV
 //   layout  bar draws the bar layout in any theme, for the same reason. standard draws the standard one. Without it a panel of
-//           roboticsWidePanels is drawn in the bar layout, as the Robotics view plays it, and every other panel as its theme does
+//           roboticsWidePanels is drawn in the bar layout, as the Robotics view plays it, and every other panel as its theme does. The
+//           Condensed view (view=family) is always the bar layout
 //   still   1 stops the clock and every movement, so the picture holds still
 //   small   1 draws the small panel too: the side of the row or the first of its view (the row preview)
 //   side, part     the small panel of a row and the page of a half panel (the row preview, core/row-preview.js)
@@ -42,7 +43,7 @@ export function readStill(search) {
   const layout = trimText(params.get('layout'));
   const roboticsView = !ask.view || ask.view === 'general';
   if (layout === 'bar' || layout === 'standard') ask.layout = layout;
-  else if (roboticsWidePanels.includes(panel) && roboticsView) ask.layout = 'bar';
+  else if (ask.view === 'family' || (roboticsWidePanels.includes(panel) && roboticsView)) ask.layout = 'bar';
   // side is the small panel of a row and part its page, for the row preview (core/row-preview.js)
   ['list', 'chart', 'side'].forEach(name => {
     if (trimText(params.get(name)) !== '') ask[name] = trimText(params.get(name));

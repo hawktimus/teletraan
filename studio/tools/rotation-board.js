@@ -161,14 +161,24 @@ export function stripOf(rows, pageSeconds = defaultPageSeconds) {
   return items;
 }
 
-// Robotics rows are split or wide by their panel. The small panel column is for a Robotics row that is split.
+// Robotics rows are split or wide by their panel. The small panel column is for a Robotics row that is split. An older
+// Monday row is judged as the Department tasks row it plays as, the same as the wall does.
 export function layoutOf(row) {
   if ((row.view || '') !== 'robotics') return 'team';
-  return wideRoboticsPanels.indexOf(row.panel) === -1 ? 'split' : 'wide';
+  return wideRoboticsPanels.indexOf((upgradedRow(row) || row).panel) === -1 ? 'split' : 'wide';
 }
 
 export function hasSmallPanel(row) {
   return layoutOf(row) === 'split';
+}
+
+// The words of a Monday row of the Robotics view: the wall plays it in the Condensed view and back (dashboard/core/views-play.js,
+// playViewOf). The control page says the same (control/static/display-rows.js).
+export const condensedWords = 'Plays in the Condensed view';
+export const mondayPanels = ['monday-department', 'monday-charts'];
+
+export function playsCondensed(row) {
+  return (row.view || '') === 'robotics' && mondayPanels.indexOf((upgradedRow(row) || row).panel) !== -1;
 }
 
 // What a Details panel offers for a row, by its panel. Each is { kind, field, label, help }. Every field says what it does in one line.

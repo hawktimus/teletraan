@@ -29,7 +29,8 @@ import * as frame from '../frame.js';
 import { themes } from '../themes/registry.js';
 import { overlays } from '../themes/overlays/registry.js';
 import { isKnownOverlay, isKnownTheme, previewedPack, resolveTheme } from './theme.js';
-import { chooseStyle } from './style.js';
+import { layoutOf } from './layout.js';
+import { chooseStyle, layoutFor } from './style.js';
 import { heldView } from './view-apply.js';
 
 const page = document.documentElement;
@@ -71,8 +72,10 @@ function addStylesheets() {
   return Promise.race([Promise.all(loading), frame.wait(stylesheetWait)]);
 }
 
+// The layout is part of the look: a Robotics row can change the layout with no other change of the look (a wide panel after
+// a split one), and without it the look would count as the one that is on the page and the layout would never change.
 function sameLook(a, b) {
-  return a.theme === b.theme && a.overlay === b.overlay && a.style === b.style && a.view === b.view;
+  return a.theme === b.theme && a.overlay === b.overlay && a.style === b.style && a.view === b.view && a.layout === b.layout;
 }
 
 // The theme and overlay the Look document asks for now, and the style Dashboard
@@ -87,6 +90,7 @@ function wantedLook() {
     look.overlay = previewedPack() || look.overlay; // a preview wins over the address, like the style
     look.style = chooseStyle(content.settings ? content.settings.style : null, asked.style);
     look.view = heldView(); // a view change goes on at the same moment, in the same swap
+    look.layout = layoutFor(look.style, layoutOf(look.theme));
     return look;
   } catch (error) {
     console.error('Could not work out the theme', error);

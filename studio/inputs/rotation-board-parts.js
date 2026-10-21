@@ -6,7 +6,7 @@
 
 import { createElement } from 'react';
 import {
-  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isRetiredRow, isShown, loopWords, missingCharts, missingDepartments, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
+  blocksOf, condensedWords, detailsFor, detailsSummary, durationWords, hasSmallPanel, isRetiredRow, isShown, loopWords, missingCharts, missingDepartments, playsCondensed, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
 import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge, playsNowWords } from '../tools/rotation-find.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
@@ -201,7 +201,7 @@ export function dataRow(item, count, state, actions) {
         placeholderBadge(row) ? h('span', { className: 'rb-badge', 'data-placeholder': row._key }, placeholderBadge(row)) : null),
       small
         ? cell(words.small, 'small', h('select', { value: row.side || '', style: styles.select, 'aria-label': words.small, onChange: event => actions.edit(index, 'side', event.target.value) }, groupedOptions(sidePanelGroups, row.side, 'Follows the view')))
-        : h('div', { className: 'rb-cell', role: 'cell', 'data-cell': 'small' }),
+        : h('div', { className: 'rb-cell', role: 'cell', 'data-cell': 'small' }, ...(playsCondensed(row) ? [h('span', { className: 'rb-help', 'data-condensed': row._key }, condensedWords)] : [])),
       cell('Seconds', 'seconds', secondsCell(row, index, state, actions)),
       cell('Show on screen', 'shown', switchOf(row, index, state, actions)),
       cell('Details', 'details', h('button', { type: 'button', style: styles.plain, 'aria-expanded': open, onClick: () => actions.toggleOpen(row._key) }, open ? 'Close' : (summary || 'Details'))),

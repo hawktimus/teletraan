@@ -2,7 +2,7 @@
 // and give markup with every value escaped. display.js puts the markup in the page and wires the buttons. Nothing here
 // touches the page, so tests/control-display-page.test.mjs can try it with node.
 
-import { blocksOf, countWhere, missingCharts, missingDepartments, retiredCount, durationWords, isNovaRow, isShown, mondayFieldsOf, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
+import { blocksOf, condensedWords, countWhere, missingCharts, missingDepartments, retiredCount, durationWords, isNovaRow, isShown, mondayFieldsOf, playsCondensed, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
 import { thumbHtml } from './display-preview-parts.js';
 import { weekStripHtml } from './push-parts.js';
@@ -92,7 +92,8 @@ function detailsWords(row, titles) {
   const words = [];
   if (row.department && row.panel !== 'monday-department') words.push('Department: ' + row.department);
   if (row.part) words.push('Page ' + row.part);
-  if (row.side) words.push('Small panel: ' + (titles[row.side] || row.side));
+  if (playsCondensed(row)) words.push(condensedWords);
+  else if (row.side) words.push('Small panel: ' + (titles[row.side] || row.side));
   return words.join('. ');
 }
 

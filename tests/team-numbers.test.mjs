@@ -40,11 +40,11 @@ test('both panels write the numbers and the count, and neither reads the view to
   });
 });
 
-test('the stylesheet shows both numbers on the Robotics view only, in both layouts', () => {
+test('the stylesheet shows both numbers on the Robotics and Condensed views only, in both layouts', () => {
   const css = read('family-line.css');
-  assert.ok(/html\[data-view="general"\] \.banner\[data-plate="two"\] \.team-plate \{ width: 940px; \}/.test(css), 'the wide plate on the standard layout');
-  assert.ok(/html\[data-view="general"\] \.banner\[data-plate="two"\] \.team-plate \.team-both \{ display: flex; \}/.test(css), 'both numbers on the standard layout');
-  assert.ok(/html\[data-view="general"\] \.bar-column\[data-plate="two"\] \.bar-team \.team-both \{[^}]*display: flex;[^}]*flex-direction: column/.test(css), 'two lines in the side column');
+  assert.ok(/html:is\(\[data-view="general"\], \[data-view="family"\]\) \.banner\[data-plate="two"\] \.team-plate \{ width: 940px; \}/.test(css), 'the wide plate on the standard layout');
+  assert.ok(/html:is\(\[data-view="general"\], \[data-view="family"\]\) \.banner\[data-plate="two"\] \.team-plate \.team-both \{ display: flex; \}/.test(css), 'both numbers on the standard layout');
+  assert.ok(/html:is\(\[data-view="general"\], \[data-view="family"\]\) \.bar-column\[data-plate="two"\] \.bar-team \.team-both \{[^}]*display: flex;[^}]*flex-direction: column/.test(css), 'two lines in the side column');
   assert.ok(/\.bar-column \.bar-team \.team-both em \{[^}]*font: 700 30px\/24px/.test(css), 'the lines are 30px');
   assert.ok(/em \+ em \{ color: var\(--team-pink\); \}/.test(css) && /em \{[^}]*color: var\(--team-label\)/.test(css), 'the first number is in the label color and the second in the accent');
   assert.ok(/\.team-both,[^{]*\{ display: none; \}/.test(css), 'both numbers are hidden on every other view');
