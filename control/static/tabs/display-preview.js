@@ -40,6 +40,7 @@ export function startPictures(root, getPage, titlesOf) {
   const nowElement = card.querySelector('[data-large-now]');
   const kioskNote = card.querySelector('[data-kiosk-note]');
   const hereButton = card.querySelector('[data-action="preview-here"]');
+  const clearButton = card.querySelector('[data-action="clear-target"]');
   const thumbSwitch = card.querySelector('[data-thumb-switch]');
   const helpLine = card.querySelector('[data-thumb-help]');
 
@@ -55,6 +56,8 @@ export function startPictures(root, getPage, titlesOf) {
   let largeTimer = null;
   let nowTimer = null;
   let lastReport = null;
+  // A push that was chosen and not sent: { row, theme, words } draws instead of the selected row (push-lib.js, previewTarget)
+  let target = null;
 
   const free = []; // frames that were used and are waiting for another row
   const live = new Map(); // row key to its small frame
@@ -103,15 +106,16 @@ export function startPictures(root, getPage, titlesOf) {
   function syncLarge() {
     if (gone) return;
     const page = getPage();
-    const row = rowOf(selected) || page.rows[0] || null;
-    if (row && row._key !== selected) selected = row._key;
+    const row = target ? target.row : rowOf(selected) || page.rows[0] || null;
+    if (!target && row && row._key !== selected) selected = row._key;
     markSelected();
 
     const titles = titlesOf(page.choices);
     const number = row ? page.rows.indexOf(row) + 1 : 0;
-    titleLine.textContent = row ? 'Row ' + number + ': ' + (titles[row.panel] || row.panel || 'Panel not chosen') + ', view ' + row.view + '.' : 'Pick a row to see it.';
-    reasonLine.hidden = !row;
-    if (row) reasonLine.innerHTML = reasonHtml(row, page.checks[row._key]);
+    titleLine.textContent = target ? target.words : row ? 'Row ' + number + ': ' + (titles[row.panel] || row.panel || 'Panel not chosen') + ', view ' + row.view + '.' : 'Pick a row to see it.';
+    clearButton.hidden = !target;
+    reasonLine.hidden = !row || Boolean(target);
+    if (row && !target) reasonLine.innerHTML = reasonHtml(row, page.checks[row._key]);
 
     kioskNote.hidden = !kiosk;
     hereButton.hidden = !kiosk || drawHere;
@@ -131,7 +135,7 @@ export function startPictures(root, getPage, titlesOf) {
     }
     // A short wait, so that a burst of changes loads the frame once
     clearTimeout(largeTimer);
-    const address = pictureAddress(row);
+    const address = pictureAddress(row, target ? target.theme : '');
     if (address === largeAddress && largeFrame) return;
     largeTimer = setTimeout(() => { if (!gone && !paused) showLarge(address); }, 200);
   }
@@ -216,7 +220,12 @@ export function startPictures(root, getPage, titlesOf) {
   // ----- the page tells what changed -----
 
   function select(key) {
-    if (!key || key === selected || !rowOf(key)) return;
+    if (!key || !rowOf(key)) return;
+    // Picking a row of the rotation ends the preview of a push
+    if (target) {
+      target = null;
+      root.dispatchEvent(new CustomEvent('preview-target-cleared'));
+    } else if (key === selected) return;
     selected = key;
     syncLarge();
     syncThumbs();
@@ -232,6 +241,10 @@ export function startPictures(root, getPage, titlesOf) {
     if (!button) return;
     if (button.dataset.action === 'preview-here') {
       drawHere = true;
+      syncLarge();
+    } else if (button.dataset.action === 'clear-target') {
+      target = null;
+      root.dispatchEvent(new CustomEvent('preview-target-cleared'));
       syncLarge();
     } else if (button.dataset.action === 'to-preview') {
       card.scrollIntoView({ block: 'start' });
@@ -290,6 +303,11 @@ export function startPictures(root, getPage, titlesOf) {
       syncLarge();
     },
     select: select,
+    // A push to preview, or null to go back to the selected row
+    setTarget(next) {
+      target = next || null;
+      syncLarge();
+    },
     selected: () => selected,
     liveCount: () => live.size,
     destroy() {

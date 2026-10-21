@@ -110,7 +110,26 @@ The copy does not report to the control page: the dashboard reports only when it
 
 ## The Display tab
 
-Display is the Rotation board for a phone, with the theme of each weekday under it. The Studio stays the source of truth: the tab reads Dashboard Settings from Sanity every time it opens, and again with Refresh from Sanity, and it writes the same stored fields the Studio writes. The Studio Rotation board and the Look page stay fully editable, and a change in either shows in the other after a refresh.
+From the top: Now on the wall, the Preview, Temporary push, Rotation (what plays, in order) and Theme rotation (which theme plays each day). On a phone they come in that order in one column. On a wide screen the Preview stays in view beside the others. The Status tab only reads. Display is where things are pushed and edited.
+
+Now on the wall. The theme on the wall in large letters, with where it comes from (the weekday schedule or pushed by hand), the line the wall reports about itself and four theme tiles. Pick a theme to see it in the Preview, choose how long to hold it (1, 5, 15, 30 or 60 minutes, 15 to start) and press Push theme to the wall. Back to the schedule ends the pushed theme. Under that is every push that is running, each with the time left (counted from the clock of the Teletraan computer, once a second) and a Cancel button, and Reset to today's schedule, which ends all of them at once.
+
+Preview. Whatever you pick in Temporary push or Now on the wall is drawn in the large picture first, on the live content, in the theme, view and panel you picked, and the words under the picture say it is not on the wall yet. Pushing is a separate button. Pick a row in the Rotation and the picture goes back to that row (or press Preview the selected row instead). The picture is the dashboard with `?rowpreview=` and `&screen=<theme>`.
+
+Temporary push. Each push holds for the chosen minutes and then the wall returns to its schedule by itself.
+
+- View: Robotics, Prime, Nova or Condensed. Writes `showView`.
+- Panel: any panel in the list. Writes `holdPanel`. The wall shows the panel with the settings of its first row in the rotation.
+- Theme: writes `previewTheme`.
+- Announcement: text up to 90 characters, Notice or Important, Both teams or one team. It is the bar under the banner (docs/announcements.md), one published document with the id `push-notice`, replaced by each new one, starting now and ending after the hold. Cancel and Reset move its end to now.
+- Hidden transitions: Desktop reveal or Red eyes, played at once. Writes `hiddenRequest`. It has no time left, and Cancel works for 2 minutes. Allow hidden transitions must be on in Dashboard Settings.
+- Pause rotation: writes `pauseRotation`.
+
+Reset to today's schedule clears `holdPanel`, `showView`, `previewTheme`, `pauseRotation` and `hiddenRequest` and ends the announcement. The calls are `GET /control/api/push` (what is pushed, the week and the choices), `POST /control/api/push` with `{ kind, minutes, ... }` (kind is theme, view, panel, pause, hidden or announcement; hidden also takes `transition`), `POST /control/api/push/cancel` with `{ kind }` and `POST /control/api/push/reset`. They need the PIN and `SANITY_WRITE_TOKEN` like every write, and a minute count outside 1 to 60 is refused. The Status buttons keep their own ranges and still work.
+
+Rotation and Theme rotation. The rows, Quick hide, pictures, the Motion card, Save to draft and Publish to the wall are described below. Theme rotation has a strip of the week that marks today and follows the pickers before you save, a theme for each weekday, the banner title for Robotics and the seconds of each transition. The time zone is the one on the Look page and is shown, not edited, here. Save and Publish are repeated in that card and work the same way.
+
+The Rotation part is the Rotation board for a phone. The Studio stays the source of truth: the tab reads Dashboard Settings from Sanity every time it opens, and again with Refresh from Sanity, and it writes the same stored fields the Studio writes. The Studio Rotation board and the Look page stay fully editable, and a change in either shows in the other after a refresh.
 
 What it shows. Each row of the rotation list is a card with its number, its panel, a View select (Robotics, Prime or Nova), a Panel select, Seconds, and Show on screen. Rows that follow each other in one view are one group, as on the Studio board, with the time of the group. Up and Down move a row. Copy, Delete (it asks you to press again), Add a row, Undo (the last 20 changes) and Fill from the standard order (it asks you to press again) work as they do in the Studio. A Photo row has Photos and Seconds per photo. A Department tasks row has three dropdowns, Department (one of the nine), List (Open or Done) and Team (Both, Prime or Nova), and a TV charts row has Chart and Team, the same as the Details of the Studio board. Another row's Department, Page and Small panel are shown as words and kept as they are; change those in the Studio. A row of one of the eleven retired Monday panels keeps its place, plays nothing, and says Retired, use Department tasks. Under the rows, Theme of each weekday has a theme for each day, the banner title for Robotics and the transition length. Under that, a Motion card has two boxes, Motion (Full, Light or Calm) and Motion on the TV computer (Light or Full). It is a section of its own, so the rows and the theme can be saved without it.
 

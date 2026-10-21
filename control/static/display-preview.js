@@ -32,10 +32,12 @@ export function pictureRow(row) {
 }
 
 // The address of the frame, or '' when the row has no panel to draw
-export function pictureAddress(row) {
+export function pictureAddress(row, theme) {
   const picked = pictureRow(row);
   if (typeof picked.panel !== 'string' || picked.panel === '') return '';
-  return dashboardPath + '?rowpreview=' + encodeURIComponent(JSON.stringify(picked));
+  // screen= is the theme the picture is drawn in (core/still.js); without it the picture takes the theme of today
+  const screen = typeof theme === 'string' && /^[a-z]+$/.test(theme) ? '&screen=' + theme : '';
+  return dashboardPath + '?rowpreview=' + encodeURIComponent(JSON.stringify(picked)) + screen;
 }
 
 // The scale of a frame drawn at 1920 by 1080 inside a box of this width

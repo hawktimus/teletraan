@@ -108,6 +108,10 @@ The code is studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.
 These three buttons write only rotationRows to the draft, like the other buttons. The Display tab of the control page has the
 same three, kept in step by tests/control-display.test.mjs.
 
+## On the control page
+
+The Display tab of the control page has the same board under the heading Rotation (what plays, in order), with the Preview beside it and Temporary push above it (docs/control-page.md, "The Display tab"). A temporary push never changes this list.
+
 ## What it writes
 
 The board writes only the field rotationRows, to the draft of Dashboard Settings. It never publishes. A value of a row that the

@@ -1,4 +1,5 @@
-// The Display tab: the rotation rows and the theme and view settings of the wall. The Studio stays the source of truth.
+// The Display tab, top to bottom: Now on the wall with the theme picker, the large preview, Temporary push (tabs/push.js), then
+// the Rotation rows and the Theme rotation of each weekday. The Studio stays the source of truth for the rotation.
 // This reads Dashboard Settings from Sanity (through the control service), lets the team reorder and change the rows,
 // saves to the draft, and publishes with its own button. Before it saves it asks the service to compare the revision it
 // loaded with the one in Sanity, and it asks before replacing a newer Studio edit. The write key is never in the browser.
@@ -10,6 +11,8 @@ import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, extrasHtml
 import { largeHtml } from './display-preview-parts.js';
 import { patchRows } from './display-patch.js';
 import { startPictures } from './display-preview.js';
+import { startPush } from './push.js';
+import { weekStripHtml } from './push-parts.js';
 
 const undoLimit = 20;
 const checkDelay = 600;
@@ -48,15 +51,22 @@ export async function mountDisplay(container) {
   useStyles();
   container.innerHTML = '<div class="tab display-page">' +
     '<section class="card"><h2>Display</h2>' +
-    '<p class="word">The rows the wall plays, top to bottom, and the theme of each weekday. The Studio is the source of truth: this reads from it and saves to the same draft the Studio Rotation board uses.</p>' +
+    '<p class="word">Choose what the wall shows right now, what it plays in order, and which theme plays each day. The Status tab only reads. A push here is temporary: the wall returns to its schedule on its own.</p></section>' +
+    // Now on the wall, the large picture, then everything else. A phone has them in that order, and a wide page keeps the
+    // picture beside the other two (tabs.css).
+    '<div class="display-split"><div class="display-now" data-now-box></div>' + largeHtml() + '<div class="display-main">' +
+    '<div data-push-box></div>' +
+    '<section class="card"><h2>Rotation (what plays, in order)</h2>' +
+    '<p class="word">The rows the wall plays, top to bottom. The Studio is the source of truth: this reads from it and saves to the same draft the Studio Rotation board uses.</p>' +
     '<div data-source></div><div data-controls></div><p class="result" role="status" data-flash></p></section>' +
     '<div data-conflict></div>' +
     '<div data-quick-box></div>' +
-    // The large picture comes first, so a phone has it above the rows. A wide page puts it beside them (tabs.css).
-    '<div class="display-split">' + largeHtml() + '<section class="card rows-card"><h2>Rows</h2><p class="word" data-summary></p><div data-rows></div></section></div>' +
-    '<div data-add></div><div data-theme></div><div data-motion-box></div><div data-extras></div></div>';
+    '<section class="card rows-card"><h2>Rows</h2><p class="word" data-summary></p><div data-rows></div></section>' +
+    '<div data-add></div><div data-motion-box></div><div data-theme></div><div data-extras></div></div></div></div>';
   const find = name => container.querySelector('[' + name + ']');
-  const boxes = { source: find('data-source'), controls: find('data-controls'), flash: find('data-flash'), conflict: find('data-conflict'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), motion: find('data-motion-box'), extras: find('data-extras') };
+  const boxes = { nowBox: find('data-now-box'), pushBox: find('data-push-box'), conflict: find('data-conflict'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), motion: find('data-motion-box'), extras: find('data-extras') };
+  // The Save and Publish buttons and their lines are in the Rotation card and again in the Theme rotation card
+  const everyBox = name => Array.from(container.querySelectorAll('[' + name + ']'));
 
   let page = kept;
   let checkTimer = null;
@@ -64,17 +74,21 @@ export async function mountDisplay(container) {
   let armed = null;
   let gone = false;
   let pictures = null;
+  let push = null;
+  let timing = { today: '', timeZone: '' };
 
   function flash(state, words) {
-    boxes.flash.dataset.state = state;
-    boxes.flash.textContent = words;
+    everyBox('data-flash').forEach(line => {
+      line.dataset.state = state;
+      line.textContent = words;
+    });
   }
 
   function paintTop() {
     page.dirty = isDirty(page);
     page.canUndo = page.history.length > 0;
-    boxes.source.innerHTML = sourceHtml(page);
-    boxes.controls.innerHTML = controlsHtml(page);
+    everyBox('data-source').forEach(box => { box.innerHTML = sourceHtml(page); });
+    everyBox('data-controls').forEach(box => { box.innerHTML = controlsHtml(page); });
     boxes.conflict.innerHTML = conflictHtml(page.conflict);
     boxes.summary.textContent = summaryWords(page.rows, page.checks, page.pageSeconds);
   }
@@ -91,9 +105,10 @@ export async function mountDisplay(container) {
   function paintAll() {
     paintRows();
     boxes.add.innerHTML = addRowHtml(page.choices);
-    boxes.theme.innerHTML = themeHtml(page.theme, page.choices);
+    boxes.theme.innerHTML = themeHtml(page.theme, page.choices, timing);
     boxes.motion.innerHTML = motionHtml(page.motion);
     boxes.extras.innerHTML = extrasHtml(page.extras);
+    paintTop(); // the Theme rotation card has its own Save and Publish buttons
   }
 
   // The answer of the wall check goes into the cards in place, so a field being typed in is not redrawn
@@ -121,6 +136,15 @@ export async function mountDisplay(container) {
     }, checkDelay);
   }
 
+  // The strip of the week follows the pickers at once, saved or not
+  function paintStrip() {
+    const strip = container.querySelector('[data-week-strip]');
+    if (!strip) return;
+    const titles = {};
+    page.choices.themes.forEach(item => { titles[item.value] = item.title; });
+    strip.innerHTML = weekStripHtml(page.theme.themeByWeekday, timing.today, titles);
+  }
+
   function change(next, wantCheck) {
     page.history = page.history.concat([page.rows]).slice(-undoLimit);
     page.rows = next;
@@ -146,7 +170,7 @@ export async function mountDisplay(container) {
     if (gone) return false;
     if (!answer.ok) {
       flash('bad', answer.error);
-      if (!page) boxes.controls.innerHTML = '<div class="buttons"><button type="button" class="act" data-action="refresh">Refresh from Sanity</button></div>';
+      if (!page) everyBox('data-controls').forEach(box => { box.innerHTML = '<div class="buttons"><button type="button" class="act" data-action="refresh">Refresh from Sanity</button></div>'; });
       return false;
     }
     take(answer.data);
@@ -309,7 +333,10 @@ export async function mountDisplay(container) {
       return;
     }
     if (target.dataset.motionField) page.motion[target.dataset.motionField] = target.value;
-    else if (target.dataset.themeDay) page.theme.themeByWeekday[target.dataset.themeDay] = target.value;
+    else if (target.dataset.themeDay) {
+      page.theme.themeByWeekday[target.dataset.themeDay] = target.value;
+      paintStrip();
+    }
     else if ('themeTitle' in target.dataset) page.theme.generalViewTitle = target.value;
     else if ('themeTransition' in target.dataset) {
       const number = Number(target.value);
@@ -330,9 +357,26 @@ export async function mountDisplay(container) {
   }
   revTimer = setInterval(checkRev, revEvery);
 
+  if (page && !gone) {
+    push = startPush(container, { now: boxes.nowBox, push: boxes.pushBox }, {
+      choices: () => page.choices,
+      rows: () => page.rows,
+      selectedRow: () => (pictures && pictures.selected() ? page.rows.find(row => row._key === pictures.selected()) : null) || null,
+      pictures: () => pictures,
+      // Today and the time zone come with the first answer, so the strip of the week can mark today
+      onState: state => {
+        timing = { today: state.today, timeZone: state.timeZone };
+        boxes.theme.innerHTML = themeHtml(page.theme, page.choices, timing);
+        paintTop();
+      },
+    });
+    push.start();
+  }
+
   return () => {
     gone = true;
     if (pictures) pictures.destroy();
+    if (push) push.destroy();
     clearTimeout(checkTimer);
     clearInterval(revTimer);
     container.removeEventListener('click', onClick);
