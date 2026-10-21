@@ -10,7 +10,8 @@
 //       its code, when it was last downloaded, why the last download failed, how
 //       many events it has in the next 30 days, how many of those the filters
 //       hide, and the next 40 with their title, date, day and time (and their start and end moments), whether the
-//       screen shows each one, and the name of the rule that hides it
+//       screen shows each one, and the name of the rule that hides it. An event the screen does not show is
+//       listed without its title, because the dataset is public.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,6 +91,8 @@ function occurrencesOf(content, code, text, now) {
       };
       // The day the filters judge by, so a rule made on the Calendars page matches this event
       if (listing.day === '') delete listing.day;
+      // The dataset is public, so the title of an event the screen does not show is not written
+      if (!listing.shown) delete listing.title;
       return listing;
     });
 }

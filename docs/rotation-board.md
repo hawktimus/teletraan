@@ -118,6 +118,10 @@ or named as an old or internal panel with a reason (internalPanels in studio/too
 hardware test are the internal ones. The retired Monday panels are not in the registry any more. tests/rotation-panels-explained.test.mjs fails with
 the id of a panel that is none of these, so a panel cannot reach the wall without the Studio saying what it is.
 
+## Pictures of a row
+
+The Studio board shows a picture of a Monday row (the Preview button). The Display tab of the control page shows one for every row, a large one for the selected row and small ones on the rows, and they follow the settings on the page before they are saved. Both open the real dashboard with an address that holds one panel (docs/layouts.md, "Switches of the address"). How the control page keeps their cost down is in docs/control-page.md, "Pictures of a row".
+
 ## Where the code is
 
 - studio/inputs/rotation-board-view.js: the page and its actions.

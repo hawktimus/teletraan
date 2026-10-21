@@ -5,7 +5,9 @@ Two transitions sit beside the older ones (the page change, the swap and the hid
 - **Panel transition** (kind `reform`): the large panel goes to the next row of the same view. Only the main panel comes apart and goes together again.
 - **View transition** (kind `reformView`): the view changes. Every panel of the page does the same at once. The side column and the main panel swap sides on the way, the team name, the team plate, the school line and the ticker label turn over to the next team's, and the hawk turns into the other team's hawk.
 
-core/rotation.js says which kind a change is (`transitionKindFor`). core/transition-kinds.js is the list of kinds, and core/swap-run-play.js asks it at each page change of the large panel. A change of look that is not a view change (a theme, a preview, a Monday card) is still the swap. Calm motion and no motion draw a plain change, with nothing in 3D.
+core/rotation.js says which kind a change is (`transitionKindFor`). core/transition-kinds.js is the list of kinds, and core/swap-run-play.js asks it at each page change of the large panel. A change of look that is not a view change (a theme, a preview, a Monday card) is still the swap in Full motion. Calm motion and no motion draw a plain change, with nothing in 3D. Light motion has its own, simpler run of each kind (see "Full, Light and Calm" below).
+
+What each design board of docs/reference/transitions/ shows, and how the live screen compares, is in docs/transition-reference-guide.md.
 
 ## How long it takes
 
@@ -27,14 +29,14 @@ The numbers are in core/reform-plan.js (`reformTimes`) and nothing else writes t
 2. The copy covers the panel (or the whole stage, in a view transition) and the real page is out of sight. The page changes underneath, and the new content is copied the same way. This all happens before the three seconds start, in turns of a few milliseconds, so no frame is long while it is made (the screen shows the old page meanwhile, which takes about a tenth of a second for a panel and two thirds for a view). A view transition also copies the old frames, which stay until the edges that fold have covered them.
 3. The content is cut into squares: 12 by 6 on the main panel, 3 by 8 on the side column, 16 by 1 on the banner and the ticker. Each square holds the old content on its face and the new content on its back, each cut to the square's window, so text splits across squares and joins again exactly. A box that lies wholly outside a window is kept empty, with its size, so what is left lays out as it did.
 4. The grid exists only during the turn. A flat copy of the old content covers the squares until the turn starts, and a flat copy of the new content covers them from the moment the last square has seated. At rest there is one plate and no seams.
-5. Each edge is two chains of four segments, hinged at knuckle pins. The edges, the screws, latches, braces, rivets, corner gears, pistons and teeth are the kit of the theme (styles/<theme>/transitions.js, `kit`). The Original kit draws them in the metal of the team. Each theme that has its own kit draws its own pieces; one that has none plays the Original kit under its own id. They come out of the corners as the transition starts and go back into them at the end (they grow from nothing, because a group that fades is drawn into a surface of its own every frame, which the 2011 computer cannot afford). The banner and the ticker are thin strips: they keep their long edges, the screws, the latches and the rivets of the long edges, and not the pieces that sit inside a frame.
+5. Each edge is two chains of four segments, hinged at knuckle pins. The edges, the screws, latches, braces, rivets, corner gears, pistons and teeth are the kit of the theme (styles/<theme>/transitions.js, `kit`). The Original kit draws them in the metal of the team. Each theme that has its own kit draws its own pieces; one that has none plays the plain kit (core/reform-plain.js), which draws grey plates and straps and nothing else, so no theme ever shows another theme's drawing. They come out of the corners as the transition starts and go back into them at the end (they grow from nothing, because a group that fades is drawn into a surface of its own every frame, which the 2011 computer cannot afford). The banner and the ticker are thin strips: they keep their long edges, the screws, the latches and the rivets of the long edges, and not the pieces that sit inside a frame.
 6. There is one camera: `#reform` has the only perspective (1600px, origin 50% 45%). It leans in about 5 degrees down and 3 to the side while the frame is open, drifts to the other side during the turn and settles as the screws go in.
 
 Every part moves by transform or opacity, on one clock: all of them are started with the same start time, so a part that is made late starts part way through and a test that sets the time sets it everywhere. The squares are made while they are hidden and are shown shortly before the turn, a few in a frame, so that no frame has to draw them all at once. The flat copies are the only parts that fade, and each fades for a moment only.
 
 ## The Foundry kit
 
-styles/foundry/transitions.js is the Original kit with pieces added to every region, and styles/foundry/reform-kit.css draws them. The straps are blued steel with a hazard stripe, whatever the metal of the team is, and the chassis behind the squares is a steel floor with hazard stripes.
+styles/foundry/transitions.js is a kit of its own and borrows nothing from the Original one, and styles/foundry/reform-kit.css draws it. Every piece is Foundry's: hex bolts for the screws, hasps for the latches, gusset straps for the braces, steel rivets, real cogs for the gears, pistons and ratchet teeth. The straps are blued steel with a hazard stripe, whatever the metal of the team is, and the chassis behind the squares is a steel floor with hazard stripes. The squares are steel plates (`plateStops` in core/reform-plan.js): each slides out of its rack along the line it turns on, turns over while it is out and is slammed back in.
 
 - Deadbolts: three on the top edge, three on the bottom, two on each side. They pop in, are drawn back along the edge (0.10 to 0.41, the top and bottom one way and the sides the other, so the four edges turn like a pinwheel) before anything folds, wait, and are slammed home at the end (2.48 to 2.83). They are gone by 3.00.
 - Hand wheel at the top right of the region: spins open by one and a half turns (to 0.40) and shut again (2.50 to 3.00).
@@ -49,6 +51,8 @@ A thin strip (the banner and the ticker) keeps the deadbolts and the wheel and h
 In the panel transition of a kit that asks for it (`lockParts: true`, the Original kit), each square sits in a cell (`.reform-cell`) that also holds one small part: a hinge barrel on the squares of a checkerboard and a lock pin on the others. While the square turns (its `startMs` to 470 ms later, `lockMs` in core/reform-plan.js) the cell slides out from the middle of the window by up to 18 pixels and shrinks a little, so the squares part and the chassis shows in the gaps; the pin draws back and the barrel turns a full turn. Then the cell slides back past its place by 3 pixels, the pin is driven home and the cell settles. The parts end at nothing and every cell ends on its place, so the page at the end is the real page. It is transform only, about 140 more animated elements, on the same clock as everything else.
 
 The view transition and the other kits draw no cells: they lost frames in the motion tests (docs/animation-review.md). A screen whose median frame is over 26 ms, and `?reform=lite`, draw the panel transition without cells. A kit that wants cells gives `draw('pin')` and `draw('barrel')` in its own style and sets `lockParts: true`.
+
+The view transition has coarser grids than the panel (`viewGrids` in core/reform-plan.js: 8 by 4 on the main panel, 3 by 6 on the side column, 10 by 1 on the banner and the ticker), and a run may animate at most `animatedLimit` elements (400 for a panel, 500 for a view). tests/motion/reform.mjs fails above the limit.
 
 ## The hawk
 
@@ -90,6 +94,9 @@ core/reform-draw.js asks a kit for four things, and each of the last three is op
 - `hardware(item)`: the stops of a piece (a different move), or `null` to leave that piece out.
 - `squares(square, move)`: `{ transform, shade }`, the stops of a square and of its shade.
 - `extras(region, tracks, strip, behind)`: an element with parts of the kit's own for a region. A part gets its move by `tracks.add(element, 'transform', stops)`, and the stops are in milliseconds of the skeleton.
+- `light(width, height, role)`: the parts of the Light transition, described in "Full, Light and Calm" below.
+
+A kit file may not use 3D (tests/house-rules.test.mjs lists the files that may). A kit that wants a turn of squares of its own takes it from a function of core/reform-plan.js, as Foundry does with `plateStops`.
 
 ## The Retro kit
 
@@ -106,3 +113,36 @@ Retro runs on the same skeleton and the same times as Original. Only the kit dif
 The bolts, speed lines, star and sparkles are the `extras` of the large panel. The star has to lie behind the squares, so `extras` gets a fourth argument, `behind`, with the chassis element, and the star is put after it. The joints are changed in the tracks list that `extras` gets (each is changed once).
 
 The Retro panel transition has about 260 animated elements (Original about 245) and the view transition about 565 (Original about 545). The Retro page itself costs more to draw than the Original page (its background moves), so check `?perf` on the Mini.
+
+## One vocabulary for each theme
+
+A theme plays its own drawing for every transition, and no theme plays the drawing of another. The classes of a kit have its own prefix: `rk-` Original, `ck-` Cybertron, `rr-` Retro, `fk-` Foundry. The stylesheet of a theme (styles/<theme>/reform-kit.css) restyles the engine only with rules that start with `html[data-style="<theme>"]`. dashboard/reform-kit.css is the plain kit and names no theme. A theme with no kit, or one whose file cannot be loaded, plays the plain kit. tests/transition-vocabulary.test.mjs and the rules `vocabulary/...` of tests/motion/light.mjs check all of it. To give a new theme its own transitions, copy styles/foundry/transitions.js and reform-kit.css, give the classes a new prefix, and add the prefix to the tests.
+
+## Full, Light and Calm
+
+The setting Motion (Dashboard Settings, stored as `motion`) has three values. The older stored values full and calm mean what they always did.
+
+| Motion | What the screen does |
+|--------|----------------------|
+| Full | Every transition of the theme, as above. The sweeps and sprites that run on a quiet screen rest while a transition plays. |
+| Light | One simple change at each panel change and view change, a few parts, and the idle sweeps and sprites stand still. No hidden transition (the desktop reveal and the red eyes) plays. |
+| Calm | A fade. As before. |
+
+**Light.** core/reform-light.js draws two plates that close over each region from its two sides, changes the page under them and opens them again, in 0.84 seconds at normal speed (420 ms each way, `lightTimes` in core/reform-plan.js, never longer than a Full run of the shortest length). A panel change covers the large panel only. A view change covers the banner, the side column, the main panel and the ticker, each with its own two plates, and the stage is out of sight while the page changes under them. Nothing is copied or cut into squares, no layer is bigger than its region, and at most 40 elements move (a panel 5 to 7, a view 20 to 28). The theme says what the plates and the few parts on them look like: `light(width, height, role)` in the kit gives a list of `{ cls, markup, x, y, w, h, close, open }`, the box of each part in its region and the keyframes it plays while the plates close and while they open (transform and opacity only), and the stylesheet of the theme draws the plates (`.reform-light-plate`).
+
+| Theme | Plates | Parts |
+|-------|--------|-------|
+| Original | Gold plates in the metal of the team | Four screws that turn in at the corners, a lock pin across the seam |
+| Cybertron | Gunmetal with a neon edge | A neon line down the seam, two power cores, a scan bar on the large panel |
+| Retro | Pop color with ink lines and dots | A spiky star where they meet, two speed lines |
+| Foundry | Steel doors with hazard stripes | Two deadbolts across the seam, two cogs |
+
+In Light there is no swap either: a theme that goes on, a preview or a Monday card changes under the plates of the view transition (`kindToPlay` in core/reform-plan.js, `light`). The slow screen guard (`screenIsSlow`) and `?reform=off` still give the plain change.
+
+**Where the setting is.** Studio, Look, Motion has Motion and Motion on the TV computer. The control page, Display tab, has the same two boxes in a Motion card, and writes the same stored fields to the draft (`motion` and `motionOnKiosk`). The address can say it for one page: `?motion=full`, `?motion=light`, `?motion=calm` or `?motion=none`, and the address wins over everything.
+
+**The Teletraan computer plays Light.** When Motion is Full, the TV computer plays Light unless Motion on the TV computer (`motionOnKiosk`, starting value light) says Full. The page knows it is the TV computer because the kiosk script writes `data/live/device.json` on that computer and nowhere else, and the page reads it once when it starts (`readKiosk` in core/motion.js). A laptop has no such file and plays what Motion says. To try Full on a spare computer, add `?motion=full` to the address of its kiosk, or set Motion on the TV computer to Full while you test and back after. A laptop that opens the address of the TV computer in a browser also finds the file and plays Light, and `?motion=full` on that address plays Full.
+
+**Full gives itself up.** A Full run counts its frames. When two transitions in a row miss the budget (more than a fifth of the frames over 34 ms, or one over 200 ms), the screen writes one line in the console and plays Light until the page is loaded again (`noteRun` in core/motion.js).
+
+The page carries `data-weight="light"` while Light is on (in Full, a screen that gave up has it too) and `data-moving` while any transition holds the screen. frame.css, base.css, neon-kit.css and seasons/motion.css use them: the three glint sweeps, the subtheme sprites, the seasonal pieces, the backgrounds, the gears and the pistons of a theme rest while `data-moving` is on and are drawn still in Light.

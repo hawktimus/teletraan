@@ -13,8 +13,9 @@ import { viewNameOf, viewShowsTag, viewTitleOf } from './core/views.js';
 import { updatePanel } from './core/panels.js';
 import { runAnnouncement, takeoverRunning } from './core/takeover.js';
 import { startHeartbeat } from './core/heartbeat.js';
+import { noteReload } from './core/page-loads.js';
 import { getContent, mergedEvents, rebuild, redrawWhatStays, useLayout } from './shell-content.js';
-import { params, screen, extras, shellState } from './shell-state.js';
+import { params, rowPreview, screen, extras, shellState } from './shell-state.js';
 
 // Weather and calendar events. Each is loaded on its own, so one failing
 // leaves the other working. The first events are worth a short wait, so the
@@ -71,7 +72,7 @@ export async function startExtras() {
   }, 60 * 1000);
 
   watchVersion();
-  startHeartbeat();
+  if (!rowPreview) startHeartbeat(); // the watchdog reads the page of the wall, never a preview
   await Promise.race([Promise.all(ready), frame.wait(3000)]);
 }
 
@@ -245,6 +246,7 @@ function watchVersion() {
       } else if (version !== known && !takeoverRunning()) {
         // Not in the middle of an announcement or alert, because the new page
         // would not bring it back. The next check in a minute tries again.
+        noteReload('a new version was installed');
         window.location.reload();
       }
     } catch (error) {
@@ -321,5 +323,8 @@ export function showFatal(error) {
   message.textContent = 'Teletraan I could not start. Trying again in 30 seconds.';
   screen.appendChild(message);
 
-  setTimeout(() => window.location.reload(), 30000);
+  setTimeout(() => {
+    noteReload('the page could not start');
+    window.location.reload();
+  }, 30000);
 }

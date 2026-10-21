@@ -158,6 +158,16 @@ test('the right side has the facts, and each event with its date, time, title, S
   assert.deepEqual(detail.events.map(event => event.hidden), [false, true, true]);
 });
 
+test('a hidden event written without its title is named Hidden event, and a shown one with no title is still No title', () => {
+  const written = { calendars: [{ code: 'team', eventCount: 2, hiddenCount: 1, occurrences: [
+    { _key: 'o1', date: 'MON OCT 12', time: '6:00 PM', shown: false, rule: 'Hide Private' },
+    { _key: 'o2', date: 'TUE OCT 13', time: '6:00 PM', title: '', shown: true, rule: '' },
+  ] }] };
+  const rows = parts.rowsOf(entries, written, now);
+  const detail = parts.detailOf(rowFor(rows, 'team'), written, now);
+  assert.deepEqual(detail.events.map(event => event.title), ['Hidden event', 'No title']);
+});
+
 test('the right side says why there is nothing to list: nothing yet, no events, or events the Teletraan computer did not list', () => {
   const rows = parts.rowsOf(entries, status, now);
 

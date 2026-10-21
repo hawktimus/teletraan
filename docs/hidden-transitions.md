@@ -105,7 +105,7 @@ under Messages, as Last hidden transition (docs/control-page.md). The lines of a
   or `failed: <message>`.
 
 A request that did not play replaces the log with the reason: `request older than 5 min` (and what
-held it), `Allow hidden transitions is off`, `motion is calm or none, not full`, or `the areas did not
+held it), `Allow hidden transitions is off`, `motion is light, calm or none, not full`, or `the areas did not
 come to rest within 3 s`. A push that waited for an alert, a talk, a demo, night mode or another
 transition and then ran out of time says which one held it.
 
@@ -580,3 +580,6 @@ chance setting.
   `desktopChance`, `redEyesChance` and `hiddenRequest` in `defaultSettings` in
   `dashboard/config.js`. The hours start at 0 there, which means not set, and at 60 in
   the Studio. `hiddenGapHours` is the 4 hour gap.
+
+
+Light motion (docs/transitions.md, "Full, Light and Calm") plays no hidden transition, not even one pushed from the Studio. The runner records `motion is light, calm or none, not full` in the log.

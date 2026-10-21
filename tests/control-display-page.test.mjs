@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { addRowHtml, conflictHtml, controlsHtml, extrasHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
+import { addRowHtml, conflictHtml, controlsHtml, extrasHtml, motionHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
 import { withKeys } from '../control/static/display-rows.js';
 import { repo } from './helpers/control-world.mjs';
 
@@ -122,6 +122,15 @@ check('the theme settings have a select for each weekday, the banner title and t
   assert.ok(html.includes('<option value="cybertron" selected>Cybertron</option>'));
   assert.ok(html.includes('maxlength="28"') && html.includes('value="HAWKTIMUS ROBOTICS"'));
   assert.ok(html.includes('min="2" max="4"'));
+});
+
+check('the motion card has a box for Motion and one for Motion on the TV computer, with the stored values selected', () => {
+  const html = motionHtml({ motion: 'light', motionOnKiosk: 'full' });
+  assert.ok(html.includes('data-motion-field="motion"') && html.includes('data-motion-field="motionOnKiosk"'));
+  assert.ok(html.includes('<option value="light" selected>Light</option>') && html.includes('<option value="full" selected>Full</option>'));
+  assert.equal((html.match(/<option/g) || []).length, 5);
+  assert.ok(html.includes('?motion=full'), 'it says how to try Full on one computer');
+  assert.ok(motionHtml({ motion: '<b>', motionOnKiosk: 'light' }).indexOf('<b>') === -1);
 });
 
 check('the add row card and the competition card say where the data is from', () => {

@@ -620,7 +620,7 @@ function match13Data() {
 test('the Match13 cards follow the phase rule in Before and after: preview and recap days only, and the same as before in Auto', () => {
   match13.setMatch13(match13Data());
   try {
-    const content = contentWith();
+    const content = contentWith(raw => { raw.settings.competitionQualify = true; }); // Chances starts off, so these days switch it on
     ['2027-03-02', '2027-03-10'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-forecast'), 'forecast in the preview ' + day));
     ['2027-03-15', '2027-03-20'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-qualify'), 'qualify in the recap ' + day));
     ['2027-03-11', '2027-03-12', '2027-03-13', '2027-02-10'].forEach(day => {
@@ -909,6 +909,41 @@ test('markup has no text of its own size, a chart for each page at 1096 by 512, 
     assert.ok(html.includes('<div class="window"><div data-scroll-list>'), name);
     assert.ok(html.includes('class="page competition competition-' + name + '" data-scroll-page="1"'), name);
   });
+});
+
+test('Championship chances is off to start with: not due in any mode, kept on when a document says on, and still in Preview competition', () => {
+  match13.setMatch13(match13Data());
+  try {
+    const recapDay = noon('2027-03-15');
+    const plan = content => competition.competitionPlan(content, recapDay).cards;
+
+    // the sample, a document with no stored switch and a document with an odd value all start with it off
+    [contentWith(), contentWith(raw => { delete raw.settings.competitionQualify; }), contentWith(raw => { raw.settings.competitionQualify = 'yes'; })].forEach((content, index) => {
+      assert.equal(content.settings.competitionQualify, false, 'content ' + index);
+      assert.equal(plan(content).includes('competition-qualify'), false, 'not due in Before and after, content ' + index);
+      assert.equal(plan(content).includes('competition-forecast') || plan(content).includes('competition-recap'), true, 'the other cards still come, content ' + index);
+    });
+    ['always', 'auto'].forEach(mode => {
+      const content = contentWith(raw => { raw.settings.competitionMode = mode; delete raw.settings.competitionQualify; });
+      assert.equal(competition.competitionPlan(content, noon('2027-03-12')).cards.includes('competition-qualify'), false, 'not due in ' + mode);
+    });
+
+    // a stored switch is kept: a document that says on still shows it, and a coach can switch it back off
+    assert.equal(plan(contentWith(raw => { raw.settings.competitionQualify = true; })).includes('competition-qualify'), true);
+    assert.equal(plan(contentWith(raw => { raw.settings.competitionQualify = false; })).includes('competition-qualify'), false);
+
+    // Preview competition lists every card, this one included, whatever the switch says
+    const content = contentWith(raw => { delete raw.frc; delete raw.settings.competitionQualify; });
+    const start = noon('2026-10-09');
+    competition.previewCompetition(contentWith().frc, start.getTime() + config.competitionPreviewSeconds * 1000);
+    try {
+      assert.ok(competition.withCompetition([{ panel: 'tasks', show: true }], content, start).some(step => step.panel === 'competition-qualify'), 'the preview shows Chances');
+    } finally {
+      competition.previewCompetition(null, 0);
+    }
+  } finally {
+    match13.setMatch13(null);
+  }
 });
 
 test('Preview competition shows the three newer cards after the others, on the sample, each for its share of the time', () => {

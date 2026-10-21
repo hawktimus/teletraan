@@ -3,7 +3,8 @@
 // fail is wrapped so the screen carries on with what it has.
 //
 // Switches you can add to the address, for example index.html?motion=calm
-//   motion=full|calm|none             how much things move
+//   motion=full|light|calm|none       how much things move. The Teletraan computer plays light when the setting says full; add
+//                                     motion=full to the address of one computer to play full there (core/motion.js)
 //   speed=very-slow|slow|normal|fast  how fast things move and how long panels stay
 //   style=original|cybertron|minimal  the style of the whole screen (Style in Dashboard Settings), for this page only. minimal
 //                                     has the bar layout (core/layout.js) whatever the theme says, and the other two keep the
@@ -32,11 +33,14 @@
 //   seasonover=on|off                 show or hide the seasonal pieces over the panels, whatever the Look page says
 //   hidden=desktop|redEyes|off        play that hidden transition at the next page change of the large panel, or never play any
 //   debug                             show the build in the bottom left corner, at 20 px (core/build-stamp.js)
-//   kit=off                           switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
+//   rowpreview=<row as JSON>          draw and hold one row of the rotation list, read only, for the control page (core/row-preview.js)
+//   kit=off                          switch the neon kit (Neon Prime's moving neon, docs/layouts.md) off, to see what it costs
 
+import './core/row-preview-guard.js'; // first, so a row preview is read only before anything else runs
 import * as frame from './frame.js';
 import { panels } from './registry.js';
 import { defaultSettings, metals } from './config.js';
+import { motionOf, readKiosk, useKiosk } from './core/motion.js';
 import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { askForSample } from './core/source.js';
 import { makeSilverGradients } from './core/plate.js';
@@ -54,9 +58,11 @@ import { startTakeovers, takeoverRunning } from './core/takeover.js';
 import { getContent, holdSavedScreen, rebuild, resumeSavedPreview, setBase, startWhatComesAndGoes, startWhatStays, useLogoSettings, useLookSetting, useTrim } from './shell-content.js';
 import { fitToScreen, showDecorations, showFatal, startDemo, startExtras, startOptional, startPerf, waitForFonts } from './shell-extras.js';
 import { params, stillAsk, competitionAsk, stress, onlyTasks, shellState } from './shell-state.js';
+import { recordPageLoad } from './core/page-loads.js';
 import './core/test-hook.js'; // does nothing without ?sample=1&clock=fixed
 
 window.teletraanStarted = true; // index.html reloads the page if this never happens
+recordPageLoad();
 
 // The frames follow the trim of the team on the page, and then the banner, the sidebar and the events follow its name
 onTeamChange(useTrim);
@@ -103,7 +109,14 @@ async function run() {
   if (metals.includes(metal)) document.documentElement.dataset.metal = metal;
 
   try {
-    frame.start({ motion: params.get('motion') || 'full', speed: params.get('speed') || 'normal', draw: params.get('draw'), still: Boolean(stillAsk && stillAsk.still) });
+    frame.start({ motion: motionOf(params, defaultSettings), speed: params.get('speed') || 'normal', draw: params.get('draw'), still: Boolean(stillAsk && stillAsk.still) });
+
+    // The Teletraan computer is told apart from a laptop by its device.json, and plays Light until it is told otherwise
+    readKiosk().then(yes => {
+      if (!yes) return;
+      useKiosk(true);
+      frame.setMotion(motionOf(params, shellState.content ? shellState.content.settings : defaultSettings));
+    });
 
     // A font problem should not stop the screen, so only wait a few seconds
     await Promise.race([waitForFonts(), frame.wait(4000)]);

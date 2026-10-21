@@ -29,6 +29,7 @@ test('there is a card for each competition card of the registry, and only compet
     assert.ok(card.shows && card.when, card.id + ' says what it shows and when it appears');
     assert.ok(/2 days|season|started|Before|Once/.test(card.when), card.id + ' says when in words');
   });
+  assert.match(auto.autoCards.filter(card => card.id === 'competition-qualify')[0].when, /^Off until its switch is turned on/, 'Chances says it is off until it is switched on');
   assert.match(auto.autoCards.filter(card => card.id === 'competition-results')[0].title, /Match Statistics/, 'the strip is named the way the team calls it');
 });
 

@@ -167,7 +167,8 @@ export function controlFor(code, event, marks) {
   const matching = marks.rules.filter(rule => isActive(rule, marks.now) && ruleMatchesEvent(rule, code, item));
 
   if (listed) {
-    const own = matching.filter(rule => rule.name === listedName)[0];
+    // A hidden event is listed without its title, so a rule made here is found by the name the list gives, not by its words
+    const own = marks.rules.filter(rule => isActive(rule, marks.now) && rule.name === listedName)[0];
     return own ? { state: 'made', rule: own } : { state: 'other', name: listedName || 'a rule with no name' };
   }
   if (matching.length > 0) return { state: 'made', rule: matching[0] };

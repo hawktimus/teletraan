@@ -3,8 +3,10 @@ Description=Restart the Teletraan I screen at night, and reboot the Teletraan co
 
 [Service]
 Type=oneshot
-# Runs as root, because restarting the screen and rebooting need it. The script
-# decides from the clock which of the two to do, and skips both when a
-# presentation is booked within the hour (nightly.sh).
+# ACCOUNT is replaced by install-nightly.sh and install.sh with the account that owns the repository. The script
+# decides from the clock which of the two to do, and skips both when a presentation is booked within the hour
+# (nightly.sh). The restart and the reboot go through sudo, which computer/sudoers/teletraan-control allows for those
+# two commands only. Do not add NoNewPrivileges here: sudo would stop working.
+User=ACCOUNT
 ExecStart=/opt/teletraan/computer/scripts/nightly.sh
 TimeoutStartSec=2min

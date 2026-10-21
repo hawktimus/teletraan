@@ -122,7 +122,7 @@ export const lookSwaps = ['assemble', 'slats', 'cut'];
 //           is not at the school during a competition, so the match by match cards are not used in this mode
 export const competitionModes = ['auto', 'always', 'off', 'around'];
 
-// The switches of the cards, one for each card in core/competition.js, in the order of the Studio. All start on.
+// The switches of the cards, one for each card in core/competition.js, in the order of the Studio. All start on except competitionQualify (Championship chances).
 export const competitionSwitches = [
   'competitionTimeline',
   'competitionLastSeason',
@@ -369,3 +369,8 @@ export const familyPanels = ['monday-charts'];
 // always been, the light band that crosses each frame. The other four are drawn behind the panels (core/theme-bg.js, and
 // styles/original/theme.css). The other themes draw their own background and ignore the setting.
 export const backgrounds = ['sweep', 'blueprint', 'rays', 'spotlight', 'embers'];
+
+// The Motion setting (Dashboard Settings, field motion): full plays every transition, light plays one simple change at each
+// panel and view change, calm only fades. motionOnKiosk is what the TV computer plays when motion is full (core/motion.js).
+export const motions = ['full', 'light', 'calm'];
+export const kioskMotions = ['light', 'full'];

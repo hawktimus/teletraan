@@ -148,15 +148,12 @@ test('when sudo refuses, the answer says failed with the reason and the log keep
   }
 });
 
-test('the sudoers file allows exactly the commands the helper runs, by the same full paths', () => {
+test('the sudoers file names the commands the helper runs, by the same full paths (tests/sudoers.test.mjs checks the rest)', () => {
   const sudoers = fs.readFileSync(path.join(repo, 'computer/sudoers/teletraan-control'), 'utf8');
-  const rule = sudoers.split('\n').find(line => line.includes('NOPASSWD:'));
-  const allowed = rule.split('NOPASSWD:')[1].split(',').map(item => item.trim());
   const text = fs.readFileSync(script, 'utf8');
   assert.ok(text.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl') && text.includes('TELETRAAN_DOCKER:-/usr/bin/docker'));
-  ['/usr/bin/systemctl restart teletraan-*', '/usr/bin/systemctl start teletraan-*.service', '/usr/bin/systemctl reboot', '/usr/bin/docker restart teletraan-web'].forEach(item => assert.ok(allowed.includes(item), item));
-  assert.ok(allowed.every(item => /^\/(usr\/)?s?bin\//.test(item)), 'only full paths');
-  assert.ok(!allowed.some(item => /\bALL\b|\*\s*$/.test(item) && !/teletraan-\*/.test(item)), 'no open wildcard');
+  ['/usr/bin/systemctl restart teletraan-kiosk.service', '/usr/bin/systemctl start teletraan-calendars.service', '/usr/bin/systemctl restart teletraan-monday.timer', '/usr/bin/systemctl reboot', '/usr/bin/docker restart teletraan-web'].forEach(item => assert.ok(sudoers.includes(item), item));
+  assert.ok(!sudoers.split('\n').some(line => !line.trim().startsWith('#') && line.includes('*')), 'no wildcard');
 });
 
 test('write-env replaces local.env with mode 600 and keeps the old one, and refuses text that is not an env file', () => {

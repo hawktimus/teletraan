@@ -135,13 +135,16 @@ these on the Teletraan computer and open the page again:
 
 The dataset is public. The TV reads it without a login, and so can anyone who
 knows the project ID. The document `calendar-status` holds the titles, dates
-and times of the next 40 events of every calendar, and that includes the events that
-a Calendar filter hides from the TV. Anyone who asks the dataset for it can read
-them. It holds no calendar address, no token and no event location. Do not put anything in the title
-of a BAND event that must stay private.
+and times of the next 40 events of every calendar that the TV shows. Anyone who asks the dataset for it can read
+them. An event that a Calendar filter hides from the TV is listed with its date, its time and the name of the
+rule, but without its title, and each calendar has a count of its hidden events. It holds no calendar address, no token and no event
+location. The page shows a hidden event as Hidden event. Its switch is off, because a rule needs the title to
+match it: change or remove the rule under Calendar filters instead. Do not put anything in the title of a BAND
+event that must stay private, because the TV shows it until a rule hides it.
 
-A one event rule holds the title and the start of its event, and it is in the same
-public dataset.
+A rule typed under Calendar filters is a document in the same public dataset, and so is its name. A one event
+rule holds the title and the start of its event. Name a rule for the reason, not for the private title, and
+delete one event rules once the event is over.
 
 The document is kept below 90000 bytes. If the titles are so long that 40 events
 of each calendar do not fit, the Teletraan computer lists fewer events of each calendar, and the

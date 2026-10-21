@@ -1,5 +1,7 @@
 # Review of the transitions
 
+This review was written before Light motion and before each theme got its own kit of every piece. docs/transition-reference-guide.md says what the design boards show and how the themes were mixed, docs/transitions.md has Full, Light and Calm, and docs/performance.md has the measurements after them. The budget of this page still holds for Full.
+
 Goal of the owner: the screen should look like one machine that takes itself apart and builds itself again, with hundreds of parts that slide, turn, fold and lock in order, and not like a picture that changes shape. This page says what the transitions do now, what was measured, where they fall short, what was built and what is only proposed.
 
 ## What happens today

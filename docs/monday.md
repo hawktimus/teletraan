@@ -100,7 +100,7 @@ what is done in each department. It is read only. To change a task, change it in
 - A tile for each of the nine departments says how many tasks are to do and how many are done. A department with
   nothing in it is greyed and says so, and is not hidden.
 - Below, each department has a table of the To Do and In Progress tasks and a table of the Done tasks, with the
-  five columns of the TV: Status, Project, Contact, Priority and Estimated Completion Date. A table stops at the 20
+  five columns of the TV: Status, Project, Contact, Priority and Estimated Completion Date (the TV says DUE DATE, and DUE in the narrow layout). A table stops at the 20
   rows the TV holds and says how many more are in Monday. A phone shows each row as a small card.
 - What the TV shows draws the first page (four rows) of one Department tasks row. Pick the Department, the List and
   the Team, as in a Rotation row. It says when the TV would leave the row out.
@@ -119,11 +119,16 @@ Daily read limit reached. Reads start again at midnight.
 
 ## What it writes
 
-- One task document for each task, with the id `task-monday-<item number>`. A task whose item is gone is
-  deleted, but only after both boards were read to the end.
+- One task document for each task that shows on the TV, with the id `task-monday-<item number>`. A task whose
+  item is gone is deleted, but only after both boards were read to the end.
+- A task whose Show on TV? column says Hide is not written. The dataset is public, and anyone who asks it can
+  read a task, so a hidden task keeps its title in Monday only. If an earlier run wrote it, the next run
+  deletes it, with its draft. The Monday page says how many tasks say Hide (`hiddenCount` in
+  `monday-status`) and nothing more. The Show on TV switch in Studio is different: a task switched off there
+  stays in the dataset with its title, because the switch has to find it to turn it on again.
 - The document `monday-status`: when it last read (`lastSyncAt`), the last problem in plain words
   (`lastError`), the reads of the day (`callsToday`), what it read from each board (`readings`), and the
-  open and done tasks of each department (`departments`).
+  open and done tasks of each department (`departments`) and how many tasks say Hide (`hiddenCount`).
 
 ## If nothing shows up
 

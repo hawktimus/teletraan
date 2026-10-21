@@ -139,7 +139,7 @@ async function retryMissingPictures() {
 // What the screen is doing, as core/hidden.js wants it
 function screenState() {
   return {
-    motion: frame.motionNow(),
+    motion: frame.motionNow() === 'full' && frame.weightNow() === 'light' ? 'light' : frame.motionNow(), // a hidden transition is not played in Light
     takeover: takeoverRunning(),
     demo: hiddenState.demoRunning(),
     night: hiddenState.nightIsUp(),
@@ -176,7 +176,7 @@ function busyWords() {
   return 'another transition was running';
 }
 
-const ignoredWords = { off: 'Allow hidden transitions is off (hiddenEnabled)', motion: 'motion is calm or none, not full' };
+const ignoredWords = { off: 'Allow hidden transitions is off (hiddenEnabled)', motion: 'motion is light, calm or none, not full' };
 const logged = new Set(); // the requests already written to the log as ignored
 
 function logIgnoredOnce(key, kind, words) {
@@ -251,9 +251,14 @@ function look(now) {
   if (left > hiddenAdvanceSeconds) moveOn(['grid1']);
 }
 
+// Light motion, calm and none play no hidden transition
+function notFull() {
+  return frame.motionNow() !== 'full' || frame.weightNow() === 'light';
+}
+
 // True when something else needs the screen, or the motion is no longer full
 function interrupted() {
-  return takeoverRunning() || hiddenState.demoRunning() || hiddenState.nightIsUp() || frame.motionNow() !== 'full';
+  return takeoverRunning() || hiddenState.demoRunning() || hiddenState.nightIsUp() || notFull();
 }
 
 // Waits this many seconds (at normal speed), and throws Stopped if the screen is

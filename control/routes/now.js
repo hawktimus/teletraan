@@ -32,7 +32,12 @@ export function register(router, ctx) {
   mount(router, ctx, 'POST', '/now', async (req, res) => {
     if (!fromLocalhost(req)) throw new Refusal(403, 'Only the Teletraan computer reports what is on the wall.');
     const body = await readJson(req, 8 * 1024);
+    const before = report;
     report = cleanReport(body, new Date());
+    // One line in the control log for each page load, so the Log tab shows when the wall reloaded and why
+    if (report.loadAt !== '' && (!before || before.loadAt !== report.loadAt) && typeof ctx.log === 'function') {
+      ctx.log('wall page load at ' + report.loadAt + ': ' + report.loadReason + ' (' + report.loads + ' in 24 hours)');
+    }
     // The time is the Teletraan computer's own, so a wrong clock on the page cannot make a report look fresh
     received = new Date();
     send(res, 200, { ok: true });

@@ -55,6 +55,36 @@ The browser cases are in `tests/reliability.test.mjs` (37 cases, skipped when Pl
 - The watchdog could hold every restart off. A restart stamped after the current time (the Mini boots with a wrong clock, then sets it back) made "restarted a moment ago" true until the clock caught up. Such stamps are dropped (`computer/scripts/watchdog.sh`, test in `tests/watchdog.test.mjs`).
 - `pull.sh` could run a merge on a full disk, which stops half way and leaves a mix of old and new files. It stops below 200 MB free and says why (`tests/pull.test.mjs`).
 
+## A white flash on the TV
+
+The owner sees the wall flash white for a split second, now and then, with no animation to blame. Each cause was checked in the code. The page itself was also played in a real browser (Playwright, sample content, a screencast of every painted frame at the size of the window, frames counted when over half of their pixels are near white): 150 seconds of steady running, 90 seconds each with the desktop reveal and the red eyes forced, and six page loads, with no white frame and no page load during the run. That says the dashboard does not paint white by itself in that browser. It does not say what the 2011 graphics chip does, which could not be tried here.
+
+| Candidate | Verdict |
+|-----------|---------|
+| Page reload from the version check (`shell-extras.js`) | Only when `version.txt` changes to another non-empty text, which is a deploy. An error answer, an empty file and a failed fetch do nothing (tested in `tests/flash.test.mjs`). Not a random cause. |
+| Reload when the page could not start (`index.html`, 25 seconds; `showFatal`, 30 seconds) | Only after a start that failed. On a slow computer a start over 25 seconds would trigger it, once, at boot. |
+| Reload for a layout change (`layout-apply.js`) | Only when changing the layout live threw an error, and once per layout. |
+| Meta refresh, service worker, cache API, navigation by script | None exist (tested). |
+| Watchdog (`watchdog.sh`), nightly restart, `restart-kiosk` from the control page or an install | Restart the browser: the screen goes black and then draws again, at most once in 10 minutes for the watchdog, at 04:00 for the nightly job. They are logged (`journalctl -u teletraan-watchdog`). Cannot be "frequent and random" unless the log says so. |
+| `device.json` every 60 s | Writes a file and runs `hostname`, `ip` and `tailscale`. No `xrandr` and no browser contact. Not a cause. `xrandr` runs once, at the start (`display.sh`). |
+| Live preview of the control page (`mirror.py`) | Likely cause while someone has the preview open. It took a PNG with `Page.captureScreenshot` (with a clip and a scale) at the start and every 30 seconds, and fell back to a screenshot 4 times a second. A screenshot makes the browser draw the page again. Fixed: with a screencast that works there is no screenshot at all, the fallback is 1 a second, and the probe runs only in the fallback. It runs only while the preview tab is open: the control page renews a watch file every 30 seconds and the script stops 120 seconds after the last renewal (30 minutes at most). Nothing starts it without a person. |
+| Page paint: no background before the stylesheets | The 35 stylesheets block the first paint, so no white was seen in the tests. But `index.html` swapped the `href` of every stylesheet to the build number after the page began, and a changed `href` takes the old style off until the new file loads. Fixed: a copy is added and the old sheet goes when the copy has loaded. A dark `color-scheme` and an inline `html, body` background in the head cover any moment with no style. |
+| Hidden transitions, subthemes, announcements, night mode, stale chip, fonts | Played in the browser run above with no white frame. Fonts use `font-display: block`, so text is held back, not drawn in a white fallback. |
+| Chromium and the graphics chip (`kiosk.sh`) | Not provable here, and the most likely cause of a short random white flash left. `--ignore-gpu-blocklist --enable-gpu-rasterization` force the 2011 chip to draw although the browser lists it as unreliable. When the graphics process dies the browser starts it again, and the window is white until it has redrawn. |
+
+### Page loads recorded
+
+The page writes down each load and why (`dashboard/core/page-loads.js`): in localStorage (the last 100) and in the report to the control page every 10 seconds. The Log tab of the control page starts with `Page loads in the last 24 hours: n, last reason: ...`, and the control log has a line `wall page load at ...` for each one. Reasons: `a new version was installed`, `the page could not start`, `the layout changed and could not be changed live`, `the browser started or opened the page` (also after a restart of the screen) and `reloaded from outside the page (no reason was written down)`. The next time the TV flashes: if the count did not go up, the page did not reload and the cause is the browser or the graphics.
+
+### Checklist on the Teletraan computer
+
+1. Note the time of the next flash. Open the Log tab of the control page: did the page load count go up, and does the control log have a `wall page load` line at that time?
+2. Was the Live preview open on a phone or laptop at that time? Close the tab and watch for an hour.
+3. `journalctl -u teletraan-kiosk --since "1 hour ago" | grep -i "gpu\|exited\|crash\|lost"`. A line such as `GPU process exited unexpectedly` is the browser starting its graphics again (the kiosk script now sends the browser's errors to the journal).
+4. `journalctl -u teletraan-watchdog --since today` and `journalctl -u teletraan-nightly --since today`: any restart at that time?
+5. If step 3 found graphics lines: add `KIOSK_GRAPHICS=plain` to `local.env`, restart the screen, and watch a day. If the flash goes on, `KIOSK_GRAPHICS=software` (the processor draws everything, so check `?perf` for late frames). Remove the line to go back.
+6. `dmesg | grep -i "i915\|drm\|gpu"` for resets of the graphics driver at the time of the flash. A TV that loses its signal for a moment (cable, HDMI handshake, TV input switching) looks the same as a flash: try another cable or port.
+
 ## What remains
 
 - With no saved copy and no Sanity at the very first start the placeholder panels (Robot Status, 3D View) show with empty bodies until the first read. They are marked placeholders and belong to the panel lane.

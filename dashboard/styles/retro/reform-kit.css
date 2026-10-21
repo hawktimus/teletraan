@@ -72,6 +72,20 @@ html[data-style="retro"] .rr-part > svg {
   height: 100%;
   overflow: visible;
 }
+/* the Light panels: pop colored with an ink line and a sheet of dots, and a star and speed lines that sit on them */
+html[data-style="retro"] .reform-light-plate {
+  background-color: var(--retro-pop);
+  background-image: radial-gradient(circle at 10px 10px, var(--retro-ink) 0 3px, transparent 3.5px);
+  background-size: 20px 20px;
+  box-shadow: inset 0 0 0 6px var(--retro-ink);
+}
+html[data-style="retro"] .rr-light-star { transform-origin: 50% 50%; }
+html[data-style="retro"] .rr-light-speed {
+  box-sizing: border-box;
+  background: var(--retro-paper);
+  border: 3px solid var(--retro-ink);
+  border-radius: 6px;
+}
 html[data-style="retro"] .rr-speed {
   box-sizing: border-box;
   background: var(--retro-paper);

@@ -195,7 +195,7 @@ test('the cards are due only when Match13 has something, and Preview competition
   assert.equal(card('competition-qualify').setting, 'competitionQualify');
   assert.ok(config.competitionSwitches.includes('competitionForecast') && config.competitionSwitches.includes('competitionQualify'));
   assert.equal(config.defaultSettings.competitionForecast, true);
-  assert.equal(config.defaultSettings.competitionQualify, true);
+  assert.equal(config.defaultSettings.competitionQualify, false, 'Chances is off until a coach switches it on');
 
   match13.setMatch13(null, null);
   assert.equal(card('competition-forecast').data(), false);

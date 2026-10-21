@@ -181,9 +181,31 @@ function extras(region, tracks, strip, behind) {
   return region.role === 'main' ? mainParts(region, tracks, behind.chassis) : null;
 }
 
+// The Light transition (core/reform-light.js): two comic panels with a thick ink line slam shut over the region, a spiky star
+// flashes where they meet, and two speed lines streak in from the sides. A part is { cls, markup, x, y, w, h, close, open }.
+function light(width, height) {
+  const size = Math.round(Math.min(width, height) * 0.8);
+  const list = [{
+    cls: 'rr-light-star', markup: starMarkup(), x: Math.round(width / 2 - size / 2), y: Math.round(height / 2 - size / 2), w: size, h: size,
+    close: [{ transform: 'scale(0) rotate(0deg)' }, { transform: 'scale(0) rotate(0deg)', offset: 0.6 }, { transform: 'scale(1.1) rotate(15deg)' }],
+    open: [{ transform: 'scale(1.1) rotate(15deg)' }, { transform: 'scale(0) rotate(40deg)', offset: 0.4 }, { transform: 'scale(0) rotate(40deg)' }],
+  }];
+
+  [0.3, 0.7].forEach(share => {
+    const length = Math.round(Math.min(width * 0.3, 200));
+    list.push({
+      cls: 'rr-light-speed', x: 0, y: Math.round(height * share - 6), w: length, h: 12,
+      close: [{ transform: 'translateX(' + -length + 'px)' }, { transform: 'translateX(' + Math.round(width / 2 - length / 2) + 'px)' }],
+      open: [{ transform: 'translateX(' + Math.round(width / 2 - length / 2) + 'px)' }, { transform: 'translateX(' + width + 'px)' }],
+    });
+  });
+  return list;
+}
+
 export const kit = {
   id: 'retro',
   draw: role => (pieces[role] === undefined ? '' : pieces[role]),
   squares: squares,
   extras: extras,
+  light: light,
 };

@@ -152,8 +152,8 @@ Stop the small server with Ctrl+C in the second text screen when you are done.
        xinit /tmp/kiosk-no-gpu.sh 'http://localhost:8080/dashboard/?perf' -- :1 vt8
 
    If the run without the flags is smoother, or the picture glitches with
-   them, remove the two lines from `computer/scripts/kiosk.sh` and push. Never
-   add `--disable-gpu`. If glitches remain, try adding
+   them, put `KIOSK_GRAPHICS=plain` in `local.env` (it leaves the two flags out,
+   and `KIOSK_GRAPHICS=software` is `--disable-gpu`, for a last try). If glitches remain, try adding
    `--disable-gpu-compositing`.
 3. Run each of these for 30 minutes and write down typical, p95, worst and late
    at the end of each:

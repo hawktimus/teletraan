@@ -4,7 +4,9 @@
 //   - the frames: requestAnimationFrame is recorded over the whole run with the CPU at normal speed, and a frame longer than
 //     33 ms fails the rule (the view is let have a few, see scenes below). The number of elements the run holds and the number that have an animation of their own are
 //     printed (the order's budget is about 220 for a panel and 660 for a view).
-//   - every animation of the run moves transform or opacity, and nothing in it carries a perspective of its own
+//   - every animation of the run moves transform or opacity, nothing in it carries a perspective of its own, and the run animates no more
+//     elements than animatedLimit says
+//   - the elements of the run carry the classes of the kit of the theme and of no other (rules vocabulary/ in tests/motion/light.mjs)
 //   - at 0 ms the page is the old page, and at 3 s it is the new page with no seam
 //   - the hawk stays on the canvas, from start to end
 //
@@ -12,6 +14,7 @@
 // swap rules do, and the frames are measured in a second run that is let go at full speed.
 
 import { canvas } from './lib/harness.mjs';
+import { animatedLimit } from '../../dashboard/core/reform-plan.js';
 
 // 30 frames a second is 33.3 ms. A screen of 60 Hz shows a frame for 16.7, 33.3 or 50 ms, so the limit leaves the rounding of 33.3 and
 // stops at the first frame that waited for a third refresh.
@@ -289,6 +292,7 @@ function rules(theme, kind) {
 
         console.log('      ' + scene.name + ': ' + held.animated + ' animated elements (' + held.animations + ' animations), ' + held.elements + ' elements in the layer');
         const lines = held.properties.filter(name => !allowedProperties.includes(name)).map(name => scene.name + ': a part animates ' + name);
+        if (held.animated > animatedLimit[kind]) lines.push(scene.name + ': ' + held.animated + ' animated elements, over the limit of ' + animatedLimit[kind] + ' for a ' + kind + ' (animatedLimit in core/reform-plan.js)');
         if (held.animations < 100) lines.push(scene.name + ': only ' + held.animations + ' animations were made, the run did not draw its parts');
         if (held.perspectives !== 1) lines.push(scene.name + ': ' + held.perspectives + ' elements have a perspective, the stage has the only one');
         if (held.transformsWithPerspective > 0) lines.push(scene.name + ': ' + held.transformsWithPerspective + ' animations carry perspective() of their own');

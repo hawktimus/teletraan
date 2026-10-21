@@ -128,13 +128,14 @@ test('the mode and the fourteen switches have their lists and starting values in
   assert.deepEqual(config.competitionSwitches, ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify', 'competitionTeamMetrics', 'competitionCompare']);
   // a settings document with no stored mode plays Before and after, and a stored mode is kept
   assert.equal(config.defaultSettings.competitionMode, 'around');
-  config.competitionSwitches.forEach(name => assert.equal(config.defaultSettings[name], true, name));
+  // thirteen cards start on, and Championship chances (Match13) starts off
+  config.competitionSwitches.forEach(name => assert.equal(config.defaultSettings[name], name !== 'competitionQualify', name));
   assert.equal(config.competitionLeadDays, 2);
   assert.equal(config.competitionPreviewSeconds, 120);
 
   const empty = contentModule.withDefaults({}).settings;
   assert.equal(empty.competitionMode, 'around');
-  config.competitionSwitches.forEach(name => assert.equal(empty[name], true, name));
+  config.competitionSwitches.forEach(name => assert.equal(empty[name], name !== 'competitionQualify', name));
 
   ['always', 'off', 'auto', 'around'].forEach(mode => assert.equal(sanity.normalizeContent({ settings: { competitionMode: mode } }).settings.competitionMode, mode));
   [' auto', 'AUTO', 'never', 5, true, null, ['auto'], {}].forEach(mode => {
@@ -145,7 +146,7 @@ test('the mode and the fourteen switches have their lists and starting values in
   config.competitionSwitches.forEach(name => {
     assert.equal(sanity.normalizeContent({ settings: { [name]: false } }).settings[name], false, name + ' off');
     [undefined, null, 'no', 0, 1, {}].forEach(value => {
-      assert.equal(sanity.normalizeContent({ settings: { [name]: value } }).settings[name], true, name + ' ' + JSON.stringify(value));
+      assert.equal(sanity.normalizeContent({ settings: { [name]: value } }).settings[name], name !== 'competitionQualify', name + ' ' + JSON.stringify(value));
     });
   });
 });
@@ -248,7 +249,7 @@ test('the sample content has frc data with made up numbers in brackets, a team e
   assert.equal(sample.frc.sample, true);
   assert.deepEqual(sample.frc.teams.map(team => team.team), ['prime', 'nova']);
   assert.equal(sample.settings.competitionMode, 'auto');
-  config.competitionSwitches.forEach(name => assert.equal(sample.settings[name], true, name));
+  config.competitionSwitches.forEach(name => assert.equal(sample.settings[name], name !== 'competitionQualify', name));
 
   // every team number that is not one of the two teams of the sample is written in brackets
   const people = [];

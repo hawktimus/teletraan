@@ -1,42 +1,19 @@
-/* The Original kit of the reform transitions (styles/original/transitions.js, core/reform-draw.js): the chassis behind the
-   squares, the folding straps and the hardware. Every other theme plays this kit until it has its own. The colors are
-   the metal tokens, so the metal of the team reaches the pieces. */
+/* The plain kit of the reform transitions (core/reform-plain.js): what a theme plays that has no kit of its own. It draws nothing
+   but grey plates and straps, so a theme without a kit changes plainly and never borrows the look of another theme. Every theme with
+   a kit has its own file (styles/<theme>/reform-kit.css) that restyles these. Colors are tokens. */
 
-/* the chassis: a dark lattice of struts, drawn with two sets of lines at an angle */
+/* the plain kit: the chassis is a dark sheet and the folding edges are grey plates */
 .reform-chassis {
   position: absolute;
   background-color: var(--reform-chassis);
-  background-image:
-    repeating-linear-gradient(55deg, transparent 0 46px, var(--reform-strut) 46px 49px),
-    repeating-linear-gradient(-55deg, transparent 0 46px, var(--reform-strut) 46px 49px),
-    repeating-linear-gradient(0deg, transparent 0 150px, var(--reform-strut-dim) 150px 156px);
 }
-
-/* the folding edges */
 .reform-seg {
-  background-image:
-    radial-gradient(circle at calc(100% - 6px) 50%, var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
-    linear-gradient(180deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
-  box-shadow: inset 0 0 0 2px var(--metal-rim);
-}
-.reform-chain-h .reform-seg[style*="right:"] {
-  background-image:
-    radial-gradient(circle at 6px 50%, var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
-    linear-gradient(180deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
-}
-.reform-chain-v .reform-seg {
-  background-image:
-    radial-gradient(circle at 50% calc(100% - 6px), var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
-    linear-gradient(90deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
-}
-.reform-chain-v .reform-seg[style*="bottom:"] {
-  background-image:
-    radial-gradient(circle at 50% 6px, var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
-    linear-gradient(90deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+  background-color: var(--reform-plain-1);
+  box-shadow: inset 0 0 0 2px var(--reform-plain-2);
 }
 .reform-seg > .reform-shade { z-index: 1; }
 
-/* the hardware, every piece of it is drawn on a 40 x 40 grid */
+/* a part of the hardware is placed by the engine, and every drawing of it is on a 40 x 40 grid */
 .reform-part {
   position: absolute;
   transform-origin: 50% 50%;
@@ -47,16 +24,12 @@
   height: 100%;
   overflow: visible;
 }
-.rk-rim { fill: var(--metal-rim); }
-.rk-metal { fill: var(--metal-3); }
-.rk-lit { fill: var(--metal-1); }
-.rk-slot { fill: var(--metal-rim); }
-.rk-teeth {
-  fill: none;
-  stroke: var(--metal-4);
-  stroke-width: 7px;
-  stroke-dasharray: 6 6;
-}
 .reform-piston[data-axis="h"] { transform-origin: 0 50%; }
 .reform-piston[data-axis="v"] { transform-origin: 50% 0; }
 .reform-tooth { transform-origin: 50% 100%; }
+
+/* the plain Light plates: two grey plates that close over a region (core/reform-light.js) */
+.reform-light-plate {
+  background-color: var(--reform-plain-1);
+  box-shadow: inset 0 0 0 3px var(--reform-plain-2);
+}

@@ -3,19 +3,38 @@
 // id of the theme.
 
 import { swapReform, swapShape, swapTimes } from '../../core/swap-plan.js';
-import { easePop, movedStops, reformTimes } from '../../core/reform-plan.js';
-import { kit as originalKit } from '../original/transitions.js';
+import { easePop, movedStops, plateStops, reformTimes } from '../../core/reform-plan.js';
 
 export const swapVariant = { name: 'pull-apart', times: swapTimes, reform: swapReform, shape: swapShape };
 
-// The kit of the theme for the panel and view transitions (core/reform-draw.js). It is the Original kit with pieces added to every
-// region: deadbolts that are drawn back out of the four edges before anything folds and slammed home last, a hand wheel at the top
-// right, rams on the corner diagonals, and a gauge at each bottom corner. The straps and the chassis are the steel of the theme
-// (reform-kit.css in this folder). Times are milliseconds of the skeleton of three seconds.
+// The kit of the theme for the panel and view transitions (core/reform-draw.js). Everything it draws is its own, in steel and
+// hazard yellow: hex bolts, hasps, gusset straps, rivets, real cogs, rams and teeth, and in every region deadbolts that are drawn
+// back out of the four edges before anything folds and slammed home last, a hand wheel at the top right, rams on the corner
+// diagonals, and a gauge at each bottom corner. The squares are steel plates that slide out of their rack, turn over and are
+// slammed back. The straps and the chassis are the steel of the theme (reform-kit.css in this folder). Times are milliseconds of
+// the skeleton of three seconds. It borrows nothing from another theme's kit.
 const slam = 'cubic-bezier(.7,0,1,.5)';
+
+// A cog: a polygon with this many teeth, on a 40 by 40 grid
+function cogPoints(teeth, outer, inner) {
+  const points = [];
+  for (let step = 0; step < teeth * 4; step += 1) {
+    const angle = Math.PI * 2 * (step - 0.5) / (teeth * 4);
+    const radius = step % 4 === 1 || step % 4 === 2 ? outer : inner;
+    points.push(Math.round((20 + Math.cos(angle) * radius) * 10) / 10 + ',' + Math.round((20 + Math.sin(angle) * radius) * 10) / 10);
+  }
+  return points.join(' ');
+}
 
 // The pieces are drawn on their own grids and sized by the engine; the colors are classes of reform-kit.css
 const pieces = {
+  screw: '<svg viewBox="0 0 40 40"><polygon class="fk-rim" points="20,1 37,10.5 37,29.5 20,39 3,29.5 3,10.5"/><polygon class="fk-steel" points="20,6 32.5,13 32.5,27 20,34 7.5,27 7.5,13"/><circle class="fk-dark" cx="20" cy="20" r="5"/></svg>',
+  latch: '<svg viewBox="0 0 40 40"><rect class="fk-rim" x="1" y="11" width="38" height="18" rx="2"/><rect class="fk-steel" x="4" y="14" width="32" height="12"/><rect class="fk-hazard" x="4" y="14" width="9" height="12"/><circle class="fk-dark" cx="30" cy="20" r="3"/></svg>',
+  brace: '<svg viewBox="0 0 40 40"><rect class="fk-rim" x="0" y="13" width="40" height="14"/><rect class="fk-steel" x="3" y="16" width="34" height="8"/><path class="fk-hazard" d="M7 24 L11 16 H16 L12 24 Z M19 24 L23 16 H28 L24 24 Z"/></svg>',
+  rivet: '<svg viewBox="0 0 40 40"><circle class="fk-rim" cx="20" cy="20" r="18"/><circle class="fk-steel" cx="20" cy="20" r="12"/><circle class="fk-hi" cx="16" cy="16" r="4"/></svg>',
+  gear: '<svg viewBox="0 0 40 40"><polygon class="fk-rim" points="' + cogPoints(10, 19.5, 15) + '"/><circle class="fk-steel" cx="20" cy="20" r="11"/><circle class="fk-dark" cx="20" cy="20" r="4"/><circle class="fk-dark" cx="20" cy="11" r="2"/><circle class="fk-dark" cx="20" cy="29" r="2"/><circle class="fk-dark" cx="11" cy="20" r="2"/><circle class="fk-dark" cx="29" cy="20" r="2"/></svg>',
+  piston: '<svg viewBox="0 0 40 40" preserveAspectRatio="none"><rect class="fk-rim" x="0" y="0" width="40" height="40"/><rect class="fk-steel" x="2" y="5" width="36" height="30"/><rect class="fk-hazard" x="2" y="5" width="8" height="30"/></svg>',
+  tooth: '<svg viewBox="0 0 40 40" preserveAspectRatio="none"><path class="fk-rim" d="M2 40 L2 3 L38 40 Z"/><path class="fk-steel" d="M7 36 L7 13 L29 36 Z"/></svg>',
   deadbolt: '<svg viewBox="0 0 120 18" preserveAspectRatio="none"><rect class="fk-bolt-rim" x="0" y="0" width="120" height="18" rx="3"/><rect class="fk-bolt-body" x="3" y="3" width="114" height="12" rx="2"/><rect class="fk-bolt-cap" x="0" y="0" width="16" height="18"/></svg>',
   wheel: '<svg viewBox="-40 -40 80 80"><circle class="fk-wheel-rim" r="34"/><circle class="fk-wheel-ring" r="34"/><circle class="fk-wheel-inner" r="26"/><path class="fk-wheel-spoke" d="M0 0L30 0M0 0L15 26M0 0L-15 26M0 0L-30 0M0 0L-15 -26M0 0L15 -26"/><circle class="fk-wheel-hub" r="7"/></svg>',
   ram: '<svg viewBox="0 0 86 48"><rect class="fk-ram-body" x="1" y="15" width="45" height="18" rx="3"/><rect class="fk-ram-rod" x="44" y="20" width="40" height="8"/></svg>',
@@ -137,11 +156,40 @@ function jolt() {
   ];
 }
 
-export const kit = Object.assign({}, originalKit, {
+// A steel plate slides out of its rack along the line it turns on, turns over while it is out and is slammed back in (plateStops in
+// core/reform-plan.js, which holds the 3D that a kit file may not). The plates of a region that changes place travel while they turn.
+function squares(square, move) {
+  return plateStops(square, move, slam);
+}
+
+
+// The Light transition (core/reform-light.js): two hazard striped steel doors close over the region, two deadbolts are driven
+// across the seam where they meet and two cogs turn in the corners. A part is { cls, markup, x, y, w, h, close, open }.
+function light(width, height) {
+  const long = Math.round(Math.min(width * 0.2, 140));
+  const cog = Math.round(Math.max(14, Math.min(56, height * 0.22)));
+  const edge = Math.round(cog * 0.3);
+  const list = [0.3, 0.7].map(share => ({
+    cls: 'fk-light-bolt', markup: pieces.deadbolt, x: Math.round(width / 2 - long / 2), y: Math.round(height * share - 9), w: long, h: 18,
+    close: [{ transform: 'translateX(-44px) scaleX(0)' }, { transform: 'translateX(-44px) scaleX(0)', offset: 0.6 }, { transform: 'translateX(0px) scaleX(1)' }],
+    open: [{ transform: 'translateX(0px) scaleX(1)' }, { transform: 'translateX(-44px) scaleX(1)', offset: 0.35 }, { transform: 'translateX(-44px) scaleX(0)' }],
+  }));
+
+  [[edge, edge, 1], [width - edge - cog, height - edge - cog, -1]].forEach(([x, y, direction]) => list.push({
+    cls: 'fk-light-gear', markup: pieces.gear, x: x, y: y, w: cog, h: cog,
+    close: [{ transform: 'rotate(0deg) scale(0)' }, { transform: 'rotate(' + direction * 270 + 'deg) scale(1)' }],
+    open: [{ transform: 'rotate(' + direction * 270 + 'deg) scale(1)' }, { transform: 'rotate(' + direction * 540 + 'deg) scale(0)' }],
+  }));
+  return list;
+}
+
+export const kit = {
   id: 'foundry',
-  lockParts: false, // its own deadbolts, rams and gauges already fill the frame
-  draw: role => pieces[role] === undefined ? originalKit.draw(role) : pieces[role],
+  // no cells with lock pins: its own deadbolts, rams and gauges already fill the frame
+  draw: role => pieces[role] === undefined ? '' : pieces[role],
+  squares: squares,
   extras: extras,
   partsOf: partsOf,
   jolt: jolt,
-});
+  light: light,
+};

@@ -149,6 +149,8 @@ html[data-style="foundry"][data-layout="standard"] .banner .banner-text { positi
   fill: var(--style-steel-1);
   stroke: var(--style-steel-dark);
   stroke-width: 2px;
+}
+.art-foundry .fa-piston-moving {
   animation: fa-stroke var(--stroke, 7s) ease-in-out infinite alternate;
   animation-delay: var(--wait, 0s);
 }

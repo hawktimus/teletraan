@@ -910,7 +910,12 @@ html.theme-alternate {
   width: 1920px;
   height: 1080px;
 }
-html:not([data-motion="full"]) #theme-bg * { animation: none; }
+html:not([data-motion="full"]) #theme-bg *,
+html[data-weight="light"] #theme-bg * { animation: none; }
+html[data-moving] #theme-bg * { animation-play-state: paused; }
+/* the gears and pistons that a theme draws behind its frames turn all day: they rest while a transition plays, and in Light */
+html[data-weight="light"] .theme-art * { animation: none; }
+html[data-moving] .theme-art * { animation-play-state: paused; }
 
 .theme-art {
   display: none;

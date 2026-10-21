@@ -11,7 +11,7 @@
 
 import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
-import { cleanRows, cleanTheme, pickSettings, publishMutations, saveMutations, settingsQuery, themeOf } from '../support/display.js';
+import { cleanMotion, cleanRows, cleanTheme, motionOf, pickSettings, publishMutations, saveMutations, settingsQuery, themeOf } from '../support/display.js';
 import { checkRows, extrasOf, loadWorld } from '../support/display-wall.js';
 import { withKeys } from '../static/display-rows.js';
 import { defaultRotationRows } from '../../dashboard/config-rotation.js';
@@ -67,6 +67,7 @@ export function register(router, ctx) {
       rows: rows,
       pageSeconds: typeof source.pageSeconds === 'number' && source.pageSeconds > 0 ? source.pageSeconds : defaultPageSeconds,
       theme: themeOf(source),
+      motion: motionOf(source),
       choices: choices(),
       standardRows: withKeys(defaultRotationRows()),
       wall: { problem: world.problem, rows: await checkRows(rows, world), extras: extrasOf(world), checkedAt: world.now.toISOString() },
@@ -93,7 +94,7 @@ export function register(router, ctx) {
     const current = await readSettings(ctx);
     const fields = {};
     if (body.rows !== undefined) fields.rotationRows = cleanRows(body.rows, current.source && current.source.rotationRows);
-    Object.assign(fields, cleanTheme(body.theme));
+    Object.assign(fields, cleanTheme(body.theme), cleanMotion(body.motion));
     if (Object.keys(fields).length === 0) throw new Refusal(400, 'There is nothing to save.');
 
     if (body.force !== true && body.baseRev !== current.rev) {

@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <title>Teletraan I</title>
+  <!-- Before any stylesheet: a page that is being drawn with no style yet is black, never the white default of the
+       browser. The color is the --pure-black token. -->
+  <meta name="color-scheme" content="dark">
+  <style>html, body { background: black; }</style>
   <link rel="stylesheet" href="fonts/fonts.css?v=0">
   <link rel="stylesheet" href="themes/hawktimus.css?v=0">
   <link rel="stylesheet" href="tokens.css?v=0">
@@ -37,6 +41,7 @@
   <link rel="stylesheet" href="status-dots.css?v=0">
   <link rel="stylesheet" href="reform.css?v=0">
   <link rel="stylesheet" href="reform-kit.css?v=0">
+  <link rel="stylesheet" href="styles/original/reform-kit.css?v=0">
   <link rel="stylesheet" href="styles/cybertron/reform-kit.css?v=0">
   <link rel="stylesheet" href="styles/foundry/reform-kit.css?v=0">
 </head>
@@ -541,7 +546,10 @@
       if (window.teletraanStarted) return;
 
       document.body.innerHTML = '<div class="start-failed">Teletraan I could not start. Trying again in 30 seconds.</div>';
-      setTimeout(function () { window.location.reload(); }, 30000);
+      setTimeout(function () {
+        try { window.sessionStorage.setItem('teletraan-reload-reason', 'the page could not start'); } catch (error) { /* no reason is written down */ }
+        window.location.reload();
+      }, 30000);
     }, 25000);
   </script>
   <!-- The files are asked for as name?v=<build>. The build comes from build.js,
@@ -554,8 +562,15 @@
       function start(build) {
         window.teletraanBuild = String(build);
         var links = document.querySelectorAll('link[rel="stylesheet"]');
+        // A changed href takes the old sheet off at once and the page is drawn with no style until the new one has
+        // loaded: a white flash on every start. So a copy with the build is added, and the old sheet goes when the
+        // copy has loaded.
         for (var i = 0; i < links.length; i++) {
-          links[i].setAttribute('href', links[i].getAttribute('href').replace(/\?v=.*$/, '?v=' + build));
+          var old = links[i];
+          var copy = old.cloneNode();
+          copy.setAttribute('href', old.getAttribute('href').replace(/\?v=.*$/, '?v=' + build));
+          copy.onload = (function (sheet) { return function () { sheet.remove(); }; })(old);
+          old.after(copy);
         }
         var script = document.createElement('script');
         script.type = 'module';

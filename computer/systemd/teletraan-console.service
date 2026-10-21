@@ -16,7 +16,8 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/true
 # The commands below print on the first text screen, which is tty1. The service
-# runs as root and names no account. TERM is for clear.
+# runs as root and names no account, because writing to the console and switching it with chvt need root. It is on the
+# allow-list in tests/units-user.test.mjs. TERM is for clear.
 StandardOutput=tty
 TTYPath=/dev/tty1
 Environment=TERM=linux

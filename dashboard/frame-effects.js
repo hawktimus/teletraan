@@ -4,7 +4,7 @@ import { defaultScreen, defaultSettings, defaultTeam } from './config.js';
 import { frameState } from './frame-state.js';
 import { logoCanMove, playCrtNow, playEntranceNow, playHawkNow, playNameEffectNow, playSpinNow, stopCrt, stopLogoEffects } from './frame-logo.js';
 import { endKitEvents, showKit } from './frame-kit.js';
-import { page } from './frame-pages.js';
+import { page, weightNow } from './frame-pages.js';
 
 // Effects that play now and then
 //
@@ -265,3 +265,6 @@ export function isPaused() {
 export function motionNow() {
   return frameState.motion;
 }
+
+// 'full' or 'light': how heavy the transitions are in full motion. Calm and none have no transitions to weigh.
+export { weightNow };

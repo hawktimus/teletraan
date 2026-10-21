@@ -27,7 +27,7 @@ function put(file, text, mode) {
 // A staging tree: the files of this repository the installer reads
 function staging(base, options = {}) {
   const tree = path.join(base, 'staging');
-  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh']) {
+  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/systemd/teletraan-watchdog.service', 'computer/systemd/teletraan-watchdog.timer', 'computer/systemd/teletraan-nightly.service', 'computer/systemd/teletraan-nightly.timer', 'computer/systemd/teletraan-console.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh']) {
     put(path.join(tree, name), fs.readFileSync(path.join(repo, name)));
   }
   put(path.join(tree, 'dashboard/index.html'), '<html></html>');
@@ -170,8 +170,10 @@ test('the socket, its service and the sudoers file are installed with the login 
   assert.match(fs.readFileSync(path.join(s.places.systemd, 'teletraan-control@.service'), 'utf8'), new RegExp('User=' + account));
   const sudoers = fs.readFileSync(path.join(s.places.sudoers, 'teletraan-control'), 'utf8');
   assert.ok(sudoers.includes(account + ' ALL=(root) NOPASSWD:'));
-  assert.ok(sudoers.includes('/usr/bin/systemctl restart teletraan-*') && sudoers.includes('/sbin/reboot'));
-  assert.ok(sudoers.includes('/usr/bin/docker restart teletraan-web,') && !sudoers.includes('restart nginx') && !/docker restart \S*\*/.test(sudoers), sudoers);
+  assert.ok(sudoers.includes('/usr/bin/systemctl restart teletraan-kiosk.service') && sudoers.includes('/sbin/reboot'));
+  assert.ok(sudoers.includes('/usr/bin/docker restart teletraan-web') && !sudoers.includes('restart nginx'), sudoers);
+  assert.ok(!sudoers.split('\n').some(line => !line.trim().startsWith('#') && line.includes('*')), 'no wildcard in the installed file');
+  assert.ok(!/^ACCOUNT /m.test(sudoers), 'the login user is filled in');
   assert.equal(fs.statSync(path.join(s.places.sudoers, 'teletraan-control')).mode & 0o777, 0o440);
   assert.ok(result.calls.includes('visudo -cf'));
   assert.ok(result.calls.includes('systemctl enable --now teletraan-control.socket'));
@@ -181,6 +183,24 @@ test('the socket, its service and the sudoers file are installed with the login 
   assert.equal(failed.status, 1);
   assert.ok(failed.errors.includes('did not pass visudo'));
   assert.ok(!fs.existsSync(path.join(bad.places.sudoers, 'teletraan-control')));
+});
+
+test('the watchdog and nightly units are copied with the login user, and a unit of an earlier install that ran as root is replaced', () => {
+  const s = setup();
+  fs.mkdirSync(s.places.systemd, { recursive: true });
+  ['watchdog', 'nightly'].forEach(name => fs.writeFileSync(path.join(s.places.systemd, 'teletraan-' + name + '.service'), '[Service]\nExecStart=/opt/teletraan/computer/scripts/' + name + '.sh\n'));
+  const result = s.run();
+  assert.equal(result.status, 0, result.errors);
+  ['watchdog', 'nightly'].forEach(name => {
+    const text = fs.readFileSync(path.join(s.places.systemd, 'teletraan-' + name + '.service'), 'utf8');
+    assert.match(text, new RegExp('^User=' + account + '$', 'm'), name);
+    assert.ok(!/^User=ACCOUNT$/m.test(text) && !/^User=root$/m.test(text), name);
+  });
+  const console_ = fs.readFileSync(path.join(s.places.systemd, 'teletraan-console.service'), 'utf8');
+  assert.ok(!/^User=/m.test(console_), 'the shutdown drawing still runs as root');
+  const again = s.run();
+  assert.equal(again.status, 0, again.errors);
+  assert.match(fs.readFileSync(path.join(s.places.systemd, 'teletraan-watchdog.service'), 'utf8'), new RegExp('^User=' + account + '$', 'm'), 'a second install changes nothing');
 });
 
 test('the release is installed by the Node image with the root and the tree mounted, then the containers are made again', () => {

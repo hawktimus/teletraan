@@ -166,6 +166,7 @@ const contract = {
   dashboardSettings: {
     team: object({ name: text(16), number: text(5), school: text(30) }),
     motion: 'string',
+    motionOnKiosk: 'string',
     speed: 'string',
     frameMetal: 'string',
     contentSource: 'string',
@@ -441,7 +442,8 @@ const choices = {
   'presentation.subteam': ['Build', 'Programming', 'Design', 'Electrical', 'Outreach', 'Business', 'Other'],
   'presentation.status': ['scheduled', 'cancelled', 'done', 'skipped'],
   'person.role': ['Coach', 'Captain', 'Mentor'],
-  'dashboardSettings.motion': ['full', 'calm'],
+  'dashboardSettings.motion': ['full', 'light', 'calm'],
+  'dashboardSettings.motionOnKiosk': ['light', 'full'],
   'dashboardSettings.speed': ['very-slow', 'slow', 'normal', 'fast'],
   'dashboardSettings.frameMetal': ['gold', 'silver'],
   'dashboardSettings.look': ['polished', 'flat', 'plain'],
@@ -2316,6 +2318,7 @@ function checkStartingValues() {
 
   ['name', 'number', 'school'].forEach(name => expect('team.' + name, team[name]));
   expect('motion', settings.motion);
+  expect('motionOnKiosk', settings.motionOnKiosk);
   expect('speed', settings.speed);
   expect('frameMetal', settings.frameMetal);
   expect('glint', settings.glint);
@@ -4341,7 +4344,7 @@ const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanc
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify', 'competitionTeamMetrics', 'competitionCompare'];
 const settingsTabs = {
-  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
+  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'motionOnKiosk', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
   countdown: ['countdown'],
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
@@ -4541,10 +4544,13 @@ function checkCompetitionTab() {
   need(problems, config.competitionSwitches.join() === competitionNames.join(), 'competitionSwitches in config.js should be the switches of the Competition tab, in order: ' + competitionNames.join(', '));
   competitionNames.forEach((name, index) => {
     const field = at(name);
-    need(problems, field && field.type === 'boolean' && field.initialValue === true && config.defaultSettings[name] === true, name + ' should be a switch that starts on, and so should its default in config.js');
+    // Championship chances (Match13) starts off, the other thirteen start on: the field and config.js say the same
+    const starts = name !== 'competitionQualify';
+    need(problems, field && field.type === 'boolean' && field.initialValue === starts && config.defaultSettings[name] === starts, name + ' should be a switch that starts ' + (starts ? 'on' : 'off') + ', and so should its default in config.js');
     need(problems, field && field.title === titles[index], name + ' should be titled ' + titles[index]);
+    if (name === 'competitionQualify') need(problems, field && /off until you switch it on/.test(field.description), 'competitionQualify should say in its description that it is off until you switch it on');
     need(problems, field && field.group === 'advanced' && field.hidden === true && rulesOf(field).length === 0, name + ' should be hidden in Dashboard Settings (the Competition page shows it) and have no rules');
-    need(problems, world.sample.settings[name] === true, 'the sample settings need ' + name);
+    need(problems, world.sample.settings[name] === (name !== 'competitionQualify'), 'the sample settings need ' + name + ' ' + (name !== 'competitionQualify' ? 'on' : 'off')); 
   });
   need(problems, config.competitionModes.indexOf(world.sample.settings.competitionMode) !== -1, 'the sample settings need a competitionMode of ' + config.competitionModes.join(', '));
 
@@ -5720,7 +5726,7 @@ function checkMondayTab() {
 
 // The Monday data document the Teletraan computer writes (schemas/mondayStatus.js, computer/scripts/monday-sync.sh) and the task
 // fields the script writes. The board list of the older sync is a field still, and the script takes it out.
-const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'departments', 'snapshots', 'taskCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
+const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'departments', 'snapshots', 'taskCount', 'hiddenCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
 
 function checkMondayStatus() {
   const problems = [];

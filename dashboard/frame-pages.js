@@ -2,6 +2,7 @@
 
 import { defaultSettings, speeds } from './config.js';
 import { chooseFinish, chooseStyle } from './core/transitions.js';
+import { isDegraded, onDegraded } from './core/motion.js';
 import { makeSecondTimer } from './core/tick.js';
 import { frameState } from './frame-state.js';
 import { restLogos, startLookingAtEffects, stopCrt } from './frame-logo.js';
@@ -9,7 +10,7 @@ import { armKitGlitch, disarmKitGlitch, playKitBurst, showKit } from './frame-ki
 import { sequences } from './frame-sequences.js';
 
 export const page = document.documentElement;
-const motionModes = ['full', 'calm', 'none'];
+const motionModes = ['full', 'light', 'calm', 'none'];
 let speed = 'normal';
 
 
@@ -29,13 +30,18 @@ export function tickOnce() {
   secondClock.tickOnce();
 }
 
-// 'full', 'calm' or 'none'. Anything else is ignored, because a wall
-// display should carry on rather than stop.
+// 'full', 'light', 'calm' or 'none'. Anything else is ignored, because a wall
+// display should carry on rather than stop. Light is full motion with the light
+// transitions: every rule of the stylesheets that says full still applies, and the
+// weight on the page (data-weight) says light.
 export function setMotion(mode) {
   if (!motionModes.includes(mode)) {
-    console.warn('motion must be full, calm or none, not "' + mode + '". Using full.');
+    console.warn('motion must be full, light, calm or none, not "' + mode + '". Using full.');
     mode = 'full';
   }
+  frameState.light = mode === 'light';
+  if (mode === 'light') mode = 'full';
+  writeWeight();
   frameState.motion = mode;
   // Written only when it changes: shell.js calls this at every content change,
   // and writing the same value again can make the browser restyle the page,
@@ -49,6 +55,18 @@ export function setMotion(mode) {
   if (mode === 'full') armKitGlitch();
   else disarmKitGlitch();
 }
+
+// How heavy the full motion is: 'light' when the setting says so, or when a screen that played full could not keep up
+// (core/motion.js). The stylesheets read it to keep the idle sweeps still.
+export function weightNow() {
+  return frameState.light || isDegraded() ? 'light' : 'full';
+}
+
+function writeWeight() {
+  const weight = weightNow();
+  if (page.dataset.weight !== weight) page.dataset.weight = weight;
+}
+onDegraded(writeWeight);
 
 // 'very-slow', 'slow', 'normal' or 'fast'. Anything else is ignored, like
 // setMotion. The number goes into --pace, which tokens.css multiplies into

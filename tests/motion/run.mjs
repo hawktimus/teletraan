@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { loadPlaywright, serveDashboard } from '../../tools/screenshots.mjs';
 import { makeContext, repoRoot, writeFrames } from './lib/harness.mjs';
 
-const modules = ['swap.mjs', 'reform.mjs', 'hidden.mjs', 'monday.mjs', 'photo.mjs', 'effects.mjs', 'animated.mjs', 'seams.mjs', 'text.mjs', 'marks.mjs', 'leaks.mjs'];
+const modules = ['swap.mjs', 'reform.mjs', 'light.mjs', 'hidden.mjs', 'monday.mjs', 'photo.mjs', 'effects.mjs', 'animated.mjs', 'seams.mjs', 'text.mjs', 'marks.mjs', 'leaks.mjs'];
 const filter = process.argv[2] || '';
 const show = 6; // lines of one failure that are printed. All of them are in the frames folder.
 

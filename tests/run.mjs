@@ -27,7 +27,7 @@ const motionTimeLimit = 3600 * 1000; // a real browser plays every transition
 // sync scripts. They check the Mini and the Studio's pages, not the files a student edits on the dashboard. The seconds are
 // from a full run on a Mac. A new test that is slow (more than 2.5 seconds on its own) is added here.
 const slowTests = [
-  'backup-dataset', 'build-version', 'calendar-status', 'check-calendars', 'check-connection', 'control-helper', 'display', 'effects',
+  'backup-dataset', 'build-version', 'calendar-status', 'check-calendars', 'check-connection', 'control-display-pictures', 'control-helper', 'display', 'effects',
   'frc-event', 'frc-field', 'frc-sync', 'git-hook', 'install-calendars', 'install-console', 'install-sh', 'layouts', 'match13-sync',
   'mirror', 'monday-sync', 'news-sync', 'nightly', 'no-old-code', 'panel-b', 'photos-drive', 'seasons', 'ship', 'slides-sync',
   'status-write', 'swap-smooth', 'sweep', 'team-colors', 'team-name', 'teletraan-tool', 'teletraan-tool-commands', 'templates',

@@ -11,13 +11,14 @@ It runs only on demand (teletraan-mirror.service) and stops by itself when
   - the browser closes the socket, or
   - 30 minutes have passed.
 
-A screencast can come out black on a kiosk browser that has no window manager. The size of a frame cannot tell
-that for sure, so at the start and every 30 seconds (never more often) the script takes one small PNG with
-Page.captureScreenshot, decodes it with zlib and the PNG filters, and looks at about 400 pixels on a grid. If more
-than 99 percent of them are near black (every channel under 12) the picture is black. Then it tries the other way of
-making pictures (screencast or screenshots) and says which one gave a picture. Three frames in a row under
-MIRROR_BLACK_BYTES bytes (a black 960 by 540 JPEG is about 2 KB) also switch a screencast to
-Page.captureScreenshot about 4 times a second. <data>/mirror/state.json says
+Page.captureScreenshot makes the browser draw the page again for the picture, and on a kiosk browser on old
+hardware that can show on the TV as a flash. So the screencast is the only way used while it gives pictures, and
+no screenshot is taken at all then. A screencast can come out black on a kiosk browser that has no window manager.
+Three frames in a row under MIRROR_BLACK_BYTES bytes (a black 960 by 540 JPEG is about 2 KB), or no frame at all
+for 5 seconds, switch to Page.captureScreenshot once a second. Only then, and never more often than every 30
+seconds, one small PNG is decoded with zlib and the PNG filters and about 400 pixels on a grid are looked at. If
+more than 99 percent of them are near black (every channel under 12) the picture is black, and the script tries
+the screencast again and says which of the two gave a picture. <data>/mirror/state.json says
 {"state": "ok" or "black", "mode": "screencast" or "screenshots", "fps": n, "bytes": n, "width": n, "height": n,
 "sampled": true or false, "tried": {...}}. sampled is true when a PNG was read.
 
@@ -56,7 +57,7 @@ PROBE_CLIP = {'x': 0, 'y': 0, 'width': 1920, 'height': 1080, 'scale': 0.25}
 NEAR_BLACK = 12
 BLACK_SHARE = 0.99
 GRID = 20
-SHOT_SECONDS = 0.25
+SHOT_SECONDS = 1.0
 # A screencast that sends nothing at all for this long is treated like a black one
 SILENT_SECONDS = 5.0
 GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
@@ -424,7 +425,7 @@ def main():
 
     def probe():
         """One PNG of the page, read for black. Changes the way the pictures are made when the page is black."""
-        nonlocal probe_state, probe_size, mode, flipped, small_run, next_shot
+        nonlocal probe_state, probe_size, mode, flipped, small_run, next_shot, next_probe
         answer = result_of(ask('Page.captureScreenshot', {'format': 'png', 'fromSurface': True, 'captureBeyondViewport': False, 'clip': PROBE_CLIP}))
         try:
             black, width, height = sample_black(base64.b64decode(answer.get('data', ''))) if answer else (None, 0, 0)
@@ -451,6 +452,7 @@ def main():
                 say('the page is black in screenshots, trying the screencast')
                 mode = 'screencast'
                 small_run = 0
+                next_probe = float('inf')
                 start_screencast()
         else:
             say('the page is black in both ways of making pictures')
@@ -468,7 +470,9 @@ def main():
     say('copying %s' % page.get('url', '')[:80])
     reason = 'stopped'
     next_shot = 0.0
-    next_probe = 0.0
+    # The PNG probe is only for the screenshot fallback, so nothing is probed while the screencast works
+    next_probe = float('inf')
+    last_probe = 0.0
 
     try:
         while True:
@@ -484,7 +488,8 @@ def main():
                 reason = 'nobody is watching'
                 break
 
-            if now >= next_probe:
+            if mode == 'screenshots' and now >= next_probe:
+                last_probe = now
                 next_probe = now + PROBE_SECONDS
                 probe()
                 continue
@@ -494,6 +499,7 @@ def main():
                 ask('Page.stopScreencast')
                 mode = 'screenshots'
                 small_run = 0
+                next_probe = last_probe + PROBE_SECONDS
                 write_state(True)
                 continue
 
@@ -515,6 +521,7 @@ def main():
                 say('screencast gave no frames, using screenshots')
                 ask('Page.stopScreencast')
                 mode = 'screenshots'
+                next_probe = last_probe + PROBE_SECONDS
                 write_state(True)
                 continue
 

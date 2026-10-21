@@ -5,6 +5,9 @@ import { defaultSchedule, defaultThemeByWeekday, viewKeys } from './config-lists
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
   motion: 'full',
+  // What the TV computer plays when motion is full: light (one simple change at each panel and view change), or full
+  // (core/motion.js). A laptop plays full whatever this says.
+  motionOnKiosk: 'light',
   speed: 'normal',
   frameMetal: 'gold',
   glint: true,
@@ -250,8 +253,10 @@ export const defaultSettings = {
   groupEventsByKind: false,
   // The competition cards (the Competition tab in the Studio, core/competition.js, docs/frc-feed.md).
   //   competitionMode  see competitionModes above
-  //   the switches     one for each card, see competitionSwitches above
-  // A settings document with no stored mode plays Before and after. A stored mode, Auto included, is kept as it is.
+  //   the switches     one for each card, see competitionSwitches above. All start on except Championship chances
+  //                    (competitionQualify), which is off until a coach switches it on.
+  // A settings document with no stored mode plays Before and after. A stored mode, Auto included, is kept as it is, and so is a
+  // stored switch: a document that already says competitionQualify true keeps showing it.
   competitionMode: 'around',
   competitionTimeline: true,
   competitionLastSeason: true,
@@ -264,7 +269,7 @@ export const defaultSettings = {
   competitionMatches: true,
   competitionRecap: true,
   competitionForecast: true,
-  competitionQualify: true,
+  competitionQualify: false,
   competitionTeamMetrics: true,
   competitionCompare: true,
   // The FRC news (the FRC news section of the Competition page in the Studio, core/news.js, docs/frc-news.md).

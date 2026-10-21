@@ -67,7 +67,14 @@ hiddenFields().forEach(field => { sectionOf[field.name] = 'hiddenTransitions'; }
 
 const motions = [
   { title: 'Full', value: 'full' },
+  { title: 'Light', value: 'light' },
   { title: 'Calm', value: 'calm' },
+];
+
+// The values are the names in kioskMotions in dashboard/config.js
+const kioskMotions = [
+  { title: 'Light', value: 'light' },
+  { title: 'Full', value: 'full' },
 ];
 
 // The values are the names in metals in dashboard/config.js
@@ -195,10 +202,21 @@ const motionField = defineField({
   title: 'Motion',
   type: 'string',
   group: 'screen',
-  description: 'Full plays all the movement. Calm only fades panels in and out, with no turning, glint, logo animations, name effect or screen glitch.',
+  description: 'Full plays every movement. Light plays one simple change at each panel and view change and keeps the idle sweeps still. Calm only fades.',
   options: { list: motions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'full',
-  validation: Rule => Rule.required().error('Pick full or calm.'),
+  validation: Rule => Rule.required().error('Pick full, light or calm.'),
+});
+
+const motionOnKioskField = defineField({
+  name: 'motionOnKiosk',
+  title: 'Motion on the TV computer',
+  type: 'string',
+  group: 'screen',
+  description: 'The TV computer plays Light even when Motion says Full, so that it does not freeze. Choose Full here only to try the full transitions on a spare computer.',
+  options: { list: kioskMotions, layout: 'radio', direction: 'horizontal' },
+  initialValue: 'light',
+  validation: Rule => Rule.required().error('Pick light or full.'),
 });
 
 const speedField = defineField({
@@ -422,6 +440,7 @@ export default defineType({
     ...lookScheduleFields(),
     styleField,
     motionField,
+    motionOnKioskField,
     speedField,
     frameMetalField,
     glintField,

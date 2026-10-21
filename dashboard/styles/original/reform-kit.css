@@ -1,0 +1,54 @@
+/* The Original kit of the reform transitions (styles/original/transitions.js, core/reform-draw.js): the chassis, the folding edges, the
+   hardware and the Light plates in the metal of the team. Every rule starts with the theme or with a class of the kit, so no other
+   theme sees it. Colors are the metal tokens, so the metal of the team reaches the pieces. */
+
+/* the chassis behind the squares is a dark lattice of struts, drawn with two sets of lines at an angle */
+html[data-style="original"] .reform-chassis {
+  background-image:
+    repeating-linear-gradient(55deg, transparent 0 46px, var(--reform-strut) 46px 49px),
+    repeating-linear-gradient(-55deg, transparent 0 46px, var(--reform-strut) 46px 49px),
+    repeating-linear-gradient(0deg, transparent 0 150px, var(--reform-strut-dim) 150px 156px);
+}
+
+/* the folding edges, in the metal of the team */
+html[data-style="original"] .reform-seg {
+  background-color: transparent;
+  background-image:
+    radial-gradient(circle at calc(100% - 6px) 50%, var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
+    linear-gradient(180deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+  box-shadow: inset 0 0 0 2px var(--metal-rim);
+}
+html[data-style="original"] .reform-chain-h .reform-seg[style*="right:"] {
+  background-image:
+    radial-gradient(circle at 6px 50%, var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
+    linear-gradient(180deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+}
+html[data-style="original"] .reform-chain-v .reform-seg {
+  background-image:
+    radial-gradient(circle at 50% calc(100% - 6px), var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
+    linear-gradient(90deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+}
+html[data-style="original"] .reform-chain-v .reform-seg[style*="bottom:"] {
+  background-image:
+    radial-gradient(circle at 50% 6px, var(--metal-rim) 0 3px, var(--metal-4) 3px 6px, transparent 6px),
+    linear-gradient(90deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+}
+
+/* the Original hardware, drawn in the metal of the team */
+.rk-rim { fill: var(--metal-rim); }
+.rk-metal { fill: var(--metal-3); }
+.rk-lit { fill: var(--metal-1); }
+.rk-slot { fill: var(--metal-rim); }
+.rk-teeth {
+  fill: none;
+  stroke: var(--metal-4);
+  stroke-width: 7px;
+  stroke-dasharray: 6 6;
+}
+
+/* the Original Light plates: gold plates with a purple rim, a seam where they meet, and four screws in the corners */
+html[data-style="original"] .reform-light-plate {
+  background-image: linear-gradient(180deg, var(--metal-1), var(--metal-3) 28%, var(--metal-5) 52%, var(--metal-3) 76%, var(--metal-2));
+  background-color: transparent;
+  box-shadow: inset 0 0 0 3px var(--metal-rim);
+}

@@ -419,7 +419,7 @@ test('a read asks Sanity, the two boards and the names of the people, writes the
   assert.equal(result.errors, '');
   assert.deepEqual(requestsOf(result.calls), sequence);
   assert.ok(result.text.includes('monday: 9 task(s) read'), result.text);
-  assert.ok(result.text.includes('monday: 9 task(s), 9 new, 0 changed, 0 deleted'), result.text);
+  assert.ok(result.text.includes('monday: 8 task(s), 8 new, 0 changed, 0 deleted'), result.text);
   assert.deepEqual(fs.readdirSync(place.folder).sort(), ['.lock']);
 });
 
@@ -533,7 +533,7 @@ test('status, team, priority, contact, dates, hours and Show on TV come from the
   assert.equal(docs['task-monday-1004'].set.status, 'blocked', 'Stuck');
   assert.equal(docs['task-monday-1005'].set.status, 'in-review');
   assert.equal(docs['task-monday-1004'].set.priority, undefined, 'label 5 is no priority');
-  assert.equal(docs['task-monday-1006'].set.showOnBoard, false, 'Hide keeps it off the TV');
+  assert.equal(docs['task-monday-1006'], undefined, 'Hide is not written at all, because the dataset is public');
   assert.equal(docs['task-monday-1009'].set.status, 'up-next', 'no status is To Do');
   assert.equal(docs['task-monday-1009'].set.showOnBoard, true, 'no Show on TV is Show');
 });
@@ -571,6 +571,34 @@ test('a task whose item has gone is deleted with its draft, and one that is up t
   assert.ok(!mutations.some(mutation => mutation.patch && mutation.patch.id === 'task-monday-2002'), 'an up to date task is not touched');
   assert.ok(result.text.includes('1 deleted'), result.text);
   assert.ok(!JSON.stringify(mutations).includes('showOnTv'), 'the editor switch is never sent');
+});
+
+test('a task set to Hide on Monday is never written: no document, no title, only a count', () => {
+  const place = setup('hide-never', { tools: true });
+  world(place);
+  place.run();
+  assert.equal(documentsOf(place)['task-monday-1006'], undefined);
+  assert.ok(!JSON.stringify(place.writes()).includes('Hidden from the TV'), 'the title of a hidden task is in no write');
+  assert.ok(!JSON.stringify(place.writes()).includes('task-monday-1006'), 'its id is in no write');
+});
+
+test('a task that an earlier run wrote and that now says Hide is deleted with its draft, also when a board was not read to the end', () => {
+  const earlier = { _id: 'task-monday-1006', title: 'Hidden from the TV', department: 'cnc', list: 'open', status: 'up-next', showOnBoard: false, show: true, mondayBoardId: taskBoardId, mondayBoardName: 'Robotics Tasks', old: false };
+  const whole = setup('hide-delete', { tools: true });
+  world(whole, { tasks: [earlier] });
+  const result = whole.run();
+  assert.equal(result.status, 0, result.errors);
+  const mutations = whole.taskMutations();
+  assert.ok(mutations.some(mutation => mutation.delete && mutation.delete.id === 'task-monday-1006'));
+  assert.ok(mutations.some(mutation => mutation.delete && mutation.delete.id === 'drafts.task-monday-1006'));
+  assert.ok(result.text.includes('1 deleted'), result.text);
+
+  const partial = setup('hide-delete-partial', { tools: true });
+  world(partial, { tasks: [earlier, { _id: 'task-monday-9999', title: 'Gone', old: false }] });
+  partial.answer('items-' + doneBoardId, { errors: [{ message: 'Board not found' }] });
+  partial.run();
+  const deleted = partial.taskMutations().filter(mutation => mutation.delete).map(mutation => mutation.delete.id).sort();
+  assert.deepEqual(deleted, ['drafts.task-monday-1006', 'task-monday-1006'], 'a hidden task goes at once, an item that may only be unread stays');
 });
 
 test('a task the older sync wrote loses its older fields once', () => {
@@ -615,6 +643,7 @@ test('monday-status: last read, the error in plain words or none, the reads, the
   assert.equal(patch.set.callsToday, 9, 'six before and three now');
   assert.equal(patch.set.callsDate, todayText);
   assert.equal(patch.set.taskCount, 9);
+  assert.equal(patch.set.hiddenCount, 1, 'the hidden task is counted and not written');
   assert.deepEqual(patch.unset, ['boards', 'hiddenUnassigned', 'connectedAs', 'lastError']);
   assert.deepEqual(patch.set.readings.map(reading => [reading.boardId, reading.boardName, reading.itemsRead]), [[taskBoardId, 'Robotics Tasks', 9], [doneBoardId, 'Completed Tasks', 2]]);
   const build = patch.set.departments.find(entry => entry.name === 'build');

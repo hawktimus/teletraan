@@ -181,11 +181,23 @@ rm -f "$data"/device.json.tmp.* 2> /dev/null || true
   done
 ) > /dev/null 2>&1 &
 
+# The graphics flags. The first two are the default, and force the graphics chip to draw even though the browser
+# lists the 2011 chip as unreliable. If the TV flashes white now and then and the journal has a line "GPU process
+# exited unexpectedly" (journalctl -u teletraan-kiosk), put KIOSK_GRAPHICS=plain in local.env (the browser then
+# chooses by itself), and KIOSK_GRAPHICS=software if the flashes go on (the processor draws everything).
+case $(setting KIOSK_GRAPHICS) in
+  plain) graphics=() ;;
+  software) graphics=(--disable-gpu) ;;
+  *) graphics=(--enable-gpu-rasterization --ignore-gpu-blocklist) ;;
+esac
+
 # --kiosk: full screen with no address bar or tabs
 # --window-size: the 1920 by 1080 framebuffer that display.sh set, not the TV's own size
 # --force-device-scale-factor=1: never zoomed, one dashboard pixel is one TV pixel
 # --disable-features=Translate: no translate prompt
 # --password-store=basic: never asks for a keyring password
+# --enable-logging=stderr, --log-level=2: errors of the browser go to the journal, among them a graphics
+#   process that died, which shows on the TV as a white flash
 # --remote-debugging-port, --remote-debugging-address: the page list at
 #   http://127.0.0.1:9222/json, for watchdog.sh. This machine only: nothing else
 #   on the network can reach it
@@ -205,8 +217,9 @@ exec chromium \
   --password-store=basic \
   --remote-debugging-port=9222 \
   --remote-debugging-address=127.0.0.1 \
-  --enable-gpu-rasterization \
-  --ignore-gpu-blocklist \
+  --enable-logging=stderr \
+  --log-level=2 \
+  "${graphics[@]}" \
   "$url"
 
 # To use Firefox instead of Chromium, install firefox-esr and replace the

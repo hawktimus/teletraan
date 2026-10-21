@@ -116,3 +116,13 @@ html[data-style="cybertron"] .reform-chain-v .reform-seg[style*="bottom:"] {
   background-repeat: no-repeat;
   opacity: .85;
 }
+
+/* the Light plates: gunmetal with a neon edge, a neon line down the seam, and a scan bar over the large panel */
+html[data-style="cybertron"] .reform-light-plate {
+  background-image: linear-gradient(180deg, var(--style-armor-top), var(--style-armor-bottom));
+  border: 3px solid var(--style-neon);
+  box-sizing: border-box;
+}
+.ck-light-seam,
+.ck-light-scan { background: var(--style-neon); }
+.ck-light-seam { transform-origin: 50% 50%; }

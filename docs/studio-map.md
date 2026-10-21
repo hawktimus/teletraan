@@ -53,7 +53,7 @@ Under Coaches only:
 | Pick the theme for a weekday | Look, Theme by day of the week |
 | Change the background of Original | Look, Background |
 | Switch the holiday decorations on a date | Look, Seasonal decorations, Dated rules |
-| Calm the screen | Look, Motion |
+| Calm the screen, or make it lighter for the TV computer | Look, Motion (Full, Light or Calm, and Motion on the TV computer) |
 | Change the logo and the name effect | Look, Logo and name effects |
 | Choose which competition cards show | Competition |
 | Hide an FRC news headline, or choose the news categories | Competition, FRC news |

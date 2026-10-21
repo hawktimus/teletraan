@@ -66,13 +66,20 @@ One run, one password. The tool copies this repository to `~/teletraan-staging` 
 2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-nightly.sh` and `install-reboot.sh`, one after another. They turn on the timers (the watchdog, the nightly backup, the nightly restart and the scheduled reboot among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
 3. A restart of the screen, which is black for about ten seconds.
 
+Run choice 1 once after the update that moved the watchdog and the nightly restart off root. Until then the two timers still run as root from the old unit files, and the new sudoers file is not on the computer. Choice 1 installs the sudoers file (checked with `visudo`), replaces both units with ones that run as the login user, and says "runs as root. It is replaced" when it finds an old one. Running it again changes nothing more. To check afterwards, on the computer:
+
+    systemctl show -p User teletraan-watchdog.service teletraan-nightly.service
+    sudo -l | grep teletraan
+
+The first line should show the login user for both. The second lists the commands the login user may run as root, one unit at a time, with no `*`.
+
 The live tree is never written to, and the last five releases stay on the computer for a rollback. The copy leaves out `.git`, `local.env`, `.env`, `node_modules`, `.DS_Store`, `studio/dist`, `studio/.sanity`, `_inputs` and `_outputs`, so the keys on the computer are never touched or overwritten.
 
 After the copy the tool gives the installer the short hash of this repository. The release number comes from the counter on the Teletraan computer, so the build shows as `v14 · a1b2c3d` everywhere. A folder with no git history has no hash and says so.
 
 The tool refuses to copy from a folder that is not the Teletraan repository, and from a copy that still has a `deploy/` folder: "This copy is older than round 6; update it." Nothing is copied then. The password is asked before anything is copied, so a wrong one costs nothing: "That password was wrong. Choose the same thing again to try another."
 
-The first update that has the mirror (the moving Live preview) needs this tool once, because it adds a unit file, `teletraan-mirror.service`, which only the installer copies into place. The control page's Settings, Update section does not copy unit files. After that, updates from the control page are enough. The installer checks `python3 --version` and skips the unit with a note when python3 is missing. The existing sudoers rule already lets the helper start `teletraan-*.service` units, so nothing in sudoers needs to change.
+The first update that has the mirror (the moving Live preview) needs this tool once, because it adds a unit file, `teletraan-mirror.service`, which only the installer copies into place. The control page's Settings, Update section does not copy unit files. After that, updates from the control page are enough. The installer checks `python3 --version` and skips the unit with a note when python3 is missing. The sudoers file (`computer/sudoers/teletraan-control`) names each unit and each command the helper may run, so a new unit that the helper has to start needs a line there. Choice 1 installs the file again each time.
 
 A computer that pulls from GitHub by itself with the pull timer should not also get files from this tool. Use one. To make the Teletraan computer a copy-only computer, turn the timer off on the computer:
 

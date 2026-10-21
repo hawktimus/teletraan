@@ -18,7 +18,9 @@ computer reads it for our teams and shows two cards on the TV.
   gives how strong the teams of an event are. Both give nothing when Match13 has no numbers.
 
 The cards come in the same windows as the other competition cards. Forecast comes from two days before an event to
-its last day. Chances comes once the first event of the season has begun. Each has a switch on the Competition page in
+its last day. Chances comes once the first event of the season has begun, and only after its switch is turned on: it is off to
+start with, so a new Dashboard Settings does not show it. A Dashboard Settings that already says on keeps showing it until a coach
+switches it off once on the Competition page. Each has a switch on the Competition page in
 Studio, and Preview competition shows both on sample data (`dashboard/data/sample/match13.json`, marked SAMPLE).
 A card with no numbers is not shown at all.
 

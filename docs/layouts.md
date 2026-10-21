@@ -89,6 +89,12 @@ Cybertron have the same layout but not the same frames, and the page draws the f
 step that puts the style on the page (see "Cybertron", "When the style changes"). Minimal has the bar
 layout, so changing to or from it is a change of layout, as above.
 
+## Switches of the address
+
+The dashboard takes switches in its address (the list is at the top of `dashboard/shell.js`). Three of them hold one panel so that a picture can be taken of it: `?panel=<id>` with `team`, `dept`, `list`, `chart`, `screen`, `view`, `layout=bar` and `still=1` (`core/still.js`), which the Studio previews, the screenshot tool and the Status tab of the control page use.
+
+The Display tab of the control page uses `?rowpreview=<one row as JSON>` (`core/row-preview.js`). The row is a row of the rotation list: `{ "view": "prime", "panel": "events", "side": "forecast", "department": "build", "list": "open", "chart": "status", "team": "nova", "part": 1, "photoCount": 4, "secondsPerPhoto": 10 }`, and only `panel` is needed. Other fields are dropped, a value with odd characters or a row longer than 1500 characters makes the row unreadable, and an unreadable row draws an error line and never the live dashboard. The address becomes the held panel address above: the view `robotics` is `general`, a team view gives its team to the row, a Monday row keeps the team of its tasks, and `small=1` also draws the small panel of the row (its `side`, or the first small panel of its view, or the team tile). The picture holds still (`motion=none`) and is redrawn in place when the content changes. Nothing else starts, and `core/row-preview-guard.js` makes the page read only. Add `sample=1` to read the sample content.
+
 ## The screen is a fixed canvas
 
 The screen is always 1920 by 1080 pixels, in every layout, with every style and
@@ -1444,11 +1450,16 @@ same 24 px at each side. The Robotics view plays both in its wide layout.
 its Team document, and how long ago the board was read are at the right end, at 44 px. When the board is older than twice the
 read interval an amber STALE chip stands in the place of the age.
 
-**Department tasks.** The names of the five columns at 36 px, then a window of four rows of 84 px: the status chip (30 px), the
-project at 56 px on one line, or at 44 px on up to two lines when the name is longer than 13 characters, the contact, the
-priority and the Estimated Completion Date at 44 px. A value the board does not have reads Unassigned, No Priority or No Date in
-the quiet color. In a view set to the standard layout the main panel is about 1100 wide, so the project is always on two
-lines at 44 px and Contact and Priority are narrower. Under the window are the open and done counts and, for a list of more than four rows, its place in words,
+**Department tasks.** The names of the five columns at 36 px (STATUS, PROJECT, CONTACT, PRIORITY and DUE DATE, which the board
+calls Estimated Completion Date and which took three lines of the room of the project), then a window of four rows of 84 px: the
+status chip (30 px), the project at 56 px on one line, or at 44 px on up to two lines when the name is longer than 13 characters,
+the contact at 40 px (an owner name, in 250, where Bartholomew is 238, and a longer name wraps and is never cut with dots), the
+priority and the date at 44 px. A value the board does not have reads Unassigned, No Priority or No Date in the quiet color. The
+Robotics view plays this panel in the bar layout (`roboticsWidePanels`), and so does a preview of it: the Studio, the screenshot
+tool and the control page copy, because `core/still.js` makes a wide panel wide unless the address says `layout=standard`. In a view
+set to the standard layout, in the Nova mirror of it and with `?layout=standard` the main panel is about 1100 wide, so the contact
+sits under the status chip in the first column (274 wide), the rows are 96 high (the chip is 48 and the contact 44), the header is 64
+and says DUE, and the project has two full lines at 44 px in the 470 that is left. Four rows end at 448, above the counts at 452. Under the window are the open and done counts and, for a list of more than four rows, its place in words,
 1 OF 3. The list is held for its time, moves up four rows (`scrollPages` in the panel, `scrollCard` in `frame.js`, 600 ms,
 transform only, in full motion) and is held again, up to 20 rows. In Cybertron the body is 532 high, and the counts end at 528.
 

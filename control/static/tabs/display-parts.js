@@ -4,6 +4,7 @@
 
 import { blocksOf, countWhere, durationWords, isNovaRow, isShown, mondayFieldsOf, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
+import { thumbHtml } from './display-preview-parts.js';
 
 const stateWords = { show: 'Will show', skip: 'Skipped', off: 'Off', unknown: 'Not known' };
 const dayWords = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
@@ -120,6 +121,7 @@ export function rowHtml(row, index, last, page) {
     : field('Seconds (6 to 120, empty is ' + page.pageSeconds + ')', '<input type="number" inputmode="numeric" min="6" max="120" step="1" data-field="seconds" value="' + esc(row.seconds === undefined ? '' : row.seconds) + '">');
 
   return '<article class="drow" data-key="' + key + '" data-view="' + esc(row.view) + '" data-shown="' + (isShown(row) ? 'yes' : 'no') + '">' +
+    thumbHtml(titles[row.panel] || row.panel || 'Panel not chosen') +
     '<div class="dhead"><h3><span class="num">' + (index + 1) + '</span> ' + esc(titles[row.panel] || row.panel || 'Panel not chosen') + '</h3>' +
     chipHtml(check, row) + '</div>' +
     '<div class="check-area">' + checkHtml(check) + '</div>' +
@@ -136,6 +138,7 @@ export function rowHtml(row, index, last, page) {
     '<button type="button" class="act quiet" data-action="down"' + (last ? ' disabled' : '') + '>Down</button>' +
     '<button type="button" class="act quiet" data-action="copy">Copy</button>' +
     '<button type="button" class="act quiet" data-action="delete">Delete</button>' +
+    '<button type="button" class="act quiet to-picture" data-action="to-preview">Show the picture</button>' +
     '</div></article>';
 }
 
@@ -192,6 +195,25 @@ export function themeHtml(theme, choices) {
     field('Banner title for Robotics (up to 28 characters)', '<input type="text" maxlength="28" data-theme-title value="' + esc(theme.generalViewTitle) + '">') +
     field('Transition length in seconds (2 to 4)', '<input type="number" inputmode="decimal" min="2" max="4" step="0.5" data-theme-transition value="' + esc(theme.transitionSeconds === null ? '' : theme.transitionSeconds) + '">') +
     '</div><p class="note">The view of a row is in its card above. The theme changes at midnight in the time zone of the Look page.</p></section>';
+}
+
+// ----- motion (a section of its own) -----
+
+const motionWords = [
+  { value: 'full', title: 'Full' },
+  { value: 'light', title: 'Light' },
+  { value: 'calm', title: 'Calm' },
+];
+const kioskWords = [
+  { value: 'light', title: 'Light' },
+  { value: 'full', title: 'Full' },
+];
+
+export function motionHtml(motion) {
+  return '<section class="card"><h2>Motion</h2><div class="fields">' +
+    field('Motion', '<select data-motion-field="motion">' + options(motionWords, motion.motion) + '</select>') +
+    field('Motion on the TV computer', '<select data-motion-field="motionOnKiosk">' + options(kioskWords, motion.motionOnKiosk) + '</select>') +
+    '</div><p class="note">Full plays every movement. Light plays one simple change at each panel and view change. Calm only fades. The TV computer plays Light when Motion is Full, unless the second box says Full, so that it does not freeze. Add ?motion=full to the address of one computer to try Full there.</p></section>';
 }
 
 // ----- what the wall adds by itself -----

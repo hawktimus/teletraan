@@ -9,6 +9,16 @@ import { buildPage, regionOf } from './panels.js';
 import { asTeam } from './teams.js';
 import { mainPlaylist, tidyScreen } from './screens.js';
 import { stillRow } from './still.js';
+import { viewSideSteps } from './views.js';
+import { viewKeys } from '../config.js';
+
+// A page that can be drawn again from the newest content, so a change published in Sanity reaches a held panel in place
+// (core/page-refresh.js asks for it, as it does for the pages of the rotation)
+function refreshable(make) {
+  const page = make();
+  page.rebuild = make;
+  return page;
+}
 
 function failed(error) {
   console.error('The panel could not be drawn', error);
@@ -26,6 +36,18 @@ function pageFor(ask, content) {
   return asTeam(ask.team, () => buildPage(step.panel, content, step.page, step));
 }
 
+// The small panel of a row preview (?rowpreview=): the one the row pairs with it, or else the first small panel of its view, or else the team tile.
+// The standard layout always draws a small frame, so the picture of a row is not left with an empty one.
+async function holdSide(ask, getContent) {
+  const content = getContent();
+  const view = viewKeys.includes(ask.view) ? ask.view : 'general';
+  const first = viewSideSteps(content, view)[0];
+  const panel = ask.side || (first ? first.panel : 'team-tile');
+  if (regionOf(panel) !== 'grid2') return;
+
+  await changePage('grid2', refreshable(() => asTeam(ask.team, () => buildPage(panel, getContent(), 1, { panel: panel }))));
+}
+
 // getContent() returns the newest content. Call after the fixed panels are drawn.
 export async function holdPanel(ask, getContent) {
   try {
@@ -33,9 +55,17 @@ export async function holdPanel(ask, getContent) {
     if (region === null) throw new Error('"' + ask.panel + '" is not a panel in registry.js');
 
     if (region === 'grid1' || region === 'grid2') {
-      await changePage(region, pageFor(ask, getContent()));
+      await changePage(region, refreshable(() => pageFor(ask, getContent())));
     }
     // the banner and the countdown are fixed panels that are on the page already
+
+    if (region === 'grid1' && ask.small) {
+      try {
+        await holdSide(ask, getContent);
+      } catch (error) {
+        console.error('The small panel of the row could not be drawn', error);
+      }
+    }
 
     if (ask.still) frame.tickOnce();
     document.documentElement.dataset.stillReady = '1';

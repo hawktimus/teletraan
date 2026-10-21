@@ -53,7 +53,7 @@ export const listChoices = [{ value: 'open', title: 'Open' }, { value: 'done', t
 
 // What the page reads: the status the Teletraan computer wrote, the tasks it made and the teams, published only
 export const question = `{
-  "status": *[_id == $statusId][0] { lastSyncAt, lastError },
+  "status": *[_id == $statusId][0] { lastSyncAt, lastError, hiddenCount },
   "tasks": *[_type == "task" && source == "monday" && !(_id in path("drafts.**"))] {
     title, source, department, list, status, "team": team->code, contact, priority, dueDate, completedOn, showOnBoard, showOnTv, show, expires
   },
@@ -103,6 +103,12 @@ export function departmentTables(content, team, now = new Date()) {
 export function hiddenCount(content, now = new Date()) {
   const known = content.tasks.filter(task => departments.some(entry => entry.value === task.department));
   return known.length - boardTasks(content, now).length;
+}
+
+// The tasks that say Hide in Monday. The computer counts them and does not write them (the dataset is public), so the
+// page can say how many there are and no more.
+export function hiddenOnMonday(status) {
+  return isRecord(status) && Number.isInteger(status.hiddenCount) && status.hiddenCount > 0 ? status.hiddenCount : 0;
 }
 
 // The tasks on the TV that have no team: they count for both teams

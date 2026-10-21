@@ -325,7 +325,8 @@ test('with Node the document lists the next events of each calendar, SHOWN or HI
   assert.equal(group.hiddenCount, 3);
   assert.equal(group.occurrences.length, 7);
   assert.deepEqual(group.occurrences.map(event => event._key), ['o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7']);
-  assert.deepEqual(group.occurrences.map(event => event.title), ['Pre-Season Kickoff', 'Pre-Season Meeting', 'Pre-Season Meeting', 'Team meeting', 'Pre-Season Meeting', 'Pre-Season Meeting', 'Food drive']);
+  // The dataset is public: only the events the screen shows keep their title
+  assert.deepEqual(group.occurrences.map(event => event.title), ['Pre-Season Kickoff', undefined, undefined, 'Team meeting', 'Pre-Season Meeting', 'Pre-Season Meeting', undefined]);
 
   const hidden = group.occurrences.filter(event => !event.shown);
   assert.deepEqual(hidden.map(event => event.rule), ['Hide Pre-Season', 'Hide Pre-Season', 'Hide Food drive in group']);
@@ -411,10 +412,27 @@ test('each listed event has its day like 2026-10-09, the first day in the time z
   const [group] = place.document().calendars;
   group.occurrences.forEach(event => {
     assert.match(event.day, /^\d{4}-\d{2}-\d{2}$/);
-    assert.deepEqual(Object.keys(event), ['_key', 'title', 'date', 'day', 'time', 'shown', 'rule', 'start', 'end']);
+    assert.deepEqual(Object.keys(event), event.shown ? ['_key', 'title', 'date', 'day', 'time', 'shown', 'rule', 'start', 'end'] : ['_key', 'date', 'day', 'time', 'shown', 'rule', 'start', 'end']);
   });
   const kickoff = group.occurrences.find(event => event.title === 'Pre-Season Kickoff');
   assert.equal(kickoff.day, noon(1).toISOString().slice(0, 10), 'noon in UTC is the early morning in New York, on the same date');
+});
+
+test('the title of an event the screen does not show is not in the document at all, only the counts and the shown titles', () => {
+  const place = setup('private', { localEnv: secretEnv, files: { 'sanity.json': sanityAnswer }, calendars: { 'group.ics': groupCalendar }, sync: 'group|2026-10-09T15:00:02Z|\n' });
+  assert.equal(place.run('calendar-status.sh').status, 0);
+
+  const [group] = place.document().calendars;
+  const hidden = group.occurrences.filter(event => !event.shown);
+  assert.equal(hidden.length, group.hiddenCount, 'the count of hidden events is still written');
+  assert.ok(hidden.length > 0);
+  hidden.forEach(event => assert.ok(!('title' in event), 'a hidden event has no title key'));
+  const text = JSON.stringify(place.document());
+  // 'Food drive' is hidden by a rule, whose name the editors typed. The title of the event itself must not be there.
+  const hiddenTitles = ['Food drive', 'Pre-Season Meeting'].filter(title => !group.occurrences.some(event => event.shown && event.title === title));
+  assert.deepEqual(hiddenTitles, ['Food drive']);
+  assert.ok(!text.includes('"title":"Food drive"'));
+  assert.ok(group.occurrences.filter(event => event.shown).every(event => typeof event.title === 'string' && event.title !== ''));
 });
 
 test('a long title is cut, a title with line breaks or quotes stays one safe line, and an untitled event says so', () => {

@@ -116,8 +116,10 @@ test('the five columns, and the words of a value the board does not have: Unassi
   assert.deepEqual([rows[1].contact, rows[1].priority, rows[1].date], ['Unassigned', 'No Priority', 'No Date']);
 
   const html = htmlOf('monday-department', contentOf(tasks), { department: 'build', list: 'open' });
-  const heads = Array.from(html.match(/<div class="columns">([\s\S]*?)<\/div>/)[1].matchAll(/<span>([^<]*)<\/span>/g)).map(match => match[1]);
-  assert.deepEqual(heads, ['STATUS', 'PROJECT', 'CONTACT', 'PRIORITY', 'ESTIMATED COMPLETION DATE']);
+  // The last name is DUE DATE on the TV (the board says Estimated Completion Date, which took three lines), and DATE is
+  // hidden in the standard layout by panels/monday-department/panel.css
+  const heads = Array.from(html.match(/<div class="columns">([\s\S]*?)<\/div>/)[1].matchAll(/<span>((?:[^<]|<span[^>]*>[^<]*<\/span>)*)<\/span>/g)).map(match => match[1].replace(/<[^>]*>/g, ''));
+  assert.deepEqual(heads, ['STATUS', 'PROJECT', 'CONTACT', 'PRIORITY', 'DUE DATE']);
   assert.ok(html.includes('<span class="contact none">Unassigned</span>') && html.includes('<span class="priority priority-none">No Priority</span>') && html.includes('<span class="date none">No Date</span>'));
 });
 
@@ -288,7 +290,7 @@ test('the header says how old the board is, and an amber chip says STALE when it
 
 // The look
 
-const exceptions = [30, 36]; // the chips, and the labels of the columns and the legend, which the order for the panels allows
+const exceptions = [30, 36, 40]; // the chips, the labels of the columns and the legend, and the first name of a contact (40, an owner name), which the order for the panels allows
 
 test('the stylesheets use no text under 44px but the chips and the labels, no colour of their own and nothing that moves', () => {
   ['panels/monday-department/panel.css', 'panels/monday-charts/panel.css', 'monday.css'].forEach(file => {
@@ -303,6 +305,33 @@ test('the stylesheets use no text under 44px but the chips and the labels, no co
   ['panels/monday-department/panel.js', 'panels/monday-charts/panel.js'].forEach(file => {
     assert.equal(/animate\(|requestAnimationFrame|setTimeout|setInterval/.test(read(file)), false, file + ' has animation code');
   });
+});
+
+
+test('the standard layout stacks the contact under the status, has rows of 96 and says DUE, and the bar layout has room for a first name', () => {
+  const css = read('panels/monday-department/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  // the rules of the standard layout for a selector, as one text (a selector may be in a list, and in more than one rule)
+  const standard = selector => Array.from(css.matchAll(new RegExp('html\\[data-layout="standard"\\] \\.monday-department ' + selector.replace(/[.>:()]/g, '\\$&') + ' \\{([^}]*)\\}', 'g'))).map(match => match[1]).join(';');
+  const rule = (selector, name) => (standard(selector).match(new RegExp('(?:^|[;\\s])' + name + ':\\s*([^;]+);')) || [])[1];
+
+  // four rows of 96 are the window, the step of the scroll and, with the header of 64, end where the counts begin (452)
+  assert.equal(rule('.row', 'height'), '96px');
+  assert.equal(rule('.rows-window', 'height'), '384px');
+  assert.equal(rule('.rows-window', 'top'), '64px');
+  assert.ok(/html\[data-layout="standard"\] \.monday-department \{ --scroll-step: 384px; \}/.test(css));
+  assert.ok(64 + 4 * 96 <= 452, 'the rows end above the counts');
+  // the contact is in the first column, under the chip: 48 and 44 make 92 of the 96
+  assert.ok(/\.row > :nth-child\(3\)[^{]*\{ grid-column: 1; grid-row: 2; \}/.test(css), 'the contact is under the status');
+  assert.equal(rule('.row', 'grid-template-rows'), '48px 44px');
+  assert.ok(/grid-template-columns: 274px minmax\(0, 1fr\) 180px 150px;/.test(css), 'the project has what the three others leave');
+  assert.equal(rule('.project', '-webkit-line-clamp'), '2', 'a project has two full lines');
+  assert.ok(/\.date-more \{ display: none; \}/.test(css), 'DATE is dropped in the narrow layout, DUE stays');
+  // a first name is 40 and wraps, in both layouts; it is never cut with dots
+  const contact = css.match(/^\.monday-department \.contact \{([^}]*)\}/m)[1];
+  assert.ok(/font: 500 40px/.test(contact) && /overflow-wrap: anywhere/.test(contact) && /white-space: normal/.test(contact) && !/ellipsis/.test(contact));
+  assert.ok(/grid-template-columns: 232px minmax\(0, 1fr\) 250px 180px 180px;/.test(css), 'the bar layout has 250 for a name (Bartholomew is 238 at 40px)');
+  // No Priority and No Date take two lines and are not cut
+  assert.ok(/\.monday-department \.priority,\s*\.monday-department \.date \{\s*white-space: normal;/.test(css));
 });
 
 

@@ -302,6 +302,26 @@ html[data-kit="on"][data-motion="full"] .kit-side::before   { animation: kit-fli
 /* The brackets breathe, there and back */
 html[data-kit="on"][data-motion="full"] .kit-brackets       { animation: kit-breathe calc(5.6s * var(--pace)) ease-in-out calc(-1.7s * var(--pace)) infinite alternate; }
 
+/* The lines of the kit stand still while a transition plays (core/busy.js writes data-moving) and in Light */
+html[data-kit="on"][data-motion="full"][data-moving] .kit-strip::after,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-side::after,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-ticker::after,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-strip::before,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-pane::before,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-scan::before,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-ticker::before,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-side::before,
+html[data-kit="on"][data-motion="full"][data-moving] .kit-brackets { animation: none; }
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-strip::after,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-side::after,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-ticker::after,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-strip::before,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-pane::before,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-scan::before,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-ticker::before,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-side::before,
+html[data-kit="on"][data-motion="full"][data-weight="light"] .kit-brackets { animation: none; }
+
 /* The page burst lasts .3 s (kitBurstSeconds in frame.js). frame.js adds .bursting
    to the layer while it plays. The bars start a little apart. */
 html[data-kit="on"][data-motion="full"] .kit-pane.bursting i { animation: kit-burst calc(.3s * var(--pace)) steps(1) both; }

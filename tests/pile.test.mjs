@@ -805,6 +805,7 @@ async function onPage(page, run) {
   globalThis.window = {
     getComputedStyle: (element, pseudo) => (pseudo ? { content: element.beforeContent } : { backgroundColor: element.background, backgroundImage: 'none' }),
   };
+  pileModule.forgetScreenPlace(); // each page has its own screen, and the place of the last one is not it
   try {
     return await run();
   } finally {

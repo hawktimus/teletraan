@@ -294,40 +294,39 @@ if (!havePython) {
     assert.equal(decodeWithScript(panel.png)[4], 'False');
   });
 
-  test('mirror.py with a black PNG says black, tries the screenshots, and writes what it knows of the picture', async () => {
-    const browser = await fakeBrowser([big, big, big], { png: blackPng, shot: big });
-    const data = path.join(work, 'd' + count++);
-    fs.mkdirSync(data);
-    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
-    const folder = path.join(data, 'mirror');
-    const state = await until(() => { const found = readState(folder); return found && found.mode === 'screenshots' && found.sampled ? found : null; });
-    assert.ok(state, 'a sampled state in the other mode');
-    assert.equal(state.state, 'black');
-    assert.equal(state.sampled, true);
-    assert.equal(typeof state.bytes, 'number');
-    assert.equal(state.tried.screencast, 'ok', 'the screencast frames were big');
-    assert.ok(browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
-    const png = browser.seen.messages.find(message => message.method === 'Page.captureScreenshot' && message.params.format === 'png');
-    assert.equal(png.params.clip.scale, 0.25);
-    const ended = await run.done;
-    assert.match(ended.said, /the page is black in the screencast, trying screenshots/);
-    browser.server.close();
-  });
-
-  test('mirror.py with a coloured PNG says ok, stays on the screencast and takes one PNG in the first 30 seconds', async () => {
-    const browser = await fakeBrowser([big, big, big], { png: colourPng });
+  test('mirror.py with small frames and a black PNG tries the screenshots, reads one PNG, says black and tries the screencast again', async () => {
+    const browser = await fakeBrowser([tiny, tiny, tiny], { png: blackPng, shot: big });
     const data = path.join(work, 'd' + count++);
     fs.mkdirSync(data);
     const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
     const folder = path.join(data, 'mirror');
     const state = await until(() => { const found = readState(folder); return found && found.sampled ? found : null; });
+    assert.ok(state, 'a sampled state');
+    assert.equal(state.state, 'black');
+    assert.equal(typeof state.bytes, 'number');
+    assert.equal(state.tried.screencast, 'black', 'the screencast frames were small');
+    assert.ok(browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
+    const png = browser.seen.messages.find(message => message.method === 'Page.captureScreenshot' && message.params.format === 'png');
+    assert.equal(png.params.clip.scale, 0.25);
+    const ended = await run.done;
+    assert.match(ended.said, /screencast was black, using screenshots/);
+    assert.match(ended.said, /the page is black in screenshots, trying the screencast/);
+    browser.server.close();
+  });
+
+  test('mirror.py takes no screenshot of any kind while the screencast gives good frames', async () => {
+    const browser = await fakeBrowser([big, big, big], { png: colourPng });
+    const data = path.join(work, 'd' + count++);
+    fs.mkdirSync(data);
+    const run = runMirror(browser.port, data, { MIRROR_IDLE: '3' });
+    const folder = path.join(data, 'mirror');
+    const state = await until(() => { const found = readState(folder); return found && found.fps !== undefined ? found : null; });
     assert.ok(state);
     assert.equal(state.state, 'ok');
     assert.equal(state.mode, 'screencast');
-    assert.equal(state.width, 48, 'the size of the probe when a frame has no size of its own');
+    assert.equal(state.sampled, false, 'no PNG was read');
     await run.done;
-    const pngs = browser.seen.messages.filter(message => message.method === 'Page.captureScreenshot' && message.params.format === 'png');
-    assert.equal(pngs.length, 1);
+    assert.ok(!browser.seen.messages.some(message => message.method === 'Page.captureScreenshot'), 'a screenshot makes the browser draw the page again, which can flash the TV');
     assert.ok(!browser.seen.messages.some(message => message.method === 'Page.stopScreencast'));
     browser.server.close();
   });
@@ -419,9 +418,10 @@ test('the unit starts only on demand, as the login user', () => {
   assert.ok(install.includes('teletraan-mirror.service') && install.includes('python3 --version'));
 });
 
-test('the sudoers rule already allows starting this unit, and only starting', () => {
-  const rule = read('computer/sudoers/teletraan-control').split('\n').find(line => line.includes('NOPASSWD:') && line.includes('systemctl start teletraan-*.service'));
-  assert.ok(rule);
+test('the sudoers file names this unit for starting, and only starting', () => {
+  const lines = read('computer/sudoers/teletraan-control').split('\n');
+  assert.ok(lines.some(line => line.includes('/usr/bin/systemctl start teletraan-mirror.service')));
+  assert.ok(!lines.some(line => /(stop|restart|enable) teletraan-mirror/.test(line)));
   const helper = read('computer/scripts/control-helper.sh');
   assert.ok(helper.includes('as_root "$systemctl_bin" start teletraan-mirror.service'));
   assert.ok(!/systemctl_bin" (stop|restart) teletraan-mirror/.test(helper));

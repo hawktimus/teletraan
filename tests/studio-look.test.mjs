@@ -50,7 +50,7 @@ test('the page has the six sections of the owner in order, then Advanced, each w
     'Theme by day of the week',
     'Background',
     'Seasonal decorations (subthemes and packs)',
-    'Motion (full or calm)',
+    'Motion (full, light or calm)',
     'Frame polish',
     'Logo and name effects',
     'Advanced',

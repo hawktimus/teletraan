@@ -37,9 +37,9 @@ export const sections = [
   },
   {
     id: 'motion',
-    title: 'Motion (full or calm)',
-    says: 'How much the screen moves: calm only fades panels, and speed sets how long things take.',
-    fields: ['motion', 'speed'],
+    title: 'Motion (full, light or calm)',
+    says: 'How much the screen moves: light plays one simple change at each panel change, calm only fades panels, and speed sets how long things take.',
+    fields: ['motion', 'motionOnKiosk', 'speed'],
   },
   {
     id: 'polish',

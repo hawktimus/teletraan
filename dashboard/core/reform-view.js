@@ -13,16 +13,16 @@ import * as frame from '../frame.js';
 import { bake, rectOf, screenOrigin, slice } from './reform-bake.js';
 import { drawRun, fillCover, fillSquares, revealSquares } from './reform-draw.js';
 import { drawHawk, teamOfLogo } from './reform-hawk.js';
-import { gridNameOf, randomOf, reformTimes } from './reform-plan.js';
+import { gridNameOf, randomOf, reformTimes, viewGridOf } from './reform-plan.js';
 import { kitNow, layerOf, markReady, mount, nextFrame, playTracks, scaleNow, takeRun, until } from './reform-run.js';
 
 const turnMs = 4; // milliseconds of one turn of the copying, so that no frame is long
 const squaresMs = 4; // milliseconds of one turn of giving the squares their content and showing them
 const squaresPerFrame = 8; // and the most squares shown in one frame, shortly before the turn
-const otherRegions = ['grid2', 'ticker']; // the areas that wait for the page to be changed under the cover
-const regionWait = 1200; // milliseconds to wait for them to have chosen their pages
+export const otherRegions = ['grid2', 'ticker']; // the areas that wait for the page to be changed under the cover
+export const regionWait = 1200; // milliseconds to wait for them to have chosen their pages
 const restWait = 8000; // milliseconds to wait for the areas to stop changing page
-const reloadWait = 8000; // how long the screen stays covered for a page that is about to reload
+export const reloadWait = 8000; // how long the screen stays covered for a page that is about to reload
 
 // The parts of the page that turn, by role, with the elements that can be that part in each layout
 const roles = [
@@ -60,7 +60,7 @@ export function regionsOf(before, after, seed) {
     if (!to) return;
 
     const grid = role === 'side' ? 'side' : gridNameOf(to.id, to.rect);
-    list.push({ role: role, from: from.rect, to: to.rect, grid: grid, seed: Math.floor(random() * 4294967296) });
+    list.push({ role: role, from: from.rect, to: to.rect, grid: viewGridOf(grid), seed: Math.floor(random() * 4294967296) });
   });
   return list;
 }
@@ -75,7 +75,7 @@ export function stageStops() {
   return [[0, 0.001], [reformTimes.tighten[0] - 1, 0.001, 'linear'], [reformTimes.tighten[0], 1], [reformTimes.totalMs, 1]];
 }
 
-async function waitForRest(busyNow) {
+export async function waitForRest(busyNow) {
   const until = performance.now() + restWait;
   while (performance.now() < until) {
     if (busyNow()) return false;

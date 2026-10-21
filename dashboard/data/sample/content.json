@@ -86,7 +86,7 @@
     "groupEventsByKind": false,
     "competitionMode": "auto",
     "competitionTimeline": true, "competitionLastSeason": true, "competitionRank": true, "competitionNextMatch": true,
-    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true, "competitionPreview": true, "competitionMatches": true, "competitionRecap": true, "competitionForecast": true, "competitionQualify": true, "competitionTeamMetrics": true, "competitionCompare": true,
+    "competitionResults": true, "competitionAlliance": true, "competitionDistrict": true, "competitionPreview": true, "competitionMatches": true, "competitionRecap": true, "competitionForecast": true, "competitionQualify": false, "competitionTeamMetrics": true, "competitionCompare": true,
     "mondayBoards": [],
     "mondayShowOwners": false
   },

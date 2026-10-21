@@ -26,6 +26,10 @@ export const reformTimes = {
   rideEnd: 2050, // the hawk is standing again as the other team's by here
 };
 
+// The Light transitions (core/reform-light.js) have no skeleton of three seconds: the plates close, the page changes under
+// them and they open. Times in milliseconds at normal speed. They are never longer than the shortest heavy transition.
+export const lightTimes = { closeMs: 420, openMs: 420 };
+
 export const reformSeconds = { min: 2, max: 4, start: 3 };
 
 // How many times longer than the skeleton a transition of this many seconds is
@@ -42,6 +46,20 @@ export const grids = {
   banner: { cols: 16, rows: 1 },
   ticker: { cols: 16, rows: 1 },
 };
+
+// The view transition draws four or five regions at once, so its grids are coarser: about 70 squares in all instead of 130. A run
+// may not animate more than this many elements (animatedLimit), which tests/motion/reform.mjs checks. The Original panel
+// transition with its cells is the biggest of the panel runs.
+export const viewGrids = {
+  main: { cols: 8, rows: 4 },
+  side: { cols: 3, rows: 6 },
+  wide: { cols: 4, rows: 4 },
+  banner: { cols: 10, rows: 1 },
+  ticker: { cols: 10, rows: 1 },
+};
+Object.keys(viewGrids).forEach(name => { grids['view-' + name] = viewGrids[name]; });
+export const viewGridOf = name => 'view-' + name;
+export const animatedLimit = { panel: 400, view: 500 };
 
 // The regions of the page that turn in a view transition, by the id of the element, and the grid of each. A region
 // the layout does not have has no size and is left out (reformRegions).
@@ -211,6 +229,26 @@ export function squareStops(square, from = { dx: 0, dy: 0, sx: 1, sy: 1 }) {
     [square.startMs + squareTurnMs, at(0, 180, 1, 0)],
     [reformTimes.totalMs, at(0, 180, 1, 0)],
   ];
+}
+
+// A steel plate (the Foundry kit): the square slides out of its rack along the line it turns on, turns over while it is out and is
+// driven back in by the easing it is given (slam). The shade is dark while it is out.
+export function plateStops(square, from, slam) {
+  const sideways = square.axis === 'y';
+  const reach = Math.round((sideways ? square.w : square.h) * 0.3);
+  const turn = 'rotate' + square.axis.toUpperCase();
+  const round = value => Math.round(value * 100) / 100;
+  const at = (slide, angle, travel) => 'translate3d(' + round(from.dx * travel + (sideways ? slide : 0)) + 'px,' + round(from.dy * travel + (sideways ? 0 : slide)) + 'px,0px) ' + turn + '(' + angle + 'deg) scale(' +
+    round(1 + (from.sx - 1) * travel) + ',' + round(1 + (from.sy - 1) * travel) + ')';
+  const start = square.startMs;
+
+  return {
+    transform: [
+      [0, at(0, 0, 1)], [start, at(0, 0, 1), 'ease-in-out'], [start + 130, at(reach, 0, 0.7), 'ease-in-out'],
+      [start + 260, at(reach, 180, 0.3), slam], [start + squareTurnMs, at(0, 180, 0)], [reformTimes.totalMs, at(0, 180, 0)],
+    ],
+    shade: [[0, 0], [start, 0, 'ease-in'], [start + 130, 0.45], [start + 260, 0.45, 'ease-out'], [start + squareTurnMs, 0], [reformTimes.totalMs, 0]],
+  };
 }
 
 // The squares come apart and lock again. Each square sits in a cell. While its turn runs the cell slides out from the middle of the
@@ -519,6 +557,8 @@ export function hiddenStops() {
 // a team, a theme) and a Monday card are the swap's, and a view transition only goes with a look that is held for it.
 export function kindToPlay(kind, context) {
   if (context.motion !== 'full' || context.busy || context.running || context.slow || context.off) return '';
+  // Light has no swap: a look that goes on, or a Monday card, is changed under the plates of the view transition
+  if (context.light === true && kind === 'reform' && (context.looked || context.monday)) return 'reformView';
   if (kind === 'reform') return context.looked || context.monday ? '' : 'reform';
   if (kind === 'reformView') return context.looked ? 'reformView' : '';
   return '';

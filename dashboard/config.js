@@ -38,7 +38,7 @@ export {
   defaultPhotoRow, screenLimits, viewKeys, scheduledThemeIds, defaultThemeByWeekday, viewIds, viewTeams,
   viewLimits, viewLayoutNames, countdownPlaces, viewColors, defaultViews, familyPanels,
 } from './config-lists.js';
-export { backgrounds } from './config-lists.js';
+export { backgrounds, kioskMotions, motions } from './config-lists.js';
 export { defaultSettings, defaultThemeSettings } from './config-settings.js';
 export {
   demoWindowSeconds, demoSkewSeconds, demoMaxSteps, demoDefaultSeconds, demoPlaceholderText, hiddenAdvanceSeconds,

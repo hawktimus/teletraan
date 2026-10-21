@@ -488,7 +488,8 @@ test('seven calendars of 40 events with long titles and long rule names make a d
     assert.ok(calendar.eventCount >= 58 && calendar.eventCount <= 60, 'the count is of every event: ' + calendar.eventCount);
     calendar.occurrences.forEach(event => {
       assert.match(event.day, /^\d{4}-\d{2}-\d{2}$/);
-      assert.equal(event.title, 'A'.repeat(60) + '...');
+      // A hidden event has no title, because the dataset is public
+      assert.equal(event.title, event.shown ? 'A'.repeat(60) + '...' : undefined);
       assert.equal(event.rule, 'R'.repeat(60) + '...');
     });
   });
@@ -572,15 +573,21 @@ test('a long title is never cut through the middle of an emoji, so the document 
     fs.mkdirSync(path.join(folder, 'calendars'), { recursive: true });
     fs.writeFileSync(path.join(folder, 'calendars', 'team.ics'), lines(item[0]));
     fs.writeFileSync(path.join(folder, 'sync.txt'), 'team|2026-10-09T15:00:02Z|\n');
+    // First with the rule, which hides the event (the list keeps no title for it), then with no rule, which shows it
     fs.writeFileSync(path.join(folder, 'answer.json'), JSON.stringify({ result: { calendarFilters: [{ name: 'e'.repeat(59) + '\u{1F600}\u{1F600}', action: 'hide', words: ['x'.repeat(5)] }], settings: { calendars: [] } } }));
+    const hiddenRun = spawnSync(process.execPath, [helper, 'build', path.join(folder, 'answer.json'), path.join(folder, 'sync.txt'), path.join(folder, 'calendars')], { encoding: 'utf8' });
+    assert.equal(hiddenRun.status, 0, hiddenRun.stderr);
+    const [hiddenEvent] = JSON.parse(hiddenRun.stdout).calendars[0].occurrences;
+    assert.equal(hiddenEvent.title, undefined, 'a hidden event has no title ' + index);
+    assert.equal(hiddenEvent.rule, 'e'.repeat(59) + '...', 'a rule name is cut the same way');
+
+    fs.writeFileSync(path.join(folder, 'answer.json'), JSON.stringify({ result: { calendarFilters: [], settings: { calendars: [] } } }));
     const result = spawnSync(process.execPath, [helper, 'build', path.join(folder, 'answer.json'), path.join(folder, 'sync.txt'), path.join(folder, 'calendars')], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
-
     const [event] = JSON.parse(result.stdout).calendars[0].occurrences;
     assert.equal(event.title, item[1], 'title ' + index);
-    assert.equal(event.rule, 'e'.repeat(59) + '...', 'a rule name is cut the same way');
-    assert.ok(!brokenHalf.test(event.title + event.rule), 'no broken character in the text ' + index);
-    assert.ok(!/\\ud[89a-f][0-9a-f]{2}/i.test(result.stdout), 'JSON escapes only a half of an emoji, so none may be in the document ' + index);
+    assert.ok(!brokenHalf.test(event.title + hiddenEvent.rule), 'no broken character in the text ' + index);
+    assert.ok(!/\\ud[89a-f][0-9a-f]{2}/i.test(result.stdout + hiddenRun.stdout), 'JSON escapes only a half of an emoji, so none may be in the document ' + index);
   });
 });
 

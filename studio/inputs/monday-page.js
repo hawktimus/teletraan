@@ -11,7 +11,7 @@ import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { Link } from 'sanity/router';
 import {
-  contentOf, controlLink, countLine, departmentTables, departments, generalCount, hiddenCount, lastReadLine, listChoices,
+  contentOf, controlLink, countLine, departmentTables, departments, generalCount, hiddenCount, hiddenOnMonday, lastReadLine, listChoices,
   mondayStatusId, question, rotationPath, teamChoices, tvPreview, words,
 } from './monday-page-parts.js';
 
@@ -182,6 +182,7 @@ export function MondayPage() {
   const read = lastReadLine(state.status, now);
   const tables = departmentTables(state.content, team, now);
   const hidden = hiddenCount(state.content, now);
+  const hiddenInMonday = hiddenOnMonday(state.status);
   const general = generalCount(state.content, now);
 
   const body = state.loading
@@ -193,7 +194,7 @@ export function MondayPage() {
         h('fieldset', { key: 'team', style: { border: 'none', padding: 0, margin: '0 0 8px', minWidth: 0 } },
           h('legend', { style: styles.label }, words.teamLabel),
           h('div', { style: styles.teams }, teamChoices.map(entry => teamButton(entry, team, setTeam)))),
-        h('p', { key: 'help', style: styles.muted }, words.teamHelp + (general > 0 ? ' ' + general + ' of the tasks have no team.' : '') + (hidden > 0 ? ' ' + hidden + ' hidden from the TV.' : '')),
+        h('p', { key: 'help', style: styles.muted }, words.teamHelp + (general > 0 ? ' ' + general + ' of the tasks have no team.' : '') + (hidden > 0 ? ' ' + hidden + ' hidden from the TV.' : '') + (hiddenInMonday > 0 ? ' ' + hiddenInMonday + ' say Hide in Monday and are not kept here.' : '')),
         h('div', { key: 'tiles', style: styles.tiles }, tables.map(tileOf)),
         h('div', { key: 'departments' }, tables.map(departmentBlock)),
         h('div', { key: 'preview' }, previewBlock(state.content, now, choice, change => setChoice(Object.assign({}, choice, change)))),

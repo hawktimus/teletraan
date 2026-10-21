@@ -89,9 +89,13 @@ function gear(name, cx, cy, outer, teeth, seconds, direction) {
 
 // A piston: a cylinder that stays and a rod that strokes in and out by a few pixels. side is -1 for the left
 // edge of the frame and 1 for the right edge. seconds is how long one stroke back and forth takes.
+// The rod is an svg of its own, because a transform that moves a shape inside an svg makes the browser lay the whole page out
+// again on every frame, and one that moves an svg is only a move of its picture.
 function piston(x, y, side, seconds, delay) {
-  return `<svg class="fa-piston" style="left: ${number(x)}px; top: ${number(y)}px; --stroke: ${seconds}s; --wait: ${delay}s;" width="22" height="150" viewBox="0 0 22 150">
+  const place = `style="left: ${number(x)}px; top: ${number(y)}px; --stroke: ${seconds}s; --wait: ${delay}s;" width="22" height="150"`;
+  return `<svg class="fa-piston" ${place} viewBox="0 0 22 150">
       <rect class="fa-piston-body" x="${side < 0 ? 4 : 2}" y="0" width="16" height="96" rx="3"/>
+    </svg><svg class="fa-piston fa-piston-moving" ${place} viewBox="0 0 22 150">
       <rect class="fa-piston-rod" x="${side < 0 ? 8 : 6}" y="70" width="8" height="70"/>
     </svg>`;
 }

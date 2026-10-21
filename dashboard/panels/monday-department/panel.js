@@ -1,6 +1,6 @@
 // Department tasks: the tasks of one department of the Monday boards, in one list (Open or Done), for both teams or one.
 // The row of the rotation says which: page is { team, department, list }. core/monday-views.js works out the rows and their
-// order. The table has five columns: Status, Project, Contact, Priority and Estimated Completion Date. With more than four
+// order. The table has five columns: Status, Project, Contact, Priority and Due Date (Estimated Completion Date on the board). With more than four
 // rows the list holds, then moves up four rows and holds again (scrollPages, which core/schedule.js reads, and scrollCard in
 // frame.js). A department with nothing in the list has nothing to show, and the rotation leaves the row out.
 
@@ -21,7 +21,9 @@ export function scrollPages(content, page) {
 // A project name longer than this is drawn at 44px on up to two lines, and a shorter one at the body size on one
 const shortProject = 13;
 
-const columns = ['STATUS', 'PROJECT', 'CONTACT', 'PRIORITY', 'ESTIMATED COMPLETION DATE'];
+// The name of the last column is DUE DATE here (the board calls it Estimated Completion Date), because its three lines took
+// the room of the project. The standard layout, which is narrower, drops DATE as well (panel.css).
+const columns = ['STATUS', 'PROJECT', 'CONTACT', 'PRIORITY', 'DUE<span class="date-more"> DATE</span>'];
 
 function cell(name, text, empty) {
   return `<span class="${name}${text === empty ? ' none' : ''}">${escapeHtml(text)}</span>`;

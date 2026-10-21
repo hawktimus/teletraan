@@ -12,9 +12,23 @@
 
 const reasons = new Set();
 
+// While a reason holds the screen the page says so (data-moving), and the idle sweeps and sprites that run all day rest
+// (frame.css): a computer that is changing the whole screen should not also be drawing them.
+function writeMoving() {
+  if (typeof document === 'undefined' || !document.documentElement) return;
+
+  const page = document.documentElement;
+  if (reasons.size > 0) {
+    if (!('moving' in page.dataset)) page.dataset.moving = '';
+  } else if ('moving' in page.dataset) {
+    delete page.dataset.moving;
+  }
+}
+
 export function setBusy(on, reason = 'transition') {
   if (on === true) reasons.add(reason);
   else reasons.delete(reason);
+  writeMoving();
 }
 
 // True while any reason holds the effects

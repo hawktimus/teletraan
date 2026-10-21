@@ -1,7 +1,8 @@
 #!/bin/bash
 # Usage: nightly.sh   (started by teletraan-nightly.timer)
-# The nightly restarts. teletraan-nightly.timer runs it as root at 04:00 every
-# day and again at 04:10 on Sundays (kiosk time, the time zone of the Teletraan computer).
+# The nightly restarts. teletraan-nightly.timer runs it as the login user at 04:00 every
+# day and again at 04:10 on Sundays (kiosk time, the time zone of the Teletraan computer). The restart and the
+# reboot go through sudo -n, which computer/sudoers/teletraan-control allows for those two commands only.
 #   about 04:00   restarts the screen (teletraan-kiosk)
 #   about 04:10   on a Sunday, reboots the Teletraan computer
 # Either is skipped when a presentation is booked to start within the next hour
@@ -16,6 +17,7 @@ set -euo pipefail
 # Seconds. A talk that began up to this long ago may still be running.
 look_ahead=3600
 look_back=7200
+systemctl_bin=${TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl}
 
 say() {
   echo "nightly: $*"
@@ -70,8 +72,8 @@ esac
 
 if [ "$job" = kiosk ]; then
   say "restarting teletraan-kiosk."
-  systemctl restart teletraan-kiosk
+  sudo -n "$systemctl_bin" restart teletraan-kiosk.service
 else
   say "rebooting the Teletraan computer."
-  systemctl reboot
+  sudo -n "$systemctl_bin" reboot
 fi

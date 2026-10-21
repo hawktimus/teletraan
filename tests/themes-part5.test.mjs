@@ -157,7 +157,7 @@ await test('no filter, blur or shadow is written in the theme folders, the art o
 });
 
 await test('calm and no motion draw the backgrounds, the gears and the pistons still', () => {
-  assert.ok(read('dashboard/base.css').includes('html:not([data-motion="full"]) #theme-bg * { animation: none; }'));
+  assert.ok(read('dashboard/base.css').includes('html:not([data-motion="full"]) #theme-bg *,\nhtml[data-weight="light"] #theme-bg * { animation: none; }'));
   assert.ok(css('foundry').includes('html:not([data-motion="full"]) .art-foundry .fa-gear'));
   assert.ok(css('foundry').includes('.art-foundry .fa-piston-rod { animation: none; }'));
 });

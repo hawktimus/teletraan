@@ -151,6 +151,9 @@ html[data-motion="full"] .season-piece[data-move="draw"]    { animation-name: se
 html[data-motion="full"] .season-piece[data-move="sweep"]   { animation-name: season-sweep; }
 html[data-motion="full"] .season-piece[data-move="slide"]   { animation-name: season-slide; }
 html[data-motion="full"] .season-piece[data-move="flutter"] { animation-name: season-flutter; animation-timing-function: linear; }
+/* The pieces rest while a transition plays, and stand still in Light */
+html[data-motion="full"][data-moving] .season-piece[data-move] { animation-play-state: paused; }
+html[data-motion="full"][data-weight="light"] .season-piece[data-move] { animation: none; }
 
 /* Corner art draws in once and stays. An iteration count of .35 stops the draw
    keyframes at their 35% step, where the offset is 0 and every line is whole, and

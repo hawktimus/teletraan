@@ -346,6 +346,7 @@ const standIns = {
   'frame.js': [
     'export const pace = () => globalThis.world.pace;',
     'export const motionNow = () => globalThis.world.motion;',
+    "export const weightNow = () => 'full';",
     'export const wait = milliseconds => globalThis.world.sleep(milliseconds);',
     "export const setSwapPlaying = on => globalThis.world.log.push('swapPlaying ' + on);",
   ],

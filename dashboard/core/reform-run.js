@@ -20,7 +20,7 @@ let layerNow = null;
 export function startReforms(getSeconds, getKind) {
   secondsOf = getSeconds;
   kindOf = getKind;
-  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(watchFrame);
+  if (typeof requestAnimationFrame === 'function') setTimeout(sampleScreen, firstSampleMs);
 }
 
 // ?reform=off on the address turns both transitions off: the older page change and swap play instead, which is how to compare them
@@ -39,17 +39,35 @@ export function reformKind() {
 // How fast the screen draws now: the length of the last frames, while no transition plays. A screen that cannot hold 25 frames
 // a second (a median frame over 40 ms) gets the plain change, because a transition would only make it worse. Nothing is
 // known about a screen that has not been watched for a second yet, and it is not slow.
+//
+// The frames are counted in a burst of 40 frames every 10 seconds, the first one 12 seconds after the start (the start is slow on any
+// computer, and the first change is 20 seconds after it), and not all the time: a page that asks for a frame at every refresh to see
+// how fast the screen is keeps the screen drawing at every refresh, even when nothing else moves. A burst that was not interrupted
+// replaces the last one.
 const lastFrames = [];
-let lastFrameAt = 0;
+const firstSampleMs = 12000;
+const sampleEveryMs = 10000;
+const burstFrames = 40;
 
-function watchFrame(now) {
-  if (lastFrameAt > 0 && !running) {
-    const gap = now - lastFrameAt;
-    if (gap < 1000) lastFrames.push(gap);
-    if (lastFrames.length > 60) lastFrames.shift();
-  }
-  lastFrameAt = now;
-  requestAnimationFrame(watchFrame);
+// (a timeout that asks again, and not an interval: the page keeps its number of intervals, docs/performance.md)
+function sampleScreen() {
+  setTimeout(sampleScreen, sampleEveryMs);
+  if (running) return;
+
+  const gaps = [];
+  let lastAt = 0;
+  const step = now => {
+    if (running) return;
+    if (lastAt > 0 && now - lastAt < 1000) gaps.push(now - lastAt);
+    lastAt = now;
+    if (gaps.length < burstFrames) {
+      requestAnimationFrame(step);
+    } else {
+      lastFrames.length = 0;
+      lastFrames.push(...gaps);
+    }
+  };
+  requestAnimationFrame(step);
 }
 
 export function screenIsSlow() {
@@ -95,14 +113,15 @@ export function layerOf() {
   return layer;
 }
 
-// The kit of the theme that is on the page. A theme that has no kit file gets the Original one.
+// The kit of the theme that is on the page. A theme that has no kit file gets the plain one, which changes plainly and draws
+// nothing of another theme (core/reform-plain.js).
 export async function kitNow() {
   const id = document.documentElement.dataset.style || 'original';
   try {
     return (await import('../styles/' + id + '/transitions.js')).kit;
   } catch (error) {
-    console.error('Could not load the transition kit of the ' + id + ' theme. The Original kit plays.', error);
-    return (await import('../styles/original/transitions.js')).kit;
+    console.error('Could not load the transition kit of the ' + id + ' theme. The plain kit plays.', error);
+    return (await import('./reform-plain.js')).kit;
   }
 }
 

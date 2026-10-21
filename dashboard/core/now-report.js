@@ -11,6 +11,7 @@ import { hiddenRunReport } from './hidden-log.js';
 import { lastContentRead } from './content.js';
 import { activeRequests } from './screen-requests.js';
 import { heldNoteFor } from './held-note.js';
+import { pageLoadSummary } from './page-loads.js';
 import { resolveView, viewNameOf, viewSteps } from './views.js';
 import { isLocalHost, makeReport, reportAddress, reportSeconds } from './now-report-parts.js';
 
@@ -40,8 +41,12 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
   const mini = content.mini || {};
   const read = lastContentRead();
   const requests = activeRequests(content.settings, now);
+  const loads = pageLoadSummary(now);
 
   return {
+    loads: loads.count,
+    loadReason: loads.reason,
+    loadAt: loads.at,
     view: root.dataset.view || '',
     theme: root.dataset.theme || '',
     layout: root.dataset.layout || '',

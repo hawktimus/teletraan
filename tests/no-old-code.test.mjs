@@ -42,10 +42,21 @@ function runLoader(importBuild) {
   assert.ok(loader, 'index.html has the loader');
   const code = loader[0].replace(/^<script>/, '').replace(/<\/script>$/, '').replace("import('./build.js')", 'fakeImport()');
 
-  const links = (html.match(/<link [^>]*rel="stylesheet"[^>]*>/g) || []).map(link => {
-    const attributes = { rel: 'stylesheet', href: /href="([^"]+)"/.exec(link)[1] };
-    return { getAttribute: name => attributes[name], setAttribute: (name, value) => { attributes[name] = value; }, attributes: attributes };
-  });
+  // A copy of a link is added after it, and the old one goes when the copy has loaded (so the page is never drawn with no style)
+  const copies = [];
+  const makeLink = attributes => {
+    const link = {
+      removed: false,
+      getAttribute: name => attributes[name],
+      setAttribute: (name, value) => { attributes[name] = value; },
+      cloneNode: () => makeLink(Object.assign({}, attributes)),
+      after: copy => { copies.push(copy); },
+      remove: () => { link.removed = true; },
+      attributes: attributes,
+    };
+    return link;
+  };
+  const links = (html.match(/<link [^>]*rel="stylesheet"[^>]*>/g) || []).map(link => makeLink({ rel: 'stylesheet', href: /href="([^"]+)"/.exec(link)[1] }));
   const added = [];
   const sandbox = {
     window: {},
@@ -59,7 +70,7 @@ function runLoader(importBuild) {
     },
   };
   vm.runInNewContext(code, sandbox);
-  return { links: links, added: added, window: sandbox.window };
+  return { links: links, copies: copies, added: added, window: sandbox.window };
 }
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 5));
@@ -71,7 +82,11 @@ test('with a build, the entry script and every stylesheet are asked for with it'
   assert.equal(loaded.added[0].src, 'shell.js?v=abc1234');
   assert.equal(loaded.added[0].type, 'module');
   assert.equal(loaded.window.teletraanBuild, 'abc1234');
-  loaded.links.forEach(link => assert.ok(link.attributes.href.endsWith('?v=abc1234'), link.attributes.href));
+  assert.equal(loaded.copies.length, loaded.links.length, 'every stylesheet has a copy with the build');
+  loaded.copies.forEach(copy => assert.ok(copy.attributes.href.endsWith('?v=abc1234'), copy.attributes.href));
+  assert.ok(loaded.links.every(link => !link.removed), 'the old sheets stay until the copies have loaded');
+  loaded.copies.forEach(copy => copy.onload());
+  assert.ok(loaded.links.every(link => link.removed), 'and go when they have');
 });
 
 test('with no build.js, the page still starts and uses the time', async () => {
@@ -83,7 +98,7 @@ test('with no build.js, the page still starts and uses the time', async () => {
   assert.ok(stamp, loaded.added[0].src);
   assert.ok(Number(stamp[1]) >= before);
   assert.equal(loaded.window.teletraanBuild, stamp[1]);
-  loaded.links.forEach(link => assert.ok(link.attributes.href.endsWith('?v=' + stamp[1]), link.attributes.href));
+  loaded.copies.forEach(copy => assert.ok(copy.attributes.href.endsWith('?v=' + stamp[1]), copy.attributes.href));
 });
 
 test('no script is loaded without the loader, build.js is ignored by git and its shape is committed', () => {

@@ -32,8 +32,8 @@ test('no stored name of Dashboard Settings changed: all of them are still fields
   const now = settings.fields.map(field => field.name);
   assert.deepEqual(storedNames.filter(name => now.indexOf(name) === -1), []);
   assert.equal(settings.name, 'dashboardSettings');
-  // The Photos page added the first two, the Scheduled reboot section the next six (seen in Advanced), the Before and after cards the five switches after them and the FRC news section the last four. The rest are hidden here
-  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['photoSource', 'photoDriveFolder', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionTeamMetrics', 'competitionCompare', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
+  // The Motion setting added motionOnKiosk (what the TV computer plays when Motion is Full). The Photos page added the next two, the Scheduled reboot section the next six (seen in Advanced), the Before and after cards the five switches after them and the FRC news section the last four. The rest are hidden here
+  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['motionOnKiosk', 'photoSource', 'photoDriveFolder', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionTeamMetrics', 'competitionCompare', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
 });
 
 test('there are five tabs at most, in the order of the content map, and Timing opens first', () => {

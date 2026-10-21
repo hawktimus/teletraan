@@ -311,7 +311,9 @@ The Our matches card comes with the preview once the match schedule of the event
 usually the evening before. In the last 2 days before an event it comes even when the schedule is not
 posted, and then says so in one sentence. Before that it is left out, and the preview card carries on.
 
-Each card has a switch of its own, all on to start with. A card that is switched
+Each card has a switch of its own, all on to start with except Championship chances (Match13), which is off until a coach
+switches it on (`competitionQualify` is false in `defaultSettings`, in the sample content and as the starting value of the
+field in the Studio). Preview competition still shows it. A card that is switched
 off is never put in the rotation, in any mode (Preview competition shows all of
 them). The rows of a view do not have the cards:
 they come in and go out by the mode, the switches and the data. How long a card

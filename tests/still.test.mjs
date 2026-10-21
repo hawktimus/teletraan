@@ -120,6 +120,24 @@ test('view, layout and the other themes are read, and an address without them re
   assert.equal(useStillSwitches(new URLSearchParams('?panel=events&screen=retro'), readStill('?panel=events&screen=retro')).get('style'), 'retro');
 });
 
+test('a panel the Robotics view plays wide is drawn in the bar layout when the address says nothing, and ?layout=standard keeps the standard one', async () => {
+  const { roboticsWidePanels } = await load('dashboard/config.js');
+  roboticsWidePanels.forEach(id => {
+    assert.equal(readStill('?panel=' + id + '&still=1').layout, 'bar', id + ' is wide by itself');
+    assert.equal(readStill('?panel=' + id + '&view=general').layout, 'bar', id + ' in the Robotics view');
+    assert.equal(readStill('?panel=' + id + '&layout=standard').layout, 'standard', id + ' asked for the standard layout');
+    assert.equal(readStill('?panel=' + id + '&layout=bar').layout, 'bar');
+  });
+  assert.equal('layout' in readStill('?panel=events&still=1'), false, 'a split panel keeps the layout of its theme');
+  assert.equal('layout' in readStill('?panel=monday-department&view=prime'), false, 'a team view has the layout of its own view');
+  assert.equal(readStill('?panel=events&layout=standard').layout, 'standard');
+});
+
+test('the Studio preview of a Department tasks row has no layout in its address, and the page makes it wide', () => {
+  assert.equal(preview.previewAddress('monday-department', '', 'build', 'original', '', { list: 'open' }).includes('layout='), false);
+  assert.equal(readStill(preview.previewAddress('monday-department', '', 'build', 'original', '', { list: 'open' }).split('?')[1]).layout, 'bar');
+});
+
 let failed = 0;
 for (const entry of tests) {
   try {

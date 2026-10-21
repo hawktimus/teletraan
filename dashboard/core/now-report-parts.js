@@ -72,6 +72,10 @@ export function cleanReport(raw, now = new Date()) {
     heldNote: text(source.heldNote, 200),
     dots: dots,
     hiddenRun: cleanHiddenRun(source.hiddenRun),
+    // Page loads in the last 24 hours and why the newest one happened (core/page-loads.js)
+    loads: Number.isInteger(source.loads) && source.loads >= 0 ? Math.min(source.loads, 9999) : null,
+    loadReason: text(source.loadReason, 100),
+    loadAt: text(source.loadAt, 30),
   };
 }
 

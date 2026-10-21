@@ -3,9 +3,11 @@ Description=Restart the Teletraan I screen when it has frozen
 
 [Service]
 Type=oneshot
-# Runs as root, because restarting teletraan-kiosk needs it. The script reads the
-# page title from the browser on 127.0.0.1:9222 and keeps its count in the data
-# folder (watchdog.sh explains the limits on restarts).
+# ACCOUNT is replaced by install-watchdog.sh and install.sh with the account that owns the repository. The script
+# reads the page title from the browser on 127.0.0.1:9222 and keeps its count in the data folder (watchdog.sh
+# explains the limits on restarts). The restart goes through sudo, which computer/sudoers/teletraan-control allows
+# for teletraan-kiosk.service only. Do not add NoNewPrivileges here: sudo would stop working.
+User=ACCOUNT
 ExecStart=/opt/teletraan/computer/scripts/watchdog.sh
 # The script's own requests give up after 5 seconds
 TimeoutStartSec=2min

@@ -16,6 +16,7 @@ The wall is a 2011 Mac Mini that runs the page for days. This page says what was
     node tools/perf/measure.mjs heap --seconds 400             objects made in a stretch and still alive after it
     node tools/perf/heap-diff.mjs --seconds 600                two heap snapshots, by kind of object
     node tools/perf/measure.mjs trace --slow 4 --rows 12       a trace for the Performance tab of the browser
+    node tools/perf/transitions.mjs --slow 4 --motion light    each theme's panel and view transition: frames, animated elements, layouts
 
 A row change is the Next look button of Start here (`core/test-hook.js`), so a change plays the whole panel transition. `?perf` on the real screen shows a refresh-time readout (`dashboard/perf.js`).
 
@@ -123,6 +124,8 @@ Measured with `tools/perf/measure.mjs` at `--slow 4`. A change that goes over a 
 |------|--------|
 | Quiet screen | median frame 17 ms, no frame over 100 ms in a minute |
 | Row change | 95th percentile frame at most 34 ms, at most 1 frame in 1000 over 100 ms |
+| Light transition | at most 40 elements animate, none bigger than its region, and no frame over 34 ms in a panel at `--slow 6` |
+| Full transition | at most 400 animated elements in a panel and 500 in a view (`animatedLimit`) |
 | Script on a quiet screen | under 2% of one core (under 400 ms in 40 s) |
 | Timers | 13 intervals alive and no more; waiting timeouts under 20 |
 | Listeners | 139 plus or minus 24 (JS event listeners, `Performance.getMetrics`) |
@@ -132,6 +135,63 @@ Measured with `tools/perf/measure.mjs` at `--slow 4`. A change that goes over a 
 | Network | no poll faster than every 10 seconds; Sanity full read at most every 5 minutes |
 
 The motion rules in `tests/motion` check the frame time of the transitions (`reform.mjs`, 34 ms) and, for the leaks, `leaks.mjs`. `tools/perf/measure.mjs` is for finding the cause when one of them fails.
+
+## Transitions: Full and Light
+
+`tools/perf/transitions.mjs` plays the panel and the view transition of each theme twice, with the CPU slowed, and prints the frames, the frames over 34 ms and over 100 ms, the slowest frame, the elements that animate, the elements in the layer and the layouts and style recalculations of the run (`--motion full` or `light`, `--slow 4` or `6`). The numbers are of a laptop with a throttle, as above, and the Teletraan computer was not measured. The frame count is not comparable between rows of a column (a play lasts as long as it lasts, and the preparing of a run is part of it).
+
+Before the work on the freezes (Full, as it was), CPU 4x slower, then 6x:
+
+| Run | Over 34 ms | Over 100 ms | Slowest | Animated | In layer | Layouts |
+|-----|-----------|-------------|---------|----------|----------|---------|
+| Original panel | 7 / 22 | 0 / 0 | 67 / 67 ms | 387 | 6128 | 43 / 41 |
+| Original view | 58 / 70 | 4 / 10 | 117 / 183 ms | 543 | 11449 | 29 / 30 |
+| Cybertron panel | 4 / 13 | 0 / 0 | 50 / 68 ms | 228 | 5121 | 19 / 18 |
+| Cybertron view | 58 / 63 | 2 / 9 | 101 / 167 ms | 543 | 10525 | 29 / 29 |
+| Retro panel | 35 / 54 | 0 / 1 | 51 / 101 ms | 258 | 5984 | 26 / 25 |
+| Retro view | 75 / 74 | 8 / 13 | 134 / 200 ms | 558 | 13169 | 31 / 32 |
+| Foundry panel | 45 / 37 | 1 / 0 | 118 / 82 ms | 265 | 7464 | 151 / 174 |
+| Foundry view | 67 / 70 | 3 / 13 | 116 / 216 ms | 606 | 12765 | 59 / 72 |
+
+After, Full (same machine, same runs):
+
+| Run | Over 34 ms | Over 100 ms | Slowest | Animated | In layer | Layouts |
+|-----|-----------|-------------|---------|----------|----------|---------|
+| Original panel | 4 / 11 | 0 / 0 | 35 / 52 ms | 387 | 6128 | 46 / 44 |
+| Original view | 57 / 52 | 0 / 1 | 85 / 102 ms | 427 | 7149 | 23 / 13 |
+| Cybertron panel | 2 / 6 | 0 / 0 | 35 / 50 ms | 228 | 5121 | 19 / 20 |
+| Cybertron view | 43 / 53 | 1 / 2 | 101 / 117 ms | 427 | 6837 | 7 / 13 |
+| Retro panel | 12 / 12 | 0 / 0 | 35 / 51 ms | 258 | 5984 | 32 / 30 |
+| Retro view | 42 / 55 | 0 / 1 | 82 / 165 ms | 442 | 7169 | 9 / 10 |
+| Foundry panel | 6 / 17 | 0 / 0 | 35 / 65 ms | 265 | 7780 | 31 / 35 |
+| Foundry view | 38 / 53 | 1 / 1 | 100 / 102 ms | 490 | 7445 | 9 / 13 |
+
+After, Light:
+
+| Run | Over 34 ms | Over 100 ms | Slowest | Animated | In layer | Layouts |
+|-----|-----------|-------------|---------|----------|----------|---------|
+| Original panel | 0 / 0 | 0 / 0 | 19 / 19 ms | 7 | 29 | 23 / 24 |
+| Original view | 2 / 2 | 0 / 1 | 35 / 100 ms | 28 | 110 | 14 / 14 |
+| Cybertron panel | 0 / 0 | 0 / 0 | 19 / 19 ms | 6 | 19 | 7 / 8 |
+| Cybertron view | 5 / 5 | 0 / 1 | 83 / 117 ms | 21 | 67 | 13 / 14 |
+| Retro panel | 0 / 0 | 0 / 0 | 19 / 33 ms | 5 | 12 | 14 / 14 |
+| Retro view | 1 / 4 | 0 / 0 | 50 / 100 ms | 20 | 42 | 13 / 13 |
+| Foundry panel | 0 / 0 | 0 / 0 | 34 / 34 ms | 6 | 33 | 13 / 15 |
+| Foundry view | 1 / 3 | 0 / 0 | 35 / 83 ms | 24 | 126 | 12 / 13 |
+
+What the tables say. A Light panel change draws 5 to 7 animated elements and a Light view change 20 to 28, against 228 to 387 and 543 to 606, and the layer is a hundredth of the size. At 6x slower a Light run has no frame over 34 ms in a panel and at most 5 in a view, where a Full view has 52 to 80. A Full run now has fewer elements: the view draws coarser grids and is capped (`animatedLimit`), the Foundry panel lays the page out 31 times and not 151, and the Full runs over 34 ms are fewer (Foundry panel 45 to 6, Retro panel 35 to 12 at 4x). A Full view is still heavy: more than a third of its frames are over 34 ms on a slowed laptop, which is why the Teletraan computer plays Light.
+
+What was changed:
+
+- **Idle drawing.** The three glint sweeps, the sprites of a subtheme, the seasonal pieces, the backgrounds and the gears and pistons of a theme stop while a transition plays (the page has `data-moving`, written by `core/busy.js`) and are not drawn at all in Light (`data-weight="light"`). The rules are in frame.css, base.css, neon-kit.css and seasons/motion.css.
+- **The Foundry pistons** moved a shape inside an svg with a CSS transform, which made the browser lay the whole page out on every frame, all day, in the Foundry theme (60 layouts a second on a quiet screen). The rod is an svg of its own now (`core/theme-art.js`), and a quiet Foundry screen lays out a few times a second.
+- **The slow screen check** (`core/reform-run.js`) asked for an animation frame forever. It counts 40 frames every 10 seconds now, the first 12 seconds after the start, and a burst that finishes replaces the last. The guard itself (a median frame over 40 ms gives the plain change) is unchanged.
+- **Elements.** A view draws about 70 squares and not 130 (`viewGrids` in `core/reform-plan.js`), and a run may not animate more than `animatedLimit` elements (400 for a panel, 500 for a view). tests/motion/reform.mjs fails above it.
+- **The place of the screen** (`screenPlace` in `core/hidden-pile.js`) is read once and again after a resize, and not for every swap, hidden transition and pile.
+- **Full gives itself up.** Two Full transitions in a row that miss the budget switch the screen to Light until it is loaded again (`core/motion.js`). One line goes to the console.
+- **Light** is a transition of its own (docs/transitions.md): two plates and a few parts, nothing copied, nothing cut into squares.
+
+What was looked at and left. `copyElement` and `copyStyle` in `core/reform-bake.js` read a style and a box from the page and write to a copy that is not in the page yet, so they do not force a layout for each element as this page suspected: a whole panel change has 19 to 46 layouts in all, and the first half second is the style work of copying 1400 elements, which is what Light avoids. `startHawk` in `core/swap-run-copy.js` forces one layout of about 4 ms once for each swap, and the swap is only played in Full for a look that is held.
 
 ## What is not known
 

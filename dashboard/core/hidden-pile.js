@@ -84,9 +84,21 @@ export function findBolts(stage, plates) {
 }
 
 // Where the 1920 x 1080 screen is in the window. shell.js shrinks it to fit a smaller window
+// The place only changes when the window does, so it is read once and again after a resize: reading it asks the browser to lay the page
+// out, which is long in the middle of a swap.
+let placeKnown = null;
+if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('resize', () => { placeKnown = null; });
+
+export function forgetScreenPlace() {
+  placeKnown = null;
+}
+
 export function screenPlace() {
-  const box = document.getElementById('screen').getBoundingClientRect();
-  return { left: box.left, top: box.top, scale: box.width / pileShape.screenWidth };
+  if (placeKnown === null) {
+    const box = document.getElementById('screen').getBoundingClientRect();
+    placeKnown = { left: box.left, top: box.top, scale: box.width / pileShape.screenWidth };
+  }
+  return placeKnown;
 }
 
 // Where an element is on the 1920 x 1080 screen, and its zoom: how many pixels of the screen one pixel

@@ -322,6 +322,32 @@ test('the helpers import only each other and the plain-value files, so node can 
   assert.deepEqual(imports, ['./time-text.js', './plain-values.js', './calendars-hide-rules.js']);
 });
 
+test('a hidden event arrives without its title: it is listed as a hidden event, stays hidden, and its switch is off with the reason', () => {
+  const hidden = event('h', undefined, at('10', '15'), at('10', '16'), { shown: false, rule: 'Hide Private' });
+  delete hidden.title;
+  const written = { calendars: [{ code: 'team', occurrences: [hidden, event('i', 'Open house', at('10', '17'), at('10', '18'))] }] };
+  const list = parts.eventRows(written, entries, now, zone);
+  const row = list.filter(item => item.title === 'Hidden event')[0];
+  assert.ok(row, 'listed by a plain name');
+  assert.equal(row.titleKept, false);
+  assert.equal(list.filter(item => item.title === 'Open house')[0].titleKept, true);
+
+  const withRules = parts.stateOf(row, [], now);
+  assert.equal(withRules.on, false, 'with no rules read, the list still says hidden');
+  assert.equal(withRules.canSwitch, false);
+  assert.equal(withRules.note, parts.words.titleNotKept);
+  assert.equal(withRules.pending, false);
+  assert.equal(parts.stateOf(row, null, now).on, false);
+  assert.equal(parts.words.publicNote.includes('without its title'), true);
+});
+
+test('an event with no title that the screen shows is still No title, not a hidden event', () => {
+  const shown = event('j', '', at('10', '15'), at('10', '16'));
+  const list = parts.eventRows({ calendars: [{ code: 'team', occurrences: [shown] }] }, entries, now, zone);
+  assert.equal(list[0].title, 'No title');
+  assert.equal(list[0].titleKept, true);
+});
+
 let failures = 0;
 for (const entry of tests) {
   try {

@@ -1,5 +1,5 @@
 /* Department tasks (panels/monday-department). The header, the body, the status chip and the numbers are in monday.css.
-   The body is the names of the five columns, a window of four rows of 84 and, under it, the open and done counts and the
+   The body is the names of the five columns (the last is Due Date, called Estimated Completion Date on the board), a window of four rows of 84 and, under it, the open and done counts and the
    page. The Project column takes the room the other four leave, so it is widest in the bar layout. A long project name
    is at 44px on two lines. A value the board does not have (Unassigned, No Priority, No Date) is in the quiet colour. */
 .monday-department { --scroll-step: 336px; }
@@ -7,34 +7,66 @@
 .monday-department .columns,
 .monday-department .row {
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr) 240px 190px 250px;
+  grid-template-columns: 232px minmax(0, 1fr) 250px 180px 180px;
   column-gap: 14px;
   align-items: center;
 }
 
-/* The main panel of the standard layout is about 1100 wide, so Contact and Priority are narrower there (Priority keeps the 176 of its name), the project is
-   always on two lines at 44px, and No Priority and No Date may take two lines too. The date keeps 240, the width of
-   COMPLETION in its name. The Robotics view plays this panel in the bar layout, so this is only for a view set to
-   the standard layout. */
+/* The main panel of the standard layout is about 1100 wide, too narrow for five columns of 44px text (the project and the
+   contact were cut to three letters). So the contact sits under the status chip in the first column, which gives the
+   project 470 and its two full lines at 44px, and the header says DUE for the date. The rows are 96 high, so four of them
+   and the header end where the counts begin. The contact is 40px, the size of an owner name, in a column that holds 14 letters, and wraps instead of being
+   cut. The Robotics view plays this panel in the bar layout, so this is for the Studio preview, ?layout=standard and a
+   view set to the standard layout. */
+html[data-layout="standard"] .monday-department { --scroll-step: 384px; }
 html[data-layout="standard"] .monday-department .columns,
 html[data-layout="standard"] .monday-department .row {
-  grid-template-columns: 232px minmax(0, 1fr) 200px 180px 240px;
-  column-gap: 8px;
+  grid-template-columns: 274px minmax(0, 1fr) 180px 150px;
+  grid-template-rows: 48px 44px;
+  align-content: center;
+  column-gap: 10px;
 }
+html[data-layout="standard"] .monday-department .columns {
+  height: 64px;
+  grid-template-rows: 32px 32px;
+  align-content: end;
+  line-height: 32px;
+}
+html[data-layout="standard"] .monday-department .columns > :nth-child(1),
+html[data-layout="standard"] .monday-department .row > :nth-child(1) { grid-column: 1; grid-row: 1; }
+html[data-layout="standard"] .monday-department .columns > :nth-child(3),
+html[data-layout="standard"] .monday-department .row > :nth-child(3) { grid-column: 1; grid-row: 2; }
+html[data-layout="standard"] .monday-department .columns > :nth-child(2),
+html[data-layout="standard"] .monday-department .row > :nth-child(2) { grid-column: 2; grid-row: 1 / span 2; }
+html[data-layout="standard"] .monday-department .columns > :nth-child(4),
+html[data-layout="standard"] .monday-department .row > :nth-child(4) { grid-column: 3; grid-row: 1 / span 2; }
+html[data-layout="standard"] .monday-department .columns > :nth-child(5),
+html[data-layout="standard"] .monday-department .row > :nth-child(5) { grid-column: 4; grid-row: 1 / span 2; }
+html[data-layout="standard"] .monday-department .columns > :nth-child(2),
+html[data-layout="standard"] .monday-department .columns > :nth-child(4),
+html[data-layout="standard"] .monday-department .columns > :nth-child(5) { align-self: end; }
+html[data-layout="standard"] .monday-department .row { height: 96px; }
+html[data-layout="standard"] .monday-department .rows-window { top: 64px; height: 384px; }
 html[data-layout="standard"] .monday-department .project {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   white-space: normal;
-  font: 500 var(--size-label)/38px var(--font-text);
+  align-self: center;
+  font: 500 var(--size-label)/45px var(--font-text);
+}
+html[data-layout="standard"] .monday-department .contact {
+  line-height: 44px;
 }
 html[data-layout="standard"] .monday-department .priority,
 html[data-layout="standard"] .monday-department .date {
+  align-self: center;
   white-space: normal;
-  line-height: 40px;
+  line-height: 44px;
 }
+html[data-layout="standard"] .monday-department .date-more { display: none; }
 
-/* Estimated Completion Date takes three lines at 36px, so the other names sit on the bottom line with it */
+/* The names of the columns sit on the bottom line, over the rows */
 .monday-department .columns {
   height: 108px;
   align-items: end;
@@ -75,7 +107,6 @@ html[data-layout="standard"] .monday-department .date {
   font: 500 var(--size-label)/40px var(--font-text);
 }
 
-.monday-department .contact,
 .monday-department .priority,
 .monday-department .date {
   min-width: 0;
@@ -83,6 +114,13 @@ html[data-layout="standard"] .monday-department .date {
   text-overflow: ellipsis;
   white-space: nowrap;
   font: 500 var(--size-label)/48px var(--font-text);
+}
+/* A first name is never cut: 40px, the size of an owner name, in 250 (Bartholomew is 238), and a longer one wraps */
+.monday-department .contact {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font: 500 40px/40px var(--font-text);
 }
 /* No Priority and No Date may take two lines, as they do in the standard layout */
 .monday-department .priority,

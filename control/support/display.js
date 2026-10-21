@@ -5,7 +5,7 @@
 // The functions here are plain: they check what the page sent, and build Sanity mutations. The route sends them.
 
 import { randomBytes } from 'node:crypto';
-import { defaultThemeByWeekday, scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
+import { defaultThemeByWeekday, kioskMotions, motions, scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
 import { rotationViewOf, tidyRotationRow } from '../../dashboard/core/rotation.js';
 import { Refusal } from './http.js';
 import { mostRows, photoRange, secondsRange, startingPhotos } from '../static/display-rows.js';
@@ -58,6 +58,15 @@ export function themeOf(source) {
     themeByWeekday: themeByWeekday,
     generalViewTitle: source && typeof source.generalViewTitle === 'string' ? source.generalViewTitle : '',
     transitionSeconds: source && typeof source.transitionSeconds === 'number' ? source.transitionSeconds : null,
+  };
+}
+
+// The Motion setting the tab shows (a small section of its own): motion is full, light or calm, and motionOnKiosk says what
+// the TV computer plays when motion is full. An empty or unknown stored value is the starting one.
+export function motionOf(source) {
+  return {
+    motion: source && motions.includes(source.motion) ? source.motion : 'full',
+    motionOnKiosk: source && kioskMotions.includes(source.motionOnKiosk) ? source.motionOnKiosk : 'light',
   };
 }
 
@@ -175,6 +184,23 @@ export function cleanTheme(input) {
     const seconds = input.transitionSeconds;
     if (typeof seconds !== 'number' || !isFinite(seconds) || seconds < transitionRange.min || seconds > transitionRange.max) throw new Refusal(400, 'The transition length should be a number from ' + transitionRange.min + ' to ' + transitionRange.max + '.');
     out.transitionSeconds = seconds;
+  }
+  return out;
+}
+
+// The motion fields that were sent, checked. A field that was not sent is not touched.
+export function cleanMotion(input) {
+  const out = {};
+  if (input === undefined || input === null) return out;
+  if (!plain(input)) throw new Refusal(400, 'The motion settings should be an object.');
+
+  if (input.motion !== undefined) {
+    if (!motions.includes(input.motion)) throw new Refusal(400, 'Motion should be ' + motions.join(', ') + '.');
+    out.motion = input.motion;
+  }
+  if (input.motionOnKiosk !== undefined) {
+    if (!kioskMotions.includes(input.motionOnKiosk)) throw new Refusal(400, 'Motion on the TV computer should be ' + kioskMotions.join(' or ') + '.');
+    out.motionOnKiosk = input.motionOnKiosk;
   }
   return out;
 }

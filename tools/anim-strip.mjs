@@ -4,6 +4,7 @@
 //   node tools/anim-strip.mjs                     every theme, panel and view, into _outputs/anim/<label>/
 //   node tools/anim-strip.mjs --label after       the folder name (default: now)
 //   node tools/anim-strip.mjs --only original     only the sheets whose name has this text
+//   node tools/anim-strip.mjs --motion light      the Light transitions: played at a tenth of the speed and photographed on a timer
 //
 // Needs Playwright (tools/package.json). Never runs on the Teletraan computer.
 
@@ -22,6 +23,7 @@ const args = process.argv.slice(2);
 const argOf = name => (args.indexOf(name) >= 0 ? args[args.indexOf(name) + 1] : '');
 const label = argOf('--label') || new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
 const only = argOf('--only');
+const light = argOf('--motion') === 'light';
 
 async function sheet(ctx, name, look, play, options, times) {
   const page = await ctx.open({}, undefined, { look: look, settleMs: 3500 });
@@ -48,6 +50,33 @@ async function sheet(ctx, name, look, play, options, times) {
       pictures.push((await page.screenshot(clip ? { clip: { x: clip.x, y: clip.y, width: clip.w, height: clip.h } } : {})).toString('base64'));
     }
     await page.evaluate(() => { window.__reformHold = false; });
+    return pictures;
+  } finally {
+    await page.close();
+  }
+}
+
+// The Light transitions have no held clock: they are played slowly (a tenth of the speed) and photographed every 450 ms
+async function lightSheet(ctx, look, play, options) {
+  const page = await ctx.open({ motion: 'light' }, undefined, { look: look, settleMs: 3500 });
+  try {
+    await page.waitForFunction(() => { const layer = document.getElementById('reform'); return !layer || layer.hidden; }, null, { timeout: 60000, polling: 250 });
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => {
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (...args) {
+        const animation = animate.apply(this, args);
+        animation.updatePlaybackRate(0.1);
+        return animation;
+      };
+    });
+    await page.evaluate(([what, extra]) => window.teletraanTest.play(what, extra), [play, options]);
+    await page.waitForFunction(() => { const layer = document.getElementById('reform'); return layer && layer.dataset.ready === '1'; }, null, { timeout: 40000, polling: 50 });
+    const pictures = [];
+    for (let index = 0; index < 8; index += 1) {
+      pictures.push((await page.screenshot()).toString('base64'));
+      await page.waitForTimeout(450);
+    }
     return pictures;
   } finally {
     await page.close();
@@ -103,8 +132,11 @@ async function main() {
       for (const kind of ['panel', 'view']) {
         const name = theme + '-' + kind;
         if (only && !name.includes(only)) continue;
-        const pictures = await sheet(ctx, name, looks[theme][kind === 'panel' ? 0 : 1], 'reform-' + kind, kind === 'view' ? { view: 'nova' } : {}, timesOf[kind]);
-        fs.writeFileSync(path.join(folder, name + '.png'), await join(browser, pictures, timesOf[kind]));
+        const look = looks[theme][kind === 'panel' ? 0 : 1];
+        const options = kind === 'view' ? { view: 'nova' } : {};
+        const pictures = light ? await lightSheet(ctx, look, 'reform-' + kind, options) : await sheet(ctx, name, look, 'reform-' + kind, options, timesOf[kind]);
+        const labels = light ? [0, 450, 900, 1350, 1800, 2250, 2700, 3150] : timesOf[kind];
+        fs.writeFileSync(path.join(folder, name + '.png'), await join(browser, pictures, labels));
         console.log('wrote ' + path.relative(repoRoot, path.join(folder, name + '.png')));
       }
     }

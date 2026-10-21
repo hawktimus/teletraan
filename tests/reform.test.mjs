@@ -233,17 +233,22 @@ await test('only the parts that have a back face or a folding chain keep their 3
   assert.equal(/\.reform-cover[^{]*\{[^}]*preserve-3d/.test(css), false, 'the covers are flat');
 });
 
-await test('every theme has a kit that draws the hardware, the Original kit draws all of it, and a theme without a kit of its own falls back to it', async () => {
+await test('every theme has a kit of its own that imports no other theme, and a theme without a kit falls back to the plain kit', async () => {
   const original = await import(pathToFileURL(path.join(dashboard, 'styles', 'original', 'transitions.js')).href);
   ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth'].forEach(role => assert.ok(original.kit.draw(role).includes('<svg'), role));
   assert.equal(original.kit.draw('chassis'), '', 'the chassis is drawn by the stylesheet');
-  for (const id of ['foundry']) {
+  for (const id of ['original', 'cybertron', 'retro', 'foundry']) {
     const text = read('styles/' + id + '/transitions.js');
-    assert.ok(text.includes("from '../original/transitions.js'") && text.includes("id: '" + id + "'"), id);
+    assert.ok(text.includes("id: '" + id + "'"), id);
+    ['original', 'cybertron', 'retro', 'foundry'].filter(other => other !== id).forEach(other => assert.ok(!text.includes("from '../" + other + "/"), id + ' borrows from ' + other));
   }
-  // Cybertron and Retro have a kit of their own (tests/reform-cybertron.test.mjs, tests/reform-retro.test.mjs)
-  assert.ok(!read('styles/retro/transitions.js').includes("from '../original/transitions.js'"), 'retro');
-  assert.ok(!read('styles/cybertron/transitions.js').includes("from '../original/transitions.js'"), 'cybertron');
+  // The plain kit draws nothing and is what core/reform-run.js plays when a theme has no kit (docs/transitions.md)
+  const plain = await import(pathToFileURL(path.join(dashboard, 'core', 'reform-plain.js')).href);
+  ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth', 'chassis', 'anything'].forEach(role => assert.equal(plain.kit.draw(role), '', role));
+  assert.equal(plain.kit.hardware({ role: 'screw' }), null);
+  assert.deepEqual(plain.kit.light(400, 300, 'main'), [], 'the plain kit has two plates and nothing on them');
+  const run = read('core/reform-run.js');
+  assert.ok(run.includes("import('./reform-plain.js')") && !run.includes("styles/original/transitions.js'"), 'the fallback of a missing kit is the plain one');
 });
 
 await test('the transition code is in the order the docs say, and the docs name the skeleton', () => {
@@ -272,7 +277,7 @@ await test('the cells draw out from the middle, lock past their place and settle
 
 await test('only a kit that asks for lock parts gets cells, and the views draw none', () => {
   assert.ok(read('styles/original/transitions.js').includes('lockParts: true'));
-  assert.ok(read('styles/foundry/transitions.js').includes('lockParts: false'));
+  assert.ok(!read('styles/foundry/transitions.js').includes('lockParts: true'), 'a kit that draws its own parts has no cells');
   assert.ok(read('core/reform-view.js').includes('cover, kit, true)'), 'the view transition is drawn lite');
   assert.ok(read('core/reform-draw.js').includes("kit.lockParts !== true"));
 });

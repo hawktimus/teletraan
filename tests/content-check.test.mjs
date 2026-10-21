@@ -36,7 +36,7 @@ function clean() {
     { _id: 't1', _type: 'tipOrNews', kind: 'tip', text: 'Check your battery before a match' },
     { _id: 't2', _type: 'tipOrNews', kind: 'news', text: 'Practice moves to the lab on Friday', expires: '2026-12-01T00:00:00Z' },
     { _id: 'a1', _type: 'announcement', text: 'Pizza in the lab at 6', start: '2026-10-20T10:00:00Z', end: '2026-10-21T10:00:00Z' },
-    { _id: 'pl1', _type: 'plan', heading: 'Build meeting', date: '2026-10-20', location: 'Lab', rows: [{ time: '6:00 PM', text: 'Wiring', lead: 'Sam' }, { time: '7:00 PM', text: 'Cleanup', lead: 'Ana' }] },
+    { _id: 'pl1', _type: 'plan', heading: 'Build meeting', date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10), location: 'Lab', rows: [{ time: '6:00 PM', text: 'Wiring', lead: 'Sam' }, { time: '7:00 PM', text: 'Cleanup', lead: 'Ana' }] },
     { _id: 'pr1', _type: 'presentation', name: 'Sam', topic: 'Swerve drive', start: '2026-10-25T22:00:00Z', minutes: 10, status: 'scheduled', deckLink: 'https://docs.google.com/presentation/d/abc/edit' },
     { _id: 'p1', _type: 'person', role: 'Coach', name: 'Pat', title: 'Head Coach', photo: picture('image-aaa-800x800-jpg') },
     { _id: 'p2', _type: 'person', role: 'Captain', name: 'Ana', title: 'Co-President', photo: picture('image-bbb-800x800-jpg') },

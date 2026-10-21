@@ -19,7 +19,7 @@ export const helpLine = 'Hide this one, beside an event, takes that one event of
 
 export const nothingYet = 'Nothing yet. The Teletraan computer writes this after it has downloaded the calendars.';
 export const settingsLine = 'To rename a calendar or switch it off, open Dashboard Settings and use the Calendars tab.';
-export const publicLine = 'These titles are saved in the dataset, which anyone can read. That includes the ones a rule hides from the screen.';
+export const publicLine = 'The titles of events the screen shows are saved in the dataset, which anyone can read. An event a rule hides is saved without its title.';
 export const noCalendarsLine = 'Dashboard Settings has no calendars yet. Add one on its Calendars tab.';
 export const kindLine = 'Pick a kind to show a chip on each event from a calendar. Leave it blank for no chip. Set the kind in Dashboard Settings, on the Calendars tab.';
 
@@ -144,7 +144,7 @@ function eventLine(event, index, code, marks) {
     date: typeof item.date === 'string' ? item.date : '',
     day: dayOf(item),
     time: typeof item.time === 'string' && item.time !== '' ? item.time : 'All day',
-    title: typeof item.title === 'string' && item.title !== '' ? item.title : 'No title',
+    title: typeof item.title === 'string' && item.title !== '' ? item.title : hidden ? 'Hidden event' : 'No title',
     badge: hidden ? 'HIDDEN' : 'SHOWN',
     hidden: hidden,
     rule: hidden ? 'Hidden by ' + (rule || 'a rule with no name') : '',

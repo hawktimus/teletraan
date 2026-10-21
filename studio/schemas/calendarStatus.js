@@ -5,8 +5,9 @@
 // (calendars-view.js). The dashboard never reads it.
 //
 // The dataset is public, so anyone who asks for this document can read the titles of
-// the coming events, including the ones a Calendar filter hides from the screen. It
-// holds no calendar address (docs/calendars-page.md).
+// the coming events that the screen shows. An event a Calendar filter hides is listed
+// with its date and the name of the rule but without its title. It holds no calendar
+// address (docs/calendars-page.md).
 //
 // Everything but the code is optional. A calendar the Teletraan computer has not downloaded yet has no
 // time, and one with no file has no events.
@@ -17,7 +18,7 @@ const occurrence = defineArrayMember({
   type: 'object',
   title: 'Event',
   fields: [
-    defineField({ name: 'title', title: 'Title', type: 'string', description: 'The title of the event as the calendar has it, cut at 60 characters.' }),
+    defineField({ name: 'title', title: 'Title', type: 'string', description: 'The title of the event as the calendar has it, cut at 60 characters. Only for an event the screen shows: the dataset is public, so a hidden event has none.' }),
     defineField({ name: 'date', title: 'Date', type: 'string', description: 'The date as the screen writes it, such as FRI OCT 9.' }),
     defineField({ name: 'day', title: 'Day', type: 'string', description: 'The first day of the event written like 2026-10-09, in the time zone of the screen. A rule made on the Calendars page uses it.' }),
     defineField({ name: 'time', title: 'Time', type: 'string', description: 'The start time as the screen writes it. Empty for an event that lasts all day.' }),

@@ -22,9 +22,35 @@ const pieces = {
   chassis: '',
 };
 
+// The Light transition (core/reform-light.js): two gold plates close over the region, four screws turn in at its corners and a
+// lock pin is driven across the seam where the plates meet. A part is { cls, markup, x, y, w, h, close, open }: its box in the
+// region and the keyframes it plays while the plates close and while they open.
+const gone = 'rotate(0deg) scale(0)';
+const turnedIn = 'rotate(360deg) scale(1)';
+const turnedOut = 'rotate(720deg) scale(0)';
+
+function light(width, height) {
+  const size = Math.round(Math.max(12, Math.min(30, height * 0.18)));
+  const edge = Math.round(size * 0.4);
+  const list = [[edge, edge], [width - edge - size, edge], [edge, height - edge - size], [width - edge - size, height - edge - size]].map(([x, y]) => ({
+    cls: 'rk-light-screw', markup: pieces.screw, x: x, y: y, w: size, h: size,
+    close: [{ transform: gone }, { transform: turnedIn }],
+    open: [{ transform: turnedIn }, { transform: turnedOut }],
+  }));
+  const pin = Math.round(Math.min(height * 0.5, 90));
+
+  list.push({
+    cls: 'rk-light-pin', markup: pieces.brace, x: Math.round(width / 2 - pin / 2), y: Math.round(height / 2 - 7), w: pin, h: 14,
+    close: [{ transform: 'scaleX(0)' }, { transform: 'scaleX(0)', offset: 0.7 }, { transform: 'scaleX(1)' }],
+    open: [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)', offset: 0.3 }, { transform: 'scaleX(0)' }],
+  });
+  return list;
+}
+
 export const kit = {
   id: 'original',
   lockParts: true, // cells with lock pins and hinge barrels (core/reform-draw.js); a kit that draws more of its own leaves this off
 
   draw: role => pieces[role] === undefined ? '' : pieces[role],
+  light: light,
 };

@@ -114,6 +114,9 @@ const pageWith = (name, shapes) => ({ documentElement: { dataset: Object.assign(
 
 // Which layout a theme has
 
+// The page keeps the reason of its last load for the next page (core/page-loads.js), so it is not part of the layout note
+const withoutReason = data => Object.fromEntries(Object.entries(data).filter(([name]) => name !== 'teletraan-reload-reason'));
+
 test('the standard layout is the default, and Neon Prime has the sidebar layout', () => {
   assert.deepEqual(layout.layouts, ['standard', 'sidebar', 'bar']);
   assert.equal(layout.defaultLayout, 'standard');
@@ -612,7 +615,7 @@ test('when the layout cannot be changed in the page, a theme with another layout
 
     assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => true), true, 'held while something has the screen');
     assert.equal(reloads, 0);
-    assert.deepEqual(store.data, {}, 'nothing was written down, because nothing was done');
+    assert.deepEqual(withoutReason(store.data), {}, 'nothing was written down, because nothing was done');
 
     assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }, () => false), true, 'reloading, so the look is not put on this page');
     assert.equal(reloads, 1);
@@ -622,7 +625,7 @@ test('when the layout cannot be changed in the page, a theme with another layout
 
   await withGlobals({ window: window, document: pageWith('sidebar') }, () => {
     assert.equal(fallback.holdForLayout({ theme: 'neon-prime', overlay: '' }), false, 'the page is in the layout now');
-    assert.deepEqual(store.data, {}, 'so the note is gone');
+    assert.deepEqual(withoutReason(store.data), {}, 'so the note is gone');
     assert.equal(fallback.holdForLayout({ theme: 'hawktimus', overlay: '' }), true, 'a later change reloads again');
     assert.equal(reloads, 2);
   });
@@ -1815,7 +1818,7 @@ test('the kit stylesheet draws the boxes inside the blocks, lets every click thr
 
   // every rule is for the theme in the sidebar layout, for the kit being on in full motion, or is the base of a box
   rules.forEach(rule => rule.selectors.forEach(selector => {
-    const fine = /^html\.theme-neon-prime(\[data-layout="sidebar"\])?( |$)/.test(selector) || selector.indexOf('html[data-kit="on"][data-motion="full"] ') === 0 || selector === '.kit';
+    const fine = /^html\.theme-neon-prime(\[data-layout="sidebar"\])?( |$)/.test(selector) || selector.indexOf('html[data-kit="on"][data-motion="full"] ') === 0 || /^html\[data-kit="on"\]\[data-motion="full"\](\[data-(moving|weight="light")\])* /.test(selector) || selector === '.kit';
     assert.ok(fine, 'a rule of the kit for every theme or layout: ' + selector);
   }));
 
@@ -2079,7 +2082,7 @@ test('when the layout cannot be changed in the page, a style that gives another 
 
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
     assert.equal(fallback.holdForLayout(look('hawktimus', 'minimal')), false, 'the page is in the bar layout now');
-    assert.deepEqual(store.data, {}, 'so the note is gone');
+    assert.deepEqual(withoutReason(store.data), {}, 'so the note is gone');
     assert.equal(fallback.holdForLayout(look('neon-prime', 'minimal')), false, 'Minimal and a sidebar theme: still the bar layout with the same corners, so colours only');
     assert.equal(fallback.holdForLayout(look('hawktimus', 'original')), true, 'back to Original reloads again');
     assert.equal(reloads, 2);
@@ -2823,7 +2826,8 @@ const orderSmall = [
   { file: 'panels/competition-recap/panel.css', selector: '.competition-recap .axis', size: 28 },
 ].concat(
   mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .fact-label': 36 }),
-  mondaySmall('panels/monday-department/panel.css', { '.monday-department .columns': 36 }),
+  // the first name of the contact is 40, the size of an owner name, in the bar and the standard layout
+  mondaySmall('panels/monday-department/panel.css', { '.monday-department .columns': 36, '.monday-department .contact': 40 }),
   mondaySmall('panels/monday-charts/panel.css', { '.monday-charts .legend': 36, '.monday-charts .month': 36 }),
   mondaySmall('panels/competition-forecast/panel.css', { '.competition-forecast .stale-chip': 30, '.competition-forecast .tick': 28 }),
   mondaySmall('panels/competition-qualify/panel.css', { '.competition-qualify .stale-chip': 30 }),
@@ -2835,7 +2839,7 @@ function checkStylesheetsOf(style) {
   const sheets = stylesheetsOf(style);
   const rules = rulesOf(style, sheets);
   assert.ok(style === 'minimal' ? sheets.some(sheet => sheet.file === 'layouts/bar-minimal.css') : sheets.some(sheet => sheet.file === 'styles/' + style + '/theme.css'), 'the style\'s own file is loaded');
-  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, style === 'minimal' ? 0 : style === 'cybertron' ? 4 : 3, 'and the files of the other themes are not (Cybertron has its transition kit stylesheet as a fourth)');
+  assert.equal(sheets.filter(sheet => sheet.file.startsWith('styles/')).length, style === 'minimal' ? 0 : 4, 'and the files of the other themes are not (each theme has its transition kit stylesheet as a fourth)');
   assert.ok(sheets.length >= 30 && sheets.some(sheet => sheet.file === 'base.css') && sheets.some(sheet => sheet.file === 'themes/hawktimus.css'), 'the css it overrides is loaded');
 
   const scripted = Object.assign({}, layout.barCssVariables(), layout.cssVariables());
@@ -3942,7 +3946,7 @@ test('when the layout cannot be changed in the page, a style with other corners 
 
   await withGlobals({ window: window, document: pageWith('bar', 'minimal') }, () => {
     assert.equal(fallback.holdForLayout(look('neon-prime', 'minimal')), false, 'drawn for Minimal, and Minimal on any theme');
-    assert.deepEqual(store.data, {});
+    assert.deepEqual(withoutReason(store.data), {});
     assert.equal(fallback.holdForLayout(look('hawktimus', 'cybertron')), true, 'Minimal to Cybertron is a layout change');
     assert.equal(reloads, 2);
   });

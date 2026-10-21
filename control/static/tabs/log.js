@@ -2,7 +2,7 @@
 // download of one text file for a coach. The service takes the keys and calendar links out of everything it sends.
 
 import { api, showResult, useStyles } from './api.js';
-import { logHtml, outcome } from './render.js';
+import { logHtml, outcome, pageLoadsLine } from './render.js';
 
 export const hiddenWords = 'Keys and calendar links are hidden in this file. It is safe to send to a coach.';
 
@@ -39,13 +39,15 @@ export async function mountLog(container) {
   container.innerHTML = '<div class="buttons"><button type="button" class="act" data-refresh>Refresh</button>' +
     '<label class="check"><input type="checkbox" data-verbose> Verbose (1000 lines)</label></div>' +
     '<div class="buttons"><button type="button" class="act quiet" data-download>Download the verbose log</button></div>' +
-    '<p class="note">' + hiddenWords + '</p><div data-body></div>';
+    '<p class="note">' + hiddenWords + '</p><p class="note" data-loads></p><div data-body></div>';
   const body = container.querySelector('[data-body]');
   const refresh = container.querySelector('[data-refresh]');
   const verbose = container.querySelector('[data-verbose]');
   const save = container.querySelector('[data-download]');
 
   async function load(shown) {
+    const now = await api('GET', '/now');
+    container.querySelector('[data-loads]').textContent = now.ok ? pageLoadsLine(now.data) : 'Page loads in the last 24 hours: the wall could not be asked.';
     const answer = await api('GET', '/log' + (verbose.checked ? '?verbose=1' : ''));
     body.innerHTML = answer.ok
       ? logHtml(answer.data.lines, 'Control log') + logHtml(answer.data.helperLines, 'Helper log')

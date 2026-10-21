@@ -48,6 +48,15 @@ test('a table for each of the nine departments, in the order of the panels, with
   assert.equal(parts.hiddenCount(content([task({}), task({ showOnBoard: false })]), now), 1);
 });
 
+test('the tasks that say Hide in Monday are only counted, from the status the computer writes', () => {
+  assert.equal(parts.hiddenOnMonday({ hiddenCount: 3 }), 3);
+  assert.equal(parts.hiddenOnMonday({ hiddenCount: 0 }), 0);
+  assert.equal(parts.hiddenOnMonday({}), 0);
+  assert.equal(parts.hiddenOnMonday(null), 0);
+  assert.equal(parts.hiddenOnMonday({ hiddenCount: '3' }), 0);
+  assert.ok(parts.question.includes('hiddenCount'));
+});
+
 test('a team shows its own tasks and the tasks with no team, and Both shows every task', () => {
   const list = content([task({ title: '[prime]', team: 'prime' }), task({ title: '[nova]', team: 'nova' }), task({ title: '[general]' })]);
   const names = team => parts.departmentTables(list, team, now)[0].openRows.map(row => row.project).sort();

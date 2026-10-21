@@ -141,6 +141,15 @@ svg [data-fx] { transform-box: fill-box; }
 [data-state="shown"] .glint {
   animation: glint var(--time-glint) linear calc(var(--glint-delay, 2s) * var(--pace)) infinite;
 }
+/* While a transition plays the sweeps rest (core/busy.js writes data-moving), and in Light they are not drawn at all */
+[data-moving] .glint {
+  animation-play-state: paused;
+}
+/* The idle subtheme sprites rest while a transition plays, and stand still in Light (their motion is further down) */
+html[data-moving][data-motion="full"] .subtheme-sprite[data-motion],
+html[data-moving][data-motion="full"] .sb-piece [data-move] { animation-play-state: paused; }
+html[data-weight="light"][data-motion="full"] .subtheme-sprite[data-motion],
+html[data-weight="light"][data-motion="full"] .sb-piece [data-move] { animation-name: none; }
 @keyframes glint {
   0%        { stroke-dashoffset: 1; opacity: 0; }
   3%        { stroke-dashoffset: .82; opacity: .95; }
@@ -149,6 +158,7 @@ svg [data-fx] { transform-box: fill-box; }
 }
 [data-glint="off"] .glint-layer,
 [data-paused] .glint-layer,
+[data-weight="light"] .glint-layer,
 [data-motion="calm"] .glint-layer,
 [data-motion="none"] .glint-layer,
 [data-finish="flat"] .glint-layer { display: none; }

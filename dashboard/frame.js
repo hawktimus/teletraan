@@ -31,7 +31,7 @@ export {
 } from './frame-pages.js';
 export {
   spinNormalSeconds, hawkActs, setNightCovers, setEffectsPaused, setHiddenPlaying, setSwapPlaying, pause, resume,
-  isPaused, motionNow,
+  isPaused, motionNow, weightNow,
 } from './frame-effects.js';
 export {
   setNameEffect, setCrt, setSpin, setHawk, setLogoAnimations, playNameEffect, playCrt, playGlitch, stopGlitch,

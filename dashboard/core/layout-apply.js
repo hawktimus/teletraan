@@ -22,6 +22,7 @@
 // Only the elements of the layout move. docs/layouts.md explains the layouts.
 
 import { barCssVariables, blocksOf, chooseLayout, cssVariables, defaultLayout, drawnFor, everyBlock, kitMarkup, layoutNow, layoutOf, mustReload } from './layout.js';
+import { noteReload } from './page-loads.js';
 import { applyStyle, layoutFor, recordShapes, shapesFor, shapesNow, styleNow } from './style.js';
 
 // address is ?theme= from the address bar, or null. readTheme() gives the Theme
@@ -269,6 +270,7 @@ function reloadFor(wanted, onPage, look) {
   }
 
   reloading = true;
+  noteReload('the layout changed and could not be changed live');
   window.location.reload();
   return true;
 }

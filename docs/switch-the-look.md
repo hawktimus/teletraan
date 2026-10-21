@@ -50,3 +50,7 @@ On a computer, `?style=cybertron`, `?team=nova` and `?overlay=christmas` on the 
 - To go back to the screen as it was, pick Original for every day on the Look page, and turn the pack rule off, or pick No seasonal pack under Use a theme now.
 - The team gives its main, accent, background and text colors to the color file Hawktimus. The other color files keep their own colors. The plate, neon and second bright colors of a team are read by Cybertron only.
 - Every setting is explained in docs/editing-content.md, and the layouts and the frames are in docs/layouts.md.
+
+## Motion: Full, Light and Calm
+
+Look, Motion has three choices. Full plays every movement. Light plays one simple change at each panel and view change and keeps the glint, the sprites and the backgrounds still, for the old Teletraan computer, which freezes on Full. Calm only fades. The second box, Motion on the TV computer, is Light to start with: the TV computer plays Light when Motion says Full, and a laptop plays Full. Choose Full there only to try the full transitions on a spare computer. For one page, `?motion=full`, `?motion=light` or `?motion=calm` on the address wins. docs/transitions.md has the rest.

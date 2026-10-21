@@ -193,7 +193,7 @@ test('the picture kinds the browser can read are found with tiny pictures of eac
 
 test('the runner records why a transition did not play and plays a push without a page change', () => {
   // The wording the control page reads is fixed here, so a change of one side shows in the other
-  ['Allow hidden transitions is off', 'motion is calm or none', 'request older than', 'an alert, announcement or talk is on', 'a demo is on', 'night mode is on', 'another transition was running', 'the areas did not come to rest'].forEach(words => {
+  ['Allow hidden transitions is off', 'motion is light, calm or none', 'request older than', 'an alert, announcement or talk is on', 'a demo is on', 'night mode is on', 'another transition was running', 'the areas did not come to rest'].forEach(words => {
     assert.ok(runSource.includes(words), words);
   });
   assert.ok(runSource.includes('playWithoutPageChange'));

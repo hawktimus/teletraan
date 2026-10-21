@@ -44,8 +44,10 @@ $items[]
 
 # What to send to Sanity, in groups of mutations. A task that is new is made and filled in by the same
 # group, so it is never left empty. One that exists is only touched when it differs from what the item
-# says. The script never sends Show on TV (showOnTv), so an editor choice stays. When both boards were read
-# to the end, a task whose item has gone is deleted, and its draft with it.
+# says. The script never sends Show on TV (showOnTv), so an editor choice stays. A task whose Show on TV?
+# column says Hide is not written at all, because the dataset is public: if an earlier run wrote it, it is
+# deleted (with its draft) on the next run, whether or not both boards were read to the end. When both
+# boards were read to the end, a task whose item has gone is deleted too.
 plan='
 def reference($id): {_type: "reference", _ref: $id};
 
@@ -90,13 +92,16 @@ def patch_of($id; $doc):
     } + ([$doc | to_entries[] | select(.value == null) | .key] as $absent | if ($absent | length) == 0 then {} else {unset: $absent} end))};
 
 ($found.tasks | arrays | map(select(._id | type == "string")) | map({key: ._id, value: .}) | from_entries) as $earlier
-| ($rows | unique_by(.id) | map(. as $row | ("task-monday-" + $row.id) as $id | {id: $id, row: $row, task: wanted_task($row), before: ($earlier[$id] // null)})) as $pairs
+| ($rows | unique_by(.id)) as $unique
+| ($unique | map(select(.showOnBoard)) | map(. as $row | ("task-monday-" + $row.id) as $id | {id: $id, row: $row, task: wanted_task($row), before: ($earlier[$id] // null)})) as $pairs
 | ($pairs | map(select(.before == null))) as $created
 | ($pairs | map(select(.before != null and ((.before | stored_task) != .task or .before.old == true)))) as $changed
+| ([$unique[] | select(.showOnBoard | not) | "task-monday-" + .id | select($earlier[.] != null)]) as $hidden_gone
 | (if $complete == "yes"
     then ($pairs | map({key: .id, value: true}) | from_entries) as $kept
       | [$earlier | keys[] | select(startswith("task-monday-")) | select($kept[.] | not)]
-    else [] end) as $gone
+    else [] end) as $gone_complete
+| (($gone_complete + $hidden_gone) | unique) as $gone
 | {
     groups: (
       ($created | map([{createIfNotExists: {_id: .id, _type: "task", source: "monday", mondayId: .row.id}}, patch_of(.id; .task)]))
@@ -156,6 +161,7 @@ def department_counts:
       + (if $complete == "yes" then {
           lastSyncAt: $now,
           taskCount: ($rows | unique_by(.id) | length),
+          hiddenCount: ($rows | unique_by(.id) | map(select(.showOnBoard | not)) | length),
           departments: department_counts,
           snapshots: with_today(snapshot_list($sanity[0].result.snapshots); $open)
         } else {} end)

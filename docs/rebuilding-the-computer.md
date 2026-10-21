@@ -683,15 +683,15 @@ The dataset is public, so anyone who asks for the `status-mini` document can
 read it. It holds six times and nothing else.
 
 The `calendar-status` document is public in the same way and holds more: the
-titles, dates and times of the next 40 events of each calendar, including the
-events that a Calendar filter hides from the TV. It holds no calendar address.
-Anyone who asks the dataset for it can read those titles (docs/calendars-page.md,
-"Who can read it").
+titles, dates and times of the next 40 events of each calendar that the TV shows,
+and the dates and rule names, without titles, of the events that a Calendar filter
+hides. It holds no calendar address. Anyone who asks the dataset for it can read
+those titles (docs/calendars-page.md, "Who can read it").
 
 The `monday-status` document is public in the same way. It holds the name of every
 board the Monday token can see, with the titles of their columns, and the first name
-of the account, and the tasks made from the boards are public too (docs/monday.md,
-"The dataset is public").
+of the account, and the tasks made from the boards that show on the TV are public too
+(docs/monday.md, "What it writes").
 
 Every job writes a new version of the document, and the screen re-reads its
 content each time Sanity says something changed. The slides service runs every

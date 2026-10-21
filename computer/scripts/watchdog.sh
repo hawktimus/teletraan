@@ -1,7 +1,8 @@
 #!/bin/bash
 # Usage: watchdog.sh   (started by teletraan-watchdog.timer)
 # Restarts the screen when it has frozen. teletraan-watchdog.timer runs it every
-# 2 minutes as root, because restarting teletraan-kiosk needs that.
+# 2 minutes as the login user. The one thing it needs from root, restarting teletraan-kiosk, goes through
+# sudo -n, which computer/sudoers/teletraan-control allows for that one command.
 #
 # The dashboard puts the time in the page title every 30 seconds (dashboard/core/
 # heartbeat.js), and kiosk.sh starts the browser so that this machine can list
@@ -34,7 +35,8 @@ state="$data/watchdog-state"
 
 page_list=http://127.0.0.1:9222/json
 browser_pattern='--remote-debugging-port=9222'
-service=teletraan-kiosk
+service=teletraan-kiosk.service
+systemctl_bin=${TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl}
 
 # The limits, in seconds
 title_limit_minutes=3
@@ -49,7 +51,7 @@ say() {
   echo "watchdog: $*"
 }
 
-for tool in curl pgrep ps systemctl awk; do
+for tool in curl pgrep ps sudo awk; do
   command -v "$tool" > /dev/null 2>&1 || { say "$tool is not installed, so the screen cannot be checked." >&2; exit 1; }
 done
 
@@ -179,5 +181,9 @@ if ! save_state "$count" 0 "$(printf '%s\n%s' "$recent" "$now")"; then
 fi
 
 say "$problem. Restarting $service (restart $count today)."
-systemctl restart "$service"
+# The path is the one in the sudoers file, which allows this unit and no other
+if ! sudo -n "$systemctl_bin" restart "$service" > /dev/null 2>&1; then
+  say "the restart was refused. Check that computer/sudoers/teletraan-control is installed (docs/updating-the-computer.md)." >&2
+  exit 1
+fi
 tell_studio "$count"

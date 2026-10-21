@@ -155,10 +155,39 @@ function extras(region, tracks, strip) {
   return group;
 }
 
+// The Light transition (core/reform-light.js): two gunmetal plates with a neon edge close over the region, a neon line charges
+// down the seam where they meet, two power cores spin up in the corners and, on the large panel, a scan bar sweeps across.
+// A part is { cls, markup, x, y, w, h, close, open }: its box in the region and the keyframes it plays while the plates close
+// and while they open.
+function light(width, height, role) {
+  const core = Math.round(Math.max(14, Math.min(48, height * 0.2)));
+  const edge = Math.round(core * 0.3);
+  const list = [{
+    cls: 'ck-light-seam', x: Math.round(width / 2 - 2), y: 0, w: 4, h: height,
+    close: [{ transform: 'scaleY(0)' }, { transform: 'scaleY(0)', offset: 0.6 }, { transform: 'scaleY(1)' }],
+    open: [{ transform: 'scaleY(1)' }, { transform: 'scaleY(0)', offset: 0.4 }, { transform: 'scaleY(0)' }],
+  }];
+
+  [[edge, edge, 1], [width - edge - core, height - edge - core, -1]].forEach(([x, y, direction]) => list.push({
+    cls: 'ck-light-core', markup: pieces.screw, x: x, y: y, w: core, h: core,
+    close: [{ transform: 'rotate(0deg) scale(0)' }, { transform: 'rotate(' + direction * 360 + 'deg) scale(1.3)' }],
+    open: [{ transform: 'rotate(' + direction * 360 + 'deg) scale(1.3)' }, { transform: 'rotate(' + direction * 720 + 'deg) scale(0)' }],
+  }));
+  if (role === 'main') {
+    list.push({
+      cls: 'ck-light-scan', x: 0, y: 0, w: width, h: 6,
+      close: [{ transform: 'translateY(0px)' }, { transform: 'translateY(' + (height - 6) + 'px)' }],
+      open: [{ transform: 'translateY(' + (height - 6) + 'px)' }, { transform: 'translateY(0px)' }],
+    });
+  }
+  return list;
+}
+
 export const kit = {
   id: 'cybertron',
   draw: role => pieces[role] === undefined ? '' : pieces[role],
   hardware: hardware,
   squares: squares,
   extras: extras,
+  light: light,
 };

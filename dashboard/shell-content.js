@@ -10,6 +10,7 @@ import { connectionLines, drawConnection } from './core/connection.js';
 import { pageSwitchesFor } from './core/look.js';
 import { backgroundFor } from './core/theme-bg.js';
 import { showDeviceInfo } from './core/device.js';
+import { motionOf } from './core/motion.js';
 import { checkTheme } from './core/theme-apply.js';
 import { changeLayout } from './core/layout-apply.js';
 import { layoutNow } from './core/layout.js';
@@ -118,7 +119,7 @@ export function rebuild() {
   chooseTeam(); // before the events, so everything below is built for the team on the screen
   shellState.content.events = mergedEvents();
   useDrivePhotos();
-  if (!params.has('motion')) frame.setMotion(shellState.content.settings.motion); // so a change in Dashboard Settings shows at once
+  frame.setMotion(motionOf(params, shellState.content.settings)); // so a change in Dashboard Settings shows at once
   if (!params.has('speed')) frame.setSpeed(shellState.content.settings.speed);
   const glitch = shellState.content.settings.crt;
   frame.setCrt(glitch.on, glitch.everySeconds, glitch.durationSeconds);

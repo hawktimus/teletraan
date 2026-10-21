@@ -464,6 +464,9 @@ html.palette-inverted {
   --reform-strut: #2b313b;
   --reform-strut-dim: #1a1e25;
   --reform-shade: #000000;
+  /* the plain kit, for a theme that has none of its own: grey plates with a darker rim */
+  --reform-plain-1: #8d949e;
+  --reform-plain-2: #4b525c;
 }
 
 /* The bar layout draws its armor plates a little darker (layouts/bar-minimal.css) */

@@ -125,3 +125,31 @@
   height: 100%;
   overflow: visible;
 }
+
+/* The Light transitions (core/reform-light.js): for each region two plates that close over it from its two sides, and a few parts of
+   the theme on them. Nothing is larger than its region, and only transform and opacity move. The look of the plates is the kit of
+   the theme (reform-kit.css and styles/<theme>/reform-kit.css). */
+.reform-light {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.reform-light-region {
+  position: absolute;
+  overflow: hidden;
+}
+.reform-light-plate {
+  position: absolute;
+}
+.reform-light-part {
+  position: absolute;
+  transform-origin: 50% 50%;
+}
+.reform-light-part > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}

@@ -4,6 +4,9 @@
 // to it. The kiosk script on the Teletraan computer writes data/live/device.json every
 // minute (computer/scripts/kiosk.sh). Nothing is read while the status text is
 // not showing, and a missing file or bad JSON gives no lines.
+//
+// The file is also how a page knows it is on the Teletraan computer, which plays Light motion (core/motion.js): a
+// laptop has no such file.
 
 import { liveFolder } from '../config.js';
 

@@ -47,6 +47,12 @@ cat "$STUB_DIR/etimes.txt"
 const fakeSystemctl = `#!/bin/sh
 echo "systemctl $*" >> "$STUB_LOG"
 `;
+const fakeSudo = `#!/bin/sh
+echo "sudo $*" >> "$STUB_LOG"
+[ -f "$STUB_DIR/sudo.exit" ] && exit "$(cat "$STUB_DIR/sudo.exit")"
+[ "$1" = -n ] && shift
+exec "$@"
+`;
 const fakeStatusWrite = `#!/bin/sh
 echo "status-write $*" >> "$STUB_LOG"
 `;
@@ -92,6 +98,7 @@ function setup(options = {}) {
   writeTool(bin, 'pgrep', fakePgrep);
   writeTool(bin, 'ps', fakePs);
   writeTool(bin, 'systemctl', fakeSystemctl);
+  writeTool(bin, 'sudo', fakeSudo);
 
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
@@ -125,7 +132,7 @@ function setup(options = {}) {
       return fs.existsSync(place.state) ? readModule(place.state, 'utf8') : '';
     },
     run() {
-      const env = { PATH: bin, TZ: 'UTC', STUB_LOG: log, STUB_DIR: stub, WATCHDOG_BOOT_FILE: path.join(root, 'boot-id') };
+      const env = { PATH: bin, TZ: 'UTC', STUB_LOG: log, STUB_DIR: stub, WATCHDOG_BOOT_FILE: path.join(root, 'boot-id'), TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl') };
       const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/watchdog.sh')], { env: env, encoding: 'utf8', input: '' });
       const calls = readModule(log, 'utf8').split('\n').filter(Boolean);
       return {
@@ -133,7 +140,8 @@ function setup(options = {}) {
         text: result.stdout,
         errors: result.stderr,
         calls: calls,
-        restarted: calls.some(line => line === 'systemctl restart teletraan-kiosk'),
+        restarted: calls.some(line => line === 'systemctl restart teletraan-kiosk.service'),
+        sudoCalls: calls.filter(line => line.startsWith('sudo')),
         told: calls.filter(line => line.startsWith('status-write')),
       };
     },
@@ -162,6 +170,30 @@ test('a title one or two minutes old, or a minute ahead of the clock, is fresh',
     place.page(heartbeatTitle(minutes));
     assert.equal(place.run().restarted, false, minutes + ' minutes from now');
   });
+});
+
+test('the restart goes through sudo -n with the one command the sudoers file allows, and nothing else as root', () => {
+  const place = setup();
+  place.page(heartbeatTitle(-6));
+  const result = place.run();
+  assert.equal(result.restarted, true);
+  assert.deepEqual(result.sudoCalls, ['sudo -n ' + path.join(place.root, 'bin/systemctl') + ' restart teletraan-kiosk.service']);
+  const text = readModule(watchdogFile, 'utf8');
+  assert.ok(text.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl'), 'the real run uses the path of the sudoers file');
+  assert.equal((text.match(/systemctl_bin"? restart/g) || []).length, 1, 'one restart command only');
+});
+
+test('when sudo refuses the restart the watchdog says so and exits 1, and the count of restarts still holds', () => {
+  const place = setup();
+  place.page(heartbeatTitle(-6));
+  fs.writeFileSync(path.join(place.root, 'stub/sudo.exit'), '1');
+  const first = place.run();
+  assert.equal(first.status, 1);
+  assert.ok(first.errors.includes('refused'), first.errors);
+  assert.equal(first.restarted, false);
+  assert.ok(/\nrestart=\d+\n/.test(place.stateText()), 'the attempt is counted, so a refusal cannot loop');
+  const second = place.run();
+  assert.equal(second.sudoCalls.length, 1, 'the second run waits 10 minutes and does not ask sudo again');
 });
 
 test('a stale title restarts the kiosk service, keeps the state, and tells Studio the count', () => {
@@ -315,7 +347,7 @@ test('the watchdog units run the script every 2 minutes, the installer checks th
   const service = readModule(path.join(repo, 'computer/systemd/teletraan-watchdog.service'), 'utf8');
   const timer = readModule(path.join(repo, 'computer/systemd/teletraan-watchdog.timer'), 'utf8');
   assert.ok(service.includes('ExecStart=/opt/teletraan/computer/scripts/watchdog.sh'));
-  assert.ok(!/^User=/m.test(service), 'it runs as root and names no account');
+  assert.match(service, /^User=ACCOUNT$/m, 'it runs as the login user, not root');
   assert.ok(/^OnUnitActiveSec=2min$/m.test(timer));
   assert.ok(/^WantedBy=timers.target$/m.test(timer));
 
@@ -325,7 +357,7 @@ test('the watchdog units run the script every 2 minutes, the installer checks th
   assert.ok(fs.statSync(installer).mode & 0o100);
   assert.ok(text.includes('[ ! -s "$units/$unit" ]'), 'a missing or empty unit stops it');
   assert.ok(text.includes('exit 1'));
-  assert.ok(!/hawktimus/.test(text.replace(/If that account is called hawktimus/g, '')), 'no account name written in');
+  assert.ok(!/hawktimus/.test(text.replace(/hawktimus:hawktimus|called hawktimus/g, '')), 'no account name written in');
   assert.ok(text.includes('teletraan-watchdog.service') && text.includes('teletraan-watchdog.timer'));
 });
 

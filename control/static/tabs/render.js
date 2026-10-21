@@ -93,6 +93,16 @@ export function wallReport(now) {
   return now && now.report && typeof now.report === 'object' && !now.quiet ? now.report : null;
 }
 
+// The line on the Log tab about reloads: how often the page of the wall started again in the last 24 hours, and why the
+// last time. A flash on the TV with no new load here was not a reload.
+export function pageLoadsLine(now) {
+  const report = now && now.report && typeof now.report === 'object' ? now.report : null;
+  if (!report || report.loads === null || report.loads === undefined) return 'Page loads in the last 24 hours: not reported yet.';
+  const reason = report.loadReason ? ', last reason: ' + report.loadReason : '';
+  const when = report.loadAt ? ' at ' + report.loadAt.slice(11, 16) + ' UTC' : '';
+  return 'Page loads in the last 24 hours: ' + report.loads + reason + when + '.';
+}
+
 // What the wall reported about the last hidden transition (the steps are written by dashboard/core/hidden-run.js, and
 // tests/hidden-run-log.test.mjs keeps the two in step). Plain words for the page: { last, types }.
 const hiddenNames = { desktop: 'Desktop reveal', redEyes: 'Red eyes' };

@@ -64,6 +64,13 @@ Studio will not publish one with none, because it would match every event.
 
 The Events panel and the Next event tile both use the list after the rules.
 
+## What is public
+
+The dataset is public. A rule is a document in it, so its name, words and dates can be read by anyone who asks.
+The Mini lists the coming events in a document for the Calendars page, and it leaves out the title of an event a
+rule hides (docs/calendars-page.md, "Who can read it"). Name a rule for the reason, such as Hide: Practice, and
+keep private words out of its name and its words.
+
 ## One event rules
 
 The Calendars page in Studio, under Events, has a Show and Hide switch on every

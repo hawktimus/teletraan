@@ -35,10 +35,16 @@ const banner = { x: 32, y: 32, w: 1856, h: 160 };
 const roles = list => list.map(item => item.role);
 const count = (list, role) => list.filter(item => item.role === role).length;
 
-await test('the foundry kit is its own object with its own id, and keeps the Original pieces', () => {
+await test('the foundry kit is its own object with its own id, and draws every piece itself', () => {
   assert.notEqual(kit, original.kit);
   assert.equal(kit.id, 'foundry');
-  ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth'].forEach(role => assert.equal(kit.draw(role), original.kit.draw(role), role));
+  ['screw', 'latch', 'brace', 'rivet', 'gear', 'piston', 'tooth'].forEach(role => {
+    assert.ok(kit.draw(role).startsWith('<svg'), role);
+    assert.notEqual(kit.draw(role), original.kit.draw(role), role + ' is not the Original drawing');
+    assert.ok(!/class="rk-/.test(kit.draw(role)), role + ' uses a class of the Original kit');
+  });
+  assert.ok(kit.squares, 'the squares are steel plates of its own');
+  assert.equal(kit.lockParts, undefined, 'no cells with lock pins');
   assert.equal(kit.draw('chassis'), '');
   assert.equal(kit.draw('nothing'), '');
 });

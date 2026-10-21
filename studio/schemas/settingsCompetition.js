@@ -7,7 +7,7 @@
 //                      during it), always, off, or around (Before and after: a preview for the
 //                      14 days before an event, nothing while it is on, a recap for the 7 days after).
 //                      around is the starting value. A document that already stores a mode keeps it
-//   one switch for each card, all on to start with
+//   one switch for each card, all on to start with except Championship chances, which is off until it is switched on
 //
 // The mode and the switches are the same names, choices and starting values as the
 // competitionModes list, competitionSwitches and defaultSettings in dashboard/config.js.
@@ -46,7 +46,7 @@ const cards = [
   { name: 'competitionMatches', title: 'Our matches', description: 'Our qualification matches with the chance of winning each. In Before and after it shows once the schedule is posted, usually the evening before.' },
   { name: 'competitionRecap', title: 'Event recap', description: 'The final rank, record, awards and the change in EPA. In Before and after it shows for 7 days after an event.' },
   { name: 'competitionForecast', title: 'Event forecast (Match13)', description: 'Where Match13 expects each team to finish the event. Needs the Match13 key. In Auto it shows from two days before an event.' },
-  { name: 'competitionQualify', title: 'Championship chances (Match13)', description: 'The chance of the District and World Championship. Needs the Match13 key. In Auto it shows once the first event has started.' },
+  { name: 'competitionQualify', title: 'Championship chances (Match13)', description: 'The chance of the District and World Championship. It is off until you switch it on. Needs the Match13 key. Once on, it shows when the first event has started.', initialValue: false },
   { name: 'competitionTeamMetrics', title: 'Team metrics (Match13 and TBA)', description: 'Record, rank, Match13 rating, next match and last matches of the team on screen. Needs the Match13 key. In Before and after and in Always, not in Auto.' },
   { name: 'competitionCompare', title: 'Both teams side by side', description: 'Prime and Nova next to each other, each in its own color: record, rank, rating and next match. In Before and after and in Always, not in Auto.' },
 ];
@@ -82,7 +82,7 @@ export function competitionFields() {
       type: 'boolean',
       group: 'competition',
       description: card.description,
-      initialValue: true,
+      initialValue: card.initialValue === undefined ? true : card.initialValue,
     }));
   });
   return fields;

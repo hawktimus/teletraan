@@ -17,7 +17,9 @@ export const words = {
   linksNote: 'The calendar links are secret, so they are not kept here. They live on the control page, Settings, Keys.',
   help: 'These are the events the Teletraan computer downloaded from BAND, from now on. The switch on an event shows it on the TV or hides it. Past events are not listed.',
   applyNote: 'Click Publish all to apply.',
-  publicNote: 'These titles are saved in the dataset, which anyone can read. That includes the hidden ones.',
+  publicNote: 'The titles of events the TV shows are saved in the dataset, which anyone can read. A hidden event is saved without its title.',
+  hiddenTitle: 'Hidden event',
+  titleNotKept: 'The title of a hidden event is not kept, so this switch cannot be used. Change or remove the rule that hides it under Calendar filters.',
   shown: 'Shows on the TV',
   hiddenByYou: 'Hidden by you',
   hiddenCalendar: 'The calendar is hidden',
@@ -101,7 +103,9 @@ export function eventRows(status, entries, now, zone) {
       const over = end !== null && end <= now.getTime();
       if (day !== '' && day < today && (end === null || over)) return;
 
-      const title = textOf(event.title) || 'No title';
+      // A hidden event is written without its title, because the dataset is public (computer/scripts/calendar-status.mjs)
+      const titleKept = textOf(event.title) !== '' || event.shown !== false;
+      const title = textOf(event.title) || (titleKept ? 'No title' : words.hiddenTitle);
       rows.push({
         key: calendar.code + '|' + (textOf(event.start) || textOf(event._key) || index) + '|' + title,
         code: calendar.code,
@@ -109,6 +113,7 @@ export function eventRows(status, entries, now, zone) {
         kind: entry ? kindTitles[entry.kind] || '' : '',
         calendarOn: entry !== null && entry.show !== false,
         title: title,
+        titleKept: titleKept,
         time: textOf(event.time) || 'All day',
         start: textOf(event.start),
         end: textOf(event.end),
@@ -213,7 +218,7 @@ export function publishedRules(groups) {
 // TV. rules is a list of rules, or null when they could not be read, and then the computer's own
 // word for the event is used.
 export function judge(row, rules, now) {
-  if (rules === null) return row.listedShown ? { visible: true, by: '' } : { visible: false, by: 'rule', rule: row.listedRule || 'a rule with no name' };
+  if (rules === null || row.titleKept === false) return row.listedShown ? { visible: true, by: '' } : { visible: false, by: 'rule', rule: row.listedRule || 'a rule with no name' };
 
   const live = rules.filter(rule => isLive(rule, now));
   const own = live.filter(rule => oneEventMatches(rule, row));
@@ -243,6 +248,7 @@ export function stateOf(row, groups, now) {
   if (row.earlier) return Object.assign(state, { id: 'earlier', text: words.earlier, on: false, pending: false, canSwitch: false });
   if (!row.calendarOn) return Object.assign(state, { id: 'hidden-calendar', text: words.hiddenCalendar, on: false, pending: false, canSwitch: false, note: words.calendarOff });
   if (oneEventRule(row, 'hide') === null) Object.assign(state, { canSwitch: false, note: words.noStart });
+  if (row.titleKept === false) Object.assign(state, { canSwitch: false, note: words.titleNotKept });
 
   if (after.visible) {
     const reason = after.by === 'you' ? 'Shown by you although a rule hides it.' : '';
