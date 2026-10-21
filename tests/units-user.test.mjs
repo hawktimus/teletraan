@@ -65,7 +65,7 @@ check('a root unit that runs a script of /opt/teletraan is not allowed: the tree
 });
 
 check('the installers fill in ACCOUNT, refuse root, and say when they replace a unit that ran as root', () => {
-  ['watchdog', 'nightly', 'reboot', 'backup', 'calendars'].forEach(name => {
+  ['watchdog', 'nightly', 'reboot', 'cleanup', 'backup', 'calendars'].forEach(name => {
     const text = fs.readFileSync(path.join(repo, 'computer/scripts/install-' + name + '.sh'), 'utf8');
     assert.ok(text.includes('s/^User=ACCOUNT\\$/User=$account/'), name);
     assert.ok(text.includes('"$account" = root'), name + ' refuses root');

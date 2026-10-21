@@ -9,7 +9,7 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { useClient } from 'sanity';
 import { IntentLink } from 'sanity/router';
 import { styles } from './page-styles.js';
-import { checkAnswer, contentQuestion, reportOf, summaryLine } from '../tools/content-check.js';
+import { checkAnswer, cleanupLine, contentQuestion, reportOf, summaryLine } from '../tools/content-check.js';
 import { countWords, keyOf, levelWords, stateWords, words } from './check-screen-parts.js';
 
 const h = createElement;
@@ -33,7 +33,7 @@ const own = {
 export async function readReport(client, now = new Date()) {
   try {
     const answer = await client.fetch(contentQuestion, {}, { perspective: 'raw' });
-    return reportOf(checkAnswer(answer, now));
+    return Object.assign(reportOf(checkAnswer(answer, now)), { cleanup: cleanupLine(answer) });
   } catch (error) {
     return null;
   }
@@ -74,6 +74,7 @@ export function pageOf(state, check) {
     body = [
       h('p', { key: 'summary', style: state.report.problems > 0 ? styles.failed : styles.text, 'data-line': 'summary', 'aria-live': 'polite' }, summaryLine(state.report)),
       h('p', { key: 'legend', style: styles.muted }, words.legend),
+      state.report.cleanup ? h('p', { key: 'cleanup', style: styles.muted, 'data-line': 'cleanup' }, state.report.cleanup) : null,
       state.report.groups.map(groupBlock),
     ];
   }

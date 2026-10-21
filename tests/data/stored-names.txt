@@ -115,6 +115,11 @@ dashboardSettings.calendars.<object>.kind = other
 dashboardSettings.calendars.<object>.kind = outreach
 dashboardSettings.calendars.<object>.name
 dashboardSettings.calendars.<object>.show
+dashboardSettings.cleanupDeleteAfterDays
+dashboardSettings.cleanupEnabled
+dashboardSettings.cleanupMode
+dashboardSettings.cleanupMode = delete
+dashboardSettings.cleanupMode = list
 dashboardSettings.competitionAlliance
 dashboardSettings.competitionCompare
 dashboardSettings.competitionDistrict
@@ -965,10 +970,14 @@ status.buildBranch
 status.buildCommit
 status.buildDate
 status.buildVersion
+status.cleanupDeleted
+status.cleanupError
+status.cleanupWouldDelete
 status.kioskRestarts
 status.kioskStartedAt
 status.lastBackupAt
 status.lastCalendarSyncAt
+status.lastCleanupAt
 status.lastContentSeenAt
 status.lastFrcSyncAt
 status.lastKioskRestartAt

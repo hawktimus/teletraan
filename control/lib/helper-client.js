@@ -5,11 +5,13 @@
 
 import net from 'node:net';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'log-bundle'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete'];
 
 export function createHelper(socketPath, timeout = 30000, connect = net.createConnection) {
   return function helper(word, args = [], body = '') {
     return new Promise((resolve, reject) => {
+      // A clean up reads and deletes document by document, which takes longer than the other words
+      const wait = word.startsWith('cleanup-') ? Math.max(timeout, 180000) : timeout;
       if (!words.includes(word) || !args.every(arg => /^[a-z0-9-]{1,20}$/.test(arg))) {
         reject(new Error('That is not a word the helper knows.'));
         return;
@@ -19,7 +21,7 @@ export function createHelper(socketPath, timeout = 30000, connect = net.createCo
       const timer = setTimeout(() => {
         socket.destroy();
         reject(new Error('The helper did not answer in time. Look at the Log tab, then try again. If it keeps happening, restart the Teletraan computer.'));
-      }, timeout);
+      }, wait);
       socket.on('connect', () => socket.end([word].concat(args).join(' ') + '\n' + body));
       socket.on('data', chunk => { answer += chunk; });
       socket.on('error', error => {

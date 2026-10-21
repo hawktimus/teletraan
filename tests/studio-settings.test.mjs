@@ -32,8 +32,8 @@ test('no stored name of Dashboard Settings changed: all of them are still fields
   const now = settings.fields.map(field => field.name);
   assert.deepEqual(storedNames.filter(name => now.indexOf(name) === -1), []);
   assert.equal(settings.name, 'dashboardSettings');
-  // The Motion setting added motionOnKiosk (hidden now, nothing reads it). The Photos page added the next two, the Scheduled reboot section the next six (seen in Advanced), the Screen fit section the next four (also in Advanced), the Before and after cards the five switches after them and the FRC news section the last four. The rest are hidden here
-  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['motionOnKiosk', 'photoSource', 'photoDriveFolder', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionTeamMetrics', 'competitionCompare', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
+  // The Motion setting added motionOnKiosk (hidden now, nothing reads it). The Photos page added the next two, the Scheduled reboot section the next six (seen in Advanced), the Clean up expired items section the next three, the Screen fit section the next four (both in Advanced), the Before and after cards the five switches after them and the FRC news section the last four. The rest are hidden here
+  assert.deepEqual(now.filter(name => storedNames.indexOf(name) === -1), ['motionOnKiosk', 'photoSource', 'photoDriveFolder', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'cleanupEnabled', 'cleanupDeleteAfterDays', 'cleanupMode', 'screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionTeamMetrics', 'competitionCompare', 'newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], 'no other field was added: ' + now.filter(name => storedNames.indexOf(name) === -1).join());
 });
 
 test('there are five tabs at most, in the order of the content map, and Timing opens first', () => {
@@ -47,14 +47,14 @@ test('what a coach can still see is short and has no field the pages took over',
   const visible = settings.fields.filter(field => field.hidden !== true).map(field => field.name).sort();
   assert.deepEqual(visible, [
     'miniStatus', 'generalViewTitle', 'countdown', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince', 'photoOrder', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame',
-    'nightEnabled', 'nightStyle', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'hiddenEnabled', 'desktopEveryHours', 'redEyesEveryHours', 'hiddenRequest', 'presentationsEnabled', 'screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY',
+    'nightEnabled', 'nightStyle', 'nightLogoWidth', 'nightSpeed', 'nightPreview', 'rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'cleanupEnabled', 'cleanupDeleteAfterDays', 'cleanupMode', 'hiddenEnabled', 'desktopEveryHours', 'redEyesEveryHours', 'hiddenRequest', 'presentationsEnabled', 'screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY',
     'calendars', 'groupEventsByKind', 'mondayConnection', 'mondayEveryMinutes', 'showConnectionStatus',
   ].sort());
 });
 
 test('each section has a title and a one line description, and every field in it exists', () => {
   const names = settings.fields.map(field => field.name);
-  ['timing', 'banner', 'portraits', 'presentations', 'night', 'reboot', 'hiddenTransitions', 'screenFit', 'other'].forEach(name => {
+  ['timing', 'banner', 'portraits', 'presentations', 'night', 'reboot', 'cleanup', 'hiddenTransitions', 'screenFit', 'other'].forEach(name => {
     const set = settings.fieldsets.filter(item => item.name === name)[0];
     assert.ok(set, name + ' should be a section');
     assert.ok(set.title && set.description && set.description.length <= 160 && set.description.indexOf('\n') === -1, name + ' needs a title and a one line description');
@@ -65,10 +65,10 @@ test('each section has a title and a one line description, and every field in it
   assert.ok(names.length > 0);
 });
 
-test('Presentations, Night mode, Scheduled reboot, Hidden transitions and Screen fit are sections of Advanced, in that order', () => {
+test('Presentations, Night mode, Scheduled reboot, Clean up expired items, Hidden transitions and Screen fit are sections of Advanced, in that order', () => {
   const order = [];
   settings.fields.filter(field => field.group === 'advanced' && field.fieldset).forEach(field => { if (order.indexOf(field.fieldset) === -1) order.push(field.fieldset); });
-  assert.deepEqual(order.slice(0, 5), ['presentations', 'night', 'reboot', 'hiddenTransitions', 'screenFit']);
+  assert.deepEqual(order.slice(0, 6), ['presentations', 'night', 'reboot', 'cleanup', 'hiddenTransitions', 'screenFit']);
   assert.equal(order[order.length - 1], 'other');
 });
 

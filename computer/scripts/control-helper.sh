@@ -63,6 +63,9 @@ case $word in
   restart-kiosk|restart-services|reboot|status|display-info|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
     [ -z "$argument" ] || refuse "$shown"
     ;;
+  cleanup-preview|cleanup-delete)
+    [ -z "$argument" ] || refuse "$shown"
+    ;;
   sync-now)
     case $argument in
       calendars|monday|frc|news|photos-drive|match13) ;;
@@ -161,6 +164,18 @@ case $word in
       journalctl -u "$unit" -n 300 --no-pager -o short-iso 2>&1 | cut -c 1-400 || true
     done
     finish 0
+    ;;
+  cleanup-preview)
+    # The list of expired items that the nightly clean up would delete, and nothing is deleted. Plain lines for the page.
+    code=0
+    "$root/computer/scripts/expired-cleanup.sh" --dry-run --print || code=$?
+    finish "$code"
+    ;;
+  cleanup-delete)
+    # Deletes what the list holds now. The script refuses unless Mode is Delete, makes a backup first and has its own limits.
+    code=0
+    "$root/computer/scripts/expired-cleanup.sh" --delete-now --print || code=$?
+    finish "$code"
     ;;
   monday-check)
     code=0

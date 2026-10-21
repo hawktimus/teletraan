@@ -294,7 +294,7 @@ check('the installer, the Mac tool and the helper know the reboot timer, and the
   const installer = fs.readFileSync(path.join(repo, 'computer/scripts/install-reboot.sh'), 'utf8');
   assert.match(installer, /teletraan-reboot\.timer/);
   assert.match(installer, /sudo apt install curl jq nodejs/);
-  assert.match(fs.readFileSync(path.join(repo, 'tools/teletraan/teletraan-tool-deploy.sh'), 'utf8'), /nightly reboot; do/);
+  assert.match(fs.readFileSync(path.join(repo, 'tools/teletraan/teletraan-tool-deploy.sh'), 'utf8'), /nightly reboot cleanup; do/);
   assert.match(fs.readFileSync(path.join(repo, 'computer/scripts/control-helper.sh'), 'utf8'), /watchdog nightly reboot; do/);
   assert.match(fs.readFileSync(path.join(repo, 'computer/sudoers/teletraan-control'), 'utf8'), /\/usr\/bin\/systemctl reboot/);
 });

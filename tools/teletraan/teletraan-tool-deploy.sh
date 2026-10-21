@@ -21,7 +21,7 @@ update_computer() {
 
   say "This copies the files in this repository to $address:$COMPUTER_STAGING and runs the installer there as root. The installer"
   say "makes them the next release, builds the Studio, starts the containers and turns on the nightly timer. Then the services run:"
-  say "calendars, slides, Monday, competition, boot and shutdown screens (/etc/issue), watchdog, backup, nightly restart and scheduled reboot."
+  say "calendars, slides, Monday, competition, boot and shutdown screens (/etc/issue), watchdog, backup, nightly restart, scheduled reboot and the clean up of expired items."
   say "They install no packages. If one needs a package, it stops and says which, and the rest go on."
   say "The screen restarts at the end and is black for about ten seconds. The Teletraan computer keeps its local.env,"
   say "and the last five releases stay on it for a rollback (docs/control-page.md)."
@@ -169,7 +169,7 @@ stage=$1; commit=$2; dir=$3; kiosk=$4
 echo "== the installer"
 bash "$stage/computer/install.sh" --from "$stage" --yes --note "From the Mac tool" ${commit:+--commit "$commit"} || exit $?
 stopped=''
-for name in calendars slides photos-drive monday frc news match13 console watchdog backup nightly reboot; do
+for name in calendars slides photos-drive monday frc news match13 console watchdog backup nightly reboot cleanup; do
   echo
   echo "== install-$name.sh"
   echo | "$dir/install-$name.sh" || { echo "install-$name.sh stopped (exit $?)."; stopped="$stopped $name"; }

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -14,6 +14,9 @@
 #                              from news/status.json, which news-sync.sh made in the data folder
 #   status-write.sh reboot     sends the next and the last scheduled reboot (nextRebootAt, nextRebootText, lastRebootAt,
 #                              lastRebootWhy), from reboot/status.json, which scheduled-reboot.sh made in the data folder
+#   status-write.sh cleanup    sends when the clean up of expired items last ran, how many documents were on its list, how many it
+#                              deleted and why it stopped, if it did (lastCleanupAt, cleanupWouldDelete, cleanupDeleted,
+#                              cleanupError), from cleanup/status.json, which expired-cleanup.sh made in the data folder
 #   status-write.sh kiosk      the screen started
 #   status-write.sh version    the build on the wall: the version, the short hash, the date and the branch
 #                              (buildVersion, buildCommit, buildDate, buildBranch). From RELEASE.json of the
@@ -46,7 +49,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|cleanup|restart N" >&2
   exit 2
 }
 
@@ -67,6 +70,7 @@ case $1 in
   frc) field=lastFrcSyncAt ;;
   news) field=newsAt ;;
   reboot) field=nextRebootAt ;;
+  cleanup) field=lastCleanupAt ;;
   kiosk) field=kioskStartedAt ;;
   version) field=version ;;
   backup) field=lastBackupAt ;;
@@ -296,6 +300,31 @@ elif [ "$field" = nextRebootAt ]; then
   patch="\"id\":\"$document\""
   [ -z "$set_list" ] || patch="$patch,\"set\":{$set_list}"
   [ -z "$unset_list" ] || patch="$patch,\"unset\":[$unset_list]"
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
+elif [ "$field" = lastCleanupAt ]; then
+  # The line expired-cleanup.sh wrote after a run. An empty error is removed from the document. Each part is checked,
+  # because it goes into a JSON body.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/cleanup/status.json"
+  [ -f "$file" ] || exit 0
+  text=$(head -c 600 "$file")
+  at=$(printf '%s' "$text" | sed -n 's/.*"at":"\([^"]*\)".*/\1/p')
+  would=$(printf '%s' "$text" | sed -n 's/.*"wouldDelete":\([0-9]*\).*/\1/p')
+  deleted=$(printf '%s' "$text" | sed -n 's/.*"deleted":\([0-9]*\).*/\1/p')
+  problem=$(printf '%s' "$text" | sed -n 's/.*"error":"\([^"]*\)".*/\1/p')
+  if ! printf '%s' "$at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$' ||
+    ! printf '%s' "$would" | grep -Eq '^[0-9]{1,5}$' ||
+    ! printf '%s' "$deleted" | grep -Eq '^[0-9]{1,5}$' ||
+    ! printf '%s\n' "$problem" | grep -Eq "^[A-Za-z0-9 :,.()/'?-]{0,160}\$"; then
+    echo "status: cleanup/status.json is not the line expired-cleanup.sh writes, so nothing was written." >&2
+    exit 1
+  fi
+  patch="\"id\":\"$document\",\"set\":{\"lastCleanupAt\":\"$at\",\"cleanupWouldDelete\":$would,\"cleanupDeleted\":$deleted"
+  if [ -n "$problem" ]; then
+    patch="$patch,\"cleanupError\":\"$problem\"}"
+  else
+    patch="$patch},\"unset\":[\"cleanupError\"]"
+  fi
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
 elif [ "$field" = newsAt ]; then
   # The line news-sync.sh wrote after a good run. Nothing is sent when it is not there. Each part is

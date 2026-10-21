@@ -1,7 +1,7 @@
 // The Settings tab: folding sections, one file each (settings-*.js). A section is drawn the first time it is opened. On a
 // phone one section is open at a time. A link such as #settings/keys (or the old #keys) opens that section.
 //
-// Updates, Keys, Monitor Monday, Sync and restart, Competition data, Screen, Scheduled reboot, Logs, All settings. The ids are the words after
+// Updates, Keys, Monitor Monday, Sync and restart, Competition data, Screen, Scheduled reboot, Clean up expired items, Logs, All settings. The ids are the words after
 // the slash in the address and do not change when a title does.
 
 import { registerTab, tabOrder } from '../tabs.js';
@@ -13,6 +13,7 @@ import { mountSync } from './settings-sync.js';
 import { mountCompetition } from './settings-competition.js';
 import { mountReboot } from './settings-reboot.js';
 import { mountScreen } from './settings-screen.js';
+import { mountCleanup } from './settings-cleanup.js';
 import { mountLog } from './settings-log.js';
 import { mountAll } from './settings-all.js';
 
@@ -24,6 +25,7 @@ export const sections = [
   { id: 'competition', title: 'Competition data', mount: mountCompetition },
   { id: 'screen', title: 'Screen', mount: mountScreen, light: true },
   { id: 'reboot', title: 'Scheduled reboot', mount: mountReboot },
+  { id: 'cleanup', title: 'Clean up expired items', mount: mountCleanup },
   { id: 'log', title: 'Logs', mount: mountLog },
   // Other files add to this one (settings-all.js); its body has a fixed id for them
   { id: 'all', title: 'All settings', mount: mountAll, light: true, bodyId: 'settings-all' },
