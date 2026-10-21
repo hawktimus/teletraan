@@ -17,7 +17,8 @@ export const longestRow = 1500;
 export const unreadablePanel = 'row-unreadable';
 
 // The rotation rows say robotics where the dashboard says general
-const viewOfRow = { robotics: 'general', prime: 'prime', nova: 'nova' };
+// family is the Condensed view, which the control page can preview before it is pushed
+const viewOfRow = { robotics: 'general', prime: 'prime', nova: 'nova', family: 'family' };
 const wordFields = ['panel', 'view', 'side', 'department', 'list', 'chart', 'team'];
 const numberFields = ['part', 'photoCount', 'secondsPerPhoto'];
 const plainWord = /^[A-Za-z0-9._ -]{1,60}$/;

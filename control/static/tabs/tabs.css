@@ -188,3 +188,35 @@
   .display-page .to-picture { display: none; }
   .display-page .drow { cursor: default; }
 }
+
+/* Now on the wall, Temporary push and the strip of the week (tabs/push.js, tabs/push-parts.js). One column on a phone. */
+.display-page .display-main { display: grid; gap: 16px; min-width: 0; }
+.display-page .big-theme { margin: 0; font-size: 40px; font-weight: 800; line-height: 1.1; color: var(--accent, #faca2a); overflow-wrap: anywhere; }
+.display-page .tiles, .display-page .hold { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.display-page .tile { flex: 1 1 140px; min-height: 44px; }
+.display-page .hold .tile { flex: 0 1 auto; }
+.display-page .tile[aria-pressed="true"] { outline: 3px solid var(--accent, #faca2a); outline-offset: 2px; font-weight: 700; }
+.display-page .actives { margin: 8px 0 0; padding: 0; list-style: none; }
+.display-page .active { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; margin: 0 0 8px; padding: 8px 12px; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.display-page .active > div { min-width: 0; overflow-wrap: anywhere; }
+.display-page .left { color: var(--accent, #faca2a); font-weight: 700; }
+.display-page .push-card textarea { min-height: 88px; resize: vertical; }
+.display-page .week { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 12px 0; padding: 0; list-style: none; }
+.display-page .day { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; min-height: 44px; padding: 6px 12px; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; font-size: 18px; overflow-wrap: anywhere; }
+.display-page .dname { min-width: 56px; }
+.display-page .day[data-today="yes"] { border-color: var(--accent, #faca2a); background: #2a1f45; }
+.display-page .dname { font-weight: 700; }
+.display-page .dtheme { flex: 1 1 auto; }
+.display-page .dnow { color: var(--accent, #faca2a); font-weight: 700; }
+@media (min-width: 700px) {
+  .display-page .week { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .display-page .day { display: grid; gap: 2px; padding: 8px 4px; text-align: center; font-size: 16px; }
+}
+@media (min-width: 1000px) {
+  .display-page .display-split { grid-template-areas: "now preview" "main preview"; grid-template-rows: auto 1fr; }
+  .display-page .display-now { grid-area: now; min-width: 0; }
+  .display-page .display-main { grid-area: main; }
+  .display-page .preview-card { grid-area: preview; }
+}
+
+.tab textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }

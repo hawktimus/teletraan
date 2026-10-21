@@ -39,7 +39,7 @@ async function checkPresentationsOn(ctx) {
 }
 
 // The screen ignores a push while Allow hidden transitions is off, so the page says so
-async function checkHiddenOn(ctx) {
+export async function checkHiddenOn(ctx) {
   let enabled;
   try {
     enabled = await makeSanity(ctx).query('*[_id == "dashboardSettings"][0].hiddenEnabled');

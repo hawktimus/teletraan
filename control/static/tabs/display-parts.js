@@ -5,6 +5,7 @@
 import { blocksOf, countWhere, durationWords, isNovaRow, isShown, mondayFieldsOf, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
 import { thumbHtml } from './display-preview-parts.js';
+import { weekStripHtml } from './push-parts.js';
 
 const stateWords = { show: 'Will show', skip: 'Skipped', off: 'Off', unknown: 'Not known' };
 const dayWords = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
@@ -188,13 +189,20 @@ export function addRowHtml(choices) {
 
 // ----- the theme and view settings -----
 
-export function themeHtml(theme, choices) {
+// info is { today, timeZone } from the push state: the strip marks today and the time zone is shown. Both are empty until it is read.
+export function themeHtml(theme, choices, info = {}) {
+  const titles = {};
+  choices.themes.forEach(item => { titles[item.value] = item.title; });
   const days = choices.weekdays.map(day => field(dayWords[day] || day, '<select data-theme-day="' + esc(day) + '">' + options(choices.themes, theme.themeByWeekday[day]) + '</select>')).join('');
-  return '<section class="card"><h2>Theme of each weekday</h2><div class="fields">' + days + '</div>' +
-    '<div class="fields">' +
+  return '<section class="card theme-card" data-theme-card><h2>Theme rotation (which theme plays each day)</h2>' +
+    '<p class="word">The wall changes theme at midnight in the time zone of the Look page' + (info.timeZone ? ': ' + esc(info.timeZone) : '') + '. Change that on the Look page in the Studio.</p>' +
+    '<div data-week-strip>' + weekStripHtml(theme.themeByWeekday, info.today || '', titles) + '</div>' +
+    '<div class="fields">' + days + '</div>' +
+    '<h3>Names and timing</h3><div class="fields">' +
     field('Banner title for Robotics (up to 28 characters)', '<input type="text" maxlength="28" data-theme-title value="' + esc(theme.generalViewTitle) + '">') +
-    field('Transition length in seconds (2 to 4)', '<input type="number" inputmode="decimal" min="2" max="4" step="0.5" data-theme-transition value="' + esc(theme.transitionSeconds === null ? '' : theme.transitionSeconds) + '">') +
-    '</div><p class="note">The view of a row is in its card above. The theme changes at midnight in the time zone of the Look page.</p></section>';
+    field('Seconds for each transition (2 to 4)', '<input type="number" inputmode="decimal" min="2" max="4" step="0.5" data-theme-transition value="' + esc(theme.transitionSeconds === null ? '' : theme.transitionSeconds) + '">') +
+    '</div><p class="note">The names of the Prime and Nova views are the names of their Team documents. The view of a row is in its card in the rotation above.</p>' +
+    '<div data-controls></div><p class="result" role="status" data-flash></p></section>';
 }
 
 // ----- motion (a section of its own) -----
