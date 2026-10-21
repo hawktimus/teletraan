@@ -31,7 +31,7 @@ async function readDocument(ctx, id) {
   }
 }
 
-async function readTeams(ctx) {
+export async function readTeams(ctx) {
   try {
     const teams = await makeSanity(ctx).query(teamQuery);
     return (Array.isArray(teams) ? teams : []).map(team => ({ id: team._id, code: team.code || '', name: team.name || team.code || team._id, active: team.active !== false }));
@@ -51,11 +51,11 @@ async function openDocument(ctx, id) {
   return { spec: spec, docSpec: docSpec, current: current };
 }
 
-function conflict(res, current, words) {
+export function conflict(res, current, words) {
   send(res, 409, { conflict: true, error: words, current: summary(current) });
 }
 
-function refuse(res, error) {
+export function refuse(res, error) {
   send(res, error.status, { error: error.message, field: error.field || '' });
 }
 
