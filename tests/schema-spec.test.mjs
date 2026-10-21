@@ -179,7 +179,7 @@ await check('a hidden that reads one field becomes a rule the form can follow', 
 });
 
 await check('the documents and tabs are in a plain order, and every field has a tab that exists', () => {
-  assert.deepEqual(spec.documents.map(doc => doc.type), ['dashboardSettings', 'theme', 'view', 'team', 'customPanel', 'subtheme', 'tipOrNews', 'rosterPerson']);
+  assert.deepEqual(spec.documents.map(doc => doc.type), ['dashboardSettings', 'theme', 'view', 'team', 'customPanel', 'subtheme', 'tipOrNews', 'rosterPerson', 'person', 'subteam']);
   assert.deepEqual(documentOf('dashboardSettings').tabs.map(tab => tab.title), ['Timing', 'Look', 'Photos', 'Countdown', 'Calendars', 'Monday', 'Competition', 'Today', 'Advanced']);
   spec.documents.forEach(doc => doc.fields.forEach(field => assert.ok(doc.tabs.some(tab => tab.id === field.tab), doc.type + '.' + field.name)));
   assert.deepEqual(documentOf('view').ids, ['view-general', 'view-prime', 'view-nova', 'view-family']);

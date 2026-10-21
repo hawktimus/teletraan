@@ -5,7 +5,7 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { chipsOf, hiddenAfter, newsLine, renumbered, rosterGroups, sortItems, tickerLine, tickerTags } from '../control/static/tabs/content-items.js';
+import { chipsOf, hiddenAfter, keepPerson, newsLine, peopleFilters, personName, renumbered, roleGroupOf, rosterGroups, sortItems, sourceTitles, tickerLine, tickerTags } from '../control/static/tabs/content-items.js';
 
 let passed = 0;
 function check(name, test) {
@@ -64,6 +64,39 @@ check('the roster is grouped by team then role with counts, Both teams last, and
   assert.deepEqual(groups[0].roles.map(role => [role.title, role.count]), [['Mentors and Coaches', 1], ['Students', 2]]);
   assert.deepEqual(groups[0].roles[1].items.map(one => one.document.firstName), ['Amy', 'Zed']);
   assert.deepEqual(groups[1].roles.map(role => role.title), ['Leadership', 'Parents', 'No role']);
+});
+
+check('Leadership entries and Team leads join the roster by team and role, each with its source, and the filter and search narrow them', () => {
+  const teams = [{ id: 'prime', name: 'Prime' }, { id: 'nova', name: 'Nova' }];
+  const ref = id => ({ _type: 'reference', _ref: id });
+  const typed = (type, id, document) => item(id, document, { type: type });
+  const people = [
+    typed('rosterPerson', 'r1', { firstName: 'Sam', role: 'student', team: ref('prime') }),
+    typed('rosterPerson', 'r2', { firstName: 'Cy', role: 'parent' }),
+    typed('person', 'p1', { name: 'Jo', title: 'Head coach', role: 'Coach', team: ref('prime') }),
+    typed('person', 'p2', { name: 'Kai', title: 'Co-President', role: 'Captain', team: ref('prime') }),
+    typed('person', 'p3', { name: 'Mo', title: 'Mentor', role: 'Mentor' }),
+    typed('subteam', 's1', { name: 'Build', lead: 'Dee', members: ['Ed', 'Flo'], team: ref('nova') }),
+  ];
+  assert.deepEqual(people.map(roleGroupOf), ['students', 'parents', 'mentors', 'leadership', 'mentors', 'leadership']);
+  assert.deepEqual(people.map(personName), ['Sam', 'Cy', 'Jo', 'Kai', 'Mo', 'Dee']);
+  assert.deepEqual(sourceTitles, { rosterPerson: 'Roster', person: 'Leadership', subteam: 'Team lead' });
+  const groups = rosterGroups(people, teams);
+  assert.deepEqual(groups.map(group => [group.title, group.count]), [['Prime', 3], ['Nova', 1], ['Both teams', 2]]);
+  assert.deepEqual(groups[0].roles.map(role => [role.title, role.items.map(one => one.type)]), [['Leadership', ['person']], ['Mentors and Coaches', ['person']], ['Students', ['rosterPerson']]]);
+  assert.deepEqual(groups[1].roles[0].items.map(one => one.type), ['subteam']);
+
+  assert.deepEqual(peopleFilters.map(one => one.title), ['All', 'Students', 'Mentors and coaches', 'Parents', 'Leadership']);
+  const kept = (kind, query) => people.filter(one => keepPerson(one, kind, query)).map(personName);
+  assert.deepEqual(kept('all', ''), ['Sam', 'Cy', 'Jo', 'Kai', 'Mo', 'Dee']);
+  assert.deepEqual(kept('students', ''), ['Sam']);
+  assert.deepEqual(kept('mentors', ''), ['Jo', 'Mo']);
+  assert.deepEqual(kept('parents', ''), ['Cy']);
+  assert.deepEqual(kept('leadership', ''), ['Kai', 'Dee']);
+  assert.deepEqual(kept('all', 'ja'), []);
+  assert.deepEqual(kept('all', 'jo'), ['Jo']);
+  assert.deepEqual(kept('all', 'flo'), ['Dee'], 'a member name finds the Team lead it is on');
+  assert.deepEqual(kept('mentors', 'dee'), []);
 });
 
 check('a headline is hidden up to the most, and shown again by taking it out', () => {

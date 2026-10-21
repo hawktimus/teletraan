@@ -54,8 +54,12 @@
 .ct-face { flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b0714; }
 .ct-initial { display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent, #faca2a); border: 2px solid var(--card-edge, #3a2c55); }
 .ct-person[data-show="no"] { opacity: .6; }
-.ct-readonly-list { display: grid; gap: 4px; }
-.ct-link { display: inline-flex; align-items: center; text-decoration: none; }
+.ct-source { display: inline-block; margin-left: 8px; padding: 0 8px; border: 2px solid var(--card-edge, #3a2c55); border-radius: 12px; font-size: 14px; font-weight: 400; color: #d9d2e6; vertical-align: middle; }
+.ct-source[data-source="person"] { color: var(--accent, #faca2a); }
+.ct-source[data-source="subteam"] { color: #7fd4ff; }
+.ct-rows { display: grid; gap: 12px; }
+.ct-rows > * { min-width: 0; }
+.ct-pic { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; color: #b9afcf; }
 
 .ct-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .ct-editor.sa { max-width: none; margin: 0; padding: 16px; background: #0b0714; }

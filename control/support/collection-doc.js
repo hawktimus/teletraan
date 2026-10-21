@@ -5,7 +5,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { Refusal } from './http.js';
-import { problemsIn } from '../static/settings-check.js';
+import { memberProblem, problemWith, problemsIn } from '../static/settings-check.js';
 import { cleanChanges, draftIdOf, pickDocument, publishedIdOf } from './settings-doc.js';
 
 const typeShape = /^[A-Za-z][A-Za-z0-9]{0,40}$/;
@@ -73,6 +73,20 @@ export function newDraft(docSpec, body, teamIds) {
   }
   const id = randomUUID();
   return { id: id, mutations: [{ create: Object.assign({ _id: draftIdOf(id), _type: docSpec.type }, set) }] };
+}
+
+// The advice of the schema for values about to be saved, as [{ path, message }]: a full name where a first name is wanted, an email
+// address, a space or a number in a name. A warning never stops a save. The custom rules of the schema run only here, so the page
+// asks for them (POST /docs/<type>/check) while someone types.
+export function warningsFor(docSpec, values) {
+  const found = [];
+  docSpec.fields.forEach(field => {
+    if (!values || !Object.prototype.hasOwnProperty.call(values, field.name)) return;
+    if (['group', 'list', 'team'].includes(field.widget)) return;
+    const message = problemWith(field, values[field.name], values, 'warning') || memberProblem(field, values[field.name], 'warning');
+    if (message) found.push({ path: field.name, message: message });
+  });
+  return found;
 }
 
 // Delete: a draft alone goes without a question. A published document is removed only after confirm, with its draft, which is the

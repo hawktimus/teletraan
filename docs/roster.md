@@ -18,9 +18,15 @@ The dataset is public. There is no field for an email address, a phone number or
 ## Where to edit it
 
 - The Studio: People, Roster.
-- The control page: Display tab, Content, Roster. It groups people by team and then by role (Leadership, Mentors and Coaches, Students, Parents) with counts. A change is a draft until Publish, as in the Studio.
+- The control page: Display tab, Content, Roster. It groups people by team and then by role (Leadership, Mentors and Coaches, Students, Parents) with counts. A change is a draft until Publish, as in the Studio. Add person makes a Roster person; the other two kinds are edited, hidden and deleted, and new ones are added in the Studio.
 
-Leadership and Team leads are separate lists of the Studio that feed the wall. They are shown read only under the roster on the control page and are not copied into it.
+Leadership and Team leads are separate lists of the Studio that feed the wall. They stay where they are and are not copied into the roster, but the Roster block of the control page lists them in the same view and edits them in place, with the same form as the Studio (limits and warnings included). Each line says where it lives: Roster, Leadership or Team lead.
+
+- Grouping. Team, then role. A Leadership entry listed as Captain and every Team lead are under Leadership; Coach and Mentor entries are under Mentors and Coaches.
+- Filter and search. The filter is All, Students, Mentors and coaches, Parents or Leadership. The search matches a first name, and for a Team lead also the subteam name and its members.
+- A Team lead's members are lines in its editor with Add and Remove. The stored shape is unchanged, a list of first names.
+- Portraits and photos are shown but only the Studio changes them.
+- A name with a space, an @ or a number, or a full name, shows a warning while typing and after Save to draft. A warning never blocks a save; a name over its limit does.
 
 ## Recommendation
 

@@ -158,5 +158,19 @@ function problemsOf(field, value, parent, path, whole) {
   }
 
   const message = problemWith(field, value, parent);
-  return message ? [{ path: path, message: message }] : [];
+  if (message) return [{ path: path, message: message }];
+  const member = memberProblem(field, value, 'error');
+  return member ? [{ path: path, message: member }] : [];
+}
+
+// The first problem of a name in a list of words (a tags field with rules for each word): '"Ed2" in members: ...' or ''.
+// The server runs this at both levels, since the custom rules of the schema live only there.
+export function memberProblem(field, value, level) {
+  if (field.widget !== 'tags' || !field.memberValidation || !Array.isArray(value)) return '';
+  const alone = { title: field.title, widget: 'text', type: field.of, validation: field.memberValidation };
+  for (const word of value) {
+    const bad = problemWith(alone, word, {}, level);
+    if (bad) return '"' + word + '" in ' + field.title.toLowerCase() + ': ' + bad;
+  }
+  return '';
 }
