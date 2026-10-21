@@ -211,6 +211,8 @@ check({
 
   for (const entry of folders) {
     const where = 'dashboard/panels/' + entry.name;
+    // Finder leaves .DS_Store files in folders it has opened; they are not part of the repository
+    if (entry.name === '.DS_Store') continue;
     if (!entry.isDirectory()) {
       problems.push({ file: where, what: 'is a file. Panels are folders, one for each panel' });
       continue;
