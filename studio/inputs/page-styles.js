@@ -22,7 +22,9 @@ export const styles = {
   fieldset: { border: 'none', padding: 0, margin: '0 0 16px', minWidth: 0 },
   label: { display: 'block', fontWeight: 600, margin: '0 0 4px' },
   choice: { display: 'flex', alignItems: 'flex-start', gap: 12, minHeight: 44, margin: '0 0 8px', cursor: 'pointer' },
-  box: { width: 24, height: 24, flex: '0 0 24px', margin: '10px 0 0' },
+  // colorScheme light makes the browser draw a white box with a dark mark, which shows on the dark Studio and on the light one
+  box: { width: 24, height: 24, flex: '0 0 24px', margin: '10px 0 0', colorScheme: 'light', accentColor: '#2276fc' },
+  state: { marginLeft: 8, fontWeight: 600 },
   input: { boxSizing: 'border-box', width: '100%', maxWidth: '100%', minHeight: 44, padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },
   area: { boxSizing: 'border-box', width: '100%', maxWidth: '100%', minHeight: 88, padding: '8px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },
   select: { boxSizing: 'border-box', minHeight: 44, maxWidth: '100%', padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },

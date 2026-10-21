@@ -33,7 +33,7 @@ function switchRow(spec, value, onSave, busy, problems) {
     'label',
     { key: spec.id, style: styles.choice, 'data-field': spec.id },
     h('input', { type: 'checkbox', checked: Boolean(value), disabled: busy, style: styles.box, onChange: event => onSave(spec, event.target.checked) }),
-    h('span', null, h('strong', null, spec.title), h('span', { style: styles.help }, spec.description), problemLine(spec, problems))
+    h('span', null, h('strong', null, spec.title), h('span', { style: styles.state }, value ? 'On' : 'Off'), h('span', { style: styles.help }, spec.description), problemLine(spec, problems))
   );
 }
 
