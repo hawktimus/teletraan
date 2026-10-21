@@ -73,9 +73,25 @@ list moves up four rows at a time, and stops at 20 rows.
   done tasks over all the tasks.
 - Timeline: the tasks with a Timeline in this month and the next two, by department, with a red line for today.
 
+A chart row can name one department. The Status chart is then one bar for that department with the numbers Tasks, Done, In Progress, To Do and Stuck under it (the bar counts Stuck inside In Progress). Progress and Timeline draw that department only. The title says which, such as BUILD STATUS or BUILD TIMELINE.
+
 A row whose panel has nothing to show is skipped, and the Rotation board says why under the row.
 
-Whenever a Monday board is on the screen the wall plays it in the Condensed view, which is the thin bar layout with the countdown across the top and no small panel. A Robotics row swaps into Condensed when the board starts and back to Robotics when the next row is not a Monday board, and two Monday rows in a row stay in Condensed with no swap between them. A Monday row of Prime or Nova stays in the Prime or Nova view. The Rotation board and the Display tab say Plays in the Condensed view on these rows, in place of the small panel. An alert, an announcement or a talk covers the screen first, as for any view change.
+## Which view plays which tasks
+
+A task has a Team in Monday: Prime, Nova or General (stored with no team, for both teams). A Monday row plays in the view of its Team, and a view never shows a task of the other team.
+
+| Row | Team of the row | Plays in | Tasks it shows |
+|---|---|---|---|
+| Business, Operations, Marketing, Strategy, or any department | Both (empty), in a Robotics block | Condensed | General tasks only |
+| Build, Electrical, Programming, Design, CNC | Prime | Prime view | Prime tasks and General tasks |
+| Build, Electrical, Programming, Design, CNC | Nova | Nova view | Nova tasks and General tasks |
+
+- Condensed is the thin bar layout with the countdown across the top and no small panel. Prime and Nova are bar layouts too. A Robotics row of Prime or Nova swaps into that team's view for the step and back to Robotics after it. Two rows in the same view stay in it with no swap between them. An alert, an announcement or a talk covers the screen first.
+- The view that plays is decided by the Team of the row when the stored view is Robotics, and the stored view is never changed. A row stored in the Prime or Nova view plays there whatever its Team says, and a Team Both row there has that team's tasks and the General ones, as it always had.
+- Both on a Robotics row is only the General tasks. A department with no General task (CNC, for example) is left out of Condensed, and the Rotation board says so under the row.
+- The Rotation board and the Display tab say Plays in the Condensed view, Plays in the Prime view or Plays in the Nova view on a Robotics row.
+- A Subteam roster row has the same Team: Prime or Nova counts that team's people, and in a Robotics block plays in that team's view. Both counts the people of both teams and the page names both, such as PRIME + NOVA.
 
 ## Putting a department on the TV
 
@@ -85,8 +101,8 @@ Open Rotation in the Studio sidebar. Add a row with the panel Monday: Department
 - List: Open or Done.
 - Team: Both, Prime or Nova.
 
-For a chart, add Monday: TV charts and pick the Chart and the Team. The Display tab of the control page has
-the same dropdowns. The standard order has the nine departments, open, for both teams, then the three charts.
+For a chart, add Monday: TV charts and pick the Chart, the Department (All departments, or one of the nine) and the Team. A Subteam roster row has a Department (First with people, or one of the nine) and a Team. The Display tab of the control page has
+the same dropdowns. The standard order has Business, Operations, Marketing and Strategy in Robotics for both teams, then the three charts, and Build, Electrical, Programming, Design and CNC, open, in the Prime view for Prime and again in the Nova view for Nova. Add the 14 Department tasks rows adds each missing department in its own view and team.
 
 The eleven Monday panels of the older sync are retired. A stored row that names one stays in the list, plays
 nothing, and says Retired, use Department tasks. An older tasks row with one of the nine departments plays as
@@ -98,7 +114,7 @@ Monday in the Studio sidebar shows what the computer read, and answers one quest
 what is done in each department. It is read only. To change a task, change it in Monday.
 
 - The first line says when the computer last read Monday and whether it worked, or the problem in plain words.
-- Pick a Team: Both, Prime or Nova. A task with no team is for both teams, so it shows under Prime and under Nova.
+- Pick a Team: Both, Prime or Nova. A task with no team is for both teams, so it shows under Prime and under Nova. Both shows only those tasks, which is what Condensed plays.
 - A tile for each of the nine departments says how many tasks are to do and how many are done. A department with
   nothing in it is greyed and says so, and is not hidden.
 - Below, each department has a table of the To Do and In Progress tasks and a table of the Done tasks, with the

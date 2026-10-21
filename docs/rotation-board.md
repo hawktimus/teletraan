@@ -30,7 +30,7 @@ for that.
 - View: Robotics, Prime or Nova.
 - Panel: what the row plays, with the plain title, grouped by kind.
 - Small panel: only for a Robotics row in the split layout. It names the small panel beside the row. Empty follows the small
-  panels of the view. Rows in the wide layout and rows of Prime and Nova have no small panel, so the cell is empty. A Monday row of Robotics (Department tasks, TV charts, or an older tasks row that plays as Department tasks) says Plays in the Condensed view there, because the wall plays a Monday board in the Condensed view and the bar layout has no small panel.
+  panels of the view. Rows in the wide layout and rows of Prime and Nova have no small panel, so the cell is empty. A Monday row of Robotics (Department tasks, TV charts, or an older tasks row that plays as Department tasks) says which view it plays in there: Plays in the Condensed view for Team Both, Plays in the Prime view for Team Prime and Plays in the Nova view for Team Nova. A Subteam roster row of Robotics with a team says the same. The bar layouts have no small panel. The stored view of the row is not changed (docs/monday.md, Which view plays which tasks).
 - Seconds: how long the row stays, 6 to 120. Empty uses Seconds per page of Dashboard Settings. A Photos row shows its
   photos times seconds each.
 - Show on screen: off keeps the row in its place and the wall skips it.
@@ -55,8 +55,10 @@ the list.
 
 - Photo: Photos (1 to 20) and Seconds per photo (5 to 60).
 - Monday: Department tasks: Department (one of the nine), List (Open or Done) and Team (Both, Prime or Nova). Monday: TV charts:
-  Chart (Status by department, Overall progress or Timeline) and Team.
-- Subteam roster: Department and Page. Drive hours: Department.
+  Chart (Status by department, Overall progress or Timeline), Department (All departments or one of the nine) and Team.
+  Team Both plays in the Condensed view with the tasks that are for both teams only. Prime and Nova play in their own
+  view with their tasks and the both-teams ones.
+- Subteam roster: Department (First with people, or one of the nine), Team (Both, Prime or Nova) and Page. Drive hours: Department.
 - Upcoming events and Team leads: Page 1 or the next pages.
 - A row whose small panel is the Parts request QR code: says whether the Parts request address is set. Set it in Dashboard
   Settings, Screen tab.
@@ -99,9 +101,10 @@ The code is studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.
 - Remove retired Monday rows (N): shown only when the list has rows of the eleven older Monday panels. It deletes exactly
   those rows and no other. An older Monday tasks row with a department goes too; the Department tasks rows replace it. Undo
   brings them back.
-- Add the nine Department tasks rows (Robotics, Open): adds one Department tasks row, in Robotics, Open, for both teams,
-  30 seconds, for each department that has no Department tasks row yet. The label says how many it adds, for example
-  Add the 4 missing Department tasks rows. It is left out when every department has a row.
+- Add the 14 Department tasks rows (each in its view, Open): Business, Operations, Marketing and Strategy go in Robotics for
+  both teams, and Build, Electrical, Programming, Design and CNC go once in the Prime view for Prime and once in the Nova view
+  for Nova, 30 seconds each. A department counts as missing for each view that has no row for it, so the label says how many it
+  adds, for example Add the 11 missing Department tasks rows. It is left out when every department has its rows.
 - Add the three TV charts rows: the same for the Status, Progress and Timeline charts, 30 seconds each, left out when each
   chart has a row.
 
