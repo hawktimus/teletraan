@@ -93,3 +93,44 @@ html[data-style="retro"] .rr-speed {
   border-radius: 6px;
   transform: scaleX(0);
 }
+
+/* the cartoon parts: a hot colored core of a burst or a poof, the ink line of a scalloped edge, and the clip of the curtain that wipes
+   across the large panel */
+html[data-style="retro"] .rr-hot { fill: var(--retro-hot); }
+html[data-style="retro"] .rr-scallop {
+  fill: none;
+  stroke: var(--retro-ink);
+  stroke-width: 6px;
+  stroke-linecap: round;
+}
+html[data-style="retro"] .rr-wipe {
+  position: absolute;
+  overflow: hidden;
+}
+html[data-style="retro"] .rr-band {
+  background-color: var(--retro-pop);
+  background-image: radial-gradient(circle at 10px 10px, var(--retro-ink) 0 3px, transparent 3.5px);
+  background-size: 20px 20px;
+  border-left: 6px solid var(--retro-ink);
+}
+html[data-style="retro"] .rr-band > svg {
+  position: absolute;
+  left: 100%;
+}
+/* the Light curtains: the same pop color and dots as the plates under them, with an ink border on the outer sides and a scalloped
+   edge (an svg strip that sits beside the body) on the inner side. The curtain squashes about its edge that meets the other one. */
+html[data-style="retro"] .rr-light-curtain {
+  box-sizing: border-box;
+  background-color: var(--retro-pop);
+  background-image: radial-gradient(circle at 10px 10px, var(--retro-ink) 0 3px, transparent 3.5px);
+  background-size: 20px 20px;
+  border: 6px solid var(--retro-ink);
+}
+html[data-style="retro"] .rr-light-left {
+  border-right: 0;
+  transform-origin: 100% 50%;
+}
+html[data-style="retro"] .rr-light-right {
+  border-left: 0;
+  transform-origin: 0 50%;
+}
