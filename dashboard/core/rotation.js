@@ -74,8 +74,13 @@ function mondaySettings(raw, row) {
     else delete row.department;
     row.list = raw.list === 'done' ? 'done' : 'open';
   }
-  if (row.panel === 'monday-charts') row.chart = mondayCharts.some(entry => entry.value === raw.chart) ? raw.chart : 'status';
-  if ((row.panel === 'monday-department' || row.panel === 'monday-charts') && (raw.team === 'prime' || raw.team === 'nova')) row.team = raw.team;
+  if (row.panel === 'monday-charts') {
+    row.chart = mondayCharts.some(entry => entry.value === raw.chart) ? raw.chart : 'status';
+    const department = mondayDepartmentOf(raw.department);
+    if (department !== '') row.department = department;
+    else delete row.department;
+  }
+  if ((row.panel === 'monday-department' || row.panel === 'monday-charts' || row.panel === 'roster') && (raw.team === 'prime' || raw.team === 'nova')) row.team = raw.team;
 }
 
 // One row, tidy, or null when it cannot be played at all (no view, no known panel). A row of one of the eleven older Monday

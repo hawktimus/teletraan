@@ -1,7 +1,8 @@
 // The TV charts of the Monday boards, one chart a row: Status by department (a bar of Done, In Progress and To Do for each
 // department, with the counts), Overall progress (the estimated hours done over all the hours, or the tasks done over all
 // the tasks when no task has hours) and the Timeline (the tasks with a Timeline in this month and the next two, by
-// department). The row of the rotation says the chart and the team: page is { chart, team }. core/monday-views.js works out
+// department). The row of the rotation says the chart, the team and, when it names one, the department: page is { chart, team,
+// department }. With a department the chart is that department's alone. core/monday-views.js works out
 // what is drawn. A chart with nothing to draw has nothing to show, and the rotation leaves the row out.
 
 import { boardEmptyMarkup, boardHeader, countersMarkup, pageMarkup } from '../../core/monday-draw.js';
@@ -33,7 +34,18 @@ function statusMarkup(view) {
     }).join('');
     return `<div class="status-row"><span class="name">${escapeHtml(row.name)}</span><span class="track">${segments}</span><span class="total">${row.total}</span></div>`;
   }).join('');
-  return `${legendMarkup()}<div class="status-rows rows-${view.rows.length}">${rows}</div>`;
+  return `${legendMarkup()}<div class="status-rows rows-${view.rows.length}${view.department !== '' ? ' one-department' : ''}">${rows}</div>${view.department !== '' ? oneDepartmentCounters(view.rows[0]) : ''}`;
+}
+
+// One department has one bar, so the numbers under it say what the bar holds
+function oneDepartmentCounters(row) {
+  return countersMarkup([
+    { label: 'TASKS', value: row.total },
+    { label: 'DONE', value: row.done },
+    { label: 'IN PROGRESS', value: row.progress - row.blocked },
+    { label: 'TO DO', value: row.todo },
+    { label: 'STUCK', value: row.blocked },
+  ]);
 }
 
 function progressMarkup(view) {

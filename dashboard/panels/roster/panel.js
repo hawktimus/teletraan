@@ -26,9 +26,14 @@ function rowOf(page) {
   return page && typeof page === 'object' && typeof page.department === 'string' && page.department !== '' ? page : null;
 }
 
+// The team of a row: Prime or Nova when the row says so, and otherwise the team of the view as before
+function rowTeam(row) {
+  return row.team === 'prime' || row.team === 'nova' ? row.team : teamCode();
+}
+
 function rowView(content, page) {
   const row = rowOf(page);
-  return row ? rosterRowView(content, new Date(), teamCode(), row.department, row.part) : null;
+  return row ? rosterRowView(content, new Date(), rowTeam(row), row.department, row.part) : null;
 }
 
 // How many windows of six rows the row is held for: the second part scrolls through the people after the first six
@@ -59,18 +64,26 @@ function mondayMount(host, page) {
     </section>`;
 }
 
+// The words that say whose people the page counts: the short name of the team, or the names of both joined, PRIME + NOVA
+function rowTeamWords(content, code) {
+  const teams = Array.isArray(content.teams) ? content.teams.filter(team => team && team.code) : [];
+  if (code === '') return teams.map(teamNameOf).join(' + ');
+  return teamNameOf(teams.find(team => team.code === code) || { code: code });
+}
+
 // One department of a row of the rotation: the first six people, or the rest in windows of six that scroll
-function rowMount(host, view) {
+function rowMount(host, view, label) {
   const blanks = (view.pages * rosterPageRows) - view.rows.length;
   const people = view.rows.map(row => `<div class="person" data-slat="item"><span class="person-name">${escapeHtml(row.name)}</span><span class="person-hours">${row.hours} HRS</span></div>`);
   for (let at = 0; at < blanks; at += 1) people.push('<div class="person person-blank"></div>');
   const pages = view.parts > 1 ? `<span class="page-count">${view.part}/${view.parts}</span>` : '';
+  const whose = `<span class="whose">${escapeHtml(label)}</span>`;
 
   host.innerHTML = `
     <section class="page roster roster-board" data-scroll-page="1">
       <div class="header">
         <h2 class="${titleClass(view.title)}" data-slat="title">${escapeHtml(view.title)}</h2>
-        <div class="tag" data-slat="tag">${pages}</div>
+        <div class="tag" data-slat="tag">${whose}${pages}</div>
       </div>
       <div class="body"><div class="people people-window"><div data-scroll-list>${people.join('')}</div></div></div>
     </section>`;
@@ -79,7 +92,7 @@ function rowMount(host, view) {
 export function mount(host, content, asked) {
   const named = rowView(content, asked);
   if (named) {
-    rowMount(host, named);
+    rowMount(host, named, rowTeamWords(content, rowTeam(rowOf(asked))));
     return;
   }
 

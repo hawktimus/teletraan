@@ -9,12 +9,12 @@ import { config, contentOf, load, now, read, registry, runTests, task, test, wor
 const roster = await load('core/roster.js');
 const panel = await load('panels/driveHours/panel.js');
 
-const person = (name, hours, extra) => task(Object.assign({ title: '[' + name + ']', contact: name, owners: [name], estHours: hours, status: 'in-progress' }, extra));
+const person = (name, hours, extra) => task(Object.assign({ title: '[' + name + ']', contact: name, owners: [name], estHours: hours, status: 'in-progress', team: 'prime' }, extra));
 const crowd = () => contentOf([
   person('[Ann]', 10), person('[Ann]', 5), person('[Ben]', 20, { team: 'nova' }), person('[Cy]', 7), person('[Dee]', 3), person('[Eli]', 9), person('[Fay]', 1),
   person('[Gus]', 2), person('[Hal]', 4, { team: 'nova' }),
-  task({ title: '[shared]', contact: '[Ivy]', owners: ['[Ivy]', '[Ann]'], estHours: 8 }),
-  task({ title: '[nobody]', contact: '', owners: [], estHours: 50 }),
+  task({ title: '[shared]', team: 'prime', contact: '[Ivy]', owners: ['[Ivy]', '[Ann]'], estHours: 8 }),
+  task({ title: '[nobody]', team: 'prime', contact: '', owners: [], estHours: 50 }),
 ]);
 
 test('the panel is a large panel of the registry with a script and a stylesheet, and it is wide in the Robotics view', () => {

@@ -12,6 +12,8 @@
 //   small-<panel>-<screen>.png             every small panel, three Screens
 //   monday-department-<list>-<screen>[-<team>].png   Department tasks: Build open and Operations done, for both teams and Prime
 //   monday-charts-<chart>-<screen>.png     the three TV charts
+//   monday-condensed-business, monday-prime-build, monday-nova-build, monday-charts-build-prime, roster-nova-electrical
+//                                          which tasks play in which view
 //   competition-...-<screen>-<team>.png    the competition cards, with ?competition=1
 //   countdown-<screen>.png                 the countdown in the three Screens
 //   swap-team-200ms.png (and 400, 800)     one frame of the swap from Prime to Nova
@@ -86,6 +88,16 @@ export function planShots(panels) {
       shots.push({ name: 'monday-charts-' + chart + '-' + screen, kind: 'still', url: address({ panel: 'monday-charts', chart: chart, screen: screen, layout: 'bar' }) });
     }));
   }
+
+  // Which tasks play in which view: Business for both teams in the Condensed view, Build in the Prime and in the Nova view, the Build
+  // charts of Prime, and the roster of Nova Electrical (subteam-e is the Electrical of the sample, a marked placeholder)
+  [
+    ['monday-condensed-business', { panel: 'monday-department', dept: 'business', list: 'open', view: 'family' }],
+    ['monday-prime-build', { panel: 'monday-department', dept: 'build', list: 'open', team: 'prime', view: 'prime' }],
+    ['monday-nova-build', { panel: 'monday-department', dept: 'build', list: 'open', team: 'nova', view: 'nova' }],
+    ['monday-charts-build-prime', { panel: 'monday-charts', chart: 'status', dept: 'build', team: 'prime', view: 'prime' }],
+    ['roster-nova-electrical', { panel: 'roster', dept: 'subteam-e', team: 'nova', view: 'nova' }],
+  ].forEach(([name, parts]) => shots.push({ name: name, kind: 'still', url: address(Object.assign({ screen: 'original', layout: 'bar' }, parts)) }));
 
   // The three newer cards are taken in the phase they belong to (?phase= moves the dates, core/competition-address.js)
   const phaseOf = { 'competition-preview': 'preview', 'competition-matches': 'matches', 'competition-recap': 'recap' };

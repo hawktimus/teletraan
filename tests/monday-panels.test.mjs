@@ -57,13 +57,13 @@ test('every other row of an older Monday panel is kept, marked retired, and play
 
 // Department tasks
 
-test('a department row shows the tasks of its department and list, for both teams or one, and General counts for both', () => {
+test('a department row shows the tasks of its department and list: Both has only the General tasks, a team has its own and the General ones', () => {
   const tasks = [
     task({ title: '[P]', team: 'prime' }), task({ title: '[N]', team: 'nova' }), task({ title: '[G]', team: undefined }),
     task({ title: '[E]', department: 'electrical' }), task({ title: '[D]', list: 'done', status: 'done' }),
   ];
   const projects = page => (department(Object.assign({ tasks: tasks }, page)) || { rows: [] }).rows.map(row => row.project).sort();
-  assert.deepEqual(projects({ department: 'build', list: 'open' }), ['[G]', '[N]', '[P]']);
+  assert.deepEqual(projects({ department: 'build', list: 'open' }), ['[G]'], 'both teams is the Condensed view: a task of one team never plays there');
   assert.deepEqual(projects({ department: 'build', list: 'open', team: 'prime' }), ['[G]', '[P]']);
   assert.deepEqual(projects({ department: 'build', list: 'open', team: 'nova' }), ['[G]', '[N]']);
   assert.deepEqual(projects({ department: 'build', list: 'done' }), ['[D]']);
@@ -181,8 +181,8 @@ test('status by department: Done, In Progress (with In Review and Stuck) and To 
   const view = chart(tasks, { chart: 'status' });
   assert.equal(view.title, 'STATUS BY DEPARTMENT');
   assert.deepEqual(view.rows, [
-    { name: 'BUILD', done: 2, progress: 3, todo: 1, total: 6 },
-    { name: 'MARKETING', done: 0, progress: 0, todo: 1, total: 1 },
+    { name: 'BUILD', done: 2, progress: 3, todo: 1, total: 6, blocked: 1 },
+    { name: 'MARKETING', done: 0, progress: 0, todo: 1, total: 1, blocked: 0 },
   ]);
   assert.equal(view.longest, 6);
   const html = htmlOf('monday-charts', contentOf(tasks), { chart: 'status' });
@@ -193,7 +193,7 @@ test('status by department: Done, In Progress (with In Review and Stuck) and To 
 
 test('overall progress is the estimated hours done over all the hours, and the tasks done over all the tasks when no task has hours', () => {
   const hours = [task({ estHours: 6, list: 'done', status: 'done' }), task({ estHours: 2 }), task({ estHours: 0 }), task({})];
-  assert.deepEqual(chart(hours, { chart: 'progress' }), { title: 'OVERALL PROGRESS', team: '', chart: 'progress', percent: 75, done: 6, total: 8, unit: 'HOURS', tasks: { done: 1, open: 3 } });
+  assert.deepEqual(chart(hours, { chart: 'progress' }), { title: 'OVERALL PROGRESS', team: '', department: '', chart: 'progress', percent: 75, done: 6, total: 8, unit: 'HOURS', tasks: { done: 1, open: 3 } });
   const counts = [task({ list: 'done', status: 'done' }), task({}), task({}), task({})];
   assert.deepEqual(chart(counts, { chart: 'progress' }).percent, 25);
   assert.equal(chart(counts, { chart: 'progress' }).unit, 'TASKS');
@@ -222,10 +222,10 @@ test('the timeline: this month and the next two, the tasks with a Timeline by de
   assert.equal(chart([task({ startDate: undefined })], { chart: 'timeline' }), null, 'no task with a Timeline, nothing to show');
 });
 
-test('the charts take a team, and General counts for both', () => {
+test('the charts take a team: a team has its own tasks and the General ones, and Both has the General ones only', () => {
   const tasks = [task({ team: 'prime' }), task({ team: 'nova' }), task({ team: undefined })];
   assert.equal(chart(tasks, { chart: 'status', team: 'prime' }).rows[0].total, 2);
-  assert.equal(chart(tasks, { chart: 'status' }).rows[0].total, 3);
+  assert.equal(chart(tasks, { chart: 'status' }).rows[0].total, 1);
   assert.equal(chart(tasks, { chart: 'status', team: 'nova' }).team, 'NOVA');
 });
 
@@ -249,25 +249,30 @@ test('a department or a chart with nothing to show is left out of the steps, as 
   assert.equal(panels['monday-charts'].hasContent(content, { chart: 'status' }), true);
 });
 
-test('the default rotation has the nine departments open and the three charts in Robotics, and the screen plays the ones with tasks', () => {
+test('the default rotation has the four both-teams departments and the three charts in Robotics, and the five team departments in each team view', () => {
   const monday = config.defaultRotationRows().filter(row => row.panel.startsWith('monday-'));
-  assert.deepEqual(monday.map(row => row.panel + ' ' + (row.department || row.chart) + ' ' + (row.list || '')), [
-    'monday-department build open', 'monday-department electrical open', 'monday-department programming open', 'monday-department design open',
-    'monday-department cnc open', 'monday-department strategy open', 'monday-department operations open', 'monday-department business open',
-    'monday-department marketing open', 'monday-charts status ', 'monday-charts progress ', 'monday-charts timeline ',
+  const words = row => row.view + ' ' + row.panel + ' ' + (row.department || row.chart) + ' ' + (row.list || '') + ' ' + (row.team || 'both');
+  assert.deepEqual(monday.filter(row => row.view === 'robotics').map(words), [
+    'robotics monday-department business open both', 'robotics monday-department operations open both',
+    'robotics monday-department marketing open both', 'robotics monday-department strategy open both',
+    'robotics monday-charts status  both', 'robotics monday-charts progress  both', 'robotics monday-charts timeline  both',
   ]);
-  assert.ok(monday.every(row => row.view === 'robotics' && !row.team));
+  ['prime', 'nova'].forEach(team => assert.deepEqual(monday.filter(row => row.view === team).map(words),
+    ['build', 'electrical', 'programming', 'design', 'cnc'].map(name => team + ' monday-department ' + name + ' open ' + team), team));
   ['monday-department', 'monday-charts'].forEach(id => assert.ok(config.roboticsWidePanels.includes(id), id + ' is wide'));
 
-  const content = contentOf([task({}), task({ department: 'design' })]);
+  // Business has a task for both teams, Build one for Prime and one for Nova
+  const content = contentOf([task({ department: 'business' }), task({ team: 'prime' }), task({ team: 'nova', title: '[N]' })]);
   const steps = viewsPlay.viewSteps(content, 'general', now).filter(step => step.panel.startsWith('monday-'));
-  assert.deepEqual(steps.map(step => step.page.department || step.page.chart), ['build', 'design', 'status', 'progress', 'timeline']);
+  assert.deepEqual(steps.map(step => step.page.department || step.page.chart), ['business', 'status', 'progress', 'timeline']);
+  assert.deepEqual(steps.map(step => step.view), ['family', 'family', 'family', 'family']);
 });
 
 test('the sample content shows both panels', async () => {
   const sanity = await load('core/sanity.js');
   const sample = sanity.normalizeSample(JSON.parse(read('data/sample/content.json')));
-  assert.ok(views.departmentView(sample, now, { department: 'build', list: 'open' }).rows.length > 4, 'Build has more than one page');
+  assert.ok(views.departmentView(sample, now, { department: 'build', list: 'open', team: 'prime' }).rows.length > 4, 'Build has more than one page');
+  assert.ok(views.departmentView(sample, now, { department: 'business', list: 'open' }), 'Business has tasks for both teams');
   assert.ok(views.departmentView(sample, now, { department: 'operations', list: 'done' }));
   ['status', 'progress', 'timeline'].forEach(name => assert.ok(views.chartsView(sample, now, { chart: name }), name));
   sample.tasks.filter(item => item.department).forEach(item => assert.match(item.title, /^\[.*\]$/, 'a sample task is a marked placeholder'));

@@ -126,12 +126,14 @@ export function stepsOfRow(row, index, rows, content, now) {
   if (row.side) step.side = row.side;
   if (row.photoCount) Object.assign(step, { photoCount: row.photoCount, secondsPerPhoto: row.secondsPerPhoto });
   if (!isMondayPanel(row.panel)) {
-    // a panel that is one half of a list, or one department's, is told so in its page
-    const named = row.part || row.department;
-    return [Object.assign({ panel: row.panel }, step, named ? { page: { team: row.team, department: row.department || '', part: row.part || 0 } } : {})];
+    // a panel that is one half of a list, or one department's, is told so in its page. A roster row says the team of its people.
+    const named = row.part || row.department || row.tasksTeam;
+    return [Object.assign({ panel: row.panel }, step, named ? { page: { team: row.tasksTeam || row.team, department: row.department || '', part: row.part || 0 } } : {})];
   }
 
-  const page = { team: row.tasksTeam || '', department: row.department || '', list: row.list || 'open', chart: row.chart || 'status' };
+  // A row for both teams in a Prime or Nova block has the tasks of that team and the General ones, as that view always had.
+  // In the Robotics view it has the General tasks only (ofTeam in core/monday-views.js).
+  const page = { team: row.tasksTeam || (isTeamCode(row.team) ? row.team : ''), department: row.department || '', list: row.list || 'open', chart: row.chart || 'status' };
   return viewOf(row.panel, content, now, page) === null ? [] : [Object.assign({ panel: row.panel, page: page }, step)];
 }
 

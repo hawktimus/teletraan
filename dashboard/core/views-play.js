@@ -39,12 +39,16 @@ function playOrder(content) {
   return blocks.map(item => item.key).filter((key, at, all) => all.indexOf(key) === at);
 }
 
-// The view a step plays in. A Monday panel in a Robotics block plays in the Condensed view (family, the bar layout) for the
-// length of the step, and the next step that is not a Monday panel plays in Robotics again, so the view change is the swap
-// into the board and the swap out of it. A Monday panel in a Prime or Nova block stays in that team's view. The team and the
-// block of the step stay the ones of the row: only the view that is drawn changes.
-export function playViewOf(key, panel) {
-  return key === 'general' && isMondayPanel(panel) ? 'family' : key;
+// The view a step plays in. A Monday panel in a Robotics block plays in a bar layout for the length of the step, and the next
+// step that is not a Monday panel plays in Robotics again, so the view change is the swap into the board and the swap out of
+// it. Which bar view depends on the team of the tasks: both teams (tasksTeam empty) play in the Condensed view (family), Prime
+// tasks in the Prime view and Nova tasks in the Nova view. A Roster row with a team plays in that team's view too. A Monday
+// panel in a Prime or Nova block stays in that team's view. The block of the step stays the one of the row: only the view that
+// is drawn changes.
+export function playViewOf(key, panel, tasksTeam = '') {
+  if (key !== 'general') return key;
+  if (isMondayPanel(panel)) return tasksTeam === 'prime' || tasksTeam === 'nova' ? tasksTeam : 'family';
+  return panel === 'roster' && (tasksTeam === 'prime' || tasksTeam === 'nova') ? tasksTeam : key;
 }
 
 // The steps of the large panel of a view, in order, as { panel, show, team, seconds, row, view }. The team of a step is
@@ -63,7 +67,11 @@ export function viewSteps(content, key, now = new Date(), block = -1, ownRows = 
     if (isTeamCode(row.team) && (!teams.includes(row.team) || (only !== '' && row.team !== only))) return;
 
     stepsOfRow(row, index, rows, content, now).forEach(step => {
-      steps.push(Object.assign(step, { row: index, view: playViewOf(key, step.panel), team: view.team !== '' ? view.team : key === 'general' ? teams[0] : step.team }));
+      const played = playViewOf(key, step.panel, step.page ? step.page.team : '');
+      // A step that plays in the view of a team is in that team, and is left out when the team is not switched on
+      const own = played !== key ? resolveView(content, played).team : '';
+      if (own !== '' && (!teams.includes(own) || (only !== '' && own !== only))) return;
+      steps.push(Object.assign(step, { row: index, view: played, team: own !== '' ? own : view.team !== '' ? view.team : key === 'general' ? teams[0] : step.team }));
     });
   });
   return steps;

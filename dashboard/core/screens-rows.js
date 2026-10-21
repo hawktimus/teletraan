@@ -71,6 +71,8 @@ export function tidyMainRow(raw, bothTeams = false, rotating = false) {
   const row = { panel: panel.id, team: team };
   if (panel.monday) Object.assign(row, mondaySettingsOf(raw, rotating ? raw.tasksTeam : raw.team, panel.id));
   else if (named && departmentPanels.includes(panel.id)) row.department = raw.department.trim();
+  // the roster of a row of the rotation has the team of its tasks too, as a Monday row does
+  if (rotating && panel.id === 'roster' && (raw.tasksTeam === 'prime' || raw.tasksTeam === 'nova')) row.tasksTeam = raw.tasksTeam;
   if (rotating && halfPanels.includes(panel.id) && (raw.part === 1 || raw.part === 2)) row.part = raw.part;
   if (rotating && typeof raw.side === 'string' && sideIds.includes(raw.side.trim())) row.side = raw.side.trim();
   const seconds = tidySeconds(raw.seconds);
@@ -79,14 +81,17 @@ export function tidyMainRow(raw, bothTeams = false, rotating = false) {
   return row;
 }
 
-// The settings of a row of a Monday panel: the team of its tasks, and the department and list or the chart
+// The settings of a row of a Monday panel: the team of its tasks, and the department and list or the chart. The charts take a
+// department too; empty is every department.
 function mondaySettingsOf(raw, tasksTeam, id) {
   const settings = { tasksTeam: tasksTeam === 'prime' || tasksTeam === 'nova' ? tasksTeam : '' };
+  const department = typeof raw.department === 'string' ? raw.department.trim().toLowerCase() : '';
+  const known = mondayDepartments.some(entry => entry.value === department) ? department : '';
   if (id === 'monday-department') {
-    const department = typeof raw.department === 'string' ? raw.department.trim().toLowerCase() : '';
-    settings.department = mondayDepartments.some(entry => entry.value === department) ? department : '';
+    settings.department = known;
     settings.list = raw.list === 'done' ? 'done' : 'open';
   } else {
+    if (known !== '') settings.department = known;
     settings.chart = mondayCharts.some(entry => entry.value === raw.chart) ? raw.chart : 'status';
   }
   return settings;

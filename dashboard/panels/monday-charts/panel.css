@@ -63,6 +63,16 @@
 .monday-charts .status-rows.rows-3 .status-row,
 .monday-charts .status-rows.rows-4 .status-row,
 .monday-charts .status-rows.rows-5 .status-row { height: 80px; }
+/* One department is one tall bar with its numbers under it (the Team and Department of the row name one) */
+.monday-charts .status-rows.one-department { margin-top: 32px; }
+.monday-charts .status-rows.one-department .status-row { height: 200px; }
+.monday-charts .status-rows.one-department .track,
+.monday-charts .status-rows.one-department .segment { height: 120px; }
+.monday-charts .status-rows.one-department .segment { font-size: var(--size-heading); line-height: 120px; }
+.monday-charts .status-rows.one-department .segment.part-todo { line-height: 112px; }
+.monday-charts .status-rows.one-department .name { line-height: 120px; }
+.monday-charts .status-rows.one-department .total { width: 140px; font-size: 72px; line-height: 120px; }
+.monday-charts.chart-status .status-rows.one-department + .facts { top: 400px; }
 .monday-charts .track {
   flex: 1 1 0;
   min-width: 0;

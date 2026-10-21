@@ -60,7 +60,8 @@ export function task(fields) {
       subteam: '[Build]',
       subteamId: 'lead-build',
       status: 'up-next',
-      team: 'prime',
+      // no team: a task for both teams, which every page shows. A test that needs a team names it.
+      team: undefined,
       source: 'monday',
       mondayId: '[item]',
       showOnBoard: true,

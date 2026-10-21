@@ -63,13 +63,18 @@ export function useRowPreview(params, read) {
   // An older Monday row is drawn as the Department tasks row the wall plays, and a Monday row of Robotics in the Condensed view
   const row = upgradeMondayRow(read.row || { panel: unreadablePanel });
   const monday = row.panel.indexOf('monday-') === 0;
-  const view = monday && viewOfRow[row.view] === 'general' ? 'family' : viewOfRow[row.view] || '';
+  // A Monday row of Robotics plays in the view of its team: Condensed for both teams, Prime or Nova for their own. A Roster row
+  // of Robotics with a team plays in that team's view too (playViewOf in core/views-play.js).
+  const own = row.team === 'prime' || row.team === 'nova' ? row.team : '';
+  const robotics = viewOfRow[row.view] === 'general';
+  const view = monday && robotics ? (own || 'family') : row.panel === 'roster' && robotics && own ? own : viewOfRow[row.view] || '';
 
   params.set('panel', row.panel);
   params.set('still', '1');
   params.set('small', '1');
-  // A team view gives its team to the row. A Monday row names the team of its tasks in row.team, as the wall does
-  const team = monday || !view ? (row.team || '') : viewTeams[view] || '';
+  // A team view gives its team to the row. A Monday row names the team of its tasks in row.team, and with none has the team of its
+  // view, as the wall does
+  const team = monday || !view ? (row.team || viewTeams[view] || '') : viewTeams[view] || '';
   if (team !== '') params.set('team', team);
   if (view !== '' && viewKeys.includes(view)) params.set('view', view);
   if (row.department) params.set('dept', row.department);

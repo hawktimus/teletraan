@@ -57,12 +57,12 @@ test('the tasks that say Hide in Monday are only counted, from the status the co
   assert.ok(parts.question.includes('hiddenCount'));
 });
 
-test('a team shows its own tasks and the tasks with no team, and Both shows every task', () => {
+test('a team shows its own tasks and the tasks with no team, and Both shows only the tasks with no team', () => {
   const list = content([task({ title: '[prime]', team: 'prime' }), task({ title: '[nova]', team: 'nova' }), task({ title: '[general]' })]);
   const names = team => parts.departmentTables(list, team, now)[0].openRows.map(row => row.project).sort();
   assert.deepEqual(names('prime'), ['[general]', '[prime]']);
   assert.deepEqual(names('nova'), ['[general]', '[nova]']);
-  assert.deepEqual(names(''), ['[general]', '[nova]', '[prime]']);
+  assert.deepEqual(names(''), ['[general]'], 'Both is what the Condensed view plays: a task of one team never is in it');
   assert.equal(parts.generalCount(list, now), 1);
 });
 
@@ -71,7 +71,7 @@ test('a row has the five columns of the TV, open rows in the order of the panel 
     task({ title: '[done]', list: 'done', status: 'done', completedOn: '2026-10-02' }),
     task({ title: '[todo]' }),
     task({ title: '[stuck]', status: 'blocked', contact: undefined, priority: undefined, dueDate: undefined, team: 'nova' }),
-  ]), '', now)[0];
+  ]), 'nova', now)[0];
   assert.deepEqual(parts.words.columns, ['Status', 'Project', 'Contact', 'Priority', 'Estimated Completion Date']);
   const five = row => [row.statusWord, row.project, row.contact, row.priority, row.date];
   assert.deepEqual(table.openRows.map(five), [['STUCK', '[stuck]', 'Unassigned', 'No Priority', 'No Date'], ['TO DO', '[todo]', 'Robin', 'Medium', 'Oct 30']]);

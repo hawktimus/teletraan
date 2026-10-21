@@ -7,7 +7,7 @@ import * as frame from '../frame.js';
 import { changePage } from './areas.js';
 import { buildPage, regionOf } from './panels.js';
 import { asTeam } from './teams.js';
-import { mainPlaylist, tidyScreen } from './screens.js';
+import { mainPlaylist, stepsOfRow, tidyMainRow, tidyScreen } from './screens.js';
 import { stillRow } from './still.js';
 import { viewSideSteps } from './views.js';
 import { viewKeys } from '../config.js';
@@ -29,6 +29,12 @@ function failed(error) {
 // rotation does. When it has none (no tasks for that department) page 1 is drawn anyway, so
 // that the preview shows what the panel does with nothing to show.
 function pageFor(ask, content) {
+  // A Roster row names its department and team on the rotation's own terms, which a Screen row does not keep
+  if (ask.panel === 'roster' && ask.department !== '') {
+    const row = tidyMainRow({ panel: 'roster', team: '', tasksTeam: ask.team, department: ask.department, part: ask.part }, false, true);
+    const own = row ? stepsOfRow(row, 0, [row], content, new Date())[0] : null;
+    if (own) return asTeam(ask.team, () => buildPage(own.panel, content, own.page, own));
+  }
   const screen = tidyScreen({ mainRows: [stillRow(ask)] }, ask.screen || 'original', 'original');
   const steps = mainPlaylist(content, new Date(), screen);
   const step = steps.length > 0 ? steps[0] : { panel: ask.panel };

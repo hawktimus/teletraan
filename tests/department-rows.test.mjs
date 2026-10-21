@@ -83,7 +83,7 @@ test('the roster panel draws a department row in a window of six rows with the r
   const host = { innerHTML: '' };
   rosterPanel.mount(host, content, { team: 'prime', department: 'build', part: 2 });
 
-  assert.ok(wordsOf(host.innerHTML).startsWith('BUILD ROSTER 2/2'));
+  assert.ok(wordsOf(host.innerHTML).startsWith('BUILD ROSTER PRIME 2/2'));
   assert.ok(host.innerHTML.includes('data-scroll-list') && host.innerHTML.includes('people-window'));
   assert.equal((host.innerHTML.match(/class="person[" ]/g) || []).length, 6, 'two people and four blank rows fill the window');
 });

@@ -86,6 +86,8 @@
 }
 .roster-board .person-hours { color: var(--team-label); font-weight: 700; }
 .roster-board .page-count { font: 700 var(--size-label)/44px var(--font-display); color: var(--team-label); }
+/* whose people the page counts, at the left of the page count */
+.roster-board .whose { margin-right: 24px; font: 700 var(--size-label)/44px var(--font-display); color: var(--team-label); }
 
 /* A department row of the rotation: six rows of 80px are the window, and the people after them are in the same list under it.
    frame.js (scrollCard) puts the page in view in --scroll-page, and frame.css moves the list by --scroll-step. */

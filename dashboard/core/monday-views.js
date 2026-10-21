@@ -66,9 +66,10 @@ export function boardTasks(content, now = new Date()) {
     isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && departmentTitle(task.department) !== '');
 }
 
-// The tasks of a team: General (no team) counts for both teams, and no team means every task
+// The tasks of a page. A page for Prime or Nova has the tasks of that team and the General ones (no team). A page for both
+// teams, which is the Condensed view, has only the General ones: a task of one team never plays there.
 export function ofTeam(tasks, team) {
-  return team === '' ? tasks.slice() : tasks.filter(task => !hasText(task.team) || task.team === team);
+  return team === '' ? tasks.filter(task => !hasText(task.team)) : tasks.filter(task => !hasText(task.team) || task.team === team);
 }
 
 // The list a task is in. A task the older sync wrote has no list, and its status says it.
@@ -169,7 +170,10 @@ export function statusChart(tasks) {
     const own = tasks.filter(task => task.department === entry.value);
     const counts = { done: 0, progress: 0, todo: 0 };
     own.forEach(task => { counts[partOf(task)] += 1; });
-    return { name: entry.title.toUpperCase(), done: counts.done, progress: counts.progress, todo: counts.todo, total: own.length };
+    return {
+      name: entry.title.toUpperCase(), done: counts.done, progress: counts.progress, todo: counts.todo, total: own.length,
+      blocked: own.filter(task => listOf(task) === 'open' && task.status === 'blocked').length,
+    };
   }).filter(row => row.total > 0);
 
   return rows.length === 0 ? null : { chart: 'status', rows: rows, longest: Math.max(...rows.map(row => row.total)) };
@@ -263,15 +267,20 @@ export function timelineChart(tasks, today) {
 }
 
 const chartTitles = { status: 'STATUS BY DEPARTMENT', progress: 'OVERALL PROGRESS', timeline: 'TIMELINE' };
+// With one department the title is the department and the chart: BUILD STATUS, BUILD PROGRESS, BUILD TIMELINE
+const departmentChartWords = { status: 'STATUS', progress: 'PROGRESS', timeline: 'TIMELINE' };
 
-// { title, team, chart, ... } for a page of the TV charts, or null when the chart has nothing to draw
+// { title, team, department, chart, ... } for a page of the TV charts, or null when the chart has nothing to draw. A page with a
+// department draws that department only: one bar for the status chart, and the progress and the timeline of its tasks.
 export function chartsView(content, now, page) {
   const options = pageOptions(page);
-  const tasks = ofTeam(boardTasks(content, now), options.team);
+  const own = ofTeam(boardTasks(content, now), options.team);
+  const tasks = options.department === '' ? own : own.filter(task => task.department === options.department);
   const drawn = options.chart === 'progress' ? progressChart(tasks) : options.chart === 'timeline' ? timelineChart(tasks, todayOf(content, now)) : statusChart(tasks);
   if (drawn === null) return null;
 
-  return Object.assign({ title: chartTitles[options.chart], team: teamWords(content, options.team) }, drawn);
+  const title = options.department === '' ? chartTitles[options.chart] : departmentTitle(options.department).toUpperCase() + ' ' + departmentChartWords[options.chart];
+  return Object.assign({ title: title, team: teamWords(content, options.team), department: options.department }, drawn);
 }
 
 
