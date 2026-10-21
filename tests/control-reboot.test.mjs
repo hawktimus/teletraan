@@ -1,5 +1,5 @@
 // Tests for the Scheduled reboot card of the control page: the route (control/routes/reboot.js), what it checks and writes
-// (control/support/reboot.js) and the markup of the card (control/static/tabs/reboot.js). A fake Sanity and a temporary data
+// (control/support/reboot.js) and the markup of the card (control/static/tabs/settings-reboot.js). A fake Sanity and a temporary data
 // folder; nothing leaves the process.
 //
 //   node tests/control-reboot.test.mjs
@@ -7,7 +7,7 @@
 import assert from 'node:assert/strict';
 import * as reboot from '../control/routes/reboot.js';
 import * as logic from '../control/support/reboot.js';
-import { publishQuestion, rebootHtml, statusWords } from '../control/static/tabs/reboot.js';
+import { publishQuestion, rebootHtml, statusWords } from '../control/static/tabs/settings-reboot.js';
 import { defaults } from '../computer/scripts/reboot-plan.mjs';
 import { makeWorld } from './helpers/control-world.mjs';
 

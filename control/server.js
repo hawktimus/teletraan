@@ -122,13 +122,15 @@ export async function createService(config, overrides = {}) {
     return false;
   });
 
-  // The tab files in static/: tab-*.js here and the tabs of the other pages in tabs/
+  // The tab files in static/: tab-*.js here and the tabs of the other pages in tabs/. A file that calls registerTab adds a tab and
+  // one that calls extendTab adds a block to a tab (static/tabs.js).
   function tabFiles() {
     const found = fs.readdirSync(staticFolder).filter(name => /^tab-[a-z-]+\.js$/.test(name) && fs.readFileSync(path.join(staticFolder, name), 'utf8').includes('registerTab('));
     const folder = path.join(staticFolder, 'tabs');
     if (fs.existsSync(folder)) {
       fs.readdirSync(folder).filter(name => name.endsWith('.js')).forEach(name => {
-        if (fs.readFileSync(path.join(folder, name), 'utf8').includes('registerTab(')) found.push('tabs/' + name);
+        const text = fs.readFileSync(path.join(folder, name), 'utf8');
+        if (text.includes('registerTab(') || text.includes('extendTab(')) found.push('tabs/' + name);
       });
     }
     return found.sort();

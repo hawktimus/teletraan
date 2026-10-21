@@ -5704,7 +5704,7 @@ function checkMondayTab() {
   // The note stores nothing
   const block = at('mondayConnection');
   need(problems, block && block.type === 'string' && block.readOnly === true && block.initialValue === undefined && !block.validation, 'mondayConnection should be a read only note that stores nothing');
-  need(problems, block && /Robotics Tasks and Completed Tasks/.test(block.description || '') && /Rotation board/.test(block.description || '') && /control page, Settings, Monday/.test(block.description || ''), 'the note should name the two boards, the Rotation board and the control page');
+  need(problems, block && /Robotics Tasks and Completed Tasks/.test(block.description || '') && /Rotation board/.test(block.description || '') && /control page, Settings, Monitor Monday/.test(block.description || ''), 'the note should name the two boards, the Rotation board and the control page');
 
   // How often: 5 to 120 whole minutes, starting at 30, in the words given
   const every = at('mondayEveryMinutes');

@@ -6,24 +6,34 @@ Address: `http://teletraan.local:3229/`. It opens a small page with two big butt
 
 The Studio has two ways in: the Studio button on the landing page and in the header of the control page (both open `/studio/` on port 3229), and port 3426, which goes straight to the Studio: `http://teletraan.local:3426/`. Port 3426 serves the Studio and nothing else.
 
-The page has three tabs, Status, Display and Settings, and the Studio button in the header. Display is where the team builds the order the wall plays (see The Display tab below).
+The page has three tabs, in this order: Status, Display and Settings, and the Studio button in the header. On a phone the three tabs are one row of 44 px buttons at the top.
 
-Status is for the meeting. It has the Now on the wall card, the Live preview, the controls and the health of the computer. Settings has five folding sections: Update (from GitHub, from a folder, roll back, the git path), Keys (the keys and calendar links), Monday (Check the token, and Monday debug, which shows how Monday answers for one board number), Scheduled reboot (the time of day the computer reboots, below) and Log (the last lines of the logs and a download). The old addresses still work: `#now` and `#status` open Status, and `#update`, `#keys` and `#log` open Settings with that section open, and so does `#settings/reboot`.
+- Status only shows. It has the Live preview of the wall, the Now on the wall card (build, view, theme, layout, team, panel, page, hold and the age of the report), two links (Change what is shown: Display, and Sync and restart: Settings) and, at the bottom, Health: the release, the screen, page loads in 24 hours, restarts, how long the computer has been up, disk, memory and temperature when the computer tells them, Sanity, whether the Studio can reach this page, and the last errors of the control log. No button on Status changes the wall.
+- Display is where the wall is pushed or planned. At the top is Show on the wall now: Playlist, Theme and view, Hold a panel and Messages (the buttons that used to be on Status), with Next, Pause and Reset to today's schedule kept at the bottom of a phone. Under it are the saved rotation rows and the theme of each weekday (The Display tab, below).
+- Settings has folding sections, drawn when opened. On a phone one is open at a time. In order: Updates (from GitHub, from a folder, roll back, the install through the bare repository), Keys (the keys and calendar links), Monitor Monday (Check the token, and Monday debug, which shows how Monday answers for one board number), Sync and restart, Scheduled reboot (below), Logs (the last lines of the logs and a download) and All settings (a line saying the Studio settings are coming, and a fixed place with the id `settings-all` for the file that edits them).
+
+Old addresses still work: `#now`, `#health` and `#status` open Status; `#playlist`, `#hold`, `#messages` and `#theme` open Display; `#update`, `#keys`, `#monday`, `#sync`, `#restart`, `#reboot` and `#log` open Settings with that section open, and so does `#settings/<section>`. The list is in one place, `control/static/tabs.js`. Another file can add a block to a tab with `extendTab('display', { place: 'before', mount })`, or to All settings with `extendTab('settings-all', { mount })`. The service lists any file in `tabs/` that calls `registerTab` or `extendTab`.
+
+### Sync and restart
+
+The section of Settings that holds what used to be on Status: Sync all, one button for each sync (calendars, Monday, competition, FRC news, Match13, Drive photos), Last reads (when each source was read), the three dots that the TV shows, and Restart screen, Restart services and Reboot the computer, each with a 10 second countdown to cancel.
+
+Sync all calls `POST /control/api/sync-all`, which asks the helper for `sync-now` in this order: calendars, monday, frc, news, match13, photos-drive. It answers with a line for each: Ran, Skipped or Failed, with the reason in plain words. A sync that is not installed on the computer (systemd says the unit was not found) is skipped. A sync that fails never stops the ones after it. Under Which syncs Sync all runs, a box for each sync switches it off for Sync all; the choice is kept in this browser and sent as `skip`. The call can take a few minutes, so the page says to keep it open.
 
 ### Two layouts, one page
 
-The page measures its width and sets a word on the root: wide (900 px and up), medium (600 to 899 px) or narrow (under 600 px). The code is the same for all three (`control/static/tabs/status.js`), and `tabs/tabs.css` does the rest with a grid.
+The page measures its width and sets a word on the root: wide (900 px and up), medium (600 to 899 px) or narrow (under 600 px). The code is shared (`control/static/tabs/arrange.js`), and `tabs/tabs.css` does the rest with a grid.
 
-- Wide: two columns. The left column stays in view while the page scrolls and holds Now on the wall and the Live preview. The right column holds the controls in plain cards: Playlist, Theme and view, Hold a panel and Messages. The health blocks are in a grid below both columns.
-- Medium and narrow: one column. The Now card is first and the Live preview is closed behind Show live preview (nothing loads until it is tapped, so a phone is not loaded with the whole dashboard). Each group of controls folds, and one group is open at a time. Health is closed under its own heading. A bar at the bottom keeps the three most used buttons in reach: Next, Pause or Resume, and Reset to today's schedule. The page keeps clear of the notch and the home bar, and every field is 16 px or more so iPhone does not zoom.
+- Wide: Status has two columns, the Live preview on the left (it stays in view) and the card and links on the right, with Health below. The groups of Show on the wall now sit two by two.
+- Medium and narrow: one column. The Now card is first and the Live preview is closed behind Show live preview (nothing loads until it is tapped, so a phone is not loaded with the whole dashboard). On Display each group folds and one is open at a time, and a bar at the bottom keeps Next, Pause or Resume, and Reset to today's schedule in reach. Health is closed under its own heading. Every field is 16 px or more so iPhone does not zoom.
 
-The groups, in the order of the page:
+The groups of Show on the wall now:
 
 - Playlist: Next, one button that is Pause rotation or Resume rotation (it shows what a press does, and the line under it says what the rotation is doing now) and Back to schedule.
 - Theme and view: the line Today the schedule uses Cybertron (from the saved schedule and the time zone of the Look page), the big button Reset to today's schedule, then Theme and View.
 - Hold a panel, and Messages (Play announcement, Post an announcement, Play desktop reveal, Play red eyes and Run presentation test).
 
-The line above the Now card says who decides what the wall shows: Following the schedule, or Held by you: theme Retro until reset, view Nova until 14:32.
+The line above the Now card, and above the groups, says who decides what the wall shows: Following the schedule, or Held by you: theme Retro until reset, view Nova until 14:32.
 
 ## Hidden transitions
 
@@ -59,7 +69,7 @@ On the wall a theme request has its own place in `dashboard/core/style.js` (`req
 
 ## The Live preview
 
-The Status tab has a Live preview card under the card of the wall. It shows the TV moving, as a picture the Teletraan computer makes of the TV's own browser (the mirror, below). When the mirror cannot start, it shows a copy of the dashboard in a frame that follows the TV, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
+The Status tab has a Live preview card beside the card of the wall. It shows the TV moving, as a picture the Teletraan computer makes of the TV's own browser (the mirror, below). When the mirror cannot start, it shows a copy of the dashboard in a frame that follows the TV, drawn at 1920 by 1080 and shrunk to the width of the card. The web server serves the dashboard read only on port 3229 as well as on the local port, with the same folder, the same cache rules and the same slides rule. The dashboard is public data, so nothing secret is served.
 
 ### The mirror
 
@@ -81,8 +91,8 @@ The page counts a frame only when the browser loaded the picture (the image fire
 
 Two different things can go wrong, and the card says which:
 
-- Black: the picture loads but the browser on the TV draws nothing. The card says `The TV picture is black. The picture loads, but the browser on the TV is drawing nothing. Restart the screen.` and shows a Restart screen button, which asks first, like the one on the Status tab.
-- Cannot load: the picture does not arrive at all. The card shows a red line with the answer of the web server, for example `The picture could not be loaded: the server answered 403. See the Log tab.`, and a link `Open the picture in a new tab`. A 404 means the picture is not written, a 403 means the web server may not read the file.
+- Black: the picture loads but the browser on the TV draws nothing. The card says `The TV picture is black. The picture loads, but the browser on the TV is drawing nothing. Restart the screen.` and points to Settings, Sync and restart, where Restart screen is (Status never changes the wall).
+- Cannot load: the picture does not arrive at all. The card shows a red line with the answer of the web server, for example `The picture could not be loaded: the server answered 403. See Settings, Logs.`, and a link `Open the picture in a new tab`. A 404 means the picture is not written, a 403 means the web server may not read the file.
 
 The mirror folder is made by the login user with mode 755 and its files are set to 644 after each write, so the web server (another user) can read them whatever the umask of the service is.
 
@@ -193,7 +203,7 @@ Release 1 is the old tree. It stays in the list as a record. It cannot be switch
 
 ## Update from GitHub
 
-The top of the Update tab is the card From GitHub. It needs no login and no key, because the repository (github.com/Hawktimus/teletraan) is public.
+The top of Settings, Updates is the card From GitHub. It needs no login and no key, because the repository (github.com/Hawktimus/teletraan) is public.
 
 1. The card shows `On GitHub: <short hash> <message>` and `On the wall: v14 · a1b2c3d`.
 2. Press Update from GitHub and confirm. The computer downloads the zip of that exact commit (about 100 MB at most, 2 minutes at most), takes off the one top folder GitHub puts in it and installs it with the same steps as the folder upload: download, unpack, check the files, check the schemas, build the Studio, write the release files, switch, restart the screen, wait for the screen. A failure before the switch leaves the wall as it was.
@@ -227,7 +237,7 @@ The Roll back box lists the kept releases with version, date and note. Pick one,
 
 ## The git path (optional)
 
-No GitHub is needed. The installer makes a bare repository at `/srv/teletraan.git` with a `post-receive` hook. A push of `main` installs it as the next release with the same steps as the Update tab. The Update tab shows the lines with the user and host filled in:
+No GitHub is needed. The installer makes a bare repository at `/srv/teletraan.git` with a `post-receive` hook. A push of `main` installs it as the next release with the same steps as Settings, Updates. The Update tab shows the lines with the user and host filled in:
 
     git remote add teletraan <user>@<host>:/srv/teletraan.git
     git push teletraan main
@@ -241,13 +251,13 @@ What the errors mean:
 - `The install needs the sudoers rule. Run the installer again from the Mac tool (menu 1).`: the sudoers line is not there yet. Run the update once.
 - `teletraan-install.conf is missing` or `sudo: a password is required` with no wrapper: the same cause.
 - `the staging folder ...` or `the commit is not a short hash`: the wrapper refused its arguments. The hook always gives it good ones, so this means something else called it.
-- `The install stopped. The wall is unchanged.`: the install itself failed. The lines above it say why, and Settings, Log has the rest.
+- `The install stopped. The wall is unchanged.`: the install itself failed. The lines above it say why, and Settings, Logs has the rest.
 
 On a new computer: `git clone <user>@<host>:/srv/teletraan.git teletraan`. This needs an SSH key. docs/new-mac.md says when you do not need one.
 
 ## When the page cannot be reached
 
-The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the same install as Settings, Update, and `tools/teletraan/teletraan-tool restart` restarts the screen. Both need SSH.
+The Mac tool is the way in. `tools/teletraan/teletraan-tool update` does the same install as Settings, Updates, and `tools/teletraan/teletraan-tool restart` restarts the screen. Both need SSH.
 
 ## The helper and restarts
 
@@ -259,7 +269,7 @@ The control container mounts `/opt/teletraan` (read and write, which includes `l
 
 ## When a button does nothing
 
-Every button on the Status tab and in Settings, Log shows a line under it: Done in green, or the reason in red. A reboot or a services restart cuts the page's own connection, so those show an amber line that says to wait a minute and reload.
+Every button on the Display tab and in Settings shows a line under it: Done in green, or the reason in red. A reboot or a services restart cuts the page's own connection, so those show an amber line that says to wait a minute and reload.
 
 - "The control page could not reach the helper on this computer. Run the installer again." The socket `/run/teletraan/control.sock` is missing or the control container cannot use it. Run `sudo computer/install.sh` again (from the Mac tool, choose 1).
 - "Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys." The key is missing the write right, or is wrong.
@@ -292,6 +302,6 @@ To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/
 
 ## The log and the download
 
-Settings, Log shows the last 200 lines of the control log and of the helper log. Verbose shows the last 1000. Refresh reads them again. Download the verbose log saves one text file, `teletraan-log-<date>.txt`, from `GET /control/api/log/download` (it needs the PIN). The file holds a header (release, uptime, disk), the control log, the helper log and what the helper reads from the computer: the python3 version, `docker ps` when the login user may run it without sudo, and the last 300 lines of the journal of each `teletraan-*` unit. The helper word is `log-bundle`; it uses no sudo, so the journal is complete only when the login user may read it (a member of the `systemd-journal` group).
+Settings, Logs shows the last 200 lines of the control log and of the helper log. Verbose shows the last 1000. Refresh reads them again. Download the verbose log saves one text file, `teletraan-log-<date>.txt`, from `GET /control/api/log/download` (it needs the PIN). The file holds a header (release, uptime, disk), the control log, the helper log and what the helper reads from the computer: the python3 version, `docker ps` when the login user may run it without sudo, and the last 300 lines of the journal of each `teletraan-*` unit. The helper word is `log-bundle`; it uses no sudo, so the journal is complete only when the login user may read it (a member of the `systemd-journal` group).
 
 Keys and calendar links are hidden in this file. It is safe to send to a coach. Every line goes through `control/lib/redact.js`, which replaces the value after `SANITY_WRITE_TOKEN=`, `MONDAY_API_TOKEN=`, `TBA_AUTH_KEY=`, `GOOGLE_API_KEY=`, `CONTROL_PIN=` and `CALENDAR_*_URL=` (and any other setting whose name ends in TOKEN, SECRET, PASSWORD or API_KEY), any Bearer token, any JWT, any run of 40 or more letters and digits (so a full 40 character commit id is hidden too) and any calendar link with `<hidden>`. `tests/control-log.test.mjs` plants each kind in the logs and checks the file.

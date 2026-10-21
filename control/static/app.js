@@ -1,6 +1,6 @@
 // The shell of the page: loads the tab files the service lists, draws the tab bar and shows the tab in the address.
 
-import { tabs, resolveAddress } from './tabs.js';
+import { tabs, resolveAddress, extensionsFor } from './tabs.js';
 import { api, shortDate } from './api.js';
 
 const bar = document.getElementById('tabs');
@@ -13,6 +13,22 @@ function leaver(result) {
   return () => pending.then(done => { if (typeof done === 'function') done(); });
 }
 
+// Blocks that other files add to a tab (extendTab in tabs.js) sit in boxes of their own, before or after the tab, so the
+// tab can draw its page again without touching them
+function addExtensions(tab, fresh, stops) {
+  const place = name => {
+    const list = extensionsFor(tab.id, name);
+    list.forEach(item => {
+      const box = document.createElement('div');
+      box.dataset.extension = tab.id;
+      if (name === 'before') fresh.before(box); else fresh.after(box);
+      stops.push(leaver(item.mount(box)));
+    });
+  };
+  place('before');
+  place('after');
+}
+
 function show(address) {
   const { id, section } = resolveAddress(address);
   const tab = tabs.find(other => other.id === id) || tabs[0];
@@ -22,8 +38,10 @@ function show(address) {
   page.replaceChildren();
   const fresh = document.createElement('div');
   page.append(fresh);
-  leave = leaver(tab.render(fresh, section));
-  history.replaceState(null, '', '#' + tab.id + (section ? '/' + section : ''));
+  const stops = [leaver(tab.render(fresh, section))];
+  addExtensions(tab, fresh, stops);
+  leave = () => stops.forEach(stop => stop());
+  history.replaceState(null, '', '#' + tab.id + (section && id === tab.id ? '/' + section : ''));
 }
 
 async function wallLine() {

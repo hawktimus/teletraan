@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { doneWords, heldLine, todayLine, pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, statusHtml, wallCheck } from '../control/static/tabs/render.js';
+import { doneWords, heldLine, todayLine, pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, wallCheck } from '../control/static/tabs/render.js';
+import { dotsHtml, healthHtml, readsHtml, uptimeText } from '../control/static/tabs/render-health.js';
 
 let passed = 0;
 function check(name, test) {
@@ -65,13 +66,34 @@ check('the Now showing buttons are all there', () => {
   assert.ok(nowControlsHtml({ canWrite: false }).includes('SANITY_WRITE_TOKEN'));
 });
 
-check('the Status tab shows the three dots with their reasons and says not known for what is missing', () => {
-  const html = statusHtml({ versions: { current: 14, previous: [13, 12] }, dots: { monday: { color: 'red', reason: 'The last read failed: bad token' }, band: { color: 'green', reason: 'ok' }, sanity: { color: 'amber', reason: 'late' } }, mini: {}, sanity: { reachable: true }, cors: null, disk: { freeBytes: 5 * 1024 ** 3, totalBytes: 100 * 1024 ** 3 } }, now);
-  assert.ok(html.includes('v14') && html.includes('v13, v12'));
-  assert.ok(html.includes('data-color="red"') && html.includes('bad token'));
-  assert.ok(html.includes('Not checked'));
-  assert.ok(html.includes('5.0 GB free of 100 GB'));
-  assert.ok(statusHtml(null).includes('did not answer'));
+check('the three dots and the last reads (Settings, Sync and restart) show the reasons and say not known for what is missing', () => {
+  const data = { versions: { current: 14, previous: [13, 12] }, dots: { monday: { color: 'red', reason: 'The last read failed: bad token' }, band: { color: 'green', reason: 'ok' }, sanity: { color: 'amber', reason: 'late' } }, mini: { photos: '2026-10-15T11:00:00Z' }, sanity: { reachable: true }, cors: null };
+  const dots = dotsHtml(data);
+  assert.ok(dots.includes('data-color="red"') && dots.includes('bad token'));
+  const reads = readsHtml(data, now);
+  ['Content', 'Calendars', 'Slides', 'Monday', 'Competition data', 'FRC news', 'Match13', 'Drive photos'].forEach(label => assert.ok(reads.includes('<dt>' + label + '</dt>'), label));
+  assert.ok(reads.includes('Drive photos</dt><dd>1 hour ago'));
+  assert.equal((reads.match(/Match13/g) || []).length, 1, 'the Match13 line is there once');
+  assert.ok(dotsHtml(null).includes('did not answer') && readsHtml(null).includes('did not answer'));
+});
+
+check('the health block of Status has the release, uptime, disk, page loads, memory and temperature when present, and the last errors', () => {
+  const data = { versions: { current: 14, previous: [13, 12] }, kiosk: 'active', mini: {}, sanity: { reachable: true }, cors: null, uptimeSeconds: 3 * 86400 + 4 * 3600 + 60,
+    disk: { freeBytes: 5 * 1024 ** 3, totalBytes: 100 * 1024 ** 3 }, memory: { totalKb: 4000000, availableKb: 1000000 }, temperatureC: 61, lastErrors: ['2026-10-15T11:00:00Z helper sync failed <b>x</b>'] };
+  const html = healthHtml(data, { report: { loads: 3, loadReason: 'watchdog' } }, now);
+  ['v14', 'v13, v12', 'active', '3 days 4 hours', '5.0 GB free of 100 GB', '75 percent used', '61 degrees C', '3, last reason: watchdog', 'Last errors', 'Not checked'].forEach(words => assert.ok(html.includes(words), words));
+  assert.ok(html.includes('&lt;b&gt;x&lt;/b&gt;') && !html.includes('<b>x'), 'error lines are escaped');
+  const bare = healthHtml({ versions: {}, mini: {}, sanity: {}, lastErrors: [] }, null, now);
+  assert.ok(!bare.includes('Memory') && !bare.includes('Temperature'), 'left out when the computer does not tell');
+  assert.ok(bare.includes('No failures in the control log') && bare.includes('not reported yet') && bare.includes('not known'));
+  assert.equal(uptimeText(2400), '40 minutes');
+  assert.equal(uptimeText(null), 'not known');
+  assert.ok(healthHtml(null).includes('did not answer'));
+});
+
+check('the card of the wall names the build, view, theme, layout, team, panel, page and the age of the report', () => {
+  const html = nowCardHtml({ report: { build: 'v14 abc1234', view: 'nova', theme: 'retro', layout: 'bar', team: 'nova', panel: 'tasks', page: '2' }, quiet: false, rows: [], receivedAt: '2026-10-15T11:59:00Z' }, now);
+  ['Build</dt>', 'View</dt>', 'Theme</dt>', 'Layout</dt><dd>bar', 'Team</dt>', 'Panel</dt>', 'Page</dt><dd>2', 'Age of this report</dt><dd>1 minute ago'].forEach(words => assert.ok(html.includes(words), words));
 });
 
 check('the Keys section of Settings never holds a value, only the mask, and has a field and a clear for each', () => {
@@ -84,7 +106,7 @@ check('the Keys section of Settings never holds a value, only the mask, and has 
 
 check('each tab file registers itself with an id and a title, and parses', () => {
   const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
-  const sections = ['now.js', 'health.js', 'keys.js', 'log.js', 'monday.js'];
+  const sections = ['now.js', 'health.js', 'arrange.js', 'render-health.js', 'wall-controls.js', 'settings-update.js', 'settings-keys.js', 'settings-monday.js', 'settings-sync.js', 'settings-reboot.js', 'settings-log.js', 'settings-all.js'];
   sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
   [...Object.keys(expected), ...sections].forEach(file => {
     const text = fs.readFileSync(path.join(folder, file), 'utf8');
@@ -168,9 +190,9 @@ check('after a press the page says what the wall reports, and after 20 seconds w
 });
 
 check('the Monday section of Settings has Check the token and Monday debug, sends a board number of digits only, and holds no key', () => {
-  const text = fs.readFileSync(path.join(folder, 'monday.js'), 'utf8');
+  const text = fs.readFileSync(path.join(folder, 'settings-monday.js'), 'utf8');
   const settings = fs.readFileSync(path.join(folder, 'settings.js'), 'utf8');
-  assert.ok(settings.includes("id: 'monday', title: 'Monday'") && settings.includes('mountMonday'));
+  assert.ok(settings.includes("id: 'monday', title: 'Monitor Monday'") && settings.includes('mountMonday'));
   assert.ok(text.includes('>Check the token<') && text.includes('>Monday debug<'));
   assert.ok(text.includes("'/helper/monday-check'") && text.includes("'/helper/monday-debug', { board: number }"));
   assert.ok(text.includes('[0-9]{1,20}'), 'the board number is checked before it is sent');

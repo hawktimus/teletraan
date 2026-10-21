@@ -203,7 +203,7 @@ test('a failed download ends the stream with the sentence and installs nothing',
 
 test('the Update tab has the From GitHub card first, the disabled words, Check again, and the folder card below', () => {
   const card = fs.readFileSync(new URL('../control/static/github-card.js', import.meta.url), 'utf8');
-  const tab = fs.readFileSync(new URL('../control/static/tab-update.js', import.meta.url), 'utf8');
+  const tab = fs.readFileSync(new URL('../control/static/tabs/settings-update.js', import.meta.url), 'utf8');
   assert.ok(card.includes("'From GitHub'") && card.includes("'Update from GitHub'") && card.includes("'Already on the wall'") && card.includes("'Check again'"));
   assert.ok(card.includes("'On GitHub: '") && card.includes("'On the wall: '"));
   assert.ok(tab.indexOf('githubCard(') < tab.indexOf('columns);') && tab.includes("'From a folder on this computer'"));

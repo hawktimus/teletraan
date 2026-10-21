@@ -5,7 +5,7 @@
 // Nothing loads by itself under 900 px wide: a phone taps Show live preview. Everything stops when the tab changes or
 // the page goes to the background.
 
-import { api, confirmed, showResult } from './api.js';
+import { api } from './api.js';
 import {
   followFor, framesPerSecond, mirrorFrameWait, mirrorLive, mirrorPictureAddress, mirrorWords, pictureErrorLine, pictureFacts,
   previewAutoLoads, previewHeight, previewScale, previewWidth, wallReport,
@@ -32,7 +32,6 @@ export function wirePreview(root) {
   const errorLine = root.querySelector('[data-preview-error]');
   const openLink = root.querySelector('[data-preview-open]');
   const blackBox = root.querySelector('[data-preview-black]');
-  const restart = root.querySelector('[data-preview-restart]');
   // screen.width keeps a phone narrow even when a wide page makes the browser widen its layout
   const wide = () => previewAutoLoads(Math.min(window.innerWidth, window.screen && window.screen.width ? window.screen.width : window.innerWidth));
   let wanted = wide();
@@ -239,12 +238,6 @@ export function wirePreview(root) {
     off.textContent = 'The preview is off.';
     draw();
   }
-
-  confirmed(restart, 10, 'Restarting the screen', async () => {
-    showResult(restart, 'working', 'Restarting the screen.');
-    const result = await api('POST', '/helper/restart-kiosk', { confirmed: true });
-    showResult(restart, result.ok ? 'done' : 'bad', result.ok ? 'The screen is restarting.' : (result.error || 'The restart did not start.'));
-  });
 
   toggle.addEventListener('click', () => {
     wanted = !active;

@@ -24,7 +24,7 @@ The choice is saved as Photo source in Dashboard Settings. Click Publish all in 
 6. Put the key on the Teletraan computer. Open the control page (http://teletraan.local:3229/control/), Settings, the Keys section, the line Google key for the photo folder. Type the key (the typing is hidden) and save. The same line is in the Mac tool, Keys and calendars. The key lives in `local.env` on the Teletraan computer as `GOOGLE_API_KEY` and nowhere else.
 7. Share the folder. In Google Drive, right click the folder, then Share. Under General access choose Anyone with the link, with the role Viewer. Click Copy link.
 8. Tell Studio. Open Photos in the sidebar, pick Google Drive folder (or Both), paste the link under Folder link and click Save folder. Then click Publish all in the top bar.
-9. Wait up to 15 minutes, or open the control page, the Status tab, Health, and click Copy Drive photos now. The Photos page then says, for example, Last read 6 minutes ago, 34 photos.
+9. Wait up to 15 minutes, or open the control page, Settings, Sync and restart, and click Copy Drive photos now. The Photos page then says, for example, Last read 6 minutes ago, 34 photos.
 
 The Teletraan computer needs the packages curl and jq. They are already there if the calendars and the slides work. The timer is installed by the update from the Mac tool, or once by hand: `sudo /opt/teletraan/computer/scripts/install-photos-drive.sh`.
 

@@ -41,9 +41,10 @@ test('the scale is the width of the box over 1920, and a box with no width still
   [0, -5, NaN, undefined, 'x'].forEach(width => assert.equal(previewScale(width), 0.1));
 });
 
-test('the tab puts the card between the card of the wall and the buttons, and fits it to its box', () => {
+test('the Status tab puts the card of the wall first, then the picture, and fits the picture to its box', () => {
   const text = read('control/static/tabs/status.js');
-  assert.ok(text.indexOf('data-card') < text.indexOf('data-preview-card') && text.indexOf('data-preview-card') < text.indexOf('data-controls'));
+  assert.ok(text.indexOf('data-card') < text.indexOf('data-preview-card'));
+  assert.ok(!text.includes('data-controls'), 'Status has no controls: they are on Display');
   const preview = read('control/static/tabs/preview.js');
   assert.ok(preview.includes('previewScale(box.clientWidth)') && preview.includes('ResizeObserver'));
   const css = read('control/static/tabs/tabs.css');

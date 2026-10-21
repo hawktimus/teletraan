@@ -14,7 +14,8 @@ import { test, finish } from './helpers/runner.mjs';
 import { makeWorld } from './helpers/control-world.mjs';
 import * as helperRoute from '../control/routes/helper.js';
 import { buildStatus } from '../control/support/status-parts.js';
-import { doneWords, outcome, statusHtml } from '../control/static/tabs/render.js';
+import { doneWords, outcome } from '../control/static/tabs/render.js';
+import { readsHtml } from '../control/static/tabs/render-health.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(path.join(repo, name), 'utf8');
@@ -71,17 +72,17 @@ test('the status has the news time and count from the status document', () => {
 
 test('Last reads shows FRC news with how long ago and how many headlines, and not yet when it never ran', () => {
   const at = new Date('2026-10-19T12:00:00Z');
-  const withNews = statusHtml(buildStatus({ data: { mini: { newsAt: '2026-10-19T11:30:00Z', newsCount: 4 } } }, at), at);
+  const withNews = readsHtml(buildStatus({ data: { mini: { newsAt: '2026-10-19T11:30:00Z', newsCount: 4 } } }, at), at);
   assert.match(withNews, /FRC news<\/dt><dd>30 minutes ago, 4 headlines</);
-  const one = statusHtml(buildStatus({ data: { mini: { newsAt: '2026-10-19T11:59:00Z', newsCount: 1 } } }, at), at);
+  const one = readsHtml(buildStatus({ data: { mini: { newsAt: '2026-10-19T11:59:00Z', newsCount: 1 } } }, at), at);
   assert.match(one, /1 headline</);
-  const never = statusHtml(buildStatus({ data: { mini: {} } }, at), at);
+  const never = readsHtml(buildStatus({ data: { mini: {} } }, at), at);
   assert.match(never, /FRC news<\/dt><dd>not yet</);
 });
 
 test('there is a Sync news now button that sends sync-now with the target news, and its result is Done in words', () => {
-  const tab = read('control/static/tabs/health.js');
-  assert.match(tab, /\{ target: 'news', label: 'Sync news now' \}/);
+  const tab = read('control/static/tabs/settings-sync.js');
+  assert.match(tab, /\{ target: 'news', label: 'Sync news now'/);
   assert.match(tab, /run\(button, 'sync-now', \{ target: item\.target \}/);
   assert.equal(doneWords('sync-now', { target: 'news' }), 'The FRC news sync has started.');
   assert.deepEqual(outcome({ ok: true }, 'sync-now', { target: 'news' }), { state: 'done', words: 'Done. The FRC news sync has started.' });

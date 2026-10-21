@@ -87,7 +87,7 @@ moment of the web server does not cost the picture. Why a picture failed is in t
 
 The wall keeps a short run log of the last hidden transition and sends it to the control page with
 its Now report every 10 seconds (`hiddenRun`, 400 characters at most; the code is
-`dashboard/core/hidden-log.js` and `hidden-load.js`). The Status tab of the control page shows it
+`dashboard/core/hidden-log.js` and `hidden-load.js`). The Display tab of the control page shows it
 under Messages, as Last hidden transition (docs/control-page.md). The lines of a run:
 
 - `pile 1.7s`: how long the frames took to fall.
@@ -162,7 +162,7 @@ can say. The Studio starts a new settings page at 60 hours for both.
    or **Play red eyes**.
 3. Look at the TV. It plays within about 20 seconds.
 
-The control page has the same two buttons under Messages on the Status tab, and under them the
+The control page has the same two buttons under Messages on the Display tab, and under them the
 block Last hidden transition, which says what the wall did (see "What the wall reports").
 
 The menu has two more buttons that are not transitions, Play announcements and Run presentation test (see below).
@@ -288,7 +288,7 @@ from the control page at once.
 3. Look at the TV.
 
 A theme or view button writes `previewTheme` or `showView`, with the id and an end time 10 minutes ahead, and
-publishes the page for you. These are the same fields in the same shape as the Status tab of the control
+publishes the page for you. These are the same fields in the same shape as the Display tab of the control
 page writes (docs/control-page.md), so the screen has one way to read both
 (`activeRequests` in `dashboard/core/screen-requests.js`). The fields are hidden in Studio, but their values stay
 in the page. The pack button writes the kind and the time now into `previewRequest`, which has two fields, `kind`

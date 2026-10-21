@@ -1,4 +1,4 @@
-/* The four tabs of the control page. Phone first: one column, targets 44px high. From 900px two
+/* The three tabs of the control page. Phone first: one column, targets 44px high. From 900px two
    columns. The colors come from the page when it sets them. */
 .tab { max-width: 1100px; margin: 0 auto; padding: 16px 0; color: var(--page-text, #f3eefc); font-family: 'Tomorrow', system-ui, sans-serif; }
 .tab .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
@@ -61,56 +61,83 @@
   .tab dd { text-align: left; }
 }
 .tab [hidden] { display: none; }
-/* Settings: three folding sections */
+/* Settings: folding sections */
 .settings-page { max-width: 1100px; margin: 0 auto; padding: 16px 0; }
 .settings-page .fold { margin: 0 0 16px; background: var(--card, #fff); border: 2px solid var(--line, #d9d2e6); border-radius: 8px; }
 .settings-page .fold > summary { min-height: 44px; padding: 10px 16px; font: 700 20px 'Tomorrow', system-ui, sans-serif; color: var(--purple-dark, #53048f); cursor: pointer; }
 .settings-page .fold-body { padding: 0 16px 16px; }
 .settings-page .fold-body.tab { padding-top: 0; }
 
-/* The Status page. data-width on .status-page is wide (900px and up), medium or narrow (under 600px), set by tabs/status.js. */
+/* The Status page. data-width on .status-page is wide (900px and up), medium or narrow (under 600px), set by tabs/arrange.js.
+   Status only shows: the picture of the wall, the card of what it shows now, and the health block. */
+.status-page { max-width: 1560px; }
 .status-page .cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.status-page .left, .status-page .right { display: grid; gap: 16px; align-content: start; min-width: 0; }
-.status-page .left [data-preview-card] { margin: 0; }
-.status-page .group, .status-page .health { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; min-width: 0; }
-.status-page .group > summary, .status-page .health > summary { min-height: 44px; padding: 10px 16px; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); cursor: pointer; }
-.status-page .group-body { padding: 0 16px 16px; }
-.status-page .group h3 { margin: 16px 0 0; font-size: 18px; color: var(--page-text, #f3eefc); }
-.status-page .health > [data-health-body], .status-page .health > .card { margin: 0 16px 16px; }
+.status-page .info, .status-page .live { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.status-page .live[data-preview-card], .status-page .info [data-card] { margin: 0; }
+.status-page .next-links .buttons { margin-top: 0; }
+.status-page .next-links .act { display: inline-flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; flex: 1 1 220px; }
+.status-page .health, .wall-controls .group { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; min-width: 0; }
+.status-page .health > summary, .wall-controls .group > summary { min-height: 44px; padding: 10px 16px; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); cursor: pointer; }
+.status-page .health > [data-health-body] { margin: 0 16px 16px; }
 .status-page .health > [data-health-body] .card { margin: 0; }
-.status-page .quickbar { display: none; }
-.status-page[data-width="wide"] .group > summary, .status-page[data-width="wide"] .health > summary { cursor: default; }
-.status-page[data-width="wide"] .health > summary { font-size: 20px; }
+.status-page[data-width="wide"] .health > summary, .wall-controls[data-width="wide"] .group > summary { cursor: default; list-style: none; }
+.status-page[data-width="wide"] .health > summary::-webkit-details-marker, .wall-controls[data-width="wide"] .group > summary::-webkit-details-marker { display: none; }
+/* Wide: the picture on the left and stays in view, the card and the links on the right */
 .status-page[data-width="wide"] .cols { grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); align-items: start; }
-.status-page[data-width="wide"] .left { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+.status-page[data-width="wide"] .live { grid-column: 1; grid-row: 1; position: sticky; top: 8px; }
+.status-page[data-width="wide"] .info { grid-column: 2; grid-row: 1; }
 .status-page[data-width="wide"] .health { margin-top: 16px; border: 0; background: transparent; }
+.status-page[data-width="wide"] .health > summary { padding-left: 0; color: var(--purple-dark, #53048f); }
+.status-page[data-width="wide"] .health > [data-health-body] { margin: 16px 0 0; }
 .status-page[data-width="wide"] .health > [data-health-body] .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.status-page[data-width="wide"] .health > [data-health-body], .status-page[data-width="wide"] .health > .card { margin: 16px 0 0; }
-/* Under 900px: one column, and a bar of the three most used buttons that stays at the bottom */
-.status-page[data-width="medium"], .status-page[data-width="narrow"] { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-.status-page[data-width="medium"] .quickbar, .status-page[data-width="narrow"] .quickbar {
-  display: block; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0;
-  padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  background: #0b0714; border-top: 2px solid var(--card-edge, #3a2c55);
-}
-.status-page .quickbar .buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.status-page .quickbar .act { min-height: 48px; padding: 6px 8px; font-size: 16px; line-height: 1.2; }
-.status-page .quickbar .result { margin: 6px 0 0; font-size: 16px; }
-.status-page .quickbar .result:empty { display: none; }
-.status-page[data-width="medium"] .cols, .status-page[data-width="narrow"] .cols { max-width: 720px; margin: 0 auto; }
-.status-page[data-width="medium"] .health, .status-page[data-width="narrow"] .health { margin-top: 16px; max-width: 720px; margin-left: auto; margin-right: auto; }
+/* Under 900px: one column, the card first and the picture after it */
+.status-page[data-width="medium"] .cols, .status-page[data-width="narrow"] .cols, .status-page[data-width="medium"] .health, .status-page[data-width="narrow"] .health { max-width: 720px; margin-left: auto; margin-right: auto; }
+.status-page[data-width="medium"] .health, .status-page[data-width="narrow"] .health { margin-top: 16px; }
 .status-page[data-width="medium"] .health > [data-health-body] .grid, .status-page[data-width="narrow"] .health > [data-health-body] .grid { grid-template-columns: minmax(0, 1fr); }
 .status-page[data-width="narrow"] [data-preview-card][data-on="no"] .preview { display: none; }
 .status-page[data-width="narrow"] .buttons .act { flex: 1 1 auto; }
 .tab .note { color: #b9afcf; }
-.status-page { max-width: 1560px; }
-.status-page[data-width="wide"] .group > summary, .status-page[data-width="wide"] .health > summary { list-style: none; }
-.status-page[data-width="wide"] .group > summary::-webkit-details-marker, .status-page[data-width="wide"] .health > summary::-webkit-details-marker { display: none; }
-.status-page .held { margin: 0; padding: 12px 16px; font-weight: 700; color: var(--page-text, #f3eefc); background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
-.status-page .held[data-held="yes"] { color: #1a1228; background: var(--accent, #faca2a); border-color: var(--accent, #faca2a); }
-.status-page .group .act[data-big] { width: 100%; min-height: 56px; font-size: 20px; font-weight: 700; }
-.status-page .more { margin-top: 8px; }
-.status-page .more > summary { min-height: 44px; padding: 10px 0; color: #b9afcf; cursor: pointer; }
+.status-page .held, .wall-controls .held { margin: 0; padding: 12px 16px; font-weight: 700; color: var(--page-text, #f3eefc); background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.status-page .held[data-held="yes"], .wall-controls .held[data-held="yes"] { color: #1a1228; background: var(--accent, #faca2a); border-color: var(--accent, #faca2a); }
+
+/* The wall controls at the top of the Display tab (tabs/wall-controls.js): groups that fold, one open at a time when not wide,
+   and a bar of the three most used buttons at the bottom of a phone */
+.wall-controls { display: grid; gap: 16px; padding-bottom: 0; }
+.wall-controls .groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
+.wall-controls .group-body { padding: 0 16px 16px; }
+.wall-controls .group h3 { margin: 16px 0 0; font-size: 18px; color: var(--page-text, #f3eefc); }
+.wall-controls .quickbar { display: none; }
+.wall-controls[data-width="wide"] .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.wall-controls[data-width="medium"] .groups, .wall-controls[data-width="narrow"] .groups { max-width: 720px; margin: 0 auto; width: 100%; }
+main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"]) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.wall-controls[data-width="medium"] .quickbar, .wall-controls[data-width="narrow"] .quickbar {
+  display: block; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0;
+  padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: #0b0714; border-top: 2px solid var(--card-edge, #3a2c55);
+}
+.wall-controls .quickbar .buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.wall-controls .quickbar .act { min-height: 48px; padding: 6px 8px; font-size: 16px; line-height: 1.2; }
+.wall-controls .quickbar .result { margin: 6px 0 0; font-size: 16px; }
+.wall-controls .quickbar .result:empty { display: none; }
+.wall-controls[data-width="narrow"] .buttons .act { flex: 1 1 auto; }
+.wall-controls .group .act[data-big] { width: 100%; min-height: 56px; font-size: 20px; font-weight: 700; }
+.wall-controls .more { margin-top: 8px; }
+.wall-controls .more > summary { min-height: 44px; padding: 10px 0; color: #b9afcf; cursor: pointer; }
+
+/* The Sync and restart section of Settings */
+.sync-section { display: grid; gap: 16px; }
+.sync-section h3 { margin: 16px 0 0; font-size: 18px; }
+.sync-lines { margin: 12px 0 0; padding: 0; list-style: none; }
+.sync-lines li { padding: 8px 0; border-top: 1px solid var(--card-edge, #3a2c55); overflow-wrap: anywhere; }
+.sync-lines .state { font-weight: 700; }
+.sync-lines li[data-state="ok"] .state { color: #2fd27a; }
+.sync-lines li[data-state="skipped"] .state { color: #ffb300; }
+.sync-lines li[data-state="failed"] .state { color: #ff8a8a; }
+.sync-section .includes { display: grid; grid-template-columns: minmax(0, 1fr); }
+.sync-section .more > summary { min-height: 44px; padding: 10px 0; color: #b9afcf; cursor: pointer; }
+@media (min-width: 900px) {
+  .sync-section .includes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 .tab .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
 .tab .check input { width: 24px; min-height: 24px; height: 24px; }
 .tab .log { max-height: 50vh; }

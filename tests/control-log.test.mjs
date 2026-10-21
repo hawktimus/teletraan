@@ -108,7 +108,7 @@ test('the download needs the PIN, and still works when the helper cannot answer'
 });
 
 test('the page has the toggle, Refresh and the download with the sentence about hidden keys', () => {
-  const log = fs.readFileSync(new URL('../control/static/tabs/log.js', import.meta.url), 'utf8');
+  const log = fs.readFileSync(new URL('../control/static/tabs/settings-log.js', import.meta.url), 'utf8');
   ['Verbose', 'Refresh', 'Download the verbose log', '/log/download', 'Keys and calendar links are hidden in this file. It is safe to send to a coach.'].forEach(part => assert.ok(log.includes(part), part));
 });
 
