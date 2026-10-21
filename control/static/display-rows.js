@@ -37,7 +37,6 @@ export function mondayFieldsOf(row, monday) {
 // never drawn. An older monday-tasks row with a department plays as Department tasks, so it is the same. The nine departments are
 // those of mondayDepartments in dashboard/config-lists.js.
 export const condensedWords = 'Plays in the Condensed view';
-const mondayDepartmentIds = ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing'];
 
 export function playsCondensed(row) {
   if (row.view !== 'robotics') return false;
