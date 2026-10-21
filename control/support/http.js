@@ -42,6 +42,21 @@ export async function readJson(req, limit = largestBody) {
   return value;
 }
 
+// The whole body as bytes, for the one upload. A body over the limit is refused as soon as it is seen to be over, and the
+// rest is not read.
+export async function readBytes(req, limit) {
+  const declared = Number(req.headers && req.headers['content-length']);
+  if (declared > limit) throw new Refusal(413, 'That file is too big.');
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > limit) throw new Refusal(413, 'That file is too big.');
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 // The text of a request body, for the one route that takes plain text
 export async function readText(req, limit = largestBody) {
   const chunks = [];

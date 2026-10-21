@@ -1,8 +1,12 @@
-// A list of content documents on the Display tab (the ticker lines, the roster): each item with its state, a Hide or Show button, Edit,
-// Move up and down, Publish and Delete, and a form to add or change one. The form is the one of the All settings page (the fields are
-// drawn from the Studio schema by settings-all-fields.js), so the limits, counters and warnings are the Studio's. Everything goes to
-// the draft first, like the Studio, and Publish is a button of its own. A change made in the Studio meanwhile is a question,
-// never an overwrite. The page calls mountList(body, options, ctx); ctx.api replaces the call to the control service (the tests do).
+// A list of content documents on the Content tab (the ticker lines, the roster, announcements, photos): each item with its state,
+// a Hide or Show button, Edit, Move up and down, Publish and Delete, and a form to add or change one. The form is the one of the
+// All settings page (the fields are drawn from the Studio schema by settings-all-fields.js), so the limits, counters and warnings
+// are the Studio's. Everything goes to the draft first, like the Studio, and Publish is a button of its own. A change made in the
+// Studio meanwhile is a question, never an overwrite. The page calls mountList(body, options, ctx); ctx.api replaces the call to
+// the control service (the tests do).
+//
+// Options a list may add: chips(item, now) for its own state chips, sort(items) for its own order, hideSwitch: false when the type
+// has no Show switch, grid: true to lay the cards out as a grid, and addButton: false when the list is added to some other way.
 
 import { api as realApi, useStyles } from './api.js';
 import { problemsIn } from '../settings-check.js';
@@ -221,7 +225,8 @@ export async function mountList(body, options, ctx = {}) {
   // ----- drawing -----
 
   function chips(item) {
-    return h('div', { class: 'ct-chips' }, chipsOf(item, now()).map(chip => h('span', { class: 'ct-chip', 'data-chip': chip.id, text: chip.words })));
+    const list = options.chips ? options.chips(item, now()) : chipsOf(item, now());
+    return h('div', { class: 'ct-chips' }, list.map(chip => h('span', { class: 'ct-chip', 'data-chip': chip.id, text: chip.words })));
   }
 
   function askBox(item) {
@@ -243,7 +248,7 @@ export async function mountList(body, options, ctx = {}) {
     const off = item.document.show === false;
     const locked = !page.canWrite || page.working;
     const actions = h('div', { class: 'ct-actions' },
-      button(off ? 'Show' : 'Hide', { 'data-act': 'toggle', 'aria-label': (off ? 'Show ' : 'Hide ') + nameOf(item), disabled: locked }, () => toggleShow(item)),
+      options.hideSwitch === false ? null : button(off ? 'Show' : 'Hide', { 'data-act': 'toggle', 'aria-label': (off ? 'Show ' : 'Hide ') + nameOf(item), disabled: locked }, () => toggleShow(item)),
       button('Edit', { 'data-act': 'edit', 'aria-label': 'Edit ' + nameOf(item) }, () => openForm(item)),
       options.reorder ? button('Up', { 'data-act': 'up', 'aria-label': 'Move ' + nameOf(item) + ' up', disabled: locked || index <= 0 }, () => move(item, -1, shown)) : null,
       options.reorder ? button('Down', { 'data-act': 'down', 'aria-label': 'Move ' + nameOf(item) + ' down', disabled: locked || index === shown.length - 1 }, () => move(item, 1, shown)) : null,
@@ -258,7 +263,7 @@ export async function mountList(body, options, ctx = {}) {
   function toolbar() {
     const waiting = page.items.filter(item => item.isDraft).length;
     const bar = h('div', { class: 'buttons ct-bar' },
-      button('Add ' + word, { 'data-act': 'add', class: 'act', disabled: !page.canWrite || page.working }, () => openForm(null)),
+      options.addButton === false ? null : button('Add ' + word, { 'data-act': 'add', class: 'act', disabled: !page.canWrite || page.working }, () => openForm(null)),
       button(waiting === 0 ? 'Nothing to publish' : 'Publish ' + waiting + ' waiting', { 'data-act': 'publish-all', disabled: waiting === 0 || !page.canWrite || page.working }, () => { page.ask = { kind: 'all', id: '' }; draw(); }),
       button('Refresh', { 'data-act': 'refresh', disabled: page.working }, () => reload('', 'Read again from Sanity.')));
     const parts = [bar];
@@ -273,7 +278,7 @@ export async function mountList(body, options, ctx = {}) {
   }
 
   function sections() {
-    const sorted = sortItems(page.items, nameOf);
+    const sorted = options.sort ? options.sort(page.items) : sortItems(page.items, nameOf);
     if (options.sections) return options.sections(sorted, page).map(section => ({ section: section, shown: sorted }));
     return [{ section: { title: '', count: sorted.length, items: sorted }, shown: sorted }];
   }
@@ -294,6 +299,8 @@ export async function mountList(body, options, ctx = {}) {
           if (role.title) parts.push(h('h4', { class: 'ct-role', text: role.title + ' (' + role.count + ')' }));
           role.items.forEach(item => parts.push(row(item, shown)));
         });
+      } else if (options.grid) {
+        parts.push(h('div', { class: 'ct-grid' }, section.items.map(item => row(item, shown))));
       } else {
         section.items.forEach(item => parts.push(row(item, shown)));
       }
@@ -303,5 +310,5 @@ export async function mountList(body, options, ctx = {}) {
 
   await load();
   draw();
-  return { reload: () => reload('', ''), items: () => page.items };
+  return { reload: (state, words) => reload(state || '', words || ''), items: () => page.items, canWrite: () => page.canWrite };
 }

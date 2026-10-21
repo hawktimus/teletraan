@@ -18,7 +18,7 @@ The dataset is public. There is no field for an email address, a phone number or
 ## Where to edit it
 
 - The Studio: People, Roster.
-- The control page: Display tab, Content, Roster. It groups people by team and then by role (Leadership, Mentors and Coaches, Students, Parents) with counts. A change is a draft until Publish, as in the Studio.
+- The control page: Content tab, Roster. It groups people by team and then by role (Leadership, Mentors and Coaches, Students, Parents) with counts. A change is a draft until Publish, as in the Studio.
 
 Leadership and Team leads are separate lists of the Studio that feed the wall. They are shown read only under the roster on the control page and are not copied into it.
 

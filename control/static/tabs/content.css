@@ -1,4 +1,4 @@
-/* The Content section of the Display tab (tabs/content-blocks.js). Phone first: one column, a 16px gutter, every target 44px high, and
+/* The Content tab (tabs/content-blocks.js). Phone first: one column, a 16px gutter, every target 44px high, and
    nothing wider than the screen. From 700px the filters sit in a row. The cards are dark like the others of the control page. */
 .ct { display: grid; gap: 16px; }
 .ct > * { min-width: 0; }
@@ -28,7 +28,7 @@
 .ct-item { display: grid; gap: 12px; padding: 12px; background: #120b20; border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
 .ct-item > * { min-width: 0; }
 .ct-item[data-on="no"] { border-style: dashed; }
-.ct-main { display: grid; gap: 8px; }
+.ct-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .ct-row p { margin: 0; }
 .ct-title { font-weight: 700; }
 .ct-sub { color: #b9afcf; }
@@ -37,7 +37,10 @@
 .ct-chip { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border: 2px solid var(--card-edge, #3a2c55); border-radius: 16px; font-size: 16px; }
 .ct-chip[data-chip="shown"] { color: #2fd27a; border-color: #2fd27a; }
 .ct-chip[data-chip="hidden"], .ct-chip[data-chip="expired"] { color: #b9afcf; }
-.ct-chip[data-chip="new"], .ct-chip[data-chip="waiting"] { color: #ffd98a; border-color: #ffb300; }
+.ct-chip[data-chip="new"], .ct-chip[data-chip="waiting-changes"] { color: #ffd98a; border-color: #ffb300; }
+.ct-chip[data-chip="live"] { color: #2fd27a; border-color: #2fd27a; }
+.ct-chip[data-chip="waiting"] { color: #ffd98a; border-color: #ffb300; }
+.ct-chip[data-chip="over"] { color: #b9afcf; }
 .ct-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ct .ct-actions .act, .ct .ct-ask .act { flex: 0 1 auto; }
 .ct-ask { padding: 12px; border: 2px solid #ffb300; border-radius: 6px; }
@@ -57,6 +60,25 @@
 .ct-readonly-list { display: grid; gap: 4px; }
 .ct-link { display: inline-flex; align-items: center; text-decoration: none; }
 
+.ct-post { display: grid; gap: 8px; padding: 16px; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.ct-post > * { min-width: 0; }
+.ct-post h3, .ct-post p { margin: 0; }
+.ct-post label { font-weight: 700; }
+.ct-post input[type="text"], .ct-post select, .ct-post input[type="file"] { box-sizing: border-box; width: 100%; min-height: 44px; font-size: 16px; }
+.ct-post input[type="file"] { min-width: 0; max-width: 100%; padding: 8px 0; overflow: hidden; }
+.ct-sub[data-over="yes"], .ct-sub[data-state="bad"] { color: #ff8a80; font-weight: 700; }
+.ct-triple { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.ct-triple > * { min-width: 0; display: grid; gap: 4px; }
+.ct-source { padding: 12px; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
+.ct-source p { margin: 0 0 8px; }
+
+.ct-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.ct-grid > * { min-width: 0; }
+.ct-grid .ct-item { grid-template-columns: minmax(0, 1fr); align-content: start; }
+.ct-grid .ct-actions { justify-content: flex-start; max-width: none; }
+.ct-photo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.ct-thumb { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #0b0714; border-radius: 4px; }
+.ct-nothumb { display: flex; align-items: center; justify-content: center; color: #b9afcf; }
 .ct-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .ct-editor.sa { max-width: none; margin: 0; padding: 16px; background: #0b0714; }
 .ct-edit-title { margin: 0 0 8px; font-size: 20px; color: var(--accent, #faca2a); }
@@ -69,4 +91,7 @@
   .ct-actions { justify-content: flex-end; max-width: 460px; }
   .ct-ask { grid-column: 1 / -1; }
   .ct-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+  .ct-triple { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ct-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .ct-grid .ct-ask { grid-column: auto; }
 }

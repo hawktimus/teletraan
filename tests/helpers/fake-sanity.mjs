@@ -6,6 +6,7 @@
 //   const sanity = makeFakeSanity([doc, doc]);
 //   ctx.fetch = sanity.fetch;
 //   sanity.touch('dashboardSettings', { pageSeconds: 33 });   a change made in the Studio
+//   sanity.uploads                                            what the assets endpoint took: { contentType, size, filename, authorized }
 
 function copy(value) {
   return JSON.parse(JSON.stringify(value));
@@ -15,6 +16,7 @@ export function makeFakeSanity(documents) {
   const stored = {};
   let counter = 0;
   const log = [];
+  const uploads = [];
 
   const stamp = doc => {
     counter += 1;
@@ -82,9 +84,16 @@ export function makeFakeSanity(documents) {
   return {
     stored: stored,
     log: log,
+    uploads: uploads,
 
     fetch: async (url, init) => {
       const address = new URL(String(url));
+      // the asset store: the picture is kept only as a record of what was sent, and an id of the shape Sanity gives is returned
+      if (address.pathname.includes('/assets/images/')) {
+        const headers = (init && init.headers) || {};
+        uploads.push({ contentType: headers['Content-Type'], size: init.body.length, filename: address.searchParams.get('filename'), authorized: /^Bearer sk/.test(headers.Authorization || '') });
+        return { ok: true, status: 200, json: async () => ({ document: { _id: 'image-fake' + String(uploads.length).padStart(4, '0') + 'abcdef-800x600-jpg', _type: 'sanity.imageAsset' } }) };
+      }
       if (address.pathname.includes('/data/mutate/')) {
         const mutations = JSON.parse(init.body).mutations;
         log.push(mutations);

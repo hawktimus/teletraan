@@ -1,5 +1,5 @@
 // The Status tab: what is on the wall now, a live view of it, and the health of the computer. It only shows. Nothing on
-// this tab changes the wall: the buttons are on Display (what is shown) and Settings (sync, restart, keys, updates).
+// this tab changes the wall: the buttons are on Display (how the wall looks and plays), Content (what it says) and Settings (sync, restart, keys, updates).
 //
 // One page for every screen. A width word on the root (wide from 900 px, medium from 600, narrow below) picks the layout
 // in tabs.css: two columns when wide, one column when not. The health block is a folded section; when wide it is open,
@@ -14,6 +14,7 @@ import { wirePreview } from './preview.js';
 
 export const statusLinks = [
   { address: '#display', label: 'Change what is shown: Display' },
+  { address: '#content', label: 'Change what it says: Content' },
   { address: '#settings/sync', label: 'Sync and restart: Settings' },
 ];
 

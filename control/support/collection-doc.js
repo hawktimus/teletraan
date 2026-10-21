@@ -1,4 +1,4 @@
-// What the content blocks of the Display tab read and write: a list of documents of one type (the ticker lines, the roster), each
+// What the content blocks of the Content tab read and write: a list of documents of one type (the ticker lines, the roster), each
 // kept as a draft and a published copy exactly as the Studio keeps them. The form spec (settings-doc.js) says which types are
 // allowed and what each field may hold; this file lists them, makes a new draft, and works out the delete. A save and a publish
 // use the mutations of settings-doc.js, so a revision conflict, a refused field and a limit behave the same on every page.
@@ -30,6 +30,16 @@ export function pictureUrl(config, doc) {
   return 'https://cdn.sanity.io/images/' + config.projectId + '/' + config.dataset + '/' + match[1] + '-' + match[2] + '.' + match[3] + '?w=96&h=96&fit=crop&auto=format';
 }
 
+// A photo for the grid: no wider than 480 pixels, never enlarged, in a small format. The page never asks for the original.
+export const gridWidth = 480;
+
+export function photoUrl(config, doc) {
+  const ref = doc && doc.image && doc.image.asset && typeof doc.image.asset._ref === 'string' ? doc.image.asset._ref : '';
+  const match = /^image-([A-Za-z0-9]+)-(\d+x\d+)-([a-z]+)$/.exec(ref);
+  if (!match) return '';
+  return 'https://cdn.sanity.io/images/' + config.projectId + '/' + config.dataset + '/' + match[1] + '-' + match[2] + '.' + match[3] + '?w=' + gridWidth + '&fit=max&auto=format';
+}
+
 // One entry for each document: the draft when there is one, else the published copy
 export function itemsFrom(raw, type, config) {
   const groups = {};
@@ -44,11 +54,12 @@ export function itemsFrom(raw, type, config) {
       id: id,
       rev: current.rev,
       updatedAt: current.updatedAt,
+      createdAt: groups[id].map(doc => doc._createdAt).filter(Boolean).sort()[0] || '',
       isDraft: current.isDraft,
       studioNewer: current.studioNewer,
       published: Boolean(current.published),
       document: current.source,
-      picture: pictureUrl(config, current.source),
+      picture: type === 'photo' ? photoUrl(config, current.source) : pictureUrl(config, current.source),
     };
   });
 }

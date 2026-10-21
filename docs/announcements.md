@@ -10,12 +10,16 @@ The Teletraan has two things that are called announcements. They are not the sam
 
 - **Announcements on the bar (this page).** A thin bar under the banner. The panels stay on
   the screen and get a little smaller while the bar is up. You make one in Studio on the Today
-  page, under Announcements on the bar, or with the box on the Display tab of the control page.
+  page, under Announcements on the bar, from the Announcements block of the Content tab of the control page, or with the box on the Display tab.
 - **Full screen messages at set times.** On the Today page too, under Full screen messages at set times. A full-screen card with a title and a follow-up line
   that plays at a time of day. The Play announcements button plays them. They cover the whole
   screen. See docs/hidden-transitions.md, "Play announcements".
 
 The Play announcement button on the Display tab of the control page plays the full-screen kind at once. The box on the same tab posts the bar kind for two hours.
+
+## Post one from the control page
+
+Open the control page, Content, Announcements (`#content/announcements`). Post now takes the text (up to 90 characters, with a counter), the level, the team and 5 to 120 minutes, and publishes at once an announcement that starts this minute and ends by itself. Add announcement makes one with any start and end, as a draft until Publish. Each announcement shows Live now, Waiting or Over. There is no Hide switch on an announcement: delete it, or move its end to now. With two live, the wall alternates them every 12 seconds, and the page says so.
 
 ## Post one
 

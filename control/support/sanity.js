@@ -81,6 +81,35 @@ export function makeSanity(ctx) {
       return envValue(envPath(ctx), 'SANITY_WRITE_TOKEN') !== '';
     },
 
+    // Sends one picture to the asset store of the dataset and gives back the id of the asset. The file name is not sent: the dataset
+    // is public, and a name such as "Jane Smith at the pit.jpg" would be readable by anyone.
+    async uploadImage(bytes, contentType) {
+      const token = envValue(envPath(ctx), 'SANITY_WRITE_TOKEN');
+      if (token === '') throw new Refusal(503, 'SANITY_WRITE_TOKEN is not set on the Teletraan computer. Add it in Settings, Keys.');
+      const name = 'photo.' + (contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg');
+      let response;
+      try {
+        response = await doFetch(host + '/assets/images/' + config.dataset + '?filename=' + name, {
+          method: 'POST',
+          headers: { 'Content-Type': contentType, Authorization: 'Bearer ' + token },
+          body: bytes,
+          signal: AbortSignal.timeout(120000),
+        });
+      } catch (error) {
+        throw new Refusal(502, 'The Teletraan computer could not reach Sanity. Check its internet connection, then add the photo again.');
+      }
+      if (response.status === 401 || response.status === 403) throw new Refusal(502, 'Sanity refused the picture. Check SANITY_WRITE_TOKEN in Settings, Keys.');
+      if (!response.ok) throw new Refusal(502, 'Sanity could not take the picture (' + response.status + '). Try a smaller one.');
+      let id = '';
+      try {
+        id = (await response.json()).document._id;
+      } catch (error) {
+        id = '';
+      }
+      if (!/^image-[A-Za-z0-9]+-\d+x\d+-[a-z]+$/.test(String(id))) throw new Refusal(502, 'Sanity took the picture but did not say where it is. Add it again.');
+      return id;
+    },
+
     // Applies mutations. Refused with a plain message when there is no write token.
     async mutate(mutations) {
       const token = envValue(envPath(ctx), 'SANITY_WRITE_TOKEN');

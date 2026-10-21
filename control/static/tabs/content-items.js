@@ -1,5 +1,6 @@
-// The plain rules behind the Content blocks of the Display tab: what state an item is in, how a list is sorted and renumbered, how the
-// roster is grouped by team and role, how a ticker line looks, and how a news headline is hidden. No page code, so node can test
+// The plain rules behind the Content blocks of the Content tab: what state an item is in, how a list is sorted and renumbered, how the
+// roster is grouped by team and role, how a ticker line looks, how a news headline is hidden, when an announcement is live and
+// how photos are listed. No page code, so node can test
 // them (tests/control-content-items.test.mjs).
 
 const ends = item => Date.parse(item.document && item.document.expires);
@@ -102,3 +103,70 @@ export function personLine(doc, departments) {
   const department = departments.filter(choice => choice.value === doc.department)[0];
   return [doc.jobTitle, department ? department.title : doc.department].filter(Boolean).join(' · ');
 }
+
+// ----- announcements -----
+
+export const announcementLongest = 90;
+export const postMinutes = [5, 15, 30, 60, 120];
+
+// Where an announcement stands: live now, waiting for its start, or over. An announcement nobody has published is not on the wall
+// yet, so it has no standing, and its other chip says so. The wall shows two live ones in turn, 12 seconds each.
+export function announcementState(item, now) {
+  const doc = item.document || {};
+  const start = Date.parse(doc.start);
+  const end = Date.parse(doc.end);
+  if (isNaN(start) || isNaN(end)) return null;
+  if (now.getTime() >= end) return { id: 'over', words: 'Over' };
+  if (now.getTime() < start) return { id: 'waiting', words: 'Waiting' };
+  return item.published ? { id: 'live', words: 'Live now' } : { id: 'waiting', words: 'Waiting' };
+}
+
+export function announcementChips(item, now) {
+  const chips = [];
+  const state = announcementState(item, now);
+  if (state) chips.push({ id: state.id, words: state.words });
+  if (!item.published) chips.push({ id: 'new', words: 'New, not published' });
+  else if (item.isDraft) chips.push({ id: 'waiting-changes', words: 'Changes waiting' });
+  return chips;
+}
+
+// Latest start first, so the live and the coming ones are at the top and the old ones sink
+export function sortAnnouncements(items) {
+  const startOf = item => (isNaN(Date.parse(item.document.start)) ? 0 : Date.parse(item.document.start));
+  return items.slice().sort((a, b) => startOf(b) - startOf(a));
+}
+
+// How many are live at once, for the line that says the wall alternates
+export function liveCount(items, now) {
+  return items.filter(item => announcementState(item, now) && announcementState(item, now).id === 'live').length;
+}
+
+// ----- photos -----
+
+// Newest first by the day the photo was made in Sanity
+export function sortPhotos(items) {
+  return items.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+export const photoMostBytes = 15 * 1024 * 1024;
+export const photoKinds = ['image/jpeg', 'image/png', 'image/webp'];
+
+// Why a file cannot be added, or '' when it can
+export function photoFileProblem(file) {
+  if (!file) return 'Pick a picture first.';
+  if (!photoKinds.includes(file.type)) return 'Only JPEG, PNG or WebP pictures can be added. Pick a different file.';
+  if (file.size > photoMostBytes) return 'That picture is bigger than 15 MB. Make it smaller and add it again.';
+  if (file.size === 0) return 'That file is empty. Pick a different one.';
+  return '';
+}
+
+// The warning for a credit or a caption on a public screen, or ''. Same words as the people editor.
+export function creditProblem(text) {
+  const value = String(text || '');
+  if (/[\s\d]/.test(value)) return 'Use a first name only, with no spaces or numbers.';
+  if (/@/.test(value)) return 'The screen is public, so take out the email address.';
+  return '';
+}
+
+// The names of the three fits, as the Photos setting words them
+export const fitWords = { setting: 'Fit as in Dashboard Settings', fill: 'Fill the frame', whole: 'Show the whole photo' };
