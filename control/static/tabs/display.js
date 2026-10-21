@@ -1,7 +1,7 @@
 // The Display tab has two columns from 1000 px. The right one stays in view while the page scrolls: the large preview and, under it,
 // the one bar of Save to draft, Publish to the wall, Refresh from Sanity and Undo. The left one scrolls: Now on the wall, the
-// Playlist, the wall controls, Temporary push (tabs/push.js), the Rotation rows, the Theme rotation of each weekday and the
-// Content blocks (content-blocks.js, mounted into the slots). A phone has one column with the preview first.
+// Playlist, the wall controls, Temporary push (tabs/push.js), the Rotation rows and the Theme rotation of each weekday. What the
+// wall says (ticker, calendar, roster, announcements, photos) is the Content tab. A phone has one column with the preview first.
 // The Studio stays the source of truth for the rotation.
 // This reads Dashboard Settings from Sanity (through the control service), lets the team reorder and change the rows,
 // saves to the draft, and publishes with its own button. Before it saves it asks the service to compare the revision it
