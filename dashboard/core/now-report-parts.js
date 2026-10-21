@@ -2,6 +2,7 @@
 // control/routes/now.js checks it again). It knows nothing about the page.
 
 import { dotNames } from './dots.js';
+import { screenFits } from '../config-lists.js';
 
 export const reportSeconds = 10;
 export const reportAddress = '/control/api/now';
@@ -16,6 +17,30 @@ function text(value, longest) {
 }
 
 export const hiddenRunLongest = 400;
+
+function count(value, lowest, highest) {
+  return typeof value === 'number' && isFinite(value) ? Math.min(highest, Math.max(lowest, Math.round(value * 1000) / 1000)) : null;
+}
+
+// How the canvas sits in the window (core/screen-fit.js, fitReport), or null when the wall sent none: the window, the pixel
+// ratio, the display the browser sees, the fit in use and the share of the window the canvas leaves unused
+export function cleanScreen(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  return {
+    windowWidth: count(raw.windowWidth, 0, 20000),
+    windowHeight: count(raw.windowHeight, 0, 20000),
+    pixelRatio: count(raw.pixelRatio, 0, 16),
+    displayWidth: count(raw.displayWidth, 0, 20000),
+    displayHeight: count(raw.displayHeight, 0, 20000),
+    fit: screenFits.includes(raw.fit) ? raw.fit : '',
+    scale: count(raw.scale, 0, 100),
+    percent: count(raw.percent, 0, 1000),
+    offsetX: count(raw.offsetX, -5000, 5000),
+    offsetY: count(raw.offsetY, -5000, 5000),
+    unusedPercent: count(raw.unusedPercent, 0, 100),
+  };
+}
 
 function flag(value) {
   return typeof value === 'boolean' ? value : null;
@@ -72,6 +97,7 @@ export function cleanReport(raw, now = new Date()) {
     heldNote: text(source.heldNote, 200),
     dots: dots,
     hiddenRun: cleanHiddenRun(source.hiddenRun),
+    screen: cleanScreen(source.screen),
     // Page loads in the last 24 hours and why the newest one happened (core/page-loads.js)
     loads: Number.isInteger(source.loads) && source.loads >= 0 ? Math.min(source.loads, 9999) : null,
     loadReason: text(source.loadReason, 100),
@@ -84,6 +110,7 @@ export function cleanReport(raw, now = new Date()) {
 //   requests                                 activeRequests() of core/screen-requests.js
 //   dots                                     dotStates() of core/dots.js
 //   hiddenRun                                hiddenRunReport() of core/hidden-log.js
+//   screen                                   fitReport() of core/screen-fit.js
 export function makeReport(parts, now = new Date()) {
   const source = parts && typeof parts === 'object' ? parts : {};
   const requests = source.requests && typeof source.requests === 'object' ? source.requests : {};

@@ -58,7 +58,7 @@ test('every old address goes to the right tab and section', () => {
 test('Settings has these sections, in this order, and the last one has a fixed id for the settings editor', () => {
   const text = read('control/static/tabs/settings.js');
   const ids = Array.from(text.matchAll(/\{ id: '([a-z]+)', title: '([^']+)'/g)).map(found => found[1] + ':' + found[2]);
-  assert.deepEqual(ids, ['update:Updates', 'keys:Keys', 'monday:Monitor Monday', 'sync:Sync and restart', 'competition:Competition data', 'reboot:Scheduled reboot', 'log:Logs', 'all:All settings']);
+  assert.deepEqual(ids, ['update:Updates', 'keys:Keys', 'monday:Monitor Monday', 'sync:Sync and restart', 'competition:Competition data', 'screen:Screen', 'reboot:Scheduled reboot', 'log:Logs', 'all:All settings']);
   assert.ok(text.includes("bodyId: 'settings-all'") && text.includes('body.id = item.bodyId'));
   assert.ok(text.includes("widthWord(window.innerWidth) !== 'wide'"), 'one section at a time unless the screen is wide');
   assert.ok(/export function mountAll\(body\)[\s\S]*mountSettingsAll\(body/.test(read('control/static/tabs/settings-all.js')), 'the section mounts the settings editor');

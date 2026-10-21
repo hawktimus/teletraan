@@ -247,6 +247,10 @@ export const limits = {
   // The night mode settings. At 120 pixels the logo is still clear from across the room, and at 800 it
   // still fits the 1080 pixel height with the number under it.
   nightLogoWidth: { min: 120, max: 800 },
+  // Screen fit: a multiplier in percent on top of the fit, and a shift in window pixels for a TV that crops its edges
+  screenScale: { min: 50, max: 200 },
+  screenOffsetX: { min: -400, max: 400 },
+  screenOffsetY: { min: -400, max: 400 },
   // The Demo page. A step shorter than 5 seconds is gone before it can be seen, and 5 minutes
   // is longer than anyone shows a demo.
   demoSeconds: { min: 5, max: 300 },
@@ -371,6 +375,9 @@ export const familyPanels = ['monday-charts'];
 export const backgrounds = ['sweep', 'blueprint', 'rays', 'spotlight', 'embers'];
 
 // The Motion setting (Dashboard Settings, field motion): full plays every transition, light plays one simple change at each
-// panel and view change, calm only fades. motionOnKiosk is what the TV computer plays when motion is full (core/motion.js).
+// panel and view change, calm only fades (core/motion.js). The old field motionOnKiosk is kept in the Studio and not read.
 export const motions = ['full', 'light', 'calm'];
-export const kioskMotions = ['light', 'full'];
+
+// Screen fit (Dashboard Settings, Advanced, field screenFit; core/screen-fit.js): auto fits the canvas inside the window, fill
+// covers the window and crops, contain fits inside with bars, exact does not scale
+export const screenFits = ['auto', 'fill', 'contain', 'exact'];

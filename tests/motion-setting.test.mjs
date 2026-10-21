@@ -33,63 +33,37 @@ async function test(name, run) {
 
 await test('the stored field motion takes full, light and calm, and the old values still work', () => {
   assert.deepEqual(config.motions, ['full', 'light', 'calm']);
-  assert.deepEqual(config.kioskMotions, ['light', 'full']);
+  assert.equal(config.kioskMotions, undefined, 'Motion on the TV computer is gone from the dashboard');
   assert.equal(config.defaultSettings.motion, 'full');
-  assert.equal(config.defaultSettings.motionOnKiosk, 'light', 'the TV computer plays Light unless told otherwise');
+  assert.equal(config.defaultSettings.motionOnKiosk, undefined, 'nothing reads the old field');
   // a document that stored full or calm before Light existed is read as it always was
-  assert.equal(motion.motionToPlay({ asked: '', setting: 'calm', kioskSetting: 'light', onKiosk: true }), 'calm');
-  assert.equal(motion.motionToPlay({ asked: '', setting: 'full', kioskSetting: 'full', onKiosk: true }), 'full');
+  assert.equal(motion.motionToPlay({ asked: '', setting: 'calm' }), 'calm');
+  assert.equal(motion.motionToPlay({ asked: '', setting: 'full' }), 'full');
 });
 
-await test('the address wins, then the setting, and the TV computer plays Light when the setting says Full', () => {
-  const play = (asked, setting, kioskSetting, onKiosk) => motion.motionToPlay({ asked: asked, setting: setting, kioskSetting: kioskSetting, onKiosk: onKiosk });
+await test('the address wins, then the setting, and every computer plays what the setting says', () => {
+  const play = (asked, setting) => motion.motionToPlay({ asked: asked, setting: setting });
 
-  // a laptop plays what the setting says
-  assert.equal(play('', 'full', 'light', false), 'full');
-  assert.equal(play('', 'light', 'light', false), 'light');
-  assert.equal(play('', 'calm', 'light', false), 'calm');
-  // the TV computer: Full becomes Light, unless Motion on the TV computer says Full
-  assert.equal(play('', 'full', 'light', true), 'light');
-  assert.equal(play('', 'full', undefined, true), 'light', 'a document with no such field is the starting value, light');
-  assert.equal(play('', 'full', 'full', true), 'full');
-  assert.equal(play('', 'light', 'full', true), 'light');
-  assert.equal(play('', 'calm', 'light', true), 'calm');
-  // the address wins everywhere, so a spare computer can be told to play Full
-  assert.equal(play('full', 'calm', 'light', true), 'full');
-  assert.equal(play('light', 'full', 'full', false), 'light');
-  assert.equal(play('calm', 'full', 'full', false), 'calm');
-  assert.equal(play('none', 'full', 'full', false), 'none');
+  assert.equal(play('', 'full'), 'full');
+  assert.equal(play('', 'light'), 'light');
+  assert.equal(play('', 'calm'), 'calm');
+  assert.equal(play('full', 'calm'), 'full');
+  assert.equal(play('light', 'full'), 'light');
+  assert.equal(play('calm', 'full'), 'calm');
+  assert.equal(play('none', 'full'), 'none');
   // nothing known is Full, and a word that is not a motion is ignored
-  assert.equal(play('', undefined, undefined, false), 'full');
-  assert.equal(play('fast', 'light', 'light', false), 'light');
-  assert.equal(play('', 'sparkly', 'light', true), 'light');
+  assert.equal(play('', undefined), 'full');
+  assert.equal(play('fast', 'light'), 'light');
+  assert.equal(play('', 'sparkly'), 'full');
 });
 
-await test('motionOf reads ?motion= from the address and the kiosk it was told about', () => {
-  motion.useKiosk(false);
-  assert.equal(motion.motionOf(new URLSearchParams(''), { motion: 'full', motionOnKiosk: 'light' }), 'full');
+await test('motionOf reads ?motion= from the address, and an old motionOnKiosk in the content is ignored', () => {
+  assert.equal(motion.motionOf(new URLSearchParams(''), { motion: 'full', motionOnKiosk: 'light' }), 'full', 'the TV computer is not told apart any more');
   assert.equal(motion.motionOf(new URLSearchParams('motion=light'), { motion: 'full' }), 'light');
-  motion.useKiosk(true);
-  assert.equal(motion.motionOf(new URLSearchParams(''), { motion: 'full', motionOnKiosk: 'light' }), 'light');
-  assert.equal(motion.motionOf(new URLSearchParams('?motion=full'), { motion: 'full', motionOnKiosk: 'light' }), 'full');
-  assert.equal(motion.motionOf(new URLSearchParams(''), null), 'light', 'before the content is read the TV computer is already light');
-  motion.useKiosk(false);
-});
-
-await test('the Teletraan computer is told apart by device.json, which only its kiosk script writes', async () => {
-  assert.equal(motion.deviceIsKiosk({ hostname: 'hawktimus-mini', wifi: '192.168.1.23' }), true);
-  assert.equal(motion.deviceIsKiosk({}), false);
-  assert.equal(motion.deviceIsKiosk(null), false);
-  assert.equal(motion.deviceIsKiosk({ hostname: 'bad host!' }), false);
-  const answer = (ok, json) => async () => ({ ok: ok, json: async () => json });
-  assert.equal(await motion.readKiosk(answer(true, { hostname: 'hawktimus-mini' })), true);
-  assert.equal(await motion.readKiosk(answer(false, {})), false, 'a missing file is a laptop');
-  assert.equal(await motion.readKiosk(async () => { throw new Error('offline'); }), false);
-  assert.equal(await motion.readKiosk(async () => ({ ok: true, json: async () => { throw new Error('bad json'); } })), false);
-  assert.equal(await motion.readKiosk(null), false);
-  const ask = [];
-  await motion.readKiosk(async (url, options) => { ask.push([url, options]); return { ok: false }; });
-  assert.ok(ask[0][0].endsWith('data/live/device.json') && ask[0][1].cache === 'no-store');
+  assert.equal(motion.motionOf(new URLSearchParams(''), null), 'full');
+  assert.equal(motion.useKiosk, undefined);
+  assert.equal(motion.readKiosk, undefined);
+  assert.ok(!read('dashboard/shell.js').includes('readKiosk'), 'the shell does not read device.json for the motion any more');
 });
 
 await test('Light has no swap: a held look or a Monday card is changed under the plates of the view transition, and calm and no motion have none', () => {
@@ -160,15 +134,14 @@ await test('the page writes the weight, the idle sweeps rest while a transition 
   assert.ok(kinds.includes('found.light(swapPage, context)') && kinds.includes('playWatched'), 'Light plays its own run, and a Full run is watched');
 });
 
-await test('the Display tab reads and writes motion and motionOnKiosk into the draft, and nothing else of the tab changes', () => {
-  assert.deepEqual(display.motionOf(null), { motion: 'full', motionOnKiosk: 'light' });
-  assert.deepEqual(display.motionOf({ motion: 'light', motionOnKiosk: 'full' }), { motion: 'light', motionOnKiosk: 'full' });
-  assert.deepEqual(display.motionOf({ motion: 'sparkly', motionOnKiosk: 'x' }), { motion: 'full', motionOnKiosk: 'light' });
+await test('the Display tab reads and writes motion into the draft, ignores the old motionOnKiosk, and nothing else of the tab changes', () => {
+  assert.deepEqual(display.motionOf(null), { motion: 'full' });
+  assert.deepEqual(display.motionOf({ motion: 'light', motionOnKiosk: 'full' }), { motion: 'light' });
+  assert.deepEqual(display.motionOf({ motion: 'sparkly', motionOnKiosk: 'x' }), { motion: 'full' });
   assert.deepEqual(display.cleanMotion({ motion: 'calm' }), { motion: 'calm' });
-  assert.deepEqual(display.cleanMotion({ motion: 'light', motionOnKiosk: 'full' }), { motion: 'light', motionOnKiosk: 'full' });
+  assert.deepEqual(display.cleanMotion({ motion: 'light', motionOnKiosk: 'full' }), { motion: 'light' }, 'an old page that sends the field does not write it');
   assert.deepEqual(display.cleanMotion(undefined), {});
   assert.throws(() => display.cleanMotion({ motion: 'none' }), error => error.status === 400);
-  assert.throws(() => display.cleanMotion({ motionOnKiosk: 'calm' }), error => error.status === 400);
   assert.throws(() => display.cleanMotion('full'), error => error.status === 400);
   const route = read('control/routes/display.js');
   assert.ok(route.includes('cleanMotion(body.motion)') && route.includes('motion: motionOf(source)'));

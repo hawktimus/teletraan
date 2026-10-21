@@ -203,6 +203,10 @@ const contract = {
     nightEnabled: 'boolean',
     nightStyle: 'string',
     nightLogoWidth: number(120, 800),
+    screenFit: 'string',
+    screenScale: number(50, 200),
+    screenOffsetX: number(-400, 400),
+    screenOffsetY: number(-400, 400),
     nightSpeed: 'string',
     nightPreview: 'boolean',
     hiddenEnabled: 'boolean',
@@ -444,7 +448,7 @@ const choices = {
   'presentation.status': ['scheduled', 'cancelled', 'done', 'skipped'],
   'person.role': ['Coach', 'Captain', 'Mentor'],
   'dashboardSettings.motion': ['full', 'light', 'calm'],
-  'dashboardSettings.motionOnKiosk': ['light', 'full'],
+  'dashboardSettings.screenFit': ['auto', 'fill', 'contain', 'exact'],
   'dashboardSettings.speed': ['very-slow', 'slow', 'normal', 'fast'],
   'dashboardSettings.frameMetal': ['gold', 'silver'],
   'dashboardSettings.look': ['polished', 'flat', 'plain'],
@@ -1217,6 +1221,7 @@ function checkLogoTab(problems) {
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
 const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 const rebootNames = ['rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes'];
+const screenFitNames = ['screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
@@ -2322,7 +2327,10 @@ function checkStartingValues() {
 
   ['name', 'number', 'school'].forEach(name => expect('team.' + name, team[name]));
   expect('motion', settings.motion);
-  expect('motionOnKiosk', settings.motionOnKiosk);
+  expect('screenFit', settings.screenFit);
+  expect('screenScale', settings.screenScale);
+  expect('screenOffsetX', settings.screenOffsetX);
+  expect('screenOffsetY', settings.screenOffsetY);
   expect('speed', settings.speed);
   expect('frameMetal', settings.frameMetal);
   expect('glint', settings.glint);
@@ -4354,7 +4362,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, rebootNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {

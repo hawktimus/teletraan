@@ -40,7 +40,8 @@ import './core/row-preview-guard.js'; // first, so a row preview is read only be
 import * as frame from './frame.js';
 import { panels } from './registry.js';
 import { defaultSettings, metals } from './config.js';
-import { motionOf, readKiosk, useKiosk } from './core/motion.js';
+import { motionOf } from './core/motion.js';
+import { useScreenFit } from './core/screen-fit.js';
 import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { askForSample } from './core/source.js';
 import { makeSilverGradients } from './core/plate.js';
@@ -96,7 +97,7 @@ async function run() {
   } catch (error) {
     console.error('The silver gradients could not be made. Silver frames will have no metal.', error);
   }
-  fitToScreen();
+  useScreenFit(defaultSettings, params); // the address (?screenfit=) before the content is read
   window.addEventListener('resize', fitToScreen);
   // The look, the finish and the glint. index.html has the polished ones. The
   // address wins, then rebuild() applies Look and Glint from Dashboard Settings.
@@ -110,13 +111,6 @@ async function run() {
 
   try {
     frame.start({ motion: motionOf(params, defaultSettings), speed: params.get('speed') || 'normal', draw: params.get('draw'), still: Boolean(stillAsk && stillAsk.still) });
-
-    // The Teletraan computer is told apart from a laptop by its device.json, and plays Light until it is told otherwise
-    readKiosk().then(yes => {
-      if (!yes) return;
-      useKiosk(true);
-      frame.setMotion(motionOf(params, shellState.content ? shellState.content.settings : defaultSettings));
-    });
 
     // A font problem should not stop the screen, so only wait a few seconds
     await Promise.race([waitForFonts(), frame.wait(4000)]);

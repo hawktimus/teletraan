@@ -2339,10 +2339,10 @@ test('the screen is a fixed 1920 x 1080 canvas: index.html, base.css, shell.js a
   assert.ok(!/<meta[^>]*viewport/i.test(html), 'index.html asks for no viewport');
   assert.ok(/<div id="screen">/.test(html), 'index.html has the one screen');
 
-  const shell = read('dashboard/shell.js');
-  const fit = shell.slice(shell.indexOf('function fitToScreen()'), shell.indexOf('// A wall display must never sit blank'));
-  assert.ok(fit.includes('window.innerWidth / 1920') && fit.includes('window.innerHeight / 1080'), 'the page is fitted to the window by one scale, from 1920 x 1080');
-  assert.ok(fit.includes('screen.style.transform = \'scale(\' + scale + \')\';'));
+  const fit = read('dashboard/core/screen-fit.js');
+  assert.ok(fit.includes('const across = width / canvasWidth;') && fit.includes('const down = height / canvasHeight;') && fit.includes('export const canvasWidth = 1920;') && fit.includes('export const canvasHeight = 1080;'), 'the page is fitted to the window by one scale, from 1920 x 1080');
+  assert.ok(fit.includes('window.innerWidth') && fit.includes('window.innerHeight'), 'the window is what the canvas is fitted to');
+  assert.ok(fit.includes('screen.style.transform = \'scale(\' + lastFit.scale + \')\';'), 'one transform scales the canvas, across and down alike');
 
   ['bar.css', 'sidebar.css'].forEach(file => {
     const css = withoutComments(read('dashboard/layouts/' + file));

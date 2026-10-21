@@ -25,7 +25,7 @@ Under Coaches only:
 
 | Line | What it is |
 |------|------------|
-| Dashboard Settings | The settings that are set once, in five tabs: Timing, Countdown, Monday, Calendars and Advanced. Presentations, Night mode, Scheduled reboot and Hidden transitions are sections of Advanced. Scheduled reboot has the next and last reboot at the top, then the switch, the time, the days and the skip rule; the control page, Settings, shows the same values |
+| Dashboard Settings | The settings that are set once, in five tabs: Timing, Countdown, Monday, Calendars and Advanced. Presentations, Night mode, Scheduled reboot, Hidden transitions and Screen fit are sections of Advanced. Scheduled reboot has the next and last reboot at the top, then the switch, the time, the days and the skip rule; the control page, Settings, shows the same values |
 | Extra panels | A panel you build from blocks |
 | Check the screen | A read only report of what would make the TV look bad or show nothing: text too long for its panel, private details in text, photos that are small or tall, missing credits, portraits or logos, items past their dates, Rotation rows that will be skipped, two panels on one topic, and team colors that are hard to read. Drafts are checked too. Each finding has a level, a plain fix and a link to the document |
 | Kept data | The old Screens, the Condensed view and the old events calendar type. The wall does not use them. Do not delete them: some old values are read when a new list is empty |
@@ -53,7 +53,8 @@ Under Coaches only:
 | Pick the theme for a weekday | Look, Theme by day of the week |
 | Change the background of Original | Look, Background |
 | Switch the holiday decorations on a date | Look, Seasonal decorations, Dated rules |
-| Calm the screen, or make it lighter for the TV computer | Look, Motion (Full, Light or Calm, and Motion on the TV computer) |
+| Calm the screen, or make it lighter | Look, Motion (Full, Light or Calm) |
+| Make the dashboard fill the TV, or pull it in from the edges | Dashboard Settings, Advanced, Screen fit (or the control page, Settings, Screen) |
 | Change the logo and the name effect | Look, Logo and name effects |
 | Choose which competition cards show | Competition |
 | Hide an FRC news headline, or choose the news categories | Competition, FRC news |

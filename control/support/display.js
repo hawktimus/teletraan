@@ -5,7 +5,7 @@
 // The functions here are plain: they check what the page sent, and build Sanity mutations. The route sends them.
 
 import { randomBytes } from 'node:crypto';
-import { defaultThemeByWeekday, kioskMotions, motions, scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
+import { defaultThemeByWeekday, motions, scheduledThemeIds, weekdays } from '../../dashboard/config-lists.js';
 import { rotationViewOf, tidyRotationRow } from '../../dashboard/core/rotation.js';
 import { Refusal } from './http.js';
 import { mostRows, photoRange, secondsRange, startingPhotos } from '../static/display-rows.js';
@@ -61,12 +61,11 @@ export function themeOf(source) {
   };
 }
 
-// The Motion setting the tab shows (a small section of its own): motion is full, light or calm, and motionOnKiosk says what
-// the TV computer plays when motion is full. An empty or unknown stored value is the starting one.
+// The Motion setting the tab shows (a small section of its own): motion is full, light or calm. An empty or unknown stored
+// value is the starting one. The old motionOnKiosk is not read and not written any more.
 export function motionOf(source) {
   return {
     motion: source && motions.includes(source.motion) ? source.motion : 'full',
-    motionOnKiosk: source && kioskMotions.includes(source.motionOnKiosk) ? source.motionOnKiosk : 'light',
   };
 }
 
@@ -197,10 +196,6 @@ export function cleanMotion(input) {
   if (input.motion !== undefined) {
     if (!motions.includes(input.motion)) throw new Refusal(400, 'Motion should be ' + motions.join(', ') + '.');
     out.motion = input.motion;
-  }
-  if (input.motionOnKiosk !== undefined) {
-    if (!kioskMotions.includes(input.motionOnKiosk)) throw new Refusal(400, 'Motion on the TV computer should be ' + kioskMotions.join(' or ') + '.');
-    out.motionOnKiosk = input.motionOnKiosk;
   }
   return out;
 }

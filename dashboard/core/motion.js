@@ -2,63 +2,29 @@
 //
 // The Motion setting has three values: full, light and calm. Full plays every transition of the theme. Light plays one
 // simple change at each panel and view change, with a few parts, and keeps the idle sweeps still. Calm only fades.
-//
-// The Teletraan computer (the 2011 Mini) plays Light even when the setting says Full, so that it does not freeze. It
-// knows it is that computer because the kiosk script writes data/live/device.json there and nowhere else
-// (core/device.js). The setting Motion on the TV computer (motionOnKiosk) can turn that off, and ?motion= on the
-// address wins over everything, so one computer can be told to play Full.
+// Every computer plays what the setting says, the Teletraan computer too. ?motion= on the address wins over the setting.
 //
 // A Full screen that cannot keep up gives itself up: when two transitions in a row miss their frame budget it plays
 // Light from then on, until the page is loaded again.
 
-import { kioskMotions, liveFolder, motions } from '../config.js';
-import { tidyDevice } from './device.js';
+import { motions } from '../config.js';
 
 const askable = motions.concat(['none']);
 
 // What to play, as one word of frame.setMotion: full, light, calm or none.
 //   asked        ?motion= from the address, or ''
 //   setting      motion from Dashboard Settings
-//   kioskSetting motionOnKiosk from Dashboard Settings
-//   onKiosk      true on the Teletraan computer
-export function motionToPlay({ asked, setting, kioskSetting, onKiosk }) {
+export function motionToPlay({ asked, setting }) {
   if (askable.includes(asked)) return asked;
-
-  const chosen = motions.includes(setting) ? setting : 'full';
-  const onTv = kioskMotions.includes(kioskSetting) ? kioskSetting : 'light';
-  return chosen === 'full' && onKiosk === true && onTv === 'light' ? 'light' : chosen;
-}
-
-// Whether this page runs on the Teletraan computer, once it is known (shell.js reads device.json at the start)
-const place = { onKiosk: false };
-
-export function useKiosk(yes) {
-  place.onKiosk = yes === true;
+  return motions.includes(setting) ? setting : 'full';
 }
 
 // The word for frame.setMotion, from the address and the settings of the content. A setting that is not there yet is the
 // starting one.
 export function motionOf(params, settings) {
   const given = settings || {};
-  return motionToPlay({ asked: params.get('motion') || '', setting: given.motion, kioskSetting: given.motionOnKiosk, onKiosk: place.onKiosk });
+  return motionToPlay({ asked: params.get('motion') || '', setting: given.motion });
 }
-
-// True when device.json is the file of the Teletraan computer: it names the computer
-export function deviceIsKiosk(raw) {
-  return tidyDevice(raw).hostname !== '';
-}
-
-// Reads device.json once. A missing file, a bad answer or no network is "not the Teletraan computer".
-export async function readKiosk(doFetch = typeof fetch === 'function' ? fetch : null) {
-  if (!doFetch) return false;
-  try {
-    const answer = await doFetch(liveFolder + 'device.json', { cache: 'no-store' });
-    return answer.ok ? deviceIsKiosk(await answer.json()) : false;
-  } catch (error) {
-    return false;
-  }
-}
-
 
 // The frame budget of a transition
 

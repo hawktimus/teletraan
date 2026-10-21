@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const displayFile = path.join(repo, 'computer/scripts/display.sh');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-display-'));
-const ordinaryTools = ['sed', 'head', 'awk', 'sleep', 'cat'];
+const ordinaryTools = ['sed', 'head', 'awk', 'sleep', 'cat', 'grep'];
 
 // --query prints answer.txt, except for the first "empty" calls, which print a screen with nothing connected.
 // A call that sets something (--output) is only written to the log.
@@ -80,12 +80,15 @@ function run(answer, options) {
   fs.writeFileSync(log, '');
 
   const started = Date.now();
-  const result = spawnSync('/bin/sh', ['-c', '. "$DISPLAY_FILE"; set_display; echo "after:$1"', 'sh', 'the-address'], {
+  // lib.sh gives kiosk.sh its setting function; here KIOSK_RESOLUTION comes from the test
+  const script = 'setting() { [ "$1" = KIOSK_RESOLUTION ] && printf "%s" "$FAKE_RESOLUTION"; return 0; }; . "$DISPLAY_FILE"; set_display; echo "after:$1"; echo "window:$(display_window)"';
+  const result = spawnSync('/bin/sh', ['-c', script, 'sh', 'the-address'], {
     env: {
       PATH: bin,
       STUB_LOG: log,
       STUB_DIR: stub,
       DISPLAY_FILE: displayFile,
+      FAKE_RESOLUTION: settings.resolution || '',
       DISPLAY_POLL_INTERVAL: '0.01',
       DISPLAY_POLL_LIMIT: '0.1',
     },
@@ -94,7 +97,8 @@ function run(answer, options) {
   const calls = fs.readFileSync(log, 'utf8').split('\n').filter(line => line !== '');
   return {
     status: result.status,
-    out: result.stdout.split('\n').filter(line => line !== ''),
+    out: result.stdout.split('\n').filter(line => line !== '' && !line.startsWith('window:')),
+    window: (result.stdout.match(/^window:(.*)$/m) || [])[1],
     err: result.stderr,
     calls: calls,
     sets: calls.filter(line => line.startsWith('xrandr --output')),
@@ -112,6 +116,7 @@ test('HDMI-1 that lists 1920x1080 is set to it at 60 Hz with no scaling', () => 
   assert.equal(result.status, 0, result.err);
   assert.deepEqual(result.sets, ['xrandr --output HDMI-1 --mode 1920x1080 --rate 60.00 --scale 1x1']);
   assert.deepEqual(result.out, ['display: output HDMI-1, mode 1920x1080, scale 1x1', 'after:the-address']);
+  assert.equal(result.window, '1920,1080');
 });
 
 test('HDMI-2 that lists only 3840x2160 is set to its mode at half scale on both axes', () => {
@@ -159,11 +164,30 @@ test('the script never adds a mode and does not replace the address kiosk.sh was
   assert.equal(syntax.status, 0, syntax.stderr);
 });
 
-test('kiosk.sh calls it before the browser starts, and the window follows the 1920 by 1080 framebuffer', () => {
+test('KIOSK_RESOLUTION 3840x2160 uses a 4K TV at its own size with no scaling, and the window follows it', () => {
+  const result = run(answers.hdmi2Only4k, { resolution: '3840x2160' });
+  assert.deepEqual(result.sets, ['xrandr --output HDMI-2 --mode 3840x2160 --rate 30.00 --scale 1x1']);
+  assert.equal(result.window, '3840,2160');
+  const both = run(answers.hdmi1, { resolution: '3840x2160' });
+  assert.deepEqual(both.sets, ['xrandr --output HDMI-1 --mode 3840x2160 --rate 30.00 --scale 1x1']);
+});
+
+test('a size the TV does not list is reached by scaling from the preferred mode, and a bad KIOSK_RESOLUTION is ignored', () => {
+  const scaled = run(answers.qhd, { resolution: '3840x2160' });
+  assert.deepEqual(scaled.sets, ['xrandr --output HDMI-1 --mode 2560x1440 --rate 59.95 --scale 1.5x1.5']);
+  ['banana', '100x100', '99999x99999', '1920x1080; reboot', '3840*2160'].forEach(bad => {
+    const result = run(answers.hdmi1, { resolution: bad });
+    assert.deepEqual(result.sets, ['xrandr --output HDMI-1 --mode 1920x1080 --rate 60.00 --scale 1x1'], bad);
+    assert.equal(result.window, '1920,1080', bad);
+  });
+});
+
+test('kiosk.sh calls it before the browser starts, and the window follows the framebuffer, 1920 by 1080 unless KIOSK_RESOLUTION says otherwise', () => {
   const text = fs.readFileSync(path.join(repo, 'computer/scripts/kiosk.sh'), 'utf8');
   assert.ok(text.includes('. "$computer/scripts/display.sh"'));
   assert.ok(text.indexOf('set_display') < text.indexOf('exec chromium'));
-  assert.ok(text.includes('--window-size=1920,1080'));
+  assert.ok(text.includes('--window-size="$(display_window)"') && !text.includes('--window-size=1920,1080'));
+  assert.ok(text.includes('--force-device-scale-factor=1'), 'one dashboard pixel is still one TV pixel');
   assert.ok(!/xrandr/.test(text), 'the detection lives in display.sh');
 });
 

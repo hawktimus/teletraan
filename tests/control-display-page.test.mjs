@@ -162,13 +162,13 @@ check('the Playlist card says what plays now and next, the loop, and has the Edi
   assert.ok(playlistHtml(Object.assign({}, page, { rows: [] }), null, false, {}).includes('standard order'));
 });
 
-check('the motion card has a box for Motion and one for Motion on the TV computer, with the stored values selected', () => {
+check('the motion card has one box for Motion, with the stored value selected, and none for the TV computer', () => {
   const html = motionHtml({ motion: 'light', motionOnKiosk: 'full' });
-  assert.ok(html.includes('data-motion-field="motion"') && html.includes('data-motion-field="motionOnKiosk"'));
-  assert.ok(html.includes('<option value="light" selected>Light</option>') && html.includes('<option value="full" selected>Full</option>'));
-  assert.equal((html.match(/<option/g) || []).length, 5);
-  assert.ok(html.includes('?motion=full'), 'it says how to try Full on one computer');
-  assert.ok(motionHtml({ motion: '<b>', motionOnKiosk: 'light' }).indexOf('<b>') === -1);
+  assert.ok(html.includes('data-motion-field="motion"') && !html.includes('motionOnKiosk') && !html.includes('TV computer</'));
+  assert.ok(html.includes('<option value="light" selected>Light</option>'));
+  assert.equal((html.match(/<option/g) || []).length, 3);
+  assert.ok(html.includes('?motion=light'), 'it says how to try Light on one computer');
+  assert.ok(motionHtml({ motion: '<b>' }).indexOf('<b>') === -1);
 });
 
 check('the add row card and the competition card say where the data is from', () => {

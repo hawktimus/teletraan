@@ -116,6 +116,7 @@ dashboardSettings.calendars.<object>.kind = outreach
 dashboardSettings.calendars.<object>.name
 dashboardSettings.calendars.<object>.show
 dashboardSettings.competitionAlliance
+dashboardSettings.competitionCompare
 dashboardSettings.competitionDistrict
 dashboardSettings.competitionForecast
 dashboardSettings.competitionLastSeason
@@ -133,6 +134,7 @@ dashboardSettings.competitionQualify
 dashboardSettings.competitionRank
 dashboardSettings.competitionRecap
 dashboardSettings.competitionResults
+dashboardSettings.competitionTeamMetrics
 dashboardSettings.competitionTimeline
 dashboardSettings.contentSource
 dashboardSettings.contentSource = production
@@ -276,6 +278,10 @@ dashboardSettings.mondayTokenTest
 dashboardSettings.motion
 dashboardSettings.motion = calm
 dashboardSettings.motion = full
+dashboardSettings.motion = light
+dashboardSettings.motionOnKiosk
+dashboardSettings.motionOnKiosk = full
+dashboardSettings.motionOnKiosk = light
 dashboardSettings.nameDuration
 dashboardSettings.nameEvery
 dashboardSettings.nameTransform
@@ -342,6 +348,19 @@ dashboardSettings.previewRequest.requestedAt
 dashboardSettings.previewTheme
 dashboardSettings.previewTheme.theme
 dashboardSettings.previewTheme.until
+dashboardSettings.rebootDays
+dashboardSettings.rebootDays = 0
+dashboardSettings.rebootDays = 1
+dashboardSettings.rebootDays = 2
+dashboardSettings.rebootDays = 3
+dashboardSettings.rebootDays = 4
+dashboardSettings.rebootDays = 5
+dashboardSettings.rebootDays = 6
+dashboardSettings.rebootEnabled
+dashboardSettings.rebootSkipBusy
+dashboardSettings.rebootStatus
+dashboardSettings.rebootTime
+dashboardSettings.rebootWaitMinutes
 dashboardSettings.redEyesChance
 dashboardSettings.redEyesEveryHours
 dashboardSettings.rosterPortrait
@@ -404,6 +423,7 @@ dashboardSettings.rotationRows.<object>.list = done
 dashboardSettings.rotationRows.<object>.list = open
 dashboardSettings.rotationRows.<object>.panel
 dashboardSettings.rotationRows.<object>.panel = competition-rank
+dashboardSettings.rotationRows.<object>.panel = competition-team-metrics
 dashboardSettings.rotationRows.<object>.panel = custom
 dashboardSettings.rotationRows.<object>.panel = driveHours
 dashboardSettings.rotationRows.<object>.panel = events
@@ -452,6 +472,14 @@ dashboardSettings.rotationRows.<object>.view = nova
 dashboardSettings.rotationRows.<object>.view = prime
 dashboardSettings.rotationRows.<object>.view = robotics
 dashboardSettings.safetyDaysSince
+dashboardSettings.screenFit
+dashboardSettings.screenFit = auto
+dashboardSettings.screenFit = contain
+dashboardSettings.screenFit = exact
+dashboardSettings.screenFit = fill
+dashboardSettings.screenOffsetX
+dashboardSettings.screenOffsetY
+dashboardSettings.screenScale
 dashboardSettings.screenSchedule
 dashboardSettings.screenSchedule.friday
 dashboardSettings.screenSchedule.friday = cybertron
@@ -769,6 +797,7 @@ mondayStatus.departments.<object>
 mondayStatus.departments.<object>.done
 mondayStatus.departments.<object>.name
 mondayStatus.departments.<object>.open
+mondayStatus.hiddenCount
 mondayStatus.hiddenUnassigned
 mondayStatus.lastError
 mondayStatus.lastSyncAt
@@ -944,12 +973,16 @@ status.lastContentSeenAt
 status.lastFrcSyncAt
 status.lastKioskRestartAt
 status.lastMondaySyncAt
+status.lastRebootAt
+status.lastRebootWhy
 status.lastSlidesFetchAt
 status.match13At
 status.match13Count
 status.match13State
 status.newsAt
 status.newsCount
+status.nextRebootAt
+status.nextRebootText
 status.photosDriveAt
 status.photosDriveCount
 status.photosDriveState
