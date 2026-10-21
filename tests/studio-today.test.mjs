@@ -233,8 +233,10 @@ test('an end before the start is refused', async () => {
 test('the days of a message can be ticked, and the last one cannot be cleared', async () => {
   const { page, client } = await opened();
   const days = nodesWhere(page.tree(), node => node.props && node.props['data-card'] === 'k1')[0];
-  const boxes = nodesWhere(days, node => node.type === 'input' && node.props.type === 'checkbox' && node.props.onChange).filter(node => node.props.onChange.length === 1);
+  const boxes = nodesWhere(days, node => node.type === 'input' && node.props.type === 'checkbox' && node.props.onChange);
   assert.ok(boxes.length >= 8, 'seven days and the show switch');
+  assert.ok(nodesWhere(days, node => node.props && node.props.role === 'switch').length === 1, 'the show switch is a switch');
+  assert.ok(nodesWhere(days, node => node.props && node.props.className && /tt-pick/.test(node.props.className)).length === 7, 'the days are buttons');
   const saturday = nodesWhere(days, node => node.type === 'label').filter(node => wordsIn(node) === 'Saturday')[0];
   nodesWhere(saturday, node => node.type === 'input')[0].props.onChange({ target: { checked: true } });
   await page.settle();

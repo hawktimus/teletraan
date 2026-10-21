@@ -71,6 +71,10 @@ Under Coaches only:
 - The control page, Settings, All settings shows the same settings as the Studio forms, drawn from the Studio schemas. Both write the same stored fields to the draft. See docs/control-page.md.
 - Events are not typed in the Studio. They come from the BAND calendars.
 
+## How choices look
+
+On the pages that are not documents, a list of choices is a row of buttons, and the chosen one is filled blue with a check mark while the others are outlined. A switch is a pill with a knob and the word On or Off, blue when it is on. Both are real radios and checkboxes underneath, so Tab, the arrow keys and a screen reader work. The colors are fixed, not the Studio's, so they show on its dark and light themes. `controlStyle`, `choiceButtons` and `toggleSwitch` in `studio/inputs/field-editor.js` draw them, so a new page uses those and draws no radio or checkbox of its own.
+
 ## Where it is in the code
 
 `studio/structure.js` holds the sidebar as one list. To move a line, move it in that list (docs/reordering-the-sidebar.md). The pages that are not documents are in `studio/inputs/`: `today-view.js`, `look-view.js`, `competition-view.js`, `kept-data-view.js`, and the others named in the table above. The rows they share are `field-editor.js`. `tests/schemas.test.mjs` checks the sidebar, so a change to it changes that test.

@@ -18,6 +18,7 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { set, useClient, useFormValue } from 'sanity';
 import { usePaneRouter } from 'sanity/structure';
+import { choiceButtons } from './field-editor.js';
 import { ScreenContext } from './screen-context.js';
 import { pictureOf, openGroup } from './screen-input.js';
 import { mapFor, letterGroups } from '../tools/screen-map.js';
@@ -99,16 +100,9 @@ export function mapOf(key, value) {
 export function pickerOf(current, choose) {
   return h(
     'div',
-    { style: styles.switchRow, role: 'radiogroup', 'aria-label': words.picker, 'data-block': 'picker' },
+    { style: styles.switchRow, 'data-block': 'picker' },
     h('span', { style: styles.switchLabel }, words.picker + ':'),
-    viewKeys.map(key =>
-      h(
-        'label',
-        { key: key, style: styles.choice },
-        h('input', { type: 'radio', name: 'view-editing', checked: key === current, onChange: () => choose(key) }),
-        h('span', null, viewTitles[key])
-      )
-    )
+    choiceButtons({ name: 'view-editing', label: words.picker, items: viewKeys.map(key => ({ key: key, label: viewTitles[key], checked: key === current, onPick: () => choose(key) })) })
   );
 }
 

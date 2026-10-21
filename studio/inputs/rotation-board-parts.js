@@ -4,6 +4,7 @@
 //
 // It is written without JSX, so it reads as plain JavaScript: h(tag, props, ...children) is React's createElement.
 
+import { toggleSwitch } from './field-editor.js';
 import { createElement } from 'react';
 import {
   blocksOf, condensedWords, detailsFor, detailsSummary, durationWords, hasSmallPanel, isRetiredRow, isShown, loopWords, missingCharts, missingDepartments, playsCondensed, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
@@ -90,7 +91,7 @@ const muted = 'var(--card-muted-fg-color, inherit)';
 const primaryBackground = 'var(--card-badge-primary-bg-color, #dbeafe)';
 const primaryText = 'var(--card-badge-primary-fg-color, #1e40af)';
 
-const control = { boxSizing: 'border-box', minHeight: 44, padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4, maxWidth: '100%' };
+const control = { boxSizing: 'border-box', minHeight: 44, padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: '2px solid #7d828b', borderRadius: 4, maxWidth: '100%' };
 
 export const styles = {
   page: { boxSizing: 'border-box', height: '100%', overflowY: 'auto', padding: '24px 16px' },
@@ -105,7 +106,8 @@ export const styles = {
   textBox: Object.assign({}, control, { width: '100%' }),
   button: Object.assign({}, control, { fontWeight: 600, background: primaryBackground, color: primaryText, cursor: 'pointer' }),
   plain: Object.assign({}, control, { fontWeight: 600, background: 'transparent', color: 'inherit', cursor: 'pointer', padding: '4px 8px' }),
-  check: { width: 24, height: 24, margin: 10 },
+  // colorScheme light draws a white box with a dark mark, which shows on the dark Studio as well
+  check: { width: 24, height: 24, margin: 10, colorScheme: 'light', accentColor: '#2563eb' },
 };
 
 function colourVars(view) {
@@ -256,8 +258,8 @@ export function findBar(state, actions, blocks) {
       'div',
       { className: 'rb-tools' },
       h('input', { type: 'search', value: state.search || '', style: Object.assign({}, styles.textBox, { width: 260 }), placeholder: 'Search panel titles', 'aria-label': 'Search panel titles', onChange: event => actions.pick('search', event.target.value) }),
-      h('label', { className: 'rb-check' }, h('input', { type: 'checkbox', checked: Boolean(state.onlySkipped), style: styles.check, onChange: event => actions.pick('onlySkipped', event.target.checked) }), 'Show only rows that are skipped now'),
-      h('label', { className: 'rb-check' }, h('input', { type: 'checkbox', checked: Boolean(state.onlyPlaceholders), style: styles.check, onChange: event => actions.pick('onlyPlaceholders', event.target.checked) }), 'Show only placeholders')
+      toggleSwitch({ checked: Boolean(state.onlySkipped), onChange: value => actions.pick('onlySkipped', value), label: 'Show only rows that are skipped now' }),
+      toggleSwitch({ checked: Boolean(state.onlyPlaceholders), onChange: value => actions.pick('onlyPlaceholders', value), label: 'Show only placeholders' })
     ),
     h('p', { style: styles.muted, 'data-find': 'help' }, 'Skipped now means switched off, or on with nothing to show. A placeholder only draws a title until it is designed, such as Robot status.'),
     h(

@@ -17,7 +17,7 @@ process.on('exit', () => fs.rmSync(work, { recursive: true, force: true }));
 
 fs.cpSync(path.join(root, 'studio', 'tools'), path.join(work, 'tools'), { recursive: true });
 fs.mkdirSync(path.join(work, 'inputs'));
-['screen-panels.js', 'rotation-board-parts.js', 'rotation-board-view.js', 'rotation-auto-parts.js'].forEach(file => fs.copyFileSync(path.join(root, 'studio', 'inputs', file), path.join(work, 'inputs', file)));
+['screen-panels.js', 'rotation-board-parts.js', 'rotation-board-view.js', 'rotation-auto-parts.js', 'field-editor.js', 'field-editor-parts.js', 'page-styles.js'].forEach(file => fs.copyFileSync(path.join(root, 'studio', 'inputs', file), path.join(work, 'inputs', file)));
 fs.writeFileSync(path.join(work, 'package.json'), '{ "type": "module" }\n');
 const stub = (name, files) => {
   fs.mkdirSync(path.join(work, 'node_modules', name), { recursive: true });
@@ -257,7 +257,7 @@ test('the page has the owner sentence, a group for each block, a row for each ro
   buttonNamed('Move down')[0].props.onClick();
   buttonNamed('Duplicate row')[1].props.onClick();
   buttonNamed('Delete row')[2].props.onClick();
-  nodesWhere(page, node => node.props.role === 'switch')[0].props.onClick();
+  nodesWhere(page, node => node.type === 'button' && node.props.role === 'switch')[0].props.onClick();
   const handle = nodesWhere(page, node => node.props.draggable === true);
   assert.equal(handle.length, 6, 'every row has a drag handle');
   handle[1].props.onDragStart({});
@@ -317,7 +317,7 @@ test('the phone rules: cards under 600 pixels, 44 pixel targets, 16 pixel text a
   assert.ok(buttons.length > 0 && buttons.every(node => node.props.style.minHeight >= 44));
   const boxes = nodesWhere(page, node => ['select', 'input'].includes(node.type) && !['checkbox'].includes(node.props.type));
   assert.ok(boxes.length > 0 && boxes.every(node => node.props.style.minHeight >= 44 && node.props.style.fontSize >= 16));
-  assert.ok(nodesWhere(page, node => node.type === 'input' && node.props.type === 'checkbox').every(node => node.props.style.width >= 24 && node.props.style.margin >= 10), 'a checkbox has a 44 pixel target');
+  assert.ok(nodesWhere(page, node => node.type === 'input' && node.props.type === 'checkbox' && node.props.role !== 'switch').every(node => node.props.style.width >= 24 && node.props.style.margin >= 10), 'a checkbox has a 44 pixel target');
   assert.equal((fs.readFileSync(path.join(root, 'studio', 'inputs', 'rotation-board-parts.js'), 'utf8').match(/\bwidth: [3-9]\d\d\b/g) || []).length, 0, 'nothing is fixed wider than a phone');
 });
 

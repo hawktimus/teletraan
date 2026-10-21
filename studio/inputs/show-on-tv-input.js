@@ -6,6 +6,7 @@
 // h(tag, props, ...children) is React's createElement.
 
 import { createElement } from 'react';
+import { toggleSwitch } from './field-editor.js';
 import { set } from 'sanity';
 
 const h = createElement;
@@ -22,16 +23,12 @@ export function isShownOnTv(value) {
 export function ShowOnTvInput(props) {
   const shown = isShownOnTv(props.value);
 
-  return h(
-    'label',
-    { style: styles.choice },
-    h('input', {
-      type: 'checkbox',
-      id: props.id,
-      checked: shown,
-      disabled: Boolean(props.readOnly),
-      onChange: event => props.onChange(set(Boolean(event.target.checked))),
-    }),
-    h('span', null, shown ? 'Shown on the TV' : 'Not shown on the TV')
-  );
+  return toggleSwitch({
+    id: props.id,
+    checked: shown,
+    disabled: Boolean(props.readOnly),
+    ariaLabel: 'Show on TV',
+    onChange: value => props.onChange(set(Boolean(value))),
+    label: shown ? 'Shown on the TV' : 'Not shown on the TV',
+  });
 }

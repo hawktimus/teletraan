@@ -19,6 +19,7 @@ import { createElement, useContext, useEffect, useState } from 'react';
 import { set, unset, useClient, useFormValue } from 'sanity';
 import { Link } from 'sanity/router';
 import { usePaneRouter } from 'sanity/structure';
+import { choiceButtons } from './field-editor.js';
 import { ScreenContext } from './screen-context.js';
 import { words, countdownLines, departmentChoices, leadsQuestion, teamTarget, countdownTarget, tipsAndNewsPath } from './screen-parts.js';
 import { teamChoices } from './screen-panels.js';
@@ -145,15 +146,8 @@ export function RowTeamInput(props) {
 
   return h(
     'div',
-    { role: 'radiogroup', id: props.id, style: styles.group },
-    choices.map(choice =>
-      h(
-        'label',
-        { key: choice.value || 'keep', style: styles.choice },
-        h('input', { type: 'radio', name: props.id, checked: choice.value === current, disabled: Boolean(props.readOnly), onChange: () => choose(choice.value) }),
-        h('span', null, choice.label)
-      )
-    )
+    { id: props.id, style: styles.group },
+    choiceButtons({ name: props.id, label: 'Choose one', disabled: Boolean(props.readOnly), items: choices.map(choice => ({ key: choice.value || 'keep', label: choice.label, checked: choice.value === current, onPick: () => choose(choice.value) })) })
   );
 }
 

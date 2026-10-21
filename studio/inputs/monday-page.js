@@ -10,6 +10,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { Link } from 'sanity/router';
+import { choiceButtons } from './field-editor.js';
 import {
   contentOf, controlLink, countLine, departmentTables, departments, generalCount, hiddenCount, hiddenOnMonday, lastReadLine, listChoices,
   mondayStatusId, question, rotationPath, teamChoices, tvPreview, words,
@@ -47,28 +48,17 @@ const styles = {
   listTitle: { fontSize: 16, fontWeight: 600, margin: '12px 0 4px' },
   field: { margin: '0 0 16px', minWidth: 0 },
   label: { display: 'block', fontWeight: 600, margin: '0 0 4px' },
-  select: { boxSizing: 'border-box', minHeight: 44, maxWidth: '100%', padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },
+  select: { boxSizing: 'border-box', minHeight: 44, maxWidth: '100%', padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: '2px solid #7d828b', borderRadius: 4 },
   picks: { display: 'flex', flexWrap: 'wrap', gap: '0 16px' },
   link: { display: 'inline-flex', alignItems: 'center', minHeight: 44, textDecoration: 'underline', color: primaryText },
   preview: { padding: 12, border: border, borderRadius: 4, margin: '0 0 16px' },
   previewTitle: { fontSize: 18, fontWeight: 600, margin: '0 0 8px', overflowWrap: 'anywhere' },
 };
 
-function teamButton(choice, picked, pick) {
-  const on = choice.value === picked;
-  return h('button', {
-    key: choice.value || 'both', type: 'button', 'aria-pressed': on, onClick: () => pick(choice.value),
-    style: {
-      boxSizing: 'border-box', minWidth: 88, minHeight: 44, padding: '8px 16px', fontFamily: 'inherit', fontSize: 16, fontWeight: 600,
-      border: border, borderRadius: 4, cursor: 'pointer', background: on ? primaryBackground : 'transparent', color: on ? primaryText : 'inherit',
-    },
-  }, choice.title);
-}
-
 function pickerOf(label, choices, value, change) {
   return h('label', { style: styles.field },
     h('span', { style: styles.label }, label),
-    h('select', { value: value, onChange: event => change(event.target.value), style: styles.select },
+    h('select', { className: 'tt-field', value: value, onChange: event => change(event.target.value), style: styles.select },
       choices.map(choice => h('option', { key: choice.value, value: choice.value }, choice.title))));
 }
 
@@ -193,7 +183,7 @@ export function MondayPage() {
         h('p', { key: 'read', style: read.ok ? styles.good : styles.failed, 'data-read': read.ok ? 'ok' : 'problem' }, read.text),
         h('fieldset', { key: 'team', style: { border: 'none', padding: 0, margin: '0 0 8px', minWidth: 0 } },
           h('legend', { style: styles.label }, words.teamLabel),
-          h('div', { style: styles.teams }, teamChoices.map(entry => teamButton(entry, team, setTeam)))),
+          choiceButtons({ name: 'monday-team', label: words.teamLabel, items: teamChoices.map(entry => ({ key: entry.value || 'both', label: entry.title, checked: entry.value === team, onPick: () => setTeam(entry.value) })) })),
         h('p', { key: 'help', style: styles.muted }, words.teamHelp + (general > 0 ? ' ' + general + ' of the tasks have no team.' : '') + (hidden > 0 ? ' ' + hidden + ' hidden from the TV.' : '') + (hiddenInMonday > 0 ? ' ' + hiddenInMonday + ' say Hide in Monday and are not kept here.' : '')),
         h('div', { key: 'tiles', style: styles.tiles }, tables.map(tileOf)),
         h('div', { key: 'departments' }, tables.map(departmentBlock)),

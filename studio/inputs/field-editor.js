@@ -7,7 +7,7 @@
 // h(tag, props, ...children) is React's createElement.
 
 import { createElement } from 'react';
-import { styles } from './page-styles.js';
+import { styles, accent, outline, controlCss } from './page-styles.js';
 import { valueOf, toLocalInput, fromLocalInput } from './field-editor-parts.js';
 
 const h = createElement;
@@ -28,12 +28,69 @@ function problemLine(spec, problems) {
   return text ? h('span', { role: 'alert', style: styles.failed }, text) : null;
 }
 
-function switchRow(spec, value, onSave, busy, problems) {
+// The rules for the focus ring. Every choice and switch draws them, so a page needs no other setup.
+export function controlStyle() {
+  return h('style', { key: 'tt-controls', dangerouslySetInnerHTML: { __html: controlCss } });
+}
+
+// A group of buttons, one of which is on (a radio list). The items are { key, label, checked, onPick }. The real
+// radio lies invisible over each button, so the arrow keys, Tab and a screen reader work as they do on a radio.
+// The chosen button is filled and has a check mark; the others are outlined.
+export function choiceButtons({ name, label, items, disabled, multiple }) {
+  const kind = multiple ? 'checkbox' : 'radio';
+  return h(
+    'div',
+    { role: multiple ? 'group' : 'radiogroup', 'aria-label': typeof label === 'string' ? label : undefined, style: styles.buttons },
+    controlStyle(),
+    items.map(item =>
+      h(
+        'label',
+        {
+          key: item.key,
+          className: 'tt-pick' + (disabled ? ' tt-busy' : ''),
+          'data-checked': item.checked ? 'true' : 'false',
+          style: Object.assign({}, styles.button1, item.checked
+            ? { background: accent, border: '2px solid ' + accent, color: '#ffffff' }
+            : { background: 'transparent', border: '2px solid ' + outline, color: 'inherit' }),
+        },
+        h('input', { type: kind, name: name, value: item.key, checked: Boolean(item.checked), disabled: Boolean(disabled), style: styles.overlay, onChange: () => item.onPick(!item.checked) }),
+        h('span', { 'aria-hidden': 'true', style: styles.mark }, item.checked ? '\u2713' : ''),
+        h('span', null, item.label)
+      )
+    )
+  );
+}
+
+// A switch: a pill with a knob, the word On or Off and the text. It is a real checkbox with the role switch.
+export function toggleSwitch({ checked, disabled, onChange, label, ariaLabel, id }) {
+  const on = Boolean(checked);
   return h(
     'label',
-    { key: spec.id, style: styles.choice, 'data-field': spec.id },
-    h('input', { type: 'checkbox', checked: Boolean(value), disabled: busy, style: styles.box, onChange: event => onSave(spec, event.target.checked) }),
-    h('span', null, h('strong', null, spec.title), h('span', { style: styles.state }, value ? 'On' : 'Off'), h('span', { style: styles.help }, spec.description), problemLine(spec, problems))
+    { className: 'tt-toggle' + (disabled ? ' tt-busy' : ''), style: styles.toggle, 'data-checked': on ? 'true' : 'false' },
+    controlStyle(),
+    h('input', { type: 'checkbox', role: 'switch', id: id, checked: on, disabled: Boolean(disabled), 'aria-label': ariaLabel, style: styles.overlay, onChange: event => onChange(event.target.checked) }),
+    h(
+      'span',
+      { 'aria-hidden': 'true', className: 'tt-track', style: Object.assign({}, styles.track, on ? { background: accent, border: '2px solid ' + accent } : { background: 'transparent', border: '2px solid ' + outline }) },
+      h('span', { style: Object.assign({}, styles.knob, { background: on ? '#ffffff' : outline, transform: on ? 'translateX(22px)' : 'translateX(0)' }) })
+    ),
+    h('span', { 'aria-hidden': 'true', style: styles.word }, on ? 'On' : 'Off'),
+    label ? h('span', { style: { minWidth: 0 } }, label) : null
+  );
+}
+
+function switchRow(spec, value, onSave, busy, problems) {
+  return h(
+    'div',
+    { key: spec.id, style: styles.field, 'data-field': spec.id },
+    toggleSwitch({
+      checked: value,
+      disabled: busy,
+      ariaLabel: spec.title,
+      onChange: checked => onSave(spec, checked),
+      label: h('span', null, h('strong', null, spec.title), h('span', { style: styles.help }, spec.description)),
+    }),
+    problemLine(spec, problems)
   );
 }
 
@@ -43,14 +100,12 @@ function choiceRow(spec, value, onSave, busy, problems) {
     { key: spec.id, style: styles.fieldset, 'data-field': spec.id },
     h('legend', { style: styles.label }, spec.title),
     h('span', { style: styles.help }, spec.description),
-    spec.choices.map(choice =>
-      h(
-        'label',
-        { key: String(choice.value), style: styles.choice },
-        h('input', { type: 'radio', name: spec.id, value: String(choice.value), checked: value === choice.value, disabled: busy, style: styles.box, onChange: () => onSave(spec, choice.value) }),
-        h('span', { style: { paddingTop: 10 } }, choice.title)
-      )
-    ),
+    choiceButtons({
+      name: spec.id,
+      label: spec.title,
+      disabled: busy,
+      items: spec.choices.map(choice => ({ key: String(choice.value), label: choice.title, checked: value === choice.value, onPick: () => onSave(spec, choice.value) })),
+    }),
     problemLine(spec, problems)
   );
 }
@@ -63,6 +118,7 @@ function boxRow(spec, value, onSave, busy, problems) {
   };
   const props = {
     id: 'field-' + spec.id,
+    className: 'tt-field',
     key: spec.id + ':' + shown,
     defaultValue: shown,
     disabled: busy,
@@ -85,6 +141,7 @@ function boxRow(spec, value, onSave, busy, problems) {
     { key: spec.id, style: styles.field, 'data-field': spec.id },
     h('label', { htmlFor: 'field-' + spec.id, style: styles.label }, spec.title),
     h('span', { style: styles.help }, spec.description),
+    controlStyle(),
     box,
     problemLine(spec, problems)
   );

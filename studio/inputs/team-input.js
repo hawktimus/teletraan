@@ -12,6 +12,7 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { set, unset, useClient } from 'sanity';
+import { choiceButtons } from './field-editor.js';
 
 const h = createElement;
 
@@ -85,21 +86,8 @@ export function TeamInput(props) {
     null,
     h(
       'div',
-      { role: 'radiogroup', id: props.id, style: styles.group },
-      choices.map(choice =>
-        h(
-          'label',
-          { key: choice.id || 'both', style: styles.choice },
-          h('input', {
-            type: 'radio',
-            name: props.id,
-            checked: choice.id === currentId,
-            disabled: Boolean(props.readOnly),
-            onChange: () => props.onChange(teamPatch(choice.id)),
-          }),
-          h('span', null, choice.label)
-        )
-      )
+      { id: props.id, style: styles.group },
+      choiceButtons({ name: props.id, label: 'Team', disabled: Boolean(props.readOnly), items: choices.map(choice => ({ key: choice.id || 'both', label: choice.label, checked: choice.id === currentId, onPick: () => props.onChange(teamPatch(choice.id)) })) })
     ),
     read.unreadable ? h('p', { style: styles.note }, 'The teams could not be read, so only Both is shown.') : null
   );

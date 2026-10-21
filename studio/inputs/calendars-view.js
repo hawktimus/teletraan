@@ -15,6 +15,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { Link } from 'sanity/router';
+import { toggleSwitch } from './field-editor.js';
 import { calendarStatusId } from './calendars-view-parts.js';
 import {
   words,
@@ -62,7 +63,7 @@ const styles = {
   failure: { color: critical, margin: '8px 0 0', padding: '8px 0', fontSize: 14, position: 'sticky', bottom: 0, background: 'var(--card-bg-color, Canvas)', borderTop: border },
   status: { margin: '0 0 12px', padding: 0, listStyle: 'none', display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: 14 },
   toolbar: { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', margin: '0 0 16px' },
-  field: { boxSizing: 'border-box', minHeight: 44, fontFamily: 'inherit', fontSize: 14, padding: '4px 12px', color: 'inherit', background: 'transparent', border: border, borderRadius: 4 },
+  field: { boxSizing: 'border-box', minHeight: 44, fontFamily: 'inherit', fontSize: 14, padding: '4px 12px', color: 'inherit', background: 'transparent', border: '2px solid #7d828b', borderRadius: 4 },
   check: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, fontSize: 14 },
   day: { fontSize: 18, fontWeight: 600, margin: '16px 0 4px' },
   list: { margin: 0, padding: 0, listStyle: 'none' },
@@ -70,21 +71,16 @@ const styles = {
   shown: { background: 'var(--card-badge-positive-bg-color, #dcfce7)', color: 'var(--card-badge-positive-fg-color, #166534)' },
   hidden: { background: 'var(--card-badge-caution-bg-color, #fef3c7)', color: 'var(--card-badge-caution-fg-color, #92400e)' },
   kind: { display: 'inline-block', fontSize: 12, padding: '1px 8px', border: border, borderRadius: 10, marginLeft: 8 },
-  switchOn: { background: primaryText, borderColor: primaryText },
   button: { boxSizing: 'border-box', minHeight: 44, fontFamily: 'inherit', fontSize: 14, padding: '4px 12px', color: 'inherit', background: 'transparent', border: border, borderRadius: 4, cursor: 'pointer' },
   summary: { fontSize: 18, fontWeight: 600, cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' },
 };
 
 // A row is a grid on a wide window and a card under 600 pixels. The rules cannot be written inline.
 const css = [
-  '.cal-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) minmax(0, 220px) 64px; gap: 4px 12px; align-items: center; padding: 8px 0; border-top: ' + border + '; font-size: 14px; overflow-wrap: anywhere; }',
+  '.cal-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) minmax(0, 220px) 100px; gap: 4px 12px; align-items: center; padding: 8px 0; border-top: ' + border + '; font-size: 14px; overflow-wrap: anywhere; }',
   '.cal-row-earlier { opacity: 0.5; }',
   '.cal-title { font-size: 16px; font-weight: 600; }',
   '.cal-sub { color: ' + muted + '; font-size: 13px; }',
-  '.cal-switch { box-sizing: border-box; width: 56px; height: 44px; padding: 0; border: ' + border + '; border-radius: 22px; background: transparent; cursor: pointer; position: relative; }',
-  '.cal-switch[disabled] { opacity: 0.4; cursor: default; }',
-  '.cal-switch span { position: absolute; top: 9px; left: 9px; width: 24px; height: 24px; border-radius: 12px; background: currentColor; }',
-  '.cal-switch[aria-checked="true"] span { left: 23px; background: #fff; }',
   '@media (max-width: 600px) {',
   '  .cal-row { display: block; margin: 8px 0; padding: 12px; border: ' + border + '; border-radius: 6px; }',
   '  .cal-row > * { display: block; margin: 0 0 6px; }',
@@ -149,7 +145,7 @@ function eventItem(row, state, actions) {
       state.id === 'hidden-you' && !switchOff ? h('button', { type: 'button', style: Object.assign({}, styles.button, { marginLeft: 8 }), onClick: () => actions.toggle(row) }, words.undo) : null,
       reasons.map(text => h('span', { key: text, className: 'cal-sub', style: { display: 'block' } }, text))
     ),
-    h('button', { type: 'button', role: 'switch', 'aria-checked': state.on, 'aria-label': label, className: 'cal-switch', style: state.on ? styles.switchOn : undefined, disabled: switchOff, onClick: () => actions.toggle(row) }, h('span'))
+    h('span', null, toggleSwitch({ checked: state.on, disabled: switchOff, ariaLabel: label, onChange: () => actions.toggle(row) }))
   );
 }
 
@@ -160,12 +156,12 @@ function toolbar(model, actions, rows) {
     { style: styles.toolbar, 'data-block': 'filters' },
     h(
       'select',
-      { style: styles.field, value: model.filters.calendar, 'aria-label': 'Calendar', onChange: event => actions.setFilter({ calendar: event.target.value }) },
+      { className: 'tt-field', style: styles.field, value: model.filters.calendar, 'aria-label': 'Calendar', onChange: event => actions.setFilter({ calendar: event.target.value }) },
       h('option', { value: '' }, 'All calendars'),
       calendars.map(item => h('option', { key: item.code, value: item.code }, item.name))
     ),
-    h('input', { type: 'search', style: styles.field, value: model.filters.search, placeholder: 'Search', 'aria-label': 'Search the events', onChange: event => actions.setFilter({ search: event.target.value }) }),
-    h('label', { style: styles.check }, h('input', { type: 'checkbox', checked: model.filters.hiddenOnly, onChange: event => actions.setFilter({ hiddenOnly: event.target.checked }) }), 'Hidden only')
+    h('input', { type: 'search', className: 'tt-field', style: styles.field, value: model.filters.search, placeholder: 'Search', 'aria-label': 'Search the events', onChange: event => actions.setFilter({ search: event.target.value }) }),
+    toggleSwitch({ checked: model.filters.hiddenOnly, onChange: value => actions.setFilter({ hiddenOnly: value }), label: 'Hidden only' })
   );
 }
 

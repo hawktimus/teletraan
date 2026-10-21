@@ -19,6 +19,7 @@
 
 import { createElement, useEffect, useRef, useState } from 'react';
 import { set, useClient, useFormValue } from 'sanity';
+import { choiceButtons } from './field-editor.js';
 import { ScreenContext } from './screen-context.js';
 import { mapFor, labelsFor, letterGroups } from '../tools/screen-map.js';
 import { words, readSources, pickerTeams, teamCodes } from './screen-parts.js';
@@ -134,16 +135,9 @@ export function pictureOf(map, open, choose) {
 export function switchOf(teams, editing, choose) {
   return h(
     'div',
-    { style: styles.switchRow, role: 'radiogroup', 'aria-label': words.editing, 'data-block': 'switch' },
+    { style: styles.switchRow, 'data-block': 'switch' },
     h('span', { style: styles.switchLabel }, words.editing + ':'),
-    teams.map(team =>
-      h(
-        'label',
-        { key: team.code, style: styles.choice },
-        h('input', { type: 'radio', name: 'screen-editing', checked: team.code === editing, onChange: () => choose(team.code) }),
-        h('span', null, team.label)
-      )
-    )
+    choiceButtons({ name: 'screen-editing', label: words.editing, items: teams.map(team => ({ key: team.code, label: team.label, checked: team.code === editing, onPick: () => choose(team.code) })) })
   );
 }
 

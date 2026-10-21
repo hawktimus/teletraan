@@ -8,6 +8,7 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { styles } from './page-styles.js';
+import { toggleSwitch } from './field-editor.js';
 import { isRecord } from './plain-values.js';
 import { words, newsDocumentId, newsQuestion, hiddenLinksOf, categoriesOf, usesStartingCategories, addedCategory, removedCategory, rowsOf, changedHidden, shortDate, readLines } from './news-parts.js';
 
@@ -55,10 +56,9 @@ export function useNews(client) {
 
 function switchRow(name, title, says, checked, busy, onSave) {
   return h(
-    'label',
-    { key: name, style: styles.choice, 'data-news': name },
-    h('input', { type: 'checkbox', checked: checked, disabled: busy, style: styles.box, onChange: event => onSave({ [name]: event.target.checked }) }),
-    h('span', null, h('strong', null, title), h('span', { style: styles.help }, says))
+    'div',
+    { key: name, 'data-news': name },
+    toggleSwitch({ checked: checked, disabled: busy, ariaLabel: title, onChange: value => onSave({ [name]: value }), label: h('span', null, h('strong', null, title), h('span', { style: styles.help }, says)) })
   );
 }
 
@@ -94,15 +94,20 @@ function categoriesBlock(settings, busy, draft, handlers) {
 function headlineRows(rows, busy, onToggle) {
   return rows.map(row =>
     h(
-      'label',
-      { key: row.link, style: styles.choice, 'data-headline': row.link },
-      h('input', { type: 'checkbox', checked: !row.hidden, disabled: busy, style: styles.box, 'aria-label': words.show + ': ' + row.title, onChange: event => onToggle(row.link, !event.target.checked) }),
-      h(
-        'span',
-        null,
-        h('strong', null, row.title),
-        h('span', { style: styles.help }, [shortDate(row.date), row.systemcore ? words.systemcoreFlag : '', row.hidden ? words.hiddenFlag : ''].filter(Boolean).join(' · '))
-      )
+      'div',
+      { key: row.link, 'data-headline': row.link },
+      toggleSwitch({
+        checked: !row.hidden,
+        disabled: busy,
+        ariaLabel: words.show + ': ' + row.title,
+        onChange: value => onToggle(row.link, !value),
+        label: h(
+          'span',
+          null,
+          h('strong', null, row.title),
+          h('span', { style: styles.help }, [shortDate(row.date), row.systemcore ? words.systemcoreFlag : '', row.hidden ? words.hiddenFlag : ''].filter(Boolean).join(' · '))
+        ),
+      })
     )
   );
 }

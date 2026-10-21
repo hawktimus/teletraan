@@ -11,6 +11,7 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { useClient } from 'sanity';
 import { usePaneRouter } from 'sanity/structure';
+import { choiceButtons } from './field-editor.js';
 import {
   creditProblem,
   draftId,
@@ -63,7 +64,7 @@ const styles = {
   choicePicked: { borderColor: primaryText, background: primaryBackground, color: primaryText },
   choiceHelp: { display: 'block', marginTop: 2, fontSize: 14, fontWeight: 400 },
   label: { display: 'block', fontWeight: 600, margin: '0 0 4px' },
-  input: { boxSizing: 'border-box', width: '100%', maxWidth: 520, minHeight: 44, padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: border, borderRadius: 4 },
+  input: { boxSizing: 'border-box', width: '100%', maxWidth: 520, minHeight: 44, padding: '4px 12px', fontFamily: 'inherit', fontSize: 16, border: '2px solid #7d828b', borderRadius: 4 },
   button: { boxSizing: 'border-box', minHeight: 44, fontFamily: 'inherit', fontSize: 16, padding: '4px 16px', color: 'inherit', background: 'transparent', border: border, borderRadius: 4, cursor: 'pointer' },
   buttonBusy: { opacity: 0.5, cursor: 'default' },
   row: { display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 8, margin: '0 0 8px' },
@@ -115,22 +116,13 @@ function plainButton(label, onClick, busy) {
 function sourceButtons(current, change, busy) {
   return h(
     'div',
-    { style: styles.choices, role: 'group', 'aria-label': words.choose, 'data-block': 'sources' },
-    sources.map(item =>
-      h(
-        'button',
-        {
-          key: item.value,
-          type: 'button',
-          disabled: busy,
-          'aria-pressed': current === item.value,
-          style: current === item.value ? Object.assign({}, styles.choice, styles.choicePicked) : styles.choice,
-          onClick: () => change(item.value),
-        },
-        item.title,
-        h('span', { style: styles.choiceHelp }, item.help)
-      )
-    )
+    { 'data-block': 'sources' },
+    choiceButtons({
+      name: 'photos-source',
+      label: words.choose,
+      disabled: busy,
+      items: sources.map(item => ({ key: item.value, label: h('span', null, item.title, h('span', { style: styles.choiceHelp }, item.help)), checked: current === item.value, onPick: () => change(item.value) })),
+    })
   );
 }
 

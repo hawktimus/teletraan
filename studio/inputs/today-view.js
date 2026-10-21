@@ -16,7 +16,7 @@ import dashboardSettings from '../schemas/dashboardSettings.js';
 import announcementType from '../schemas/announcement.js';
 import { styles } from './page-styles.js';
 import { useDraftDocument, saveDraftFields, apiVersion, words as draftWords } from './draft-fields.js';
-import { fieldRows, saveLine } from './field-editor.js';
+import { fieldRows, saveLine, choiceButtons } from './field-editor.js';
 import { specsOf, specOf, problemWith, changeFor } from './field-editor-parts.js';
 import {
   sections,
@@ -117,14 +117,13 @@ function daysRow(row, onDay, busy, problem) {
     { style: styles.fieldset, 'data-field': 'days' },
     h('legend', { style: styles.label }, words.daysLabel),
     h('span', { style: styles.help }, words.daysHelp),
-    weekdays.map(day =>
-      h(
-        'label',
-        { key: day.value, style: styles.choice },
-        h('input', { type: 'checkbox', checked: (row.days || []).indexOf(day.value) !== -1, disabled: busy, style: styles.box, onChange: event => onDay(row, day.value, event.target.checked) }),
-        h('span', { style: { paddingTop: 10 } }, day.title)
-      )
-    ),
+    choiceButtons({
+      name: 'days',
+      label: words.daysLabel,
+      multiple: true,
+      disabled: busy,
+      items: weekdays.map(day => ({ key: String(day.value), label: day.title, checked: (row.days || []).indexOf(day.value) !== -1, onPick: checked => onDay(row, day.value, checked) })),
+    }),
     problem ? h('span', { role: 'alert', style: styles.failed }, problem) : null
   );
 }

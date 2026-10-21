@@ -4962,13 +4962,13 @@ function checkBoardTasks() {
   need(problems, input.isShownOnTv(undefined) === true && input.isShownOnTv(null) === true && input.isShownOnTv(true) === true && input.isShownOnTv(false) === false, 'only a switch turned off should read as off');
   const written = [];
   const drawn = value => input.ShowOnTvInput({ id: 'x', value: value, readOnly: false, onChange: patch => written.push(patch) });
-  const box = element => element.children[0];
+  const box = element => nodesWhere(element, node => node.type === 'input')[0];
   need(problems, box(drawn(undefined)).props.checked === true && box(drawn(true)).props.checked === true && box(drawn(false)).props.checked === false, 'the box should be ticked unless the switch was turned off');
   need(problems, written.length === 0, 'drawing the input should write nothing');
   box(drawn(undefined)).props.onChange({ target: { checked: false } });
   box(drawn(false)).props.onChange({ target: { checked: true } });
   need(problems, JSON.stringify(written) === JSON.stringify([{ type: 'set', value: false }, { type: 'set', value: true }]), 'a click should write the switch, off and then on');
-  need(problems, input.ShowOnTvInput({ value: true, readOnly: true, onChange: () => {} }).children[0].props.disabled === true, 'the box should be disabled when the field is read only');
+  need(problems, box(input.ShowOnTvInput({ value: true, readOnly: true, onChange: () => {} })).props.disabled === true, 'the box should be disabled when the field is read only');
 
   // No line of the sidebar lists tasks now: the Monday page shows them read only. No template and no New menu makes a task.
   need(problems, world.structure.oldTasksFolder === undefined, 'structure.js should have no folder of the old lists of tasks');
@@ -5205,12 +5205,12 @@ function checkCalendarsPage() {
   need(problems, items[1] && /Hidden by the rule Hide Pre-Season\./.test(wordsIn(items[1])), 'a hidden row should name its rule');
   const noKind = view.calendarsPage(model({ read: Object.assign({}, model().read, { entries: [{ id: 'team', name: 'Team calendar', show: true }] }) }), actions());
   need(problems, !/Meetings/.test(wordsIn(noKind)), 'a calendar with no kind has no chip');
-  const switches = nodesWhere(page, node => node.type === 'button' && node.props.role === 'switch');
-  need(problems, switches.length === 2 && switches.every(item => item.props.type === 'button' && typeof item.props.onClick === 'function' && item.props['aria-label']), 'every row should have a switch that is a button with a label');
-  need(problems, switches[0].props['aria-checked'] === true && switches[1].props['aria-checked'] === false, 'the switch should be on for an event the TV shows and off for a hidden one');
-  switches[0].props.onClick();
+  const switches = nodesWhere(page, node => node.type === 'input' && node.props.role === 'switch' && node.props['aria-label']);
+  need(problems, switches.length === 2 && switches.every(item => item.props.type === 'checkbox' && typeof item.props.onChange === 'function'), 'every row should have a switch that is a checkbox with a label');
+  need(problems, switches[0].props.checked === true && switches[1].props.checked === false, 'the switch should be on for an event the TV shows and off for a hidden one');
+  switches[0].props.onChange({ target: { checked: false } });
   need(problems, toggles.join() === 'Team meeting', 'a click on the switch should hand over the event');
-  need(problems, nodesWhere(view.calendarsPage(model(), actions({ busy: true })), node => node.props && node.props.role === 'switch').every(item => item.props.disabled === true) && nodesWhere(view.calendarsPage(model({ groups: null }), actions({ groups: null })), node => node.props && node.props.role === 'switch').every(item => item.props.disabled === true), 'the switches should be off while a change is saved and when the rules cannot be read');
+  need(problems, nodesWhere(view.calendarsPage(model(), actions({ busy: true })), node => node.props && node.props.role === 'switch' && node.props['aria-label']).every(item => item.props.disabled === true) && nodesWhere(view.calendarsPage(model({ groups: null }), actions({ groups: null })), node => node.props && node.props.role === 'switch' && node.props['aria-label']).every(item => item.props.disabled === true), 'the switches should be off while a change is saved and when the rules cannot be read');
 
   // The header lines
   need(problems, paragraphs.indexOf('Last downloaded 4 minutes ago from 1 calendar.') !== -1, 'the page should say when and from how many calendars it was downloaded');
@@ -6117,7 +6117,7 @@ async function checkScreenForm() {
   need(problems, tree && tree.props && typeof tree.props.value === 'object' && tree.props.value.style === 'original' && tree.props.value.editing === 'prime' && tree.props.value.teams.length === 2, 'the form should share the style, the team of the switch and the teams with the inputs inside it');
   need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'section')) === 'the usual form', 'the fields should be drawn by Studio below the map (renderDefault)');
   const radios = nodesWhere(tree, node => node.type === 'input' && node.props.type === 'radio');
-  need(problems, radios.length === 2 && wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'switch')) === 'Editing: Prime Nova' && radios[0].props.checked === true && radios[1].props.checked === false, 'the Editing switch should show Prime and Nova, with Prime picked');
+  need(problems, radios.length === 2 && wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'switch')) === 'Editing: \u2713 Prime Nova' && radios[0].props.checked === true && radios[1].props.checked === false, 'the Editing switch should show Prime and Nova, with Prime picked');
   need(problems, boxes(tree).map(letterOf).join('') === 'ABCDE' && boxes(tree).every(node => node.props.role === 'button' && node.props.tabIndex === 0 && typeof node.props.onClick === 'function' && typeof node.props.onKeyDown === 'function'), 'the map should have a box for each letter A to E, and each should be a button for the mouse and the keyboard');
 
   // a click on a letter opens its tab, and the open tab has its box highlighted
@@ -6592,7 +6592,7 @@ async function checkViewSeed() {
   await Promise.all(globalThis.studioEffects.map(effect => effect())).then(wait);
   need(problems, changes.length === 1 && Array.isArray(changes[0]) && patchOf(changes[0], 'key').value === 'nova' && patchOf(changes[0], 'team').value._ref === 'team-nova', 'opening an empty View should fill it once, in one change');
   const radios = nodesWhere(tree, node => node.type === 'input' && node.props.type === 'radio');
-  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'picker')) === 'Editing view: Robotics Prime Nova Condensed' && radios.map(node => node.props.checked).join() === 'false,false,true,false', 'the picker should show the four views with the open one picked');
+  need(problems, wordsIn(nodesWhere(tree, node => node.props && node.props['data-block'] === 'picker')) === 'Editing view: Robotics Prime \u2713 Nova Condensed' && radios.map(node => node.props.checked).join() === 'false,false,true,false', 'the picker should show the four views with the open one picked');
   radios[1].props.onChange();
   need(problems, JSON.stringify(navigated[0]) === JSON.stringify(['edit', { id: 'view-prime', type: 'view' }]), 'a choice in the picker should open that view (' + JSON.stringify(navigated[0]) + ')');
   const boxes = node => nodesWhere(node, item => item.type === 'g' && item.props && item.props['data-letter'] !== undefined);

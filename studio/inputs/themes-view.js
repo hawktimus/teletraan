@@ -13,6 +13,7 @@
 
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
+import { choiceButtons, controlStyle } from './field-editor.js';
 import { themeChoices, themeWeekdays, tidyThemeByWeekday } from './theme-ids.js';
 import { backgroundChoices, backgroundIds } from './background-ids.js';
 
@@ -111,22 +112,18 @@ export function dayRow(day, schedule, change, busy) {
   return h(
     'label',
     { key: day.name, style: styles.day },
+    controlStyle(),
     h('span', { style: styles.dayName }, day.title),
     h(
       'select',
-      { value: schedule[day.name], disabled: busy, style: styles.select, 'aria-label': day.title, onChange: event => change(day.name, event.target.value) },
+      { className: 'tt-field', value: schedule[day.name], disabled: busy, style: styles.select, 'aria-label': day.title, onChange: event => change(day.name, event.target.value) },
       themeChoices.map(theme => h('option', { key: theme.id, value: theme.id }, theme.title))
     )
   );
 }
 
 function backgroundChoice(choice, state, changeBackground) {
-  return h(
-    'label',
-    { key: choice.id, style: styles.choice },
-    h('input', { type: 'radio', name: 'background', value: choice.id, checked: state.background === choice.id, disabled: state.busy, style: styles.radio, onChange: () => changeBackground(choice.id) }),
-    h('span', null, h('strong', null, choice.title), ' ', choice.description)
-  );
+  return { key: choice.id, label: h('span', null, h('strong', null, choice.title), ' ', choice.description), checked: state.background === choice.id, onPick: () => changeBackground(choice.id) };
 }
 
 export function backgroundBlock(state, changeBackground) {
@@ -136,7 +133,7 @@ export function backgroundBlock(state, changeBackground) {
     { 'data-block': 'background' },
     h('h2', { style: styles.subheading }, words.background),
     h('p', { style: styles.muted }, words.backgroundHelp),
-    backgroundChoices.map(choice => backgroundChoice(choice, state, changeBackground))
+    choiceButtons({ name: 'background', label: words.background, disabled: state.busy, items: backgroundChoices.map(choice => backgroundChoice(choice, state, changeBackground)) })
   );
 }
 
