@@ -305,7 +305,7 @@ await check('Show a panel draws the menus of the chosen panel from the same choi
   const monday = { departments: [{ value: 'build', title: 'Build' }], lists: [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }], charts: [{ value: 'status', title: 'Status' }], teams: [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }] };
   const choices = { monday: monday };
   assert.deepEqual(panelFieldsOf('monday-department', {}, choices).map(item => item.field), ['department', 'list', 'team']);
-  assert.deepEqual(panelFieldsOf('monday-charts', {}, choices).map(item => item.field), ['chart', 'team']);
+  assert.deepEqual(panelFieldsOf('monday-charts', {}, choices).map(item => item.field), ['chart', 'department', 'team']);
   assert.deepEqual(panelFieldsOf('tasks', {}, choices), []);
   assert.deepEqual(panelFieldsOf('roster', {}, { monday: monday, roster: { teams: [{ value: 'a', title: 'A' }], departments: [{ value: 'b', title: 'B' }] } }).map(item => item.field), ['team', 'department']);
   const html = showFieldsHtml('monday-department', { department: 'build' }, choices);

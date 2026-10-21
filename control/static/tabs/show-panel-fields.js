@@ -1,5 +1,5 @@
 // The settings menus of Show a panel on the Display tab. They are the menus the row editor shows for a row of the same panel
-// (Department, List and Team for Department tasks; Chart and Team for TV charts), built here from the same panel choices the
+// (Department, List and Team for Department tasks; Chart, Department and Team for TV charts), built here from the same panel choices the
 // service sends (choices.monday, and choices.roster for the roster when the service has them). Kept in one small file so it can be
 // swapped for the field list of display-rows.js once that file exports one.
 //

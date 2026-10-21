@@ -10,7 +10,8 @@ const scrollMs = 600;
 const round = value => Math.round(value * 10) / 10;
 
 async function runScroll(ctx, panel, look) {
-  const page = await ctx.open({ panel: panel, style: look });
+  // The Prime team's tasks and the both-teams tasks: Both alone is only the tasks with no team, which are fewer than a page of rows
+  const page = await ctx.open({ panel: panel, style: look, team: 'prime' });
   try {
     // A look asked for in the address is put on by a swap, and a play made during it is lost
     await page.waitForFunction(() => !window.teletraanTest.busy(), null, { timeout: 20000 }).catch(() => {});
