@@ -91,6 +91,7 @@ A task has a Team in Monday: Prime, Nova or General (stored with no team, for bo
 - The view that plays is decided by the Team of the row when the stored view is Robotics, and the stored view is never changed. A row stored in the Prime or Nova view plays there whatever its Team says, and a Team Both row there has that team's tasks and the General ones, as it always had.
 - Both on a Robotics row is only the General tasks. A department with no General task (CNC, for example) is left out of Condensed, and the Rotation board says so under the row.
 - The Rotation board and the Display tab say Plays in the Condensed view, Plays in the Prime view or Plays in the Nova view on a Robotics row.
+- A row held from Show a panel on the control page follows the same rules. The wall plays the row of the picture (`holdRow`, docs/control-page.md), so Department tasks for Build, Open and Prime plays in the Prime view, and the same row with Both teams from Robotics plays in Condensed. A department with no task to show gives no page, and the large frame has nothing to show until the hold ends.
 - A Subteam roster row has the same Team: Prime or Nova counts that team's people, and in a Robotics block plays in that team's view. Both counts the people of both teams and the page names both, such as PRIME + NOVA.
 
 ## Putting a department on the TV
