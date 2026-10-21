@@ -6,8 +6,8 @@
 
 import assert from 'node:assert/strict';
 import * as push from '../control/routes/push.js';
-import { buildCancel, buildPush, buildReset, noticeId, pushesOf, weekdayOf } from '../control/support/push.js';
-import { clockOffset, leftWords, nowTheme, previewTarget, secondsLeft, weekDates } from '../control/static/push-lib.js';
+import { buildCancel, buildPush, buildReset, holdRowText, noticeId, pushesOf, weekdayOf } from '../control/support/push.js';
+import { clockOffset, leftWords, nowTheme, previewTarget, pushRow, rowWords, secondsLeft, weekDates } from '../control/static/push-lib.js';
 import { activeHtml, announceHtml, heldHtml, holdHtml, namesOf, onWallHtml, themeCardHtml } from '../control/static/tabs/push-parts.js';
 import { makeWorld } from './helpers/control-world.mjs';
 
@@ -48,7 +48,7 @@ function keepSanity(world, teams = [{ _id: 'team-prime', code: 'prime', name: 'H
 await check('each push writes the field the wall reads and holds for the minutes asked, 1 to 60', () => {
   assert.deepEqual(buildPush('theme', { theme: 'foundry', minutes: 5 }, at).set, { previewTheme: { theme: 'foundry', until: plus(5) } });
   assert.deepEqual(buildPush('view', { key: 'family', minutes: 60 }, at).set, { showView: { key: 'family', until: plus(60) } });
-  assert.deepEqual(buildPush('panel', { panel: 'monday-board' }, at).set, { holdPanel: { panel: 'monday-board', until: plus(15) } });
+  assert.deepEqual(buildPush('panel', { panel: 'monday-board' }, at).set, { holdPanel: { panel: 'monday-board', until: plus(15) }, holdRow: '' });
   assert.deepEqual(buildPush('pause', { minutes: 1 }, at).set, { pauseRotation: { until: plus(1) } });
   assert.deepEqual(buildPush('hidden', { transition: 'redEyes' }, at).set, { hiddenRequest: { kind: 'redEyes', requestedAt: at.toISOString() } });
   [0, 61, 1.5, 'abc', true].forEach(minutes => {
@@ -71,14 +71,14 @@ await check('an announcement is one published document with a fixed id, 90 chara
   assert.throws(() => buildPush('announcement', { text: 'Hi', level: 'loud' }, at), error => error.status === 400);
 });
 
-await check('cancel clears one field, and reset clears the four holds, the hidden request and nothing else', () => {
+await check('cancel clears one field, and reset clears the four holds and the row of the panel hold, the hidden request and nothing else', () => {
   assert.deepEqual(buildCancel('theme').set, { previewTheme: { theme: '', until: '' } });
-  assert.deepEqual(buildCancel('panel').set, { holdPanel: { panel: '', until: '' } });
+  assert.deepEqual(buildCancel('panel').set, { holdPanel: { panel: '', until: '' }, holdRow: '' });
   assert.deepEqual(buildCancel('hidden').unset, ['hiddenRequest']);
   assert.equal(buildCancel('announcement', at).endNotice, plus(0));
   assert.throws(() => buildCancel('everything'), error => error.status === 400);
   const reset = buildReset();
-  assert.deepEqual(Object.keys(reset.set).sort(), ['holdPanel', 'pauseRotation', 'previewTheme', 'showView']);
+  assert.deepEqual(Object.keys(reset.set).sort(), ['holdPanel', 'holdRow', 'pauseRotation', 'previewTheme', 'showView']);
   assert.deepEqual(reset.unset, ['hiddenRequest']);
 });
 
@@ -307,15 +307,96 @@ await check('Show a panel draws the menus of the chosen panel from the same choi
   assert.deepEqual(panelFieldsOf('monday-department', {}, choices).map(item => item.field), ['department', 'list', 'team']);
   assert.deepEqual(panelFieldsOf('monday-charts', {}, choices).map(item => item.field), ['chart', 'department', 'team']);
   assert.deepEqual(panelFieldsOf('tasks', {}, choices), []);
-  assert.deepEqual(panelFieldsOf('roster', {}, { monday: monday, roster: { teams: [{ value: 'a', title: 'A' }], departments: [{ value: 'b', title: 'B' }] } }).map(item => item.field), ['team', 'department']);
+  assert.deepEqual(panelFieldsOf('roster', {}, { monday: monday, roster: { teams: [{ value: 'a', title: 'A' }], departments: [{ value: 'b', title: 'B' }] } }).map(item => item.field), ['department', 'team']);
   const html = showFieldsHtml('monday-department', { department: 'build' }, choices);
   assert.match(html, /<select data-show-field="department">/);
   assert.match(html, /data-show-field="list"/);
-  assert.deepEqual(settingsOf('monday-charts', { chart: 'status', department: 'build', team: '' }, choices), { chart: 'status' }, 'only this panel\'s menus, none empty');
+  assert.deepEqual(settingsOf('monday-charts', { chart: 'status', department: 'build', team: '' }, choices), { chart: 'status', department: 'build', team: '' }, 'only this panel\'s menus; an empty pick is kept because it takes the setting off the row');
   const rows = [{ _key: 'a', panel: 'monday-department', department: 'build', list: 'open' }];
   const target = previewTarget({ theme: '', view: '', panel: 'monday-department', settings: { department: 'design', list: 'done' } }, rows, null, {}, {});
   assert.equal(target.row.department, 'design');
   assert.equal(target.row.list, 'done');
+  const both = previewTarget({ theme: '', view: '', panel: 'monday-department', settings: { team: '' } }, [{ _key: 'a', panel: 'monday-department', department: 'build', team: 'prime' }], null, {}, {});
+  assert.equal(both.row.team, undefined, 'Both teams takes the team off the row of the Rotation');
+  assert.equal(both.row.department, 'build');
+});
+
+const mondayChoices = {
+  monday: {
+    departments: [{ value: 'build', title: 'Build' }, { value: 'business', title: 'Business' }, { value: 'electrical', title: 'Electrical' }],
+    lists: [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }],
+    charts: [{ value: 'status', title: 'Status' }, { value: 'progress', title: 'Progress' }],
+    teams: [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }, { value: 'nova', title: 'Nova' }],
+  },
+};
+const wordNames = { panels: { 'monday-department': 'Department tasks', 'monday-charts': 'TV charts', roster: 'Subteam roster', tasks: 'Tasks' }, views: { general: 'Robotics', prime: 'Prime', nova: 'Nova', family: 'Condensed' }, choices: mondayChoices };
+
+await check('a held row is named in words: the panel, its menus and the view it plays in', () => {
+  assert.equal(rowWords({ view: 'prime', panel: 'monday-department', department: 'build', list: 'open', team: 'prime' }, wordNames), 'Monday: Department tasks, Build, Open, Prime view');
+  assert.equal(rowWords({ view: 'family', panel: 'monday-department', department: 'business', list: 'open' }, wordNames), 'Monday: Department tasks, Business, Open, Condensed view');
+  assert.equal(rowWords({ view: 'robotics', panel: 'monday-charts', chart: 'progress', department: 'electrical' }, wordNames), 'Monday: TV charts, Progress, Electrical, Condensed view', 'a Robotics Monday row of both teams plays in Condensed');
+  assert.equal(rowWords({ view: 'robotics', panel: 'roster', team: 'nova', department: 'electrical' }, wordNames), 'Subteam roster, Electrical, Nova view');
+  assert.equal(rowWords({ panel: 'tasks' }, wordNames), 'Tasks', 'a row with no view names none');
+  assert.equal(rowWords({ view: 'robotics', panel: 'tasks' }, wordNames), 'Tasks, Robotics view');
+  assert.ok(!/[–—!]/.test(rowWords({ view: 'prime', panel: 'monday-department', department: 'build' }, wordNames)));
+});
+
+await check('the row a panel push sends is the row of the picture, with the seconds of the first row of the Rotation', () => {
+  const rows = [{ _key: 'a', view: 'robotics', panel: 'monday-department', department: 'build', list: 'done', seconds: 30 }];
+  const draft = { theme: '', view: 'prime', panel: 'monday-department', settings: { department: 'design', list: 'open', team: 'prime' } };
+  const row = pushRow(draft, rows, null);
+  assert.deepEqual(row, { panel: 'monday-department', view: 'prime', department: 'design', list: 'open', team: 'prime', seconds: 30 });
+  const target = previewTarget(draft, rows, null, {}, {});
+  Object.keys(target.row).forEach(name => assert.equal(row[name], target.row[name], 'the picture draws ' + name + ' as it is sent'));
+  assert.equal(pushRow({ theme: 'retro', view: '', panel: '', settings: {} }, rows, null), null, 'no panel, no row');
+});
+
+await check('a panel push writes the row for the wall, a push with no row clears the old one, and Cancel, Reset and the Status hold clear it', async () => {
+  const world = await makeWorld([push]);
+  const store = keepSanity(world);
+  const row = { view: 'prime', panel: 'monday-department', department: 'build', list: 'open', team: 'prime', seconds: 30 };
+  const sent = await world.router.call('POST', '/push', { body: { kind: 'panel', panel: 'monday-department', minutes: 30, row: row } });
+  assert.equal(sent.status, 200);
+  assert.deepEqual(JSON.parse(store.dashboardSettings.holdRow), row);
+  assert.ok(store.dashboardSettings.holdRow.length <= 400);
+  assert.equal(store.dashboardSettings.holdPanel.panel, 'monday-department');
+  assert.equal(JSON.stringify(store.dashboardSettings).includes('skFAKE'), false);
+
+  const state = (await world.router.call('GET', '/push')).json;
+  assert.deepEqual(state.pushes[0].row, row, 'the strip can name the row');
+
+  await world.router.call('POST', '/push', { body: { kind: 'panel', panel: 'monday-department', minutes: 5 } });
+  assert.equal(store.dashboardSettings.holdRow, '', 'a push with no row clears the row of the push before');
+
+  await world.router.call('POST', '/push', { body: { kind: 'panel', panel: 'monday-department', minutes: 5, row: row } });
+  await world.router.call('POST', '/push/cancel', { body: { kind: 'panel' } });
+  assert.deepEqual([store.dashboardSettings.holdRow, store.dashboardSettings.holdPanel], ['', { panel: '', until: '' }]);
+
+  await world.router.call('POST', '/push', { body: { kind: 'panel', panel: 'monday-department', minutes: 5, row: row } });
+  await world.router.call('POST', '/push/reset', { body: {} });
+  assert.equal(store.dashboardSettings.holdRow, '', 'Reset to today\'s schedule ends the row');
+
+  const { buildRequest } = await import('../control/support/requests.js');
+  assert.equal(buildRequest('hold', { panel: 'tasks', minutes: 5 }, at).set.holdRow, '', 'the Status hold has no row');
+  assert.equal(buildRequest('schedule', {}, at).set.holdRow, '', 'Back to schedule ends the row');
+});
+
+await check('a row the wall could not play is refused before Sanity is asked, and a row is cleaned like a row of the Rotation', async () => {
+  assert.throws(() => holdRowText({ view: 'prime', panel: 'monday-charts' }, 'monday-department'), error => error.status === 400);
+  assert.throws(() => holdRowText('text', 'tasks'), error => error.status === 400);
+  assert.throws(() => holdRowText({ view: 'sideways', panel: 'tasks' }, 'tasks'), error => error.status === 400);
+  assert.equal(holdRowText(undefined, 'tasks'), '');
+  assert.equal(holdRowText('', 'tasks'), '');
+  assert.deepEqual(JSON.parse(holdRowText({ view: 'family', panel: 'monday-department', department: 'Business', list: 'later', junk: 1, shown: false }, 'monday-department')), { view: 'family', panel: 'monday-department', department: 'business', list: 'open' });
+  assert.deepEqual(JSON.parse(holdRowText({ panel: 'tasks' }, 'tasks')), { panel: 'tasks' }, 'no view stays no view');
+  assert.deepEqual(JSON.parse(holdRowText({ view: 'general', panel: 'tasks', seconds: 500 }, 'tasks')), { view: 'robotics', panel: 'tasks', seconds: 120 });
+
+  const world = await makeWorld([push]);
+  keepSanity(world);
+  const before = world.fetched.length;
+  const refused = await world.router.call('POST', '/push', { body: { kind: 'panel', panel: 'monday-department', minutes: 5, row: { view: 'prime', panel: 'roster' } } });
+  assert.equal(refused.status, 400);
+  assert.equal(world.fetched.length, before);
 });
 
 console.log(passed + ' passed');

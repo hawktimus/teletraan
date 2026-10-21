@@ -184,10 +184,12 @@ export const defaultSettings = {
   competitionPreviewRequest: { requestedAt: '' },
   // Requests from the control page (core/screen-requests.js). Each ends at its until time.
   //   holdPanel      keep one panel on the large frame
+  //   holdRow        the row that hold plays, as JSON of at most 400 characters (empty: the first row of the Rotation with the panel)
   //   showView       show one view (general, prime, nova or family)
   //   previewTheme   show one theme (original, cybertron, retro or foundry)
   //   pauseRotation  stop the rotation
   holdPanel: { panel: '', until: '' },
+  holdRow: '',
   showView: { key: '', until: '' },
   previewTheme: { theme: '', until: '' },
   pauseRotation: { until: '' },

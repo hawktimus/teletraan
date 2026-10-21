@@ -20,8 +20,8 @@ function options(list, selected) {
 }
 
 // The names the words of a push use, from the answer of GET /control/api/push and the panel titles of the Display tab
-export function namesOf(state, titles) {
-  const names = { themes: {}, views: {}, panels: titles || {}, hidden: {} };
+export function namesOf(state, titles, choices = null) {
+  const names = { themes: {}, views: {}, panels: titles || {}, hidden: {}, choices: choices };
   (state.themes || []).forEach(item => { names.themes[item.value] = item.title; });
   (state.views || []).forEach(item => { names.views[item.key] = item.name; });
   (state.hiddenKinds || []).forEach(item => { names.hidden[item.value] = item.title; });
@@ -118,7 +118,7 @@ export function showSettingsHtml(draft, choices, rowOfPanel = null) {
   if (!draft.panel) return '';
   const menus = showFieldsHtml(draft.panel, Object.assign({}, rowOfPanel, draft.settings), choices);
   if (menus === '') return '';
-  return menus + '<p class="note">The picture on the right draws these settings. The wall holds the rows of this panel that are in the Rotation.</p>';
+  return menus + '<p class="note">The picture on the right draws these settings, and the wall shows the same row.</p>';
 }
 
 // ----- card 2: Theme -----

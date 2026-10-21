@@ -16,7 +16,7 @@ import { buildCancel, buildPush, buildReset, endNoticeMutation, noticeId, notice
 import { checkHiddenOn } from './request.js';
 import { hiddenTransitions } from '../../dashboard/core/hidden-transitions.js';
 
-const stateQuery = '{ "settings": *[_id == "dashboardSettings"][0] { holdPanel, showView, previewTheme, pauseRotation, hiddenRequest, themeByWeekday, generalViewTitle, transitionSeconds }, ' +
+const stateQuery = '{ "settings": *[_id == "dashboardSettings"][0] { holdPanel, holdRow, showView, previewTheme, pauseRotation, hiddenRequest, themeByWeekday, generalViewTitle, transitionSeconds }, ' +
   '"zone": *[_id == "theme"][0].timeZone, ' +
   '"notice": *[_id == "' + noticeId + '"][0] { text, start, end, level, "team": team->code }, ' +
   '"teams": *[_type == "team"] | order(order asc) { _id, code, name, shortName } }';

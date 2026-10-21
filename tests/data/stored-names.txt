@@ -181,6 +181,7 @@ dashboardSettings.hiddenRequest.requestedAt
 dashboardSettings.holdPanel
 dashboardSettings.holdPanel.panel
 dashboardSettings.holdPanel.until
+dashboardSettings.holdRow
 dashboardSettings.leadershipPortrait
 dashboardSettings.logoAnimations
 dashboardSettings.logoEntrance

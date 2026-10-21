@@ -9,7 +9,7 @@ import { activeHtml, announceHtml, heldHtml, namesOf, onWallHtml, pausedIn, show
 import { doneWords, hiddenRunHtml, pauseStateWords } from './render.js';
 import { settingsOf } from './show-panel-fields.js';
 import { titlesOf } from './display-parts.js';
-import { clockOffset, holdWords, leftWords, previewTarget, secondsLeft, usualHold } from '../push-lib.js';
+import { clockOffset, holdWords, leftWords, previewTarget, pushRow, secondsLeft, usualHold } from '../push-lib.js';
 import { wireMoreTools } from '../guide.js';
 
 const pollSeconds = 15;
@@ -74,7 +74,7 @@ export function startPush(root, boxes, hooks) {
 
   function paintAll() {
     if (!state) return;
-    names = namesOf(state, titlesOf(hooks.choices()));
+    names = namesOf(state, titlesOf(hooks.choices()), hooks.choices());
     boxes.now.innerHTML = onWallHtml(state, draft, hooks.choices(), names, nowMs());
     boxes.theme.innerHTML = themeCardHtml(state, draft, names);
     boxes.announce.innerHTML = announceHtml(state, draft, lastReport, request);
@@ -84,11 +84,15 @@ export function startPush(root, boxes, hooks) {
     if (hooks.onPainted) hooks.onPainted();
   }
 
+  // What is picked, with the menus that belong to the panel. The picture and the push are both made from this.
+  function pickedDraft() {
+    return Object.assign({}, draft, { settings: settingsOf(draft.panel, draft.settings, hooks.choices()) });
+  }
+
   function showPreview() {
     const pictures = hooks.pictures();
     if (!pictures || !state) return;
-    const picked = Object.assign({}, draft, { settings: settingsOf(draft.panel, draft.settings, hooks.choices()) });
-    pictures.setTarget(previewTarget(picked, hooks.rows(), hooks.selectedRow(), titlesOf(hooks.choices()), names));
+    pictures.setTarget(previewTarget(pickedDraft(), hooks.rows(), hooks.selectedRow(), titlesOf(hooks.choices()), names));
   }
 
   async function load() {
@@ -106,7 +110,7 @@ export function startPush(root, boxes, hooks) {
       paintAll();
       if (hooks.onState) hooks.onState(state);
     } else {
-      names = namesOf(state, titlesOf(hooks.choices()));
+      names = namesOf(state, titlesOf(hooks.choices()), hooks.choices());
       paintActive();
       paintTheme();
       setPaused(pausedIn(state.pushes));
@@ -188,7 +192,7 @@ export function startPush(root, boxes, hooks) {
     putResult(button, 'working', 'Sending.');
     let answer = { ok: true };
     if (draft.view) answer = await api('POST', '/push', { kind: 'view', key: draft.view, minutes: draft.hold });
-    if (answer.ok && draft.panel) answer = await api('POST', '/push', { kind: 'panel', panel: draft.panel, minutes: draft.hold });
+    if (answer.ok && draft.panel) answer = await api('POST', '/push', { kind: 'panel', panel: draft.panel, minutes: draft.hold, row: pushRow(pickedDraft(), hooks.rows(), hooks.selectedRow()) });
     button.disabled = false;
     if (gone) return;
     putResult(button, answer.ok ? 'done' : 'bad', answer.ok ? 'Showing ' + (panel && view ? panel + ' in ' + view : panel || view) + ' for ' + forHold + '.' : answer.error);

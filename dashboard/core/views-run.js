@@ -32,7 +32,7 @@ import { resolveTheme } from './theme.js';
 import { noteTransition, transitionKindNow, transitionSecondsOf } from './rotation.js';
 import { startReforms } from './reform-run.js';
 import { heldView, holdView } from './view-apply.js';
-import { cycleKey, findViewWithPanel, holdPanelId, layoutOfStep, lookForViewStep, pairSide, stepInView, tickView, viewPlan } from './views.js';
+import { cycleKey, findViewWithPanel, holdPanelId, holdRowOf, layoutOfStep, lookForViewStep, pairSide, stepInView, tickView, viewPlan } from './views.js';
 
 let getContent = null;
 
@@ -190,16 +190,21 @@ function actOnRequests(content, now) {
     checkTheme();
     moveOn(['grid1']); // the theme goes on in the swap of the next page change, so that comes now and not at the end of this page
   }
-  if (asked.holdPanel !== wasHolding) {
-    wasHolding = asked.holdPanel;
-    holdPanelId(wasHolding);
+  // A new row for the same panel (other department, list, chart or team) starts the lists over too
+  const holding = asked.holdPanel + (asked.heldRow ? JSON.stringify(asked.heldRow) : '');
+  if (holding !== wasHolding) {
+    wasHolding = holding;
+    holdPanelId(asked.holdPanel);
+    holdRowOf(asked.heldRow);
     startListsOver();
     moveOn(['grid1']);
   }
 
   let view = asked.showView;
   if (asked.holdPanel !== '') {
-    if (view === '') view = findViewWithPanel(content, asked.holdPanel, now) || cycleKey();
+    // The view the held row names wins over a view held before it
+    if (asked.heldRowView !== '') view = asked.heldRowView;
+    else if (view === '') view = findViewWithPanel(content, asked.holdPanel, now) || cycleKey();
   }
   return { view: view, paused: asked.pauseRotation || asked.holdPanel !== '' };
 }
