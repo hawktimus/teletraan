@@ -104,6 +104,12 @@ the TV the window is exactly that size and nothing is scaled. On a smaller windo
 across and down, and centres it. The page never reflows: there are no media queries,
 no sizes in the window's units and no viewport tag.
 
+### Fit the screen
+
+`core/screen-fit.js` does the fit. Dashboard Settings, Advanced, Screen fit has four settings. Fit is Auto (the whole picture inside the window, centred, the fit the screen always had), Fill the window (covers the window and crops the overflow), Fit inside (the same as Auto, never snapped to 100 percent) or No scaling. Size is a percent from 50 to 200 on top of the fit, and Move right and Move down are pixels from -400 to 400, for a TV that crops its edges (overscan, which 95 percent and a small move answers). A change applies at once with no reload. The address wins: `?screenfit=`, `?screenscale=`, `?screenx=`, `?screeny=`. The wall reports its window, pixel ratio, screen size and unused share to the control page, which has a one button fix (docs/control-page.md, "The Screen section").
+
+`computer/scripts/display.sh` makes the framebuffer 1920 by 1080 and the browser window follows it (`--force-device-scale-factor=1`). A 4K TV that lists 1920x1080 is set to that mode, and one that lists only 3840x2160 is set to it at half scale, so the window is 1920 by 1080 either way. To use a 4K TV at its own size, put `KIOSK_RESOLUTION=3840x2160` in `local.env` and restart the screen: the window is then 3840 by 2160 and the dashboard draws at twice the size. A value that is not a size is ignored.
+
 So every part of a layout is placed in pixels, counted from the top left corner of
 the canvas. This holds for the standard, sidebar and bar layouts, for the mirror and
 for the war clock. A new layout does the same (see "Adding a layout"), and gives
