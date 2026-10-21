@@ -1,0 +1,11 @@
+[Unit]
+Description=Clean up expired items in Studio every night
+
+[Timer]
+# 03:40 in the time zone of the Teletraan computer, after the backup of 03:15. A computer that was off at that time runs
+# it when it next starts. The script itself does nothing while the switch in Dashboard Settings is off.
+OnCalendar=*-*-* 03:40:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
