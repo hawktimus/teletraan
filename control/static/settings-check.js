@@ -49,7 +49,8 @@ function listProblem(field, value) {
 // for the advice the schema marks as a warning.
 export function problemWith(field, value, parent, level = 'error') {
   const rules = field.validation || {};
-  const say = (name, fallback) => (rules.messages && rules.messages[name]) || fallback;
+  const own = level === 'error' ? rules : rules.warn || {};
+  const say = (name, fallback) => (own.messages && own.messages[name]) || fallback;
   const empty = nothing(value) || (Array.isArray(value) && value.length === 0 && field.widget === 'tags');
 
   if (nothing(value) || (Array.isArray(value) && value.length === 0 && rules.required)) {

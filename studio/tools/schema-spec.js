@@ -75,6 +75,7 @@ function limitsOf(validation) {
         // the first limit of a kind wins when two rules disagree, so the strictest is not hidden by order
         if (target[name] === undefined || (name === 'max' && value < target[name]) || (name === 'min' && value > target[name])) target[name] = value;
         if (record.message && record.level !== 'warning' && out.messages[name] === undefined) out.messages[name] = record.message;
+        if (record.message && record.level === 'warning') (target.messages = target.messages || {})[name] = record.message;
       }
     });
     record.customs.forEach(fn => customs.push({ fn: fn, level: record.level, message: record.message }));
