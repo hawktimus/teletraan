@@ -4,6 +4,8 @@
 // here touches the page, so Node can try it.
 
 import { screenWords } from './screen-plan.js';
+import { choiceHtml } from '../choice.js';
+import { lead, leadIdOf } from '../guide.js';
 
 export function esc(value) {
   return String(value === undefined || value === null ? '' : value)
@@ -33,8 +35,9 @@ export function row(label, value) {
   return '<div class="row"><dt>' + esc(label) + '</dt><dd>' + value + '</dd></div>';
 }
 
-export function card(title, body, extra = '') {
-  return '<section class="card ' + extra + '"><h2>' + esc(title) + '</h2>' + body + '</section>';
+// leadId names the sentence under the heading (guide.js)
+export function card(title, body, extra = '', leadId = '') {
+  return '<section class="card ' + extra + '"><h2>' + esc(title) + '</h2>' + (leadId ? lead(leadId) : '') + body + '</section>';
 }
 
 const colorWords = { green: 'Up to date', amber: 'Late', red: 'Failed' };
@@ -117,27 +120,35 @@ export function hiddenRunHtml(report) {
   return '<h3>Last hidden transition</h3><p data-hidden-last>' + esc(words.last) + '</p>' + (words.types ? '<p class="note" data-hidden-types>' + esc(words.types) + '</p>' : '');
 }
 
+// The plain word for an id the wall stores: the table the control service sends (routes/now.js) first, then the id spelled out
+export function nameOf(names, group, id) {
+  const table = names && names[group];
+  if (table && table[id]) return table[id];
+  return id === undefined || id === null || id === '' ? '' : words(id);
+}
+
 export function nowCardHtml(now, at = new Date()) {
+  const names = now && now.names;
   if (!wallReport(now)) {
-    const words = now && now.message ? now.message : 'No report from the wall yet';
-    const last = now && now.report ? '<p>Last seen: ' + esc(now.report.panel || 'no panel') + ', view ' + esc(now.report.view || 'not known') + '.</p>' : '';
-    return card('Now on the wall', '<p class="quiet">' + esc(words) + '</p>' + last, 'grey');
+    const words = now && now.message ? now.message : 'No report from the wall yet. The TV may be starting, or the page on it may have stopped. Look at the TV, then try again in a minute.';
+    const last = now && now.report ? '<p>Last seen: ' + esc(nameOf(names, 'panels', now.report.panel) || 'no panel') + ', ' + esc(nameOf(names, 'views', now.report.view) || 'view not known') + ' view.</p>' : '';
+    return card('Now on the wall', '<p class="quiet">' + esc(words) + '</p>' + last, 'grey', 'status.now');
   }
   const report = now.report;
   const rows = (now.rows || []).map(line => '<li>' + esc(line) + '</li>').join('');
   return card('Now on the wall', '<dl>' +
     row('Build', esc(report.build || 'not known')) +
-    row('View', esc(report.view || 'not known')) +
-    row('Theme', esc(report.theme || 'not known')) +
-    row('Layout', esc(report.layout || 'standard')) +
-    row('Panel', esc(report.panel || 'not known')) +
-    row('Team', esc(report.team || 'both')) +
+    row('View', esc(nameOf(names, 'views', report.view) || 'not known')) +
+    row('Theme', esc(nameOf(names, 'themes', report.theme) || 'not known')) +
+    row('Layout', esc(nameOf(names, 'layouts', report.layout || 'standard'))) +
+    row('Panel', esc(nameOf(names, 'panels', report.panel) || 'not known')) +
+    row('Team', esc(nameOf(names, 'teams', report.team || 'both'))) +
     row('Page', esc(report.page || '1')) +
     row('Screen', esc(screenWords(report.screen))) +
     row('Hold', esc(report.hold || (report.pause ? 'rotation paused' : 'none'))) +
     (report.heldNote ? row('Held view', esc(report.heldNote)) : '') +
     row('Age of this report', esc(agoText(now.receivedAt, at))) + '</dl>' +
-    (rows ? '<ul class="rows">' + rows + '</ul>' : ''));
+    (rows ? '<ul class="rows">' + rows + '</ul>' : ''), '', 'status.now');
 }
 
 // A copy of the screen at 1920 by 1080, drawn smaller by the page (tabs/now.js sets the scale from the width of the box)
@@ -168,7 +179,7 @@ export function previewCardHtml() {
     '<p class="note" data-preview-open hidden><a href="/mirror/frame.jpg" target="_blank" rel="noopener">Open the picture in a new tab</a></p>' +
     '<p class="note" data-preview-black hidden>Status only shows. To restart the screen, open <a href="#settings/sync">Settings, Sync and restart</a>.</p>' +
     '<p class="note" data-preview-line hidden></p>' +
-    '<p class="note" data-preview-follow-note hidden>' + esc(followNote) + '</p>');
+    '<p class="note" data-preview-follow-note hidden>' + esc(followNote) + '</p>', '', 'status.preview');
 }
 
 // The mirror: a moving picture of the TV that the Teletraan computer makes (computer/scripts/mirror.py). The words of
@@ -232,13 +243,13 @@ function words(id) {
 // reported. Only the panel, team, theme, view and layout are in the address, so the frame changes only when one of
 // them does. The page number is shown in the line and is not in the address: the dashboard address holds a panel at
 // its first page.
-export function followFor(report) {
+export function followFor(report, names) {
   if (!report || typeof report !== 'object' || String(report.panel || '') === '') return { src: '', line: followLine(null) };
 
   const notes = [];
   let panel = String(report.panel);
   if (noAddress.includes(panel)) {
-    notes.push(words(panel) + ' cannot be copied, so the copy shows ' + nearestPanel);
+    notes.push(nameOf(names, 'panels', panel) + ' cannot be copied, so the copy shows ' + nameOf(names, 'panels', nearestPanel));
     panel = nearestPanel;
   } else if (mondayPanels.test(panel)) {
     notes.push('the copy has no department for this card');
@@ -255,7 +266,7 @@ export function followFor(report) {
   params.push('still=1');
 
   const page = String(report.page || '').trim();
-  const shown = [words(panel) + (page !== '' && page !== '1' ? ' (page ' + page + ')' : ''), team === '' ? 'both teams' : team, theme === '' ? 'theme not known' : theme];
+  const shown = [nameOf(names, 'panels', panel) + (page !== '' && page !== '1' ? ' (page ' + page + ')' : ''), team === '' ? 'both teams' : nameOf(names, 'teams', team), theme === '' ? 'theme not known' : nameOf(names, 'themes', theme)];
   return { src: '/dashboard/?' + params.join('&'), line: followLine(shown, notes) };
 }
 
@@ -268,11 +279,16 @@ function button(action, label, data = '', kind = '') {
   return '<button type="button" class="act ' + kind + '" data-action="' + esc(action) + '"' + data + '>' + esc(label) + '</button>';
 }
 
-// A choice that sits under a heading of its own names itself for a screen reader and shows no second label
+// A menu for a long list. A short list is a row of buttons (pickButtons).
 function choice(name, items, label, plain = false) {
   const list = items.map(item => '<option value="' + esc(item.value) + '">' + esc(item.label) + '</option>').join('');
   if (plain) return '<label class="pick"><select name="' + esc(name) + '" aria-label="' + esc(label) + '">' + list + '</select></label>';
   return '<label class="pick"><span>' + esc(label) + '</span><select name="' + esc(name) + '">' + list + '</select></label>';
+}
+
+function pickButtons(name, items, label, selected) {
+  const first = items.some(item => item.value === selected) ? selected : (items[0] || {}).value;
+  return choiceHtml({ name: name, label: label, items: items.map(item => ({ value: item.value, label: item.label, checked: item.value === first })) });
 }
 
 function minuteField(name, label, usual, least, most) {
@@ -350,7 +366,7 @@ export function heldLine(requests, names = {}, now = new Date()) {
   const view = r.showView && r.showView.key && live(r.showView.until);
   if (view) parts.push('view ' + ((names.view && names.view[r.showView.key]) || words(r.showView.key)) + ' ' + ending(view));
   const panel = r.holdPanel && r.holdPanel.panel && live(r.holdPanel.until);
-  if (panel) parts.push('panel ' + r.holdPanel.panel + ' ' + ending(panel));
+  if (panel) parts.push('panel ' + ((names.panel && names.panel[r.holdPanel.panel]) || words(r.holdPanel.panel)) + ' ' + ending(panel));
   const pause = r.pauseRotation && live(r.pauseRotation.until);
   if (pause) parts.push('rotation paused ' + ending(pause));
 
@@ -374,8 +390,8 @@ function previewBlock(kind) {
 
 // A group of controls. On a wide screen every group is open and plain; on a phone the groups fold and one is open at a time
 // (tabs/status.js).
-function group(id, title, body, open = false) {
-  return '<details class="group" data-group="' + id + '" data-fold="' + (open ? 'open' : 'closed') + '"' + (open ? ' open' : '') + '><summary>' + esc(title) + '</summary><div class="group-body">' + body + '</div></details>';
+function group(id, title, body, open = false, leadId = '') {
+  return '<details class="group" data-group="' + id + '" data-fold="' + (open ? 'open' : 'closed') + '"' + (open ? ' open' : '') + '><summary' + (leadId ? ' aria-describedby="' + leadIdOf(leadId) + '"' : '') + '>' + esc(title) + '</summary><div class="group-body">' + (leadId ? lead(leadId) : '') + body + '</div></details>';
 }
 
 // The one button for Pause and Resume. It says what a press does, and the line under it says what the rotation is doing.
@@ -396,7 +412,8 @@ export function nowControlsHtml(options) {
   const views = (o.views || []).map(view => ({ value: view.key, label: view.name }));
   const themeWordsOf = o.themeNames || {};
   const themes = (o.themes || []).map(theme => ({ value: theme, label: themeWordsOf[theme] || words(theme) }));
-  const panels = (o.panels || []).map(panel => ({ value: panel, label: panel }));
+  const panelNames = o.panelNames || {};
+  const panels = (o.panels || []).map(panel => ({ value: panel, label: panelNames[panel] || words(panel) }));
   const talks = (o.talks || []).map(talk => '<li>' + esc(talk.name || talk.topic || 'Talk') + ', ' + esc(talk.start) + '</li>').join('');
   const live = o.liveAnnouncements === null || o.liveAnnouncements === undefined ? 'not known' : o.liveAnnouncements;
   const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it in Settings, Keys, then these buttons work.</p>' : '';
@@ -407,12 +424,12 @@ export function nowControlsHtml(options) {
   const stays = '<p class="note">Stays until you reset it, or ' + stayHours + ' hours.</p>';
   const themeAndView = '<p class="note" data-today>' + esc(todayLine(o)) + '</p>' +
     '<div class="buttons">' + button('schedule', 'Reset to today\'s schedule', ' data-big') + '</div>' +
-    '<h3>Theme</h3>' + choice('theme', themes, 'Theme', true) +
+    '<h3>Theme</h3>' + pickButtons('theme', themes, 'Theme', o.todayTheme) +
     '<div class="buttons">' + button('theme', 'Switch to this theme', ' data-hours="' + stayHours + '"') + '</div>' + stays +
     '<div class="buttons">' + button('theme', 'Preview for ' + previewMinutes + ' minutes', '', 'quiet') + '</div>' + previewBlock('theme') +
     '<details class="more"><summary>More</summary>' + minuteField('theme-minutes', 'Minutes (10 to 120)', previewMinutes, 10, 120) +
     '<div class="buttons">' + button('theme', 'Preview for that many minutes', ' data-minutes-from="theme-minutes"', 'quiet') + '</div></details>' +
-    '<h3>View</h3>' + choice('view', views, 'View', true) +
+    '<h3>View</h3>' + pickButtons('view', views, 'View', '') +
     '<div class="buttons">' + button('view', 'Switch to this view', ' data-hours="' + stayHours + '"') + '</div>' + stays + previewBlock('view') +
     minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for a time', ' data-minutes-from="view-minutes"', 'quiet') + '</div>';
 
@@ -422,12 +439,10 @@ export function nowControlsHtml(options) {
   const messages = '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
     '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
     '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>' +
-    '<h3>Hidden transitions</h3><div class="buttons">' + button('hidden', 'Play desktop reveal', ' data-kind="desktop"') + button('hidden', 'Play red eyes', ' data-kind="redEyes"') + '</div>' +
-    '<div class="hidden-run" data-hidden-run>' + hiddenRunHtml(null) + '</div>' +
     (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>';
 
-  return blocked + group('playlist', 'Playlist', playlist) + group('theme-view', 'Theme and view', themeAndView, true) +
-    group('hold', 'Hold a panel', hold) + group('messages', 'Messages', messages);
+  return blocked + group('playlist', 'Playlist', playlist, false, 'display.playlist-group') + group('theme-view', 'Theme and view', themeAndView, true, 'display.theme-view') +
+    group('hold', 'Hold a panel', hold, false, 'display.hold') + group('messages', 'Messages', messages, false, 'display.messages');
 }
 
 // The Keys section of Settings. describe is GET env.

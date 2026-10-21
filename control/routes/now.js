@@ -10,6 +10,7 @@ import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
 import { rowsFor } from '../support/now-rows.js';
 import { cleanReport } from '../../dashboard/core/now-report-parts.js';
+import { namesFor } from '../support/names.js';
 
 export const quietSeconds = 40;
 const localAddresses = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
@@ -65,6 +66,7 @@ export function register(router, ctx) {
       quiet: quiet,
       message: quiet ? (age === null ? 'No report from the wall yet' : 'No report for ' + age + ' s') : '',
       rows: report && rows.panel === report.panel ? rows.lines : [],
+      names: namesFor(report),
     });
   });
 }

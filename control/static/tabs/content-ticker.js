@@ -5,6 +5,7 @@
 import { api as realApi } from './api.js';
 import { h } from '../settings-all-fields.js';
 import { button, mountList } from './content-list.js';
+import { actionWords } from '../actions.js';
 import { hiddenAfter, newsLine, tickerLimit, tickerLine } from './content-items.js';
 
 const when = iso => (iso && !isNaN(Date.parse(iso)) ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '');
@@ -53,7 +54,7 @@ async function mountNews(host, ctx) {
     page.working = false;
     await load();
     page.flash = answer.ok
-      ? { state: 'done', words: 'Saved to the draft of Dashboard Settings. The wall changes when you press Publish below.' }
+      ? { state: 'done', words: 'Saved to the draft of Dashboard Settings. The wall changes when you press Publish to the wall below.' }
       : { state: 'bad', words: answer.data && answer.data.conflict ? 'Dashboard Settings changed in the Studio. The list was read again, so press the button once more.' : answer.error };
     draw();
   }
@@ -99,9 +100,9 @@ async function mountNews(host, ctx) {
       parts.push(h('p', { class: 'word', text: 'Dashboard Settings has waiting changes. Publishing sends all of them to the wall, not only this list.' }));
       parts.push(page.ask
         ? h('div', { class: 'ct-ask', role: 'group', 'aria-label': 'Confirm', 'data-ask': 'news' },
-          h('p', { text: 'Publish the Dashboard Settings draft now?' }),
+          h('p', { text: 'Publish the Dashboard Settings draft to the wall now?' }),
           h('div', { class: 'buttons' }, button('Publish now', { 'data-act': 'news-publish-now', class: 'act' }, publish), button('Cancel', {}, () => { page.ask = false; draw(); })))
-        : h('div', { class: 'buttons' }, button('Publish Dashboard Settings', { 'data-act': 'news-publish', class: 'act', disabled: !data.canWrite || page.working }, () => { page.ask = true; draw(); })));
+        : h('div', { class: 'buttons' }, button(actionWords.publish, { 'data-act': 'news-publish', class: 'act', disabled: !data.canWrite || page.working }, () => { page.ask = true; draw(); })));
     }
     parts.push(h('p', { class: 'ct-flash', role: 'status', 'data-state': page.flash.state, text: page.flash.words }));
     host.replaceChildren(...parts);
@@ -115,7 +116,7 @@ export async function mountTicker(body, ctx = {}) {
   const listHost = h('div', { 'data-part': 'lines' });
   const newsHost = h('div', { 'data-part': 'news' });
   body.replaceChildren(
-    h('p', { class: 'word', text: 'The tips, news and reminders on the ticker along the bottom of the wall. It shows one at a time. A change is a draft until you press Publish, the same as in the Studio.' }),
+    h('p', { class: 'word', text: 'The tips, news and reminders on the ticker along the bottom of the wall. It shows one at a time. A change is a draft until you press Publish to the wall, the same as in the Studio.' }),
     listHost,
     newsHost);
   await mountList(listHost, {

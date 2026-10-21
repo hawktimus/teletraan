@@ -72,7 +72,7 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     const page = await open(width, height);
     for (const tab of ['screen', 'look', 'calendars', 'today', 'advanced']) {
       await page.click('[data-tab="' + tab + '"]');
-      const small = await page.evaluate(() => Array.from(document.querySelectorAll('.sa button, .sa select, .sa input:not([type="checkbox"]):not([type="radio"]), .sa textarea, .sa .sa-choice, .sa .sa-switch'))
+      const small = await page.evaluate(() => Array.from(document.querySelectorAll('.sa button, .sa select, .sa input:not([type="checkbox"]):not([type="radio"]), .sa textarea, .sa .choice-face, .sa .switch'))
         .filter(element => element.offsetParent !== null)
         .map(element => ({ name: (element.className || element.tagName) + ' ' + (element.textContent || '').trim().slice(0, 20), height: element.getBoundingClientRect().height }))
         .filter(item => item.height < 43.5));
@@ -109,14 +109,14 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     const field = page.locator('.sa-field[data-path="pageSeconds"]');
     await field.locator('input').fill('31');
     assert.equal(await field.locator('.sa-mark').isVisible(), true);
-    assert.match(await page.locator('.sa-unsaved').textContent(), /1 unsaved change/);
+    assert.match(await page.locator('[data-unsaved]').textContent(), /1 unsaved change/);
     assert.equal(await page.locator('.sa-tab[data-tab="screen"] .sa-badge').textContent(), '1');
     assert.equal(await page.locator('[data-act="save"]').isEnabled(), true);
     await shot(page, 'unsaved', width);
 
     await page.click('[data-act="undo"]');
     assert.equal(await page.locator('.sa-field[data-path="pageSeconds"] input').inputValue(), '20');
-    assert.match(await page.locator('.sa-unsaved').textContent(), /No unsaved/);
+    assert.match(await page.locator('[data-unsaved]').textContent(), /No unsaved/);
 
     await page.locator('.sa-field[data-path="pageSeconds"] input').fill('5');
     assert.match(await page.locator('.sa-field[data-path="pageSeconds"] .sa-error').textContent(), /8 to 120/);
@@ -149,7 +149,7 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
 
     const panelPage = await open(width, height, 'panel-info');
     await panelPage.locator('.sa-field[data-path="team"] label:has-text("HAWKTIMUS NOVA") input').check();
-    assert.match(await panelPage.locator('.sa-unsaved').textContent(), /1 unsaved/);
+    assert.match(await panelPage.locator('[data-unsaved]').textContent(), /1 unsaved/);
     await panelPage.click('[data-act="save"]');
     await panelPage.waitForSelector('.sa-flash[data-state="done"]');
     assert.deepEqual(harness.sanity.stored['drafts.panel-info'].team, { _type: 'reference', _ref: 'team-nova' });
@@ -182,7 +182,7 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     assert.match(await page.locator('.sa-flash').textContent(), /Saved to the draft/);
     assert.equal(harness.sanity.stored['drafts.dashboardSettings'].pageSeconds, 33);
     assert.equal(harness.sanity.stored.dashboardSettings.pageSeconds, 20, 'the published copy did not change yet');
-    assert.match(await page.locator('.sa-status').textContent(), /waiting draft/);
+    assert.match(await page.locator('.sa-bar .note:not(.unsaved)').textContent(), /waiting draft/);
 
     await page.click('[data-act="publish"]');
     assert.equal(await page.locator('.sa-confirm').count(), 1);
@@ -207,16 +207,16 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     await page.locator('.sa-field[data-path="doneDays"] input').fill('9');
     harness.sanity.touch('dashboardSettings', { doneDays: 12, pageSeconds: 44 });
     await page.click('[data-act="save"]');
-    await page.waitForSelector('.sa-conflict');
-    assert.match(await page.locator('.sa-conflict').textContent(), /The Studio has a newer copy/);
+    await page.waitForSelector('.studio-changed');
+    assert.match(await page.locator('.studio-changed').textContent(), /The Studio has a newer copy/);
     assert.equal(harness.sanity.stored['drafts.dashboardSettings'].doneDays, 12, 'nothing was written');
     await shot(page, 'conflict', width);
 
     await page.click('[data-act="keep"]');
-    assert.equal(await page.locator('.sa-conflict').count(), 0);
+    assert.equal(await page.locator('.studio-changed').count(), 0);
     assert.equal(await page.locator('.sa-field[data-path="doneDays"] input').inputValue(), '9', 'my edit is still there');
     await page.click('[data-act="save"]');
-    await page.waitForSelector('.sa-conflict');
+    await page.waitForSelector('.studio-changed');
     await page.click('[data-act="replace"]');
     await page.waitForSelector('.sa-flash[data-state="done"]');
     assert.equal(harness.sanity.stored['drafts.dashboardSettings'].doneDays, 9);
@@ -225,8 +225,8 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     await page.locator('.sa-field[data-path="doneDays"] input').fill('10');
     harness.sanity.touch('dashboardSettings', { doneDays: 15 });
     await page.click('[data-act="save"]');
-    await page.waitForSelector('.sa-conflict');
-    await page.click('[data-act="refresh"]');
+    await page.waitForSelector('.studio-changed');
+    await page.click('.studio-changed [data-act="refresh"]');
     await page.waitForFunction(() => /Refreshed/.test(document.querySelector('.sa-flash').textContent));
     assert.equal(await page.locator('.sa-field[data-path="doneDays"] input').inputValue(), '15');
     harness.sanity.stored.dashboardSettings.pageSeconds = 20;

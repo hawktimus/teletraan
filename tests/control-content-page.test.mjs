@@ -102,7 +102,7 @@ async function shot(page, name, width) {
 
 // Every button, link, box and menu inside the section is 44px high, and nothing is wider than the page
 async function fits(page, what) {
-  const small = await page.evaluate(() => Array.from(document.querySelectorAll('.ct button, .ct a, .ct select, .ct input:not([type="checkbox"]):not([type="radio"]), .ct textarea, .ct .sa-choice, .ct .sa-switch'))
+  const small = await page.evaluate(() => Array.from(document.querySelectorAll('.ct button, .ct a, .ct select, .ct input:not([type="checkbox"]):not([type="radio"]), .ct textarea, .ct .choice-face, .ct .switch'))
     .filter(element => element.offsetParent !== null)
     .map(element => ({ name: (element.className || element.tagName) + ' ' + (element.textContent || '').trim().slice(0, 20), height: element.getBoundingClientRect().height }))
     .filter(item => item.height < 43.5));
@@ -175,7 +175,8 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     assert.equal(made[0].show, true);
     const created = page.locator('[data-part="lines"] .ct-item').filter({ hasText: 'Clean up your bench' });
     assert.equal(await created.locator('[data-chip="new"]').count(), 1);
-    assert.equal(await page.locator('[data-part="lines"] [data-act="publish-all"]').textContent(), 'Publish 1 waiting');
+    assert.equal(await page.locator('[data-part="lines"] [data-act="publish-all"]').textContent(), 'Publish to the wall');
+    assert.equal(await page.locator('[data-part="lines"] [data-waiting]').getAttribute('data-waiting'), '1');
     await created.locator('[data-act="publish"]').click();
     await created.locator('[data-act="publish-now"]').click();
     await page.waitForSelector('.ct-flash:has-text("Published")');
@@ -244,7 +245,8 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     const rule = Object.values(harness.sanity.stored).filter(doc => doc._id.startsWith('drafts.calendarFilter-one-'))[0];
     assert.equal(rule.eventTitle, 'Build meeting');
     assert.equal(await page.locator('.ct-event').filter({ hasText: 'Build meeting' }).locator('[data-chip="hidden"]').count(), 1);
-    assert.equal(await page.locator('[data-act="cal-publish"]').textContent(), 'Publish 1 change');
+    assert.equal(await page.locator('[data-act="cal-publish"]').textContent(), 'Publish to the wall');
+    assert.equal(await page.locator('[data-part="calendar"] [data-waiting], [data-waiting]').first().getAttribute('data-waiting'), '1');
     await page.click('[data-act="cal-publish"]');
     await page.click('[data-act="cal-publish-now"]');
     await page.waitForSelector('.ct-flash:has-text("Published")');

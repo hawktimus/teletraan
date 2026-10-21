@@ -5,10 +5,11 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+const readFileSync = fs.readFileSync;
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { addRowHtml, conflictHtml, controlsHtml, motionHtml, playlistHtml, playlistPosition, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
+import { addRowHtml, newerHtml, conflictHtml, controlsHtml, motionHtml, playlistHtml, playlistPosition, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
 import { extrasHtml } from '../control/static/tabs/settings-competition.js';
 import { addChartRows, addDepartmentRows, withKeys } from '../control/static/display-rows.js';
 import { repo } from './helpers/control-world.mjs';
@@ -84,7 +85,7 @@ check('Save needs a change and a write key, Publish needs a saved draft, and the
   const dirty = controlsHtml(Object.assign({}, page, { dirty: true }));
   assert.doesNotMatch(dirty, /data-action="save" disabled/);
   assert.match(dirty, /data-action="publish" disabled/);
-  assert.ok(dirty.includes('You have changes that are not saved.'));
+  assert.ok(dirty.includes('You have unsaved changes.'));
 
   const nowrite = controlsHtml(Object.assign({}, page, { dirty: true, canWrite: false }));
   assert.match(nowrite, /data-action="save" disabled/);
@@ -98,7 +99,8 @@ check('the page says where its copy came from and when the Studio copy is newer'
   assert.ok(sourceHtml(page).includes('Showing the draft of Dashboard Settings.'));
   assert.ok(sourceHtml(Object.assign({}, page, { isDraft: false })).includes('Showing the published list.'));
   assert.ok(!sourceHtml(page).includes('data-newer'));
-  assert.ok(sourceHtml(Object.assign({}, page, { newerInStudio: true })).includes('The Studio copy is newer than what you loaded.'));
+  assert.ok(newerHtml(Object.assign({}, page, { newerInStudio: true })).includes('The Studio changed this'), 'the newer copy is the shared card');
+  assert.equal(newerHtml(page), '');
   assert.ok(sourceHtml(Object.assign({}, page, { canWrite: false })).includes('SANITY_WRITE_TOKEN'));
   assert.ok(sourceHtml(Object.assign({}, page, { hasDocument: false })).includes('Publish once'));
 });
@@ -162,11 +164,12 @@ check('the Playlist card says what plays now and next, the loop, and has the Edi
   assert.ok(playlistHtml(Object.assign({}, page, { rows: [] }), null, false, {}).includes('standard order'));
 });
 
-check('the motion card has one box for Motion, with the stored value selected, and none for the TV computer', () => {
+check('the motion card has one group of buttons for Motion, with the stored value chosen, and none for the TV computer', () => {
   const html = motionHtml({ motion: 'light', motionOnKiosk: 'full' });
   assert.ok(html.includes('data-motion-field="motion"') && !html.includes('motionOnKiosk') && !html.includes('TV computer</'));
-  assert.ok(html.includes('<option value="light" selected>Light</option>'));
-  assert.equal((html.match(/<option/g) || []).length, 3);
+  assert.ok(html.includes('value="light" checked data-motion-field="motion"'));
+  assert.equal((html.match(/type="radio"/g) || []).length, 3);
+  assert.equal((html.match(/ checked/g) || []).length, 1);
   assert.ok(html.includes('?motion=light'), 'it says how to try Light on one computer');
   assert.ok(motionHtml({ motion: '<b>' }).indexOf('<b>') === -1);
 });
@@ -217,7 +220,7 @@ check('the Display styles keep the phone rules: wrapping text, one column, 44px 
   assert.match(display, /\.preview-card \{ grid-column: 2; grid-row: 1; position: sticky; top: 16px; max-height: calc\(100vh - 32px\); overflow-y: auto; \}/, 'the preview column follows the scroll');
   assert.match(css, /select, \.tab input \{[^}]*min-height: 44px/, 'every select and input of a tab is 44px high');
   assert.match(css, /\.tab \.act \{ min-height: 44px; min-width: 44px/);
-  assert.match(css, /\.tab \.check \{[^}]*min-height: 44px/);
+  assert.match(readFileSync(path.join(repo, 'control/static/choice.css'), 'utf8'), /\.choice-face \{[^}]*min-height: 44px/, 'every choice button is 44px high');
 });
 
 check('the words are plain: no em or en dash, no exclamation mark, no emoji in the new files', () => {
@@ -261,14 +264,15 @@ check('Quick hide says what each button does and how many rows it changes, and e
   assert.ok(quickHtml([], quickChoices).includes('no rows in the list'));
 });
 
-check('a Department tasks row has a Department, a List and a Team dropdown, and a TV charts row a Chart and a Team dropdown', () => {
+check('a Department tasks row has a Department menu, a List and a Team group of buttons, and a TV charts row a Chart and a Team group of buttons', () => {
   const monday = { departments: [{ value: 'build', title: 'Build' }, { value: 'cnc', title: 'CNC' }], lists: [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }], charts: [{ value: 'status', title: 'Status by department' }, { value: 'timeline', title: 'Timeline' }], teams: [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }, { value: 'nova', title: 'Nova' }] };
   const rows = withKeys([{ view: 'robotics', panel: 'monday-department', department: 'cnc', list: 'done', shown: true }, { view: 'robotics', panel: 'monday-charts', chart: 'timeline', team: 'nova', shown: true }, { view: 'robotics', panel: 'photo', shown: true }]);
   const html = rowsHtml(rows, Object.assign({}, page, { rows: rows, checks: {}, choices: Object.assign({}, choices, { monday: monday }) }));
   const cards = html.split('<article').slice(1);
   ['department', 'list', 'team'].forEach(name => assert.ok(cards[0].includes('data-field="' + name + '"'), name));
-  assert.ok(cards[0].includes('<option value="cnc" selected>CNC</option>') && cards[0].includes('<option value="done" selected>Done</option>') && cards[0].includes('<option value="" selected>Both</option>'));
-  assert.ok(cards[1].includes('data-field="chart"') && cards[1].includes('<option value="timeline" selected>Timeline</option>') && cards[1].includes('<option value="nova" selected>Nova</option>'));
+  assert.ok(cards[0].includes('<option value="cnc" selected>CNC</option>') && cards[0].includes('value="done" checked data-field="list"') && cards[0].includes('value="" checked data-field="team"'));
+  assert.ok(cards[1].includes('value="timeline" checked data-field="chart"') && cards[1].includes('value="nova" checked data-field="team"'));
+  assert.ok(cards[0].includes('class="switch"') && cards[0].includes('checked data-field="shown"'), 'Show on screen is a switch');
   assert.ok(!cards[1].includes('data-field="list"') && !cards[2].includes('data-field="team"'));
 });
 

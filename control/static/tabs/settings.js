@@ -16,6 +16,7 @@ import { mountScreen } from './settings-screen.js';
 import { mountCleanup } from './settings-cleanup.js';
 import { mountLog } from './settings-log.js';
 import { mountAll } from './settings-all.js';
+import { lead, leadIdOf, sentences } from '../guide.js';
 
 export const sections = [
   { id: 'update', title: 'Updates', mount: mountUpdate, light: true },
@@ -39,18 +40,27 @@ registerTab({
     const wanted = sections.some(item => item.id === section) ? section : 'update';
     const root = document.createElement('div');
     root.className = 'settings-page';
+    const head = document.createElement('section');
+    head.className = 'fold fold-head';
+    head.innerHTML = '<h2>Settings</h2>' + lead('settings');
+    root.append(head);
     const stops = [];
     const folds = [];
     sections.forEach(item => {
       const fold = document.createElement('details');
       fold.className = 'fold';
       fold.dataset.section = item.id;
-      const head = document.createElement('summary');
-      head.textContent = item.title;
+      const summary = document.createElement('summary');
+      summary.textContent = item.title;
+      summary.setAttribute('aria-describedby', leadIdOf('settings.' + item.id));
+      const says = document.createElement('p');
+      says.className = 'lead';
+      says.id = leadIdOf('settings.' + item.id);
+      says.textContent = sentences['settings.' + item.id];
       const body = document.createElement('div');
       body.className = item.light ? 'fold-body' : 'fold-body tab';
       if (item.bodyId) body.id = item.bodyId;
-      fold.append(head, body);
+      fold.append(summary, says, body);
       let drawn = false;
       const draw = () => {
         if (drawn || !fold.open) return;

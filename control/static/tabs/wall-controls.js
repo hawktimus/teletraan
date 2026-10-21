@@ -6,13 +6,13 @@ import { extendTab } from '../tabs.js';
 import { arrange } from './arrange.js';
 import { mountControls } from './now.js';
 import { quickBarHtml } from './render.js';
+import { lead } from '../guide.js';
 
 extendTab('display', {
   place: 'before',
   async mount(box) {
     box.innerHTML = '<div class="tab wall-controls">' +
-      '<section class="card"><h2>Show on the wall now</h2>' +
-      '<p class="word">These change the wall at once and end by themselves, or when you press Back to schedule. The rows below are the saved order.</p></section>' +
+      '<section class="card"><h2>Show on the wall now</h2>' + lead('display.now') + '</section>' +
       '<p class="held" data-held-box data-held="no">Following the schedule.</p>' +
       '<div class="groups" data-controls></div>' +
       quickBarHtml() +

@@ -1,0 +1,32 @@
+/* Choices and switches (choice.js). The colors are fixed, not the page's, so they read on the dark cards and on the light
+   Settings page alike: a mid purple with white text for what is on, a grey outline for what is off. Every target is 44px. */
+:root { --choice-on: #7c3aed; --choice-line: #8d84a3; --choice-ring: #ffffff; }
+
+.choices { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; min-width: 0; }
+.choice, .switch { position: relative; display: inline-flex; max-width: 100%; min-width: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* The real radio or checkbox lies over the button, so a tap, the keyboard and a screen reader all reach it */
+label.choice > input, label.switch > input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+
+.choice-face {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; min-height: 44px; min-width: 44px; padding: 8px 16px;
+  border: 2px solid var(--choice-line); border-radius: 8px; background: transparent; color: inherit;
+  font-size: 16px; font-weight: 600; line-height: 1.3; text-align: center; overflow-wrap: anywhere; user-select: none;
+}
+.choice-mark { flex: none; width: 16px; text-align: center; }
+label.choice > input:checked + .choice-face { background: var(--choice-on); border-color: var(--choice-on); color: #ffffff; }
+label.choice > input:checked + .choice-face .choice-mark::before { content: "\2713"; }
+
+.switch { align-items: center; gap: 12px; min-height: 44px; }
+.switch-track { position: relative; box-sizing: border-box; flex: none; width: 52px; height: 30px; border: 2px solid var(--choice-line); border-radius: 15px; background: transparent; }
+.switch-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--choice-line); }
+label.switch > input:checked + .switch-track { background: var(--choice-on); border-color: var(--choice-on); }
+label.switch > input:checked + .switch-track .switch-knob { background: #ffffff; transform: translateX(22px); }
+.switch-word { flex: none; min-width: 28px; font-weight: 700; }
+.switch-word::before { content: "Off"; }
+label.switch > input:checked ~ .switch-word::before { content: "On"; }
+.switch-text { min-width: 0; overflow-wrap: anywhere; }
+
+/* White inside and purple outside, so the ring shows on dark and on light */
+label.choice > input:focus-visible + .choice-face, label.switch > input:focus-visible + .switch-track { outline: none; box-shadow: 0 0 0 2px var(--choice-ring), 0 0 0 5px var(--choice-on); }
+label.choice > input:disabled + .choice-face, label.switch > input:disabled ~ * { opacity: .55; }
+label.choice > input:disabled, label.switch > input:disabled { cursor: default; }

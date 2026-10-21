@@ -15,7 +15,7 @@ export function mountMonday(container) {
   container.innerHTML = '<p class="note">Check the token asks Monday who the token belongs to.</p>' +
     '<div class="buttons"><button type="button" class="act" data-check>Check the token</button></div>' +
     '<p class="note">Monday debug shows how Monday answers for the first two items of one board. Press it when the Monday page of Studio lists no tasks, and send the answer to a coach. It holds item names and column ids, and no token and no names of people.</p>' +
-    '<div class="buttons"><label class="check">Board number <input type="text" inputmode="numeric" data-board autocomplete="off"></label>' +
+    '<div class="buttons"><label class="inline-field">Board number <input type="text" inputmode="numeric" data-board autocomplete="off"></label>' +
     '<button type="button" class="act" data-debug>Monday debug</button></div>' +
     '<pre class="log" data-answer hidden></pre>';
   const check = container.querySelector('[data-check]');

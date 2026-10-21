@@ -197,13 +197,12 @@ await check('the card has the status words, the five fields, Save and Publish, a
   const html = rebootHtml(page, now);
   assert.match(html, /Next reboot: Wed 04:15/);
   assert.match(html, /Last reboot: 4 hours ago \(Tue 04:15, as scheduled\)/);
-  assert.match(html, /data-enabled checked/);
+  assert.match(html, /checked data-enabled/);
   assert.match(html, /data-time value="04:15"/);
   assert.equal((html.match(/data-day="/g) || []).length, 7);
-  assert.equal((html.match(/data-day="[0-6]" checked/g) || []).length, 2);
+  assert.equal((html.match(/checked data-day="[0-6]"/g) || []).length, 2);
   assert.match(html, /data-wait[^>]*value="20"/);
-  assert.match(html, /data-save>Save to draft/);
-  assert.match(html, /data-publish>Publish/);
+  assert.match(html, /data-draft/, 'the shared bar is drawn into this place');
   assert.match(html, /The Studio shows the same values in Dashboard Settings, Advanced, Scheduled reboot/);
   assert.match(html, /America\/New_York/);
 });

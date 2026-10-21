@@ -21,7 +21,11 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 120px; }
+
+/* The ring that shows where the keyboard is: purple with a white halo, so it reads on the dark cards and on the light page */
+:focus-visible { outline: 3px solid #7c3aed; outline-offset: 2px; box-shadow: 0 0 0 7px #ffffff; }
+header :focus-visible { outline-color: #ffffff; box-shadow: none; }
 
 body {
   margin: 0;
@@ -40,14 +44,17 @@ header {
 
 header h1 { margin: 0; font: 700 24px/1.2 var(--display); }
 header .on-wall { margin: 2px 0 8px; font-size: 16px; opacity: .9; }
+:root { --tabbar: 56px; }
 
 /* The tabs wrap into rows instead of being cut off or scrolled out of sight */
 nav { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 280px; min-width: 0; }
 .bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
-.studio {
-  display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 6px; margin-left: auto; padding: 0 16px;
-  border: 2px solid var(--yellow); border-radius: 8px; color: var(--yellow); font: 600 18px var(--display); text-decoration: none;
+.studio, button.help {
+  display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 6px; padding: 0 16px;
+  border: 2px solid var(--yellow); border-radius: 8px; background: transparent; color: var(--yellow); font: 600 18px var(--display); text-decoration: none; cursor: pointer;
 }
+.studio { margin-left: 4px; }
+button.help { margin-left: auto; border-color: #ffffff; color: #ffffff; }
 nav button {
   min-height: 44px;
   padding: 0 16px;
@@ -122,10 +129,19 @@ button.link { background: none; border: 0; color: var(--purple-dark); text-decor
 
 @media (max-width: 600px) {
   header h1 { font-size: 22px; }
-  /* The four tabs share one row of 44px targets, and the Studio button goes under them */
-  nav { flex-basis: 100%; flex-wrap: nowrap; }
-  nav button { flex: 1 1 0; min-width: 0; padding: 0 2px; font-size: 16px; }
-  .studio { margin-bottom: 8px; }
+  .bar { justify-content: flex-end; }
+  .studio, button.help { margin-bottom: 8px; }
+  /* The four tabs are a bar fixed to the bottom of the phone, one row of buttons at least 44px high. The page gets room under it,
+     and the bars that other tabs fix to the bottom sit above it (--tabbar). */
+  nav {
+    position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; flex: none; flex-wrap: nowrap; gap: 0;
+    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: var(--purple); border-top: 4px solid var(--yellow);
+  }
+  nav button { flex: 1 1 0; min-width: 0; min-height: calc(var(--tabbar) - 4px); padding: 0 2px; border-radius: 0; font-size: 18px; }
+  nav button[aria-selected="true"] { background: var(--yellow); color: var(--ink); }
+  nav :focus-visible { outline-offset: -5px; }
+  main { padding-bottom: calc(16px + var(--tabbar) + env(safe-area-inset-bottom)); }
   .card { padding: 12px; }
   button.action, label.action { white-space: normal; text-align: center; }
 }

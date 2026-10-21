@@ -11,6 +11,7 @@ import { agoText } from './render.js';
 import { problemsIn } from '../settings-check.js';
 import { clone, changesOf, getAt, sameValue, searchFields, searchOthers, setAt, shownValues, visible } from '../settings-all-values.js';
 import { fieldView, h, refreshProblems } from '../settings-all-fields.js';
+import { actionBarHtml, noWriteWords, studioChangedHtml, studioNewerHtml, unsavedWords } from '../actions.js';
 
 const mostHistory = 60;
 
@@ -227,54 +228,55 @@ export async function mountSettingsAll(container, ctx = {}) {
     afterChange();
   }
 
+  // The buttons of the shared bar keep the names this page has always used for them (the tests and the address bar know them)
+  const hook = name => 'data-act="' + ({ overwrite: 'replace', 'keep-editing': 'keep' }[name] || name) + '"';
+
   function drawBar() {
     const state = current();
     if (!state.loaded) { hole('bar').replaceChildren(); hole('notice').replaceChildren(); return; }
     const count = changes(state).names.length;
     const where = state.isDraft ? 'the waiting draft' : 'the published settings';
     const when = state.updatedAt ? ', changed ' + agoText(state.updatedAt, new Date()) : '';
-    const status = h('p', { class: 'sa-status' },
-      h('strong', { class: 'sa-unsaved', text: count === 0 ? 'No unsaved changes.' : count + (count === 1 ? ' unsaved change.' : ' unsaved changes.') }),
-      ' Showing ' + where + when + '.');
-
-    const save = h('button', { type: 'button', class: 'act', 'data-act': 'save', text: 'Save to draft', disabled: count === 0 || !state.canWrite || Boolean(page.working), onclick: () => saveNow(state, false) });
-    const undo = h('button', { type: 'button', class: 'act quiet', 'data-act': 'undo', text: 'Undo', disabled: state.history.length === 0, onclick: () => undoOne(state) });
-    const discard = h('button', { type: 'button', class: 'act quiet', 'data-act': 'discard', text: 'Discard my changes', disabled: count === 0, onclick: () => { state.history.push(clone(state.values)); state.values = clone(state.base); state.errors = {}; say('', 'Your changes were dropped.'); drawPanel(); } });
     const canPublish = state.isDraft && state.canWrite && count === 0 && !page.working;
-    const publish = h('button', { type: 'button', class: 'act', 'data-act': 'publish', text: 'Publish', disabled: !canPublish, onclick: () => { page.publishing = !page.publishing; drawBar(); } });
 
-    const buttons = h('div', { class: 'buttons' }, save, undo, discard, publish);
-    const parts = [status, buttons];
-    if (!state.canWrite) parts.push(h('p', { class: 'sa-line', 'data-state': 'bad', text: 'SANITY_WRITE_TOKEN is not set on the Teletraan computer, so nothing can be saved here. Add it in Settings, Keys.' }));
-    if (state.isDraft && count > 0) parts.push(h('p', { class: 'sa-line', text: 'Save to draft first, then Publish.' }));
+    const bar = h('div', { class: 'sa-bar action-bar' });
+    bar.innerHTML = actionBarHtml({
+      dirty: count, canSave: count > 0 && state.canWrite, canPublish: state.isDraft && state.canWrite && count === 0, canUndo: state.history.length > 0,
+      working: Boolean(page.working), note: 'Showing ' + where + when + '.',
+    }, hook);
+    bar.addEventListener('click', event => {
+      const button = event.target.closest('button[data-act]');
+      if (!button || button.disabled) return;
+      const act = button.dataset.act;
+      if (act === 'save') saveNow(state, false);
+      else if (act === 'publish') { page.publishing = !page.publishing; drawBar(); }
+      else if (act === 'refresh') refreshNow(state);
+      else if (act === 'undo') undoOne(state);
+    });
+    const parts = [bar];
+    if (!state.canWrite) parts.push(h('p', { class: 'sa-line', 'data-state': 'bad', text: noWriteWords }));
+    if (state.isDraft && count > 0) parts.push(h('p', { class: 'sa-line', text: 'Save to draft first, then Publish to the wall.' }));
     if (page.publishing && canPublish) {
       parts.push(h('div', { class: 'sa-confirm', role: 'group', 'aria-label': 'Confirm' },
-        h('p', { text: 'Publish ' + state.title + ' now? The wall shows it within a minute.' }),
+        h('p', { text: 'Publish ' + state.title + ' to the wall now? The wall shows it within a minute.' }),
         h('div', { class: 'buttons' },
           h('button', { type: 'button', class: 'act', 'data-act': 'publish-now', text: 'Publish now', onclick: () => publishNow(state, false) }),
           h('button', { type: 'button', class: 'act quiet', text: 'Cancel', onclick: () => { page.publishing = false; drawBar(); } }))));
     }
     parts.push(h('p', { class: 'sa-flash', role: 'status', 'data-state': page.flash.state, text: page.flash.words }));
-    hole('bar').replaceChildren(h('div', { class: 'sa-bar' }, parts));
+    hole('bar').replaceChildren(h('div', { class: 'sa-barwrap' }, parts));
 
-    const notice = [];
-    if (state.conflict) notice.push(conflictCard(state));
-    else if (state.studioChanged) notice.push(h('section', { class: 'card sa-conflict', role: 'alert' }, h('h2', { text: 'The Studio changed this' }), h('p', { text: state.title + ' changed in the Studio after this page loaded it. Refresh to see it, or keep editing and decide when you save.' }),
-      h('div', { class: 'buttons' }, h('button', { type: 'button', class: 'act', 'data-act': 'refresh', text: 'Refresh from Sanity', onclick: () => refreshNow(state) }), h('button', { type: 'button', class: 'act quiet', 'data-act': 'keep', text: 'Keep editing', onclick: () => { state.studioChanged = false; drawBar(); } }))));
-    hole('notice').replaceChildren(...notice);
-  }
-
-  function conflictCard(state) {
-    const conflict = state.conflict;
-    const when = conflict.updatedAt ? ' It was last changed ' + agoText(conflict.updatedAt, new Date()) + '.' : '';
-    const publishing = conflict.action === 'publish';
-    return h('section', { class: 'card sa-conflict', role: 'alert', 'data-conflict': conflict.action },
-      h('h2', { text: 'The Studio has a newer copy' }),
-      h('p', { text: conflict.error + when + ' ' + (publishing ? 'Publishing now puts that newer draft on the wall.' : 'Saving now replaces what you changed here in the Studio draft. Everything else in the document stays as the Studio has it.') }),
-      h('div', { class: 'buttons' },
-        h('button', { type: 'button', class: 'act', 'data-act': 'replace', text: publishing ? 'Publish that draft' : 'Replace with my changes', onclick: () => (publishing ? publishNow(state, true) : saveNow(state, true)) }),
-        h('button', { type: 'button', class: 'act quiet', 'data-act': 'refresh', text: 'Refresh from Sanity', onclick: () => refreshNow(state) }),
-        h('button', { type: 'button', class: 'act quiet', 'data-act': 'keep', text: 'Keep editing', onclick: () => { state.conflict = null; drawBar(); } })));
+    const notice = h('div', { class: 'sa-notice' });
+    if (state.conflict) notice.innerHTML = studioNewerHtml(state.conflict, hook);
+    else if (state.studioChanged) notice.innerHTML = studioChangedHtml(state.title, hook);
+    notice.addEventListener('click', event => {
+      const button = event.target.closest('button[data-act]');
+      if (!button) return;
+      if (button.dataset.act === 'replace') (state.conflict.action === 'publish' ? publishNow(state, true) : saveNow(state, true));
+      else if (button.dataset.act === 'refresh') refreshNow(state);
+      else if (button.dataset.act === 'keep') { state.conflict = null; state.studioChanged = false; drawBar(); }
+    });
+    hole('notice').replaceChildren(...(state.conflict || state.studioChanged ? [notice] : []));
   }
 
   // Marks, counts and the rules that follow other fields, after any change
@@ -299,12 +301,10 @@ export async function mountSettingsAll(container, ctx = {}) {
       if (wrapper) { wrapper.querySelector(':scope > .sa-error').textContent = state.errors[path]; wrapper.dataset.invalid = 'yes'; }
     });
     const count = changes(state).names.length;
-    const unsaved = root.querySelector('.sa-unsaved');
-    if (unsaved) unsaved.textContent = count === 0 ? 'No unsaved changes.' : count + (count === 1 ? ' unsaved change.' : ' unsaved changes.');
+    const unsaved = root.querySelector('[data-unsaved]');
+    if (unsaved) { unsaved.textContent = unsavedWords(count); unsaved.dataset.state = count === 0 ? 'done' : 'wait'; }
     const save = root.querySelector('[data-act="save"]');
     if (save) save.disabled = count === 0 || !state.canWrite || Boolean(page.working);
-    const discard = root.querySelector('[data-act="discard"]');
-    if (discard) discard.disabled = count === 0;
     const undo = root.querySelector('[data-act="undo"]');
     if (undo) undo.disabled = state.history.length === 0;
     const publish = root.querySelector('[data-act="publish"]');
@@ -364,7 +364,7 @@ export async function mountSettingsAll(container, ctx = {}) {
     drawBar();
     const answer = await call('POST', '/doc/' + encodeURIComponent(state.id) + '/save', { baseRev: state.rev, force: force, set: patch.set, unset: patch.unset });
     page.working = '';
-    if (answer.ok) return reload(state, 'Saved to the draft. It is not on the wall until you press Publish.');
+    if (answer.ok) return reload(state, 'Saved to the draft. It is not on the wall until you press Publish to the wall.');
     if (answer.data && answer.data.conflict) {
       state.conflict = { action: 'save', error: answer.data.error, updatedAt: answer.data.current && answer.data.current.updatedAt };
       say('bad', 'The Studio has a newer copy. Nothing was saved.');

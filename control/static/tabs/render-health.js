@@ -41,7 +41,7 @@ function loadsWords(wall) {
 export function dotsHtml(data) {
   if (!data) return card('The three dots on the TV', '<p>The Teletraan computer did not answer.</p>');
   const dots = data.dots || {};
-  return card('The three dots on the TV', dotRow('Monday', dots.monday) + dotRow('Band (calendars)', dots.band) + dotRow('Sanity (content)', dots.sanity));
+  return card('The three dots on the TV', dotRow('Monday', dots.monday) + dotRow('Band (calendars)', dots.band) + dotRow('Sanity (content)', dots.sanity), '', 'health.dots');
 }
 
 // When the Teletraan computer last read each source
@@ -60,7 +60,7 @@ export function readsHtml(data, now = new Date()) {
     row('Match13', esc(agoText(mini.match13, now))) +
     row('Drive photos', esc(agoText(mini.photos, now))) +
     row('Screen started', esc(agoText(mini.screenStarted, now))) +
-    row('Last backup', esc(agoText(data.lastBackupAt, now))) + '</dl>');
+    row('Last backup', esc(agoText(data.lastBackupAt, now))) + '</dl>', '', 'health.reads');
 }
 
 // The health block at the bottom of Status. data is GET status, wall is GET now. Memory and temperature are left out when
@@ -80,7 +80,7 @@ export function healthHtml(data, wall, now = new Date()) {
     row('Display', esc(data.display || 'not known')) +
     row('Page loads in 24 hours', esc(loadsWords(wall))) +
     row('Screen restarts today', esc(data.kioskRestarts === null || data.kioskRestarts === undefined ? 'not known' : data.kioskRestarts)) +
-    row('Last restart', esc(agoText(data.lastKioskRestartAt, now))) + '</dl>');
+    row('Last restart', esc(agoText(data.lastKioskRestartAt, now))) + '</dl>', '', 'health.running');
 
   const around = card('The Teletraan computer', '<dl>' +
     row('Up for', esc(uptimeText(data.uptimeSeconds))) +
@@ -89,12 +89,12 @@ export function healthHtml(data, wall, now = new Date()) {
     (warm ? row('Temperature', esc(warm)) : '') +
     row('Sanity', data.sanity && data.sanity.reachable ? 'Reachable' : 'Not reachable' + (data.sanity && data.sanity.error ? ': ' + esc(data.sanity.error) : '')) +
     row('Studio can reach this page', corsWords(data.cors)) +
-    row('Tailscale address', esc(data.tailscale || 'not known')) + '</dl>');
+    row('Tailscale address', esc(data.tailscale || 'not known')) + '</dl>', '', 'health.computer');
 
   const errors = Array.isArray(data.lastErrors) ? data.lastErrors : [];
   const last = card('Last errors', errors.length
     ? '<ul class="rows">' + errors.map(line => '<li>' + esc(line) + '</li>').join('') + '</ul>'
-    : '<p class="quiet">No failures in the control log.</p>');
+    : '<p class="quiet">No failures in the control log.</p>', '', 'health.errors');
 
   return '<div class="grid">' + running + around + last + '</div>';
 }

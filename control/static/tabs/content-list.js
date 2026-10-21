@@ -15,6 +15,7 @@ import { problemsIn } from '../settings-check.js';
 import { changesOf, clone, getAt, sameValue, setAt, shownValues } from '../settings-all-values.js';
 import { fieldView, h, refreshProblems } from '../settings-all-fields.js';
 import { chipsOf, renumbered, sortItems } from './content-items.js';
+import { actionBarHtml, actionWords, byAct, noWriteWords, studioNewerHtml } from '../actions.js';
 
 // The form spec is large and the same for every list, so it is asked for once
 let specRequest = null;
@@ -136,7 +137,26 @@ export async function mountList(body, options, ctx = {}) {
       }, 300);
     }
 
+    // The one bar of the page: Save to draft and Undo, with Cancel after them. Publish to the wall is on the item once it is saved.
+    const start = clone(state.values);
+    const bar = h('div', { class: 'action-bar ct-editor-bar' });
+    bar.addEventListener('click', event => {
+      const press = event.target.closest('button[data-act]');
+      if (!press || press.disabled) return;
+      if (press.dataset.act === 'save') save(false);
+      else if (press.dataset.act === 'undo') { state.values = clone(item ? state.base : start); state.errors = {}; drawFields(); after(); }
+      else if (press.dataset.act === 'cancel') { page.editing = null; page.adding = false; draw(); }
+    });
+    function paintBar() {
+      const count = changesOf(fields, item ? state.base : start, state.values).names.length;
+      bar.innerHTML = actionBarHtml({
+        show: ['save', 'undo'], dirty: count, canSave: page.canWrite && (count > 0 || !item), canUndo: count > 0, working: page.working,
+        extra: '<button type="button" class="act quiet" data-act="cancel">Cancel</button>',
+      }, byAct);
+    }
+
     function after() {
+      paintBar();
       box.querySelectorAll('.sa-field').forEach(wrapper => {
         const changed = Boolean(item) && !sameValue(getAt(state.base, wrapper.dataset.path), getAt(state.values, wrapper.dataset.path));
         wrapper.dataset.changed = changed ? 'yes' : 'no';
@@ -153,11 +173,20 @@ export async function mountList(body, options, ctx = {}) {
       askAdvice();
     }
 
-    const conflictBox = answer => h('div', { class: 'ct-conflict', role: 'alert' },
-      h('p', { text: answer.error + ' Saving now replaces only the fields you changed here. Everything else stays as the Studio has it.' }),
-      h('div', { class: 'buttons' },
-        button('Replace with my changes', { 'data-act': 'replace', class: 'act' }, () => save(true)),
-        button('Reload from Sanity', { 'data-act': 'reload' }, () => { page.editing = null; reload('', 'Reloaded from Sanity.'); })));
+    // The shared card (actions.js), with the names of the buttons this list has always used
+    const names = { overwrite: 'replace', refresh: 'reload', 'keep-editing': 'keep' };
+    const conflictBox = answer => {
+      const wrap = h('div', { class: 'ct-conflict' });
+      wrap.innerHTML = studioNewerHtml({ action: 'save', error: answer.error, updatedAt: answer.current && answer.current.updatedAt }, name => 'data-act="' + (names[name] || name) + '"');
+      wrap.addEventListener('click', event => {
+        const press = event.target.closest('button[data-act]');
+        if (!press) return;
+        if (press.dataset.act === 'replace') save(true);
+        else if (press.dataset.act === 'reload') { page.editing = null; reload('', 'Read again from Sanity.'); }
+        else if (press.dataset.act === 'keep') conflictSlot.replaceChildren();
+      });
+      return wrap;
+    };
 
     async function save(force) {
       const patch = changesOf(fields, state.base, state.values);
@@ -181,7 +210,7 @@ export async function mountList(body, options, ctx = {}) {
         page.editing = null;
         page.adding = false;
         const advice = (answer.data.warnings || []).map(one => one.message);
-        return reload('done', 'Saved to the draft. It is not on the wall until you press Publish.' + (advice.length > 0 ? ' Check: ' + advice.join(' ') : ''));
+        return reload('done', 'Saved to the draft. It is not on the wall until you press Publish to the wall.' + (advice.length > 0 ? ' Check: ' + advice.join(' ') : ''));
       }
       if (answer.data && answer.data.conflict) {
         flash.dataset.state = 'bad';
@@ -199,12 +228,8 @@ export async function mountList(body, options, ctx = {}) {
     drawFields();
     box.append(conflictSlot, grid);
     if (extra) box.append(extra);
-    box.append(
-      h('div', { class: 'buttons' },
-        button('Save to draft', { 'data-act': 'save', class: 'act', disabled: !page.canWrite }, () => save(false)),
-        button('Cancel', { 'data-act': 'cancel' }, () => { page.editing = null; page.adding = false; draw(); })),
-      flash);
-    if (!page.canWrite) flash.textContent = 'SANITY_WRITE_TOKEN is not set on the Teletraan computer, so nothing can be saved here. Add it in Settings, Keys.';
+    box.append(bar, flash);
+    if (!page.canWrite) flash.textContent = noWriteWords;
     after();
     return box;
   }
@@ -223,7 +248,7 @@ export async function mountList(body, options, ctx = {}) {
     draw();
   }
 
-  const toggleShow = item => act(item, '/save', { baseRev: item.rev, set: { show: item.document.show === false } }, 'Saved to the draft. Press Publish to put it on the wall.');
+  const toggleShow = item => act(item, '/save', { baseRev: item.rev, set: { show: item.document.show === false } }, 'Saved to the draft. Press Publish to the wall to put it on the wall.');
   const publish = item => act(item, '/publish', { confirm: true, rev: item.rev }, 'Published. The wall shows it within a minute.');
   const dropDraft = item => act(item, '/delete', { draftOnly: true, rev: item.rev }, 'The waiting changes were dropped.');
   const remove = item => act(item, '/delete', { confirm: true, rev: item.rev }, 'Deleted.');
@@ -250,7 +275,7 @@ export async function mountList(body, options, ctx = {}) {
       const answer = await call('POST', '/docs/' + typeOf(target) + '/' + change.id + '/save', { baseRev: target.rev, set: { order: change.order } });
       if (!answer.ok) return reload('bad', answer.error);
     }
-    return reload('done', 'Saved the new order to the drafts. Press Publish to put it on the wall.');
+    return reload('done', 'Saved the new order to the drafts. Press Publish to the wall to put it on the wall.');
   }
 
   // ----- drawing -----
@@ -263,7 +288,7 @@ export async function mountList(body, options, ctx = {}) {
   function askBox(item) {
     const ask = page.ask;
     const wording = {
-      publish: ['Publish this ' + nounOf(item) + ' now? The wall shows it within a minute.', 'Publish now', publish],
+      publish: ['Publish this ' + nounOf(item) + ' to the wall now? The wall shows it within a minute.', 'Publish now', publish],
       drop: ['Drop the waiting changes? The published copy stays as it is.', 'Drop my changes', dropDraft],
       delete: [item.published ? 'Delete this ' + nounOf(item) + ' from the wall and the Studio? This cannot be undone.' : 'Delete this draft? It was never published.', 'Delete', remove],
     }[ask.kind];
@@ -283,7 +308,7 @@ export async function mountList(body, options, ctx = {}) {
       button('Edit', { 'data-act': 'edit', 'aria-label': 'Edit ' + nameOf(item) }, () => openForm(item)),
       options.reorder ? button('Up', { 'data-act': 'up', 'aria-label': 'Move ' + nameOf(item) + ' up', disabled: locked || index <= 0 }, () => move(item, -1, shown)) : null,
       options.reorder ? button('Down', { 'data-act': 'down', 'aria-label': 'Move ' + nameOf(item) + ' down', disabled: locked || index === shown.length - 1 }, () => move(item, 1, shown)) : null,
-      item.isDraft ? button('Publish', { 'data-act': 'publish', class: 'act', disabled: locked }, () => { page.ask = { kind: 'publish', id: item.id }; draw(); }) : null,
+      item.isDraft ? button(actionWords.publish, { 'data-act': 'publish', class: 'act', disabled: locked }, () => { page.ask = { kind: 'publish', id: item.id }; draw(); }) : null,
       item.isDraft && item.published ? button('Drop changes', { 'data-act': 'drop', disabled: locked }, () => { page.ask = { kind: 'drop', id: item.id }; draw(); }) : null,
       button('Delete', { 'data-act': 'delete', 'aria-label': 'Delete ' + nameOf(item), disabled: locked }, () => { page.ask = { kind: 'delete', id: item.id }; draw(); }));
     const card = h('article', { class: 'ct-item', 'data-id': item.id }, h('div', { class: 'ct-main' }, options.row(item, page), chips(item)), actions);
@@ -295,12 +320,12 @@ export async function mountList(body, options, ctx = {}) {
     const waiting = page.items.filter(item => item.isDraft).length;
     const bar = h('div', { class: 'buttons ct-bar' },
       options.addButton === false ? null : button('Add ' + word, { 'data-act': 'add', class: 'act', disabled: !page.canWrite || page.working }, () => openForm(null)),
-      button(waiting === 0 ? 'Nothing to publish' : 'Publish ' + waiting + ' waiting', { 'data-act': 'publish-all', disabled: waiting === 0 || !page.canWrite || page.working }, () => { page.ask = { kind: 'all', id: '' }; draw(); }),
-      button('Refresh', { 'data-act': 'refresh', disabled: page.working }, () => reload('', 'Read again from Sanity.')));
-    const parts = [bar];
+      button(actionWords.publish, { 'data-act': 'publish-all', class: 'act', disabled: waiting === 0 || !page.canWrite || page.working }, () => { page.ask = { kind: 'all', id: '' }; draw(); }),
+      button(actionWords.refresh, { 'data-act': 'refresh', disabled: page.working }, () => reload('', 'Read again from Sanity.')));
+    const parts = [bar, h('p', { class: 'note', 'data-waiting': String(waiting), text: waiting === 0 ? 'Nothing is waiting for the wall.' : waiting + (waiting === 1 ? ' change is' : ' changes are') + ' saved as a draft and waiting for Publish to the wall.' })];
     if (page.ask && page.ask.kind === 'all') {
       parts.push(h('div', { class: 'ct-ask', role: 'group', 'aria-label': 'Confirm', 'data-ask': 'all' },
-        h('p', { text: 'Publish all ' + waiting + ' waiting? The wall shows them within a minute.' }),
+        h('p', { text: 'Publish the ' + waiting + ' waiting ' + (waiting === 1 ? 'change' : 'changes') + ' to the wall now? The wall shows them within a minute.' }),
         h('div', { class: 'buttons' },
           button('Publish now', { 'data-act': 'all-now', class: 'act' }, publishAll),
           button('Cancel', {}, () => { page.ask = null; draw(); }))));

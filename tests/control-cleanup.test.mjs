@@ -258,11 +258,11 @@ await check('the card has the last run, the three fields, Save, Publish and the 
   const html = cleanupHtml(page, now);
   assert.match(html, /Last run: 4 hours ago, 4 on the list, 3 deleted/);
   assert.match(html, /data-problem>One could not be deleted/);
-  assert.match(html, /data-enabled checked/);
+  assert.match(html, /checked data-enabled/);
   assert.match(html, /data-days[^>]*value="21"/);
-  assert.match(html, /data-mode value="delete" checked/);
-  assert.match(html, /data-save>Save to draft/);
-  assert.match(html, /data-publish>Publish/);
+  assert.match(html, /value="delete" checked data-mode/);
+  assert.match(html, /data-draft/, 'the shared bar (Save to draft, Publish to the wall, Refresh from Sanity, Undo) is drawn into this place');
+  assert.match(html, /role="switch"/, 'the switch is a switch');
   assert.match(html, /data-preview>Show what would be deleted now/);
   assert.doesNotMatch(html, /data-delete/, 'the delete button is drawn after a list, not before');
   assert.match(html, /Dashboard Settings, Advanced, Clean up expired items/);

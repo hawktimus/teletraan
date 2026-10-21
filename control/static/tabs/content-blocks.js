@@ -10,13 +10,14 @@ import { mountCalendar } from './content-calendar.js';
 import { mountRoster } from './content-roster.js';
 import { mountAnnouncements } from './content-announcements.js';
 import { mountPhotos } from './content-photos.js';
+import { lead, leadIdOf, sentences } from '../guide.js';
 
 export const blocks = [
-  { id: 'ticker', title: 'Ticker and news', says: 'The tips, news and reminders on the ticker, and the FIRST headlines.', mount: mountTicker },
-  { id: 'calendar', title: 'Calendar', says: 'The coming BAND events, and which ones the wall shows.', mount: mountCalendar },
-  { id: 'roster', title: 'Roster', says: 'Everyone on the team by team and role.', mount: mountRoster },
-  { id: 'announcements', title: 'Announcements', says: 'The bar under the banner, for a notice people must see today.', mount: mountAnnouncements },
-  { id: 'photos', title: 'Photos', says: 'The pictures of the Photo panel, and a way to add one.', mount: mountPhotos },
+  { id: 'ticker', title: 'Ticker and news', says: sentences['content.ticker'], mount: mountTicker },
+  { id: 'calendar', title: 'Calendar', says: sentences['content.calendar'], mount: mountCalendar },
+  { id: 'roster', title: 'Roster', says: sentences['content.roster'], mount: mountRoster },
+  { id: 'announcements', title: 'Announcements', says: sentences['content.announcements'], mount: mountAnnouncements },
+  { id: 'photos', title: 'Photos', says: sentences['content.photos'], mount: mountPhotos },
 ];
 
 export function drawContent(box, ctx = {}) {
@@ -25,7 +26,7 @@ export function drawContent(box, ctx = {}) {
   root.className = 'tab ct';
   const head = document.createElement('section');
   head.className = 'card';
-  head.innerHTML = '<h2>Content</h2><p class="word">What the wall says, edited here the same way as in the Studio: a change is a draft first, and it reaches the wall when you press Publish.</p>';
+  head.innerHTML = '<h2>Content</h2>' + lead('content');
   root.append(head);
 
   const folds = [];
@@ -37,13 +38,15 @@ export function drawContent(box, ctx = {}) {
     const title = document.createElement('span');
     title.className = 'ct-block-title';
     title.textContent = block.title;
-    const says = document.createElement('span');
-    says.className = 'ct-block-says';
+    const says = document.createElement('p');
+    says.className = 'lead';
+    says.id = leadIdOf('content.' + block.id);
     says.textContent = block.says;
-    summary.append(title, says);
+    summary.setAttribute('aria-describedby', leadIdOf('content.' + block.id));
+    summary.append(title);
     const body = document.createElement('div');
     body.className = 'ct-block-body';
-    details.append(summary, body);
+    details.append(summary, says, body);
     let started = false;
     const start = () => {
       if (started || !details.open) return;

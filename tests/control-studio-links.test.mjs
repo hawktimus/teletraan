@@ -57,7 +57,7 @@ test('the landing page has the two buttons, 44px or more high, in the colors of 
 test('the header of the control page has a Studio button that opens /studio/ in a new tab', () => {
   const html = read('control/static/index.html');
   assert.ok(/<a class="studio" href="\/studio\/" target="_blank" rel="noopener">Studio<\/a>/.test(html));
-  assert.ok(/\.studio \{[^}]*min-height: 44px/.test(read('control/static/style.css')));
+  assert.ok(/\.studio, button\.help \{[^}]*min-height: 44px/.test(read('control/static/style.css')));
 });
 
 test('the CORS hint names the same address on port 3426, for the WiFi name, a Tailscale address and a name with no port', () => {

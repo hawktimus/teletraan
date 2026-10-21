@@ -11,6 +11,7 @@ import * as request from '../control/routes/request.js';
 import * as now from '../control/routes/now.js';
 import { actions, buildRequest, hiddenKinds } from '../control/support/requests.js';
 import { doneWords, hiddenRunHtml, hiddenRunWords, nowControlsHtml } from '../control/static/tabs/render.js';
+import { hiddenBlockHtml } from '../control/static/tabs/push-parts.js';
 import { pushedKind } from '../dashboard/core/hidden.js';
 import { makeWorld } from './helpers/control-world.mjs';
 
@@ -101,11 +102,12 @@ test('a request that was ignored, a stopped run, a run in progress and no run ea
   assert.match(hiddenRunWords(played('desktop', [], { imageTypes: { png: null, webp: null } })).types, /PNG not tested, WebP not tested/);
 });
 
-test('the Messages group has both buttons, the block under them, and every text is escaped', () => {
-  const html = nowControlsHtml({});
-  assert.match(html, /data-action="hidden" data-kind="desktop">Play desktop reveal</);
-  assert.match(html, /data-action="hidden" data-kind="redEyes">Play red eyes</);
-  assert.ok(html.indexOf('data-hidden-run') > html.indexOf('Play red eyes'));
+test('the Hidden transitions card under More tools has both buttons and the block under them, and every text is escaped', () => {
+  assert.ok(!nowControlsHtml({}).includes('Play red eyes'), 'the Messages group no longer holds them');
+  const html = hiddenBlockHtml({ canWrite: true, hiddenKinds: [{ value: 'desktop', title: 'Desktop reveal' }, { value: 'redEyes', title: 'Red eyes' }] }, null);
+  assert.match(html, /data-action="push-hidden" data-kind="desktop">Play Desktop reveal</);
+  assert.match(html, /data-action="push-hidden" data-kind="redEyes">Play Red eyes</);
+  assert.ok(html.indexOf('data-hidden-run') > html.indexOf('Play Red eyes'));
   assert.match(html, /Last hidden transition/);
   assert.notEqual(doneWords('hidden', { kind: 'redEyes' }), 'It worked.');
   assert.match(doneWords('hidden', { kind: 'redEyes' }), /red eyes within about 20 seconds/);
@@ -116,9 +118,9 @@ test('the Messages group has both buttons, the block under them, and every text 
 });
 
 test('the tab draws the block from every report and presses send the kind', () => {
-  const tab = fs.readFileSync(root + 'control/static/tabs/now.js', 'utf8');
-  assert.ok(tab.includes("if (action === 'hidden') body.kind = button.dataset.kind;"));
-  assert.ok(tab.includes('drawHiddenRun(answer.ok ? wallReport(answer.data) : null);'));
+  const push = fs.readFileSync(root + 'control/static/tabs/push.js', 'utf8');
+  assert.ok(push.includes("{ kind: 'hidden', transition: button.dataset.kind }"));
+  assert.ok(push.includes('hiddenRun.innerHTML = hiddenRunHtml(report);'));
 });
 
 let failed = 0;

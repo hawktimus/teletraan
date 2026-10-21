@@ -11,6 +11,7 @@ import { mountCard } from './now.js';
 import { mountHealth } from './health.js';
 import { previewCardHtml } from './render.js';
 import { wirePreview } from './preview.js';
+import { lead } from '../guide.js';
 
 export const statusLinks = [
   { address: '#display', label: 'Change what is shown: Display' },
@@ -24,13 +25,14 @@ registerTab({
   order: tabOrder.status,
   async render(container) {
     container.innerHTML = '<div class="tab status-page">' +
+      '<section class="card"><h2>Status</h2>' + lead('status') + '</section>' +
       '<div class="cols">' +
       '<div class="info"><p class="held" data-held-box data-held="no">Following the schedule.</p><div data-card></div>' +
-      '<section class="card next-links" aria-label="Where to change things"><div class="buttons">' +
+      '<section class="card next-links" aria-label="Where to change things">' + lead('status.links') + '<div class="buttons">' +
       statusLinks.map(link => '<a class="act" href="' + link.address + '">' + link.label + '</a>').join('') + '</div></section></div>' +
       '<div class="live" data-preview-card></div>' +
       '</div>' +
-      '<details class="health" data-fold><summary>Health</summary><div data-health-body></div></details>' +
+      '<details class="health" data-fold><summary aria-describedby="lead-status-health">Health</summary>' + lead('status.health') + '<div data-health-body></div></details>' +
       '</div>';
     const root = container.querySelector('.status-page');
     const find = name => container.querySelector('[' + name + ']');

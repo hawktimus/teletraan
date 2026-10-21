@@ -15,17 +15,19 @@
   </style>
   <link rel="stylesheet" href="style.css">
   <link id="tabs-css" rel="stylesheet" href="tabs/tabs.css">
+  <link id="choice-css" rel="stylesheet" href="choice.css">
 </head>
 <body>
   <header>
     <h1>Teletraan I control</h1>
     <p class="on-wall" id="on-wall"></p>
     <div class="bar">
-      <nav id="tabs" role="tablist"></nav>
+      <nav id="tabs" role="tablist" aria-label="Pages of the control page"></nav>
+      <button type="button" class="help" id="help">Help</button>
       <a class="studio" href="/studio/" target="_blank" rel="noopener">Studio</a>
     </div>
   </header>
-  <main id="page">
+  <main id="page" role="tabpanel" tabindex="-1">
     <p class="boot">Loading the page. If this stays here, <a href="./">reload it</a>.</p>
     <noscript><p>This page needs JavaScript. Turn it on in the browser settings, then <a href="./">reload</a>.</p></noscript>
   </main>

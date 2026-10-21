@@ -6,9 +6,11 @@
 
 import { api, showResult, useStyles } from './api.js';
 import { agoText, esc } from './render.js';
+import { choiceHtml, switchHtml } from '../choice.js';
+import { failedHtml, noWriteWords } from '../actions.js';
+import { countChanged, mountDraftBar } from '../draft-bar.js';
 
-export const publishQuestion = 'Publish puts every waiting change of Dashboard Settings on the wall, including edits made in the Studio. The Teletraan computer reads the clean up setting when it runs at 03:40. Publish now?';
-export const replaceQuestion = 'The Studio has a newer copy of Dashboard Settings. Replace the clean up values in it with the ones on this page?';
+export const publishQuestion = 'Publish to the wall puts every waiting change of Dashboard Settings on the wall, including edits made in the Studio. The Teletraan computer reads the clean up setting when it runs at 03:40. Publish now?';
 
 // The question before anything is deleted: how many, and that a backup comes first
 export function deleteQuestion(count) {
@@ -38,21 +40,23 @@ export function cleanupHtml(page, now = new Date()) {
   const words = statusWords(page.status, now);
   const lines = [];
   if (!page.hasDocument) lines.push('<p class="warn">Dashboard Settings has not been published yet. Open it in the Studio, click Publish once, and come back.</p>');
-  if (!page.canWrite) lines.push('<p class="warn">SANITY_WRITE_TOKEN is not set on the Teletraan computer, so this card can read but not save. Add it in Keys.</p>');
+  if (!page.canWrite) lines.push('<p class="warn">' + esc(noWriteWords) + '</p>');
   if (page.status && page.status.unreadable) lines.push('<p class="warn">What the last run did could not be read from Sanity just now.</p>');
-  if (page.isDraft && page.studioNewer) lines.push('<p class="note">A draft is waiting. The computer uses the published setting until it is published.</p>');
+  if (page.isDraft && page.studioNewer) lines.push('<p class="note">A draft is waiting. The computer uses the published setting until you press Publish to the wall.</p>');
   const deleting = page.published && page.published.cleanupMode === 'delete';
-  const mode = value => '<label class="check"><input type="radio" name="cleanup-mode" data-mode value="' + value + '"' + (setting.cleanupMode === value ? ' checked' : '') + '> ' + (value === 'list' ? 'Only show what would be deleted' : 'Delete the items') + '</label>';
+  const modes = choiceHtml({ name: 'cleanup-mode', label: 'Mode', items: [
+    { value: 'list', label: 'Only show what would be deleted', checked: setting.cleanupMode === 'list', attrs: 'data-mode' },
+    { value: 'delete', label: 'Delete the items', checked: setting.cleanupMode === 'delete', attrs: 'data-mode' },
+  ] });
 
   return '<section class="card cleanup-card"><h2>Clean up expired items</h2>' +
     '<p data-last><strong>' + esc(words.last) + '</strong></p>' +
     (words.problem ? '<p class="warn" data-problem>' + esc(words.problem) + '</p>' : '') +
     lines.join('') +
-    '<label class="check"><input type="checkbox" data-enabled' + (setting.cleanupEnabled ? ' checked' : '') + '> Clean up expired items every night at 03:40</label>' +
+    switchHtml({ checked: setting.cleanupEnabled, label: 'Clean up expired items every night at 03:40', attrs: 'data-enabled' }) +
     '<label class="pick"><span>Wait this many days after an item expired</span><input type="number" inputmode="numeric" min="1" max="365" step="1" data-days value="' + esc(setting.cleanupDeleteAfterDays) + '"></label>' +
-    '<div class="pick"><span>Mode</span>' + mode('list') + ' ' + mode('delete') + '</div>' +
-    '<div class="buttons"><button type="button" class="act" data-save>Save to draft</button>' +
-    '<button type="button" class="act" data-publish>Publish</button></div>' +
+    '<div class="pick"><span>Mode</span>' + modes + '</div>' +
+    '<div data-draft></div>' +
     '<h3>What would be deleted now</h3>' +
     '<div class="buttons"><button type="button" class="act" data-preview>Show what would be deleted now</button></div>' +
     '<div data-list></div>' +
@@ -74,46 +78,37 @@ export function readForm(container) {
 
 export async function mountCleanup(container) {
   useStyles();
-  container.innerHTML = '<p class="note">Reading the setting.</p>';
+  container.innerHTML = '<p class="note">Reading the setting from Sanity.</p>';
   let page = null;
+  let draft = null;
+
+  // Drawing the card again is also the undo: it puts back the values that were loaded
+  function draw() {
+    container.innerHTML = cleanupHtml(page);
+    draft = mountDraftBar(container.querySelector('[data-draft]'), {
+      canWrite: () => page.canWrite,
+      isDraft: () => page.isDraft,
+      dirty: () => countChanged(page.setting, readForm(container)),
+      problem: () => (Number.isNaN(readForm(container).cleanupDeleteAfterDays) ? 'Wait this many days should be a whole number from 1 to 365.' : ''),
+      save: force => api('POST', '/cleanup/save', { setting: readForm(container), baseRev: page.rev, force: force }),
+      publish: force => api('POST', '/cleanup/publish', { rev: page.rev, force: force, confirm: true }),
+      reload: load,
+      undo: draw,
+      publishQuestion: publishQuestion,
+      publishedWords: 'Published. The computer reads the setting when it runs at 03:40.',
+    });
+    container.querySelector('[data-preview]').addEventListener('click', event => preview(event.currentTarget));
+  }
 
   async function load() {
     const answer = await api('GET', '/cleanup');
     if (!answer.ok) {
-      container.innerHTML = '<p class="warn">' + esc(answer.error) + '</p>';
+      container.innerHTML = failedHtml('The clean up setting', answer.error);
       return false;
     }
     page = answer.data;
-    container.innerHTML = cleanupHtml(page);
-    container.querySelector('[data-save]').addEventListener('click', event => save(event.currentTarget, false));
-    container.querySelector('[data-publish]').addEventListener('click', event => publish(event.currentTarget, false));
-    container.querySelector('[data-preview]').addEventListener('click', event => preview(event.currentTarget));
+    draw();
     return true;
-  }
-
-  async function save(button, force) {
-    const setting = readForm(container);
-    if (Number.isNaN(setting.cleanupDeleteAfterDays)) return showResult(button, 'bad', 'Wait this many days should be a whole number from 1 to 365.');
-    showResult(button, 'working', 'Saving to the draft.');
-    const answer = await api('POST', '/cleanup/save', { setting: setting, baseRev: page.rev, force: force });
-    if (!answer.ok && answer.data && answer.data.conflict) {
-      if (window.confirm(replaceQuestion)) return save(button, true);
-      return showResult(button, 'wait', 'Nothing was saved. Press Refresh in the browser to see the Studio copy.');
-    }
-    if (!answer.ok) return showResult(button, 'bad', answer.error);
-    if (await load()) showResult(container.querySelector('[data-save]'), 'done', 'Saved to the draft. Press Publish when you are ready.');
-  }
-
-  async function publish(button, force) {
-    if (!force && !window.confirm(publishQuestion)) return showResult(button, 'wait', 'Nothing was published.');
-    showResult(button, 'working', 'Publishing.');
-    const answer = await api('POST', '/cleanup/publish', { rev: page.rev, force: force, confirm: true });
-    if (!answer.ok && answer.data && answer.data.conflict) {
-      if (window.confirm('The draft changed in the Studio after this page loaded it. Publish the newer draft?')) return publish(button, true);
-      return showResult(button, 'wait', 'Nothing was published.');
-    }
-    if (!answer.ok) return showResult(button, 'bad', answer.error);
-    if (await load()) showResult(container.querySelector('[data-publish]'), 'done', 'Published. The computer reads the setting when it runs at 03:40.');
   }
 
   async function preview(button) {
@@ -146,5 +141,8 @@ export async function mountCleanup(container) {
     if (fresh.ok) container.querySelector('[data-last]').innerHTML = '<strong>' + esc(statusWords(fresh.data.status).last) + '</strong>';
   }
 
+  container.addEventListener('input', () => { if (draft) draft.paint(); });
+  container.addEventListener('change', () => { if (draft) draft.paint(); });
+  container.addEventListener('click', event => { if (event.target.closest('[data-act="retry"]')) load(); });
   await load();
 }

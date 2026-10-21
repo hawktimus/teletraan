@@ -26,11 +26,16 @@ export async function api(method, path, body) {
 
 // Puts the tab stylesheet in the page once
 export function useStyles() {
-  if (document.getElementById('tabs-css')) return;
+  addStyle('tabs-css', './tabs.css');
+  addStyle('choice-css', '../choice.css');
+}
+
+function addStyle(id, path) {
+  if (document.getElementById(id)) return;
   const link = document.createElement('link');
-  link.id = 'tabs-css';
+  link.id = id;
   link.rel = 'stylesheet';
-  link.href = new URL('./tabs.css', import.meta.url).href;
+  link.href = new URL(path, import.meta.url).href;
   document.head.appendChild(link);
 }
 

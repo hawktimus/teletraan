@@ -8,6 +8,7 @@ import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
 import { actions, buildRequest, mutationsFor, themeIds, themeNames, todayThemeOf, todayViewsOf, viewKeys, viewNames as plainViewNames } from '../support/requests.js';
 import { gridPanels, registryText } from '../support/now-rows.js';
+import { panelNamesOf } from '../support/names.js';
 
 const optionsQuery = '{ "teams": *[_type == "team"] | order(order asc) { code, name, shortName, number }, ' +
   '"live": count(*[_type == "announcement" && dateTime(start) <= dateTime(now()) && dateTime(end) > dateTime(now())]), ' +
@@ -61,12 +62,14 @@ export function register(router, ctx) {
     }
     const found = data || {};
 
+    const panels = gridPanels(registryText(ctx));
     send(res, 200, {
       actions: actions,
       views: viewNames(found.teams),
       themes: themeIds,
       themeNames: themeNames,
-      panels: gridPanels(registryText(ctx)),
+      panels: panels,
+      panelNames: panelNamesOf(panels),
       liveAnnouncements: typeof found.live === 'number' ? found.live : null,
       talks: Array.isArray(found.talks) ? found.talks : [],
       requests: found.requests || null,

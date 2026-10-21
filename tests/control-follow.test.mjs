@@ -17,13 +17,13 @@ const base = { view: 'prime', theme: 'cybertron', layout: 'standard', team: 'pri
 test('a report gives an address that holds the same panel, team, theme and view, still', () => {
   const found = followFor(base);
   assert.equal(found.src, '/dashboard/?panel=events&team=prime&screen=cybertron&view=prime&still=1');
-  assert.equal(found.line, 'Showing: Events (page 2), prime, cybertron');
+  assert.equal(found.line, 'Showing: Events (page 2), Prime, Cybertron');
 });
 
 test('the bar layout is carried, and a report with no team says both teams', () => {
   const found = followFor({ view: 'family', theme: 'original', layout: 'bar', team: '', panel: 'photo', page: '1' });
   assert.equal(found.src, '/dashboard/?panel=photo&screen=original&view=family&layout=bar&still=1');
-  assert.equal(found.line, 'Showing: Photo, both teams, original');
+  assert.equal(found.line, 'Showing: Photo, both teams, Original');
 });
 
 test('the address the control page builds is read by the dashboard as a held, still panel', () => {
@@ -45,7 +45,7 @@ test('a panel that cannot be held is replaced by the nearest plain one, and the 
   ['alert', 'announcement', 'talk', 'stand-in-tile'].forEach(panel => {
     const found = followFor({ ...base, panel });
     assert.ok(found.src.startsWith('/dashboard/?panel=tonight&'), panel);
-    assert.ok(found.line.includes('cannot be copied, so the copy shows tonight'), panel);
+    assert.ok(found.line.includes('cannot be copied, so the copy shows Tonight'), panel);
   });
 });
 
@@ -78,7 +78,8 @@ test('the card and the preview agree on the real answer of GET /now', () => {
   const answer = { report, receivedAt: new Date().toISOString(), ageSeconds: 2, quiet: false, message: '', rows: [] };
   assert.equal(wallReport(answer), report);
   assert.ok(followFor(wallReport(answer)).src.startsWith('/dashboard/?panel=competition-timeline&team=prime&screen=cybertron&view=general'));
-  assert.ok(nowCardHtml(answer).includes('competition-timeline'));
+  assert.ok(!nowCardHtml(answer).includes('competition-timeline'), 'the card says the panel in plain words, not its stored name');
+  assert.ok(nowCardHtml({ ...answer, names: { panels: { 'competition-timeline': 'Competition: Timeline' } } }).includes('Competition: Timeline'));
   const quiet = { ...answer, quiet: true, message: 'No report for 90 s' };
   assert.equal(wallReport(quiet), null);
   assert.equal(followFor(wallReport(quiet)).src, '');

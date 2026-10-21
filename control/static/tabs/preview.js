@@ -79,7 +79,7 @@ export function wirePreview(root) {
   async function follow(mine) {
     const answer = await api('GET', '/now');
     if (mine !== run) return;
-    const next = followFor(wallReport(answer.ok ? answer.data : null));
+    const next = followFor(wallReport(answer.ok ? answer.data : null), answer.ok && answer.data ? answer.data.names : null);
     line.hidden = false;
     followNote.hidden = false;
     line.textContent = next.line;

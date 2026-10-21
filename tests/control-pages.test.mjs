@@ -40,13 +40,18 @@ check('the card is grey with the number of seconds when the wall has gone quiet'
   assert.match(quiet, /No report for 52 s/);
   const live = nowCardHtml({ report: { view: 'nova', theme: 'retro', panel: 'tasks', team: 'nova', page: '2', hold: 'tasks', build: 'v14 abc1234' }, quiet: false, rows: ['One', 'Two'], receivedAt: '2026-10-15T11:59:55Z' }, now);
   assert.ok(!live.includes('grey'));
-  ['nova', 'retro', 'tasks', 'v14 abc1234', '<li>One</li>'].forEach(word => assert.ok(live.includes(word), word));
+  ['v14 abc1234', '<li>One</li>'].forEach(word => assert.ok(live.includes(word), word));
+  // the ids the wall stores are shown as the words people use
+  const named = nowCardHtml({ report: { view: 'family', theme: 'retro', panel: 'monday-department', team: 'both', layout: 'bar', page: '1', build: 'v1' }, quiet: false, rows: [], receivedAt: '2026-10-15T11:59:55Z',
+    names: { panels: { 'monday-department': 'Monday: Department tasks' }, views: { family: 'Condensed' }, themes: { retro: 'Retro' }, layouts: { bar: 'Bar' }, teams: { both: 'Both teams' } } }, now);
+  ['Condensed', 'Retro', 'Monday: Department tasks', 'Bar', 'Both teams'].forEach(word => assert.ok(named.includes(word), word));
+  ['family', 'monday-department', '>both<'].forEach(word => assert.ok(!named.includes(word), word + ' is not shown'));
 });
 
 check('the Now showing buttons are all there', () => {
   const html = nowControlsHtml({ views: [{ key: 'general', name: 'General' }], themes: ['original'], panels: ['tasks'], talks: [], liveAnnouncements: 1, canWrite: true });
   ['next', 'pause', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
-  ['Playlist', 'Theme and view', 'Hold a panel', 'Messages'].forEach(title => assert.ok(html.includes('<summary>' + title + '</summary>'), title));
+  ['Playlist', 'Theme and view', 'Hold a panel', 'Messages'].forEach(title => assert.ok(html.includes('>' + title + '</summary>'), title));
   assert.equal((html.match(/data-toggle-pause/g) || []).length, 1, 'Pause and Resume are one button');
   assert.ok(pauseToggleHtml(true).includes('data-action="resume"') && pauseToggleHtml(true).includes('Resume rotation'));
   assert.ok(pauseToggleHtml(false).includes('data-action="pause"'));
@@ -93,7 +98,7 @@ check('the health block of Status has the release, uptime, disk, page loads, mem
 
 check('the card of the wall names the build, view, theme, layout, team, panel, page and the age of the report', () => {
   const html = nowCardHtml({ report: { build: 'v14 abc1234', view: 'nova', theme: 'retro', layout: 'bar', team: 'nova', panel: 'tasks', page: '2' }, quiet: false, rows: [], receivedAt: '2026-10-15T11:59:00Z' }, now);
-  ['Build</dt>', 'View</dt>', 'Theme</dt>', 'Layout</dt><dd>bar', 'Team</dt>', 'Panel</dt>', 'Page</dt><dd>2', 'Age of this report</dt><dd>1 minute ago'].forEach(words => assert.ok(html.includes(words), words));
+  ['Build</dt>', 'View</dt>', 'Theme</dt>', 'Layout</dt><dd>Bar', 'Team</dt>', 'Panel</dt>', 'Page</dt><dd>2', 'Age of this report</dt><dd>1 minute ago'].forEach(words => assert.ok(html.includes(words), words));
 });
 
 check('the Keys section of Settings never holds a value, only the mask, and has a field and a clear for each', () => {
@@ -136,8 +141,8 @@ check('the theme and view group says what a press does, and the lists come from 
   assert.ok(html.includes('Stays until you reset it, or 24 hours.'));
   assert.ok(html.includes("Reset to today&#39;s schedule") && html.includes('data-big'));
   assert.ok(html.includes('Today the schedule uses Cybertron. The views play in turn: Robotics, Condensed.'));
-  assert.ok(html.includes('<option value="cybertron">Cybertron</option>') && html.includes('<option value="foundry">Foundry</option>'));
-  assert.ok(html.includes('<option value="general">Robotics</option>') && html.includes('<option value="family">Condensed</option>'));
+  assert.ok(html.includes('value="cybertron" checked') && html.includes('>Foundry<'), "the theme is a group of buttons and today's theme is chosen");
+  assert.ok(html.includes('value="general" checked') && html.includes('>Condensed<'), 'the view is a group of buttons');
   assert.ok(html.includes('data-left="theme"') && html.includes('data-wall="theme"') && html.includes('data-wall="view"'));
 });
 
@@ -149,7 +154,7 @@ check('the held line says who decides what the wall shows', () => {
   assert.equal(heldLine({ previewTheme: { theme: '', until: '' }, showView: { key: '', until: '' } }, names, at), 'Following the schedule.');
   assert.equal(heldLine({ previewTheme: { theme: 'retro', until: plus(24 * 60) } }, names, at), 'Held by you: theme Retro until reset.');
   assert.match(heldLine({ showView: { key: 'nova', until: plus(30) } }, names, at), /^Held by you: view Nova until \d\d:\d\d\.$/);
-  assert.match(heldLine({ previewTheme: { theme: 'retro', until: plus(24 * 60) }, holdPanel: { panel: 'tasks', until: plus(10) }, pauseRotation: { until: plus(60) } }, names, at), /^Held by you: theme Retro until reset, panel tasks until \d\d:\d\d, rotation paused until \d\d:\d\d\.$/);
+  assert.match(heldLine({ previewTheme: { theme: 'retro', until: plus(24 * 60) }, holdPanel: { panel: 'tasks', until: plus(10) }, pauseRotation: { until: plus(60) } }, names, at), /^Held by you: theme Retro until reset, panel Tasks until \d\d:\d\d, rotation paused until \d\d:\d\d\.$/);
   assert.equal(heldLine({ previewTheme: { theme: 'retro', until: plus(-1) } }, names, at), 'Following the schedule.', 'a request that ended is not held');
   assert.equal(todayLine({}), '');
 });

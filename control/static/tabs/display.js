@@ -10,11 +10,13 @@
 import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
 import { addChartRows, addDepartmentRows, addRow, copyRow, countWhere, isNovaRow, isPanelRow, mondayFieldNames, moveRow, photoRange, quickAction, removeRetired, removeRow, retiredCount, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
-import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, motionHtml, playlistHtml, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from './display-parts.js';
+import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, newerHtml, motionHtml, playlistHtml, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from './display-parts.js';
 import { largeHtml } from './display-preview-parts.js';
 import { patchRows } from './display-patch.js';
 import { startPictures } from './display-preview.js';
 import { startPush } from './push.js';
+import { chosen } from '../choice.js';
+import { lead, moreToolsHtml, sentences, wireMoreTools } from '../guide.js';
 
 const undoLimit = 20;
 const checkDelay = 600;
@@ -55,17 +57,18 @@ export async function mountDisplay(container) {
     // The right column comes first in the page, so a phone shows the preview before everything else
     largeHtml() +
     '<div class="display-left">' +
-    '<section class="card"><h2>Display</h2>' +
-    '<p class="word">Choose what the wall shows right now, what it plays in order, and which theme plays each day. The Status tab only reads. A push here is temporary: the wall returns to its schedule on its own.</p></section>' +
+    '<section class="card"><h2>Display</h2>' + lead('display') + '</section>' +
     '<div data-now-box></div><div data-playlist-box></div><div data-extension-slot="before"></div><div data-push-box></div>' +
-    '<section class="card"><h2>Rotation (what plays, in order)</h2>' +
-    '<p class="word">The rows the wall plays, top to bottom. The Studio is the source of truth: this reads from it and saves to the same draft the Studio Rotation board uses.</p>' +
+    '<section class="card"><h2>Rotation (what plays, in order)</h2>' + lead('display.rotation') +
+    '<p class="word">The Studio is the source of truth: this reads from it and saves to the same draft as the Rotation board in the Studio.</p>' +
     '<div data-source></div></section>' +
-    '<div data-quick-box></div>' +
-    '<section class="card rows-card" data-rotation-card tabindex="-1"><h2>Rows</h2><p class="word" data-summary></p><div data-rows></div></section>' +
-    '<div data-add></div><div data-motion-box></div><div data-theme></div><div data-extension-slot="after"></div></div></div></div>';
+    '<section class="card rows-card" data-rotation-card tabindex="-1"><h2>Rows</h2>' + lead('display.rows') + '<p class="word" data-summary></p><div data-rows></div></section>' +
+    '<div data-add></div><div data-theme></div>' +
+    moreToolsHtml('display', '<div data-quick-box></div><div data-hidden-box></div><div data-motion-box></div>', sentences['display.more']) +
+    '<div data-extension-slot="after"></div></div></div></div>';
+  wireMoreTools(container);
   const find = name => container.querySelector('[' + name + ']');
-  const boxes = { nowBox: find('data-now-box'), pushBox: find('data-push-box'), conflict: find('data-conflict'), source: find('data-source'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), motion: find('data-motion-box'), playlist: find('data-playlist-box'), bar: find('data-save-bar'), rotation: find('data-rotation-card') };
+  const boxes = { nowBox: find('data-now-box'), pushBox: find('data-push-box'), hiddenBox: find('data-hidden-box'), conflict: find('data-conflict'), source: find('data-source'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), motion: find('data-motion-box'), playlist: find('data-playlist-box'), bar: find('data-save-bar'), rotation: find('data-rotation-card') };
 
   let page = kept;
   let checkTimer = null;
@@ -89,7 +92,7 @@ export async function mountDisplay(container) {
     page.canUndo = page.history.length > 0;
     boxes.source.innerHTML = sourceHtml(page);
     boxes.bar.innerHTML = controlsHtml(page);
-    boxes.conflict.innerHTML = conflictHtml(page.conflict);
+    boxes.conflict.innerHTML = conflictHtml(page.conflict) || newerHtml(page);
     boxes.summary.textContent = summaryWords(page.rows, page.checks, page.pageSeconds);
     paintPlaylist();
   }
@@ -140,11 +143,24 @@ export async function mountDisplay(container) {
     }, checkDelay);
   }
 
+  // A row is drawn again after each change, so the keyboard would lose its place. The control that was used gets the focus back.
+  let usedControl = null;
+
+  function refocus() {
+    const used = usedControl;
+    usedControl = null;
+    if (!used) return;
+    const card = boxes.rows.querySelector('[data-key="' + used.key + '"]');
+    const found = card && Array.from(card.querySelectorAll('[data-field="' + used.field + '"]')).filter(input => used.radio ? input.value === used.value : true)[0];
+    if (found) found.focus({ preventScroll: true });
+  }
+
   function change(next, wantCheck) {
     page.history = page.history.concat([page.rows]).slice(-undoLimit);
     page.rows = next;
     page.conflict = null;
     paintRows();
+    refocus();
     if (wantCheck) askCheck(false);
   }
 
@@ -178,7 +194,9 @@ export async function mountDisplay(container) {
     if (gone || !page) return;
     const answer = await api('GET', '/display/rev');
     if (gone || !answer.ok || !page) return;
-    if (answer.data.rev !== page.rev && !page.newerInStudio) {
+    page.latestRev = answer.data.rev;
+    // A copy the person chose to ignore is not announced again until the Studio changes it once more
+    if (answer.data.rev !== page.rev && answer.data.rev !== page.ignoredRev && !page.newerInStudio) {
       page.newerInStudio = true;
       paintTop();
     }
@@ -252,7 +270,12 @@ export async function mountDisplay(container) {
     }
     else if (action === 'save') save(false);
     else if (action === 'publish') publish(false);
-    else if (action === 'keep-editing') { page.conflict = null; paintTop(); flash('done', ''); }
+    else if (action === 'keep-editing') {
+      page.conflict = null;
+      if (page.newerInStudio) { page.newerInStudio = false; page.ignoredRev = page.latestRev; }
+      paintTop();
+      flash('done', '');
+    }
     else if (action === 'overwrite') {
       const was = page.conflict && page.conflict.action;
       page.conflict = null;
@@ -295,8 +318,8 @@ export async function mountDisplay(container) {
       change(removeRow(page.rows, index), false);
     } else if (action === 'add') {
       const panel = boxes.add.querySelector('[data-add="panel"]').value;
-      if (panel === '') return flash('bad', 'Pick a panel to add.');
-      change(addRow(page.rows, boxes.add.querySelector('[data-add="view"]').value, panel), true);
+      if (panel === '') return flash('bad', 'Pick a panel to add, then press Add row at the end.');
+      change(addRow(page.rows, chosen(boxes.add.querySelector('.choices')), panel), true);
       flash('done', 'Row added at the end of the list.');
     } else if (action === 'standard') {
       if (armed !== 'standard') {
@@ -315,6 +338,7 @@ export async function mountDisplay(container) {
     const card = target.closest('.drow');
 
     if (card && target.dataset.field) {
+      usedControl = { key: card.dataset.key, field: target.dataset.field, value: target.value, radio: target.type === 'radio' };
       const index = indexOfKey(card.dataset.key);
       const name = target.dataset.field;
       if (name === 'shown') return change(setRowValue(page.rows, index, 'shown', target.checked), true);
@@ -357,7 +381,7 @@ export async function mountDisplay(container) {
   revTimer = setInterval(checkRev, revEvery);
 
   if (page && !gone) {
-    push = startPush(container, { now: boxes.nowBox, push: boxes.pushBox }, {
+    push = startPush(container, { now: boxes.nowBox, push: boxes.pushBox, hidden: boxes.hiddenBox }, {
       choices: () => page.choices,
       rows: () => page.rows,
       selectedRow: () => (pictures && pictures.selected() ? page.rows.find(row => row._key === pictures.selected()) : null) || null,

@@ -2,6 +2,7 @@
 // button that installs it. The steps are shown the same way as for a folder.
 
 import { api } from './api.js';
+import { sentences } from './guide.js';
 import { versionLabel, restartWords, waitUntilBack } from './update-lib.js';
 
 function element(tag, text, className) {
@@ -25,7 +26,7 @@ export function githubCard(stepNames, reload) {
   row.append(button, again);
   const problem = element('p', '', 'bad');
   const steps = element('ol', '', 'steps');
-  card.append(element('h2', 'From GitHub'), github, wall, row, problem, steps);
+  card.append(element('h2', 'From GitHub'), element('p', sentences['update.github'], 'lead'), github, wall, row, problem, steps);
 
   let found = null;
   let switched = false;

@@ -224,8 +224,11 @@ test('the phone has four tab buttons in one row, each 44px high or more', () => 
   const style = read('control/static/style.css');
   assert.ok(/nav button \{[^}]*min-height: 44px/.test(style));
   const phone = style.slice(style.indexOf('@media (max-width: 600px)'));
-  assert.ok(phone.includes('nav { flex-basis: 100%; flex-wrap: nowrap; }') && phone.includes('nav button { flex: 1 1 0;'));
-  assert.ok(read('control/static/index.html').includes('<nav id="tabs" role="tablist">'));
+  assert.ok(/nav \{[^}]*position: fixed[^}]*bottom: 0[^}]*flex-wrap: nowrap/.test(phone), 'on a phone the tabs are a bar fixed to the bottom');
+  assert.ok(phone.includes('nav button { flex: 1 1 0;') && /nav button \{[^}]*min-height: calc\(var\(--tabbar\) - 4px\)/.test(phone) && style.includes('--tabbar: 56px'), 'the buttons are at least 44px high');
+  assert.ok(/main \{ padding-bottom: calc\(16px \+ var\(--tabbar\)/.test(phone), 'the page keeps clear of the bar');
+  assert.ok(read('control/static/tabs/tabs.css').includes('bottom: calc(var(--tabbar, 56px) + env(safe-area-inset-bottom))'), 'the Next, Pause and Reset bar sits above the tab bar');
+  assert.ok(read('control/static/index.html').includes('<nav id="tabs" role="tablist"'));
 });
 
 await finish();

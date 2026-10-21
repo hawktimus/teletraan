@@ -18,7 +18,7 @@
 .tab .act:disabled { opacity: .5; cursor: default; }
 .tab .buttons.small .act { font-size: 16px; }
 .tab .pick { display: block; margin-top: 8px; }
-.tab .pick span { display: block; margin-bottom: 4px; color: #b9afcf; }
+.tab .pick > span { display: block; margin-bottom: 4px; color: #b9afcf; }
 .tab select, .tab input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
 .tab .rows { margin: 12px 0 0; padding-left: 20px; }
 .tab .dot-row { display: flex; gap: 12px; padding: 8px 0; }
@@ -138,8 +138,6 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 @media (min-width: 900px) {
   .sync-section .includes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-.tab .check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
-.tab .check input { width: 24px; min-height: 24px; height: 24px; }
 .tab .log { max-height: 50vh; }
 /* The Keys and Log sections sit on the light Settings page: their loose text and quiet buttons are dark there */
 .settings-page .fold-body.tab { color: var(--ink, #1d1a24); }
@@ -176,7 +174,7 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
 .display-page .quick .act { min-height: 44px; white-space: normal; text-align: left; }
 .display-page .items { margin: 4px 0 0; padding-left: 20px; color: #b9afcf; }
-.display-page .drow .check { display: flex; margin-top: 4px; }
+.display-page .drow .switch { margin-top: 4px; }
 .display-page [data-save-flash]:empty { display: none; }
 .display-page h3 { font-size: 18px; }
 .display-page h4 { margin: 8px 0 0; font-size: 16px; }
@@ -192,11 +190,6 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .facts dt { flex: 0 0 120px; color: #b9afcf; }
 .display-page .facts dd { flex: 1 1 200px; margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .display-page .action-bar { margin: 12px 0 0; padding: 12px 0 0; border-top: 2px solid var(--card-edge, #3a2c55); }
-.display-page .action-bar .buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); margin-top: 0; }
-.display-page .action-bar .act { padding-left: 8px; padding-right: 8px; white-space: normal; }
-.display-page .action-bar .note { margin: 8px 0 0; }
-.display-page .action-bar .card { margin: 12px 0 0; padding: 12px; background: #0b0714; border: 2px solid var(--accent, #faca2a); }
-.display-page .action-bar .card h2 { font-size: 18px; }
 .display-page .wall-controls { padding: 0; }
 .display-page .wall-controls .groups { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); max-width: none; }
 .display-page .preview-card { min-width: 0; margin: 0; }
@@ -205,8 +198,7 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .large-frame { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; transform: scale(0.2); pointer-events: none; background: #0b0714; }
 .display-page .large-empty { position: absolute; inset: 0; margin: 0; padding: 12px; overflow: auto; }
 .display-page .large-box[data-state="picture"] .large-empty { display: none; }
-.display-page .thumb-switch { display: flex; min-height: 44px; align-items: center; gap: 8px; margin-top: 12px; }
-.display-page .thumb-switch input { width: 24px; min-height: 24px; flex: none; }
+.display-page .thumb-switch { margin-top: 12px; }
 .display-page .thumb { position: relative; display: none; width: 240px; max-width: 100%; height: 135px; margin: 0 0 8px; overflow: hidden; background: #140d24; border: 2px solid var(--card-edge, #3a2c55); border-radius: 4px; }
 .display-page .thumb-title { position: absolute; inset: 0; padding: 8px; font-size: 16px; color: #b9afcf; overflow: hidden; overflow-wrap: anywhere; }
 .display-page .thumb-frame { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; transform: scale(0.125); pointer-events: none; background: #0b0714; }
@@ -254,3 +246,51 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .tab textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
 
 .tab .fit-picture { display: block; width: 100%; max-width: 300px; margin: 8px 0 0; color: #b9afcf; }
+
+/* The shared parts of every tab: the sentence under a heading (guide.js), the What do I do here note, More tools, the one bar of
+   Save to draft, Publish to the wall, Refresh from Sanity and Undo (actions.js), and the card for a newer Studio copy. */
+.lead { margin: 4px 0 12px; color: #5d5670; }
+.card .lead, .ct-block .lead, .more-tools .lead, .help-note .lead { color: #cfc6e4; }
+.ct-block > .lead { margin: 0 16px 12px; }
+.settings-page .fold > .lead { margin: 0 16px 12px; }
+.settings-page .fold-head { padding: 16px; }
+.settings-page .fold-head h2 { margin: 0 0 4px; font: 700 20px 'Tomorrow', system-ui, sans-serif; color: var(--purple-dark, #53048f); }
+.settings-page .fold-head .lead { margin: 0; color: #5d5670; }
+.status-page > .card { margin: 0 0 16px; }
+
+#page > .help-note { margin: 0 0 16px; padding: 16px; color: var(--page-text, #f3eefc); background: var(--card-bg, #1a1228); border: 2px solid var(--accent, #faca2a); border-radius: 8px; font-family: 'Tomorrow', system-ui, sans-serif; }
+.help-note h2 { margin: 0 0 8px; font-size: 20px; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); }
+.help-note ul { margin: 0 0 12px; padding-left: 20px; }
+.help-note li { margin: 0 0 4px; }
+.help-note .act { min-height: 44px; min-width: 44px; padding: 8px 16px; font: inherit; color: #1a1228; background: var(--accent, #faca2a); border: 0; border-radius: 6px; cursor: pointer; }
+
+.more-tools { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.more-tools > summary { min-height: 44px; padding: 10px 16px; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); cursor: pointer; }
+.more-tools > .lead { margin: 0 16px 12px; }
+.more-tools > .more-body { display: grid; gap: 16px; margin: 0 16px 16px; }
+.more-tools > .more-body > div { min-width: 0; }
+.more-tools > .more-body > div:empty { display: none; }
+.more-tools .card { background: #120b20; }
+
+.action-bar { margin: 12px 0 0; min-width: 0; }
+.action-bar .action-bar-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0; }
+.action-bar .act { padding-left: 8px; padding-right: 8px; white-space: normal; }
+.action-bar .note { margin: 8px 0 0; }
+.action-bar .note.unsaved[data-state="wait"] { color: #ffb300; font-weight: 700; }
+.studio-changed, .action-bar .card { margin: 12px 0 0; padding: 12px; background: #0b0714; border: 2px solid var(--accent, #faca2a); border-radius: 8px; color: var(--page-text, #f3eefc); }
+.studio-changed h2 { font-size: 18px; }
+.settings-page .fold-body.tab .action-bar .note { color: #b9afcf; }
+.settings-page .fold-body.tab .card .action-bar .note.unsaved[data-state="wait"] { color: #ffb300; }
+
+.tab .inline-field { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 44px; }
+.tab .inline-field input { width: 12ch; }
+
+/* On a phone the four tabs are fixed to the bottom (style.css), so the three most used buttons sit just above them */
+@media (max-width: 600px) {
+  .wall-controls[data-width="medium"] .quickbar, .wall-controls[data-width="narrow"] .quickbar { bottom: calc(var(--tabbar, 56px) + env(safe-area-inset-bottom)); padding-bottom: 8px; }
+  main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"]) { padding-bottom: calc(96px + var(--tabbar, 56px) + env(safe-area-inset-bottom)); }
+}
+.tab .lead { color: #cfc6e4; }
+.status-page[data-width="wide"] .health > .lead { margin: 0; color: #5d5670; }
+.status-page .health > .lead { margin: 0 16px 12px; }
+.status-page[data-width="wide"] .health > .lead { margin: 0 0 12px; }

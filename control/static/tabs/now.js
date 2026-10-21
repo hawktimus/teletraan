@@ -2,7 +2,7 @@
 // card refreshes every 10 seconds, the length of the dashboard's own report. The Live preview card is in preview.js.
 
 import { api, showResult, useStyles } from './api.js';
-import { heldLine, hiddenRunHtml, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
+import { heldLine, nowCardHtml, nowControlsHtml, outcome, pauseStateWords, previewLine, previewMinutes, wallCheck, wallChecks, wallReport } from './render.js';
 
 // The sentence for a minutes field that holds no whole number inside its own limits, or '' when it is fine
 function fieldProblem(field) {
@@ -108,7 +108,8 @@ function wire(root, watcher, afterPress) {
 
     const action = button.dataset.action;
     const body = { action: action };
-    const value = name => { const field = root.querySelector('[name="' + name + '"]'); return field ? field.value : ''; };
+    // A group of choices has one input for each button, and the chosen one answers
+    const value = name => { const field = root.querySelector('[name="' + name + '"]:checked') || root.querySelector('[name="' + name + '"]'); return field ? field.value : ''; };
 
     // A fixed button has its minutes in data-minutes; the other one reads the field named in data-minutes-from
     if (action === 'hold') body.panel = value('panel');
@@ -146,7 +147,7 @@ function wire(root, watcher, afterPress) {
 // request that ended goes away. options is the answer of GET request. Returns { set(requests), stop() }.
 function makeHeld(heldBox, options) {
   const data = options.ok && options.data ? options.data : {};
-  const names = { theme: data.themeNames || {}, view: {} };
+  const names = { theme: data.themeNames || {}, view: {}, panel: data.panelNames || {} };
   (data.views || []).forEach(view => { names.view[view.key] = view.name; });
   let requests = data.requests || null;
   const draw = () => {
@@ -217,22 +218,11 @@ export async function mountControls(boxes) {
     if (Date.now() - pressed.at > 15000) setPaused(root, pausedBy(answer.data.requests));
   }
 
-  // The last hidden transition, under the buttons. Redrawn only when its words changed.
-  let hiddenLast = '';
-  function drawHiddenRun(report) {
-    const box = controls.querySelector('[data-hidden-run]');
-    const html = hiddenRunHtml(report);
-    if (!box || html === hiddenLast) return;
-    hiddenLast = html;
-    box.innerHTML = html;
-  }
-
   async function refresh() {
     askRequests();
     const answer = await api('GET', '/now');
     if (left) return;
     if (answer.ok && wallReport(answer.data) && Date.now() - pressed.at > 15000) setPaused(root, wallReport(answer.data).pause === true);
-    drawHiddenRun(answer.ok ? wallReport(answer.data) : null);
   }
   await refresh();
   if (!left) timer = setInterval(refresh, 10000);

@@ -72,7 +72,7 @@ test('the stylesheets keep 16px fields, 44px targets, wrapping text and no cut l
   const tabs = read('control/static/tabs/tabs.css');
   assert.ok(/input\[type="text"\][^{]*\{[^}]*min-height: 44px[^}]*font: 18px/.test(style));
   assert.ok(/\.tab select, \.tab input \{[^}]*min-height: 44px[^}]*font: inherit/.test(tabs));
-  assert.ok(/button\.action, label\.action \{[^}]*min-height: 44px/.test(style) && /\.studio \{[^}]*min-height: 44px/.test(style));
+  assert.ok(/button\.action, label\.action \{[^}]*min-height: 44px/.test(style) && /\.studio, button\.help \{[^}]*min-height: 44px/.test(style));
   assert.ok(/nav \{[^}]*flex-wrap: wrap/.test(style), 'the tabs wrap, they are not cut');
   assert.ok(/pre \{[^}]*white-space: pre-wrap/.test(style) && /\.log \{[^}]*white-space: pre-wrap/.test(tabs));
   assert.ok(style.includes('overflow-wrap: anywhere') && tabs.includes('overflow-wrap: anywhere'));

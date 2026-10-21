@@ -6,11 +6,14 @@
 
 import { api, showResult, useStyles } from './api.js';
 import { esc } from './render.js';
+import { chosen, choiceHtml } from '../choice.js';
+import { failedHtml, noWriteWords } from '../actions.js';
+import { countChanged, mountDraftBar } from '../draft-bar.js';
 import { autoSettings, displayWords, fillPlan, fitWords, presets, previewSvg, readManual, screenWords } from './screen-plan.js';
 
 const settingsId = 'dashboardSettings';
 
-export const publishQuestion = 'Publish puts every waiting change of Dashboard Settings on the wall, including edits made in the Studio. The screen changes within a few seconds. Publish now?';
+export const publishQuestion = 'Publish to the wall puts every waiting change of Dashboard Settings on the wall, including edits made in the Studio. The screen changes within a few seconds. Publish now?';
 
 // The settings stored in a document, with the starting value for any that is missing
 export function storedFit(document) {
@@ -23,7 +26,7 @@ export function storedFit(document) {
 
 export function screenHtml() {
   const presetOptions = presets.map(preset => '<option value="' + esc(preset.id) + '">' + esc(preset.title) + '</option>').join('');
-  const fitOptions = Object.keys(fitWords).map(key => '<option value="' + esc(key) + '">' + esc(fitWords[key]) + '</option>').join('');
+  const fits = choiceHtml({ name: 'screen-fit', label: 'Fit', groupAttrs: 'data-fit-group', items: Object.keys(fitWords).map(key => ({ value: key, label: fitWords[key], attrs: 'data-fit' })) });
   return '<div class="tab screen-section" data-root>' +
     '<section class="card"><h2>Fit the dashboard to the screen</h2>' +
     '<p class="note">Use this when the dashboard looks too small, has bars around it or is cut off. It reads the window of the wall and sets the fit so the picture fills it.</p>' +
@@ -32,13 +35,13 @@ export function screenHtml() {
     '</section>' +
     '<section class="card"><h2>By hand</h2>' +
     '<label class="pick"><span>Preset</span><select data-preset>' + presetOptions + '</select></label><p class="note" data-preset-says></p>' +
-    '<label class="pick"><span>Fit</span><select data-fit>' + fitOptions + '</select></label>' +
+    '<div class="pick"><span>Fit</span>' + fits + '</div>' +
     '<label class="pick"><span>Size (percent, 50 to 200)</span><input type="number" inputmode="numeric" min="50" max="200" step="1" data-scale></label>' +
     '<label class="pick"><span>Move right (pixels, -400 to 400)</span><input type="number" inputmode="numeric" min="-400" max="400" step="1" data-offset-x></label>' +
     '<label class="pick"><span>Move down (pixels, -400 to 400)</span><input type="number" inputmode="numeric" min="-400" max="400" step="1" data-offset-y></label>' +
     '<div data-picture></div>' +
-    '<div class="buttons"><button type="button" class="act" data-apply>Save and publish</button>' +
-    '<button type="button" class="act quiet" data-reset>Reset to Auto</button></div>' +
+    '<div class="buttons"><button type="button" class="act quiet" data-reset>Reset to Auto</button></div>' +
+    '<div data-draft></div>' +
     '<p class="note">The Studio shows the same values in Dashboard Settings, Advanced, Screen fit. On a 4K TV that shows the dashboard small, put KIOSK_RESOLUTION=3840x2160 in Keys and restart the screen.</p>' +
     '</section></div>';
 }
@@ -50,9 +53,10 @@ export async function mountScreen(container) {
   const field = name => root.querySelector(name);
   let doc = null;
   let report = null;
+  let draft = null;
 
   function fill(settings) {
-    field('[data-fit]').value = settings.screenFit;
+    root.querySelectorAll('[data-fit]').forEach(input => { input.checked = input.value === settings.screenFit; });
     field('[data-scale]').value = settings.screenScale;
     field('[data-offset-x]').value = settings.screenOffsetX;
     field('[data-offset-y]').value = settings.screenOffsetY;
@@ -60,7 +64,7 @@ export async function mountScreen(container) {
   }
 
   function manual() {
-    return readManual({ fit: field('[data-fit]').value, scale: field('[data-scale]').value, offsetX: field('[data-offset-x]').value, offsetY: field('[data-offset-y]').value });
+    return readManual({ fit: chosen(field('[data-fit-group]')), scale: field('[data-scale]').value, offsetX: field('[data-offset-x]').value, offsetY: field('[data-offset-y]').value });
   }
 
   // The picture follows every key press, from the same arithmetic as the wall
@@ -70,7 +74,11 @@ export async function mountScreen(container) {
     field('[data-picture]').innerHTML = now.settings ? previewSvg(size, now.settings) : '<p class="warn">' + esc(now.problem) + '</p>';
     const preset = presets.filter(item => item.id === field('[data-preset]').value)[0];
     field('[data-preset-says]').textContent = preset ? preset.says : '';
+    if (draft) draft.paint();
   }
+
+  // The saved values, as the four fields of the bar compare them. A value that cannot be read counts as a change.
+  const savedFit = () => storedFit(doc && doc.document);
 
   async function readWall() {
     const answer = await api('GET', '/now');
@@ -91,11 +99,18 @@ export async function mountScreen(container) {
     return '';
   }
 
+  async function reloadDocument() {
+    const problem = await readDocument();
+    if (problem) return false;
+    fill(savedFit());
+    return true;
+  }
+
   // Saves the four values to the draft and publishes it, after the person says yes
   async function saveAndPublish(button, settings, words) {
     const problem = await readDocument();
     if (problem) return showResult(button, 'bad', problem);
-    if (!doc.canWrite) return showResult(button, 'bad', 'SANITY_WRITE_TOKEN is not set on the Teletraan computer. Add it in Keys.');
+    if (!doc.canWrite) return showResult(button, 'bad', noWriteWords);
     if (!window.confirm(words + '\n\n' + publishQuestion)) return showResult(button, 'wait', 'Nothing was changed.');
 
     showResult(button, 'working', 'Saving to the draft.');
@@ -145,20 +160,31 @@ export async function mountScreen(container) {
     if (preset) fill(preset.set);
   });
   root.addEventListener('input', event => { if (event.target.closest('[data-fit], [data-scale], [data-offset-x], [data-offset-y]')) draw(); });
-  field('[data-apply]').addEventListener('click', event => {
-    const button = event.currentTarget;
-    const now = manual();
-    if (!now.settings) return showResult(button, 'bad', now.problem);
-    return saveAndPublish(button, now.settings, 'The screen will use fit ' + fitWords[now.settings.screenFit].toLowerCase() + ', size ' + now.settings.screenScale + ' percent, moved ' + now.settings.screenOffsetX + ' and ' + now.settings.screenOffsetY + ' pixels.');
-  });
-  field('[data-reset]').addEventListener('click', event => {
+  field('[data-reset]').addEventListener('click', () => {
     fill(autoSettings);
     field('[data-preset]').value = 'auto';
-    return saveAndPublish(event.currentTarget, Object.assign({}, autoSettings), 'The screen goes back to Auto, 100 percent, with no move.');
   });
 
-  await Promise.all([readWall(), readDisplay(), readDocument()]);
-  fill(storedFit(doc && doc.document));
+  const readProblem = (await Promise.all([readWall(), readDisplay(), readDocument()]))[2];
+  if (readProblem) {
+    field('[data-draft]').innerHTML = failedHtml('Dashboard Settings', readProblem);
+    field('[data-draft]').addEventListener('click', event => { if (event.target.closest('[data-act="retry"]')) mountScreen(container); });
+    return;
+  }
+  draft = mountDraftBar(field('[data-draft]'), {
+    canWrite: () => Boolean(doc && doc.canWrite),
+    note: () => (doc && doc.canWrite ? '' : noWriteWords),
+    isDraft: () => Boolean(doc && doc.isDraft),
+    dirty: () => { const now = manual(); return now.settings ? countChanged(savedFit(), now.settings) : 1; },
+    problem: () => manual().problem || '',
+    save: force => api('POST', '/doc/' + settingsId + '/save', { set: manual().settings, baseRev: doc.rev, force: force }),
+    publish: force => api('POST', '/doc/' + settingsId + '/publish', { confirm: true, rev: doc.rev, force: force }),
+    reload: reloadDocument,
+    undo: () => fill(savedFit()),
+    publishQuestion: publishQuestion,
+    publishedWords: 'Published. The screen takes the new fit within a few seconds.',
+  });
+  fill(savedFit());
   field('[data-preset]').value = 'auto';
   draw();
 }

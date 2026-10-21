@@ -11,6 +11,7 @@
 
 import { problemWith } from './settings-check.js';
 import { fromLocalBox, itemLabel, move, newItem, toLocalBox, visible } from './settings-all-values.js';
+import { choiceElement, switchElement } from './choice.js';
 
 export function h(tag, attrs, ...children) {
   const element = document.createElement(tag);
@@ -87,13 +88,9 @@ function frame(field, form, path, control, id, whole) {
 // ----- the controls -----
 
 function switchControl(field, form, path, id) {
-  const input = h('input', { type: 'checkbox', id: id, role: 'switch' });
-  const state = h('span', { class: 'sa-state' });
-  const sync = () => { state.textContent = input.checked ? 'On' : 'Off'; };
-  input.checked = form.get(path) === true;
-  input.addEventListener('change', () => { form.set(path, input.checked); form.commit(); sync(); });
-  sync();
-  return h('label', { class: 'sa-switch', for: id }, input, h('span', { class: 'sa-track' }), state);
+  const control = switchElement({ id: id, checked: form.get(path) === true });
+  control.querySelector('input').addEventListener('change', event => { form.set(path, event.target.checked); form.commit(); });
+  return control;
 }
 
 function numberControl(field, form, path, id) {
@@ -116,14 +113,13 @@ function radioControl(field, form, path, id) {
   const rules = field.validation || {};
   const list = rules.required || field.initialValue !== undefined ? field.options.list : [{ title: 'Not set', value: '' }].concat(field.options.list);
   const current = form.get(path);
-  const group = h('div', { class: 'sa-choices', role: 'radiogroup', 'aria-labelledby': id + '-t' });
-  list.forEach(item => {
-    const input = h('input', { type: 'radio', name: name, value: String(item.value) });
-    input.checked = item.value === '' ? current === undefined || current === null || current === '' : current === item.value;
-    input.addEventListener('change', () => { form.set(path, item.value === '' ? undefined : item.value); form.commit(); });
-    group.append(h('label', { class: 'sa-choice' }, input, h('span', { text: item.title })));
+  const group = choiceElement({
+    name: name, id: id, labelledBy: id + '-t',
+    items: list.map(item => ({ value: String(item.value), label: item.title, checked: item.value === '' ? current === undefined || current === null || current === '' : current === item.value })),
   });
-  group.id = id;
+  group.querySelectorAll('input').forEach((input, at) => {
+    input.addEventListener('change', () => { form.set(path, list[at].value === '' ? undefined : list[at].value); form.commit(); });
+  });
   return group;
 }
 
@@ -189,19 +185,18 @@ function dateControl(field, form, path, id) {
 }
 
 function checksControl(field, form, path, id) {
-  const group = h('div', { class: 'sa-choices', id: id, role: 'group' });
   const picked = () => (Array.isArray(form.get(path)) ? form.get(path) : []);
-  field.options.list.forEach(item => {
-    const input = h('input', { type: 'checkbox', value: String(item.value) });
-    input.checked = picked().includes(item.value);
+  const list = field.options.list;
+  const group = choiceElement({ id: id, multiple: true, labelledBy: id + '-t', items: list.map(item => ({ value: String(item.value), label: item.title, checked: picked().includes(item.value) })) });
+  group.querySelectorAll('input').forEach((input, at) => {
     input.addEventListener('change', () => {
+      const item = list[at];
       const now = picked().filter(value => value !== item.value);
       if (input.checked) now.push(item.value);
-      const order = field.options.list.map(one => one.value);
+      const order = list.map(one => one.value);
       form.set(path, now.sort((a, b) => order.indexOf(a) - order.indexOf(b)));
       form.commit();
     });
-    group.append(h('label', { class: 'sa-choice' }, input, h('span', { text: item.title })));
   });
   return group;
 }
@@ -245,12 +240,10 @@ function teamControl(field, form, path, id) {
   const current = form.get(path);
   const picked = current && current._ref;
   const teams = form.teams.filter(team => team.active || team.id === picked);
-  const group = h('div', { class: 'sa-choices', id: id, role: 'radiogroup' });
-  [{ id: '', name: 'Both' }].concat(teams).forEach(team => {
-    const input = h('input', { type: 'radio', name: name, value: team.id });
-    input.checked = team.id === '' ? !picked : team.id === picked;
-    input.addEventListener('change', () => { form.set(path, team.id === '' ? undefined : { _type: 'reference', _ref: team.id }); form.commit(); });
-    group.append(h('label', { class: 'sa-choice' }, input, h('span', { text: team.name })));
+  const list = [{ id: '', name: 'Both' }].concat(teams);
+  const group = choiceElement({ name: name, id: id, labelledBy: id + '-t', items: list.map(team => ({ value: team.id, label: team.name, checked: team.id === '' ? !picked : team.id === picked })) });
+  group.querySelectorAll('input').forEach((input, at) => {
+    input.addEventListener('change', () => { form.set(path, list[at].id === '' ? undefined : { _type: 'reference', _ref: list[at].id }); form.commit(); });
   });
   return group;
 }

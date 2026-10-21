@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import * as push from '../control/routes/push.js';
 import { buildCancel, buildPush, buildReset, noticeId, pushesOf, weekdayOf } from '../control/support/push.js';
 import { clockOffset, leftWords, nowTheme, previewTarget, secondsLeft, weekDates } from '../control/static/push-lib.js';
-import { activeHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml } from '../control/static/tabs/push-parts.js';
+import { activeHtml, hiddenBlockHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml } from '../control/static/tabs/push-parts.js';
 import { makeWorld } from './helpers/control-world.mjs';
 
 let passed = 0;
@@ -261,7 +261,7 @@ await check('the top of the page: the big theme, 5 hold lengths with 15 pressed,
   const names = namesOf(state, { tasks: 'Tasks' });
   const top = nowThemeHtml(state, draft, names);
   const block = pushBlockHtml(state, draft, choices, names);
-  const all = top + block;
+  const all = top + block + hiddenBlockHtml(state, null);
 
   assert.match(top, /data-now-theme-name>Foundry</, 'a pushed theme is the big one');
   assert.match(top, /Pushed by hand/);
@@ -273,8 +273,11 @@ await check('the top of the page: the big theme, 5 hold lengths with 15 pressed,
   assert.match(top, /Reset to today's schedule/);
   assert.ok(top.includes('&lt;b&gt;Pizza&lt;/b&gt;') && !top.includes('<b>Pizza'), 'an announcement text is escaped');
   assert.equal((top.match(/data-action="cancel"/g) || []).length, 3, 'one Cancel on each push and one Back to the schedule');
-  ['push-view', 'push-panel', 'push-announcement', 'push-pause', 'push-hidden'].forEach(action => assert.ok(block.includes('data-action="' + action + '"'), action));
-  assert.equal((block.match(/data-action="push-hidden"/g) || []).length, 2);
+  ['push-view', 'push-panel', 'push-announcement', 'push-pause'].forEach(action => assert.ok(block.includes('data-action="' + action + '"'), action));
+  assert.ok(!block.includes('push-hidden'), 'Hidden transitions moved under More tools');
+  const hidden = hiddenBlockHtml(state, null);
+  assert.equal((hidden.match(/data-action="push-hidden"/g) || []).length, 2);
+  assert.ok(hidden.includes('data-hidden-run'));
   assert.match(block, /maxlength="90"/);
   assert.ok(!/[–—!]/.test(all.replace(/<[^>]*>/g, '')), 'plain wording');
   assert.ok(activeHtml([], state, names).includes('Nothing is pushed'));

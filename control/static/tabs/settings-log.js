@@ -3,6 +3,7 @@
 
 import { api, showResult, useStyles } from './api.js';
 import { logHtml, outcome, pageLoadsLine } from './render.js';
+import { switchHtml } from '../choice.js';
 
 export const hiddenWords = 'Keys and calendar links are hidden in this file. It is safe to send to a coach.';
 
@@ -37,7 +38,7 @@ async function download() {
 export async function mountLog(container) {
   useStyles();
   container.innerHTML = '<div class="buttons"><button type="button" class="act" data-refresh>Refresh</button>' +
-    '<label class="check"><input type="checkbox" data-verbose> Verbose (1000 lines)</label></div>' +
+    switchHtml({ label: 'Verbose (1000 lines)', attrs: 'data-verbose' }) + '</div>' +
     '<div class="buttons"><button type="button" class="act quiet" data-download>Download the verbose log</button></div>' +
     '<p class="note">' + hiddenWords + '</p><p class="note" data-loads></p><div data-body></div>';
   const body = container.querySelector('[data-body]');

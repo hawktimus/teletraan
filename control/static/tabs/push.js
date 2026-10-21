@@ -4,7 +4,8 @@
 // when Push is pressed. The countdown follows the clock of the Teletraan computer, not the clock of this device.
 
 import { api, showResult } from './api.js';
-import { activeHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml } from './push-parts.js';
+import { activeHtml, hiddenBlockHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml } from './push-parts.js';
+import { hiddenRunHtml } from './render.js';
 import { titlesOf } from './display-parts.js';
 import { nowLine } from '../display-preview.js';
 import { clockOffset, holdWords, leftWords, previewTarget, secondsLeft, usualHold } from '../push-lib.js';
@@ -15,13 +16,14 @@ const reportSeconds = 10;
 const pausedIn = state => (state.pushes || []).some(push => push.kind === 'pause');
 
 // hooks: { choices(), rows(), selectedRow(), pictures(), onState(state), onReport(report) } give the rotation and the large picture of the page.
-// boxes: { now, push } are the two places the markup goes. Returns { start, destroy }.
+// boxes: { now, push, hidden } are the places the markup goes (hidden is the card under More tools, and may be left out). Returns { start, destroy }.
 export function startPush(root, boxes, hooks) {
   let state = null;
   let names = namesOf({}, {});
   let offset = 0;
   let gone = false;
   let endingSoon = false;
+  let lastReport = null;
   const draft = { theme: '', view: '', panel: '', hold: usualHold, text: '', level: 'notice', noticeTeam: '' };
   const timers = [];
 
@@ -41,6 +43,7 @@ export function startPush(root, boxes, hooks) {
     names = namesOf(state, titlesOf(hooks.choices()));
     boxes.now.innerHTML = nowThemeHtml(state, draft, names);
     boxes.push.innerHTML = pushBlockHtml(state, draft, hooks.choices(), names);
+    if (boxes.hidden) boxes.hidden.innerHTML = hiddenBlockHtml(state, lastReport);
   }
 
   function showPreview() {
@@ -84,6 +87,9 @@ export function startPush(root, boxes, hooks) {
     const line = root.querySelector('[data-now-view]');
     const report = answer.ok && answer.data && answer.data.report && !answer.data.quiet ? answer.data.report : null;
     if (line) line.textContent = nowLine(report);
+    lastReport = report;
+    const hiddenRun = root.querySelector('[data-hidden-run]');
+    if (hiddenRun) hiddenRun.innerHTML = hiddenRunHtml(report);
     if (hooks.onReport) hooks.onReport(report);
   }
 

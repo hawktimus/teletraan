@@ -5,6 +5,7 @@
 import { api as realApi } from './api.js';
 import { h } from '../settings-all-fields.js';
 import { button, useContentStyles } from './content-list.js';
+import { actionWords } from '../actions.js';
 
 export async function mountCalendar(body, ctx = {}) {
   useContentStyles();
@@ -39,7 +40,7 @@ export async function mountCalendar(body, ctx = {}) {
 
   function eventRow(event) {
     const state = event.state;
-    const reason = [state.reason, event.rule && !state.reason ? 'Hidden by the rule ' + event.rule + '.' : '', state.note, state.pending ? 'Waiting for Publish.' : ''].filter(Boolean).join(' ');
+    const reason = [state.reason, event.rule && !state.reason ? 'Hidden by the rule ' + event.rule + '.' : '', state.note, state.pending ? 'Waiting for Publish to the wall.' : ''].filter(Boolean).join(' ');
     return h('article', { class: 'ct-item ct-event', 'data-state': state.id, 'data-on': state.on ? 'yes' : 'no' },
       h('div', { class: 'ct-main' },
         h('div', { class: 'ct-row' },
@@ -52,7 +53,7 @@ export async function mountCalendar(body, ctx = {}) {
           'data-act': 'switch',
           'aria-label': (state.on ? 'Hide ' : 'Show ') + event.title,
           disabled: !state.canSwitch || page.working || !page.data.canWrite || !page.data.rulesReadable,
-        }, () => run('/switch', { key: event.key }, state.on ? 'Hidden in a draft rule. It is on the wall until you press Publish.' : 'Shown again in a draft rule. It changes on the wall when you press Publish.'))));
+        }, () => run('/switch', { key: event.key }, state.on ? 'Hidden in a draft rule. It is on the wall until you press Publish to the wall.' : 'Shown again in a draft rule. It changes on the wall when you press Publish to the wall.'))));
   }
 
   function matches(event) {
@@ -86,12 +87,12 @@ export async function mountCalendar(body, ctx = {}) {
 
     const waiting = data.pending;
     const bar = h('div', { class: 'buttons ct-bar' },
-      button(waiting === 0 ? 'Nothing to publish' : 'Publish ' + waiting + (waiting === 1 ? ' change' : ' changes'), { 'data-act': 'cal-publish', class: 'act', disabled: waiting === 0 || !data.canWrite || page.working }, () => { page.ask = true; draw(); }),
-      button('Refresh', { 'data-act': 'cal-refresh', disabled: page.working }, async () => { await load(); page.flash = { state: '', words: 'Read again from Sanity.' }; draw(); }));
-    parts.push(bar);
+      button(actionWords.publish, { 'data-act': 'cal-publish', class: 'act', disabled: waiting === 0 || !data.canWrite || page.working }, () => { page.ask = true; draw(); }),
+      button(actionWords.refresh, { 'data-act': 'cal-refresh', disabled: page.working }, async () => { await load(); page.flash = { state: '', words: 'Read again from Sanity.' }; draw(); }));
+    parts.push(bar, h('p', { class: 'note', 'data-waiting': String(waiting), text: waiting === 0 ? 'Nothing is waiting for the wall.' : waiting + (waiting === 1 ? ' event change is' : ' event changes are') + ' saved as a draft and waiting for Publish to the wall.' }));
     if (page.ask) {
       parts.push(h('div', { class: 'ct-ask', role: 'group', 'aria-label': 'Confirm', 'data-ask': 'calendar' },
-        h('p', { text: 'Publish ' + waiting + (waiting === 1 ? ' event change' : ' event changes') + ' now? The wall shows them within a minute.' }),
+        h('p', { text: 'Publish ' + waiting + (waiting === 1 ? ' event change' : ' event changes') + ' to the wall now? The wall shows them within a minute.' }),
         h('div', { class: 'buttons' }, button('Publish now', { 'data-act': 'cal-publish-now', class: 'act' }, () => run('/publish', { confirm: true }, 'Published. The wall shows it within a minute.')), button('Cancel', {}, () => { page.ask = false; draw(); }))));
     }
     parts.push(h('p', { class: 'ct-flash', role: 'status', 'data-state': page.flash.state, text: page.flash.words }));

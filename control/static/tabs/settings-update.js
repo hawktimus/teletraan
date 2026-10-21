@@ -1,6 +1,7 @@
 // The Update section of Settings: pick the repository folder on this computer, see how it compares with the wall, push it, and roll back.
 
 import { api, shortDate } from '../api.js';
+import { sentences } from '../guide.js';
 import { treeHashOfFiles } from '../tree-hash.js';
 import { githubCard } from '../github-card.js';
 import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit, restartWords, waitUntilBack } from '../update-lib.js';
@@ -108,8 +109,8 @@ export function mountUpdate(page) {
   const steps = element('ol', '', 'steps');
   const problem = element('p', '', 'bad');
 
-  push.append(element('h2', 'From a folder on this computer'), wall, pick, remembered, folderLine, note, element('div', '', 'row'), problem, bar, steps);
-  push.children[6].append(button);
+  push.append(element('h2', 'From a folder on this computer'), element('p', sentences['update.folder'], 'lead'), wall, pick, remembered, folderLine, note, element('div', '', 'row'), problem, bar, steps);
+  push.children[7].append(button);
 
   let releases = [];
   let files = [];
@@ -202,14 +203,14 @@ export function mountUpdate(page) {
   });
 
   // Rollback
-  back.append(element('h2', 'Roll back'));
+  back.append(element('h2', 'Roll back'), element('p', sentences['update.back'], 'lead'));
   const choose = document.createElement('select');
   const go = element('button', 'Switch to this version', 'action quiet');
   go.type = 'button';
   const backNote = element('p', '', 'muted');
   const chosen = element('p', '', 'muted');
   back.append(choose, chosen, element('div', '', 'row'), backNote);
-  back.children[3].append(go);
+  back.children[4].append(go);
   choose.addEventListener('change', () => { chosen.textContent = choose.selectedOptions.length ? choose.selectedOptions[0].textContent : ''; });
 
   function renderRollback() {

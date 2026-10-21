@@ -5,7 +5,6 @@
 .ct-block { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
 .ct-block > summary { display: grid; gap: 4px; min-height: 44px; padding: 10px 16px; cursor: pointer; }
 .ct-block-title { font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); }
-.ct-block-says { color: #b9afcf; }
 .ct-block-body { margin: 0 16px 16px; }
 .ct-block-body > .word:first-child, .ct-list .word, .ct-calendar .word { margin: 0 0 12px; }
 
@@ -86,8 +85,7 @@
 .ct-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .ct-editor.sa { max-width: none; margin: 0; padding: 16px; background: #0b0714; }
 .ct-edit-title { margin: 0 0 8px; font-size: 20px; color: var(--accent, #faca2a); }
-.ct-conflict { margin-bottom: 12px; padding: 12px; border: 2px solid #ff8a80; border-radius: 6px; }
-.ct-conflict p { margin: 0 0 8px; }
+.ct-conflict { margin-bottom: 12px; }
 .ct-error p { margin: 0 0 8px; }
 
 @media (min-width: 700px) {
@@ -99,3 +97,4 @@
   .ct-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
   .ct-grid .ct-ask { grid-column: auto; }
 }
+.ct .ct-link { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; text-decoration: none; }

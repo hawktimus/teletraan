@@ -4,6 +4,7 @@
 import { api, confirmed, showResult, useStyles } from './api.js';
 import { esc, outcome } from './render.js';
 import { dotsHtml, readsHtml } from './render-health.js';
+import { choiceHtml } from '../choice.js';
 
 export const restarts = [
   { word: 'restart-kiosk', label: 'Restart screen', doing: 'Restarting the screen' },
@@ -48,12 +49,12 @@ export function syncLinesHtml(answer) {
 }
 
 function syncCardHtml(off) {
-  const boxes = syncs.map(item => '<label class="check"><input type="checkbox" data-include="' + esc(item.target) + '"' + (off.includes(item.target) ? '' : ' checked') + '> ' + esc(item.name) + '</label>').join('');
+  const boxes = choiceHtml({ multiple: true, label: 'Syncs that Sync all runs', items: syncs.map(item => ({ value: item.target, label: item.name, checked: !off.includes(item.target), attrs: 'data-include="' + esc(item.target) + '"' })) });
   return '<section class="card"><h2>Sync</h2>' +
     '<p class="note">Sync all runs the syncs one after another: calendars, Monday, competition, news, Match13, Drive photos. One that fails does not stop the others.</p>' +
     '<div class="buttons"><button type="button" class="act" data-sync-all>Sync all</button></div>' +
     '<div data-sync-lines></div>' +
-    '<details class="more"><summary>Which syncs Sync all runs</summary><div class="includes">' + boxes + '</div></details>' +
+    '<details class="more"><summary>Which syncs Sync all runs</summary>' + boxes + '</details>' +
     '<h3>One at a time</h3><div class="buttons small" data-singles></div></section>';
 }
 

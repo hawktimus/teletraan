@@ -3,7 +3,8 @@
 // tests/control-push.test.mjs can try it with node.
 
 import { dayWords, holdChoices, holdWords, leftWords, pushWords, usualHold } from '../push-lib.js';
-import { esc } from './render.js';
+import { esc, hiddenRunHtml } from './render.js';
+import { lead } from '../guide.js';
 
 const hiddenOrder = ['desktop', 'redEyes'];
 
@@ -41,7 +42,7 @@ export function nowThemeHtml(state, draft, names) {
   const pushedTheme = (state.pushes || []).find(push => push.kind === 'theme');
   const id = pushedTheme ? pushedTheme.id : (state.week && state.week[state.today]) || '';
   const source = pushedTheme ? 'Pushed by hand.' : (dayWords[state.today] || 'Today') + ' schedule.';
-  return '<section class="card now-card" data-now-card><h2>Now on the wall</h2>' +
+  return '<section class="card now-card" data-now-card><h2>Now on the wall</h2>' + lead('display.now-theme') +
     '<p class="big-theme" data-now-theme-name>' + esc(names.themes[id] || id || 'Not known') + '</p>' +
     '<p class="word" data-now-theme-source>' + esc(source) + '</p>' +
     '<p class="word" data-now-view>The wall has not reported yet.</p>' +
@@ -74,12 +75,10 @@ export function activeHtml(pushes, state, names, nowMilliseconds = Date.now()) {
 export function pushBlockHtml(state, draft, choices, names) {
   const panelGroups = (choices.panelGroups || []).map(group => '<optgroup label="' + esc(group.title) + '">' + options(group.panels, draft.panel) + '</optgroup>').join('');
   const views = (state.views || []).map(view => ({ value: view.key, title: view.name }));
-  const kinds = (state.hiddenKinds || []).slice().sort((a, b) => hiddenOrder.indexOf(a.value) - hiddenOrder.indexOf(b.value));
   const off = state.canWrite ? '' : ' disabled';
   const teams = [{ value: '', title: 'Both teams' }].concat((state.teams || []).map(team => ({ value: team.code, title: team.name })));
 
-  return '<section class="card push-card" data-push-card><h2>Temporary push</h2>' +
-    '<p class="word">Show something on the wall for a while. It stays for the hold length, then the wall goes back to its schedule on its own. The picture above shows it before you push.</p>' +
+  return '<section class="card push-card" data-push-card><h2>Temporary push</h2>' + lead('display.push') +
     '<div data-hold-box>' + holdHtml(draft.hold) + '</div>' +
     (state.canWrite ? '' : '<p class="note">SANITY_WRITE_TOKEN is not set on the Teletraan computer, so nothing can be pushed. Add it in Settings, Keys.</p>') +
 
@@ -99,15 +98,22 @@ export function pushBlockHtml(state, draft, choices, names) {
     '</div><p class="word" data-notice-count>' + esc(draft.text.length + ' of 90 characters.') + '</p>' +
     '<div class="buttons"><button type="button" class="act" data-action="push-announcement"' + off + '>Post announcement</button></div>' +
 
-    '<h3>Hidden transitions</h3>' +
-    '<p class="word">Plays at once. Allow hidden transitions must be on in Dashboard Settings.</p>' +
-    '<div class="buttons">' + kinds.map(kind => '<button type="button" class="act quiet" data-action="push-hidden" data-kind="' + esc(kind.value) + '"' + off + '>Play ' + esc(kind.title) + '</button>').join('') + '</div>' +
-
     '<h3>Pause rotation</h3>' +
     '<p class="word">Keeps the panel that is on the wall where it is.</p>' +
     '<div class="buttons"><button type="button" class="act" data-action="push-pause"' + off + '>Pause rotation</button></div>' +
     '<div class="buttons"><button type="button" class="act" data-action="reset">Reset to today\'s schedule</button></div>' +
     '</section>';
+}
+
+// The Hidden transitions card, which lives under More tools. The buttons are wired with the other pushes (push.js). report is the
+// report of the wall, or null.
+export function hiddenBlockHtml(state, report) {
+  const kinds = (state.hiddenKinds || []).slice().sort((a, b) => hiddenOrder.indexOf(a.value) - hiddenOrder.indexOf(b.value));
+  const off = state.canWrite ? '' : ' disabled';
+  return '<section class="card hidden-card" data-hidden-card><h2>Hidden transitions</h2>' + lead('display.hidden') +
+    '<div class="buttons">' + kinds.map(kind => '<button type="button" class="act quiet" data-action="push-hidden" data-kind="' + esc(kind.value) + '"' + off + '>Play ' + esc(kind.title) + '</button>').join('') + '</div>' +
+    '<p class="note">Allow hidden transitions must be on in Dashboard Settings, in the Studio.</p>' +
+    '<div class="hidden-run" data-hidden-run>' + hiddenRunHtml(report) + '</div></section>';
 }
 
 export { holdWords, usualHold };
