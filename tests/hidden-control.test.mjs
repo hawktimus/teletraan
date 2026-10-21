@@ -10,8 +10,8 @@ import { fileURLToPath } from 'node:url';
 import * as request from '../control/routes/request.js';
 import * as now from '../control/routes/now.js';
 import { actions, buildRequest, hiddenKinds } from '../control/support/requests.js';
-import { doneWords, hiddenRunHtml, hiddenRunWords, nowControlsHtml } from '../control/static/tabs/render.js';
-import { hiddenBlockHtml } from '../control/static/tabs/push-parts.js';
+import { doneWords, hiddenRunHtml, hiddenRunWords } from '../control/static/tabs/render.js';
+import { hiddenPartHtml } from '../control/static/tabs/push-parts.js';
 import { pushedKind } from '../dashboard/core/hidden.js';
 import { makeWorld } from './helpers/control-world.mjs';
 
@@ -102,9 +102,8 @@ test('a request that was ignored, a stopped run, a run in progress and no run ea
   assert.match(hiddenRunWords(played('desktop', [], { imageTypes: { png: null, webp: null } })).types, /PNG not tested, WebP not tested/);
 });
 
-test('the Hidden transitions card under More tools has both buttons and the block under them, and every text is escaped', () => {
-  assert.ok(!nowControlsHtml({}).includes('Play red eyes'), 'the Messages group no longer holds them');
-  const html = hiddenBlockHtml({ canWrite: true, hiddenKinds: [{ value: 'desktop', title: 'Desktop reveal' }, { value: 'redEyes', title: 'Red eyes' }] }, null);
+test('the Hidden transitions part of Announce and effects has both buttons and the block under them, and every text is escaped', () => {
+  const html = hiddenPartHtml({ canWrite: true, hiddenKinds: [{ value: 'desktop', title: 'Desktop reveal' }, { value: 'redEyes', title: 'Red eyes' }] }, null);
   assert.match(html, /data-action="push-hidden" data-kind="desktop">Play Desktop reveal</);
   assert.match(html, /data-action="push-hidden" data-kind="redEyes">Play Red eyes</);
   assert.ok(html.indexOf('data-hidden-run') > html.indexOf('Play Red eyes'));

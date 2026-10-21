@@ -134,19 +134,21 @@ try {
     await context.close();
   });
 
-  await check('More tools on Display starts closed, holds Quick hide, Hidden transitions and Motion, and a browser remembers it open', async () => {
+  await check('More tools on Display starts closed, holds Quick hide and Motion, and a browser remembers it open; Announce and effects starts closed and holds the hidden transitions', async () => {
     const { context, page } = await open(1600, 1000, 'display');
-    await page.waitForSelector('.more-tools');
-    assert.equal(await page.locator('.more-tools').evaluate(element => element.open), false);
-    assert.equal(await page.locator('.more-tools [data-quick]').count(), 1);
-    assert.equal(await page.locator('.more-tools [data-hidden-card]').count(), 1);
-    assert.equal(await page.locator('.more-tools h2', { hasText: 'Motion' }).count(), 1);
-    await page.click('.more-tools > summary');
-    assert.equal(await page.locator('.more-tools').evaluate(element => element.open), true);
+    await page.waitForSelector('.more-tools[data-more="display"]');
+    assert.equal(await page.locator('.more-tools[data-more="display"]').evaluate(element => element.open), false);
+    assert.equal(await page.locator('.more-tools[data-more="display"] [data-quick]').count(), 1);
+    assert.equal(await page.locator('.more-tools[data-more="announce"]').evaluate(element => element.open), false);
+    assert.equal(await page.locator('.more-tools[data-more="announce"] [data-hidden-part]').count(), 1);
+    assert.equal(await page.locator('.more-tools[data-more="display"] [data-hidden-part]').count(), 0);
+    assert.equal(await page.locator('.more-tools[data-more="display"] h2', { hasText: 'Motion' }).count(), 1);
+    await page.click('.more-tools[data-more="display"] > summary');
+    assert.equal(await page.locator('.more-tools[data-more="display"]').evaluate(element => element.open), true);
     await page.waitForFunction(() => window.localStorage.getItem('teletraan.control.more.display') === 'open');
     await page.reload();
-    await page.waitForSelector('.more-tools');
-    assert.equal(await page.locator('.more-tools').evaluate(element => element.open), true, 'remembered by this browser');
+    await page.waitForSelector('.more-tools[data-more="display"]');
+    assert.equal(await page.locator('.more-tools[data-more="display"]').evaluate(element => element.open), true, 'remembered by this browser');
     await context.close();
   });
 

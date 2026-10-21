@@ -233,7 +233,7 @@ export function themeHtml(theme, choices, info = {}) {
     '<p class="note">Save to draft and Publish to the wall are under the preview, and they save these too.</p></section>';
 }
 
-// ----- the playlist -----
+// ----- the playlist (its words are in On the wall now) -----
 
 // The row the wall plays now, found from its report (panel and view), and the shown row after it. Rows that are off are passed over.
 // A report that matches no row (a pushed panel, a card the wall adds) gives no position, and the card then says only what the wall shows.
@@ -251,19 +251,15 @@ function rowName(row, titles) {
   return (titles[row.panel] || row.panel || 'Panel not chosen') + ' (' + (viewWords[row.view] || 'no view') + ')';
 }
 
-// What the playlist is doing: what plays now, what comes next, how long a loop is. paused and report come from the push state and the
-// wall report. The Edit button jumps to the Rotation rows.
-export function playlistHtml(page, report, paused, titles) {
+// What the rotation is doing, as three sentences: what plays now, what comes next and how long a loop is. report comes from the wall
+// report and titles from titlesOf. On the wall now puts them in its status lines.
+export function playlistWords(page, report, titles) {
   const place = playlistPosition(page.rows, report);
   const shown = page.rows.filter(isShown);
   const playing = place.now ? rowName(place.now, titles) : report && report.panel ? (titles[report.panel] || String(report.panel).replace(/-/g, ' ')) + ' (not a row of the list)' : 'not known yet';
   const next = place.next ? rowName(place.next, titles) : place.now ? 'the same row again' : 'not known yet';
   const loop = shown.length === 0 ? 'No row is on, so the wall plays the standard order.' : shown.length + (shown.length === 1 ? ' row is on' : ' rows are on') + ', and a full loop takes ' + durationWords(loopSeconds(page.rows, page.pageSeconds)) + '.';
-  return '<section class="card playlist-card" data-playlist-card><h2>Playlist</h2>' + lead('display.playlist') +
-    (paused ? '<p class="warn" data-state="skip">The rotation is paused. The wall keeps the panel it shows.</p>' : '') +
-    '<dl class="facts"><div><dt>Playing now</dt><dd data-play-now>' + esc(playing) + '</dd></div><div><dt>Next</dt><dd data-play-next>' + esc(next) + '</dd></div><div><dt>Loop</dt><dd>' + esc(loop) + '</dd></div></dl>' +
-    '<div class="buttons"><button type="button" class="act" data-action="edit-rows">Edit</button></div>' +
-    '<p class="note">Next, Pause and Back to schedule are in Show on the wall now, above.</p></section>';
+  return { playing: playing, next: next, loop: loop };
 }
 
 // ----- motion (a section of its own) -----

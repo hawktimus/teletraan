@@ -1,7 +1,8 @@
-// The Display tab has two columns from 1000 px. The right one stays in view while the page scrolls: the large preview and, under it,
-// the one bar of Save to draft, Publish to the wall, Refresh from Sanity and Undo. The left one scrolls: Now on the wall, the
-// Playlist, the wall controls, Temporary push (tabs/push.js), the Rotation rows and the Theme rotation of each weekday. What the
-// wall says (ticker, calendar, roster, announcements, photos) is the Content tab. A phone has one column with the preview first.
+// The Display tab has two columns from 1000 px, never three. The right one stays in view while the page scrolls: the large preview
+// and, under it, the one bar of Save to draft, Publish to the wall, Refresh from Sanity and Undo. The left one is one stack of
+// full width cards that scrolls: the strip of what is pushed, On the wall now, Theme, Announce and effects (tabs/push.js), then the
+// Rotation rows and the Theme rotation of each weekday. What the wall says (ticker, calendar, roster, announcements, photos) is the
+// Content tab. A phone has one column with the preview first.
 // The Studio stays the source of truth for the rotation.
 // This reads Dashboard Settings from Sanity (through the control service), lets the team reorder and change the rows,
 // saves to the draft, and publishes with its own button. Before it saves it asks the service to compare the revision it
@@ -10,13 +11,14 @@
 import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
 import { addChartRows, addDepartmentRows, addRow, copyRow, countWhere, isNovaRow, isPanelRow, mondayFieldNames, moveRow, photoRange, quickAction, removeRetired, removeRow, retiredCount, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
-import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, newerHtml, motionHtml, playlistHtml, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from './display-parts.js';
+import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, newerHtml, motionHtml, playlistWords, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from './display-parts.js';
 import { largeHtml } from './display-preview-parts.js';
 import { patchRows } from './display-patch.js';
 import { startPictures } from './display-preview.js';
 import { startPush } from './push.js';
 import { chosen } from '../choice.js';
 import { lead, moreToolsHtml, sentences, wireMoreTools } from '../guide.js';
+import { quickBarHtml } from './render.js';
 
 const undoLimit = 20;
 const checkDelay = 600;
@@ -57,18 +59,20 @@ export async function mountDisplay(container) {
     // The right column comes first in the page, so a phone shows the preview before everything else
     largeHtml() +
     '<div class="display-left">' +
-    '<section class="card"><h2>Display</h2>' + lead('display') + '</section>' +
-    '<div data-now-box></div><div data-playlist-box></div><div data-extension-slot="before"></div><div data-push-box></div>' +
+    lead('display') +
+    // The strip is not a card: one slim line of what is pushed, with Cancel and Reset
+    '<div class="pushed-strip" data-active></div>' +
+    '<div data-now-box></div><div data-theme-now-box></div><div data-announce-box></div><div data-extension-slot="before"></div>' +
     '<section class="card"><h2>Rotation (what plays, in order)</h2>' + lead('display.rotation') +
     '<p class="word">The Studio is the source of truth: this reads from it and saves to the same draft as the Rotation board in the Studio.</p>' +
     '<div data-source></div></section>' +
     '<section class="card rows-card" data-rotation-card tabindex="-1"><h2>Rows</h2>' + lead('display.rows') + '<p class="word" data-summary></p><div data-rows></div></section>' +
     '<div data-add></div><div data-theme></div>' +
-    moreToolsHtml('display', '<div data-quick-box></div><div data-hidden-box></div><div data-motion-box></div>', sentences['display.more']) +
-    '<div data-extension-slot="after"></div></div></div></div>';
+    moreToolsHtml('display', '<div data-quick-box></div><div data-motion-box></div>', sentences['display.more']) +
+    '<div data-extension-slot="after"></div></div></div>' + quickBarHtml() + '</div>';
   wireMoreTools(container);
   const find = name => container.querySelector('[' + name + ']');
-  const boxes = { nowBox: find('data-now-box'), pushBox: find('data-push-box'), hiddenBox: find('data-hidden-box'), conflict: find('data-conflict'), source: find('data-source'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), motion: find('data-motion-box'), playlist: find('data-playlist-box'), bar: find('data-save-bar'), rotation: find('data-rotation-card') };
+  const boxes = { nowBox: find('data-now-box'), themeNowBox: find('data-theme-now-box'), announceBox: find('data-announce-box'), strip: find('data-active'), conflict: find('data-conflict'), source: find('data-source'), summary: find('data-summary'), quick: find('data-quick-box'), rows: find('data-rows'), add: find('data-add'), theme: find('data-theme'), motion: find('data-motion-box'), bar: find('data-save-bar'), rotation: find('data-rotation-card') };
 
   let page = kept;
   let checkTimer = null;
@@ -79,7 +83,6 @@ export async function mountDisplay(container) {
   let push = null;
   let timing = { today: '', timeZone: '', serverTime: '' };
   let report = null;
-  let paused = false;
   const flashLine = find('data-save-flash');
 
   function flash(state, words) {
@@ -97,8 +100,13 @@ export async function mountDisplay(container) {
     paintPlaylist();
   }
 
+  // The three lines of On the wall now that come from the rotation list and the report of the wall
   function paintPlaylist() {
-    boxes.playlist.innerHTML = playlistHtml(page, report, paused, titlesOf(page.choices));
+    const words = playlistWords(page, report, titlesOf(page.choices));
+    [['data-play-now', words.playing], ['data-play-next', words.next], ['data-play-loop', words.loop]].forEach(item => {
+      const line = container.querySelector('[' + item[0] + ']');
+      if (line) line.textContent = item[1];
+    });
   }
 
   function paintRows() {
@@ -381,16 +389,15 @@ export async function mountDisplay(container) {
   revTimer = setInterval(checkRev, revEvery);
 
   if (page && !gone) {
-    push = startPush(container, { now: boxes.nowBox, push: boxes.pushBox, hidden: boxes.hiddenBox }, {
+    push = startPush(container, { strip: boxes.strip, now: boxes.nowBox, theme: boxes.themeNowBox, announce: boxes.announceBox }, {
       choices: () => page.choices,
       rows: () => page.rows,
       selectedRow: () => (pictures && pictures.selected() ? page.rows.find(row => row._key === pictures.selected()) : null) || null,
       pictures: () => pictures,
       // Today, the time zone and the clock of the computer come with the answer, so Theme rotation can write the dates and mark today.
-      // It is told again when the day changes or a pause starts or ends.
+      // It is told again when the day changes.
       onState: state => {
         timing = { today: state.today, timeZone: state.timeZone, serverTime: state.serverTime };
-        paused = (state.pushes || []).some(item => item.kind === 'pause');
         boxes.theme.innerHTML = themeHtml(page.theme, page.choices, timing);
         paintTop();
       },
@@ -398,6 +405,7 @@ export async function mountDisplay(container) {
         report = wall;
         paintPlaylist();
       },
+      onPainted: paintPlaylist,
     });
     push.start();
   }

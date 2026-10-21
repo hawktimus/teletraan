@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { doneWords, heldLine, todayLine, pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, nowControlsHtml, notChangedWords, previewLeft, previewLine, wallCheck } from '../control/static/tabs/render.js';
+import { doneWords, heldLine, todayLine, pauseToggleHtml, quickBarHtml, agoText, esc, keysHtml, logHtml, nowCardHtml, notChangedWords, previewLeft, previewLine, wallCheck } from '../control/static/tabs/render.js';
 import { dotsHtml, healthHtml, readsHtml, uptimeText } from '../control/static/tabs/render-health.js';
 
 let passed = 0;
@@ -48,27 +48,13 @@ check('the card is grey with the number of seconds when the wall has gone quiet'
   ['family', 'monday-department', '>both<'].forEach(word => assert.ok(!named.includes(word), word + ' is not shown'));
 });
 
-check('the Now showing buttons are all there', () => {
-  const html = nowControlsHtml({ views: [{ key: 'general', name: 'General' }], themes: ['original'], panels: ['tasks'], talks: [], liveAnnouncements: 1, canWrite: true });
-  ['next', 'pause', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'presentation-test', 'schedule'].forEach(action => assert.ok(html.includes('data-action="' + action + '"'), action));
-  ['Playlist', 'Theme and view', 'Hold a panel', 'Messages'].forEach(title => assert.ok(html.includes('>' + title + '</summary>'), title));
-  assert.equal((html.match(/data-toggle-pause/g) || []).length, 1, 'Pause and Resume are one button');
+check('Pause and Resume are one button, and the bar at the foot of a phone has Next, Pause and Reset', () => {
   assert.ok(pauseToggleHtml(true).includes('data-action="resume"') && pauseToggleHtml(true).includes('Resume rotation'));
   assert.ok(pauseToggleHtml(false).includes('data-action="pause"'));
   const bar = quickBarHtml();
   ['next', 'pause', 'schedule'].forEach(action => assert.ok(bar.includes('data-action="' + action + '"'), 'bar ' + action));
   assert.ok(bar.includes('Reset to today&#39;s schedule'));
-  assert.ok(html.includes('Hold 1 minute') && html.includes('data-minutes="1"'));
-  assert.ok(!html.includes('data-minutes="10"') && !html.includes('data-minutes="30"'), 'the two fixed hold buttons are gone');
-  assert.match(html, /name="hold-minutes" type="number" inputmode="numeric" min="1" max="60" step="1" value="10"/);
-  assert.match(html, /data-minutes-from="hold-minutes">Hold for that many minutes</);
-  assert.match(html, /name="view-minutes" type="number" inputmode="numeric" min="10" max="120" step="1" value="30"/);
-  assert.match(html, /data-minutes-from="view-minutes">Show for a time</);
-  assert.match(html, /name="theme-minutes" type="number" inputmode="numeric" min="10" max="120" step="1" value="10"/);
-  assert.equal((html.match(/type="number"/g) || []).length, 3, 'three minutes fields: hold, view, and the theme one under More');
-  assert.ok(html.indexOf('<summary>More</summary>') < html.indexOf('name="theme-minutes"'), 'the theme minutes are kept under More');
-  assert.ok(html.includes('maxlength="90"'));
-  assert.ok(nowControlsHtml({ canWrite: false }).includes('SANITY_WRITE_TOKEN'));
+  assert.equal((bar.match(/data-toggle-pause/g) || []).length, 1);
 });
 
 check('the three dots and the last reads (Settings, Sync and restart) show the reasons and say not known for what is missing', () => {
@@ -111,7 +97,7 @@ check('the Keys section of Settings never holds a value, only the mask, and has 
 
 check('each tab file registers itself with an id and a title, and parses', () => {
   const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
-  const sections = ['now.js', 'health.js', 'arrange.js', 'render-health.js', 'wall-controls.js', 'settings-update.js', 'settings-keys.js', 'settings-monday.js', 'settings-sync.js', 'settings-reboot.js', 'settings-cleanup.js', 'settings-log.js', 'settings-all.js'];
+  const sections = ['now.js', 'health.js', 'arrange.js', 'render-health.js', 'settings-update.js', 'settings-keys.js', 'settings-monday.js', 'settings-sync.js', 'settings-reboot.js', 'settings-cleanup.js', 'settings-log.js', 'settings-all.js'];
   sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
   [...Object.keys(expected), ...sections].forEach(file => {
     const text = fs.readFileSync(path.join(folder, file), 'utf8');
@@ -132,18 +118,6 @@ check('buttons and fields are 44px high or more, and the tabs are one column unt
   assert.match(css, /select, \.tab input \{[^}]*min-height: 44px/);
   assert.match(css, /\.tab \.grid \{ display: grid; grid-template-columns: minmax\(0, 1fr\);/);
   assert.match(css, /@media \(min-width: 900px\)[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/);
-});
-
-check('the theme and view group says what a press does, and the lists come from the service in one table', () => {
-  const html = nowControlsHtml({ views: [{ key: 'general', name: 'Robotics' }, { key: 'family', name: 'Condensed' }], themes: ['original', 'cybertron', 'retro', 'foundry'], themeNames: { cybertron: 'Cybertron' }, panels: [], talks: [], canWrite: true, todayTheme: 'cybertron', todayViews: ['general', 'family'] });
-  assert.ok(html.includes('Switch to this theme') && html.includes('Switch to this view') && html.includes('Preview for 10 minutes') && html.includes('Show for a time'));
-  assert.equal((html.match(/data-hours="24"/g) || []).length, 2, 'the two switch buttons ask for 24 hours');
-  assert.ok(html.includes('Stays until you reset it, or 24 hours.'));
-  assert.ok(html.includes("Reset to today&#39;s schedule") && html.includes('data-big'));
-  assert.ok(html.includes('Today the schedule uses Cybertron. The views play in turn: Robotics, Condensed.'));
-  assert.ok(html.includes('value="cybertron" checked') && html.includes('>Foundry<'), "the theme is a group of buttons and today's theme is chosen");
-  assert.ok(html.includes('value="general" checked') && html.includes('>Condensed<'), 'the view is a group of buttons');
-  assert.ok(html.includes('data-left="theme"') && html.includes('data-wall="theme"') && html.includes('data-wall="view"'));
 });
 
 check('the held line says who decides what the wall shows', () => {

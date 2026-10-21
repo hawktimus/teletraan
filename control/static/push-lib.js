@@ -98,7 +98,7 @@ export function nowTheme(pushes, week, today) {
 
 // The row and the theme the large picture draws for a push that was chosen but not sent. draft is { theme, view, panel }; an
 // empty one gives null, and the picture goes back to the selected row of the rotation. rows is the rotation list.
-// A panel takes the settings of its first row in the rotation (department, list, chart, team), as the wall shows it.
+// A panel takes the settings of its first row in the rotation (department, list, chart, team), then the menus picked in draft.settings.
 export function previewTarget(draft, rows, selectedRow, titles, names) {
   if (!draft || (!draft.theme && !draft.view && !draft.panel)) return null;
   const list = Array.isArray(rows) ? rows : [];
@@ -113,11 +113,13 @@ export function previewTarget(draft, rows, selectedRow, titles, names) {
   if (draft.panel) row = copy(list.find(item => item.panel === draft.panel) || { panel: draft.panel });
   else row = copy(selectedRow || list.find(item => item.panel) || {});
   row.panel = draft.panel || row.panel || '';
+  // The menus picked under Show a panel (department, list, chart, team) go on top of the settings of the first row
+  if (draft.panel && draft.settings) Object.keys(draft.settings).forEach(name => { if (draft.settings[name] !== '') row[name] = draft.settings[name]; });
   if (draft.view) row.view = rowViewOf[draft.view] || row.view;
 
   const parts = [];
   parts.push((titles && titles[row.panel]) || row.panel || 'No panel');
   if (draft.view) parts.push((names && names.views && names.views[draft.view]) || draft.view);
   if (draft.theme) parts.push((names && names.themes && names.themes[draft.theme]) || draft.theme);
-  return { row: row, theme: draft.theme || '', words: 'Previewing ' + parts.join(', ') + '. This is not on the wall until you press Push.' };
+  return { row: row, theme: draft.theme || '', words: 'Previewing ' + parts.join(', ') + '. This is not on the wall until you send it.' };
 }
