@@ -132,16 +132,19 @@ export function publishRuleMutations(parts, world) {
 export async function newsAnswer(parts, sanity, now, canWrite) {
   const news = await readFixed(sanity, 'frc-news');
   let settings = null;
+  let draft = null;
   try {
     const found = await sanity.queryRaw('*[_id in ["dashboardSettings", "drafts.dashboardSettings"]]');
     const list = Array.isArray(found) ? found : [];
-    settings = list.filter(doc => doc._id === 'drafts.dashboardSettings')[0] || list.filter(doc => doc._id === 'dashboardSettings')[0] || null;
+    draft = list.filter(doc => doc._id === 'drafts.dashboardSettings')[0] || null;
+    settings = draft || list.filter(doc => doc._id === 'dashboardSettings')[0] || null;
   } catch (error) {
     settings = null;
   }
   return {
     canWrite: canWrite,
     hasSettings: settings !== null,
+    isDraft: draft !== null,
     rev: settings ? settings._rev || '' : '',
     enabled: !settings || settings.newsEnabled !== false,
     inTicker: Boolean(settings && settings.newsInTicker === true),

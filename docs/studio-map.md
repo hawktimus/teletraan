@@ -13,7 +13,7 @@ Every change has three steps: open a line in the sidebar, make the change, click
 | Today | Everything that puts a message on the TV today: the alert, the announcements on the bar under the banner, and the full screen messages at set times. Links to Agenda items, Presentations and Meeting days |
 | Ticker | The tips, news and reminders that run along the bottom of the screen |
 | Events | Calendars, which shows what each BAND calendar brings in and lets you show or hide each coming event, and Calendar filters, which are rules that hide events or keep them |
-| People | Leadership, Team leads and Sponsors |
+| People | Leadership, Roster, Team leads and Sponsors. Roster is the list of everyone on the team by first name, with a role and a team (docs/roster.md) |
 | Photos | The pictures for the Photo panel: upload a series, or take them from a Google Drive folder |
 | Monday | What the computer read from Robotics Tasks and Completed Tasks, read only. The last read and whether it worked, a Team picker (Both, Prime, Nova), and for each of the nine departments the To Do and In Progress tasks and the Done tasks with Status, Project, Contact, Priority and Estimated Completion Date and their counts. An empty department is greyed. What the TV shows draws the first page of a Department tasks row. A department goes on the TV with a Department tasks row on the Rotation board (docs/monday.md) |
 | Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
