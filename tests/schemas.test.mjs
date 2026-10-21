@@ -391,6 +391,9 @@ const studioOnlyFields = {
   'dashboardSettings.rebootDays': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.rebootSkipBusy': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.rebootWaitMinutes': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
+  'dashboardSettings.cleanupEnabled': 'the Teletraan computer reads it (computer/scripts/expired-cleanup.sh), and the dashboard never does',
+  'dashboardSettings.cleanupDeleteAfterDays': 'the Teletraan computer reads it (computer/scripts/expired-cleanup.sh), and the dashboard never does',
+  'dashboardSettings.cleanupMode': 'the Teletraan computer reads it (computer/scripts/expired-cleanup.sh), and the dashboard never does',
   'dashboardSettings.mondayConnection': 'the block at the top of the Monday tab. It stores nothing',
   'dashboardSettings.mondayTokenTest': 'the note and the link to the Monday check on the control page, on the Monday tab. It stores nothing',
   'dashboardSettings.frcConnection': 'the block at the top of the Competition tab. It stores nothing',
@@ -1217,6 +1220,7 @@ function checkLogoTab(problems) {
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
 const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 const rebootNames = ['rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes'];
+const cleanupNames = ['cleanupEnabled', 'cleanupDeleteAfterDays', 'cleanupMode'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
 const hiddenNames = ['hiddenEnabled', 'desktopEveryHours', 'desktopChance', 'redEyesEveryHours', 'redEyesChance', 'hiddenRequest'];
 const presentationNames = ['presentationsEnabled', 'noShowMinutes', 'graceMinutes'];
@@ -4354,7 +4358,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, rebootNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, rebootNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {
@@ -5690,6 +5694,51 @@ function checkRebootFields() {
   return problems;
 }
 
+// The Clean up expired items section of Dashboard Settings (schemas/settingsCleanup.js): three fields that start as the defaults of
+// computer/scripts/cleanup-plan.mjs, which the nightly job and the control page use. Nothing is deleted until the owner turns it on.
+function checkCleanupFields() {
+  const problems = [];
+  const plan = world.cleanupPlan;
+  const settings = typeByName('dashboardSettings');
+  const at = name => fieldAt('dashboardSettings.' + name);
+  const rulesOf = field => (field ? constraintsOf(field) : []);
+  const inSection = fieldsIn(settings).filter(field => field.fieldset === 'cleanup').map(field => field.name);
+
+  need(problems, inSection.join() === cleanupNames.join(), 'the Clean up expired items section should hold ' + cleanupNames.join(', ') + ', in that order, not ' + inSection.join());
+  cleanupNames.forEach(name => {
+    const field = at(name);
+    need(problems, field && field.group === 'advanced' && !field.hidden, name + ' should be seen in the Advanced tab');
+    need(problems, field && typeof field.description === 'string' && field.description.length > 0 && field.description.indexOf('\n') === -1, name + ' needs a one line description');
+  });
+
+  const enabled = at('cleanupEnabled');
+  need(problems, enabled && enabled.type === 'boolean' && enabled.initialValue === plan.defaults.cleanupEnabled && plan.defaults.cleanupEnabled === false, 'cleanupEnabled should be a switch that starts off, as in cleanup-plan.mjs');
+  const days = at('cleanupDeleteAfterDays');
+  need(problems, days && days.type === 'number' && days.initialValue === plan.defaults.cleanupDeleteAfterDays && plan.defaults.cleanupDeleteAfterDays === 14, 'cleanupDeleteAfterDays should start at 14, as in cleanup-plan.mjs');
+  ['min', 'max'].forEach(name => need(problems, constraintNamed(rulesOf(days), name) && constraintNamed(rulesOf(days), name).args[0] === plan.daysRange[name], 'cleanupDeleteAfterDays needs ' + name + ' ' + plan.daysRange[name]));
+  need(problems, constraintNamed(rulesOf(days), 'integer'), 'cleanupDeleteAfterDays needs whole numbers');
+  const mode = at('cleanupMode');
+  const choices = mode && mode.options && mode.options.list ? mode.options.list.map(item => item.value) : [];
+  need(problems, mode && mode.type === 'string' && mode.initialValue === plan.defaults.cleanupMode && plan.defaults.cleanupMode === 'list' && choices.join() === plan.modes.join(), 'cleanupMode should offer list and delete and start on list (only show what would be deleted), as in cleanup-plan.mjs');
+
+  // The status document carries the four lines that the job writes, and status-write.sh and the job use the same names
+  const statusFields = fieldsIn(typeByName('status')).map(field => field.name);
+  ['lastCleanupAt', 'cleanupWouldDelete', 'cleanupDeleted', 'cleanupError'].forEach(name => {
+    need(problems, statusFields.indexOf(name) !== -1, 'the status document needs ' + name);
+    need(problems, textOf(path.join(here, '..', 'computer', 'scripts', 'status-write.sh')).indexOf(name) !== -1, 'status-write.sh should write ' + name);
+  });
+  cleanupNames.forEach(name => need(problems, world.cleanupScript.indexOf(name) !== -1 || world.cleanupScript.indexOf('cleanup-plan.mjs') !== -1, 'expired-cleanup.sh should ask Sanity for ' + name));
+  need(problems, /cleanupEnabled, cleanupDeleteAfterDays, cleanupMode/.test(world.cleanupScript), 'expired-cleanup.sh should ask Sanity for the three cleanup fields');
+  need(problems, !/MONDAY_API_TOKEN|TBA_AUTH_KEY/.test(world.cleanupScript), 'expired-cleanup.sh should never name another key');
+
+  // The types it may delete are exactly the ones with an expiry, and none of them is a type the Mini or the Studio settings own
+  const never = ['team', 'dashboardSettings', 'theme', 'view', 'screen', 'task', 'milestone', 'status', 'calendarStatus', 'mondayStatus', 'frcStatus', 'frcNews'];
+  need(problems, plan.types.every(type => !never.includes(type)), 'the clean up must never list ' + never.join(', '));
+  need(problems, plan.types.every(type => typeByName(type)), 'every type the clean up lists should exist in the schema');
+  plan.types.forEach(type => plan.rules[type].fields.forEach(field => need(problems, fieldAt(type + '.' + field[0]), type + '.' + field[0] + ' should be a field of the schema')));
+  return problems;
+}
+
 // The Monday tab of Dashboard Settings (schemas/settingsMonday.js): a note and how often the Teletraan computer reads. The boards
 // are read by their numbers (computer/scripts/monday-contract.sh), so the board blocks, the token link, the owner switch and the
 // older board rows are hidden and kept, so that nothing typed is lost and the page still publishes.
@@ -6678,6 +6727,8 @@ async function main() {
     world.rebootStatusInput = await load(path.join(folder, 'inputs', 'reboot-status-input.js'));
     world.rebootPlan = await load(path.join(here, '..', 'computer', 'scripts', 'reboot-plan.mjs'));
     world.rebootScript = textOf(path.join(here, '..', 'computer', 'scripts', 'scheduled-reboot.sh'));
+    world.cleanupPlan = await load(path.join(here, '..', 'computer', 'scripts', 'cleanup-plan.mjs'));
+    world.cleanupScript = textOf(path.join(here, '..', 'computer', 'scripts', 'expired-cleanup.sh'));
     world.frcStatusInput = await load(path.join(folder, 'inputs', 'frc-status-input.js'));
     world.competition = await load(path.join(dashboardFolder, 'core', 'competition.js'));
     world.sanitySource = readModule(path.join(dashboardFolder, 'core', 'sanity.js'), 'utf8');
@@ -6790,6 +6841,7 @@ async function main() {
   check('the one event rules the Calendars switch makes are accepted by the Calendar filters schema, and the kinds are the ones of Dashboard Settings', checkCalendarsHide);
   results.push({ name: 'the Hide buttons make a rule once with createIfNotExists, Show again deletes the rule and its draft, and the rules made on the page are read by their id', problems: await checkCalendarsHideWrite().catch(error => ['the check stopped: ' + error.message]) });
   check('the Scheduled reboot section has a status line and five fields that start as in reboot-plan.mjs, and the timer writes the status fields the Studio and the control page read', checkRebootFields);
+  check('the Clean up expired items section has three fields that start off, at 14 days and on list only as in cleanup-plan.mjs, and only types with an expiry may be deleted', checkCleanupFields);
   check('the Monday tab has the connection block, up to 10 board entries with pickers and a choice of group names or a status column, the labels for in progress and done (the Backlog label is hidden and ignored) and the owner switch, as in dashboard/config.js', checkMondayTab);
   check('the Monday data document has the fields the Teletraan computer writes, is kept out of the sidebar and the New menu, the script writes the same fields and task fields, and the connection block shows its lines in plain words', checkMondayStatus);
   check('the Photo fit setting and the Fit of a photo agree with dashboard/config.js, start as fill and as the setting, and the sample shows both on photos of different shapes', checkPhotoFit);

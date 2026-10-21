@@ -63,7 +63,7 @@ calendars serves both computers, and a save goes to the Teletraan computer you p
 One run, one password. The tool copies this repository to `~/teletraan-staging` on the Teletraan computer with `rsync`, then runs one root shell on the computer that does all of this in order:
 
 1. `computer/install.sh`. It makes the files the next release (docs/control-page.md, "How releases work"), builds the Studio, starts the containers and turns on the nightly timer. It pulls the Node image or the web server image first when the computer does not have it (a download from the internet, which the installer says). On a computer that has no control page yet it also makes the move to the releases layout, which is why this is the first install.
-2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-nightly.sh` and `install-reboot.sh`, one after another. They turn on the timers (the watchdog, the nightly backup, the nightly restart and the scheduled reboot among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
+2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-nightly.sh`, `install-reboot.sh` and `install-cleanup.sh`, one after another. They turn on the timers (the watchdog, the nightly backup, the nightly restart and the scheduled reboot among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
 3. A restart of the screen, which is black for about ten seconds.
 
 Run choice 1 once after the update that moved the watchdog and the nightly restart off root. Until then the two timers still run as root from the old unit files, and the new sudoers file is not on the computer. Choice 1 installs the sudoers file (checked with `visudo`), replaces both units with ones that run as the login user, and says "runs as root. It is replaced" when it finds an old one. Running it again changes nothing more. To check afterwards, on the computer:
@@ -224,6 +224,14 @@ Choosing 1 (Install everything) copies the units of the scheduled reboot and run
 3. Turn it on in the Studio (Dashboard Settings, Advanced, Scheduled reboot) or on the control page (Settings, Scheduled reboot): pick the time and the days, click Publish all or Publish, and read `Next reboot` on the same card. The computer reads the setting within 5 minutes.
 
 `teletraan-tool status` does not show it. Read the line the timer writes with `journalctl -u teletraan-reboot.service -n 20` on the computer. docs/control-page.md, "The Scheduled reboot section", says how it decides and what stops a loop.
+
+## Turn on the clean up of expired items
+
+Choosing 1 (Install everything) copies the units of the clean up and runs `install-cleanup.sh`, so the timer is on after any update that has it. It deletes nothing yet, because Clean up expired items is off to start with, and when it is on, Mode starts at Only show what would be deleted.
+
+1. The job needs `curl`, `jq`, `flock` and Node 18 or newer (`docs/rebuilding-the-computer.md`, step 19), and SANITY_WRITE_TOKEN in Keys. If `install-cleanup.sh` stops with `These packages are not installed`, ask the team mentor, run the `apt install` line it prints, and choose 1 again.
+2. Turn it on in the Studio (Dashboard Settings, Advanced, Clean up expired items) or on the control page (Settings, Clean up expired items). Start with Mode: Only show what would be deleted, and read the list with Show what would be deleted now.
+3. docs/expired-cleanup.md says what is deleted, what never is, the limits, and how to put an item back from the backup.
 
 ## Changing the settings
 

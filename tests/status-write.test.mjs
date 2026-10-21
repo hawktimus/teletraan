@@ -496,8 +496,9 @@ test('the status document and the fields in the script are the ones the Studio h
   const schema = readModule(path.join(repo, 'studio/schemas/status.js'), 'utf8');
   const studioFields = Array.from(schema.matchAll(/timeField\('(\w+)'/g)).map(match => match[1]);
   // photosDriveAt is written by the job photos-drive, which has its own test (tests/photos-drive.test.mjs),
-  // newsAt by the job news (tests/news-sync.test.mjs), and nextRebootAt and lastRebootAt by the job reboot (tests/scheduled-reboot.test.mjs)
-  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt']).sort());
+  // newsAt by the job news (tests/news-sync.test.mjs), nextRebootAt and lastRebootAt by the job reboot (tests/scheduled-reboot.test.mjs),
+  // and lastCleanupAt by the job cleanup (tests/expired-cleanup.test.mjs)
+  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt']).sort());
 
   const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));

@@ -106,7 +106,7 @@ check('the Keys section of Settings never holds a value, only the mask, and has 
 
 check('each tab file registers itself with an id and a title, and parses', () => {
   const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
-  const sections = ['now.js', 'health.js', 'arrange.js', 'render-health.js', 'wall-controls.js', 'settings-update.js', 'settings-keys.js', 'settings-monday.js', 'settings-sync.js', 'settings-reboot.js', 'settings-log.js', 'settings-all.js'];
+  const sections = ['now.js', 'health.js', 'arrange.js', 'render-health.js', 'wall-controls.js', 'settings-update.js', 'settings-keys.js', 'settings-monday.js', 'settings-sync.js', 'settings-reboot.js', 'settings-cleanup.js', 'settings-log.js', 'settings-all.js'];
   sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
   [...Object.keys(expected), ...sections].forEach(file => {
     const text = fs.readFileSync(path.join(folder, file), 'utf8');

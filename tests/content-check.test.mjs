@@ -437,6 +437,22 @@ test('checkAnswer takes the answer of contentQuestion', () => {
   assert.match(check.contentQuestion, /asset->/);
 });
 
+test('the page says whether the automatic clean up is on, what it does and when it last ran', () => {
+  const settings = extra => [{ _id: 'dashboardSettings', _type: 'dashboardSettings', ...extra }];
+  assert.match(check.cleanupLine({ documents: [] }), /^Automatic clean up is off, so expired items stay in the Studio until someone deletes them\./);
+  assert.match(check.cleanupLine({ documents: settings({ cleanupEnabled: false, cleanupMode: 'delete' }) }), /is off/, 'the switch decides');
+  const listing = check.cleanupLine({ documents: settings({ cleanupEnabled: true, cleanupMode: 'list', cleanupDeleteAfterDays: 21 }) });
+  assert.match(listing, /on but only lists: every night at 03:40/);
+  assert.match(listing, /expired more than 21 days ago and deletes nothing/);
+  const deleting = check.cleanupLine({ documents: settings({ cleanupEnabled: true, cleanupMode: 'delete' }), status: { lastCleanupAt: '2026-10-21T07:40:12Z', cleanupWouldDelete: 4, cleanupDeleted: 3, cleanupError: 'One could not be deleted (status 409).' } });
+  assert.match(deleting, /on: every night at 03:40 the Teletraan computer saves a backup and deletes items that expired more than 14 days ago\./);
+  assert.match(deleting, /Last run: 2026-10-21 07:40 UTC, 4 on the list, 3 deleted\. Problem: One could not be deleted/);
+  assert.match(check.cleanupLine({ documents: settings({ cleanupEnabled: true, cleanupDeleteAfterDays: 1 }) }), /more than 1 day ago/);
+  assert.match(check.cleanupLine(null), /is off/);
+  assert.match(check.contentQuestion, /status-mini/, 'the question asks for the last run');
+  assert.ok(!/[\u2013\u2014!]/.test(deleting + listing));
+});
+
 
 // The warnings while typing
 

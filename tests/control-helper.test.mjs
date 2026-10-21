@@ -28,6 +28,7 @@ function setup() {
   const log = path.join(root, 'calls.log');
   const fake = `#!/bin/sh\necho "$(basename "$0") $*" >> "${log}"\n[ "$(basename "$0")" = sudo ] && { [ -n "\${FAKE_SUDO_SAYS:-}" ] && { echo "$FAKE_SUDO_SAYS" >&2; exit 1; }; "$@" 2>/dev/null; exit 0; }\nexit 0\n`;
   for (const name of ['sudo', 'systemctl', 'docker']) fs.writeFileSync(path.join(bin, name), fake, { mode: 0o755 });
+  fs.writeFileSync(path.join(root, 'computer/scripts/expired-cleanup.sh'), '#!/bin/sh\necho "cleanup $*" >> "' + log + '"\necho "item\tTip or news\tOld tip\t2026-08-01\t81"\nexit 0\n', { mode: 0o755 });
   fs.writeFileSync(path.join(root, 'computer/scripts/monday-sync.sh'), '#!/bin/sh\necho "monday $*" >> "' + log + '"\nexit 0\n', { mode: 0o755 });
   fs.writeFileSync(path.join(root, 'local.env'), "CONTROL_PIN='123456'\n", { mode: 0o600 });
   return {
@@ -44,7 +45,7 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle', 'cleanup-preview', 'cleanup-delete']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
 });
@@ -93,13 +94,13 @@ test('sync-now takes calendars, monday or frc and nothing else', () => {
 
 test('anything that is not a word is refused and logged, and nothing runs', () => {
   const h = setup();
-  ['', 'ls', 'rm -rf /', 'Restart-Kiosk', 'restart-kiosk now', 'status extra', 'reboot now', 'monday-check x', 'write-env x', 'restart-kiosk; reboot', '$(reboot)', 'restart_kiosk'].forEach(line => {
+  ['', 'ls', 'rm -rf /', 'Restart-Kiosk', 'restart-kiosk now', 'status extra', 'reboot now', 'monday-check x', 'write-env x', 'restart-kiosk; reboot', '$(reboot)', 'restart_kiosk', 'cleanup-preview now', 'cleanup-delete --all'].forEach(line => {
     const answer = h.ask(line + '\n');
     assert.equal(answer.status, 'refused', JSON.stringify(line));
     assert.equal(answer.calls, '', JSON.stringify(line) + ' ran something');
   });
   const log = h.log().trim().split('\n');
-  assert.equal(log.length, 12, 'one line for each refusal');
+  assert.equal(log.length, 14, 'one line for each refusal');
   log.forEach(line => assert.match(line, /^\d{4}-\d{2}-\d{2}T[\d:]+Z refused: [A-Za-z0-9 ?-]{0,40}$/));
 });
 
@@ -113,6 +114,19 @@ test('status prints plain name=value lines, and monday-check runs the check of t
   const check = h.ask('monday-check\n');
   assert.equal(check.status, 'ok');
   assert.ok(check.calls.includes('monday --check'), check.calls);
+});
+
+test('cleanup-preview lists without deleting and cleanup-delete deletes, each with no argument, as the login user and without sudo', () => {
+  const h = setup();
+  const preview = h.ask('cleanup-preview\n');
+  assert.equal(preview.status, 'ok');
+  assert.ok(preview.calls.includes('cleanup --dry-run --print') && !preview.calls.includes('--delete-now'), preview.calls);
+  assert.match(preview.output, /^item\tTip or news\tOld tip\t2026-08-01\t81$/m);
+  const gone = h.ask('cleanup-delete\n');
+  assert.equal(gone.status, 'ok');
+  assert.ok(gone.calls.includes('cleanup --delete-now --print'), gone.calls);
+  assert.ok(!/^sudo /m.test(preview.calls + gone.calls), 'no sudo rule is needed');
+  ['cleanup-preview x', 'cleanup-preview --delete-now', 'cleanup-delete 5', 'cleanup'].forEach(line => assert.equal(h.ask(line + '\n').status, 'refused', line));
 });
 
 test('monday-debug takes one board number and runs the debug of the Monday script, and refuses anything else', () => {
