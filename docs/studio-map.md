@@ -68,6 +68,7 @@ Under Coaches only:
 - A page in the sidebar that is not a document (Start here, Rotation, Today, Look, Competition, Calendars) saves what you change as a draft of the document it shows. Click Publish all to put it on the screen. The Monday page writes nothing.
 - Dashboard Settings still holds every setting it ever had. The ones the pages took over (the alert, the messages, the look, the competition cards and the team fallback) are hidden there, with their stored values. The ones the old Screens left behind say Not used any more.
 - Anything under Coaches only is for a coach.
+- The control page, Settings, All settings shows the same settings as the Studio forms, drawn from the Studio schemas. Both write the same stored fields to the draft. See docs/control-page.md.
 - Events are not typed in the Studio. They come from the BAND calendars.
 
 ## Where it is in the code
