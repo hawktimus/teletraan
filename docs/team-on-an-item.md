@@ -53,6 +53,8 @@ shows for both teams.
   same name. If that person is for the other team, the lead shows the silhouette.
 - A Meeting day has the field, but the screen does not read Meeting days, so a team
   on a Meeting day changes nothing on the screen.
+- The look of Nova (the purple metal hawk and the outline on its team number) follows the team on the screen,
+  not the Team of an item. An item for Both on the Nova screen is drawn in Nova's colors.
 - A team that has been deleted counts as no team, so its items show for both.
 - A board in the Monday tab of Dashboard Settings has the same field. A board with
   no team makes tasks with no team, and they show for both teams.

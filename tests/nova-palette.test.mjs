@@ -74,6 +74,14 @@ function test_each() {
     console.log('  ' + name + ': ' + found.toFixed(2));
     assert.ok(found >= least, name + ' is ' + found.toFixed(2) + ', it needs ' + least);
   });
+  // Purple text on gold: the outline does not count towards contrast, so the pairs are chosen on their own. The accent is
+  // too faint on the plate color itself (2.6) and on the main color (1.3), so it is only drawn on the dark shade
+  // (4.5, the TEAM plate of Cybertron and the bar layout), where the dark stroke of teams.css gives the letters an edge.
+  // The label color is the readable purple where the plate color is the ground (4.1).
+  assert.ok(ratio(wanted.accent, wanted.plate) < 3, 'the accent on the plate color is below 3, which is why it is not drawn there');
+  assert.ok(ratio(wanted.accent, wanted.primary) < 3, 'purple text on the main gold is below 3 and is never drawn');
+  assert.ok(ratio(wanted.label, wanted.plate) >= 4, 'the label color on the plate color');
+  assert.ok(ratio(wanted.headerInk, wanted.primary) >= 7, 'on the main gold the outline ink is 7 to 1');
   assert.ok(ratio('#FFFFFF', wanted.primary) < 3, 'white on the main color fails at a distance, which is why Nova has a header ink');
   console.log('ok nova palette');
 }

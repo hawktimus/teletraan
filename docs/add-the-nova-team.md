@@ -84,6 +84,14 @@ In Studio open Teams and views, then Hawktimus Nova. These are the fields.
   both teams to start with, and turning it on draws outlined letters with a line under them in
   the accent color. The older choice Team name look is hidden and the screen does not read it.
 
+  The purple of Nova is metal on the hawk and an outline on the team number. The hawk's edge is brushed
+  purple metal (a band of light, a dark pit before it and a dark rim), in every theme and layout, and
+  Cybertron and the bar layout no longer flatten it to the accent color. The number on the TEAM plate,
+  where it is drawn in the accent on the dark gold (Cybertron and the bar layout), has a 3 px dark outline
+  drawn behind the letters. Both are set by the team: only a team with the inverted palette and the purple metal
+  gets them (`--team-text-outline` and `--team-text-outline-ink` in `dashboard/teams.css`), and Prime has neither.
+  The Outlined name switch is a different thing and is not changed.
+
   A team with none of them stored, such as one saved before the trim existed, looks like Prime.
   The frames change shape when the team goes on, in the same moment as the colors and the
   mirror. docs/layouts.md, "Team trim", says how each one is drawn.

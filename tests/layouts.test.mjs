@@ -3832,7 +3832,7 @@ test('the page background of Cybertron is the grid at 64px and the scan line, in
 
 test('the steel and the bolts reach the frames of Cybertron through the tokens: the edge, the row bars and the banner follow the style, the logo has the team accent, and the standard layout\'s frames are untouched', () => {
   const css = withoutComments((read('dashboard/styles/cybertron/tokens.css') + read('dashboard/styles/cybertron/theme.css')));
-  assert.ok(css.includes('html[data-style="cybertron"] .banner .logo .drawing,\nhtml[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }'), 'the hawk of the banner and of the sidebar has the team accent');
+  assert.ok(css.includes('html[data-style="cybertron"] .banner .logo .drawing:not(.logo-nova),\nhtml[data-style="cybertron"] .side-logo .drawing:not(.logo-nova) { --logo-edge: var(--team-accent); }'), 'the hawk of the banner and of the sidebar has the team accent, except the Nova hawk, which keeps its purple metal');
 
   // The tokens file gives the metal of the team to the html element and to each element with a data-metal: that is the banner and every area
   const tokens = withoutComments(read('dashboard/tokens.css'));
@@ -4205,7 +4205,7 @@ test('the Minimal stylesheet paints with the team\'s colors and gradients and no
   // The plates: the body is the team's background, the tab an armor plate, the team plate and the tag in the plate color
   assert.ok(/--panel-face: var\(--style-body\);/.test(css) && css.includes('fill: url(#armor-face);'));
   assert.ok(/\.team-fill,\s*html\[data-layout="bar"\] \.tag-fill,\s*html\[data-layout="bar"\] \.card-fill \{ fill: var\(--team-plate\); \}/.test(css));
-  assert.ok(css.includes('html[data-layout="bar"] .bar-logo .drawing { --logo-edge: var(--team-accent); }'));
+  assert.ok(css.includes('html[data-layout="bar"] .bar-logo .drawing:not(.logo-nova) { --logo-edge: var(--team-accent); }'));
 
   // The rivets are shown and the id is not, the // mark of the header is off, the weld seam is dark with a faint light line, the ticks are neon and the rust is a patch and an arc
   assert.ok(css.includes('html[data-layout="bar"] .rivets { display: inline; }') && !/plate-id/.test(css), 'the rivets, and no id');

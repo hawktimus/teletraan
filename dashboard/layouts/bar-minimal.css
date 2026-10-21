@@ -70,8 +70,8 @@ html[data-layout="bar"] .sponsor-feature .card-fill,
 html[data-layout="bar"] .photo .card-fill { fill: none; }
 
 /* The hawk has the team's accent for its outline, and keeps the colors the theme gives its
-   plates */
-html[data-layout="bar"] .bar-logo .drawing { --logo-edge: var(--team-accent); }
+   plates. The Nova hawk keeps its purple metal (frame.css) and is not flattened to the accent */
+html[data-layout="bar"] .bar-logo .drawing:not(.logo-nova) { --logo-edge: var(--team-accent); }
 
 /* Nova's neon purple is 2.5 to 3.5 on the war clock plate and its plate color is 2.6 under the accent, so the inverted
    palette reads its digits in the label color and fills its cards and TEAM plate with the dark shade of the plate */
