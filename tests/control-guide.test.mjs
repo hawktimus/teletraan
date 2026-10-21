@@ -28,7 +28,7 @@ test('every tab, every Settings section and every Content block has one plain se
   ['status', 'display', 'content', 'settings'].forEach(id => assert.ok(sentences[id], id));
   sections.forEach(section => assert.ok(sentences['settings.' + section.id], 'settings.' + section.id));
   blocks.forEach(block => assert.ok(sentences['content.' + block.id], 'content.' + block.id));
-  ['display.now', 'display.preview', 'display.push', 'display.playlist', 'display.rotation', 'display.rows', 'display.add', 'display.more', 'display.quick', 'display.hidden', 'display.motion', 'display.theme',
+  ['display.onwall', 'display.theme-card', 'display.announce', 'display.preview', 'display.rotation', 'display.rows', 'display.add', 'display.more', 'display.quick', 'display.motion', 'display.theme',
     'status.preview', 'status.now', 'status.health', 'health.dots', 'health.reads', 'health.running', 'health.computer', 'health.errors'].forEach(key => assert.ok(sentences[key], key));
   Object.keys(sentences).forEach(key => {
     const words = sentences[key];
@@ -90,7 +90,7 @@ test('More tools is a closed disclosure with its sentence and a name a screen re
   assert.ok(!html.includes(' open'));
   assert.ok(html.includes('<p>inner</p>'));
   const display = read('control/static/tabs/display.js');
-  ['data-quick-box', 'data-hidden-box', 'data-motion-box'].forEach(box => assert.ok(display.indexOf(box) > display.indexOf("moreToolsHtml('display'"), box + ' is inside More tools'));
+  ['data-quick-box', 'data-motion-box'].forEach(box => assert.ok(display.indexOf(box) > display.indexOf("moreToolsHtml('display'"), box + ' is inside More tools'));
   assert.ok(read('control/static/tabs/settings-log.js').includes("moreToolsHtml('log'"), 'the log download is under More tools');
 });
 

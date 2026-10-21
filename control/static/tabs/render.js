@@ -4,8 +4,7 @@
 // here touches the page, so Node can try it.
 
 import { screenWords } from './screen-plan.js';
-import { choiceHtml } from '../choice.js';
-import { lead, leadIdOf } from '../guide.js';
+import { lead } from '../guide.js';
 
 export function esc(value) {
   return String(value === undefined || value === null ? '' : value)
@@ -279,22 +278,6 @@ function button(action, label, data = '', kind = '') {
   return '<button type="button" class="act ' + kind + '" data-action="' + esc(action) + '"' + data + '>' + esc(label) + '</button>';
 }
 
-// A menu for a long list. A short list is a row of buttons (pickButtons).
-function choice(name, items, label, plain = false) {
-  const list = items.map(item => '<option value="' + esc(item.value) + '">' + esc(item.label) + '</option>').join('');
-  if (plain) return '<label class="pick"><select name="' + esc(name) + '" aria-label="' + esc(label) + '">' + list + '</select></label>';
-  return '<label class="pick"><span>' + esc(label) + '</span><select name="' + esc(name) + '">' + list + '</select></label>';
-}
-
-function pickButtons(name, items, label, selected) {
-  const first = items.some(item => item.value === selected) ? selected : (items[0] || {}).value;
-  return choiceHtml({ name: name, label: label, items: items.map(item => ({ value: item.value, label: item.label, checked: item.value === first })) });
-}
-
-function minuteField(name, label, usual, least, most) {
-  return '<label class="pick"><span>' + esc(label) + '</span><input name="' + esc(name) + '" type="number" inputmode="numeric" min="' + least + '" max="' + most + '" step="1" value="' + usual + '"></label>';
-}
-
 // The theme and view previews. A preview has an end time, and the page shows what is left of it, and what the wall
 // reports after a button is pressed (the report of the wall comes every 10 seconds, so a change can take that long to
 // show). These are plain functions with no page in them.
@@ -302,7 +285,6 @@ function minuteField(name, label, usual, least, most) {
 export const previewMinutes = 10;
 // A request with more than this left runs until a reset (the timed buttons end within 2 hours)
 export const stayAfterSeconds = 2 * 60 * 60 + 60;
-export const stayHours = 24;
 export const wallChecks = { answerSeconds: 15, notChangedSeconds: 20, stopSeconds: 60 };
 export const notChangedWords = 'The wall has not changed yet. It checks every 10 seconds.';
 
@@ -384,16 +366,6 @@ export function todayLine(options) {
   return 'Today the schedule uses ' + (themeNamesOf[o.todayTheme] || words(o.todayTheme)) + '.' + (turn ? ' The views play in turn: ' + turn + '.' : '');
 }
 
-function previewBlock(kind) {
-  return '<p class="note" data-left="' + kind + '" role="status"></p><p class="note" data-wall="' + kind + '" role="status"></p>';
-}
-
-// A group of controls. On a wide screen every group is open and plain; on a phone the groups fold and one is open at a time
-// (tabs/status.js).
-function group(id, title, body, open = false, leadId = '') {
-  return '<details class="group" data-group="' + id + '" data-fold="' + (open ? 'open' : 'closed') + '"' + (open ? ' open' : '') + '><summary' + (leadId ? ' aria-describedby="' + leadIdOf(leadId) + '"' : '') + '>' + esc(title) + '</summary><div class="group-body">' + (leadId ? lead(leadId) : '') + body + '</div></details>';
-}
-
 // The one button for Pause and Resume. It says what a press does, and the line under it says what the rotation is doing.
 // tabs/now.js swaps the two as the state changes.
 export function pauseToggleHtml(paused, kind = '') {
@@ -405,44 +377,6 @@ export const pauseStateWords = { paused: 'The rotation is paused.', running: 'Th
 // The three buttons that stay at the bottom of a phone
 export function quickBarHtml() {
   return '<div class="quickbar" data-quickbar><div class="buttons">' + button('next', 'Next') + pauseToggleHtml(false) + button('schedule', 'Reset to today\'s schedule', '', 'quiet') + '</div></div>';
-}
-
-export function nowControlsHtml(options) {
-  const o = options || {};
-  const views = (o.views || []).map(view => ({ value: view.key, label: view.name }));
-  const themeWordsOf = o.themeNames || {};
-  const themes = (o.themes || []).map(theme => ({ value: theme, label: themeWordsOf[theme] || words(theme) }));
-  const panelNames = o.panelNames || {};
-  const panels = (o.panels || []).map(panel => ({ value: panel, label: panelNames[panel] || words(panel) }));
-  const talks = (o.talks || []).map(talk => '<li>' + esc(talk.name || talk.topic || 'Talk') + ', ' + esc(talk.start) + '</li>').join('');
-  const live = o.liveAnnouncements === null || o.liveAnnouncements === undefined ? 'not known' : o.liveAnnouncements;
-  const blocked = o.canWrite === false ? '<p class="warn">SANITY_WRITE_TOKEN is not set. Add it in Settings, Keys, then these buttons work.</p>' : '';
-
-  const playlist = '<div class="buttons">' + button('next', 'Next') + pauseToggleHtml(false) + button('schedule', 'Back to schedule', '', 'quiet') + '</div>' +
-    '<p class="note" data-pause-state>' + pauseStateWords.running + '</p>';
-
-  const stays = '<p class="note">Stays until you reset it, or ' + stayHours + ' hours.</p>';
-  const themeAndView = '<p class="note" data-today>' + esc(todayLine(o)) + '</p>' +
-    '<div class="buttons">' + button('schedule', 'Reset to today\'s schedule', ' data-big') + '</div>' +
-    '<h3>Theme</h3>' + pickButtons('theme', themes, 'Theme', o.todayTheme) +
-    '<div class="buttons">' + button('theme', 'Switch to this theme', ' data-hours="' + stayHours + '"') + '</div>' + stays +
-    '<div class="buttons">' + button('theme', 'Preview for ' + previewMinutes + ' minutes', '', 'quiet') + '</div>' + previewBlock('theme') +
-    '<details class="more"><summary>More</summary>' + minuteField('theme-minutes', 'Minutes (10 to 120)', previewMinutes, 10, 120) +
-    '<div class="buttons">' + button('theme', 'Preview for that many minutes', ' data-minutes-from="theme-minutes"', 'quiet') + '</div></details>' +
-    '<h3>View</h3>' + pickButtons('view', views, 'View', '') +
-    '<div class="buttons">' + button('view', 'Switch to this view', ' data-hours="' + stayHours + '"') + '</div>' + stays + previewBlock('view') +
-    minuteField('view-minutes', 'Minutes (10 to 120)', 30, 10, 120) + '<div class="buttons">' + button('view', 'Show for a time', ' data-minutes-from="view-minutes"', 'quiet') + '</div>';
-
-  const hold = choice('panel', panels, 'Panel') + '<div class="buttons">' + button('hold', 'Hold 1 minute', ' data-minutes="1"') + '</div>' +
-    minuteField('hold-minutes', 'Minutes (1 to 60)', 10, 1, 60) + '<div class="buttons">' + button('hold', 'Hold for that many minutes', ' data-minutes-from="hold-minutes"') + '</div>';
-
-  const messages = '<p>' + esc(live) + ' live now.</p><div class="buttons">' + button('announce', 'Play announcement') + '</div>' +
-    '<label class="pick"><span>Post an announcement (90 characters, two hours, both teams)</span><input name="text" maxlength="90" autocomplete="off"></label>' +
-    '<div class="buttons">' + button('post-announcement', 'Post it') + '</div>' +
-    (talks ? '<ul class="rows">' + talks + '</ul>' : '<p>No talks booked in the next day.</p>') + '<div class="buttons">' + button('presentation-test', 'Run presentation test') + '</div>';
-
-  return blocked + group('playlist', 'Playlist', playlist, false, 'display.playlist-group') + group('theme-view', 'Theme and view', themeAndView, true, 'display.theme-view') +
-    group('hold', 'Hold a panel', hold, false, 'display.hold') + group('messages', 'Messages', messages, false, 'display.messages');
 }
 
 // The Keys section of Settings. describe is GET env.

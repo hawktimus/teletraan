@@ -188,9 +188,9 @@ test('the result goes in a line right under the buttons that were pressed, and i
 });
 
 test('every button of the Display controls, Sync and restart and Logs reports through the result line, and the CSS colors it', () => {
-  ['now.js', 'settings-sync.js', 'settings-log.js'].forEach(file => {
+  ['push.js', 'settings-sync.js', 'settings-log.js'].forEach(file => {
     const text = read('control/static/tabs/' + file);
-    assert.ok(text.includes('showResult(') && text.includes('outcome('), file);
+    assert.ok(text.includes('showResult(') && (text.includes('outcome(') || text.includes('doneWords(')), file);
     assert.ok(!text.includes('say('), file + ' still has the quiet note');
   });
   const css = read('control/static/tabs/tabs.css');

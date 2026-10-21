@@ -24,22 +24,16 @@ export const sentences = {
   'health.computer': 'How the Teletraan computer itself is doing: how long it has been on, its disk, its memory and its temperature.',
   'health.errors': 'The last problems the control service wrote down. An empty list is good news.',
 
-  display: 'Choose what the wall plays. The buttons under Show on the wall now act at once. Changes to the rows and the themes reach the wall only after you press Save to draft and then Publish to the wall.',
-  'display.now': 'These buttons change the wall within seconds. They end by themselves, or when you press Back to schedule.',
-  'display.playlist-group': 'Next moves the wall to its next panel. Pause keeps the panel on the wall until you press Resume.',
-  'display.theme-view': 'Switch changes the look or the view of the wall for up to 24 hours. Reset to today\'s schedule puts it back.',
-  'display.hold': 'Keeps one panel on the wall for the minutes you choose. The rotation then goes on.',
-  'display.messages': 'Play announcement shows the announcements now. Post it puts your sentence on the wall for two hours.',
+  display: 'Choose what the wall plays. The four cards at the top act at once. Changes to the rows and the themes reach the wall only after you press Save to draft and then Publish to the wall.',
+  'display.onwall': 'What the wall plays now. Pause, Next and Back to schedule move the rotation, and Show on the wall holds a view or a panel for the minutes you choose.',
+  'display.theme-card': 'The theme on the wall now. Pick another and press Switch to this theme to hold it for the minutes you choose, then the wall goes back to its schedule.',
+  'display.announce': 'A short announcement under the banner, the announcements and the test talk, and the hidden transitions. You will not need them every day.',
   'display.preview': 'A picture of the row you pick. It changes nothing on the wall. The buttons under it save and publish this page.',
-  'display.now-theme': 'The theme on the wall now. Pick another and press Push theme to the wall to show it for the hold time.',
-  'display.push': 'A push shows something on the wall for the hold time you pick, then the wall goes back to its schedule by itself.',
-  'display.playlist': 'What the wall plays now and what comes next. Edit takes you to the rows below and changes nothing.',
   'display.rotation': 'The list the wall plays, top to bottom. Change it here, then press Save to draft and Publish to the wall.',
   'display.rows': 'Each card is one row of the loop. Up and Down move a row. Nothing reaches the wall until you publish.',
   'display.add': 'Add row at the end puts a new row at the bottom of the list. Press Save to draft to keep it.',
-  'display.more': 'Quick hide, hidden transitions and motion. You will rarely need them.',
+  'display.more': 'Quick hide and motion. You will rarely need them.',
   'display.quick': 'Switches Show on screen off for many rows at once, and on again later. Press Save to draft to keep the change.',
-  'display.hidden': 'Plays the desktop reveal or red eyes on the wall now. It waits if something else has the screen.',
   'display.motion': 'How much the wall moves. Press Save to draft and then Publish to the wall to change it.',
   'display.theme': 'Which theme the wall uses on each day. Press Save to draft and then Publish to the wall to change it.',
 
@@ -69,7 +63,7 @@ export const sentences = {
 
 export const helpNotes = {
   status: ['Status shows what the TV is doing right now.', 'Nothing here changes the wall. To change it, use Display or Content.', 'If a line is red or amber, open Health and read what it says.'],
-  display: ['Display decides what the wall plays and in what order.', 'The buttons at the top act at once and end by themselves.', 'The rows and the theme days are different. Change them, press Save to draft, then press Publish to the wall. Undo takes back your last change.'],
+  display: ['Display decides what the wall plays and in what order.', 'The cards at the top act at once and end by themselves.', 'The rows and the theme days are different. Change them, press Save to draft, then press Publish to the wall. Undo takes back your last change.'],
   content: ['Content is the words and pictures on the wall: the ticker, the calendar, the roster, announcements and photos.', 'Open one block, change something, then press Publish to the wall.', 'Nothing reaches the TV until you publish.'],
   settings: ['Settings is for coaches and for fixing the Teletraan computer.', 'Open one section at a time. Most sections have a button that does what the section is named after.', 'If you are not sure, leave it alone and ask a coach.'],
 };

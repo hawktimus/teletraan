@@ -9,7 +9,7 @@ const readFileSync = fs.readFileSync;
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { addRowHtml, newerHtml, conflictHtml, controlsHtml, motionHtml, playlistHtml, playlistPosition, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
+import { addRowHtml, newerHtml, conflictHtml, controlsHtml, motionHtml, playlistWords, playlistPosition, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
 import { extrasHtml } from '../control/static/tabs/settings-competition.js';
 import { addChartRows, addDepartmentRows, withKeys } from '../control/static/display-rows.js';
 import { repo } from './helpers/control-world.mjs';
@@ -145,7 +145,7 @@ check('Theme rotation has seven rows: the weekday, its next date, today marked, 
   assert.ok(!early.includes('Oct') && (early.match(/data-theme-day=/g) || []).length === 7);
 });
 
-check('the Playlist card says what plays now and next, the loop, and has the Edit button', () => {
+check('the playlist words say what plays now and next and how long the loop is (they sit in On the wall now)', () => {
   const rows = withKeys([{ view: 'robotics', panel: 'tasks', shown: true }, { view: 'prime', panel: 'events', shown: false }, { view: 'prime', panel: 'photo', shown: true }]);
   const there = Object.assign({}, page, { rows: rows });
   const place = playlistPosition(rows, { panel: 'tasks', view: 'general' });
@@ -153,15 +153,12 @@ check('the Playlist card says what plays now and next, the loop, and has the Edi
   assert.equal(place.next.panel, 'photo', 'a row that is off is passed over');
   assert.equal(playlistPosition(rows, { panel: 'photo', view: 'prime' }).next.panel, 'tasks', 'the loop starts again');
   assert.deepEqual(playlistPosition(rows, null), { now: null, next: null });
-  const html = playlistHtml(there, { panel: 'tasks', view: 'general' }, false, titlesOf(choices));
-  assert.ok(html.includes('data-action="edit-rows"') && html.includes('>Edit<'));
-  assert.match(html, /data-play-now>[^<]*\(Robotics\)/);
-  assert.match(html, /data-play-next>[^<]*\(Prime\)/);
-  assert.ok(html.includes('2 rows are on'));
-  assert.ok(!html.includes('is paused'));
-  assert.ok(playlistHtml(there, null, true, titlesOf(choices)).includes('The rotation is paused'));
-  assert.ok(playlistHtml(there, { panel: 'weather-hold', view: 'general' }, false, {}).includes('not a row of the list'));
-  assert.ok(playlistHtml(Object.assign({}, page, { rows: [] }), null, false, {}).includes('standard order'));
+  const words = playlistWords(there, { panel: 'tasks', view: 'general' }, titlesOf(choices));
+  assert.match(words.playing, /\(Robotics\)/);
+  assert.match(words.next, /\(Prime\)/);
+  assert.ok(words.loop.includes('2 rows are on'));
+  assert.ok(playlistWords(there, { panel: 'weather-hold', view: 'general' }, {}).playing.includes('not a row of the list'));
+  assert.ok(playlistWords(Object.assign({}, page, { rows: [] }), null, {}).loop.includes('standard order'));
 });
 
 check('the motion card has one group of buttons for Motion, with the stored value chosen, and none for the TV computer', () => {

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import * as push from '../control/routes/push.js';
 import { buildCancel, buildPush, buildReset, noticeId, pushesOf, weekdayOf } from '../control/support/push.js';
 import { clockOffset, leftWords, nowTheme, previewTarget, secondsLeft, weekDates } from '../control/static/push-lib.js';
-import { activeHtml, hiddenBlockHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml } from '../control/static/tabs/push-parts.js';
+import { activeHtml, announceHtml, heldHtml, holdHtml, namesOf, onWallHtml, themeCardHtml } from '../control/static/tabs/push-parts.js';
 import { makeWorld } from './helpers/control-world.mjs';
 
 let passed = 0;
@@ -241,14 +241,14 @@ await check('a push that is chosen but not sent is drawn in the large picture wi
   assert.equal(theme.theme, 'retro');
   assert.equal(theme.row.panel, 'monday-department');
   assert.equal(theme.row.seconds, undefined, 'only the fields that change the picture');
-  assert.match(theme.words, /^Previewing Department tasks, Retro\. This is not on the wall until you press Push\.$/);
+  assert.match(theme.words, /^Previewing Department tasks, Retro\. This is not on the wall until you send it\.$/);
   const panel = previewTarget({ theme: '', view: 'family', panel: 'monday-department' }, rows, rows[0], titles, names);
   assert.equal(panel.row.department, 'build');
   assert.equal(panel.row.view, 'family');
   assert.equal(previewTarget({ theme: '', view: '', panel: 'photo' }, rows, rows[0], titles, names).row.panel, 'photo');
 });
 
-await check('the top of the page: the big theme, 5 hold lengths with 15 pressed, tiles, escaped words, no dash, no exclamation mark', () => {
+await check('the top of the page: the strip, three cards, 5 hold lengths with 15 pressed, tiles, escaped words, no dash, no exclamation mark', () => {
   const state = {
     pushes: [{ kind: 'announcement', id: '<b>Pizza</b>', until: plus(10), level: 'notice', team: '' }, { kind: 'theme', id: 'foundry', until: plus(5) }],
     today: 'tuesday', week: { tuesday: 'cybertron' }, canWrite: true,
@@ -256,34 +256,66 @@ await check('the top of the page: the big theme, 5 hold lengths with 15 pressed,
     views: [{ key: 'general', name: 'Robotics' }, { key: 'prime', name: 'Prime' }, { key: 'nova', name: 'Nova' }, { key: 'family', name: 'Condensed' }],
     teams: [{ code: 'prime', name: 'Prime' }], hiddenKinds: [{ value: 'desktop', title: 'Desktop reveal' }, { value: 'redEyes', title: 'Red eyes' }],
   };
-  const draft = { theme: 'retro', view: '', panel: '', hold: 15, text: '', level: 'notice', noticeTeam: '' };
+  const draft = { theme: 'retro', view: 'prime', panel: '', settings: {}, hold: 15, text: '', level: 'notice', noticeTeam: '' };
   const choices = { panelGroups: [{ title: 'Wall', panels: [{ value: 'tasks', title: 'Tasks' }] }] };
   const names = namesOf(state, { tasks: 'Tasks' });
-  const top = nowThemeHtml(state, draft, names);
-  const block = pushBlockHtml(state, draft, choices, names);
-  const all = top + block + hiddenBlockHtml(state, null);
+  const wall = onWallHtml(state, draft, choices, names);
+  const theme = themeCardHtml(state, draft, names);
+  const announce = announceHtml(state, draft, null, { liveAnnouncements: 2, talks: [{ name: 'Ada', start: '10:00' }] });
+  const strip = activeHtml(state.pushes, state, names);
+  const all = wall + theme + announce + strip;
 
-  assert.match(top, /data-now-theme-name>Foundry</, 'a pushed theme is the big one');
-  assert.match(top, /Pushed by hand/);
-  assert.equal((top.match(/data-theme-pick=/g) || []).length, 4);
-  assert.match(top, /data-theme-pick="retro"[^>]*aria-pressed="true"/);
+  assert.match(wall, /<h2>On the wall now<\/h2>/);
+  assert.match(wall, /data-now-theme-name>Foundry</, 'a pushed theme is the big one');
+  assert.match(wall, /Held<\/dt><dd data-held-now>[^]*data-left=/, 'the status line counts down what is held');
+  ['pause', 'next', 'schedule', 'reset', 'show-on-wall', 'edit-rows'].forEach(action => assert.ok(wall.includes('data-action="' + action + '"'), action));
+  assert.ok(wall.indexOf('data-action="pause"') < wall.indexOf('data-action="show-on-wall"'), 'playback comes first');
+  assert.equal((wall.match(/data-view-pick=/g) || []).length, 4);
+  assert.match(wall, /data-view-pick="prime"[^>]*aria-pressed="true"/);
+  assert.match(wall, /<option value="tasks">Tasks<\/option>/);
+  assert.match(onWallHtml({ ...state, pushes: [{ kind: 'pause', id: '', until: plus(5) }] }, draft, choices, names), /data-action="resume"[^>]*>Resume rotation</);
+  assert.equal((theme.match(/data-theme-pick=/g) || []).length, 4);
+  assert.match(theme, /data-theme-pick="retro"[^>]*aria-pressed="true"/);
+  ['push-theme', 'preview-theme'].forEach(action => assert.ok(theme.includes('data-action="' + action + '"'), action));
+  assert.match(theme, /Preview for 10 minutes/);
+  assert.match(theme, /Back to the schedule/);
+  assert.match(theme, /Tuesday the schedule uses Cybertron/);
   assert.equal((holdHtml(15).match(/data-hold=/g) || []).length, 5);
   assert.match(holdHtml(15), /data-hold="15"[^>]*aria-pressed="true"/);
-  assert.match(top, /Back to the schedule/);
-  assert.match(top, /Reset to today's schedule/);
-  assert.ok(top.includes('&lt;b&gt;Pizza&lt;/b&gt;') && !top.includes('<b>Pizza'), 'an announcement text is escaped');
-  assert.equal((top.match(/data-action="cancel"/g) || []).length, 3, 'one Cancel on each push and one Back to the schedule');
-  ['push-view', 'push-panel', 'push-announcement', 'push-pause'].forEach(action => assert.ok(block.includes('data-action="' + action + '"'), action));
-  assert.ok(!block.includes('push-hidden'), 'Hidden transitions moved under More tools');
-  const hidden = hiddenBlockHtml(state, null);
-  assert.equal((hidden.match(/data-action="push-hidden"/g) || []).length, 2);
-  assert.ok(hidden.includes('data-hidden-run'));
-  assert.match(block, /maxlength="90"/);
+  assert.ok(strip.includes('&lt;b&gt;Pizza&lt;/b&gt;') && !strip.includes('<b>Pizza'), 'an announcement text is escaped');
+  assert.equal((strip.match(/data-action="cancel"/g) || []).length, 2, 'one Cancel on each push');
+  assert.ok(strip.includes('data-action="reset"'));
+  assert.ok(!/<details/.test(wall + theme), 'the first two cards are not folded');
+  assert.match(announce, /<details class="more-tools announce-card" data-more="announce">/);
+  assert.ok(!/<details[^>]* open/.test(announce), 'closed to start with');
+  ['push-announcement', 'post-announcement', 'announce', 'presentation-test'].forEach(action => assert.ok(announce.includes('data-action="' + action + '"'), action));
+  assert.equal((announce.match(/data-action="push-hidden"/g) || []).length, 2);
+  assert.ok(announce.includes('data-hidden-run') && announce.includes('2 live now') && announce.includes('Ada'));
+  assert.match(announce, /maxlength="90"/);
   assert.ok(!/[–—!]/.test(all.replace(/<[^>]*>/g, '')), 'plain wording');
-  assert.ok(activeHtml([], state, names).includes('Nothing is pushed'));
+  assert.ok(activeHtml([], state, names).includes('nothing'));
+  assert.match(heldHtml([], names), /Nothing is held/);
 
-  const off = pushBlockHtml(Object.assign({}, state, { canWrite: false }), draft, choices, names);
-  assert.match(off, /data-action="push-view" disabled/);
+  const off = onWallHtml(Object.assign({}, state, { canWrite: false }), draft, choices, names);
+  assert.match(off, /data-action="show-on-wall" disabled/);
+});
+
+await check('Show a panel draws the menus of the chosen panel from the same choices as the row editor', async () => {
+  const { panelFieldsOf, settingsOf, showFieldsHtml } = await import('../control/static/tabs/show-panel-fields.js');
+  const monday = { departments: [{ value: 'build', title: 'Build' }], lists: [{ value: 'open', title: 'Open' }, { value: 'done', title: 'Done' }], charts: [{ value: 'status', title: 'Status' }], teams: [{ value: '', title: 'Both' }, { value: 'prime', title: 'Prime' }] };
+  const choices = { monday: monday };
+  assert.deepEqual(panelFieldsOf('monday-department', {}, choices).map(item => item.field), ['department', 'list', 'team']);
+  assert.deepEqual(panelFieldsOf('monday-charts', {}, choices).map(item => item.field), ['chart', 'team']);
+  assert.deepEqual(panelFieldsOf('tasks', {}, choices), []);
+  assert.deepEqual(panelFieldsOf('roster', {}, { monday: monday, roster: { teams: [{ value: 'a', title: 'A' }], departments: [{ value: 'b', title: 'B' }] } }).map(item => item.field), ['team', 'department']);
+  const html = showFieldsHtml('monday-department', { department: 'build' }, choices);
+  assert.match(html, /<select data-show-field="department">/);
+  assert.match(html, /data-show-field="list"/);
+  assert.deepEqual(settingsOf('monday-charts', { chart: 'status', department: 'build', team: '' }, choices), { chart: 'status' }, 'only this panel\'s menus, none empty');
+  const rows = [{ _key: 'a', panel: 'monday-department', department: 'build', list: 'open' }];
+  const target = previewTarget({ theme: '', view: '', panel: 'monday-department', settings: { department: 'design', list: 'done' } }, rows, null, {}, {});
+  assert.equal(target.row.department, 'design');
+  assert.equal(target.row.list, 'done');
 });
 
 console.log(passed + ' passed');

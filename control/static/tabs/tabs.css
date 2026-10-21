@@ -76,12 +76,12 @@
 .status-page .live[data-preview-card], .status-page .info [data-card] { margin: 0; }
 .status-page .next-links .buttons { margin-top: 0; }
 .status-page .next-links .act { display: inline-flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; flex: 1 1 220px; }
-.status-page .health, .wall-controls .group { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; min-width: 0; }
-.status-page .health > summary, .wall-controls .group > summary { min-height: 44px; padding: 10px 16px; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); cursor: pointer; }
+.status-page .health { background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; min-width: 0; }
+.status-page .health > summary { min-height: 44px; padding: 10px 16px; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent, #faca2a); cursor: pointer; }
 .status-page .health > [data-health-body] { margin: 0 16px 16px; }
 .status-page .health > [data-health-body] .card { margin: 0; }
-.status-page[data-width="wide"] .health > summary, .wall-controls[data-width="wide"] .group > summary { cursor: default; list-style: none; }
-.status-page[data-width="wide"] .health > summary::-webkit-details-marker, .wall-controls[data-width="wide"] .group > summary::-webkit-details-marker { display: none; }
+.status-page[data-width="wide"] .health > summary { cursor: default; list-style: none; }
+.status-page[data-width="wide"] .health > summary::-webkit-details-marker { display: none; }
 /* Wide: the picture on the left and stays in view, the card and the links on the right */
 .status-page[data-width="wide"] .cols { grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr); align-items: start; }
 .status-page[data-width="wide"] .live { grid-column: 1; grid-row: 1; position: sticky; top: 8px; }
@@ -97,34 +97,9 @@
 .status-page[data-width="narrow"] [data-preview-card][data-on="no"] .preview { display: none; }
 .status-page[data-width="narrow"] .buttons .act { flex: 1 1 auto; }
 .tab .note { color: #b9afcf; }
-.status-page .held, .wall-controls .held { margin: 0; padding: 12px 16px; font-weight: 700; color: var(--page-text, #f3eefc); background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
-.status-page .held[data-held="yes"], .wall-controls .held[data-held="yes"] { color: #1a1228; background: var(--accent, #faca2a); border-color: var(--accent, #faca2a); }
+.status-page .held { margin: 0; padding: 12px 16px; font-weight: 700; color: var(--page-text, #f3eefc); background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-radius: 8px; }
+.status-page .held[data-held="yes"] { color: #1a1228; background: var(--accent, #faca2a); border-color: var(--accent, #faca2a); }
 
-/* The wall controls at the top of the Display tab (tabs/wall-controls.js): groups that fold, one open at a time when not wide,
-   and a bar of the three most used buttons at the bottom of a phone */
-.wall-controls { display: grid; gap: 16px; padding-bottom: 0; }
-.wall-controls .groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
-.wall-controls .group-body { padding: 0 16px 16px; }
-.wall-controls .group h3 { margin: 16px 0 0; font-size: 18px; color: var(--page-text, #f3eefc); }
-.wall-controls .quickbar { display: none; }
-.wall-controls[data-width="wide"] .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-.wall-controls[data-width="medium"] .groups, .wall-controls[data-width="narrow"] .groups { max-width: 720px; margin: 0 auto; width: 100%; }
-main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"]) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-.wall-controls[data-width="medium"] .quickbar, .wall-controls[data-width="narrow"] .quickbar {
-  display: block; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0;
-  padding: 8px max(12px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  background: #0b0714; border-top: 2px solid var(--card-edge, #3a2c55);
-}
-.wall-controls .quickbar .buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.wall-controls .quickbar .act { min-height: 48px; padding: 6px 8px; font-size: 16px; line-height: 1.2; }
-.wall-controls .quickbar .result { margin: 6px 0 0; font-size: 16px; }
-.wall-controls .quickbar .result:empty { display: none; }
-.wall-controls[data-width="narrow"] .buttons .act { flex: 1 1 auto; }
-.wall-controls .group .act[data-big] { width: 100%; min-height: 56px; font-size: 20px; font-weight: 700; }
-.wall-controls .more { margin-top: 8px; }
-.wall-controls .more > summary { min-height: 44px; padding: 10px 0; color: #b9afcf; cursor: pointer; }
-
-/* The Sync and restart section of Settings */
 .sync-section { display: grid; gap: 16px; }
 .sync-section h3 { margin: 16px 0 0; font-size: 18px; }
 .sync-lines { margin: 12px 0 0; padding: 0; list-style: none; }
@@ -190,8 +165,6 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .facts dt { flex: 0 0 120px; color: #b9afcf; }
 .display-page .facts dd { flex: 1 1 200px; margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .display-page .action-bar { margin: 12px 0 0; padding: 12px 0 0; border-top: 2px solid var(--card-edge, #3a2c55); }
-.display-page .wall-controls { padding: 0; }
-.display-page .wall-controls .groups { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); max-width: none; }
 .display-page .preview-card { min-width: 0; margin: 0; }
 .display-page .large-box { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
 .display-page .large-stage { position: absolute; inset: 0; overflow: hidden; }
@@ -285,12 +258,37 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .tab .inline-field { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 44px; }
 .tab .inline-field input { width: 12ch; }
 
-/* On a phone the four tabs are fixed to the bottom (style.css), so the three most used buttons sit just above them */
-@media (max-width: 600px) {
-  .wall-controls[data-width="medium"] .quickbar, .wall-controls[data-width="narrow"] .quickbar { bottom: calc(var(--tabbar, 56px) + env(safe-area-inset-bottom)); padding-bottom: 8px; }
-  main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"]) { padding-bottom: calc(96px + var(--tabbar, 56px) + env(safe-area-inset-bottom)); }
-}
 .tab .lead { color: #cfc6e4; }
 .status-page[data-width="wide"] .health > .lead { margin: 0; color: #5d5670; }
 .status-page .health > .lead { margin: 0 16px 12px; }
 .status-page[data-width="wide"] .health > .lead { margin: 0 0 12px; }
+
+/* The left column of Display is one stack of full width cards, never cards side by side. Under 1000px it is the only column; from
+   1000px the picture and its bar are the second one. The bar of Next, Pause and Reset sits at the foot of a phone or tablet. */
+.display-page .display-left > * { min-width: 0; }
+.display-page .display-left > .lead { margin: 0; color: #5d5670; }
+.display-page .pushed-strip { padding: 8px 16px; background: var(--card-bg, #1a1228); border: 2px solid var(--card-edge, #3a2c55); border-left: 6px solid var(--accent, #faca2a); border-radius: 8px; }
+.display-page .pushed-strip p { margin: 0; }
+.display-page .pushed-strip .actives { margin: 4px 0 0; }
+.display-page .pushed-strip .active { margin: 0 0 4px; padding: 4px 8px; }
+.display-page .pushed-strip .buttons { margin-top: 4px; }
+.display-page .now-card h3, .display-page .theme-now-card h3, .display-page .announce-card h3 { margin: 16px 0 0; font-size: 18px; }
+.display-page .playback .act { flex: 1 1 160px; }
+.display-page .show-settings:empty { display: none; }
+.display-page .quickbar { display: none; }
+@media (max-width: 999px) {
+  .display-page .quickbar {
+    display: block; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0;
+    padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+    background: #0b0714; border-top: 2px solid var(--card-edge, #3a2c55);
+  }
+  .display-page .quickbar .buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+  .display-page .quickbar .act { min-height: 48px; padding: 6px 8px; font-size: 16px; line-height: 1.2; }
+  .display-page .quickbar .result { margin: 6px 0 0; font-size: 16px; }
+  .display-page .quickbar .result:empty { display: none; }
+  main:has(.display-page .quickbar) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 600px) {
+  .display-page .quickbar { bottom: calc(var(--tabbar, 56px) + env(safe-area-inset-bottom)); }
+  main:has(.display-page .quickbar) { padding-bottom: calc(96px + var(--tabbar, 56px) + env(safe-area-inset-bottom)); }
+}

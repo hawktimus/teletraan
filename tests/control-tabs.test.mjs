@@ -94,12 +94,11 @@ test('Settings has these sections, in this order, and the last one has a fixed i
 });
 
 test('a file can add a block to a tab or to the settings-all section without editing them', async () => {
-  await import('../control/static/tabs/wall-controls.js');
   const mount = () => {};
   extendTab('settings-all', { mount: mount });
   extendTab('display', { place: 'before', mount: mount });
   assert.equal(extensionsFor('settings-all').length, 1);
-  assert.equal(extensionsFor('display', 'before').length >= 2, true, 'the wall controls and this one');
+  assert.equal(extensionsFor('display', 'before').length, 1, 'this one only: the wall controls are part of Display now');
   assert.equal(extensionsFor('display', 'after').length, 0);
 });
 
@@ -107,7 +106,7 @@ test('Status only shows: no write call and no button that changes the wall', () 
   const status = read('control/static/tabs/status.js');
   const health = read('control/static/tabs/health.js');
   const now = read('control/static/tabs/now.js');
-  const card = now.slice(now.indexOf('export async function mountCard'), now.indexOf('export async function mountControls'));
+  const card = now.slice(now.indexOf('export async function mountCard'));
   const preview = read('control/static/tabs/preview.js');
   [['status.js', status], ['health.js', health], ['the card in now.js', card]].forEach(([name, text]) => {
     assert.ok(!/api\('(POST|PUT|PATCH|DELETE)'/.test(text), name + ' makes no write call');
@@ -124,8 +123,9 @@ test('Status only shows: no write call and no button that changes the wall', () 
 });
 
 test('the buttons that moved are where the owner asked: wall controls on Display, sync and restart in Settings', () => {
-  const wall = read('control/static/tabs/wall-controls.js');
-  assert.ok(wall.includes("extendTab('display'") && wall.includes('mountControls') && wall.includes('quickBarHtml'));
+  const push = read('control/static/tabs/push.js');
+  assert.ok(push.includes("'/request'") && push.includes("'/push'"), 'Display sends the Status requests and the pushes');
+  assert.ok(read('control/static/tabs/display.js').includes('quickBarHtml'));
   const sync = read('control/static/tabs/settings-sync.js');
   ['restart-kiosk', 'restart-services', 'reboot', 'Sync all', "'/sync-all'", 'dotsHtml', 'readsHtml'].forEach(word => assert.ok(sync.includes(word), word));
   assert.deepEqual(syncs.map(item => item.target), ['calendars', 'monday', 'frc', 'news', 'match13', 'photos-drive'], 'the order Sync all runs them in');

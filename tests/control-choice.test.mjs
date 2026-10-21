@@ -79,7 +79,7 @@ test('no page draws a plain radio or checkbox of its own: they all come from cho
 
 test('the pages that had plain boxes use the helper', () => {
   ['control/static/tabs/settings-reboot.js', 'control/static/tabs/settings-cleanup.js', 'control/static/tabs/settings-sync.js', 'control/static/tabs/settings-log.js', 'control/static/tabs/settings-screen.js',
-    'control/static/tabs/display-parts.js', 'control/static/tabs/display-preview-parts.js', 'control/static/tabs/render.js', 'control/static/settings-all-fields.js'].forEach(file => {
+    'control/static/tabs/display-parts.js', 'control/static/tabs/display-preview-parts.js', 'control/static/tabs/show-panel-fields.js', 'control/static/settings-all-fields.js'].forEach(file => {
     assert.ok(read(file).includes("from '../choice.js'") || read(file).includes("from './choice.js'"), file);
   });
 });
