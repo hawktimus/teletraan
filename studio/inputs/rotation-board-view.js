@@ -12,7 +12,7 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { useClient } from 'sanity';
 import {
-  addRow, copyRow, moveRow, moveTo, notPublished, pushUndo, removeRow, removeRows, rowsFrom, saveRows, secondsFrom, setPhotoValue, setRowValue,
+  addChartRows, addDepartmentRows, addRow, copyRow, moveRow, moveTo, notPublished, pushUndo, removeRetired, removeRow, removeRows, rowsFrom, saveRows, secondsFrom, setPhotoValue, setRowValue,
   setShown, settingsFrom, skipNotes, skipQuestion, standardRows, startingPhotos, wholeFrom, defaultPageSeconds,
 } from '../tools/rotation-board.js';
 import { panelChoices, boardCss, nowLine, stripOfPage, styles, tableOf, toolsOf, words } from './rotation-board-parts.js';
@@ -44,6 +44,7 @@ export function pageOf(state, actions) {
       state.rows.length === 0 ? null : nowLine(state),
       tools[0],
       tools[1],
+      tools[2],
       state.rows.length === 0 ? h('p', { style: styles.text, 'data-block': 'empty' }, words.empty) : tableOf(state, actions),
       state.rows.length === 0 ? null : stripOfPage(state),
       autoSection(state)
@@ -162,6 +163,9 @@ export function RotationView(props) {
       if (line && line.scrollIntoView) line.scrollIntoView({ block: 'start' });
     },
     add: () => change(addRow(rowsNow(), latest.current.newView, latest.current.newPanel)),
+    removeRetired: () => change(removeRetired(rowsNow())),
+    addDepartments: () => change(addDepartmentRows(rowsNow())),
+    addCharts: () => change(addChartRows(rowsNow())),
     fill: () => (ask(words.confirmFill) ? change(standardRows()) : Promise.resolve()),
     undo: () => {
       const history = latest.current.history;

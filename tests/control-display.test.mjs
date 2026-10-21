@@ -73,6 +73,42 @@ await check('the row functions do what the Studio board does, on the same rows',
   assert.equal(rows.defaultPageSeconds, studio.defaultPageSeconds);
 });
 
+await check('the retired Monday rows are removed and the new rows added the same way as the Studio board does', async () => {
+  const lists = await import('../dashboard/config-lists.js');
+  assert.deepEqual(rows.retiredMondayPanels, lists.retiredMondayPanels);
+  assert.deepEqual(rows.mondayDepartmentIds, lists.mondayDepartments.map(item => item.value));
+  assert.deepEqual(rows.mondayChartIds, lists.mondayCharts.map(item => item.value));
+  assert.deepEqual(rows.mondayDepartmentIds, studio.mondayDepartmentIds);
+  assert.deepEqual(rows.mondayChartIds, studio.mondayChartIds);
+
+  const mixed = rows.withKeys(lists.retiredMondayPanels.map(panel => ({ view: 'prime', panel: panel, department: 'build' })).concat([
+    { view: 'robotics', panel: 'tasks', seconds: 30 },
+    { view: 'robotics', panel: 'monday-department', department: 'cnc', list: 'done', team: 'nova', seconds: 20, extra: 'kept' },
+    { view: 'robotics', panel: 'monday-charts', shown: false },
+  ]));
+  assert.equal(rows.retiredCount(mixed), 11);
+  assert.deepEqual(rows.removeRetired(mixed), studio.removeRetired(mixed));
+  const kept = rows.removeRetired(mixed);
+  assert.deepEqual(kept.map(row => row.panel), ['tasks', 'monday-department', 'monday-charts']);
+  assert.equal(kept[1].extra, 'kept');
+  assert.equal(mixed.length, 14, 'the old list is not changed');
+  assert.equal(rows.removeRetired(kept), kept, 'nothing to remove gives the same list');
+
+  const same = (mine, theirs) => assert.deepEqual(mine.map(row => Object.assign({}, row, { _key: 'k' })), theirs.map(row => Object.assign({}, row, { _key: 'k' })));
+  assert.deepEqual(rows.missingDepartments(kept), studio.missingDepartments(kept));
+  assert.equal(rows.missingDepartments(kept).length, 8, 'cnc already has a row, whatever its list');
+  assert.deepEqual(rows.missingCharts(kept), ['progress', 'timeline'], 'a chart row with no chart is the Status chart');
+  same(rows.addDepartmentRows(kept), studio.addDepartmentRows(kept));
+  same(rows.addChartRows(kept), studio.addChartRows(kept));
+  const full = rows.addChartRows(rows.addDepartmentRows(kept));
+  assert.equal(full.length, 3 + 8 + 2);
+  assert.deepEqual(full[3], { _key: full[3]._key, view: 'robotics', panel: 'monday-department', department: 'build', list: 'open', seconds: 30, shown: true });
+  assert.equal(full[full.length - 1].chart, 'timeline');
+  assert.equal(rows.addDepartmentRows(full).length, full.length, 'nothing is added twice');
+  assert.equal(rows.addChartRows(full).length, full.length);
+  assert.equal(new Set(full.map(row => row._key)).size, full.length);
+});
+
 await check('a change leaves the rows it was given as they were and keeps a field the tab does not show', () => {
   const start = rows.withKeys([{ view: 'prime', panel: 'roster', department: 'build', part: 2, side: 'forecast', shown: true, unknown: 'x' }]);
   const before = JSON.stringify(start);

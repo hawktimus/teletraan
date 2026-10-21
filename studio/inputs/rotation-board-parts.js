@@ -6,7 +6,7 @@
 
 import { createElement } from 'react';
 import {
-  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isShown, loopWords, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
+  blocksOf, detailsFor, detailsSummary, durationWords, hasSmallPanel, isRetiredRow, isShown, loopWords, missingCharts, missingDepartments, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
 import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge, playsNowWords } from '../tools/rotation-find.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
@@ -315,6 +315,16 @@ export function toolsOf(state, actions) {
     h('button', { type: 'button', style: styles.plain, disabled: busy || state.history.length === 0, onClick: () => actions.undo() }, 'Undo'),
     h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.fill() }, 'Fill from the standard order')
   );
+  const old = state.rows.filter(isRetiredRow).length;
+  const departments = missingDepartments(state.rows).length;
+  const charts = missingCharts(state.rows).length;
+  const monday = old + departments + charts === 0 ? null : h(
+    'div',
+    { className: 'rb-tools', 'data-block': 'monday-rows' },
+    old === 0 ? null : h('button', { type: 'button', style: styles.button, disabled: busy, onClick: () => actions.removeRetired() }, 'Remove retired Monday rows (' + old + ')'),
+    departments === 0 ? null : h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.addDepartments() }, 'Add the ' + (departments === 9 ? 'nine' : departments + ' missing') + ' Department tasks rows (Robotics, Open)'),
+    charts === 0 ? null : h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.addCharts() }, 'Add the ' + (charts === 3 ? 'three' : charts + ' missing') + ' TV charts rows')
+  );
   const bulk = selected.length === 0 ? null : h(
     'div',
     { className: 'rb-bulk', 'data-block': 'bulk' },
@@ -324,7 +334,7 @@ export function toolsOf(state, actions) {
     h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.removeSelected() }, 'Delete selected'),
     h('button', { type: 'button', style: styles.plain, onClick: () => actions.selectAll(false) }, 'Clear selection')
   );
-  return [tools, bulk];
+  return [tools, monday, bulk];
 }
 
 export { panelChoices, sideChoices };

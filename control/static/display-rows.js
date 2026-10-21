@@ -199,6 +199,48 @@ export function quickAction(counts) {
   return { hide: false, rows: counts.total };
 }
 
+// Retired Monday rows. The eleven Monday panels of the older sync play nothing now (retiredMondayPanels in
+// dashboard/config-lists.js, which tests/control-display.test.mjs compares with this list). These functions take them out of the
+// list and put the Department tasks and TV charts rows that replace them. They never touch any other row.
+export const retiredMondayPanels = [
+  'monday-tasks', 'monday-done', 'monday-status-depts', 'monday-overall', 'monday-timeline', 'monday-board', 'monday-pie',
+  'monday-milestones', 'monday-progress', 'monday-milestones-both', 'monday-progress-both',
+];
+export const mondayDepartmentIds = ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing'];
+export const mondayChartIds = ['status', 'progress', 'timeline'];
+export const addedRowSeconds = 30;
+
+export const isRetiredRow = row => Boolean(row) && retiredMondayPanels.includes(row.panel);
+
+export function retiredCount(rows) {
+  return rows.filter(isRetiredRow).length;
+}
+
+// The same rows without the retired Monday rows. A list with none comes back as it was.
+export function removeRetired(rows) {
+  return retiredCount(rows) === 0 ? rows : rows.filter(row => !isRetiredRow(row));
+}
+
+// The departments that no Department tasks row has yet, in the order of the pickers
+export function missingDepartments(rows) {
+  return mondayDepartmentIds.filter(id => !rows.some(row => row.panel === 'monday-department' && row.department === id));
+}
+
+// The chart kinds that no TV charts row has yet. A row with no chart is the Status chart.
+export function missingCharts(rows) {
+  return mondayChartIds.filter(id => !rows.some(row => row.panel === 'monday-charts' && (row.chart || 'status') === id));
+}
+
+// One Department tasks row, open, for both teams, at the end of the list for each department that has none
+export function addDepartmentRows(rows) {
+  return rows.concat(missingDepartments(rows).map(id => ({ _key: newKey(), view: 'robotics', panel: 'monday-department', department: id, list: 'open', seconds: addedRowSeconds, shown: true })));
+}
+
+// One TV charts row, for both teams, at the end of the list for each chart kind that has none
+export function addChartRows(rows) {
+  return rows.concat(missingCharts(rows).map(id => ({ _key: newKey(), view: 'robotics', panel: 'monday-charts', chart: id, seconds: addedRowSeconds, shown: true })));
+}
+
 // True when two lists are the same rows with the same values, for "you have unsaved changes"
 export function sameRows(first, second) {
   return JSON.stringify(first) === JSON.stringify(second);

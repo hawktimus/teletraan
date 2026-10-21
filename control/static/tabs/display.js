@@ -5,7 +5,7 @@
 
 import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
-import { addRow, copyRow, countWhere, isNovaRow, isPanelRow, mondayFieldNames, moveRow, photoRange, quickAction, removeRow, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
+import { addChartRows, addDepartmentRows, addRow, copyRow, countWhere, isNovaRow, isPanelRow, mondayFieldNames, moveRow, photoRange, quickAction, removeRetired, removeRow, retiredCount, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
 import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, extrasHtml, motionHtml, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from './display-parts.js';
 import { largeHtml } from './display-preview-parts.js';
 import { patchRows } from './display-patch.js';
@@ -246,6 +246,17 @@ export async function mountDisplay(container) {
       const what = quickAction(countWhere(page.rows, test));
       change(setShownWhere(page.rows, test, !what.hide), true);
       flash('done', (what.hide ? 'Hidden ' : 'Shown ') + what.rows + (what.rows === 1 ? ' row' : ' rows') + ' on this page. Press Save to draft to keep it.');
+    } else if (action === 'remove-retired') {
+      const count = retiredCount(page.rows);
+      if (count === 0) return;
+      change(removeRetired(page.rows), true);
+      flash('done', 'Removed ' + count + (count === 1 ? ' retired Monday row' : ' retired Monday rows') + ' on this page. Press Save to draft, then Publish to the wall. Undo brings them back.');
+    } else if (action === 'add-departments' || action === 'add-charts') {
+      const next = action === 'add-departments' ? addDepartmentRows(page.rows) : addChartRows(page.rows);
+      const added = next.length - page.rows.length;
+      if (added === 0) return;
+      change(next, true);
+      flash('done', 'Added ' + added + (added === 1 ? ' row' : ' rows') + ' at the end of the list. Press Save to draft, then Publish to the wall. Undo takes them away.');
     } else if (action === 'up') change(moveRow(page.rows, index, -1), false);
     else if (action === 'down') change(moveRow(page.rows, index, 1), false);
     else if (action === 'copy') change(copyRow(page.rows, index), true);

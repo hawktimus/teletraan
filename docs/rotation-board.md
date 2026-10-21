@@ -96,6 +96,17 @@ The code is studio/tools/rotation-auto.js and studio/inputs/rotation-auto-parts.
 - Undo: puts back the list before the last change. The last twenty changes are kept until you leave the page.
 - Fill from the standard order: replaces the list with the fifteen blocks the team chose, after a question. Undo brings your
   list back.
+- Remove retired Monday rows (N): shown only when the list has rows of the eleven older Monday panels. It deletes exactly
+  those rows and no other. An older Monday tasks row with a department goes too; the Department tasks rows replace it. Undo
+  brings them back.
+- Add the nine Department tasks rows (Robotics, Open): adds one Department tasks row, in Robotics, Open, for both teams,
+  30 seconds, for each department that has no Department tasks row yet. The label says how many it adds, for example
+  Add the 4 missing Department tasks rows. It is left out when every department has a row.
+- Add the three TV charts rows: the same for the Status, Progress and Timeline charts, 30 seconds each, left out when each
+  chart has a row.
+
+These three buttons write only rotationRows to the draft, like the other buttons. The Display tab of the control page has the
+same three, kept in step by tests/control-display.test.mjs.
 
 ## What it writes
 

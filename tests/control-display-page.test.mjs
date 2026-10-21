@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { addRowHtml, conflictHtml, controlsHtml, extrasHtml, motionHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
-import { withKeys } from '../control/static/display-rows.js';
+import { addChartRows, addDepartmentRows, withKeys } from '../control/static/display-rows.js';
 import { repo } from './helpers/control-world.mjs';
 
 let passed = 0;
@@ -188,6 +188,25 @@ check('the words are plain: no em or en dash, no exclamation mark, no emoji in t
     assert.ok(!/[A-Za-z0-9.)'"]!(?!=)/.test(text), file + ' has an exclamation mark');
     assert.ok(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(text), file + ' has an emoji');
   });
+});
+
+function nineAndThree() {
+  return addChartRows(addDepartmentRows([]));
+}
+
+check('the Monday rows buttons name their counts and are left out when there is nothing to do', () => {
+  const old = withKeys([{ view: 'prime', panel: 'monday-tasks', department: 'build' }, { view: 'prime', panel: 'monday-pie' }, { view: 'robotics', panel: 'tasks' }]);
+  const html = quickHtml(old, choices);
+  assert.ok(html.includes('data-action="remove-retired">Remove retired Monday rows (2)'));
+  assert.ok(html.includes('Add the nine Department tasks rows (Robotics, Open)'));
+  assert.ok(html.includes('Add the three TV charts rows'));
+  const partly = withKeys([{ view: 'robotics', panel: 'monday-department', department: 'build' }, { view: 'robotics', panel: 'monday-charts', chart: 'timeline' }]);
+  const some = quickHtml(partly, choices);
+  assert.ok(!some.includes('remove-retired'));
+  assert.ok(some.includes('Add the 8 missing Department tasks rows'));
+  assert.ok(some.includes('Add the 2 missing TV charts rows'));
+  const done = quickHtml(withKeys(nineAndThree()), choices);
+  assert.ok(!done.includes('data-action="add-') && !done.includes('remove-retired'));
 });
 
 check('Quick hide says what each button does and how many rows it changes, and escapes names', () => {

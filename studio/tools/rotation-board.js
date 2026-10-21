@@ -315,6 +315,44 @@ export function setShown(rows, keys, shown) {
   return rows.map(row => (keys.indexOf(row._key) === -1 ? row : Object.assign({}, row, { shown: shown })));
 }
 
+// Retired Monday rows (olderMondayPanels in inputs/screen-panels.js). These functions take them out of the
+// list and put the Department tasks and TV charts rows that replace them. They never touch any other row.
+
+export const addedRowSeconds = 30;
+export const mondayDepartmentIds = mondayDepartmentChoices.map(item => item.value);
+export const mondayChartIds = mondayChartChoices.map(item => item.value);
+
+export const isRetiredRow = row => isRetired(row);
+
+export function retiredCount(rows) {
+  return rows.filter(isRetiredRow).length;
+}
+
+// The same rows without the retired Monday rows. A list with none comes back as it was.
+export function removeRetired(rows) {
+  return retiredCount(rows) === 0 ? rows : rows.filter(row => !isRetiredRow(row));
+}
+
+// The departments that no Department tasks row has yet, in the order of the pickers
+export function missingDepartments(rows) {
+  return mondayDepartmentIds.filter(id => !rows.some(row => row.panel === 'monday-department' && row.department === id));
+}
+
+// The chart kinds that no TV charts row has yet. A row with no chart is the Status chart.
+export function missingCharts(rows) {
+  return mondayChartIds.filter(id => !rows.some(row => row.panel === 'monday-charts' && (row.chart || 'status') === id));
+}
+
+// One Department tasks row, open, for both teams, at the end of the list for each department that has none
+export function addDepartmentRows(rows) {
+  return rows.concat(missingDepartments(rows).map(id => ({ _key: newKey(), view: 'robotics', panel: 'monday-department', department: id, list: 'open', seconds: addedRowSeconds, shown: true })));
+}
+
+// One TV charts row, for both teams, at the end of the list for each chart kind that has none
+export function addChartRows(rows) {
+  return rows.concat(missingCharts(rows).map(id => ({ _key: newKey(), view: 'robotics', panel: 'monday-charts', chart: id, seconds: addedRowSeconds, shown: true })));
+}
+
 // Writes the rows to the draft of Dashboard Settings, and only the field rotationRows. The draft is made from the published
 // document first when there is none, so the other fields are kept. It gives back a promise.
 export const notPublished = 'Dashboard Settings has not been published yet. Open it, click Publish once, and come back.';

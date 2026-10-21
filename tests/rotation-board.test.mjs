@@ -268,6 +268,20 @@ test('the page has the owner sentence, a group for each block, a row for each ro
   assert.deepEqual(out, ['add', 'undo', 'fill', 'showSelected', 'showSelected', 'removeSelected']);
 });
 
+test('the Monday rows buttons show their counts, call only their actions and are left out when there is nothing to do', () => {
+  const old = board.withKeys([{ view: 'prime', panel: 'monday-tasks', department: 'build' }, { view: 'robotics', panel: 'monday-done' }, { view: 'robotics', panel: 'tasks' }]);
+  const labels = rows => nodesWhere(view.pageOf(state(rows), noActions), node => node.type === 'button').map(textOf);
+  assert.ok(labels(old).includes('Remove retired Monday rows (2)'));
+  assert.ok(labels(old).includes('Add the nine Department tasks rows (Robotics, Open)'));
+  assert.ok(labels(old).includes('Add the three TV charts rows'));
+  const out = [];
+  const tree = view.pageOf(state(old), new Proxy({}, { get: (target, name) => () => out.push(name) }));
+  nodesWhere(tree, node => node.type === 'button' && /^(Remove retired|Add the)/.test(textOf(node))).forEach(node => node.props.onClick());
+  assert.deepEqual(out, ['removeRetired', 'addDepartments', 'addCharts']);
+  const done = board.addChartRows(board.addDepartmentRows(board.withKeys([{ view: 'robotics', panel: 'tasks' }])));
+  assert.ok(!labels(done).some(text => /^(Remove retired|Add the)/.test(text)));
+});
+
 test('every panel the rows use has a plain title from the one table, and the pickers are grouped', () => {
   defaults.defaultRotationRows().forEach(item => {
     assert.ok(titles.panelTitleOf(item.panel), 'a title for ' + item.panel);

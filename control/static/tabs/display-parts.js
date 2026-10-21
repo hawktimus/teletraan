@@ -2,7 +2,7 @@
 // and give markup with every value escaped. display.js puts the markup in the page and wires the buttons. Nothing here
 // touches the page, so tests/control-display-page.test.mjs can try it with node.
 
-import { blocksOf, countWhere, durationWords, isNovaRow, isShown, mondayFieldsOf, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
+import { blocksOf, countWhere, missingCharts, missingDepartments, retiredCount, durationWords, isNovaRow, isShown, mondayFieldsOf, quickAction, quickPanels, loopSeconds, photoRange, secondsOf, viewWords } from '../display-rows.js';
 import { agoText, esc } from './render.js';
 import { thumbHtml } from './display-preview-parts.js';
 
@@ -174,7 +174,22 @@ export function quickHtml(rows, choices) {
   const panels = quickPanels(rows).map(item => quickButton('quick-panel', item.panel, titles[item.panel] || item.panel, item));
   return '<section class="card" data-quick><h2>Quick hide</h2>' +
     '<p class="word">Switch Show on screen off for many rows at once, and on again later. The rows stay in the list with all their settings. Nothing is sent until you press Save to draft.</p>' +
-    '<ul class="quicks">' + quickButton('quick-nova', '', 'Nova rows', countWhere(rows, isNovaRow)) + panels.join('') + '</ul></section>';
+    '<ul class="quicks">' + quickButton('quick-nova', '', 'Nova rows', countWhere(rows, isNovaRow)) + panels.join('') + '</ul>' + mondayCleanupHtml(rows) + '</section>';
+}
+
+// Old Monday rows out and the Department tasks and TV charts rows in. Each button names how many rows it changes and is left out
+// when there is nothing to change. They change the list on this page only, like the quick buttons.
+export function mondayCleanupHtml(rows) {
+  const old = retiredCount(rows);
+  const departments = missingDepartments(rows).length;
+  const charts = missingCharts(rows).length;
+  const item = (action, label, note) => '<li class="quick"><button type="button" class="act" data-action="' + action + '">' + esc(label) + '</button><span class="word">' + esc(note) + '</span></li>';
+  const list = [];
+  if (old > 0) list.push(item('remove-retired', 'Remove retired Monday rows (' + old + ')', 'The older Monday panels play nothing. Department tasks and the TV charts replace them.'));
+  if (departments > 0) list.push(item('add-departments', 'Add the ' + (departments === 9 ? 'nine' : departments + ' missing') + ' Department tasks rows (Robotics, Open)', 'One row for each department that has none, at the end of the list, 30 seconds, both teams.'));
+  if (charts > 0) list.push(item('add-charts', 'Add the ' + (charts === 3 ? 'three' : charts + ' missing') + ' TV charts rows', 'Status, progress and timeline, one row for each chart that has none, at the end of the list, 30 seconds.'));
+  if (list.length === 0) return '<h3>Monday rows</h3><p class="word">No retired Monday rows, and every department and chart has a row.</p>';
+  return '<h3>Monday rows</h3><ul class="quicks">' + list.join('') + '</ul>';
 }
 
 export function addRowHtml(choices) {
