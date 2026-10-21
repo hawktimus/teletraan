@@ -5,7 +5,7 @@
 
 import net from 'node:net';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete'];
 
 export function createHelper(socketPath, timeout = 30000, connect = net.createConnection) {
   return function helper(word, args = [], body = '') {

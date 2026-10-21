@@ -63,7 +63,7 @@ calendars serves both computers, and a save goes to the Teletraan computer you p
 One run, one password. The tool copies this repository to `~/teletraan-staging` on the Teletraan computer with `rsync`, then runs one root shell on the computer that does all of this in order:
 
 1. `computer/install.sh`. It makes the files the next release (docs/control-page.md, "How releases work"), builds the Studio, starts the containers and turns on the nightly timer. It pulls the Node image or the web server image first when the computer does not have it (a download from the internet, which the installer says). On a computer that has no control page yet it also makes the move to the releases layout, which is why this is the first install.
-2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-nightly.sh`, `install-reboot.sh` and `install-cleanup.sh`, one after another. They turn on the timers (the watchdog, the nightly backup, the nightly restart and the scheduled reboot among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
+2. `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-monday.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-console.sh`, `install-watchdog.sh`, `install-network.sh`, `install-backup.sh`, `install-nightly.sh`, `install-reboot.sh` and `install-cleanup.sh`, one after another. They turn on the timers (the watchdog, the nightly backup, the nightly restart and the scheduled reboot among them) and the boot and shutdown screens. Each one says what it will do and is given the Enter it waits for. They install no packages: one that finds a package missing stops and prints the `apt install` line to run, and the tool goes on to the next script and names the ones that stopped at the end. `install-console.sh` changes `/etc/issue`, so the team mentor should have said yes (`docs/rebuilding-the-computer.md`, the list at the top).
 3. A restart of the screen, which is black for about ten seconds.
 
 Run choice 1 once after the update that moved the watchdog and the nightly restart off root. Until then the two timers still run as root from the old unit files, and the new sudoers file is not on the computer. Choice 1 installs the sudoers file (checked with `visudo`), replaces both units with ones that run as the login user, and says "runs as root. It is replaced" when it finds an old one. Running it again changes nothing more. To check afterwards, on the computer:
@@ -216,6 +216,14 @@ Choices 3 and `c` stay in the menu, because they ask questions.
 | macOS will not open the .command file | Right-click it, choose Open, and choose Open again. |
 
 ## Turn on the scheduled reboot
+
+Choosing 1 (Install everything) also runs `install-network.sh`, which turns on the network watchdog (`teletraan-network.timer`, every 2 minutes, as the login user), writes `/etc/sudoers.d/teletraan-network` for the Wi-Fi and Ethernet devices that NetworkManager manages, and turns off Wi-Fi power saving, energy-efficient Ethernet, USB autosuspend and sleep (docs/network.md has each setting and how to undo it). It needs `curl`, `iproute2`, `flock` and `gawk`, which Debian has. It prints the `apt install` line when one is missing. To check afterwards, on the computer:
+
+    systemctl list-timers 'teletraan-network*'
+    sudo -l | grep -E "nmcli|journalctl|NetworkManager"
+    cat /var/lib/teletraan/data/network/state
+
+The sudo list names `wlp2s0` and `enp3s0f0` command by command, with no `*`. `sudo /opt/teletraan/computer/scripts/install-network.sh --undo` takes the settings away again.
 
 Choosing 1 (Install everything) copies the units of the scheduled reboot and runs `install-reboot.sh`, so the timer is on after any update that has it. It reboots nothing yet, because Scheduled reboot is off to start with.
 

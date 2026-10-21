@@ -37,6 +37,17 @@ function loadsWords(wall) {
   return String(report.loads) + (report.loadReason ? ', last reason: ' + report.loadReason : '');
 }
 
+// "ok, last problem 3 days ago, 2 recoveries in 24 hours", from the network part of GET status
+export function networkWords(network, now = new Date()) {
+  if (!network || network.state === 'not known') return 'not known yet. The network check has not run, or it is not installed';
+  if (network.state === 'down') {
+    return 'down since ' + agoText(network.downSince, now) + (network.lastStep ? ', last repair step ' + network.lastStep : ', no repair step yet');
+  }
+  const count = typeof network.recoveries === 'number' ? network.recoveries : 0;
+  const problem = network.lastProblemAt ? agoText(network.lastProblemAt, now) : '';
+  return 'ok, ' + (problem && problem !== 'not yet' ? 'last problem ' + problem : 'no problem seen') + ', ' + count + (count === 1 ? ' recovery' : ' recoveries') + ' in 24 hours';
+}
+
 // The three dots on the TV, with the reason behind each
 export function dotsHtml(data) {
   if (!data) return card('The three dots on the TV', '<p>The Teletraan computer did not answer. Check that it is on and on the WiFi, then reload this page.</p>');
@@ -87,6 +98,7 @@ export function healthHtml(data, wall, now = new Date()) {
     row('Disk', esc(disk)) +
     (memory ? row('Memory', esc(memory)) : '') +
     (warm ? row('Temperature', esc(warm)) : '') +
+    row('Network', esc(networkWords(data.network, now))) +
     row('Sanity', data.sanity && data.sanity.reachable ? 'Reachable' : 'Not reachable' + (data.sanity && data.sanity.error ? ': ' + esc(data.sanity.error) : '')) +
     row('Studio can reach this page', corsWords(data.cors)) +
     row('Tailscale address', esc(data.tailscale || 'not known')) + '</dl>', '', 'health.computer');

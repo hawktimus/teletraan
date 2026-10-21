@@ -474,7 +474,7 @@ test('status-write.sh --print shows the last news read, the usage names news, an
   const printed = place.status(['--print']);
   assert.equal(printed.status, 0, printed.errors);
   assert.match(printed.text, /Last news read\s+2 hours ago/);
-  assert.match(place.status(['wrong']).errors, /photos-drive\|news\|reboot\|cleanup\|restart N/);
+  assert.match(place.status(['wrong']).errors, /photos-drive\|news\|reboot\|cleanup\|network\|restart N/);
   const text = fs.readFileSync(path.join(repo, 'computer/scripts/status-write.sh'), 'utf8');
   assert.ok(text.includes('"frcStatus", "frcNews"]'), 'the news document is left out of the newest change');
 });

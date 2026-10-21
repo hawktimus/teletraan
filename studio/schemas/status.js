@@ -55,6 +55,12 @@ export default defineType({
     defineField({ name: 'cleanupWouldDelete', title: 'Clean up list', type: 'number', description: 'How many expired documents were on the list at the last clean up. The Teletraan computer writes this.' }),
     defineField({ name: 'cleanupDeleted', title: 'Clean up deleted', type: 'number', description: 'How many documents the last clean up deleted. Zero while Mode is Only show. The Teletraan computer writes this.' }),
     textField('cleanupError', 'Clean up problem', 'Why the last clean up stopped or could not delete something, or empty when it went well. The Teletraan computer writes this.'),
+    // The network watchdog (computer/scripts/network-watchdog.sh, status-write.sh network)
+    timeField('networkLastOkAt', 'Network last worked', 'When the network watchdog last found the network working. The computer writes this about once an hour.'),
+    timeField('networkDownSince', 'Network down since', 'When the network went away, or empty while it works. The computer writes this when the network is back.'),
+    timeField('networkLastProblemAt', 'Last network problem', 'When the network last went away. The Teletraan computer writes this.'),
+    defineField({ name: 'networkRecoveries', title: 'Network recoveries in 24 hours', type: 'number', description: 'How many times the network came back in the last 24 hours. The Teletraan computer writes this.' }),
+    textField('networkLastStep', 'Last network repair step', 'The last repair step the network watchdog took, such as 2 reconnect. The Teletraan computer writes this.'),
     timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
     defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],

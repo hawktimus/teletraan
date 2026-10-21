@@ -93,6 +93,14 @@ export function buildStatus(facts, now = new Date()) {
     memory: numberFrom(f.host, 'memTotalKb') && numberFrom(f.host, 'memAvailableKb') !== null
       ? { totalKb: numberFrom(f.host, 'memTotalKb'), availableKb: numberFrom(f.host, 'memAvailableKb') } : null,
     temperatureC: numberFrom(f.host, 'tempC'),
+    network: {
+      state: lineStarting(f.host, 'networkState') || 'not known',
+      lastOkAt: lineStarting(f.host, 'networkLastOkAt'),
+      downSince: lineStarting(f.host, 'networkDownSince'),
+      lastProblemAt: lineStarting(f.host, 'networkLastProblemAt'),
+      lastStep: lineStarting(f.host, 'networkLastStep'),
+      recoveries: numberFrom(f.host, 'networkRecoveries'),
+    },
     lastErrors: Array.isArray(f.errors) ? f.errors : [],
     sanity: { reachable: Boolean(sanity.ok), error: sanity.ok ? '' : text(sanity.error) },
     cors: f.cors || null,

@@ -103,9 +103,19 @@ write_device_info() {
 
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ 2> /dev/null || true)
 
+  # When the network went away and the last repair step the network watchdog took (network-watchdog.sh). Empty while the
+  # network works. The page says "trying to fix this by itself" only when both are there (dashboard/core/device.js).
+  network_down=''
+  network_step=''
+  if [ -f "$data/network/status.json" ]; then
+    network_down=$(sed -n 's/.*"networkDownSince":"\([^"]*\)".*/\1/p' "$data/network/status.json" 2> /dev/null | head -n 1 || true)
+    network_step=$(sed -n 's/.*"networkLastStep":"\([^"]*\)".*/\1/p' "$data/network/status.json" 2> /dev/null | head -n 1 || true)
+  fi
+
   temporary="$data/device.json.tmp.$$"
-  if printf '{"hostname":"%s","wifi":"%s","tailscale":"%s","time":"%s"}\n' \
+  if printf '{"hostname":"%s","wifi":"%s","tailscale":"%s","time":"%s","networkDownSince":"%s","networkLastStep":"%s"}\n' \
     "$(json_text "$name")" "$(json_text "$wifi")" "$(json_text "$tailscale_address")" "$(json_text "$now")" \
+    "$(json_text "$network_down")" "$(json_text "$network_step")" \
     2> /dev/null > "$temporary"; then
     chmod 644 "$temporary" 2> /dev/null || true
     mv -f "$temporary" "$data/device.json" 2> /dev/null || rm -f "$temporary"

@@ -45,7 +45,7 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
 });
@@ -98,7 +98,52 @@ test('restart-services restarts the web container and the timers, and goes on wh
   const calls = h.ask('status\n').calls;
   assert.ok(calls.includes('sudo -n ' + path.join(h.bin, 'docker') + ' restart teletraan-web'), calls);
   assert.ok(!calls.includes('nginx'), 'no fallback to the nginx service');
-  ['calendars', 'monday', 'slides', 'watchdog', 'nightly'].forEach(name => assert.ok(calls.includes('restart teletraan-' + name + '.timer'), name));
+  ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'network'].forEach(name => assert.ok(calls.includes('restart teletraan-' + name + '.timer'), name));
+});
+
+test('network-info prints the link, the signal, the addresses, the journal with secrets taken out and the watchdog record, and says when iw is missing', () => {
+  const h = setup();
+  fs.copyFileSync(path.join(repo, 'computer/scripts/network-info.sh'), path.join(h.root, 'computer/scripts/network-info.sh'));
+  fs.chmodSync(path.join(h.root, 'computer/scripts/network-info.sh'), 0o755);
+  const sys = path.join(h.root, 'sys');
+  fs.mkdirSync(path.join(sys, 'wlp2s0/wireless'), { recursive: true });
+  fs.writeFileSync(path.join(sys, 'wlp2s0/operstate'), 'up\n');
+  fs.writeFileSync(path.join(sys, 'wlp2s0/carrier'), '1\n');
+  const data = path.join(h.root, 'data');
+  fs.mkdirSync(path.join(data, 'network'), { recursive: true });
+  fs.writeFileSync(path.join(h.root, 'computer/local.env'), "TELETRAAN_DATA='" + data + "'\n");
+  fs.writeFileSync(path.join(data, 'network/state'), 'manager=networkmanager\ninterface=wlp2s0\nsanity=ok\nfails=0\ncheckedAt=1760000000\n');
+  fs.writeFileSync(path.join(data, 'network/history'), '2026-10-20T03:10:00Z 1-dhcp done, still down\n');
+  fs.writeFileSync(path.join(data, 'network/status.json'), '{"networkLastOkAt":"2026-10-21T17:00:00Z","networkDownSince":"","networkRecoveries":2,"networkLastStep":"3 service","networkLastProblemAt":"2026-10-20T03:10:00Z"}\n');
+  const journal = [
+    '2026-10-21T17:12:01+0000 hawk NetworkManager[812]: <info>  device (wlp2s0): state change: activated -> disconnected',
+    '2026-10-21T17:12:02+0000 hawk wpa_supplicant[900]: wlp2s0: CTRL-EVENT-DISCONNECT bssid=aa:bb reason=3',
+    '2026-10-21T17:12:03+0000 hawk wpa_supplicant[900]: connected psk=SuperSecretPassphrase99 key_mgmt=WPA-PSK',
+    '2026-10-21T17:12:04+0000 hawk NetworkManager[812]: <warn>  dhcp timeout token 0123456789abcdef0123456789abcdef0123456789abcdef',
+  ].join('\\n');
+  fs.writeFileSync(path.join(h.bin, 'ip'), '#!/bin/sh\ncase "$*" in *"-4 -o addr"*) echo "3: wlp2s0 inet 10.0.137.149/24 brd 10.0.137.255" ;; *) echo "default via 10.0.137.1 dev wlp2s0 proto dhcp" ;; esac\n', { mode: 0o755 });
+  fs.writeFileSync(path.join(h.bin, 'sudo'), `#!/bin/sh\necho "sudo $*" >> "${path.join(h.root, 'calls.log')}"\nprintf '%b\\n' "${journal.replace(/"/g, '\\"')}"\n`, { mode: 0o755 });
+  const answer = h.ask('network-info\n', { NETWORK_SYS: sys });
+  assert.equal(answer.status, 'ok', answer.output);
+  assert.match(answer.output, /^interface: wlp2s0$/m);
+  assert.match(answer.output, /^type: Wi-Fi$/m);
+  assert.match(answer.output, /^link: up, carrier 1$/m);
+  assert.match(answer.output, /^gateway: 10\.0\.137\.1$/m);
+  assert.match(answer.output, /^ip: 10\.0\.137\.149\/24$/m);
+  assert.match(answer.output, /^powerSave: iw is not installed/m, 'it says plainly that iw is missing');
+  assert.match(answer.output, /^journal: .*CTRL-EVENT-DISCONNECT/m);
+  assert.ok(!answer.output.includes('SuperSecretPassphrase99') && !answer.output.includes('0123456789abcdef0123456789abcdef'), 'secrets are taken out');
+  assert.match(answer.output, /^journal: .*psk=REDACTED/m);
+  assert.match(answer.output, /^state: manager=networkmanager$/m);
+  assert.match(answer.output, /^history: .*1-dhcp/m);
+  assert.ok(answer.calls.includes('sudo -n /usr/bin/journalctl -u NetworkManager.service -u wpa_supplicant.service -u systemd-networkd.service --no-pager -n 60 -o short-iso'), answer.calls);
+  assert.ok(!/wpa_supplicant\.conf|\/etc\/NetworkManager\/system-connections/.test(fs.readFileSync(path.join(repo, 'computer/scripts/network-info.sh'), 'utf8').replace(/^#.*$/gm, '')), 'no password file is read');
+  assert.equal(h.ask('network-info now\n').status, 'refused', 'it takes no argument');
+
+  const status = h.ask('status\n');
+  assert.match(status.output, /^networkState: ok$/m);
+  assert.match(status.output, /^networkRecoveries: 2$/m);
+  assert.match(status.output, /^networkLastStep: 3 service$/m);
 });
 
 test('sync-now takes calendars, monday or frc and nothing else', () => {

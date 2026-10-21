@@ -67,13 +67,17 @@ function allows(commands, line) {
 const parsed = read(generated('hawk'));
 const commands = commandsOf(parsed);
 
-const timers = ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot'];
+const timers = ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'network'];
 const syncs = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
+const networkServices = ['NetworkManager.service', 'systemd-networkd.service', 'systemd-resolved.service', 'networking.service'];
+const journalLine = '/usr/bin/journalctl -u NetworkManager.service -u wpa_supplicant.service -u systemd-networkd.service --no-pager -n 60 -o short-iso';
 const expected = [
   '/usr/bin/systemctl restart teletraan-kiosk.service',
   '/usr/bin/systemctl start teletraan-mirror.service',
   ...timers.map(name => '/usr/bin/systemctl restart teletraan-' + name + '.timer'),
   ...syncs.map(name => '/usr/bin/systemctl start teletraan-' + name + '.service'),
+  ...networkServices.map(name => '/usr/bin/systemctl restart ' + name),
+  journalLine,
   '/usr/bin/docker restart teletraan-web',
   '/usr/bin/systemctl reboot',
   '/bin/systemctl reboot',
@@ -92,8 +96,8 @@ check('no wildcard, no open command and no way to change the environment', () =>
   assert.ok(!/[*?[\]!]/.test(body), 'no wildcard or negation');
   assert.ok(!/\bALL\b/.test(body.replace(/ALL=\(root\)/g, '')), 'no ALL command');
   assert.ok(!/SETENV|EXEC|sudoedit|\(ALL|ALL:/.test(body));
-  commands.filter(command => command !== wrapper && !/reboot$/.test(command)).forEach(command => {
-    assert.match(command, /^\/usr\/bin\/(systemctl (restart|start) teletraan-[a-z0-9-]+\.(service|timer)|docker restart teletraan-web)$/, command);
+  commands.filter(command => command !== wrapper && command !== journalLine && !/reboot$/.test(command)).forEach(command => {
+    assert.match(command, /^\/usr\/bin\/(systemctl (restart|start) (teletraan-[a-z0-9-]+\.(service|timer)|NetworkManager\.service|systemd-networkd\.service|systemd-resolved\.service|networking\.service)|docker restart teletraan-web)$/, command);
   });
   commands.forEach(command => assert.ok(command.startsWith('/'), 'a full path: ' + command));
 });
@@ -117,7 +121,7 @@ check('every command the scripts run through sudo is allowed, by the same path',
   lines.forEach(line => assert.ok(allows(commands, line), line));
 
   // The watchdog restarts the screen. The nightly job restarts it and reboots. The scheduled reboot reboots.
-  const scripts = { watchdog: ['restart teletraan-kiosk.service'], nightly: ['restart teletraan-kiosk.service', 'reboot'], 'scheduled-reboot': ['reboot'] };
+  const scripts = { watchdog: ['restart teletraan-kiosk.service'], nightly: ['restart teletraan-kiosk.service', 'reboot'], 'scheduled-reboot': ['reboot'], 'network-watchdog': ['restart teletraan-kiosk.service', 'reboot'] };
   Object.keys(scripts).forEach(name => {
     const text = fs.readFileSync(path.join(repo, 'computer/scripts', name + '.sh'), 'utf8');
     assert.ok(text.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl'), name);
@@ -156,7 +160,41 @@ check('commands that are not listed are refused: other units, extra arguments, w
     '/usr/bin/tee /etc/sudoers.d/x',
     '/usr/local/sbin/teletraan-install-tree-other',
     '/opt/teletraan/computer/scripts/watchdog.sh',
+    '/usr/bin/systemctl restart NetworkManager',
+    '/usr/bin/systemctl stop NetworkManager.service',
+    '/usr/bin/systemctl restart wpa_supplicant.service',
+    '/usr/bin/systemctl restart NetworkManager.service systemd-networkd.service',
+    '/usr/bin/journalctl -u sshd.service --no-pager -n 60 -o short-iso',
+    '/usr/bin/journalctl -u NetworkManager.service -u wpa_supplicant.service -u systemd-networkd.service --no-pager -n 6000 -o short-iso',
+    '/usr/bin/journalctl',
+    '/usr/bin/nmcli device wifi connect x password y',
+    '/usr/bin/nmcli connection delete id x',
   ].forEach(line => assert.ok(!allows(commands, line), 'must be refused: ' + line));
+});
+
+// The interface rules that install-network.sh writes: the block of computer/sudoers/teletraan-network once for each device
+const netTemplate = fs.readFileSync(path.join(repo, 'computer/sudoers/teletraan-network'), 'utf8');
+function netGenerated(account, names) {
+  const block = netTemplate.split('\n').slice(netTemplate.split('\n').indexOf('# --- block ---') + 1, netTemplate.split('\n').indexOf('# --- end ---')).join('\n');
+  return names.map(name => block.replace(/IFACE/g, name).replace(/ACCOUNT/g, account)).join('\n') + '\n';
+}
+
+check('the interface rules name each command with the interface, for the devices that were found only', () => {
+  const text = netGenerated('hawk', ['wlp2s0', 'enp3s0f0']);
+  const net = commandsOf(read(text));
+  const expectedNet = [];
+  ['wlp2s0', 'enp3s0f0'].forEach(name => expectedNet.push('/usr/bin/nmcli device reapply ' + name, '/usr/bin/nmcli device disconnect ' + name,
+    '/usr/bin/nmcli device connect ' + name, '/usr/bin/networkctl renew ' + name, '/usr/bin/networkctl reconfigure ' + name,
+    '/usr/sbin/ifup --force ' + name, '/usr/sbin/ifup ' + name, '/usr/sbin/ifdown ' + name));
+  assert.deepEqual([...net].sort(), [...expectedNet].sort());
+  assert.ok(!/[*?[\]!]/.test(text), 'no wildcard');
+  ['docker0', 'tailscale0', 'br-1a2b3c', 'veth9f8e', 'lo', 'wlp2s0 extra', '*'].forEach(name => {
+    ['/usr/bin/nmcli device reapply ', '/usr/bin/nmcli device disconnect ', '/usr/bin/networkctl renew '].forEach(start => assert.ok(!allows(net, start + name), start + name));
+  });
+  assert.ok(!allows(net, '/usr/bin/nmcli device delete wlp2s0') && !allows(net, '/usr/bin/nmcli radio wifi off'));
+  const script = fs.readFileSync(path.join(repo, 'computer/scripts/network-watchdog.sh'), 'utf8');
+  ['nmcli_bin\" device reapply', 'nmcli_bin\" device disconnect', 'nmcli_bin\" device connect', 'networkctl_bin\" renew', 'networkctl_bin\" reconfigure', 'ifup_bin\" --force', 'ifdown_bin\" \"$interface'].forEach(part => assert.ok(script.includes(part), part));
+  assert.ok(allows(commands, '/usr/bin/systemctl restart teletraan-kiosk.service') && allows(commands, '/usr/bin/systemctl reboot'), 'the watchdog reuses the kiosk and reboot rules');
 });
 
 check('visudo accepts the generated file and refuses a broken one', () => {
@@ -173,6 +211,9 @@ check('visudo accepts the generated file and refuses a broken one', () => {
     assert.equal(result.status, 0, result.stdout + result.stderr);
     const broken = path.join(folder, 'broken');
     fs.writeFileSync(broken, generated('hawktimus') + '\nhawktimus ALL=(root NOPASSWD: /usr/bin/systemctl\n', { mode: 0o440 });
+    const net = path.join(folder, 'teletraan-network');
+    fs.writeFileSync(net, netGenerated('hawktimus', ['wlp2s0', 'enp3s0f0']), { mode: 0o440 });
+    assert.equal(spawnSync(visudo, ['-cf', net], { encoding: 'utf8' }).status, 0, 'visudo accepts the interface rules');
     assert.notEqual(spawnSync(visudo, ['-cf', broken], { encoding: 'utf8' }).status, 0, 'visudo does refuse a broken file');
   } finally {
     fs.rmSync(folder, { recursive: true, force: true });

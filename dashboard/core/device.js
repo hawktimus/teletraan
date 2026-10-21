@@ -45,10 +45,23 @@ export function loginAddress(device) {
   return device.tailscale || device.wifi;
 }
 
+// The sentence under the banner once the network has been down this long and the network watchdog on the Teletraan computer
+// has taken a repair step (computer/scripts/network-watchdog.sh puts both in device.json by way of kiosk.sh)
+export const repairAfterMinutes = 10;
+export const repairLine = 'The Teletraan computer is trying to fix this by itself';
+
+export function repairText(raw, now = new Date()) {
+  const device = raw && typeof raw === 'object' ? raw : {};
+  const since = typeof device.networkDownSince === 'string' ? Date.parse(device.networkDownSince) : NaN;
+  const step = typeof device.networkLastStep === 'string' ? device.networkLastStep.trim() : '';
+  if (!Number.isFinite(since) || !/^[1-5] [a-z]+$/.test(step)) return '';
+  return now.getTime() - since > repairAfterMinutes * 60 * 1000 ? repairLine : '';
+}
+
 // What the screen says: up to two lines, and none at all when nothing is known.
 //   hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103
 //   ssh hawktimus@100.101.102.103
-export function deviceLines(raw) {
+export function deviceLines(raw, now = new Date()) {
   const device = tidyDevice(raw);
 
   const parts = [];
@@ -57,6 +70,8 @@ export function deviceLines(raw) {
   if (device.tailscale) parts.push('Tailscale ' + device.tailscale);
 
   const lines = [];
+  const repair = repairText(raw, now);
+  if (repair) lines.push(repair);
   if (parts.length > 0) lines.push(parts.join(' · '));
 
   const address = loginAddress(device);

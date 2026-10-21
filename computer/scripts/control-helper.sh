@@ -60,7 +60,7 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|display-info|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
+  restart-kiosk|restart-services|reboot|status|display-info|network-info|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   cleanup-preview|cleanup-delete)
@@ -93,7 +93,7 @@ case $word in
   restart-services)
     # The web server is a container here, and a restart makes it read the release that current points at. It goes
     # last, because the page reaches this helper through it and loses its connection when it restarts.
-    for timer in calendars monday slides watchdog nightly reboot; do
+    for timer in calendars monday slides watchdog nightly reboot network; do
       sudo -n "$systemctl_bin" restart "teletraan-$timer.timer" > /dev/null 2>&1 || true
     done
     code=0
@@ -117,7 +117,16 @@ case $word in
     echo "tempC: $(awk '{ printf "%d", $1 / 1000 }' /sys/class/thermal/thermal_zone0/temp 2> /dev/null || true)"
     echo "tailscale: $(tailscale ip -4 2> /dev/null | head -n 1 || true)"
     echo "display: $(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | sed 's/^.*display: //' | cut -c 1-200)"
+    # The network watchdog's own record (network-watchdog.sh), which needs no network to be read
+    "$root/computer/scripts/network-info.sh" --summary 2> /dev/null || true
     finish 0
+    ;;
+  network-info)
+    # Everything about the link, read only (computer/scripts/network-info.sh). The journal part uses the one sudo rule
+    # for journalctl; the script prints a line that says so when the rule is missing.
+    code=0
+    "$root/computer/scripts/network-info.sh" || code=$?
+    finish "$code"
     ;;
   display-info)
     # What the connected screen is: the output, its mode and rate, every mode it lists and the line display.sh logged when

@@ -1,0 +1,16 @@
+# The commands of the network watchdog that name an interface (network-watchdog.sh), one set for each interface that
+# NetworkManager manages as Ethernet or Wi-Fi. install-network.sh copies the block between the two marker lines once for
+# each such interface, puts the interface name in place of IFACE and the login user in place of ACCOUNT, checks the result
+# with visudo and installs it as /etc/sudoers.d/teletraan-network. There is no wildcard: a different interface or an extra
+# argument does not match. Docker, Tailscale, bridge and veth devices are never listed.
+# --- block ---
+ACCOUNT ALL=(root) NOPASSWD: \
+  /usr/bin/nmcli device reapply IFACE, \
+  /usr/bin/nmcli device disconnect IFACE, \
+  /usr/bin/nmcli device connect IFACE, \
+  /usr/bin/networkctl renew IFACE, \
+  /usr/bin/networkctl reconfigure IFACE, \
+  /usr/sbin/ifup --force IFACE, \
+  /usr/sbin/ifup IFACE, \
+  /usr/sbin/ifdown IFACE
+# --- end ---
