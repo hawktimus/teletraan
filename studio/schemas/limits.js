@@ -30,6 +30,8 @@ export const limits = {
   planRowLead: 10,
   teamName: 20,
   teamNumber: 6,
+  rosterFirstName: 24,
+  rosterJobTitle: 28,
 };
 
 // The Photo panel in the standard layout is 1152 by 708 pixels (main panel in dashboard/base.css) and the screen asks

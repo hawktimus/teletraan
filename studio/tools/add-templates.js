@@ -23,6 +23,7 @@ export const addTemplates = [
   { id: 'newCalendarFilter', title: 'Calendar filter', schemaType: 'calendarFilter', value: { show: true } },
   { id: 'newSubtheme', title: 'Subtheme', schemaType: 'subtheme', value: { enabled: true } },
   { id: 'newPerson', title: 'Person', schemaType: 'person', value: { show: true } },
+  { id: 'newRosterPerson', title: 'Roster person', schemaType: 'rosterPerson', value: { show: true } },
   { id: 'newSubteam', title: 'Team lead', schemaType: 'subteam', value: { show: true } },
   { id: 'newSponsor', title: 'Sponsor', schemaType: 'sponsor', value: { show: true } },
   { id: 'newPhoto', title: 'Photo', schemaType: 'photo', value: { show: true } },

@@ -10,6 +10,7 @@ import announcement from './announcement.js';
 import subteam from './subteam.js';
 import place from './place.js';
 import person from './person.js';
+import rosterPerson from './rosterPerson.js';
 import team from './team.js';
 import photo from './photo.js';
 import customPanel from './customPanel.js';
@@ -40,6 +41,7 @@ export const schemaTypes = [
   subteam,
   place,
   person,
+  rosterPerson,
   team,
   photo,
   customPanel,

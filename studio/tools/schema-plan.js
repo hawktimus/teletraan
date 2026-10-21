@@ -102,6 +102,9 @@ export const plan = {
     { type: 'team', mode: 'list', title: 'Teams', says: 'Name, number, colors, metal, glow, mirror and trim of each team.', skip: { palette: 'Not set by editors. Inverted is the Nova palette.' } },
     { type: 'customPanel', mode: 'list', title: 'Extra panels', says: 'The panels built from blocks.' },
     { type: 'subtheme', mode: 'list', title: 'Subthemes', says: 'Small pictures drawn on the frames between two dates.', skip: subthemeSkip },
+    // Collections are content, edited in blocks of the Display tab (control/routes/collection-doc.js), not on the All settings page
+    { type: 'tipOrNews', mode: 'collection', title: 'Ticker lines', says: 'The tips, news and reminders on the ticker.' },
+    { type: 'rosterPerson', mode: 'collection', title: 'Roster', says: 'First names with a role and a team.' },
   ],
 };
 
@@ -114,7 +117,6 @@ export const leftOut = {
   extraEvent: 'Not read by the screen.',
   calendarFilter: 'Calendar filters are content for the Studio.',
   sponsor: 'Sponsors have pictures and are content for the Studio.',
-  tipOrNews: 'Tips and news are content for the Studio.',
   announcement: 'Announcements are content for the Studio.',
   subteam: 'Team leads have pictures and are content for the Studio.',
   place: 'Not read by the screen.',
