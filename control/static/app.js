@@ -21,7 +21,11 @@ function addExtensions(tab, fresh, stops) {
     list.forEach(item => {
       const box = document.createElement('div');
       box.dataset.extension = tab.id;
-      if (name === 'before') fresh.before(box); else fresh.after(box);
+      // A tab can leave a slot for the blocks (Display does, to keep them in its left column); without one they sit beside it
+      const slot = fresh.querySelector('[data-extension-slot="' + name + '"]');
+      if (slot) slot.append(box);
+      else if (name === 'before') fresh.before(box);
+      else fresh.after(box);
       stops.push(leaver(item.mount(box)));
     });
   };

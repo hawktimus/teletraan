@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { addRowHtml, conflictHtml, controlsHtml, extrasHtml, motionHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
+import { addRowHtml, conflictHtml, controlsHtml, motionHtml, playlistHtml, playlistPosition, rowsHtml, sourceHtml, summaryWords, themeHtml, quickHtml, titlesOf } from '../control/static/tabs/display-parts.js';
+import { extrasHtml } from '../control/static/tabs/settings-competition.js';
 import { addChartRows, addDepartmentRows, withKeys } from '../control/static/display-rows.js';
 import { repo } from './helpers/control-world.mjs';
 
@@ -122,6 +123,43 @@ check('the theme settings have a select for each weekday, the banner title and t
   assert.ok(html.includes('<option value="cybertron" selected>Cybertron</option>'));
   assert.ok(html.includes('maxlength="28"') && html.includes('value="HAWKTIMUS ROBOTICS"'));
   assert.ok(html.includes('min="2" max="4"'));
+  assert.ok(!html.includes('data-week-strip') && !html.includes('class="week"'), 'the week strip is gone');
+  assert.ok(!html.includes('data-action="save"') && !html.includes('data-action="publish"'), 'Save and Publish are in the bar under the preview');
+});
+
+check('Theme rotation has seven rows: the weekday, its next date, today marked, and the themes to choose from', () => {
+  const week = { monday: 'cybertron', tuesday: 'original', wednesday: 'original', thursday: 'original', friday: 'original', saturday: 'original', sunday: 'original' };
+  // Wednesday 21 October 2026, midday in New York
+  const html = themeHtml({ themeByWeekday: week, generalViewTitle: 'X', transitionSeconds: 3 }, choices, { today: 'wednesday', timeZone: 'America/New_York', serverTime: '2026-10-21T16:00:00Z' });
+  const rows = html.split('<label class="trow"').slice(1);
+  assert.equal(rows.length, 7);
+  assert.ok(rows[0].includes('Monday') && rows[0].includes('Mon Oct 26'));
+  assert.ok(rows[2].includes('Wed Oct 21') && rows[2].includes('data-today="yes"') && rows[2].includes('>today<'));
+  assert.ok(rows[3].includes('Thu Oct 22') && rows[1].includes('Tue Oct 27'));
+  assert.equal((html.match(/data-today="yes"/g) || []).length, 1);
+  assert.ok(html.includes('America/New_York'), 'the time zone line stays');
+  // before the first answer there is no date and no guess
+  const early = themeHtml({ themeByWeekday: week, generalViewTitle: 'X', transitionSeconds: 3 }, choices);
+  assert.ok(!early.includes('Oct') && (early.match(/data-theme-day=/g) || []).length === 7);
+});
+
+check('the Playlist card says what plays now and next, the loop, and has the Edit button', () => {
+  const rows = withKeys([{ view: 'robotics', panel: 'tasks', shown: true }, { view: 'prime', panel: 'events', shown: false }, { view: 'prime', panel: 'photo', shown: true }]);
+  const there = Object.assign({}, page, { rows: rows });
+  const place = playlistPosition(rows, { panel: 'tasks', view: 'general' });
+  assert.equal(place.now.panel, 'tasks');
+  assert.equal(place.next.panel, 'photo', 'a row that is off is passed over');
+  assert.equal(playlistPosition(rows, { panel: 'photo', view: 'prime' }).next.panel, 'tasks', 'the loop starts again');
+  assert.deepEqual(playlistPosition(rows, null), { now: null, next: null });
+  const html = playlistHtml(there, { panel: 'tasks', view: 'general' }, false, titlesOf(choices));
+  assert.ok(html.includes('data-action="edit-rows"') && html.includes('>Edit<'));
+  assert.match(html, /data-play-now>[^<]*\(Robotics\)/);
+  assert.match(html, /data-play-next>[^<]*\(Prime\)/);
+  assert.ok(html.includes('2 rows are on'));
+  assert.ok(!html.includes('is paused'));
+  assert.ok(playlistHtml(there, null, true, titlesOf(choices)).includes('The rotation is paused'));
+  assert.ok(playlistHtml(there, { panel: 'weather-hold', view: 'general' }, false, {}).includes('not a row of the list'));
+  assert.ok(playlistHtml(Object.assign({}, page, { rows: [] }), null, false, {}).includes('standard order'));
 });
 
 check('the motion card has a box for Motion and one for Motion on the TV computer, with the stored values selected', () => {
@@ -146,10 +184,10 @@ check('the add row card and the competition card say where the data is from', ()
 
 // ----- the files -----
 
-const files = ['control/static/tabs/display.js', 'control/static/tabs/display-parts.js', 'control/static/display-rows.js', 'control/support/display.js', 'control/support/display-wall.js', 'control/routes/display.js'];
+const files = ['control/static/tabs/settings-competition.js', 'control/static/tabs/display.js', 'control/static/tabs/display-parts.js', 'control/static/display-rows.js', 'control/support/display.js', 'control/support/display-wall.js', 'control/routes/display.js'];
 
 check('the tab file registers itself as Display, the parts files do not, and every file parses', () => {
-  const tab = fs.readFileSync(path.join(repo, files[0]), 'utf8');
+  const tab = fs.readFileSync(path.join(repo, 'control/static/tabs/display.js'), 'utf8');
   assert.match(tab, /registerTab\(\{/);
   assert.ok(tab.includes("id: 'display'") && tab.includes("title: 'Display'"));
   ['control/static/tabs/display-parts.js', 'control/static/display-rows.js'].forEach(file => assert.ok(!fs.readFileSync(path.join(repo, file), 'utf8').includes('registerTab(')));
@@ -172,9 +210,11 @@ check('the page keeps no key and sends nothing to Sanity itself', () => {
 check('the Display styles keep the phone rules: wrapping text, one column, 44px fields', () => {
   const css = fs.readFileSync(path.join(repo, 'control/static/tabs/tabs.css'), 'utf8');
   const display = css.slice(css.indexOf('The Display tab'));
-  assert.match(display, /\.display-page \.fields \{ display: grid; grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(display, /\.display-page \.fields \{ display: grid; grid-template-columns: repeat\(auto-fit, minmax\(min\(220px, 100%\), 1fr\)\)/);
   assert.match(display, /overflow-wrap: anywhere/);
-  assert.match(display, /@media \(min-width: 900px\)/);
+  assert.match(display, /\.display-page \.display-split \{ display: grid; grid-template-columns: minmax\(0, 1fr\)/, 'one column on a phone');
+  assert.match(display, /@media \(min-width: 1000px\)[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(380px, 38%\)/, 'two columns from 1000px');
+  assert.match(display, /\.preview-card \{ grid-column: 2; grid-row: 1; position: sticky; top: 16px; max-height: calc\(100vh - 32px\); overflow-y: auto; \}/, 'the preview column follows the scroll');
   assert.match(css, /select, \.tab input \{[^}]*min-height: 44px/, 'every select and input of a tab is 44px high');
   assert.match(css, /\.tab \.act \{ min-height: 44px; min-width: 44px/);
   assert.match(css, /\.tab \.check \{[^}]*min-height: 44px/);

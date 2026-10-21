@@ -4,7 +4,7 @@
 import { words } from '../display-preview.js';
 import { esc } from './render.js';
 
-// The big picture and its lines. The frame itself is made by display-preview.js when a row is selected.
+// The right column: the big picture, its lines and, under them, the Save, Publish, Refresh and Undo bar. The frame itself is made by display-preview.js when a row is selected.
 export function largeHtml() {
   return '<aside class="card preview-card" data-preview-card aria-label="Picture of the selected row">' +
     '<h2>Preview</h2>' +
@@ -13,6 +13,8 @@ export function largeHtml() {
     '<p class="large-empty word" data-large-empty></p></div>' +
     '<p class="reason" data-large-reason hidden></p>' +
     '<p class="word" data-large-now></p>' +
+    // The one action bar of the page: it acts on the rotation working copy and on the theme settings, which are saved together
+    '<div class="action-bar" data-action-bar><div data-save-bar></div><p class="result" role="status" data-save-flash></p><div data-conflict></div></div>' +
     '<p class="note" data-kiosk-note hidden>' + esc(words.kiosk) + '</p>' +
     '<div class="buttons"><button type="button" class="act quiet" data-action="preview-here" hidden>' + esc(words.kioskButton) + '</button></div>' +
     '<div class="buttons"><button type="button" class="act quiet" data-action="clear-target" hidden>Preview the selected row instead</button></div>' +

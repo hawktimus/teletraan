@@ -156,7 +156,7 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 /* The Display tab: one card for each row, grouped by view. Phone first: one column, 16px gutter from the page, 44px targets. */
 .display-page { display: grid; gap: 16px; }
 .display-page .word, .display-page .note, .display-page .reason, .display-page .items li { overflow-wrap: anywhere; }
-.display-page .fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 16px; }
+.display-page .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 4px 16px; }
 .display-page .dgroup { margin: 16px 0 0; padding: 0 0 0 12px; border-left: 6px solid #6b7280; }
 .display-page .dgroup[data-view="prime"] { border-left-color: #7c3aed; }
 .display-page .dgroup[data-view="nova"] { border-left-color: #d69e2e; }
@@ -177,17 +177,29 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .quick .act { min-height: 44px; white-space: normal; text-align: left; }
 .display-page .items { margin: 4px 0 0; padding-left: 20px; color: #b9afcf; }
 .display-page .drow .check { display: flex; margin-top: 4px; }
-.display-page [data-flash]:empty { display: none; }
+.display-page [data-save-flash]:empty { display: none; }
 .display-page h3 { font-size: 18px; }
 .display-page h4 { margin: 8px 0 0; font-size: 16px; }
-@media (min-width: 900px) {
-  .display-page .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
-/* The pictures of a row (tabs/display-preview.js). A phone has the large picture above the rows and a small picture on the
-   selected row only. From 1000px the large picture stays in view beside the rows and every row has a small picture. */
-.display-page .display-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.display-page .preview-card { min-width: 0; }
+/* The two columns. The right one is the preview card with the action bar, first in the page so that a phone shows it first. The
+   pictures of a row (tabs/display-preview.js): a phone has a small picture on the selected row only; from 1000px the large
+   picture stays in view beside the rows and every row has a small picture. */
+.display-page .display-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.display-page .display-left { display: grid; gap: 16px; min-width: 0; }
+.display-page .display-left > div:empty { display: none; }
+.display-page .facts { margin: 8px 0; }
+.display-page .facts > div { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; border-top: 1px solid var(--card-edge, #3a2c55); }
+.display-page .facts dt { flex: 0 0 120px; color: #b9afcf; }
+.display-page .facts dd { flex: 1 1 200px; margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.display-page .action-bar { margin: 12px 0 0; padding: 12px 0 0; border-top: 2px solid var(--card-edge, #3a2c55); }
+.display-page .action-bar .buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); margin-top: 0; }
+.display-page .action-bar .act { padding-left: 8px; padding-right: 8px; white-space: normal; }
+.display-page .action-bar .note { margin: 8px 0 0; }
+.display-page .action-bar .card { margin: 12px 0 0; padding: 12px; background: #0b0714; border: 2px solid var(--accent, #faca2a); }
+.display-page .action-bar .card h2 { font-size: 18px; }
+.display-page .wall-controls { padding: 0; }
+.display-page .wall-controls .groups { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); max-width: none; }
+.display-page .preview-card { min-width: 0; margin: 0; }
 .display-page .large-box { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
 .display-page .large-stage { position: absolute; inset: 0; overflow: hidden; }
 .display-page .large-frame { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; transform: scale(0.2); pointer-events: none; background: #0b0714; }
@@ -203,10 +215,10 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .drow[data-selected] { border-color: var(--accent, #faca2a); }
 .display-page .to-picture { display: inline-flex; }
 @media (min-width: 1000px) {
-  .tab.display-page { max-width: 1500px; }
-  .display-page .display-split { grid-template-columns: minmax(0, 1fr) minmax(360px, 42%); align-items: start; }
-  .display-page .preview-card { order: 2; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
-  .display-page .rows-card { order: 1; }
+  .tab.display-page { max-width: 1700px; }
+  .display-page .display-split { grid-template-columns: minmax(0, 1fr) minmax(380px, 38%); }
+  .display-page .display-left { grid-column: 1; grid-row: 1; }
+  .display-page .preview-card { grid-column: 2; grid-row: 1; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
   .display-page [data-thumbs="on"] .thumb { display: block; }
   .display-page .drow { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
   .display-page .drow > * { grid-column: 1; }
@@ -217,7 +229,6 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 }
 
 /* Now on the wall, Temporary push and the strip of the week (tabs/push.js, tabs/push-parts.js). One column on a phone. */
-.display-page .display-main { display: grid; gap: 16px; min-width: 0; }
 .display-page .big-theme { margin: 0; font-size: 40px; font-weight: 800; line-height: 1.1; color: var(--accent, #faca2a); overflow-wrap: anywhere; }
 .display-page .tiles, .display-page .hold { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
 .display-page .tile { flex: 1 1 140px; min-height: 44px; }
@@ -228,22 +239,16 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 .display-page .active > div { min-width: 0; overflow-wrap: anywhere; }
 .display-page .left { color: var(--accent, #faca2a); font-weight: 700; }
 .display-page .push-card textarea { min-height: 88px; resize: vertical; }
-.display-page .week { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 12px 0; padding: 0; list-style: none; }
-.display-page .day { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; min-height: 44px; padding: 6px 12px; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; font-size: 18px; overflow-wrap: anywhere; }
-.display-page .dname { min-width: 56px; }
-.display-page .day[data-today="yes"] { border-color: var(--accent, #faca2a); background: #2a1f45; }
-.display-page .dname { font-weight: 700; }
-.display-page .dtheme { flex: 1 1 auto; }
 .display-page .dnow { color: var(--accent, #faca2a); font-weight: 700; }
-@media (min-width: 700px) {
-  .display-page .week { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .display-page .day { display: grid; gap: 2px; padding: 8px 4px; text-align: center; font-size: 16px; }
-}
-@media (min-width: 1000px) {
-  .display-page .display-split { grid-template-areas: "now preview" "main preview"; grid-template-rows: auto 1fr; }
-  .display-page .display-now { grid-area: now; min-width: 0; }
-  .display-page .display-main { grid-area: main; }
-  .display-page .preview-card { grid-area: preview; }
+/* Theme rotation: one row for each weekday, the next date of the day, and the theme to play */
+.display-page .trows { display: grid; gap: 8px; margin: 12px 0; }
+.display-page .trow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 12px; align-items: center; min-width: 0; padding: 8px 12px; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
+.display-page .trow[data-today="yes"] { border-color: var(--accent, #faca2a); background: #2a1f45; }
+.display-page .trow select { width: 100%; min-width: 0; }
+.display-page .tname { font-weight: 700; }
+.display-page .tdate { color: #b9afcf; white-space: nowrap; }
+@media (min-width: 560px) {
+  .display-page .trow { grid-template-columns: 130px 190px minmax(0, 1fr); }
 }
 
 .tab textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }

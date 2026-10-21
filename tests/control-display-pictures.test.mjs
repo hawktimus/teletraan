@@ -183,6 +183,33 @@ try {
     await context.close();
   });
 
+  await check('a wide page has the preview and its four buttons in a right column that follows the scroll, and Edit jumps to the rows', async () => {
+    const { context, page } = await openDisplay(1440, 900);
+    const box = selector => page.evaluate(name => { const r = document.querySelector(name).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; }, selector);
+    const left = await box('.display-left');
+    const card = await box('[data-preview-card]');
+    assert.ok(card.left >= left.right, 'the preview is to the right of everything else');
+    const buttons = await page.locator('[data-preview-card] [data-save-bar] button').allTextContents();
+    assert.deepEqual(buttons, ['Save to draft', 'Publish to the wall', 'Refresh from Sanity', 'Undo']);
+    assert.equal(await page.locator('.display-left [data-action="save"], .display-left [data-action="publish"]').count(), 0, 'no second set of buttons on the left');
+    await page.evaluate(() => window.scrollTo(0, 2500));
+    await page.waitForTimeout(300);
+    const moved = await box('[data-preview-card]');
+    assert.ok(moved.top >= 0 && moved.top <= 40 && moved.bottom <= 900, 'the preview stays in view after a long scroll');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.locator('[data-action="edit-rows"]').click();
+    await page.waitForTimeout(400);
+    const rows = await box('.rows-card');
+    assert.ok(rows.top >= -2 && rows.top < 450, 'the rows are at the top of the screen');
+    assert.equal(await page.evaluate(() => Boolean(document.activeElement.closest('.drow'))), true, 'a field of the first row has the focus');
+    assert.equal(await page.locator('[data-theme-card] .trow').count(), 7, 'Theme rotation has a row for each day');
+    assert.equal(await page.locator('[data-theme-card] [data-week-strip]').count(), 0);
+    await page.locator('[data-theme-day="friday"]').selectOption({ index: 1 });
+    assert.match(await page.locator('[data-save-bar] .note').textContent(), /changes that are not saved/, 'a theme change shows in the one bar');
+    assert.equal(await page.locator('[data-save-bar] [data-action="save"]').isEnabled(), true);
+    await context.close();
+  });
+
   await check('opened on the Teletraan computer itself the page says so and draws nothing until asked', async () => {
     const { context, page } = await openDisplay(1440, 900, world.url.replace('127.0.0.1', 'localhost'));
     await page.waitForTimeout(1500);

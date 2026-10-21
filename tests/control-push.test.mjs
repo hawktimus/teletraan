@@ -7,8 +7,8 @@
 import assert from 'node:assert/strict';
 import * as push from '../control/routes/push.js';
 import { buildCancel, buildPush, buildReset, noticeId, pushesOf, weekdayOf } from '../control/support/push.js';
-import { clockOffset, leftWords, nowTheme, previewTarget, secondsLeft, weekStrip } from '../control/static/push-lib.js';
-import { activeHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml, weekStripHtml } from '../control/static/tabs/push-parts.js';
+import { clockOffset, leftWords, nowTheme, previewTarget, secondsLeft, weekDates } from '../control/static/push-lib.js';
+import { activeHtml, holdHtml, namesOf, nowThemeHtml, pushBlockHtml } from '../control/static/tabs/push-parts.js';
 import { makeWorld } from './helpers/control-world.mjs';
 
 let passed = 0;
@@ -216,15 +216,18 @@ await check('the countdown follows the clock of the Teletraan computer and says 
   assert.equal(secondsLeft('nonsense', now), 0);
 });
 
-await check('the strip of the week marks today, and the theme shown now is the pushed one or the one of the weekday', () => {
+await check('the next date of each weekday is counted in the time zone of the wall, and the theme shown now is the pushed one or the one of the weekday', () => {
   const week = { monday: 'original', tuesday: 'cybertron', wednesday: 'retro', thursday: 'foundry', friday: 'original', saturday: 'original', sunday: 'original' };
-  const strip = weekStrip(week, 'tuesday', { cybertron: 'Cybertron' });
-  assert.equal(strip.length, 7);
-  assert.deepEqual(strip.filter(cell => cell.today).map(cell => cell.day), ['tuesday']);
-  assert.equal(strip[1].title, 'Cybertron');
-  const html = weekStripHtml(week, 'tuesday', { cybertron: 'Cybertron' });
-  assert.equal((html.match(/<li /g) || []).length, 7);
-  assert.equal((html.match(/data-today="yes"/g) || []).length, 1);
+  // 21 October 2026 is a Wednesday. Late evening in New York is already Thursday in UTC.
+  const dates = weekDates('2026-10-21T16:00:00Z', 'America/New_York');
+  assert.deepEqual(Object.keys(dates), ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+  assert.deepEqual([dates.monday.date, dates.wednesday.date, dates.thursday.date, dates.sunday.date], ['Mon Oct 26', 'Wed Oct 21', 'Thu Oct 22', 'Sun Oct 25']);
+  assert.deepEqual(Object.keys(dates).filter(day => dates[day].today), ['wednesday']);
+  const late = weekDates('2026-10-22T02:30:00Z', 'America/New_York');
+  assert.equal(late.wednesday.today, true, 'it is still Wednesday evening there');
+  assert.equal(weekDates('2026-12-30T12:00:00Z', 'UTC').monday.date, 'Mon Jan 4', 'the year turns');
+  assert.equal(weekDates('nonsense', 'UTC').monday.date, '');
+  assert.equal(weekDates('2026-10-21T16:00:00Z', 'Not/AZone').wednesday.date.startsWith('Wed'), true, 'an unknown zone falls back to this device');
   assert.deepEqual(nowTheme([], week, 'tuesday'), { id: 'cybertron', pushed: false, until: '' });
   assert.equal(nowTheme([{ kind: 'theme', id: 'foundry', until: plus(5) }], week, 'tuesday').pushed, true);
 });

@@ -2,7 +2,7 @@
 // is escaped. tabs/push.js puts the markup in the page and wires the buttons. Nothing here touches the page, so
 // tests/control-push.test.mjs can try it with node.
 
-import { dayWords, holdChoices, holdWords, leftWords, pushWords, usualHold, weekStrip } from '../push-lib.js';
+import { dayWords, holdChoices, holdWords, leftWords, pushWords, usualHold } from '../push-lib.js';
 import { esc } from './render.js';
 
 const hiddenOrder = ['desktop', 'redEyes'];
@@ -108,15 +108,6 @@ export function pushBlockHtml(state, draft, choices, names) {
     '<div class="buttons"><button type="button" class="act" data-action="push-pause"' + off + '>Pause rotation</button></div>' +
     '<div class="buttons"><button type="button" class="act" data-action="reset">Reset to today\'s schedule</button></div>' +
     '</section>';
-}
-
-// ----- the theme of each weekday -----
-
-// The strip of the week: one cell for each day with the theme it plays, today marked
-export function weekStripHtml(week, today, themeTitles) {
-  return '<ol class="week" aria-label="This week">' + weekStrip(week, today, themeTitles).map(cell =>
-    '<li class="day" data-theme="' + esc(cell.theme) + '"' + (cell.today ? ' data-today="yes" aria-current="date"' : '') + '><span class="dname">' + esc(cell.short) + '</span><span class="dtheme">' + esc(cell.title) + '</span>' +
-    (cell.today ? '<span class="dnow">Today</span>' : '') + '</li>').join('') + '</ol>';
 }
 
 export { holdWords, usualHold };

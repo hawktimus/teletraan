@@ -51,13 +51,42 @@ export function pushWords(push, names) {
   }
 }
 
-// The seven days with the theme of each, and which one is today. week is { monday: 'original', ... }.
-export function weekStrip(week, today, themeTitles) {
-  return Object.keys(dayWords).map(day => ({
-    day: day, short: dayShort[day], name: dayWords[day],
-    theme: week && week[day] ? week[day] : '', title: (themeTitles && themeTitles[week && week[day]]) || (week && week[day]) || 'Not scheduled',
-    today: day === today,
-  }));
+const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayOrder = Object.keys(dayWords);
+
+// The calendar date it is in a time zone, as { year, month (0 to 11), day, weekday (a key of dayWords) }. A zone the browser does
+// not know falls back to the clock of this device.
+function dateIn(milliseconds, timeZone) {
+  const at = new Date(milliseconds);
+  const parts = {};
+  let format = null;
+  try {
+    format = new Intl.DateTimeFormat('en-US', { timeZone: timeZone || undefined, year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'long' });
+  } catch (error) {
+    format = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'long' });
+  }
+  format.formatToParts(at).forEach(part => { parts[part.type] = part.value; });
+  return { year: Number(parts.year), month: Number(parts.month) - 1, day: Number(parts.day), weekday: String(parts.weekday).toLowerCase() };
+}
+
+// The next date of each weekday, today counting as today: { monday: { date: 'Mon Oct 26', today: false }, ... }. The dates are
+// counted in the time zone of the wall, from the clock of the Teletraan computer (serverTime). Without a time, every date is empty.
+export function weekDates(serverTime, timeZone) {
+  const start = Date.parse(serverTime);
+  const result = {};
+  if (isNaN(start)) {
+    dayOrder.forEach(day => { result[day] = { date: '', today: false }; });
+    return result;
+  }
+  const today = dateIn(start, timeZone);
+  const base = Date.UTC(today.year, today.month, today.day);
+  const todayAt = Math.max(0, dayOrder.indexOf(today.weekday));
+  dayOrder.forEach((day, at) => {
+    const ahead = (at - todayAt + 7) % 7;
+    const date = new Date(base + ahead * 86400000);
+    result[day] = { date: dayShort[day] + ' ' + monthShort[date.getUTCMonth()] + ' ' + date.getUTCDate(), today: ahead === 0 };
+  });
+  return result;
 }
 
 // What plays now: the theme that is pushed, else the theme of today's weekday
