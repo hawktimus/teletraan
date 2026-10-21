@@ -89,7 +89,8 @@ await check('what the Display tab and the other cards own is left out, and the r
   const left = name => spec.skipped.filter(item => item.document === 'dashboardSettings' && item.field === name)[0];
   ['rotationRows', 'themeByWeekday'].forEach(name => assert.match(left(name).reason, /Display tab/));
   ['rebootEnabled', 'rebootTime', 'rebootDays'].forEach(name => assert.match(left(name).reason, /Scheduled reboot/));
-  ['motion', 'motionOnKiosk'].forEach(name => assert.match(left(name).reason, /Motion card/));
+  assert.match(left('motion').reason, /Motion card/);
+  assert.match(left('motionOnKiosk').reason, /Not used any more/);
   ['holdPanel', 'showView', 'pauseRotation', 'nextLookRequest'].forEach(name => assert.match(left(name).reason, /one-time request/));
   const drawn = new Set(documentOf('dashboardSettings').fields.map(field => field.name));
   ['rotationRows', 'themeByWeekday', 'rebootTime', 'motion', 'holdPanel'].forEach(name => assert.ok(!drawn.has(name), name));

@@ -247,3 +247,5 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 }
 
 .tab textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; background: #0b0714; border: 2px solid var(--card-edge, #3a2c55); border-radius: 6px; }
+
+.tab .fit-picture { display: block; width: 100%; max-width: 300px; margin: 8px 0 0; color: #b9afcf; }

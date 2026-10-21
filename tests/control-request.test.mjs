@@ -251,7 +251,7 @@ await check('the report of the wall is cut to size, keeps the hold and the pause
   assert.equal(report.pause, true);
   assert.deepEqual(Object.keys(report.dots), ['monday', 'band', 'sanity']);
   assert.equal(report.at, '2026-10-15T12:00:00.000Z');
-  assert.deepEqual(Object.keys(cleanReport({ junk: 1 }, at)).sort(), ['at', 'build', 'dots', 'heldNote', 'hiddenRun', 'hold', 'layout', 'loadAt', 'loadReason', 'loads', 'page', 'panel', 'pause', 'team', 'theme', 'view']);
+  assert.deepEqual(Object.keys(cleanReport({ junk: 1 }, at)).sort(), ['at', 'build', 'dots', 'heldNote', 'hiddenRun', 'hold', 'layout', 'loadAt', 'loadReason', 'loads', 'page', 'panel', 'pause', 'screen', 'team', 'theme', 'view']);
   assert.equal(isLocalHost('localhost') && isLocalHost('127.0.0.1') && isLocalHost('[::1]'), true);
   assert.equal(isLocalHost('teletraan.local') || isLocalHost('192.168.1.5') || isLocalHost(''), false);
 });

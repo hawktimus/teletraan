@@ -11,6 +11,7 @@ import { transitionsFields } from './settingsTransitions.js';
 import { photosFields, portraitFieldsets } from './settingsPhotos.js';
 import { nightFields } from './settingsNight.js';
 import { rebootFields } from './settingsReboot.js';
+import { screenFitFields } from './settingsScreen.js';
 import { hiddenFields } from './settingsHidden.js';
 import { presentationsFields, presentationTestRequestField } from './settingsPresentations.js';
 import { teamsFields } from './settingsTeams.js';
@@ -52,6 +53,7 @@ const sectionFieldsets = [
   { name: 'night', title: 'Night mode', description: 'The screen at night, from 23:30 to 11:30: a bouncing logo or a dark screen.', options: open },
   { name: 'reboot', title: 'Scheduled reboot', description: 'Reboot the Teletraan computer at a time of day. The control page, Settings, shows the same values.', options: open },
   { name: 'hiddenTransitions', title: 'Hidden transitions', description: 'The desktop reveal and the red eyes, which come about once every few hours of screen time.', options: open },
+  { name: 'screenFit', title: 'Screen fit', description: 'How the picture sits in the window of the TV computer. The control page, Settings, Screen, has a button that sets it for you.', options: open },
   { name: 'other', title: 'Other', description: 'The connection text at the bottom of the screen, and fields kept for the older versions.', options: open },
 ];
 
@@ -62,6 +64,7 @@ sectionOf.generalViewTitle = 'banner';
 presentationsFields().concat([presentationTestRequestField()]).forEach(field => { sectionOf[field.name] = 'presentations'; });
 nightFields().forEach(field => { sectionOf[field.name] = 'night'; });
 rebootFields().forEach(field => { sectionOf[field.name] = 'reboot'; });
+screenFitFields().forEach(field => { sectionOf[field.name] = 'screenFit'; });
 hiddenFields().forEach(field => { sectionOf[field.name] = 'hiddenTransitions'; });
 ['rotationRows', 'showConnectionStatus', 'contentSource'].forEach(name => { sectionOf[name] = 'other'; });
 
@@ -71,7 +74,7 @@ const motions = [
   { title: 'Calm', value: 'calm' },
 ];
 
-// The values are the names in kioskMotions in dashboard/config.js
+// Kept for the hidden field motionOnKiosk, which nothing reads any more
 const kioskMotions = [
   { title: 'Light', value: 'light' },
   { title: 'Full', value: 'full' },
@@ -213,7 +216,8 @@ const motionOnKioskField = defineField({
   title: 'Motion on the TV computer',
   type: 'string',
   group: 'screen',
-  description: 'The TV computer plays Light even when Motion says Full, so that it does not freeze. Choose Full here only to try the full transitions on a spare computer.',
+  hidden: true,
+  description: 'Not used any more. Every computer plays the Motion setting, and a screen that cannot keep up in Full moves to Light by itself.',
   options: { list: kioskMotions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'light',
   validation: Rule => Rule.required().error('Pick light or full.'),
@@ -468,6 +472,7 @@ export default defineType({
     ...nightFields(),
     ...rebootFields(),
     ...hiddenFields(),
+    ...screenFitFields(),
     calendarsField,
     groupEventsByKindField,
     ...mondayFields(),

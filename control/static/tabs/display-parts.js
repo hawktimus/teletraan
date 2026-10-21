@@ -228,16 +228,11 @@ const motionWords = [
   { value: 'light', title: 'Light' },
   { value: 'calm', title: 'Calm' },
 ];
-const kioskWords = [
-  { value: 'light', title: 'Light' },
-  { value: 'full', title: 'Full' },
-];
 
 export function motionHtml(motion) {
   return '<section class="card"><h2>Motion</h2><div class="fields">' +
     field('Motion', '<select data-motion-field="motion">' + options(motionWords, motion.motion) + '</select>') +
-    field('Motion on the TV computer', '<select data-motion-field="motionOnKiosk">' + options(kioskWords, motion.motionOnKiosk) + '</select>') +
-    '</div><p class="note">Full plays every movement. Light plays one simple change at each panel and view change. Calm only fades. The TV computer plays Light when Motion is Full, unless the second box says Full, so that it does not freeze. Add ?motion=full to the address of one computer to try Full there.</p></section>';
+    '</div><p class="note">Full plays every movement. Light plays one simple change at each panel and view change. Calm only fades. Every computer plays what this says, the TV computer too. A screen that cannot keep up in Full moves to Light by itself. Add ?motion=light to the address of one computer to try Light there.</p></section>';
 }
 
 // ----- what the wall adds by itself -----

@@ -44,9 +44,30 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'log-bundle']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'log-bundle']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
+});
+
+test('display-info lists the connected output and its modes with xrandr, asks for no sudo, and answers ok when xrandr is missing', () => {
+  const h = setup();
+  const lines = ['Screen 0: minimum 8 x 8, current 1920 x 1080, maximum 32767 x 32767', 'HDMI-1 connected primary 1920x1080+0+0 (normal left inverted right x axis y axis) 1600mm x 900mm',
+    '   3840x2160     30.00 +', '   1920x1080     60.00*   50.00', 'VGA-1 disconnected (normal left inverted right x axis y axis)'];
+  fs.writeFileSync(path.join(h.bin, 'xrandr'), '#!/bin/sh\necho "xrandr $DISPLAY $*" >> "' + path.join(h.root, 'calls.log') + '"\ncat <<EOF\n' + lines.join('\n') + '\nEOF\n', { mode: 0o755 });
+  fs.writeFileSync(path.join(h.bin, 'journalctl'), '#!/bin/sh\necho "display: output HDMI-1, mode 1920x1080, scale 1x1"\n', { mode: 0o755 });
+  const answer = h.ask('display-info\n');
+  assert.equal(answer.status, 'ok');
+  assert.ok(answer.output.includes('output: HDMI-1 primary 1920x1080+0+0'), answer.output);
+  assert.ok(answer.output.includes('mode: 3840x2160') && answer.output.includes('mode: 1920x1080'));
+  assert.ok(answer.output.includes('display: output HDMI-1, mode 1920x1080, scale 1x1'));
+  assert.ok(!answer.output.includes('VGA-1'), 'a disconnected output is not listed');
+  assert.ok(answer.calls.includes('xrandr :1 --query') && !answer.calls.includes('sudo'), 'it reads the screen :1 and asks for no sudo');
+  assert.ok(h.ask('display-info x\n').status === 'refused', 'it takes no argument');
+
+  const bare = setup();
+  const none = bare.ask('display-info\n');
+  assert.equal(none.status, 'ok');
+  assert.ok(none.output.includes('xrandr: not reachable'), none.output);
 });
 
 test('log-bundle reads the journal of each teletraan unit as the login user, with no sudo', () => {

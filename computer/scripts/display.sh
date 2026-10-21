@@ -1,5 +1,5 @@
 # Finds the connected screen and sets it so that the framebuffer is 1920 by
-# 1080, whatever the TV offers. kiosk.sh sources this file and calls
+# 1080 (or KIOSK_RESOLUTION), whatever the TV offers. kiosk.sh sources this file and calls
 # set_display. It is a file of its own so that tests/display.test.mjs can
 # run it with a fake xrandr.
 #
@@ -7,9 +7,30 @@
 # used. A TV that lists only 3840x2160 is shown at that mode, scaled by half,
 # so the dashboard still draws 1920 by 1080 pixels.
 #
+# KIOSK_RESOLUTION in local.env (WIDTHxHEIGHT, 1920x1080 to start with) names another size for the framebuffer and the
+# browser window, for example 3840x2160 to use a 4K TV at its own resolution. The dashboard then scales its 1920 by 1080
+# picture up by two with one transform (core/screen-fit.js). A value that is not a size is ignored.
+#
 # Two settings for tests, with the defaults the Teletraan computer uses:
 #   DISPLAY_POLL_INTERVAL   seconds between looks for a connected screen (2)
 #   DISPLAY_POLL_LIMIT      seconds to look before giving up (20)
+
+# The wanted size as WIDTHxHEIGHT: KIOSK_RESOLUTION when it is a size of 640 to 7680 by 360 to 4320, else 1920x1080
+display_wanted() {
+  wanted=$(setting KIOSK_RESOLUTION 2> /dev/null || true)
+  if printf '%s' "$wanted" | grep -Eq '^[0-9]{3,4}x[0-9]{3,4}$' \
+    && [ "${wanted%x*}" -ge 640 ] && [ "${wanted%x*}" -le 7680 ] && [ "${wanted#*x}" -ge 360 ] && [ "${wanted#*x}" -le 4320 ]; then
+    printf '%s' "$wanted"
+  else
+    printf '1920x1080'
+  fi
+}
+
+# The window size for the browser, as WIDTH,HEIGHT
+display_window() {
+  wanted=$(display_wanted)
+  printf '%s,%s' "${wanted%x*}" "${wanted#*x}"
+}
 
 # The name of the first connected output, or nothing
 display_output() {
@@ -50,13 +71,14 @@ set_display() {
   fi
 
   lines=$(display_mode_lines "$output")
+  wanted=$(display_wanted)
 
   # One line: the mode, the rate to use and the scale. A rate is the number on
   # a mode line, without the * (in use now) and the + (preferred).
-  choice=$(printf '%s\n' "$lines" | awk '
+  choice=$(printf '%s\n' "$lines" | awk -v want="$wanted" '
     function bare(token) { gsub(/[*+]/, "", token); return token }
     function remember(mode, rate, marked) {
-      if (mode == "1920x1080") {
+      if (mode == want) {
         if (firstRate == "") firstRate = rate
         if (rate + 0 == 60) sixty = rate
         have = 1
@@ -83,7 +105,7 @@ set_display() {
     END {
       if (have) {
         rate = sixty != "" ? sixty : firstRate
-        print "1920x1080", (rate == "" ? "none" : rate), "1x1"
+        print want, (rate == "" ? "none" : rate), "1x1"
         exit
       }
       mode = preferred != "" ? preferred : first
@@ -91,7 +113,8 @@ set_display() {
       if (mode == "") exit
       split(mode, size, "x")
       gsub(/[^0-9]/, "", size[2])
-      printf "%s %s %.6gx%.6g\n", mode, (rate == "" ? "none" : rate), 1920 / size[1], 1080 / size[2]
+      split(want, wanted, "x")
+      printf "%s %s %.6gx%.6g\n", mode, (rate == "" ? "none" : rate), wanted[1] / size[1], wanted[2] / size[2]
     }
   ')
 

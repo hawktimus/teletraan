@@ -25,7 +25,7 @@ const settingsSkip = {
   generalViewTitle: displayTab,
   transitionSeconds: displayTab,
   motion: motionCard,
-  motionOnKiosk: motionCard,
+  motionOnKiosk: 'Not used any more. Every computer plays the Motion setting. The stored value is kept and ignored.',
   rebootEnabled: rebootCard,
   rebootTime: rebootCard,
   rebootDays: rebootCard,
@@ -70,7 +70,7 @@ lookSectionOf.background = 'Background';
 const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 
 function placeSettings(field) {
-  if (lookSectionOf[field.name] && !['motion', 'motionOnKiosk'].includes(field.name)) return { tab: 'look', section: lookSectionOf[field.name] };
+  if (lookSectionOf[field.name] && field.name !== 'motion') return { tab: 'look', section: lookSectionOf[field.name] };
   if (photoNames.includes(field.name)) return { tab: 'photos', section: field.fieldset === 'portraits' ? 'Portraits' : 'Photo panel' };
   if (competitionNames.includes(field.name)) return { tab: 'competition', section: 'Competition cards' };
   if (newsNames.includes(field.name)) return { tab: 'competition', section: 'FRC news' };

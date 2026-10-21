@@ -3,6 +3,8 @@
 // (now.js, status.js, keys.js, log.js) put the markup in the page and wire the buttons. Nothing
 // here touches the page, so Node can try it.
 
+import { screenWords } from './screen-plan.js';
+
 export function esc(value) {
   return String(value === undefined || value === null ? '' : value)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -131,6 +133,7 @@ export function nowCardHtml(now, at = new Date()) {
     row('Panel', esc(report.panel || 'not known')) +
     row('Team', esc(report.team || 'both')) +
     row('Page', esc(report.page || '1')) +
+    row('Screen', esc(screenWords(report.screen))) +
     row('Hold', esc(report.hold || (report.pause ? 'rotation paused' : 'none'))) +
     (report.heldNote ? row('Held view', esc(report.heldNote)) : '') +
     row('Age of this report', esc(agoText(now.receivedAt, at))) + '</dl>' +

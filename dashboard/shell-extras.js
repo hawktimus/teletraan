@@ -295,22 +295,8 @@ export function waitForFonts() {
   ]).catch(() => {});
 }
 
-// On the TV the window is exactly 1920x1080 and nothing is scaled. On a
-// smaller screen the whole picture shrinks to fit, and stays centred.
-export function fitToScreen() {
-  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-
-  if (Math.abs(scale - 1) < 0.01) {
-    screen.style.transform = '';
-    screen.style.marginLeft = '';
-    screen.style.marginTop = '';
-    return;
-  }
-
-  screen.style.transform = 'scale(' + scale + ')';
-  screen.style.marginLeft = Math.max(0, (window.innerWidth - 1920 * scale) / 2) + 'px';
-  screen.style.marginTop = Math.max(0, (window.innerHeight - 1080 * scale) / 2) + 'px';
-}
+// fitToScreen (core/screen-fit.js) scales the 1920x1080 canvas to the window. shell.js imports it from here.
+export { fitToScreen } from './core/screen-fit.js';
 
 // A wall display must never sit blank without saying why
 export function showFatal(error) {

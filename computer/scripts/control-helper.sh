@@ -60,7 +60,7 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
+  restart-kiosk|restart-services|reboot|status|display-info|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   sync-now)
@@ -113,6 +113,26 @@ case $word in
     echo "memAvailableKb: $(awk '/^MemAvailable:/ { print $2 }' /proc/meminfo 2> /dev/null || true)"
     echo "tempC: $(awk '{ printf "%d", $1 / 1000 }' /sys/class/thermal/thermal_zone0/temp 2> /dev/null || true)"
     echo "tailscale: $(tailscale ip -4 2> /dev/null | head -n 1 || true)"
+    echo "display: $(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | sed 's/^.*display: //' | cut -c 1-200)"
+    finish 0
+    ;;
+  display-info)
+    # What the connected screen is: the output, its mode and rate, every mode it lists and the line display.sh logged when
+    # the screen started. xrandr only reads, and it needs the screen of the kiosk (KIOSK_DISPLAY in local.env, :1 to start
+    # with). The word answers ok even when xrandr cannot be reached, with a line that says so.
+    display_name=$(setting KIOSK_DISPLAY)
+    display_name=${display_name:-:1}
+    echo "resolutionSetting: $(setting KIOSK_RESOLUTION | tr -c 'A-Za-z0-9x' '?' | cut -c 1-20)"
+    if command -v xrandr > /dev/null 2>&1 && xrandr_text=$(DISPLAY="$display_name" xrandr --query 2> /dev/null) && [ -n "$xrandr_text" ]; then
+      printf '%s\n' "$xrandr_text" | awk '
+        /^Screen/ { print "screen: " $0 }
+        $2 == "connected" { print "output: " $1 " " $3 " " $4; inside = 1; next }
+        /^[^ \t]/ { inside = 0 }
+        inside && $1 ~ /^[0-9]+x[0-9]+/ { $1 = $1; print "mode: " $0 }
+      ' | cut -c 1-160 | head -n 40
+    else
+      echo "xrandr: not reachable from the control helper"
+    fi
     echo "display: $(journalctl -u teletraan-kiosk.service -n 300 --no-pager 2> /dev/null | grep 'display:' | tail -n 1 | sed 's/^.*display: //' | cut -c 1-200)"
     finish 0
     ;;

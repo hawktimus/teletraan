@@ -131,7 +131,7 @@ profile="$HOME/.config/teletraan-kiosk"
 # (chrome://gpu, for example).
 curl --fail --silent --output /dev/null --retry 30 --retry-delay 2 --retry-connrefused "$dashboard"
 
-# Find the screen and make the framebuffer 1920 by 1080 (display.sh). The
+# Find the screen and make the framebuffer 1920 by 1080 (display.sh), or the size KIOSK_RESOLUTION names. The
 # browser window below follows that size, not the size of the TV.
 . "$computer/scripts/display.sh"
 set_display || true
@@ -192,7 +192,7 @@ case $(setting KIOSK_GRAPHICS) in
 esac
 
 # --kiosk: full screen with no address bar or tabs
-# --window-size: the 1920 by 1080 framebuffer that display.sh set, not the TV's own size
+# --window-size: the framebuffer that display.sh set (1920 by 1080 unless KIOSK_RESOLUTION says otherwise), not the TV's own size
 # --force-device-scale-factor=1: never zoomed, one dashboard pixel is one TV pixel
 # --disable-features=Translate: no translate prompt
 # --password-store=basic: never asks for a keyring password
@@ -205,7 +205,7 @@ exec chromium \
   --kiosk \
   --user-data-dir="$profile" \
   --window-position=0,0 \
-  --window-size=1920,1080 \
+  --window-size="$(display_window)" \
   --force-device-scale-factor=1 \
   --no-first-run \
   --no-default-browser-check \

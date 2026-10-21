@@ -5,9 +5,11 @@ import { defaultSchedule, defaultThemeByWeekday, viewKeys } from './config-lists
 // Used for anything the editors have not filled in yet
 export const defaultSettings = {
   motion: 'full',
-  // What the TV computer plays when motion is full: light (one simple change at each panel and view change), or full
-  // (core/motion.js). A laptop plays full whatever this says.
-  motionOnKiosk: 'light',
+  // Screen fit (core/screen-fit.js): how the 1920 by 1080 canvas sits in the window. auto is the fit the screen always had.
+  screenFit: 'auto',
+  screenScale: 100,
+  screenOffsetX: 0,
+  screenOffsetY: 0,
   speed: 'normal',
   frameMetal: 'gold',
   glint: true,

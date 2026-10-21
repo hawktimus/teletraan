@@ -295,14 +295,14 @@ await check('a theme only save does not touch the rotation rows', async () => {
   assert.equal(sent[1].patch.id, 'drafts.dashboardSettings');
 });
 
-await check('a motion only save writes motion and motionOnKiosk to the draft and nothing else, and a bad value is refused', async () => {
+await check('a motion only save writes motion to the draft and nothing else, and ignores motionOnKiosk, and a bad value is refused', async () => {
   const world = await worldWith([published]);
   const got = await world.router.call('GET', '/display');
-  assert.deepEqual(got.json.motion, { motion: 'full', motionOnKiosk: 'light' }, 'a document with no such fields shows the starting values');
+  assert.deepEqual(got.json.motion, { motion: 'full' }, 'a document with no such field shows the starting value');
   const answer = await world.router.call('POST', '/display/save', { body: { motion: { motion: 'light', motionOnKiosk: 'full' }, baseRev: 'rev-pub' } });
   assert.equal(answer.status, 200);
   const sent = mutationsOf(world)[0];
-  assert.deepEqual(sent[1].patch.set, { motion: 'light', motionOnKiosk: 'full' });
+  assert.deepEqual(sent[1].patch.set, { motion: 'light' });
   const refused = await world.router.call('POST', '/display/save', { body: { motion: { motion: 'sparkly' }, baseRev: 'rev-pub' } });
   assert.equal(refused.status, 400);
 });

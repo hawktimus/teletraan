@@ -3,6 +3,7 @@
 import * as frame from './frame.js';
 import { fixedPanels } from './registry.js';
 import { frameFinishes, metals, pageChangeStyles } from './config.js';
+import { useScreenFit } from './core/screen-fit.js';
 import { savedContent } from './core/content.js';
 import { mergeEvents } from './core/events.js';
 import { mixPhotos, usesDrive } from './core/photos-drive.js';
@@ -130,6 +131,7 @@ export function rebuild() {
   writeViewLabels();
   if (!metals.includes(params.get('metal'))) setPageSwitch('metal', shellState.content.settings.frameMetal);
   useLookSetting(shellState.content.settings);
+  useScreenFit(shellState.content.settings); // Screen fit in Dashboard Settings, live, with no reload
   updatePanel('banner', shellState.content);
   updatePanel('countdown', shellState.content);
   updatePanel('side', shellState.content); // does nothing in a layout that does not draw it
