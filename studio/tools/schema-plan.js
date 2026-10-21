@@ -16,6 +16,7 @@ export const viewIds = ['view-general', 'view-prime', 'view-nova', 'view-family'
 const displayTab = 'The Display tab owns it.';
 const motionCard = 'The Motion card of the Display tab owns it.';
 const rebootCard = 'The Scheduled reboot card owns it.';
+const cleanupCard = 'The Clean up expired items card owns it.';
 const oneTime = 'A one-time request that a button writes (the Control page or the Studio). It is not a setting.';
 
 // Dashboard Settings: the fields other cards or buttons own, and the ones that are not settings at all
@@ -31,6 +32,9 @@ const settingsSkip = {
   rebootDays: rebootCard,
   rebootSkipBusy: rebootCard,
   rebootWaitMinutes: rebootCard,
+  cleanupEnabled: cleanupCard,
+  cleanupDeleteAfterDays: cleanupCard,
+  cleanupMode: cleanupCard,
   rebootStatus: 'A status line that the Teletraan computer fills in. It is not a setting.',
   miniStatus: 'The status of the Teletraan computer, written by the Mini. It is not a setting.',
   holdPanel: oneTime,

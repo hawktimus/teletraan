@@ -44,7 +44,8 @@ export const contentQuestion = `{
   },
   "tasks": *[_type == "task" && source == "monday" && show != false && showOnTv != false && showOnBoard != false && defined(department)] {
     "team": team->code, department, list, status, startDate, dueDate, expires
-  }
+  },
+  "status": *[_id == "status-mini"][0] { lastCleanupAt, cleanupWouldDelete, cleanupDeleted, cleanupError }
 }`;
 
 // The documents one per page: the draft when there is one (it is what Publish all would put on the TV), else the published one
@@ -409,6 +410,29 @@ export function checkContent(documents, now = new Date(), tasks = []) {
 }
 
 // Everything in one call, from the answer of contentQuestion: { documents, tasks }
+// The one line about the automatic clean up of expired items (computer/scripts/expired-cleanup.sh): whether it is on, what it
+// does and when. It reads the published Dashboard Settings, because that is what the Teletraan computer reads.
+export function cleanupLine(answer) {
+  const given = answer && typeof answer === 'object' ? answer : {};
+  const docs = Array.isArray(given.documents) ? given.documents : [];
+  const settings = docs.find(doc => doc && doc._id === 'dashboardSettings') || docs.find(doc => doc && doc._id === 'drafts.dashboardSettings') || {};
+  const days = Number.isInteger(settings.cleanupDeleteAfterDays) && settings.cleanupDeleteAfterDays >= 1 && settings.cleanupDeleteAfterDays <= 365 ? settings.cleanupDeleteAfterDays : 14;
+  let line;
+  if (settings.cleanupEnabled !== true) {
+    line = 'Automatic clean up is off, so expired items stay in the Studio until someone deletes them. Dashboard Settings, Advanced, Clean up expired items turns it on.';
+  } else if (settings.cleanupMode === 'delete') {
+    line = 'Automatic clean up is on: every night at 03:40 the Teletraan computer saves a backup and deletes items that expired more than ' + plural(days, 'day') + ' ago.';
+  } else {
+    line = 'Automatic clean up is on but only lists: every night at 03:40 it writes down the items that expired more than ' + plural(days, 'day') + ' ago and deletes nothing. Set Mode to Delete to have them deleted.';
+  }
+  const status = given.status && typeof given.status === 'object' ? given.status : null;
+  if (status && typeof status.lastCleanupAt === 'string') {
+    line += ' Last run: ' + status.lastCleanupAt.slice(0, 16).replace('T', ' ') + ' UTC, ' + (Number(status.cleanupWouldDelete) || 0) + ' on the list, ' + (Number(status.cleanupDeleted) || 0) + ' deleted.';
+    if (typeof status.cleanupError === 'string' && status.cleanupError !== '') line += ' Problem: ' + status.cleanupError;
+  }
+  return line;
+}
+
 export function checkAnswer(answer, now = new Date()) {
   const given = answer && typeof answer === 'object' ? answer : {};
   return checkContent(given.documents, now, given.tasks || []);

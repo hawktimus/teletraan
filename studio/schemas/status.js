@@ -50,6 +50,11 @@ export default defineType({
     textField('nextRebootText', 'Next reboot (words)', 'The next scheduled reboot as the screen counts it, such as Tue 03:30. The computer writes this.'),
     timeField('lastRebootAt', 'Last scheduled reboot', 'When the Teletraan computer last rebooted on its schedule. The computer writes this.'),
     textField('lastRebootWhy', 'Last reboot reason', 'Why it last rebooted, such as Tue 03:30, as scheduled. The computer writes this.'),
+    // The clean up of expired items (computer/scripts/expired-cleanup.sh, status-write.sh cleanup)
+    timeField('lastCleanupAt', 'Last clean up', 'When the nightly clean up of expired items last ran. The Teletraan computer writes this.'),
+    defineField({ name: 'cleanupWouldDelete', title: 'Clean up list', type: 'number', description: 'How many expired documents were on the list at the last clean up. The Teletraan computer writes this.' }),
+    defineField({ name: 'cleanupDeleted', title: 'Clean up deleted', type: 'number', description: 'How many documents the last clean up deleted. Zero while Mode is Only show. The Teletraan computer writes this.' }),
+    textField('cleanupError', 'Clean up problem', 'Why the last clean up stopped or could not delete something, or empty when it went well. The Teletraan computer writes this.'),
     timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
     defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],
