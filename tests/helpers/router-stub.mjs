@@ -35,8 +35,9 @@ export function makeRouter() {
       const params = {};
       route.names.forEach((name, index) => { params[name] = decodeURIComponent(found[index + 1]); });
 
-      const text = options.body === undefined ? '' : typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
-      const req = Readable.from(text === '' ? [] : [Buffer.from(text)]);
+      const raw = Buffer.isBuffer(options.body);
+      const text = options.body === undefined ? '' : raw || typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+      const req = Readable.from(text.length === 0 ? [] : [raw ? text : Buffer.from(text)]);
       req.method = method;
       req.url = '/control/api' + url;
       req.headers = Object.assign({}, options.headers);

@@ -7,6 +7,9 @@ export const controlAddress = 'http://teletraan.local:3229/control/';
 export const controlSections = {
   status: controlAddress + '#status',
   display: controlAddress + '#display',
+  content: controlAddress + '#content',
+  announcements: controlAddress + '#content/announcements',
+  photos: controlAddress + '#content/photos',
   keys: controlAddress + '#settings/keys',
   monday: controlAddress + '#settings/monday',
   sync: controlAddress + '#settings/sync',

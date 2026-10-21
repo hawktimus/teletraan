@@ -1,4 +1,4 @@
-// The three tabs of the control page (Status, Display, Settings): the order, where every old address goes, that Status has no
+// The four tabs of the control page (Status, Display, Content, Settings): the order, where every old address goes, that Status has no
 // button that changes the wall, the sections of Settings, and Sync all (order, skipped syncs, a failure that does not stop
 // the rest).
 //
@@ -18,12 +18,22 @@ const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(repo + name, 'utf8');
 const helperTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 
-test('the page has three tabs in this order: Status, Display, Settings', async () => {
+test('the page has four tabs in this order: Status, Display, Content, Settings', async () => {
   await import('../control/static/tabs/status.js');
   await import('../control/static/tabs/display.js');
+  await import('../control/static/tabs/content-blocks.js');
   await import('../control/static/tabs/settings.js');
-  assert.deepEqual(tabs.map(tab => tab.title), ['Status', 'Display', 'Settings']);
-  assert.deepEqual(tabs.map(tab => tab.id), ['status', 'display', 'settings']);
+  assert.deepEqual(tabs.map(tab => tab.title), ['Status', 'Display', 'Content', 'Settings']);
+  assert.deepEqual(tabs.map(tab => tab.id), ['status', 'display', 'content', 'settings']);
+});
+
+test('Content has the five blocks in this order, and the Display tab no longer mounts any of them', async () => {
+  const { blocks } = await import('../control/static/tabs/content-blocks.js');
+  assert.deepEqual(blocks.map(block => block.id), ['ticker', 'calendar', 'roster', 'announcements', 'photos']);
+  assert.deepEqual(blocks.map(block => block.title), ['Ticker and news', 'Calendar', 'Roster', 'Announcements', 'Photos']);
+  assert.equal(extensionsFor('display', 'after').length, 0, 'nothing is added under the Display tab');
+  assert.ok(!read('control/static/tabs/content-blocks.js').includes('extendTab('), 'Content is a tab of its own');
+  assert.ok(!/content-blocks|drawContent|ct-block/.test(read('control/static/tabs/display.js')), 'display.js knows nothing of the Content blocks');
 });
 
 test('every old address goes to the right tab and section', () => {
@@ -47,6 +57,25 @@ test('every old address goes to the right tab and section', () => {
     'settings/competition': { id: 'settings', section: 'competition' },
     log: { id: 'settings', section: 'log' },
     settings: { id: 'settings', section: '' },
+    content: { id: 'content', section: '' },
+    'content/ticker': { id: 'content', section: 'ticker' },
+    'content/calendar': { id: 'content', section: 'calendar' },
+    'content/roster': { id: 'content', section: 'roster' },
+    'content/announcements': { id: 'content', section: 'announcements' },
+    'content/photos': { id: 'content', section: 'photos' },
+    'content/nothing': { id: 'content', section: '' },
+    'display/content': { id: 'content', section: '' },
+    'display/content/photos': { id: 'content', section: 'photos' },
+    'display/ticker': { id: 'content', section: 'ticker' },
+    'display/news': { id: 'content', section: 'ticker' },
+    'display/calendar': { id: 'content', section: 'calendar' },
+    'display/roster': { id: 'content', section: 'roster' },
+    'display/announcements': { id: 'content', section: 'announcements' },
+    'display/photos': { id: 'content', section: 'photos' },
+    ticker: { id: 'content', section: 'ticker' },
+    roster: { id: 'content', section: 'roster' },
+    photos: { id: 'content', section: 'photos' },
+    'display/other': { id: 'display', section: 'other' },
     'settings/monday': { id: 'settings', section: 'monday' },
     'settings/reboot': { id: 'settings', section: 'reboot' },
     'settings/sync': { id: 'settings', section: 'sync' },
@@ -89,6 +118,7 @@ test('Status only shows: no write call and no button that changes the wall', () 
   const markup = read('control/static/tabs/render.js');
   const previewHtml = markup.slice(markup.indexOf('export function previewCardHtml'), markup.indexOf('// The mirror: a moving picture'));
   assert.deepEqual(previewHtml.match(/<button[^>]*>[^<]*/g).map(found => found.replace(/<[^>]*>/, '')), ['Show live preview']);
+  assert.ok(status.includes("address: '#content', label: 'Change what it says: Content'"), 'Status links to Content');
   assert.ok(status.includes("address: '#display', label: 'Change what is shown: Display'") && status.includes("address: '#settings/sync', label: 'Sync and restart: Settings'"));
   assert.ok(!markup.slice(markup.indexOf('export function nowCardHtml'), markup.indexOf('// A copy of the screen')).includes('<button'));
 });
@@ -190,7 +220,7 @@ test('the real helper client accepts photos-drive as an argument, so Sync all an
   await assert.rejects(createHelper('x', 1000, connect)('sync-now', ['photos drive']), /not a word the helper knows/);
 });
 
-test('the phone has three tab buttons in one row, each 44px high or more', () => {
+test('the phone has four tab buttons in one row, each 44px high or more', () => {
   const style = read('control/static/style.css');
   assert.ok(/nav button \{[^}]*min-height: 44px/.test(style));
   const phone = style.slice(style.indexOf('@media (max-width: 600px)'));

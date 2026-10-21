@@ -86,7 +86,7 @@ test('the control page doc names the landing page, port 3426 and the extra CORS 
 test('the Studio links name tabs and sections the control page has, and the older addresses still reach them', async () => {
   const { resolveAddress } = await import('../control/static/tabs.js');
   const settings = fs.readFileSync(repo + 'control/static/tabs/settings.js', 'utf8');
-  const known = { status: ['status'], display: ['display'], settings: ['settings'] };
+  const known = { status: ['status'], display: ['display'], content: ['content'], settings: ['settings'] };
   Object.values(controlSections).forEach(address => {
     assert.ok(address.startsWith(controlAddress + '#'), address);
     const found = resolveAddress(address.slice(controlAddress.length + 1));

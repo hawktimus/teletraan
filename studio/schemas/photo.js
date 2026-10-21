@@ -59,6 +59,8 @@ export default defineType({
       validation: Rule => [
         tooLong(Rule, limits.photoCredit),
         Rule.custom(firstNameOnly),
+        // The same warning as the First name of the roster, which the Control page can show while you type
+        Rule.regex(/^[^\s@\d]*$/, { name: 'a first name' }).warning('This has a space, an @ or a number. The screen is public, so use a first name only.'),
         Rule.custom(noContact).warning(),
       ],
     }),
