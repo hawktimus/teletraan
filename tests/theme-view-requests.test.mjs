@@ -175,7 +175,8 @@ config.viewKeys.forEach(key => {
     if (key !== 'general') assert.ok(world.log.includes('moveOn grid1 grid2'), 'both lists begin again');
     const steps = views.viewPlaylist(world.content, monday12);
     assert.ok(steps.length > 0, 'the large panel has steps to play in ' + key);
-    assert.ok(steps.every(step => step.view === key));
+    // a Monday board of Robotics plays in the Condensed view (docs/views.md), so it is a step of family and nothing else is
+    assert.ok(steps.every(step => step.view === key || (key === 'general' && step.view === 'family' && step.panel.indexOf('monday-') === 0)));
     for (let second = 1; second < 25 * 60; second += 1) world.seconds(new Date(monday12.getTime() + second * 1000));
     assert.equal(views.cycleKey(), key, 'held for the whole request');
 
