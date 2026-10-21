@@ -351,6 +351,8 @@ test('Minimal and Cybertron share an explicit list of rules and of values, and e
   assert.deepEqual(named.filter(text => !text.endsWith('data-style="black"')).sort(), [
     'dashboard/base.css data-style="original"',
     'dashboard/frame.css data-style="cybertron"',
+    // the outline of the Nova team number in Cybertron (dashboard/teams.css, --team-text-outline)
+    'dashboard/teams.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',
     'dashboard/tokens.css data-style="cybertron"',

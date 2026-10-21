@@ -37,7 +37,7 @@ async function openDisplay(width, height, address = base) {
   await page.evaluate(() => fetch('/control/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: '123456' }) }));
   await page.goto(address + '/control/#display');
   await page.waitForSelector('.drow');
-  await page.evaluate(() => document.querySelector('.display-split').scrollIntoView());
+  await page.evaluate(() => document.querySelector('.drow').scrollIntoView());
   return { context, page, outside };
 }
 

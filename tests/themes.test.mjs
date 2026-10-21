@@ -1233,7 +1233,8 @@ function blocksOf(text) {
 
 test('tokens.css starts the twelve team colors at the Prime ones, and teams.css has no other rule than the four the default theme follows', () => {
   const blocks = blocksOf(teamsCss);
-  assert.equal(blocks.length, 1);
+  // the team colors, then the outline of the purple team number for Nova (--team-text-outline): the default theme follows the first block, the others are Nova's
+  assert.equal(blocks.length, 4);
 
   const start = blocksOf(readModule(path.join(dashboardFolder, 'tokens.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')).find(block => '--team-primary' in block.declarations);
   assert.deepEqual(start.selectors, [':root']);
