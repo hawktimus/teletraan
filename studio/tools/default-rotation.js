@@ -20,15 +20,22 @@ function pairBlock() {
   ];
 }
 
-// The Monday block: the open tasks of each of the nine departments, then the three TV charts, for both teams
+// The Monday block of the Robotics view: the open tasks of the four departments that belong to both teams (Business, Operations,
+// Marketing and Strategy), then the three TV charts. The Condensed view shows only tasks that are for both teams. The tasks
+// of one team play in that team's block, in departmentTaskRows.
 function mondayRows() {
-  const departments = ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing'];
+  const departments = ['business', 'operations', 'marketing', 'strategy'];
   const charts = ['status', 'progress', 'timeline'];
   return [].concat(
     departments.map(department => ({ view: 'robotics', panel: 'monday-department', department: department, list: 'open', seconds: 20, shown: true })),
     charts.map(chart => ({ view: 'robotics', panel: 'monday-charts', chart: chart, seconds: 30, shown: true })),
     [{ view: 'robotics', panel: 'roster', department: 'business,marketing', shown: true }],
   );
+}
+
+// The open tasks of departments in a team view, for that team
+function departmentTaskRows(view, departments) {
+  return departments.map(department => ({ view: view, panel: 'monday-department', department: department, list: 'open', team: view, seconds: 20, shown: true }));
 }
 
 // The two roster rows of a department of a team view
@@ -49,16 +56,20 @@ function lastRows(view) {
 }
 
 // Blocks 1 to 15: Robotics with the Monday block, Prime and Nova (Build with the Team leads), their Electrical rows,
-// Robotics, Programming, Design and CNC, Robotics, Strategy, and the last four panels of each team
+// Robotics, Programming, Design and CNC, Robotics, Strategy, and the last four panels of each team. Each team block that has
+// the roster of a department also has that department's open tasks for the team.
 export function defaultRotationRows() {
   return [].concat(
     pairBlock(), mondayRows(),
-    leadRows('prime'), departmentRows('prime', 'build'),
-    leadRows('nova'), departmentRows('nova', 'build'),
-    departmentRows('prime', 'electrical'), departmentRows('nova', 'electrical'),
+    leadRows('prime'), departmentRows('prime', 'build'), departmentTaskRows('prime', ['build']),
+    leadRows('nova'), departmentRows('nova', 'build'), departmentTaskRows('nova', ['build']),
+    departmentRows('prime', 'electrical'), departmentTaskRows('prime', ['electrical']),
+    departmentRows('nova', 'electrical'), departmentTaskRows('nova', ['electrical']),
     pairBlock(),
-    departmentRows('prime', 'programming'), departmentRows('nova', 'programming'),
-    departmentRows('prime', 'design'), departmentRows('nova', 'design'),
+    departmentRows('prime', 'programming'), departmentTaskRows('prime', ['programming']),
+    departmentRows('nova', 'programming'), departmentTaskRows('nova', ['programming']),
+    departmentRows('prime', 'design'), departmentTaskRows('prime', ['design', 'cnc']),
+    departmentRows('nova', 'design'), departmentTaskRows('nova', ['design', 'cnc']),
     pairBlock(),
     departmentRows('prime', 'strategy'), departmentRows('nova', 'strategy'),
     lastRows('prime'), lastRows('nova'),

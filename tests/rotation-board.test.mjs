@@ -74,7 +74,7 @@ test('rows of one view that follow each other are one block, with the count and 
   assert.equal(board.blocksOf(sample(), 10)[1].seconds, 40);
   const standard = board.blocksOf(board.standardRows());
   assert.equal(standard[0].view, 'robotics');
-  assert.equal(standard[0].count, 19, 'six pairs, nine departments, three charts and the Business and Marketing roster');
+  assert.equal(standard[0].count, 14, 'six pairs, four both-teams departments, three charts and the Business and Marketing roster');
   assert.equal(standard.reduce((all, block) => all + block.count, 0), defaults.defaultRotationRows().length);
 });
 
@@ -128,9 +128,9 @@ test('the details of a row depend on its panel', () => {
   const fields = panel => board.detailsFor(row('prime', panel)).map(item => item.field + ':' + item.kind).join();
   assert.equal(fields('photo'), 'photoCount:number,secondsPerPhoto:number');
   assert.equal(fields('monday-department'), 'department:choice,list:choice,team:choice');
-  assert.equal(fields('monday-charts'), 'chart:choice,team:choice');
+  assert.equal(fields('monday-charts'), 'chart:choice,department:choice,team:choice');
   assert.equal(fields('monday-board'), '', 'a retired panel has no details');
-  assert.equal(fields('roster'), 'department:text,part:part');
+  assert.equal(fields('roster'), 'department:choice,team:choice,part:part');
   assert.equal(fields('driveHours'), 'department:text');
   assert.equal(fields('events'), 'part:part');
   assert.equal(fields('team-leads'), 'part:part');
@@ -142,10 +142,10 @@ test('the details of a row depend on its panel', () => {
   const editor = parts.editorOf(row('robotics', 'photo', { side: 'qrParts' }), 0, state([]), noActions);
   assert.equal(nodesWhere(editor, node => node.props['data-link'] === 'missing').length, 1);
   assert.equal(nodesWhere(parts.editorOf(row('robotics', 'photo', { side: 'qrParts' }), 0, state([], { settings: { pageSeconds: 20, partsLink: true } }), noActions), node => node.props['data-link'] === 'set').length, 1);
-  assert.equal(board.detailsSummary(row('prime', 'roster', { department: 'build', part: 2 })), 'build, Page 2');
+  assert.equal(board.detailsSummary(row('prime', 'roster', { department: 'build', part: 2 })), 'Build, Both, Page 2');
   assert.equal(board.detailsSummary(row('robotics', 'monday-department', { department: 'cnc', list: 'done', team: 'nova' })), 'CNC, Done, Nova');
   assert.equal(board.detailsSummary(row('robotics', 'monday-department', {})), 'No department, Open, Both');
-  assert.equal(board.detailsSummary(row('robotics', 'monday-charts', {})), 'Status by department, Both');
+  assert.equal(board.detailsSummary(row('robotics', 'monday-charts', {})), 'Status by department, All departments, Both');
   const choices = parts.editorOf(row('robotics', 'monday-department', { department: 'cnc' }), 0, state([]), noActions);
   const selects = nodesWhere(choices, node => node.type === 'select');
   assert.deepEqual(selects.map(node => node.props.id + '=' + node.props.value), ['rb-department=cnc', 'rb-list=open', 'rb-team=']);
@@ -277,7 +277,7 @@ test('the Monday rows buttons show their counts, call only their actions and are
   const old = board.withKeys([{ view: 'prime', panel: 'monday-tasks', department: 'build' }, { view: 'robotics', panel: 'monday-done' }, { view: 'robotics', panel: 'tasks' }]);
   const labels = rows => nodesWhere(view.pageOf(state(rows), noActions), node => node.type === 'button').map(textOf);
   assert.ok(labels(old).includes('Remove retired Monday rows (2)'));
-  assert.ok(labels(old).includes('Add the nine Department tasks rows (Robotics, Open)'));
+  assert.ok(labels(old).includes('Add the 14 Department tasks rows (each in its view, Open)'));
   assert.ok(labels(old).includes('Add the three TV charts rows'));
   const out = [];
   const tree = view.pageOf(state(old), new Proxy({}, { get: (target, name) => () => out.push(name) }));

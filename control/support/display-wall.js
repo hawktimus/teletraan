@@ -147,10 +147,14 @@ function teamWords(team) {
   return team === '' || team === undefined ? 'both teams' : 'the ' + team.charAt(0).toUpperCase() + team.slice(1) + ' team';
 }
 
-// row is a tidy row of the rotation, whose team is the team of the tasks
+// row is a tidy row of the rotation, whose team is the team of the tasks. A row of a Prime or Nova block with no team of its own
+// has the tasks of that team and the General ones, the same as the wall.
 function mondayReason(row) {
-  const who = teamWords(row.team);
-  if (row.panel === 'monday-charts') return 'no Monday task is on the TV for ' + who + ' to chart.';
+  const who = teamWords(row.team || (row.view === 'prime' || row.view === 'nova' ? row.view : ''));
+  if (row.panel === 'monday-charts') {
+    const own = departmentTitle(row.department);
+    return 'no Monday task' + (own === '' ? '' : ' in ' + own) + ' is on the TV for ' + who + ' to chart.';
+  }
   const department = departmentTitle(row.department);
   if (department === '') return 'pick a Department for this row.';
   return 'no ' + (row.list === 'done' ? 'done' : 'open') + ' ' + department + ' task is on the TV for ' + who + '.';

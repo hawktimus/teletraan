@@ -198,7 +198,7 @@ test('the Rotation board names a row that the wall skips for lack of data, and e
   assert.equal(notes.g, 'Skipped now: no done Electrical task is on the TV for the Nova team.');
   assert.equal(notes.h, 'Skipped now: pick a Department in Details.');
   assert.equal(notes.i, 'Skipped now: no Monday task of the Prime team has a Timeline.');
-  assert.equal(notes.j, undefined);
+  assert.equal(notes.j, 'Skipped now: no Monday task of both teams has a Timeline.', 'only a Nova task has a Timeline, and Both plays the tasks for both teams only');
   assert.deepEqual(board.skipNotes(rows, null), { d: 'Retired, use Department tasks.' }, 'when the data cannot be read only the retired rows have notes');
   assert.deepEqual(Object.keys(board.skipNotes(rows, { tasks: [], photos: [{ expires: '2000-01-01T00:00:00Z' }] })).sort(), ['a', 'b', 'd'], 'an expired photo is not a photo');
 });

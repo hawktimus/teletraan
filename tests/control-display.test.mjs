@@ -96,13 +96,18 @@ await check('the retired Monday rows are removed and the new rows added the same
 
   const same = (mine, theirs) => assert.deepEqual(mine.map(row => Object.assign({}, row, { _key: 'k' })), theirs.map(row => Object.assign({}, row, { _key: 'k' })));
   assert.deepEqual(rows.missingDepartments(kept), studio.missingDepartments(kept));
-  assert.equal(rows.missingDepartments(kept).length, 8, 'cnc already has a row, whatever its list');
+  assert.deepEqual(rows.missingTargets(kept), studio.missingTargets(kept));
+  assert.deepEqual(rows.departmentTargets, studio.departmentTargets);
+  assert.equal(rows.departmentTargets.length, 14, 'four departments of both teams, and five for each team');
+  assert.equal(rows.missingTargets(kept).length, 13, 'cnc for Nova already has a row, whatever its list, and cnc for Prime has none');
+  assert.equal(rows.missingDepartments(kept).length, 9, 'cnc is still missing in the Prime view');
   assert.deepEqual(rows.missingCharts(kept), ['progress', 'timeline'], 'a chart row with no chart is the Status chart');
   same(rows.addDepartmentRows(kept), studio.addDepartmentRows(kept));
   same(rows.addChartRows(kept), studio.addChartRows(kept));
   const full = rows.addChartRows(rows.addDepartmentRows(kept));
-  assert.equal(full.length, 3 + 8 + 2);
-  assert.deepEqual(full[3], { _key: full[3]._key, view: 'robotics', panel: 'monday-department', department: 'build', list: 'open', seconds: 30, shown: true });
+  assert.equal(full.length, 3 + 13 + 2);
+  assert.deepEqual(full[3], { _key: full[3]._key, view: 'prime', panel: 'monday-department', department: 'build', list: 'open', team: 'prime', seconds: 30, shown: true });
+  assert.deepEqual(full.filter(row => row.view === 'robotics' && row.panel === 'monday-department' && !row.team).map(row => row.department), ['strategy', 'operations', 'business', 'marketing'], 'the departments of both teams go in Robotics with no team');
   assert.equal(full[full.length - 1].chart, 'timeline');
   assert.equal(rows.addDepartmentRows(full).length, full.length, 'nothing is added twice');
   assert.equal(rows.addChartRows(full).length, full.length);

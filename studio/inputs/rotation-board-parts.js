@@ -7,7 +7,7 @@
 import { toggleSwitch } from './field-editor.js';
 import { createElement } from 'react';
 import {
-  blocksOf, condensedWords, detailsFor, detailsSummary, durationWords, hasSmallPanel, isRetiredRow, isShown, loopWords, missingCharts, missingDepartments, playsCondensed, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
+  blocksOf, playsIn, playsWords, detailsFor, detailsSummary, durationWords, hasSmallPanel, isRetiredRow, isShown, loopWords, missingCharts, missingTargets, qrStatus, retiredNote, secondsOf, skipHint, stripOf,
 } from '../tools/rotation-board.js';
 import { blockId, filterBlocks, findingWords, hasFilter, jumpLinks, placeholderBadge, playsNowWords } from '../tools/rotation-find.js';
 import { panelChoices, panelGroups, panelTitleOf, sideChoices, sidePanelGroups, viewEntry, viewTable } from '../tools/rotation-titles.js';
@@ -203,7 +203,7 @@ export function dataRow(item, count, state, actions) {
         placeholderBadge(row) ? h('span', { className: 'rb-badge', 'data-placeholder': row._key }, placeholderBadge(row)) : null),
       small
         ? cell(words.small, 'small', h('select', { value: row.side || '', style: styles.select, 'aria-label': words.small, onChange: event => actions.edit(index, 'side', event.target.value) }, groupedOptions(sidePanelGroups, row.side, 'Follows the view')))
-        : h('div', { className: 'rb-cell', role: 'cell', 'data-cell': 'small' }, ...(playsCondensed(row) ? [h('span', { className: 'rb-help', 'data-condensed': row._key }, condensedWords)] : [])),
+        : h('div', { className: 'rb-cell', role: 'cell', 'data-cell': 'small' }, ...(playsIn(row) !== '' && (row.view || '') === 'robotics' ? [h('span', { className: 'rb-help', 'data-condensed': row._key, 'data-plays': playsIn(row) }, playsWords[playsIn(row)])] : [])),
       cell('Seconds', 'seconds', secondsCell(row, index, state, actions)),
       cell('Show on screen', 'shown', switchOf(row, index, state, actions)),
       cell('Details', 'details', h('button', { type: 'button', style: styles.plain, 'aria-expanded': open, onClick: () => actions.toggleOpen(row._key) }, open ? 'Close' : (summary || 'Details'))),
@@ -318,13 +318,13 @@ export function toolsOf(state, actions) {
     h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.fill() }, 'Fill from the standard order')
   );
   const old = state.rows.filter(isRetiredRow).length;
-  const departments = missingDepartments(state.rows).length;
+  const departments = missingTargets(state.rows).length;
   const charts = missingCharts(state.rows).length;
   const monday = old + departments + charts === 0 ? null : h(
     'div',
     { className: 'rb-tools', 'data-block': 'monday-rows' },
     old === 0 ? null : h('button', { type: 'button', style: styles.button, disabled: busy, onClick: () => actions.removeRetired() }, 'Remove retired Monday rows (' + old + ')'),
-    departments === 0 ? null : h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.addDepartments() }, 'Add the ' + (departments === 9 ? 'nine' : departments + ' missing') + ' Department tasks rows (Robotics, Open)'),
+    departments === 0 ? null : h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.addDepartments() }, 'Add the ' + (departments === 14 ? '14' : departments + ' missing') + ' Department tasks rows (each in its view, Open)'),
     charts === 0 ? null : h('button', { type: 'button', style: styles.plain, disabled: busy, onClick: () => actions.addCharts() }, 'Add the ' + (charts === 3 ? 'three' : charts + ' missing') + ' TV charts rows')
   );
   const bulk = selected.length === 0 ? null : h(

@@ -43,10 +43,10 @@ test('an untouched Studio plays the default rotation: fifteen blocks, in the vie
   assert.ok(rows.every(item => item.shown));
 });
 
-test('block 1 is the six pairs of the split layout, then the open tasks of the nine departments, the three TV charts and the Business and Marketing roster', () => {
+test('block 1 is the six pairs of the split layout, then the open tasks of the four both-teams departments, the three TV charts and the Business and Marketing roster', () => {
   const first = blocks[0].rows;
   assert.deepEqual(first.slice(0, 6).map(item => [item.panel + (item.part ? ' ' + item.part : ''), item.side]), pairs);
-  assert.deepEqual(line({ rows: first.slice(6) }), nine.map(name => 'monday-department [' + name + '] open').concat([
+  assert.deepEqual(line({ rows: first.slice(6) }), ['business', 'operations', 'marketing', 'strategy'].map(name => 'monday-department [' + name + '] open').concat([
     'monday-charts status', 'monday-charts progress', 'monday-charts timeline', 'roster [business,marketing]',
   ]));
   first.slice(6).forEach(item => assert.equal(config.roboticsWidePanels.includes(item.panel), true, item.panel + ' is wide'));
@@ -55,10 +55,12 @@ test('block 1 is the six pairs of the split layout, then the open tasks of the n
 
 test('blocks 2 and 3 are the Team leads and Build for Prime and for Nova, blocks 4 and 5 Electrical', () => {
   const leads = ['team-leads 1', 'team-leads 2'];
-  assert.deepEqual(line(blocks[1]), leads.concat(two('build')));
-  assert.deepEqual(line(blocks[2]), leads.concat(two('build')));
-  assert.deepEqual(line(blocks[3]), two('electrical'));
-  assert.deepEqual(line(blocks[4]), two('electrical'));
+  const tasks = name => 'monday-department [' + name + '] open';
+  assert.deepEqual(line(blocks[1]), leads.concat(two('build'), [tasks('build')]));
+  assert.deepEqual(line(blocks[2]), leads.concat(two('build'), [tasks('build')]));
+  assert.deepEqual(line(blocks[3]), two('electrical').concat([tasks('electrical')]));
+  assert.deepEqual(line(blocks[4]), two('electrical').concat([tasks('electrical')]));
+  [1, 2, 3, 4].forEach(at => blocks[at].rows.filter(item => item.panel === 'monday-department').forEach(item => assert.equal(item.team, blocks[at].view, 'the tasks of a team block are for that team')));
 });
 
 test('blocks 6 and 11 are the six pairs again with no Business rows', () => {
@@ -66,10 +68,11 @@ test('blocks 6 and 11 are the six pairs again with no Business rows', () => {
 });
 
 test('blocks 7 to 10 and 12 to 13 are Programming, Design and CNC, and Strategy, Prime then Nova', () => {
-  assert.deepEqual(line(blocks[6]), two('programming'));
-  assert.deepEqual(line(blocks[7]), two('programming'));
-  assert.deepEqual(line(blocks[8]), two('design'));
-  assert.deepEqual(line(blocks[9]), two('design'));
+  const tasks = names => names.map(name => 'monday-department [' + name + '] open');
+  assert.deepEqual(line(blocks[6]), two('programming').concat(tasks(['programming'])));
+  assert.deepEqual(line(blocks[7]), two('programming').concat(tasks(['programming'])));
+  assert.deepEqual(line(blocks[8]), two('design').concat(tasks(['design', 'cnc'])));
+  assert.deepEqual(line(blocks[9]), two('design').concat(tasks(['design', 'cnc'])));
   assert.deepEqual(line(blocks[11]), two('strategy'));
   assert.deepEqual(line(blocks[12]), two('strategy'));
 });
@@ -77,7 +80,7 @@ test('blocks 7 to 10 and 12 to 13 are Programming, Design and CNC, and Strategy,
 test('blocks 14 and 15 are the last four panels of Prime and of Nova', () => {
   assert.deepEqual(line(blocks[13]), lastFour);
   assert.deepEqual(line(blocks[14]), lastFour);
-  assert.equal(rows.length, 6 + 13 + 2 * (2 + 2) + 2 * 2 + 6 + 4 * 2 + 6 + 2 * 2 + 2 * 4, 'the count of rows adds up');
+  assert.equal(rows.length, 6 + 8 + 2 * (2 + 2) + 2 * 2 + 6 + 4 * 2 + 6 + 2 * 2 + 2 * 4 + 2 * 5, 'the count of rows adds up, the Department tasks rows of the two teams included');
 });
 
 test('every default row is a registered panel the list accepts, and nothing is dropped by tidy', () => {
@@ -165,13 +168,14 @@ test('the steps of the first block carry the small panel of each row, and the pa
   playing.resetViews();
 });
 
-test('the Robotics Monday block plays the departments with open tasks and the charts, and leaves the others out', () => {
+test('the Robotics Monday block plays the both-teams departments with open tasks and the charts, and leaves the others out', () => {
   const named = contentOf([
-    task({ title: '[A]', department: 'build', status: 'in-progress', team: 'prime', estHours: 4 }),
-    task({ title: '[B]', department: 'electrical', list: 'done', status: 'done', team: 'prime', estHours: 2, completedOn: '2026-10-14' }),
+    task({ title: '[A]', department: 'business', status: 'in-progress', estHours: 4 }),
+    task({ title: '[B]', department: 'marketing', list: 'done', status: 'done', estHours: 2, completedOn: '2026-10-14' }),
+    task({ title: '[C]', department: 'build', team: 'prime', status: 'in-progress' }),
   ]);
   const first = playing.viewSteps(named, 'general', now, 0).filter(step => step.panel.startsWith('monday-'));
-  assert.deepEqual(first.map(step => step.page.department || step.page.chart), ['build', 'status', 'progress', 'timeline'], 'Electrical has nothing open');
+  assert.deepEqual(first.map(step => step.page.department || step.page.chart), ['business', 'status', 'progress', 'timeline'], 'Marketing has nothing open, and a Build task of Prime is not in this block');
 });
 
 test('the views doc has the table of the default order', () => {

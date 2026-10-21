@@ -241,12 +241,12 @@ check('the Monday rows buttons name their counts and are left out when there is 
   const old = withKeys([{ view: 'prime', panel: 'monday-tasks', department: 'build' }, { view: 'prime', panel: 'monday-pie' }, { view: 'robotics', panel: 'tasks' }]);
   const html = quickHtml(old, choices);
   assert.ok(html.includes('data-action="remove-retired">Remove retired Monday rows (2)'));
-  assert.ok(html.includes('Add the nine Department tasks rows (Robotics, Open)'));
+  assert.ok(html.includes('Add the 14 Department tasks rows (each in its view, Open)'));
   assert.ok(html.includes('Add the three TV charts rows'));
-  const partly = withKeys([{ view: 'robotics', panel: 'monday-department', department: 'build' }, { view: 'robotics', panel: 'monday-charts', chart: 'timeline' }]);
+  const partly = withKeys([{ view: 'robotics', panel: 'monday-department', department: 'business' }, { view: 'robotics', panel: 'monday-charts', chart: 'timeline' }]);
   const some = quickHtml(partly, choices);
   assert.ok(!some.includes('remove-retired'));
-  assert.ok(some.includes('Add the 8 missing Department tasks rows'));
+  assert.ok(some.includes('Add the 13 missing Department tasks rows'));
   assert.ok(some.includes('Add the 2 missing TV charts rows'));
   const done = quickHtml(withKeys(nineAndThree()), choices);
   assert.ok(!done.includes('data-action="add-') && !done.includes('remove-retired'));

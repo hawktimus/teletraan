@@ -21,6 +21,12 @@ export const startingPhotos = { count: 4, each: 10 };
 // tests/rotation-board.test.mjs compares this list with roboticsWidePanels in dashboard/config-rotation.js.
 export const wideRoboticsPanels = ['monday-department', 'monday-charts', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
 
+// What the Team dropdown of the Monday rows does. Both is the Condensed view, which has the tasks that are for both teams only.
+const teamHelp = 'Both plays in the Condensed view and shows only tasks that are for both teams. Prime plays in the Prime view and Nova in the Nova view, each with its own tasks and the both-teams tasks.';
+
+// The Department dropdown of a Roster row: empty is the first department with people, then the nine departments
+export const rosterDepartmentChoices = [{ value: '', title: 'First with people' }].concat(mondayDepartmentChoices);
+
 export const departmentHints = ['build', 'electrical', 'programming', 'design', 'strategy', 'business', 'operations', 'marketing'];
 
 // The teams a Monday row can show: both (no team), Prime or Nova (mondayTeams in dashboard/config-lists.js)
@@ -172,13 +178,26 @@ export function hasSmallPanel(row) {
   return layoutOf(row) === 'split';
 }
 
-// The words of a Monday row of the Robotics view: the wall plays it in the Condensed view and back (dashboard/core/views-play.js,
-// playViewOf). The control page says the same (control/static/display-rows.js).
+// The view a Monday row plays in (dashboard/core/views-play.js, playViewOf). A row in a Prime or Nova block plays there. A row in
+// a Robotics block plays in the view of its team: Condensed for both teams (only the tasks that are for both teams), Prime for
+// Prime and Nova for Nova. The stored view of the row is never changed. A Roster row with a team of its own plays in that team's
+// view as well. The control page says the same (control/static/display-rows.js).
 export const condensedWords = 'Plays in the Condensed view';
 export const mondayPanels = ['monday-department', 'monday-charts'];
+export const playsWords = { condensed: condensedWords, prime: 'Plays in the Prime view', nova: 'Plays in the Nova view' };
+
+// 'condensed', 'prime' or 'nova' for a Monday row, and for a Roster row of a Robotics block that names a team. '' for any other row.
+export function playsIn(row) {
+  const monday = mondayPanels.indexOf((upgradedRow(row) || row).panel) !== -1;
+  const team = row.team === 'prime' || row.team === 'nova' ? row.team : '';
+  if (!monday && !(row.panel === 'roster' && (row.view || '') === 'robotics' && team !== '')) return '';
+  if ((row.view || '') === 'prime' || (row.view || '') === 'nova') return monday ? row.view : '';
+  if ((row.view || '') !== 'robotics') return '';
+  return team !== '' ? team : 'condensed';
+}
 
 export function playsCondensed(row) {
-  return (row.view || '') === 'robotics' && mondayPanels.indexOf((upgradedRow(row) || row).panel) !== -1;
+  return playsIn(row) === 'condensed';
 }
 
 // What a Details panel offers for a row, by its panel. Each is { kind, field, label, help }. Every field says what it does in one line.
@@ -193,13 +212,21 @@ export function detailsFor(row) {
   if (panel === 'monday-department') {
     list.push({ kind: 'choice', field: 'department', label: 'Department', help: 'The department whose tasks the panel shows. A row with no department is skipped.', choices: [{ value: '', title: 'Pick a department' }].concat(mondayDepartmentChoices) });
     list.push({ kind: 'choice', field: 'list', label: 'List', help: 'Open is To Do, In Progress, In Review and Stuck. Done is the done tasks, the newest first.', choices: mondayListChoices });
-    list.push({ kind: 'choice', field: 'team', label: 'Team', help: 'The tasks of both teams, or of Prime or Nova. A task with the team General shows for both.', choices: mondayTeamChoices });
+    list.push({ kind: 'choice', field: 'team', label: 'Team', help: teamHelp, choices: mondayTeamChoices });
   }
   if (panel === 'monday-charts') {
     list.push({ kind: 'choice', field: 'chart', label: 'Chart', help: 'Status by department, Overall progress (by estimated hours) or the Timeline of this month and the next two.', choices: mondayChartChoices });
-    list.push({ kind: 'choice', field: 'team', label: 'Team', help: 'The tasks of both teams, or of Prime or Nova. A task with the team General counts for both.', choices: mondayTeamChoices });
+    list.push({ kind: 'choice', field: 'department', label: 'Department', help: 'All departments, or one: then the chart shows that department alone and its title says which.', choices: [{ value: '', title: 'All departments' }].concat(mondayDepartmentChoices) });
+    list.push({ kind: 'choice', field: 'team', label: 'Team', help: teamHelp, choices: mondayTeamChoices });
   }
-  if (panel === 'roster' || panel === 'driveHours') {
+  if (panel === 'roster') {
+    // a department typed before the dropdown, such as business,marketing, stays in the list as it is
+    const stored = String(row.department || '');
+    const known = rosterDepartmentChoices.some(item => item.value === stored);
+    list.push({ kind: 'choice', field: 'department', label: 'Department', help: 'The department whose people are shown. First with people shows the first department that has any.', choices: rosterDepartmentChoices.concat(known ? [] : [{ value: stored, title: stored }]) });
+    list.push({ kind: 'choice', field: 'team', label: 'Team', help: 'Only the people of Prime or Nova, or Both for the two teams together (the page names both, PRIME + NOVA). Prime or Nova in a Robotics block plays the row in that team view.', choices: mondayTeamChoices });
+  }
+  if (panel === 'driveHours') {
     list.push({ kind: 'text', field: 'department', label: 'Department', help: 'The department shown, or two with a comma, such as business,marketing. Empty shows every department.' });
   }
   if (panel === 'events' || panel === 'team-leads' || panel === 'roster') {
@@ -218,7 +245,10 @@ export function detailsSummary(row) {
   if (row.panel === 'monday-department') {
     words.push(choiceTitle(mondayDepartmentChoices, row.department) || 'No department', row.list === 'done' ? 'Done' : 'Open', choiceTitle(mondayTeamChoices, row.team) || 'Both');
   } else if (row.panel === 'monday-charts') {
-    words.push(choiceTitle(mondayChartChoices, row.chart || 'status'), choiceTitle(mondayTeamChoices, row.team) || 'Both');
+    words.push(choiceTitle(mondayChartChoices, row.chart || 'status'), choiceTitle(mondayDepartmentChoices, row.department) || 'All departments', choiceTitle(mondayTeamChoices, row.team) || 'Both');
+  } else if (row.panel === 'roster') {
+    if (row.department) words.push(choiceTitle(mondayDepartmentChoices, row.department) || row.department);
+    words.push(choiceTitle(mondayTeamChoices, row.team) || 'Both');
   } else if (row.department) {
     words.push(row.department);
   }
@@ -343,9 +373,27 @@ export function removeRetired(rows) {
   return retiredCount(rows) === 0 ? rows : rows.filter(row => !isRetiredRow(row));
 }
 
-// The departments that no Department tasks row has yet, in the order of the pickers
+// The departments of both teams (Business, Operations, Marketing and Strategy) play in the Condensed view. The others have a
+// row for each team, in that team's view. Each target is { department, view, team }, view being the view of the stored row.
+export const sharedDepartments = ['strategy', 'operations', 'business', 'marketing'];
+export const departmentTargets = [].concat(...mondayDepartmentIds.map(id => (sharedDepartments.indexOf(id) !== -1
+  ? [{ department: id, view: 'robotics', team: '' }]
+  : [{ department: id, view: 'prime', team: 'prime' }, { department: id, view: 'nova', team: 'nova' }])));
+
+function playsFor(target) {
+  return target.team === '' ? 'condensed' : target.team;
+}
+
+// The (department, view) pairs that no Department tasks row plays yet, in the order of the pickers. A row counts for a pair
+// when it names the department and plays in the view of the pair.
+export function missingTargets(rows) {
+  return departmentTargets.filter(target => !rows.some(row => row.panel === 'monday-department' && row.department === target.department && playsIn(row) === playsFor(target)));
+}
+
+// The departments with a missing row, once each
 export function missingDepartments(rows) {
-  return mondayDepartmentIds.filter(id => !rows.some(row => row.panel === 'monday-department' && row.department === id));
+  const names = missingTargets(rows).map(target => target.department);
+  return names.filter((name, at) => names.indexOf(name) === at);
 }
 
 // The chart kinds that no TV charts row has yet. A row with no chart is the Status chart.
@@ -353,9 +401,13 @@ export function missingCharts(rows) {
   return mondayChartIds.filter(id => !rows.some(row => row.panel === 'monday-charts' && (row.chart || 'status') === id));
 }
 
-// One Department tasks row, open, for both teams, at the end of the list for each department that has none
+// One Department tasks row, open, at the end of the list for each missing (department, view) pair: a department of both teams in
+// the Robotics view with no team, and any other department once in the Prime view and once in the Nova view with that team
 export function addDepartmentRows(rows) {
-  return rows.concat(missingDepartments(rows).map(id => ({ _key: newKey(), view: 'robotics', panel: 'monday-department', department: id, list: 'open', seconds: addedRowSeconds, shown: true })));
+  return rows.concat(missingTargets(rows).map(target => Object.assign(
+    { _key: newKey(), view: target.view, panel: 'monday-department', department: target.department, list: 'open' },
+    target.team === '' ? {} : { team: target.team },
+    { seconds: addedRowSeconds, shown: true })));
 }
 
 // One TV charts row, for both teams, at the end of the list for each chart kind that has none
@@ -416,15 +468,19 @@ function teamWords(team) {
 
 // The note of a Monday row, or nothing when it has something to show
 function mondayNote(row, tasks) {
-  const team = row.team === 'prime' || row.team === 'nova' ? row.team : '';
-  const ofTeam = tasks.filter(task => team === '' || !task.team || task.team === team);
+  // A team view has the tasks of its team and the General ones; Both has the General ones only (ofTeam in monday-views.js)
+  const team = row.team === 'prime' || row.team === 'nova' ? row.team : row.view === 'prime' || row.view === 'nova' ? row.view : '';
+  const ofTeam = tasks.filter(task => !task.team || task.team === team);
 
   if (row.panel === 'monday-charts') {
-    const drawn = row.chart === 'timeline' ? ofTeam.filter(task => task.startDate && task.dueDate) : ofTeam;
+    const own = choiceTitle(mondayDepartmentChoices, row.department);
+    const inDepartment = own === '' ? ofTeam : ofTeam.filter(task => task.department === row.department);
+    const drawn = row.chart === 'timeline' ? inDepartment.filter(task => task.startDate && task.dueDate) : inDepartment;
     if (drawn.length > 0) return '';
+    const where = own === '' ? '' : ' in ' + own;
     return row.chart === 'timeline'
-      ? 'Skipped now: no Monday task of ' + teamWords(team) + ' has a Timeline.'
-      : 'Skipped now: no Monday task is on the TV for ' + teamWords(team) + '.';
+      ? 'Skipped now: no Monday task' + where + ' of ' + teamWords(team) + ' has a Timeline.'
+      : 'Skipped now: no Monday task' + where + ' is on the TV for ' + teamWords(team) + '.';
   }
 
   const department = choiceTitle(mondayDepartmentChoices, row.department);

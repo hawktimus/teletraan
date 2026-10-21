@@ -29,11 +29,11 @@ function section(title) {
 }
 
 test('the page has the sections it should, in plain words, and is short', () => {
-  ['The two boards', 'How a task gets onto the TV', 'What the computer reads from each task', 'The two panels', 'Putting a department on the TV', 'The Monday page', 'How often it reads', 'What it writes', 'If nothing shows up', 'Setting it up'].forEach(title => section(title));
+  ['The two boards', 'How a task gets onto the TV', 'What the computer reads from each task', 'The two panels', 'Which view plays which tasks', 'Putting a department on the TV', 'The Monday page', 'How often it reads', 'What it writes', 'If nothing shows up', 'Setting it up'].forEach(title => section(title));
   assert.ok(!/[—–!]/.test(doc), 'no em dash, en dash or exclamation mark');
   assert.ok(!/[\u{1F300}-\u{1FAFF}☀-➿]/u.test(doc), 'no emoji');
   doc.split('\n').forEach(line => assert.ok(!/\s+$/.test(line), 'no space at the end of a line: ' + line));
-  assert.ok(doc.split('\n').length < 160, 'the page is short');
+  assert.ok(doc.split('\n').length < 170, 'the page is short');
 });
 
 test('the boards, the columns and the label numbers are the ones of the contract', () => {

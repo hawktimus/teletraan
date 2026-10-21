@@ -17,8 +17,9 @@ export const viewWords = { robotics: 'Robotics', prime: 'Prime', nova: 'Nova' };
 // The settings of a row of the two Monday panels, the same as the Details of the Studio board (studio/tools/rotation-board.js)
 export const mondayFieldNames = ['department', 'list', 'chart', 'team'];
 
-// The dropdowns of a row: [{ field, label, value, choices }] for Department tasks (Department, List, Team) and the TV charts
-// (Chart, Team), none for any other panel. monday is the lists of choices the server sends (choices.monday).
+// The dropdowns of a row: [{ field, label, value, choices }] for Department tasks (Department, List, Team), the TV charts
+// (Chart, Department, Team) and the Subteam roster (Department, Team), none for any other panel. monday is the lists of choices
+// the server sends (choices.monday).
 export function mondayFieldsOf(row, monday) {
   if (!monday) return [];
   const team = { field: 'team', label: 'Team', value: row.team || '', choices: monday.teams };
@@ -29,19 +30,46 @@ export function mondayFieldsOf(row, monday) {
       team,
     ];
   }
-  if (row.panel === 'monday-charts') return [{ field: 'chart', label: 'Chart', value: row.chart || 'status', choices: monday.charts }, team];
+  if (row.panel === 'monday-charts') {
+    return [
+      { field: 'chart', label: 'Chart', value: row.chart || 'status', choices: monday.charts },
+      { field: 'department', label: 'Department', value: row.department || '', choices: [{ value: '', title: 'All departments' }].concat(monday.departments) },
+      team,
+    ];
+  }
+  if (row.panel === 'roster') {
+    // a department typed before the dropdown, such as business,marketing, stays in the list as it is
+    const stored = String(row.department || '');
+    const known = stored === '' || monday.departments.some(item => item.value === stored);
+    return [
+      { field: 'department', label: 'Department', value: stored, choices: [{ value: '', title: 'First with people' }].concat(monday.departments, known ? [] : [{ value: stored, title: stored }]) },
+      team,
+    ];
+  }
   return [];
 }
 
-// A Monday row of the Robotics view plays in the Condensed view (dashboard/core/views-play.js, playViewOf), and its small panel is
-// never drawn. An older monday-tasks row with a department plays as Department tasks, so it is the same. The nine departments are
-// those of mondayDepartments in dashboard/config-lists.js.
+// The view a Monday row plays in (dashboard/core/views-play.js, playViewOf), the same rule as the Studio board. A row in a Prime
+// or Nova block plays there. A row in a Robotics block plays in the view of its team: Condensed for both teams (only the tasks
+// that are for both teams, and no small panel), Prime for Prime and Nova for Nova. The stored view is never changed. A Roster row
+// of a Robotics block with a team plays in that team's view. An older monday-tasks row with a department plays as Department
+// tasks, so it is the same. The nine departments are those of mondayDepartments in dashboard/config-lists.js.
 export const condensedWords = 'Plays in the Condensed view';
+export const playsWords = { condensed: condensedWords, prime: 'Plays in the Prime view', nova: 'Plays in the Nova view' };
+
+// 'condensed', 'prime' or 'nova' for a Monday row, and for a Roster row of a Robotics block that names a team. '' for any other row.
+export function playsIn(row) {
+  const older = row.panel === 'monday-tasks' && mondayDepartmentIds.indexOf(String(row.department || '').trim().toLowerCase()) !== -1;
+  const monday = older || row.panel === 'monday-department' || row.panel === 'monday-charts';
+  const team = row.team === 'prime' || row.team === 'nova' ? row.team : '';
+  if (!monday && !(row.panel === 'roster' && row.view === 'robotics' && team !== '')) return '';
+  if (row.view === 'prime' || row.view === 'nova') return monday ? row.view : '';
+  if (row.view !== 'robotics') return '';
+  return team !== '' ? team : 'condensed';
+}
 
 export function playsCondensed(row) {
-  if (row.view !== 'robotics') return false;
-  const older = row.panel === 'monday-tasks' && mondayDepartmentIds.indexOf(String(row.department || '').trim().toLowerCase()) !== -1;
-  return older || row.panel === 'monday-department' || row.panel === 'monday-charts';
+  return playsIn(row) === 'condensed';
 }
 
 export function newKey() {
@@ -232,9 +260,23 @@ export function removeRetired(rows) {
   return retiredCount(rows) === 0 ? rows : rows.filter(row => !isRetiredRow(row));
 }
 
-// The departments that no Department tasks row has yet, in the order of the pickers
+// The departments of both teams (Business, Operations, Marketing and Strategy) play in the Condensed view. The others have a
+// row for each team, in that team's view. Each target is { department, view, team }, view being the view of the stored row.
+export const sharedDepartments = ['strategy', 'operations', 'business', 'marketing'];
+export const departmentTargets = [].concat(...mondayDepartmentIds.map(id => (sharedDepartments.indexOf(id) !== -1
+  ? [{ department: id, view: 'robotics', team: '' }]
+  : [{ department: id, view: 'prime', team: 'prime' }, { department: id, view: 'nova', team: 'nova' }])));
+
+// The (department, view) pairs that no Department tasks row plays yet, in the order of the pickers. A row counts for a pair
+// when it names the department and plays in the view of the pair.
+export function missingTargets(rows) {
+  return departmentTargets.filter(target => !rows.some(row => row.panel === 'monday-department' && row.department === target.department && playsIn(row) === (target.team === '' ? 'condensed' : target.team)));
+}
+
+// The departments with a missing row, once each
 export function missingDepartments(rows) {
-  return mondayDepartmentIds.filter(id => !rows.some(row => row.panel === 'monday-department' && row.department === id));
+  const names = missingTargets(rows).map(target => target.department);
+  return names.filter((name, at) => names.indexOf(name) === at);
 }
 
 // The chart kinds that no TV charts row has yet. A row with no chart is the Status chart.
@@ -242,9 +284,13 @@ export function missingCharts(rows) {
   return mondayChartIds.filter(id => !rows.some(row => row.panel === 'monday-charts' && (row.chart || 'status') === id));
 }
 
-// One Department tasks row, open, for both teams, at the end of the list for each department that has none
+// One Department tasks row, open, at the end of the list for each missing (department, view) pair: a department of both teams in
+// the Robotics view with no team, and any other department once in the Prime view and once in the Nova view with that team
 export function addDepartmentRows(rows) {
-  return rows.concat(missingDepartments(rows).map(id => ({ _key: newKey(), view: 'robotics', panel: 'monday-department', department: id, list: 'open', seconds: addedRowSeconds, shown: true })));
+  return rows.concat(missingTargets(rows).map(target => Object.assign(
+    { _key: newKey(), view: target.view, panel: 'monday-department', department: target.department, list: 'open' },
+    target.team === '' ? {} : { team: target.team },
+    { seconds: addedRowSeconds, shown: true })));
 }
 
 // One TV charts row, for both teams, at the end of the list for each chart kind that has none
