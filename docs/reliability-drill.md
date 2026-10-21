@@ -85,6 +85,23 @@ The page writes down each load and why (`dashboard/core/page-loads.js`): in loca
 5. If step 3 found graphics lines: add `KIOSK_GRAPHICS=plain` to `local.env`, restart the screen, and watch a day. If the flash goes on, `KIOSK_GRAPHICS=software` (the processor draws everything, so check `?perf` for late frames). Remove the line to go back.
 6. `dmesg | grep -i "i915\|drm\|gpu"` for resets of the graphics driver at the time of the flash. A TV that loses its signal for a moment (cable, HDMI handshake, TV input switching) looks the same as a flash: try another cable or port.
 
+## The network goes away when idle
+
+The owner's TV shows the red banner SANITY UNREACHABLE: NETWORK DOWN most days after sitting idle. The cause is not known; the Wi-Fi chip sleeping, the driver dropping, the lease, NetworkManager giving up after 4 tries and a suspended computer are all possible, and docs/network.md lists the commands that find out which. What the system does about it:
+
+| Case | What happens | Recovers | Tested |
+|------|--------------|----------|--------|
+| Network gone for 30 minutes on the page | Banner after 2 minutes. After 10 minutes down and one repair step, the extra line: The Teletraan computer is trying to fix this by itself (from `device.json`). Content stays. | Yes, within 35 seconds of the network returning (a read every 30 seconds after a failure), no page reload | `tests/reliability.test.mjs`, with the clock moved in 35 second jumps |
+| Network gone for 6 minutes on the computer | 3 failed checks, then one repair step at a time: dhcp, reconnect, service, screen, and a reboot only after 30 minutes | Usually at step 1 to 3 | `tests/network-watchdog.test.mjs` |
+| Network gone for 14 hours | Steps 1 to 4 once each, a reboot at most every 6 hours, never in the first 10 minutes after boot, never within 6 hours of the scheduled reboot | When the network returns, which clears the count | the same |
+| Drops again within 30 minutes | The steps that ran less than 30 minutes ago are skipped | Yes | the same |
+| Sanity answers with an error page | Counts as a working network, nothing is repaired | n/a | the same |
+| Certificate refused but the gateway and lookup work | Treated as a wrong clock, not a network fault | n/a | the same |
+| The sudo rule is missing | The step is logged as failed and counted as taken, so it does not repeat | n/a | the same |
+| The run is cut between disconnect and connect | A marker file makes the next run connect the interface | Yes | read, not run |
+
+Limits: the watchdog cannot know about a booked talk, because Sanity cannot be asked while the network is down, so step 4 or 5 can restart the screen during a talk after 6 minutes of no network. A restart of NetworkManager can reset the connection for a second or two. `connection.autoconnect-retries = 0` and `ipv4.dhcp-timeout = 2147483647` were written from the NetworkManager manual and not tried on the computer.
+
 ## What remains
 
 - With no saved copy and no Sanity at the very first start the placeholder panels (Robot Status, 3D View) show with empty bodies until the first read. They are marked placeholders and belong to the panel lane.
