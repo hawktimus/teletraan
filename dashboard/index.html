@@ -372,8 +372,8 @@
 
       <!-- The patterns and gradients of the themes (styles/<theme>/theme.css). Their colors are the custom
            properties of the theme, so they follow the team. theme-hair is the double hairline of Cybertron, theme-hex
-           its faint hex field, theme-retro-dots the halftone of Retro, and the other three the steel, the hazard
-           stripes and the grain of Foundry. -->
+           its faint hex field, theme-retro-dots the halftone of Retro, and the others the steel, the plate, the gear, the brushed
+           lines and the hazard stripes of Foundry. -->
       <linearGradient id="theme-hair" gradientUnits="userSpaceOnUse" spreadMethod="reflect" x1="0" y1="0" x2="760" y2="420">
         <stop offset="0" style="stop-color: var(--style-neon)"/>
         <stop offset="1" style="stop-color: var(--style-pink)"/>
@@ -386,18 +386,29 @@
       </pattern>
       <linearGradient id="theme-steel" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" style="stop-color: var(--style-steel-1)"/>
-        <stop offset=".2" style="stop-color: var(--style-steel-2)"/>
-        <stop offset=".45" style="stop-color: var(--style-steel-3)"/>
-        <stop offset=".6" style="stop-color: var(--style-steel-4)"/>
-        <stop offset=".8" style="stop-color: var(--style-steel-5)"/>
+        <stop offset=".14" style="stop-color: var(--style-steel-2)"/>
+        <stop offset=".4" style="stop-color: var(--style-steel-3)"/>
+        <stop offset=".62" style="stop-color: var(--style-steel-4)"/>
+        <stop offset=".84" style="stop-color: var(--style-steel-5)"/>
         <stop offset="1" style="stop-color: var(--style-steel-6)"/>
       </linearGradient>
+      <linearGradient id="theme-plate" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color: var(--style-plate-hi)"/>
+        <stop offset=".55" style="stop-color: var(--style-plate)"/>
+        <stop offset="1" style="stop-color: var(--style-plate-lo)"/>
+      </linearGradient>
+      <radialGradient id="theme-gear" cx=".5" cy=".5" r=".5">
+        <stop offset="0" style="stop-color: var(--style-steel-3)"/>
+        <stop offset=".55" style="stop-color: var(--style-steel-2)"/>
+        <stop offset=".85" style="stop-color: var(--style-steel-1)"/>
+        <stop offset="1" style="stop-color: var(--style-steel-5)"/>
+      </radialGradient>
+      <pattern id="theme-brush" width="48" height="8" patternUnits="userSpaceOnUse">
+        <path d="M0 1.5H34M10 4.5H48M0 7H20" style="fill: none; stroke: var(--style-steel-hi); stroke-opacity: .1; stroke-width: 1px"/>
+      </pattern>
       <pattern id="theme-hazard" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="14" height="28" style="fill: var(--style-hazard)"/>
         <rect x="14" width="14" height="28" style="fill: var(--style-hazard-ink)"/>
-      </pattern>
-      <pattern id="theme-grain" width="60" height="60" patternUnits="userSpaceOnUse">
-        <path d="M0 30H60M30 0V60" style="fill: none; stroke: var(--style-steel-hi); stroke-opacity: .05; stroke-width: 1px"/>
       </pattern>
 
       <g id="metal-shapes"></g>

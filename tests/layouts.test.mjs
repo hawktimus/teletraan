@@ -3612,10 +3612,10 @@ test('the frames are small: a handful of svg elements and five new gradients, an
   const html = read('dashboard/index.html');
   const gradients = html.match(/<linearGradient id="[a-z-]+"/g) || [];
   ['edge-steel', 'edge-ridge-steel', 'edge-shade-steel', 'armor-face'].forEach(id => assert.ok(gradients.some(text => text.includes('"' + id + '"')), id));
-  assert.equal(gradients.length, 15, 'gold 3, red 3, the screw, the logo, the Nova logo, steel 3, the armor plate, and the hairline and the steel of the themes: ' + gradients.length);
+  assert.equal(gradients.length, 16, 'gold 3, red 3, the screw, the logo, the Nova logo, steel 3, the armor plate, and the hairline, the steel and the plate of the themes: ' + gradients.length);
   assert.ok(!/<(filter|image|mask|clipPath|animate|set)\b/i.test(html), 'no filter, image, mask, clip or SMIL in the page\'s own drawing');
-  assert.deepEqual(html.match(/<pattern id="[a-z-]+"/g), ['<pattern id="theme-hex"', '<pattern id="theme-retro-dots"', '<pattern id="theme-hazard"', '<pattern id="theme-grain"'], 'the patterns are the four of the themes');
-  assert.deepEqual(html.match(/<radialGradient id="[a-z-]+"/g), ['<radialGradient id="wear-rust"'], 'the one radial gradient is the patch of rust under a Minimal frame\'s wear');
+  assert.deepEqual(html.match(/<pattern id="[a-z-]+"/g), ['<pattern id="theme-hex"', '<pattern id="theme-retro-dots"', '<pattern id="theme-brush"', '<pattern id="theme-hazard"'], 'the patterns are the four of the themes');
+  assert.deepEqual(html.match(/<radialGradient id="[a-z-]+"/g), ['<radialGradient id="wear-rust"', '<radialGradient id="theme-gear"'], 'the radial gradients are the patch of rust under a Minimal frame\'s wear and the dome of a Foundry gear');
   assert.ok(!/(feGaussianBlur|feDropShadow|box-shadow|text-shadow|backdrop-filter|filter=|filter:)/.test(read('dashboard/core/plate.js')), 'plate.js draws no glow');
 });
 
@@ -4627,7 +4627,7 @@ test('the war clock\'s plates, sizes and colors are the fixed ones, and only Cyb
     else if (entry.name.endsWith('.css') && /\.war-/.test(withoutComments(read(relative)))) mentions.push(relative);
   });
   walk('dashboard');
-  assert.deepEqual(mentions.sort(), ['dashboard/layouts/bar-minimal.css', warCssFile, 'dashboard/styles/cybertron/theme.css', 'dashboard/trim.css'], 'trim.css gives the war clock the team\'s neon in place of its red, for a team that has Countdown color on Neon');
+  assert.deepEqual(mentions.sort(), ['dashboard/layouts/bar-minimal.css', warCssFile, 'dashboard/styles/cybertron/theme.css', 'dashboard/styles/foundry/theme.css', 'dashboard/trim.css'], 'trim.css gives the war clock the team\'s neon in place of its red, for a team that has Countdown color on Neon');
   assert.ok(!/war-/.test(withoutComments(read('dashboard/styles/original/theme.css'))), 'Original has no war clock');
 });
 

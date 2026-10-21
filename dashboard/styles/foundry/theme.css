@@ -1,15 +1,21 @@
-/* The Foundry theme (core/style.js, Style in Dashboard Settings): blued steel. A frame has a steel rim with a
-   highlight edge, a flange of bolts along the top and the bottom, weld stitches down the sides, a strip of hazard
-   stripes along the foot and a caution plate at the bottom right. The header is a steel plate with an accent bar
-   under the right of it. Gears stand half hidden behind the corner cuts and turn all the time, and pistons stroke
-   at the sides of the large and the small frame. The banner and the ticker are the same steel with a bolt flange.
-   The team's colors appear on the accent bar, the TEAM plate and the ticker's tag; the steel is the same for
-   every team. The background is a dark shop floor (background.js in this folder).
+/* The Foundry theme (core/style.js, Style in Dashboard Settings): dark gunmetal armor, a wall of a fort. A frame has a
+   rim of steel with a lit edge on its upper left and a dark one on its lower right, armor plates split by seams, a row
+   of hex bolts along the rim, brackets in the square corners, clamps across the top and the bottom, hinge knuckles on
+   the left, lock catches with a deadbolt on the right, a strip of hazard stripes along the foot and a caution plate at
+   the bottom right. The header is a steel plate with an accent bar and a hazard line under the right of it. Gears
+   stand half hidden behind the corner cuts and turn all the time, and pistons stroke at the sides of the large and
+   the small frame. The banner and the ticker are the same armor with a smaller bolt row.
+   The team's colors appear on the accent bar, the TEAM plate, the ticker's tag and the tip of each lock: the steel is
+   the same for every team, so a team metal tints the trim and never the plate. The background is a dark shop floor
+   (background.js in this folder).
 
-   The frames are drawn by core/theme-art.js, one svg for each area and an element for each gear and piston, and
-   are in the page for every theme. This file shows them while the theme is on and the layout is the standard one;
-   the bar layout draws Minimal's frames in every theme, so only the background of the theme reaches it. The frames
-   of plate.js (the gold metal) are not drawn by this theme. Nothing here changes any size of the layout.
+   The frames are drawn by core/theme-art-foundry.js, one svg for each area and an element for each gear and piston,
+   and are in the page for every theme. This file shows them while the theme is on and the layout is the standard one;
+   the bar layout draws the plates of Minimal, and the rules for them are at the end of this file. Nothing here changes
+   any size of the layout.
+
+   The bevel is drawn with lines, never with a shadow: a light line on the edges that face up and left, a dark line on
+   the others. Every part of the armor has one (.fa-lit, .fa-lip-lit, .fa-lip-dark).
 
    Motion: the gears turn about their middle and the rod of a piston slides 10 pixels, both with transform only
    (frame.css in this folder). Calm and no motion draw them still, at the end of this file.
@@ -34,69 +40,124 @@ html[data-style="foundry"][data-layout="standard"] .banner .banner-text { positi
 /* The block of shadow behind the rim, moved down and to the right, hard edged */
 .fa-shadow {
   fill: var(--style-ink);
-  fill-opacity: .6;
-  transform: translate(7px, 9px);
+  fill-opacity: .7;
+  transform: translate(8px, 10px);
 }
 .fa-body { fill: var(--style-panel); }
-.fa-grain { fill: url(#theme-grain); }
+.fa-inset-dark {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-width: 3px;
+}
+.fa-inset-lit {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .3;
+  stroke-width: 2px;
+}
 
-/* The rim: a dark line, the steel over it, and a thin bright line moved up and to the left, which is the lit edge */
+/* The rim: a dark outline, the steel over it, the brushed lines over that, and the bevel. The lit line is on the upper
+   left edges at the outside of the rim, and the dark one on the lower right edges; inside the rim it is the other way
+   round, as a lip that goes down to the body. */
 .fa-rim-dark {
   fill: none;
   stroke: var(--style-steel-dark);
-  stroke-width: 22px;
+  stroke-width: 24px;
   stroke-linejoin: miter;
 }
 .fa-rim {
   fill: none;
   stroke: url(#theme-steel);
-  stroke-width: 14px;
+  stroke-width: 20px;
 }
-.fa-rim-light {
+.fa-rim-brush {
+  fill: none;
+  stroke: url(#theme-brush);
+  stroke-width: 20px;
+}
+.fa-lip-lit {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .75;
+  stroke-width: 2px;
+}
+.fa-lip-dark {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-opacity: .95;
+  stroke-width: 2.5px;
+}
+.fa-lip-low { stroke-opacity: .35; }
+.theme-art-banner .fa-rim-dark,
+.theme-art-ticker .fa-rim-dark { stroke-width: 16px; }
+.theme-art-banner .fa-rim,
+.theme-art-ticker .fa-rim,
+.theme-art-banner .fa-rim-brush,
+.theme-art-ticker .fa-rim-brush { stroke-width: 12px; }
+.theme-art-banner .fa-lip-lit,
+.theme-art-ticker .fa-lip-lit { stroke-width: 1.5px; }
+.theme-art-banner .fa-lip-dark,
+.theme-art-ticker .fa-lip-dark { stroke-width: 1.5px; }
+
+/* The seams between the armor plates: a dark groove with a thin light line beside it */
+.fa-seam {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-width: 3px;
+}
+.fa-seam-lit {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .35;
+  stroke-width: 1.5px;
+}
+
+/* The parts that stand on the rim. Each has a steel face, a dark line and a lit line on its upper left edges. */
+.fa-plate {
+  fill: url(#theme-steel);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.fa-lit {
   fill: none;
   stroke: var(--style-steel-hi);
   stroke-opacity: .7;
-  stroke-width: 2px;
-  transform: translate(-5px, -5px);
-}
-.theme-art-banner .fa-rim-dark,
-.theme-art-ticker .fa-rim-dark { stroke-width: 14px; }
-.theme-art-banner .fa-rim,
-.theme-art-ticker .fa-rim { stroke-width: 8px; }
-.theme-art-banner .fa-rim-light,
-.theme-art-ticker .fa-rim-light {
   stroke-width: 1.5px;
-  transform: translate(-3px, -3px);
+}
+.fa-groove {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-width: 2.5px;
+}
+.fa-tongue {
+  fill: var(--style-steel-hi);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
+}
+.fa-tongue-tip {
+  fill: var(--team-accent);
+  stroke: var(--style-steel-dark);
+  stroke-width: 2px;
 }
 
-/* The bolt flange: round heads along the rim, 64 apart, a dark ring and a steel face */
-.fa-flange {
+/* The bolt heads: a dark hexagon, a steel face, a lit line on the upper left of the face and a socket */
+.fa-bolt-rim { fill: var(--style-seam); }
+.fa-bolt-face { fill: var(--style-bolt); }
+.fa-bolt-lit {
+  fill: none;
+  stroke: var(--style-bolt-hi);
+  stroke-width: 1.5px;
+}
+.fa-bolt-dot { fill: var(--style-seam); }
+
+/* The hazard stripes along the foot and the caution plate. The stripes have a dark line around them and a lit one on top. */
+.fa-hazard { fill: url(#theme-hazard); }
+.fa-hazard-line {
   fill: none;
   stroke: var(--style-steel-dark);
-  stroke-width: 16px;
-  stroke-linecap: round;
-  stroke-dasharray: 0 64;
+  stroke-width: 2px;
 }
-.fa-flange-face {
-  fill: none;
-  stroke: var(--style-bolt);
-  stroke-width: 10px;
-  stroke-linecap: round;
-  stroke-dasharray: 0 64;
-}
-.theme-art-banner .fa-flange,
-.theme-art-ticker .fa-flange { stroke-width: 11px; }
-.theme-art-banner .fa-flange-face,
-.theme-art-ticker .fa-flange-face { stroke-width: 6px; }
-
-.fa-stitch {
-  fill: none;
-  stroke: var(--style-steel-hi);
-  stroke-opacity: .5;
-  stroke-width: 3px;
-  stroke-dasharray: 10 14;
-}
-.fa-hazard { fill: url(#theme-hazard); }
 .fa-caution {
   fill: var(--style-hazard);
   stroke: var(--style-steel-dark);
@@ -104,18 +165,26 @@ html[data-style="foundry"][data-layout="standard"] .banner .banner-text { positi
 }
 .fa-caution-mark { fill: var(--style-steel-dark); }
 
-/* The header: a steel plate with the line along its foot, and the accent bar under the right of it */
-.fa-header { fill: var(--style-plate); }
-.fa-header-grain { fill: url(#theme-grain); }
+/* The header: a steel plate with a dark seam along its foot and a lit line over it. The accent bar of the team sits under
+   the right of it, with a strip of hazard stripes. */
+.fa-header { fill: url(#theme-plate); }
 .fa-header-line {
   fill: none;
-  stroke: var(--style-steel-6);
-  stroke-width: 6px;
+  stroke: var(--style-seam);
+  stroke-width: 8px;
+}
+.fa-header-lit {
+  fill: none;
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .28;
+  stroke-width: 1.5px;
 }
 .fa-accent { fill: var(--team-accent); }
+.fa-accent-hazard { fill: url(#theme-hazard); }
 
-/* The gears: steel, with holes, behind the frame. The big one and the far one turn clockwise and the small one,
-   which meshes with the big one, the other way. --gear-turn is the seconds for a turn. */
+/* The gears: gunmetal with a lit rim, holes, behind the frame. The big one and the far one turn clockwise and the small
+   one, which meshes with the big one, the other way. --gear-turn is the seconds for a turn. The gradient is round, so it
+   does not change as the gear turns. */
 .art-foundry .fa-gear {
   position: absolute;
   overflow: visible;
@@ -123,7 +192,7 @@ html[data-style="foundry"][data-layout="standard"] .banner .banner-text { positi
 }
 .art-foundry .fa-gear-small { animation-name: fa-spin-back; }
 .fa-gear-body {
-  fill: var(--style-steel-5);
+  fill: url(#theme-gear);
   fill-rule: evenodd;
   stroke: var(--style-steel-dark);
   stroke-width: 3px;
@@ -131,22 +200,27 @@ html[data-style="foundry"][data-layout="standard"] .banner .banner-text { positi
 }
 .fa-gear-hub {
   fill: var(--style-steel-dark);
-  stroke: var(--style-steel-5);
+  stroke: var(--style-steel-6);
   stroke-width: 3px;
 }
 
-/* The pistons: a cylinder that stays, and a rod that slides 10 pixels in and out */
+/* The pistons: a cylinder that stays, with two bands, and a rod that slides 10 pixels in and out */
 .art-foundry .fa-piston {
   position: absolute;
   overflow: visible;
 }
 .fa-piston-body {
-  fill: var(--style-steel-3);
+  fill: url(#theme-steel);
   stroke: var(--style-steel-dark);
   stroke-width: 2px;
 }
+.fa-piston-band {
+  fill: none;
+  stroke: var(--style-seam);
+  stroke-width: 3px;
+}
 .fa-piston-rod {
-  fill: var(--style-steel-1);
+  fill: var(--style-steel-6);
   stroke: var(--style-steel-dark);
   stroke-width: 2px;
 }
@@ -171,10 +245,14 @@ html[data-style="foundry"] .team-fill,
 html[data-style="foundry"] .tag-fill { fill: var(--team-primary); }
 html[data-style="foundry"] .team-plate-art .edge-shadow,
 html[data-style="foundry"] .team-plate-art .edge-shade,
-html[data-style="foundry"] .team-plate-art .edge-ridge,
 html[data-style="foundry"] .tag-plate .edge-shadow,
-html[data-style="foundry"] .tag-plate .edge-shade,
-html[data-style="foundry"] .tag-plate .edge-ridge { display: none; }
+html[data-style="foundry"] .tag-plate .edge-shade { display: none; }
+html[data-style="foundry"] .team-plate-art .edge-ridge,
+html[data-style="foundry"] .tag-plate .edge-ridge {
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .55;
+  stroke-width: 2px;
+}
 html[data-style="foundry"] .team-plate-art .edge-rim,
 html[data-style="foundry"] .tag-plate .edge-rim { stroke: var(--style-steel-dark); }
 html[data-style="foundry"] .team-plate-art .edge-face,
@@ -270,3 +348,83 @@ html:not([data-motion="full"]) .art-foundry .fa-piston-rod { animation: none; }
    the header ink of a team (dark on Nova's gold) is for the plates that are drawn in the main color. */
 html[data-style="foundry"] .area .header .title { color: var(--team-text); }
 html[data-style="foundry"][data-layout="standard"] .area .page > .label { color: var(--team-text); }
+
+/* The screws of the plates that Foundry does not redraw (the countdown, the TEAM plate, the plates of the bar layout) are hex
+   bolts of gunmetal with a lit edge, not silver */
+html[data-style="foundry"] {
+  --screw-rim: var(--style-seam);
+  --screw-face: var(--style-bolt);
+  --screw-mid: var(--style-bolt);
+  --screw-ridge: var(--style-bolt-hi);
+  --screw-light: var(--style-bolt-hi);
+  --screw-slot: var(--style-seam);
+}
+
+/* The countdown of the standard layout: its plate is gunmetal with a lit edge and a dark one, and a body of the same dark as
+   the frames. The numbers and the stripes are the clock's own colors */
+html[data-style="foundry"][data-layout="standard"] .countdown { --panel-face: var(--style-panel); }
+html[data-style="foundry"][data-layout="standard"] .countdown .red-metal {
+  --edge-face: url(#theme-steel);
+  --edge-rim: var(--style-steel-dark);
+  --edge-ridge: var(--style-steel-hi);
+  --edge-shade: var(--style-seam);
+}
+
+/* The plates of the bar layout (Prime, Nova and Family): armor in the same gunmetal as the standard frames. The team's
+   neon line stays just inside the edge, which is the team's metal as a trim, and the body is the dark of the frames. */
+html[data-style="foundry"][data-layout="bar"] .plate .body { fill: var(--style-panel); }
+html[data-style="foundry"][data-layout="bar"] .area,
+html[data-style="foundry"][data-layout="bar"] .bar-banner { --panel-face: var(--style-panel); }
+html[data-style="foundry"][data-layout="bar"] .area .plate .header-left,
+html[data-style="foundry"][data-layout="bar"] .area .plate .header-right { fill: url(#theme-plate); }
+html[data-style="foundry"][data-layout="bar"] .plate .tab-inset { fill: var(--style-plate); fill-opacity: .6; }
+html[data-style="foundry"][data-layout="bar"] .plate .tab-bevel { stroke: var(--style-seam); }
+html[data-style="foundry"][data-layout="bar"] .plate .tab-line {
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .45;
+}
+html[data-style="foundry"][data-layout="bar"] .edge-face { stroke: url(#theme-steel); }
+html[data-style="foundry"][data-layout="bar"] .edge-rim { stroke: var(--style-steel-dark); }
+html[data-style="foundry"][data-layout="bar"] .edge-shade {
+  stroke: var(--style-seam);
+  stroke-opacity: .7;
+}
+html[data-style="foundry"][data-layout="bar"] .edge-ridge {
+  stroke: var(--style-steel-hi);
+  stroke-opacity: .65;
+}
+html[data-style="foundry"][data-layout="bar"] .plate .art-wear,
+html[data-style="foundry"][data-layout="bar"] .plate .art-smudge { display: none; }
+html[data-style="foundry"][data-layout="bar"] .area .row-bar .edge-face {
+  stroke: var(--style-steel-5);
+  stroke-width: 4px;
+}
+html[data-style="foundry"][data-layout="bar"] .area .row-bar .edge-shadow,
+html[data-style="foundry"][data-layout="bar"] .area .row-bar .edge-shade,
+html[data-style="foundry"][data-layout="bar"] .area .row-bar .edge-ridge,
+html[data-style="foundry"][data-layout="bar"] .area .row-bar .edge-rim { display: none; }
+
+/* The chips are stamped plates: the team's color, a lit line on the upper left and a dark one on the lower right drawn as
+   gradients over it, and a dark line inside the edge. Nothing here changes the size of a chip. */
+html[data-style="foundry"] .person-chip,
+html[data-style="foundry"] .team-chip,
+html[data-style="foundry"] .events .kind-chip {
+  outline: 2px solid var(--style-seam);
+  outline-offset: -2px;
+  background-image:
+    linear-gradient(var(--style-sheen), var(--style-sheen)),
+    linear-gradient(var(--style-sheen), var(--style-sheen)),
+    linear-gradient(var(--style-dusk), var(--style-dusk)),
+    linear-gradient(var(--style-dusk), var(--style-dusk)),
+    linear-gradient(180deg, var(--style-sheen-soft), transparent 45%);
+  background-position: 0 0, 0 0, 0 100%, 100% 0, 0 0;
+  background-repeat: no-repeat;
+  background-size: 100% 2px, 2px 100%, 100% 2px, 2px 100%, 100% 100%;
+}
+
+/* The housing of the war clock in the bar banner is the same gunmetal, with no rust. The digits and the plates behind them are the clock's own. */
+html[data-style="foundry"][data-layout="bar"] .war-housing-fill,
+html[data-style="foundry"] .war-clock.war-wide .war-housing-fill { fill: url(#theme-steel); }
+html[data-style="foundry"] .war-rust,
+html[data-style="foundry"] .war-smudge,
+html[data-style="foundry"] .war-wear { display: none; }
