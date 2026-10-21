@@ -415,7 +415,8 @@
     const strong = style => Number(style.opacity) * (style.strokeOpacity === '' ? 1 : Number(style.strokeOpacity)) >= 0.9;
     const lineOf = (element, path, matrix) => {
       const style = window.getComputedStyle(element);
-      const width = style.stroke !== 'none' && strong(style) && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class'))) ? parseFloat(style.strokeWidth) : 0;
+      // A layer the theme hides (the rim of the Cybertron edge, 16 wide) paints nothing, so it cannot cover a seam
+      const width = style.stroke !== 'none' && style.display !== 'none' && strong(style) && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class'))) ? parseFloat(style.strokeWidth) : 0;
       const filled = style.fill !== 'none' && style.display !== 'none' && Number(style.opacity) >= 0.9 && Number(style.fillOpacity) >= (/\bart-/.test(String(element.getAttribute('class'))) ? 0.9 : 0.1) && !/shadow|glint|neon|glow|wear|rust/.test(String(element.getAttribute('class')));
       if (!filled && !(width > 0)) return;
       shapes.push({ path: path, matrix: matrix, fill: filled, width: width, cap: style.strokeLinecap, join: style.strokeLinejoin });

@@ -50,6 +50,7 @@ Say so here and in the commit that did it, so nobody wonders.
 
 - Letters of one word, and a bracket that touches the line under it, are not text blocks that overlap (`swap.mjs`): only ink that overlaps by more than 4px does.
 - A seam is a run of at least 8 pixels along an edge. A pinhole of a few pixels where three pieces meet at a corner is not counted (`seams.mjs`).
+- A layer the theme hides (display none, like the rim of the Cybertron edge) is not painted by the probe, because it is not on the screen.
 - A translucent fill counts as paint in the seam probe (`lib/probe.js`), because the Cybertron and Retro frames are translucent by design. Where the pieces are is still checked to the pixel; decoration must be solid to count.
 - The title of a panel has the 16px that the design keeps between its room and the metal of the line (`dashboard/core/header-room.js`), so LEADERSHIP at 96px, 650.6px wide in 656px, has 21px before the metal and 5px in its box (`text.mjs`).
 
