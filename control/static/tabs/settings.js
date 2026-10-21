@@ -21,11 +21,8 @@ export const sections = [
   { id: 'keys', title: 'Keys', mount: mountKeys },
   { id: 'monday', title: 'Monitor Monday', mount: mountMonday, light: true },
   { id: 'sync', title: 'Sync and restart', mount: mountSync },
-<<<<<<< HEAD
   { id: 'competition', title: 'Competition data', mount: mountCompetition },
-=======
   { id: 'screen', title: 'Screen', mount: mountScreen, light: true },
->>>>>>> worktree-agent-ada81b1504457165e
   { id: 'reboot', title: 'Scheduled reboot', mount: mountReboot },
   { id: 'log', title: 'Logs', mount: mountLog },
   // Other files add to this one (settings-all.js); its body has a fixed id for them
