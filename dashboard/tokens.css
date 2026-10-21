@@ -387,8 +387,10 @@ html.palette-inverted {
   --logo-nova-shadow: #1a0530;
   --logo-nova-flat: #6c18b6; /* the one plain color of the edge in the flat finish */
   --logo-nova-edge-1: #c8a7ff; /* the brightest highlight, and the band where the light catches */
+  --logo-nova-edge-2: #a56ae8; /* the light mid tone, on both sides of the dark band */
   --logo-nova-edge-3: #8c44dc; /* the plain mid tone */
   --logo-nova-edge-4: #53048f; /* the dark tone */
+  --logo-nova-edge-5: #2a1245; /* the darkest pit, just before the band of light */
 }
 
 :root {

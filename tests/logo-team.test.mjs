@@ -68,18 +68,24 @@ test('every color of Nova is the pair of the Prime one, and the colors are token
   assert.equal(tokenIn(tokens, 'logo-nova-tail'), '#c18c07', '#53048F and #C18C07');
   assert.equal(tokenIn(tokens, 'logo-nova-far'), '#9b6c06', '#3D036D and #9B6C06');
   assert.equal(tokenIn(tokens, 'logo-nova-edge-1'), '#c8a7ff', '#FFF5CE and #C8A7FF');
+  assert.equal(tokenIn(tokens, 'logo-nova-edge-2'), '#a56ae8', 'the light mid tone of the brushed purple metal');
   assert.equal(tokenIn(tokens, 'logo-nova-edge-3'), '#8c44dc', '#FFDD77 and #8C44DC');
   assert.equal(tokenIn(tokens, 'logo-nova-edge-4'), '#53048f', '#C18C07 and #53048F');
+  assert.equal(tokenIn(tokens, 'logo-nova-edge-5'), '#2a1245', 'the darkest pit of the brushed purple metal');
   assert.equal(tokenIn(tokens, 'logo-nova-shadow'), '#1a0530', '#2E2000 and #1A0530');
   assert.equal(tokenIn(tokens, 'logo-nova-flat'), '#6c18b6', 'the flat finish takes the purple');
 
   const page = read('dashboard/index.html');
   const gradient = /<linearGradient id="logo-metal-nova"[\s\S]*?<\/linearGradient>/.exec(page);
   assert.ok(gradient, 'the page has the Nova edge gradient');
-  ['edge-1', 'edge-3', 'edge-4'].forEach(name => assert.ok(gradient[0].includes('var(--logo-nova-' + name + ')'), name));
+  ['edge-1', 'edge-2', 'edge-3', 'edge-4', 'edge-5'].forEach(name => assert.ok(gradient[0].includes('var(--logo-nova-' + name + ')'), name));
+  // The purple metal has more bands than the gold one (nine stops, with a dark pit before the hard band of light at .56),
+  // because one lilac line read as flat paint. The direction and the band of light are the Prime edge's.
   const prime2 = /<linearGradient id="logo-metal"[\s\S]*?<\/linearGradient>/.exec(page)[0];
-  assert.equal(gradient[0].match(/<stop /g).length, prime2.match(/<stop /g).length, 'the same stops and the same light as the Prime edge');
-  assert.equal(gradient[0].match(/offset="[^"]+"/g).join(), prime2.match(/offset="[^"]+"/g).join());
+  assert.equal(gradient[0].match(/<stop /g).length, 9, 'nine stops');
+  assert.ok(gradient[0].match(/<stop /g).length > prime2.match(/<stop /g).length, 'more bands than the Prime edge');
+  assert.ok(gradient[0].includes('offset=".56"') && prime2.includes('offset=".56"'), 'the hard band of light is where the Prime edge has it');
+  assert.equal(gradient[0].match(/x1="[^"]+" y1="[^"]+" x2="[^"]+" y2="[^"]+"/)[0], prime2.match(/x1="[^"]+" y1="[^"]+" x2="[^"]+" y2="[^"]+"/)[0], 'the same direction of light');
 });
 
 test('which team draws which logo: Nova gets the Nova logo, Prime and every other team and the Robotics view get Prime', () => {
@@ -207,6 +213,22 @@ for (const entry of tests) {
     console.log(error);
   }
 }
+test('the Nova hawk keeps its purple metal in Cybertron and the bar layout, and purple numbers on the TEAM plate have an outline for Nova only', () => {
+  const cybertron = withoutComments(read('dashboard/styles/cybertron/theme.css'));
+  const bar = withoutComments(read('dashboard/layouts/bar-minimal.css'));
+  assert.ok(cybertron.includes('.banner .logo .drawing:not(.logo-nova)') && cybertron.includes('.side-logo .drawing:not(.logo-nova)'), 'Cybertron does not flatten the Nova edge to the accent');
+  assert.ok(bar.includes('.bar-logo .drawing:not(.logo-nova)'), 'the bar layout does not either');
+
+  const teams = withoutComments(read('dashboard/teams.css'));
+  assert.ok(/:root \{\s*--team-text-outline: 0px;\s*--team-text-outline-ink: transparent;\s*\}/.test(teams), 'no outline for any team by default');
+  assert.ok(/html\.palette-inverted\.metal-purple \{\s*--team-text-outline: 3px;\s*--team-text-outline-ink: var\(--team-header-ink\);\s*\}/.test(teams), 'the width and the dark ink are set for the Nova palette only');
+  const rule = /(html\[data-style="cybertron"\] \.team-number,[^{]*)\{([^}]*)\}/.exec(teams);
+  assert.ok(rule, 'the outline rule');
+  assert.ok(rule[1].includes('html[data-layout="bar"] .team-number'), 'the bar layout');
+  assert.ok(!/retro|foundry/.test(rule[1]), 'Retro and Foundry draw the number in the header ink and take no outline');
+  assert.ok(/-webkit-text-stroke: var\(--team-text-outline\) var\(--team-text-outline-ink\);/.test(rule[2]) && /paint-order: stroke fill;/.test(rule[2]), 'the stroke is behind the fill');
+  assert.ok(!/html\.name-outline|\.team-name|\.bar-name/.test(rule[1]), 'the name has its own switch and is not touched');
+});
 
 console.log('\n' + (tests.length - failures) + ' of ' + tests.length + ' passed');
 if (failures > 0) process.exitCode = 1;

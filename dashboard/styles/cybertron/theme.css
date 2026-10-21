@@ -147,9 +147,10 @@ html[data-style="cybertron"] .sponsor-feature .card-fill,
 html[data-style="cybertron"] .photo .card-fill { fill: none; }
 
 /* The hawk in the banner (and in the sidebar of Neon Prime) has the team's accent for its outline,
-   and keeps the colors the theme gives its plates */
-html[data-style="cybertron"] .banner .logo .drawing,
-html[data-style="cybertron"] .side-logo .drawing { --logo-edge: var(--team-accent); }
+   and keeps the colors the theme gives its plates. The Nova hawk keeps its purple metal: the accent
+   as one flat color made its outline look painted */
+html[data-style="cybertron"] .banner .logo .drawing:not(.logo-nova),
+html[data-style="cybertron"] .side-logo .drawing:not(.logo-nova) { --logo-edge: var(--team-accent); }
 
 /* The // mark at the right end of a header is left off. The step at the top right of the frame
    is where its top would be, and the pictures have none there. A seasonal pack's mark is

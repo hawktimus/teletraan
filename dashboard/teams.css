@@ -16,3 +16,26 @@ html.theme-hawktimus {
   --ground: var(--team-background);
   --white: var(--team-text);
 }
+
+/* The outline of purple text on Nova's gold. Nova's accent is a light purple, and where the number on the TEAM
+   plate is drawn in it (Cybertron, the bar layout and the two themes that paint their own plates) it sits on dark
+   gold, a soft pair on a TV. So those numbers get a dark stroke around the letters, drawn behind the fill
+   (paint-order) so the letters keep their weight and only gain an edge. Original, Retro and Foundry draw the number
+   in the header ink on the gold and need none. The width and color are set for the inverted palette with the purple
+   metal (Nova) only and stay 0 for every other team, so Prime is unchanged. The name has its own switch, Outlined
+   name (trim.css), and is not touched here. */
+:root {
+  --team-text-outline: 0px;
+  --team-text-outline-ink: transparent;
+}
+html.palette-inverted.metal-purple {
+  --team-text-outline: 3px;
+  --team-text-outline-ink: var(--team-header-ink);
+}
+html[data-style="cybertron"] .team-number,
+html[data-layout="bar"] .team-number,
+html.theme-neon-prime .team-number,
+html.theme-alternate .team-number {
+  -webkit-text-stroke: var(--team-text-outline) var(--team-text-outline-ink);
+  paint-order: stroke fill;
+}
