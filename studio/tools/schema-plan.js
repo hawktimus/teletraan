@@ -105,6 +105,9 @@ export const plan = {
     // Collections are content, edited in blocks of the Display tab (control/routes/collection-doc.js), not on the All settings page
     { type: 'tipOrNews', mode: 'collection', title: 'Ticker lines', says: 'The tips, news and reminders on the ticker.' },
     { type: 'rosterPerson', mode: 'collection', title: 'Roster', says: 'First names with a role and a team.' },
+    // The existing people of the wall. The Studio calls the type person Leadership and the type subteam Team leads.
+    { type: 'person', mode: 'collection', title: 'Leadership', says: 'The leadership list of the wall: name, role, team.' },
+    { type: 'subteam', mode: 'collection', title: 'Team leads', says: 'The subteam leads of the wall, with their members.' },
   ],
 };
 
@@ -118,9 +121,7 @@ export const leftOut = {
   calendarFilter: 'Calendar filters are content for the Studio.',
   sponsor: 'Sponsors have pictures and are content for the Studio.',
   announcement: 'Announcements are content for the Studio.',
-  subteam: 'Team leads have pictures and are content for the Studio.',
   place: 'Not read by the screen.',
-  person: 'People have pictures and are content for the Studio.',
   photo: 'Photos are uploads.',
   screen: 'The old Screens are stored for seeding only. The screen reads the views.',
   demo: 'Demo content is not shown on the screen.',

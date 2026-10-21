@@ -3,6 +3,8 @@
 // drawn from the Studio schema by settings-all-fields.js), so the limits, counters and warnings are the Studio's. Everything goes to
 // the draft first, like the Studio, and Publish is a button of its own. A change made in the Studio meanwhile is a question,
 // never an overwrite. The page calls mountList(body, options, ctx); ctx.api replaces the call to the control service (the tests do).
+// One list can hold several types (options.types, the roster does): each item remembers its own type, and a save, publish or delete
+// goes to that type. Only options.type can be added. options.filters and options.keep add a filter box and a search box.
 
 import { api as realApi, useStyles } from './api.js';
 import { problemsIn } from '../settings-check.js';
@@ -34,10 +36,13 @@ export async function mountList(body, options, ctx = {}) {
   const call = ctx.api || realApi;
   const root = h('div', { class: 'ct-list', 'data-type': options.type });
   body.replaceChildren(root);
-  const page = { docSpec: null, items: [], teams: [], canWrite: false, editing: null, adding: false, ask: null, working: false, flash: { state: '', words: '' }, error: '' };
+  const types = options.types || [options.type];
+  const page = { docSpec: null, specs: {}, filter: { kind: 'all', q: '' }, items: [], teams: [], canWrite: false, editing: null, adding: false, ask: null, working: false, flash: { state: '', words: '' }, error: '' };
 
   const word = options.noun;
-  const nameOf = item => options.nameOf(item.document);
+  const typeOf = item => (item && item.type) || options.type;
+  const nameOf = item => options.nameOf(item.document, typeOf(item));
+  const nounOf = item => (options.nounOf && item ? options.nounOf(item) : word);
   const now = () => new Date();
 
   function say(state, words) {
@@ -50,17 +55,19 @@ export async function mountList(body, options, ctx = {}) {
 
   async function load() {
     if (!specRequest) specRequest = call('GET', '/spec');
-    const [spec, list] = await Promise.all([specRequest, call('GET', '/docs/' + options.type)]);
+    const [spec, ...lists] = await Promise.all([specRequest].concat(types.map(type => call('GET', '/docs/' + type))));
     if (!spec.ok) specRequest = null;
-    if (!spec.ok || !list.ok) {
-      page.error = spec.ok ? list.error : spec.error;
+    const failed = !spec.ok ? spec : lists.filter(list => !list.ok)[0];
+    if (failed) {
+      page.error = failed.error;
       return false;
     }
     page.error = '';
-    page.docSpec = spec.data.documents.filter(doc => doc.type === options.type)[0];
-    page.items = list.data.items;
-    page.teams = list.data.teams;
-    page.canWrite = list.data.canWrite;
+    types.forEach(type => { page.specs[type] = spec.data.documents.filter(doc => doc.type === type)[0]; });
+    page.docSpec = page.specs[options.type];
+    page.items = [].concat(...lists.map((list, at) => list.data.items.map(item => Object.assign({ type: types[at] }, item))));
+    page.teams = lists[0].data.teams;
+    page.canWrite = lists[0].data.canWrite;
     return true;
   }
 
@@ -84,9 +91,9 @@ export async function mountList(body, options, ctx = {}) {
 
   function editor() {
     const item = page.editing;
-    const fields = page.docSpec.fields;
-    const state = { base: item ? shownValues(fields, item.document) : {}, values: shownValues(fields, item ? item.document : null), errors: {} };
-    const box = h('section', { class: 'sa ct-editor', 'aria-label': item ? 'Edit ' + word : 'Add ' + word });
+    const fields = (item ? page.specs[typeOf(item)] : page.docSpec).fields;
+    const state = { base: item ? shownValues(fields, item.document) : {}, values: shownValues(fields, item ? item.document : null), errors: {}, advice: {} };
+    const box = h('section', { class: 'sa ct-editor', 'aria-label': item ? 'Edit ' + nounOf(item) : 'Add ' + word });
     const flash = h('p', { class: 'ct-note', role: 'status' });
     const fieldAt = path => fields.filter(field => field.name === path)[0];
     const extra = options.preview ? h('div', { class: 'ct-extra' }) : null;
@@ -105,6 +112,26 @@ export async function mountList(body, options, ctx = {}) {
     const conflictSlot = h('div', { class: 'ct-slot' });
     const drawFields = () => grid.replaceChildren(...fields.map(field => fieldView(field, form, field.name, state.values)));
 
+    // The advice that only the control service can work out (a full name, an email address): asked a moment after typing stops
+    let asking = null;
+    function showAdvice() {
+      box.querySelectorAll('.sa-field').forEach(wrapper => {
+        const warn = wrapper.querySelector(':scope > .sa-warn');
+        const error = wrapper.querySelector(':scope > .sa-error');
+        if (warn && warn.textContent === '' && error.textContent === '' && state.advice[wrapper.dataset.path]) warn.textContent = state.advice[wrapper.dataset.path];
+      });
+    }
+    function askAdvice() {
+      clearTimeout(asking);
+      asking = setTimeout(async () => {
+        const answer = await call('POST', '/docs/' + typeOf(item || { type: options.type }) + '/check', { set: item ? changesOf(fields, state.base, state.values).set : state.values });
+        if (!answer.ok || !box.isConnected) return;
+        state.advice = {};
+        answer.data.warnings.forEach(one => { state.advice[one.path] = one.message; });
+        showAdvice();
+      }, 300);
+    }
+
     function after() {
       box.querySelectorAll('.sa-field').forEach(wrapper => {
         const changed = Boolean(item) && !sameValue(getAt(state.base, wrapper.dataset.path), getAt(state.values, wrapper.dataset.path));
@@ -113,11 +140,13 @@ export async function mountList(body, options, ctx = {}) {
         wrapper.querySelector(':scope > .sa-head .sa-undo').hidden = !changed;
       });
       refreshProblems(box, fieldAt, form);
+      showAdvice();
       Object.keys(state.errors).forEach(path => {
         const wrapper = Array.from(box.querySelectorAll('.sa-field')).filter(one => one.dataset.path === path)[0];
         if (wrapper) { wrapper.querySelector(':scope > .sa-error').textContent = state.errors[path]; wrapper.dataset.invalid = 'yes'; }
       });
       if (extra) options.preview(extra, state.values);
+      askAdvice();
     }
 
     const conflictBox = answer => h('div', { class: 'ct-conflict', role: 'alert' },
@@ -141,13 +170,14 @@ export async function mountList(body, options, ctx = {}) {
       flash.dataset.state = 'wait';
       flash.textContent = 'Saving to the draft.';
       const answer = item
-        ? await call('POST', '/docs/' + options.type + '/' + item.id + '/save', { baseRev: item.rev, force: force, set: patch.set, unset: patch.unset })
+        ? await call('POST', '/docs/' + typeOf(item) + '/' + item.id + '/save', { baseRev: item.rev, force: force, set: patch.set, unset: patch.unset })
         : await call('POST', '/docs/' + options.type, { set: patch.set });
       page.working = false;
       if (answer.ok) {
         page.editing = null;
         page.adding = false;
-        return reload('done', 'Saved to the draft. It is not on the wall until you press Publish.');
+        const advice = (answer.data.warnings || []).map(one => one.message);
+        return reload('done', 'Saved to the draft. It is not on the wall until you press Publish.' + (advice.length > 0 ? ' Check: ' + advice.join(' ') : ''));
       }
       if (answer.data && answer.data.conflict) {
         flash.dataset.state = 'bad';
@@ -160,7 +190,8 @@ export async function mountList(body, options, ctx = {}) {
       after();
     }
 
-    box.append(h('h3', { class: 'ct-edit-title', text: item ? 'Edit ' + word : 'Add ' + word }));
+    box.append(h('h3', { class: 'ct-edit-title', text: item ? 'Edit ' + nounOf(item) : 'Add ' + word }));
+    if (item && item.picture) box.append(h('p', { class: 'ct-pic' }, h('img', { class: 'ct-face', src: item.picture, alt: '', width: '48', height: '48' }), h('span', { text: 'The picture is added in the Studio. It shows here but cannot be changed here.' })));
     drawFields();
     box.append(conflictSlot, grid);
     if (extra) box.append(extra);
@@ -179,7 +210,7 @@ export async function mountList(body, options, ctx = {}) {
   async function act(item, path, body, doneWords) {
     page.working = true;
     say('wait', 'Working.');
-    const answer = await call('POST', '/docs/' + options.type + '/' + item.id + path, body);
+    const answer = await call('POST', '/docs/' + typeOf(item) + '/' + item.id + path, body);
     page.working = false;
     if (answer.ok) return reload('done', doneWords);
     if (answer.data && answer.data.conflict) return reload('bad', answer.error + ' The list was read again.');
@@ -199,7 +230,7 @@ export async function mountList(body, options, ctx = {}) {
     say('wait', 'Publishing ' + waiting.length + '.');
     let done = 0;
     for (const item of waiting) {
-      const answer = await call('POST', '/docs/' + options.type + '/' + item.id + '/publish', { confirm: true, rev: item.rev });
+      const answer = await call('POST', '/docs/' + typeOf(item) + '/' + item.id + '/publish', { confirm: true, rev: item.rev });
       if (!answer.ok) return reload('bad', 'Published ' + done + ' of ' + waiting.length + '. ' + answer.error);
       done += 1;
     }
@@ -212,7 +243,7 @@ export async function mountList(body, options, ctx = {}) {
     say('wait', 'Saving the new order to the drafts.');
     for (const change of changes) {
       const target = page.items.filter(one => one.id === change.id)[0];
-      const answer = await call('POST', '/docs/' + options.type + '/' + change.id + '/save', { baseRev: target.rev, set: { order: change.order } });
+      const answer = await call('POST', '/docs/' + typeOf(target) + '/' + change.id + '/save', { baseRev: target.rev, set: { order: change.order } });
       if (!answer.ok) return reload('bad', answer.error);
     }
     return reload('done', 'Saved the new order to the drafts. Press Publish to put it on the wall.');
@@ -227,9 +258,9 @@ export async function mountList(body, options, ctx = {}) {
   function askBox(item) {
     const ask = page.ask;
     const wording = {
-      publish: ['Publish this ' + word + ' now? The wall shows it within a minute.', 'Publish now', publish],
+      publish: ['Publish this ' + nounOf(item) + ' now? The wall shows it within a minute.', 'Publish now', publish],
       drop: ['Drop the waiting changes? The published copy stays as it is.', 'Drop my changes', dropDraft],
-      delete: [item.published ? 'Delete this ' + word + ' from the wall and the Studio? This cannot be undone.' : 'Delete this draft? It was never published.', 'Delete', remove],
+      delete: [item.published ? 'Delete this ' + nounOf(item) + ' from the wall and the Studio? This cannot be undone.' : 'Delete this draft? It was never published.', 'Delete', remove],
     }[ask.kind];
     return h('div', { class: 'ct-ask', role: 'group', 'aria-label': 'Confirm', 'data-ask': ask.kind },
       h('p', { text: wording[0] }),
@@ -272,21 +303,19 @@ export async function mountList(body, options, ctx = {}) {
     return parts;
   }
 
+  const kept = item => !options.keep || options.keep(item, page.filter.kind, page.filter.q.trim().toLowerCase());
+
   function sections() {
-    const sorted = sortItems(page.items, nameOf);
+    const sorted = sortItems(page.items.filter(kept), nameOf);
     if (options.sections) return options.sections(sorted, page).map(section => ({ section: section, shown: sorted }));
     return [{ section: { title: '', count: sorted.length, items: sorted }, shown: sorted }];
   }
 
-  function draw() {
-    if (page.error) {
-      root.replaceChildren(h('div', { class: 'ct-error' }, h('p', { class: 'bad', text: page.error }), button('Try again', { 'data-act': 'again', class: 'act' }, () => reload('', ''))));
-      return;
-    }
-    const parts = toolbar();
-    parts.push(h('p', { class: 'ct-flash', role: 'status', 'data-state': page.flash.state, text: page.flash.words }));
-    if (page.editing || page.adding) parts.push(editor());
+  // The rows alone, so typing in the search box never rebuilds an open form
+  function rows() {
+    const parts = [];
     if (page.items.length === 0) parts.push(h('p', { class: 'ct-none', text: options.empty }));
+    else if (page.items.filter(kept).length === 0) parts.push(h('p', { class: 'ct-none', text: 'Nobody matches. Clear the search or pick All.' }));
     sections().forEach(({ section, shown }) => {
       if (section.title) {
         parts.push(h('h3', { class: 'ct-group', text: section.title + ' (' + section.count + ')' }));
@@ -298,6 +327,31 @@ export async function mountList(body, options, ctx = {}) {
         section.items.forEach(item => parts.push(row(item, shown)));
       }
     });
+    return parts;
+  }
+
+  function filterBar(rowsHost) {
+    const kind = h('select', { id: 'ct-filter-kind', 'aria-label': 'Show', 'data-filter': 'kind' }, options.filters.map(choice => h('option', { value: choice.id, text: choice.title })));
+    kind.value = page.filter.kind;
+    const search = h('input', { type: 'search', id: 'ct-filter-q', 'aria-label': 'Search by first name', placeholder: 'Search by first name', autocomplete: 'off', value: page.filter.q });
+    const again = () => rowsHost.replaceChildren(...rows());
+    kind.addEventListener('change', () => { page.filter.kind = kind.value; again(); });
+    search.addEventListener('input', () => { page.filter.q = search.value; again(); });
+    return h('div', { class: 'ct-filters' }, kind, search);
+  }
+
+  function draw() {
+    if (page.error) {
+      root.replaceChildren(h('div', { class: 'ct-error' }, h('p', { class: 'bad', text: page.error }), button('Try again', { 'data-act': 'again', class: 'act' }, () => reload('', ''))));
+      return;
+    }
+    const parts = toolbar();
+    parts.push(h('p', { class: 'ct-flash', role: 'status', 'data-state': page.flash.state, text: page.flash.words }));
+    if (page.editing || page.adding) parts.push(editor());
+    const rowsHost = h('div', { class: 'ct-rows' });
+    if (options.filters) parts.push(filterBar(rowsHost));
+    rowsHost.replaceChildren(...rows());
+    parts.push(rowsHost);
     root.replaceChildren(...parts);
   }
 

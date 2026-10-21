@@ -3,6 +3,7 @@
 //
 //   GET  /control/api/docs/<type>                       every document of that type, the draft when there is one
 //   POST /control/api/docs/<type>                       { set } makes a new draft with a new id
+//   POST /control/api/docs/<type>/check                 { set } the warnings of the schema for those values; writes nothing
 //   GET  /control/api/docs/<type>/<id>                  one document
 //   POST /control/api/docs/<type>/<id>/save             { set, unset, baseRev, force } writes the changed fields to the draft
 //   POST /control/api/docs/<type>/<id>/publish          { confirm, rev, force } publishes that one document
@@ -14,7 +15,7 @@
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
 import { checkIdShape, cleanChanges, documentQuery, getSpec, pickDocument, publishMutations, publishedIdOf, saveMutations, summary } from '../support/settings-doc.js';
-import { collectionOf, deleteMutations, itemsFrom, listQuery, newDraft } from '../support/collection-doc.js';
+import { collectionOf, deleteMutations, itemsFrom, listQuery, newDraft, warningsFor } from '../support/collection-doc.js';
 import { conflict, readTeams, refuse } from './settings-doc.js';
 
 const noToken = 'SANITY_WRITE_TOKEN is not set on the Teletraan computer. Add it in Settings, Keys.';
@@ -76,6 +77,13 @@ export function register(router, ctx) {
     }
   });
 
+  mount(router, ctx, 'POST', '/docs/:type/check', async (req, res) => {
+    const type = paramOf(req, '/docs/:type/check', 'type');
+    const body = await readJson(req);
+    const docSpec = collectionOf(await getSpec(ctx), type);
+    send(res, 200, { warnings: warningsFor(docSpec, body && typeof body.set === 'object' && body.set ? body.set : {}) });
+  });
+
   mount(router, ctx, 'GET', '/docs/:type/:id', async (req, res) => {
     const type = paramOf(req, '/docs/:type/:id', 'type');
     const id = paramOf(req, '/docs/:type/:id', 'id');
@@ -105,7 +113,7 @@ export function register(router, ctx) {
         throw error;
       }
       ctx.log(type + ' saved to the draft of ' + current.id + ': ' + Object.keys(changes.set).concat(changes.unset).join(', '));
-      send(res, 200, Object.assign({ ok: true }, summary((await openItem(ctx, type, id)).current)));
+      send(res, 200, Object.assign({ ok: true, warnings: warningsFor(docSpec, changes.set) }, summary((await openItem(ctx, type, id)).current)));
     } catch (error) {
       if (error instanceof Refusal && error.status === 400) return refuse(res, error);
       throw error;

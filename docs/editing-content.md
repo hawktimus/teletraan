@@ -112,7 +112,7 @@ The agenda, the talks and the meeting days open from the links at the foot of th
 
 ### Roster
 
-Under People, Roster lists everyone on the team: a first name, a role (Student, Mentor, Coach, Parent or Leadership), an optional job title such as Captain or Lead mentor, the team (Both, Prime or Nova), an optional department, an optional portrait, Show on screen and Hide after. Use a first name only. The screen is public, so no last name, email address or phone number goes in, and the form warns on a space, an @ or a number. Set Hide after for someone who graduated or left. The same list can be edited on the control page, Display tab, Content, Roster, where the portrait shows but cannot be changed. docs/roster.md has the rest.
+Under People, Roster lists everyone on the team: a first name, a role (Student, Mentor, Coach, Parent or Leadership), an optional job title such as Captain or Lead mentor, the team (Both, Prime or Nova), an optional department, an optional portrait, Show on screen and Hide after. Use a first name only. The screen is public, so no last name, email address or phone number goes in, and the form warns on a space, an @ or a number. Set Hide after for someone who graduated or left. The same list can be edited on the control page, Display tab, Content, Roster, where the portrait shows but cannot be changed. That block also lists the Leadership and Team leads documents, so any of them can be edited there without opening the Studio. docs/roster.md has the rest.
 
 ### Coaches only
 

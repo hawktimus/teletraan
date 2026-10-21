@@ -1,12 +1,12 @@
-// Roster, a block of the Content section of the Display tab: everyone on the roster grouped by team and then by role (Leadership,
-// Mentors and Coaches, Students, Parents) with counts, and an add, edit, hide and delete form. Under it the Leadership and Team
-// leads that the Studio already has, read only, with a link to edit them there. The portrait is shown but only the Studio changes
-// it. The whole dataset is public, so the form takes a first name and nothing that names or reaches a person.
+// Roster, a block of the Content section of the Display tab: everyone the wall knows by first name in one list, grouped by team and
+// then by role with counts. It holds three kinds of document, each marked with where it lives: the Roster (rosterPerson), Leadership
+// (person) and Team leads (subteam). All three are edited in place with the same form, Save to draft, Publish, Hide and Delete, and
+// nothing is copied from one to another. Portraits are shown but only the Studio changes them. The whole dataset is public, so the
+// forms take a first name and nothing that names or reaches a person.
 
-import { api as realApi } from './api.js';
 import { h } from '../settings-all-fields.js';
 import { mountList } from './content-list.js';
-import { personLine, roleTitles, rosterGroups } from './content-items.js';
+import { keepPerson, peopleFilters, personLine, personName, roleTitles, rosterGroups, sourceTitles } from './content-items.js';
 
 const initial = text => (String(text || '?').trim().charAt(0) || '?').toUpperCase();
 
@@ -16,55 +16,45 @@ function picture(src, name) {
     : h('span', { class: 'ct-face ct-initial', 'aria-hidden': 'true', text: initial(name) });
 }
 
-function personRow(item, page) {
+const until = doc => (doc.expires ? 'Until ' + new Date(doc.expires).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+
+// The grey line under the name, which depends on what the kind of document holds
+function subLine(item, page) {
   const doc = item.document;
-  const field = page.docSpec.fields.filter(one => one.name === 'department')[0];
-  const line = personLine(doc, field && field.options ? field.options.list : []);
-  return h('div', { class: 'ct-person' },
-    picture(item.picture, doc.firstName),
-    h('div', { class: 'ct-row' },
-      h('p', { class: 'ct-title', text: doc.firstName || 'Person with no name' }),
-      h('p', { class: 'ct-sub', text: [roleTitles[doc.role] || 'No role', line, doc.expires ? 'Until ' + new Date(doc.expires).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''].filter(Boolean).join(' · ') })));
+  if (item.type === 'subteam') {
+    const members = Array.isArray(doc.members) ? doc.members.length : 0;
+    return [(doc.name || 'No subteam') + ' lead', members === 0 ? '' : members + (members === 1 ? ' member' : ' members'), doc.spotlight ? 'In the spotlight' : '', until(doc)];
+  }
+  if (item.type === 'person') return [doc.title || 'No role', doc.role ? 'Listed with ' + doc.role : '', until(doc)];
+  const field = page.specs.rosterPerson.fields.filter(one => one.name === 'department')[0];
+  return [roleTitles[doc.role] || 'No role', personLine(doc, field && field.options ? field.options.list : []), until(doc)];
 }
 
-async function mountStudioPeople(host, ctx) {
-  const call = ctx.api || realApi;
-  const answer = await call('GET', '/content/people');
-  if (!answer.ok) {
-    host.replaceChildren(h('p', { class: 'bad', text: answer.error }));
-    return;
-  }
-  const list = (title, rows, sub) => h('div', { class: 'ct-readonly-list' },
-    h('h4', { class: 'ct-role', text: title + ' (' + rows.length + ')' }),
-    rows.length === 0 ? h('p', { class: 'ct-none', text: 'Nobody yet.' }) : null,
-    rows.map(person => h('div', { class: 'ct-person', 'data-show': person.show ? 'yes' : 'no' },
-      picture(person.picture, person.name),
-      h('div', { class: 'ct-row' },
-        h('p', { class: 'ct-title', text: person.name || 'No name' }),
-        h('p', { class: 'ct-sub', text: [sub(person), person.team || 'Both teams', person.show ? '' : 'Hidden'].filter(Boolean).join(' · ') })))));
-  host.replaceChildren(
-    h('h3', { class: 'ct-group', text: 'Already in the Studio' }),
-    h('p', { class: 'word', text: 'These are the Leadership and Team leads lists that feed the wall. They are shown here to read and are not copied into the roster. Edit them in the Studio.' }),
-    list('Leadership', answer.data.leadership, person => person.role),
-    list('Team leads', answer.data.teamLeads, person => [person.department, person.members + (person.members === 1 ? ' member' : ' members')].join(' · ')),
-    h('p', {}, h('a', { class: 'act quiet ct-link', href: '/studio/', text: 'Open the Studio to edit them' })));
+function personRow(item, page) {
+  const name = personName(item);
+  return h('div', { class: 'ct-person' },
+    picture(item.picture, name),
+    h('div', { class: 'ct-row' },
+      h('p', { class: 'ct-title' }, name || 'No name', h('span', { class: 'ct-source', 'data-source': item.type, text: sourceTitles[item.type] })),
+      h('p', { class: 'ct-sub', text: subLine(item, page).filter(Boolean).join(' · ') })));
 }
 
 export async function mountRoster(body, ctx = {}) {
   const listHost = h('div', { 'data-part': 'people' });
-  const studioHost = h('div', { 'data-part': 'studio-people' });
   body.replaceChildren(
-    h('p', { class: 'word', text: 'Everyone on the team by first name, with a role and a team. Portraits are added in the Studio; they show here but cannot be changed here. No panel of the wall shows this roster yet.' }),
-    listHost,
-    studioHost);
+    h('p', { class: 'word', text: 'Everyone by first name, with a role and a team. Each line says where it lives: Roster, Leadership or Team lead. Edit any of them here; they stay where they are. Portraits are added in the Studio; they show here but cannot be changed here. No panel of the wall shows the Roster list yet.' }),
+    listHost);
   await mountList(listHost, {
     type: 'rosterPerson',
+    types: ['rosterPerson', 'person', 'subteam'],
     noun: 'person',
+    nounOf: item => ({ rosterPerson: 'person', person: 'Leadership entry', subteam: 'Team lead' })[item.type],
     empty: 'Nobody on the roster yet. Press Add person.',
     reorder: false,
-    nameOf: doc => doc.firstName || 'Person with no name',
+    nameOf: (doc, type) => personName({ type: type, document: doc }) || 'Person with no name',
     row: personRow,
     sections: (sorted, page) => rosterGroups(sorted, page.teams),
+    filters: peopleFilters,
+    keep: keepPerson,
   }, ctx);
-  await mountStudioPeople(studioHost, ctx);
 }

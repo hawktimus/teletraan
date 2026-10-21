@@ -74,6 +74,47 @@ export const roleGroups = [
 
 export const roleTitles = { student: 'Student', mentor: 'Mentor', coach: 'Coach', parent: 'Parent', leadership: 'Leadership' };
 
+// The three kinds of document that hold people. The Studio calls person Leadership and subteam Team leads (type names are stored
+// names and stay as they are).
+export const sourceTitles = { rosterPerson: 'Roster', person: 'Leadership', subteam: 'Team lead' };
+
+// The name a person goes by in a list: a first name, the name of a leader, or the lead of a subteam
+export function personName(item) {
+  const doc = item.document || {};
+  if (item.type === 'subteam') return doc.lead || '';
+  return doc.firstName || doc.name || '';
+}
+
+// Which role group an item belongs to. A Leadership entry listed as Captain is leadership; Coach and Mentor are mentors and
+// coaches. A team lead is leadership. An item with no type is a roster person.
+export function roleGroupOf(item) {
+  const doc = item.document || {};
+  if (item.type === 'subteam') return 'leadership';
+  if (item.type === 'person') return { Captain: 'leadership', Coach: 'mentors', Mentor: 'mentors' }[doc.role] || 'other';
+  const found = roleGroups.filter(group => group.roles.includes(doc.role))[0];
+  return found ? found.id : 'other';
+}
+
+// The filter on the roster: a role group, or everything
+export const peopleFilters = [
+  { id: 'all', title: 'All' },
+  { id: 'students', title: 'Students' },
+  { id: 'mentors', title: 'Mentors and coaches' },
+  { id: 'parents', title: 'Parents' },
+  { id: 'leadership', title: 'Leadership' },
+];
+
+// Whether a person shows under a filter and a search (lower case). The search looks at the first name, and at the subteam name
+// and the members of a team lead, since those are first names too.
+export function keepPerson(item, kind, query) {
+  if (kind !== 'all' && roleGroupOf(item) !== kind) return false;
+  if (query === '') return true;
+  const doc = item.document || {};
+  const words = [personName(item)];
+  if (item.type === 'subteam') words.push(doc.name, ...(Array.isArray(doc.members) ? doc.members : []));
+  return words.some(word => String(word || '').toLowerCase().includes(query));
+}
+
 // The people by team, then by role: [{ id, title, count, roles: [{ id, title, count, items }] }]. A team that has nobody is left out.
 // Teams come in the order of the list, then Both teams. A person with no team is for both teams.
 export function rosterGroups(items, teams) {
@@ -83,13 +124,13 @@ export function rosterGroups(items, teams) {
     const ref = item.document.team && item.document.team._ref;
     return known.includes(ref) ? ref : '';
   };
-  const sorted = sortItems(items, item => item.document.firstName || '');
+  const sorted = sortItems(items, personName);
   const out = [];
   columns.forEach(column => {
     const here = sorted.filter(item => teamOf(item) === column.id);
     if (here.length === 0) return;
-    const roles = roleGroups.map(group => ({ id: group.id, title: group.title, items: here.filter(item => group.roles.includes(item.document.role)) }));
-    const other = here.filter(item => !roleGroups.some(group => group.roles.includes(item.document.role)));
+    const roles = roleGroups.map(group => ({ id: group.id, title: group.title, items: here.filter(item => roleGroupOf(item) === group.id) }));
+    const other = here.filter(item => roleGroupOf(item) === 'other');
     if (other.length > 0) roles.push({ id: 'other', title: 'No role', items: other });
     const shown = roles.filter(group => group.items.length > 0).map(group => Object.assign(group, { count: group.items.length }));
     out.push({ id: column.id || 'both', title: column.title, count: here.length, roles: shown });
