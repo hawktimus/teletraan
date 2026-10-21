@@ -68,9 +68,9 @@ test('no report means no address and the plain sentence', () => {
   [null, undefined, {}, { panel: '' }, 'x'].forEach(report => {
     const found = followFor(report);
     assert.equal(found.src, '');
-    assert.equal(found.line, 'The TV has not reported yet');
+    assert.equal(found.line, 'The TV has not reported yet. Look at the TV. This page asks again by itself.');
   });
-  assert.equal(followLine(null), 'The TV has not reported yet');
+  assert.equal(followLine(null), 'The TV has not reported yet. Look at the TV. This page asks again by itself.');
 });
 
 test('the card and the preview agree on the real answer of GET /now', () => {

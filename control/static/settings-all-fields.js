@@ -271,7 +271,7 @@ function listControl(field, form, path) {
     else card.append(h('p', { class: 'sa-help', text: 'This kind of item is edited in the Studio.' }));
     box.append(card);
   });
-  if (items.length === 0) box.append(h('p', { class: 'sa-none', text: 'Nothing here yet.' }));
+  if (items.length === 0) box.append(h('p', { class: 'sa-none', text: 'Nothing here yet. Press the button below to add one.' }));
   const adds = field.members.filter(member => member.addable !== false);
   const most = field.validation && field.validation.max;
   if (adds.length > 0) {

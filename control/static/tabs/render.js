@@ -271,7 +271,7 @@ export function followFor(report, names) {
 }
 
 export function followLine(shown, notes = []) {
-  if (!shown) return 'The TV has not reported yet';
+  if (!shown) return 'The TV has not reported yet. Look at the TV. This page asks again by itself.';
   return 'Showing: ' + shown.join(', ') + (notes.length ? '. Note: ' + notes.join('; ') + '.' : '');
 }
 
@@ -461,8 +461,8 @@ export function keysHtml(data) {
     '<button type="button" class="act quiet" data-clear-calendar="' + esc(calendar.name) + '">Clear</button></div></div>').join('');
 
   return '<div class="grid">' +
-    card('Keys', (keyRows || '<p>No keys are known.</p>') + '<p class="note">Leave a box empty to keep what is there. PIN: fixed</p>') +
-    card('Calendars', (calendarRows || '<p>No calendars yet.</p>') + '<p class="note">A link starts with https:// or webcal://. Leave a box empty to keep the link.</p>' +
+    card('Keys', (keyRows || '<p>No keys were found. Ask a coach to check the Teletraan computer, then reload this page.</p>') + '<p class="note">Leave a box empty to keep what is there. PIN: fixed</p>') +
+    card('Calendars', (calendarRows || '<p>No calendars yet. Type a name and a link below, then press Save.</p>') + '<p class="note">A link starts with https:// or webcal://. Leave a box empty to keep the link.</p>' +
       '<div class="key newcal"><div><strong>Add a calendar</strong></div><div class="keyform"><input name="new-name" placeholder="Name" aria-label="Name of the new calendar" autocomplete="off"><input type="password" name="new-link" placeholder="Link" aria-label="Link of the new calendar" autocomplete="off"></div></div>') +
     '</div><div class="buttons"><button type="button" class="act" data-save>Save</button></div><p class="note" data-note></p>';
 }
@@ -470,7 +470,7 @@ export function keysHtml(data) {
 // The Log tab. lines is GET log.
 export function logHtml(lines, title = 'Log') {
   const list = Array.isArray(lines) ? lines : [];
-  if (list.length === 0) return card(title, '<p>The log is empty.</p>');
+  if (list.length === 0) return card(title, '<p>The log is empty, so nothing has been written down yet. Press Refresh later to look again.</p>');
   return card(title, '<pre class="log">' + list.map(esc).join('\n') + '</pre>');
 }
 

@@ -116,7 +116,6 @@ export async function mountTicker(body, ctx = {}) {
   const listHost = h('div', { 'data-part': 'lines' });
   const newsHost = h('div', { 'data-part': 'news' });
   body.replaceChildren(
-    h('p', { class: 'word', text: 'The tips, news and reminders on the ticker along the bottom of the wall. It shows one at a time. A change is a draft until you press Publish to the wall, the same as in the Studio.' }),
     listHost,
     newsHost);
   await mountList(listHost, {

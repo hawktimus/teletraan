@@ -24,6 +24,9 @@ export function countChanged(before, now) {
   return Object.keys(now).filter(name => JSON.stringify(before[name]) !== JSON.stringify(now[name])).length;
 }
 
+// A page that reads its document again draws itself again, with a new bar. The words of the result wait here for that new bar.
+let carried = null;
+
 export function mountDraftBar(box, spec) {
   box.innerHTML = '<div class="action-bar" data-bar></div><div data-conflict></div>';
   const bar = box.querySelector('[data-bar]');
@@ -42,6 +45,14 @@ export function mountDraftBar(box, spec) {
 
   // The line under the buttons, made by the first press (api.js showResult)
   const say = (state, words) => showResult(bar.querySelector('.buttons'), state, words);
+
+  // Reads the document again and says the result on whichever bar is on the page afterwards
+  async function reloadThen(words) {
+    carried = { state: 'done', words: words };
+    const worked = await spec.reload();
+    if (!worked) { carried = null; return; }
+    if (box.isConnected) { carried = null; paint(); say('done', words); }
+  }
 
   async function run(label, work) {
     state.working = true;
@@ -66,7 +77,7 @@ export function mountDraftBar(box, spec) {
     }
     if (!answer.ok) { paint(); say('bad', answer.error); return; }
     state.conflict = null;
-    if (await spec.reload()) { paint(); say('done', 'Saved to the draft. Press ' + actionWords.publish + ' when you are ready.'); }
+    await reloadThen('Saved to the draft. Press ' + actionWords.publish + ' when you are ready.');
   }
 
   async function publish(force) {
@@ -80,12 +91,12 @@ export function mountDraftBar(box, spec) {
     }
     if (!answer.ok) { paint(); say('bad', answer.error); return; }
     state.conflict = null;
-    if (await spec.reload()) { paint(); say('done', spec.publishedWords); }
+    await reloadThen(spec.publishedWords);
   }
 
   async function refresh() {
     state.conflict = null;
-    if (await spec.reload()) { paint(); say('done', 'Read again from Sanity. Anything you had not saved was dropped.'); }
+    await reloadThen('Read again from Sanity. Anything you had not saved was dropped.');
   }
 
   box.addEventListener('click', event => {
@@ -105,5 +116,10 @@ export function mountDraftBar(box, spec) {
   });
 
   paint();
+  if (carried) {
+    const words = carried;
+    carried = null;
+    say(words.state, words.words);
+  }
   return { paint: paint, say: say };
 }

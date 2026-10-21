@@ -201,7 +201,7 @@ export async function mountSettingsAll(container, ctx = {}) {
     if (page.query === '') {
       if (tab && tab.says) panel.append(h('p', { class: 'sa-says', text: tab.says }));
       panel.append(drawFields(state, fields, form));
-      if (fields.length === 0) panel.append(h('p', { class: 'sa-none', text: 'Nothing on this tab can be changed here.' }));
+      if (fields.length === 0) panel.append(h('p', { class: 'sa-none', text: 'Nothing on this tab can be changed here. It is set in the Studio.' }));
     } else {
       panel.append(h('p', { class: 'sa-says', text: fields.length === 0 ? 'No setting in ' + state.docSpec.title + ' matches "' + page.query + '".' : fields.length + (fields.length === 1 ? ' setting' : ' settings') + ' in ' + state.docSpec.title + ' match "' + page.query + '".' }));
       const grid = h('div', { class: 'sa-fields' });

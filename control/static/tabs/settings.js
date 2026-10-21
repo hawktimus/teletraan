@@ -51,16 +51,18 @@ registerTab({
       fold.className = 'fold';
       fold.dataset.section = item.id;
       const summary = document.createElement('summary');
-      summary.textContent = item.title;
+      const name = document.createElement('span');
+      name.textContent = item.title;
       summary.setAttribute('aria-describedby', leadIdOf('settings.' + item.id));
-      const says = document.createElement('p');
+      const says = document.createElement('span');
       says.className = 'lead';
       says.id = leadIdOf('settings.' + item.id);
       says.textContent = sentences['settings.' + item.id];
       const body = document.createElement('div');
       body.className = item.light ? 'fold-body' : 'fold-body tab';
       if (item.bodyId) body.id = item.bodyId;
-      fold.append(summary, says, body);
+      summary.append(name, says);
+      fold.append(summary, body);
       let drawn = false;
       const draw = () => {
         if (drawn || !fold.open) return;

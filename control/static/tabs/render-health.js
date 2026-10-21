@@ -39,14 +39,14 @@ function loadsWords(wall) {
 
 // The three dots on the TV, with the reason behind each
 export function dotsHtml(data) {
-  if (!data) return card('The three dots on the TV', '<p>The Teletraan computer did not answer.</p>');
+  if (!data) return card('The three dots on the TV', '<p>The Teletraan computer did not answer. Check that it is on and on the WiFi, then reload this page.</p>');
   const dots = data.dots || {};
   return card('The three dots on the TV', dotRow('Monday', dots.monday) + dotRow('Band (calendars)', dots.band) + dotRow('Sanity (content)', dots.sanity), '', 'health.dots');
 }
 
 // When the Teletraan computer last read each source
 export function readsHtml(data, now = new Date()) {
-  if (!data) return card('Last reads', '<p>The Teletraan computer did not answer.</p>');
+  if (!data) return card('Last reads', '<p>The Teletraan computer did not answer. Check that it is on and on the WiFi, then reload this page.</p>');
   const mini = data.mini || {};
   const headlines = mini.news && typeof mini.newsCount === 'number' ? ', ' + mini.newsCount + (mini.newsCount === 1 ? ' headline' : ' headlines') : '';
   return card('Last reads', '<dl>' +
@@ -66,7 +66,7 @@ export function readsHtml(data, now = new Date()) {
 // The health block at the bottom of Status. data is GET status, wall is GET now. Memory and temperature are left out when
 // the computer does not tell them.
 export function healthHtml(data, wall, now = new Date()) {
-  if (!data) return card('Health', '<p>The Teletraan computer did not answer.</p>');
+  if (!data) return card('Health', '<p>The Teletraan computer did not answer. Check that it is on and on the WiFi, then reload this page.</p>');
   const previous = data.versions && data.versions.previous && data.versions.previous.length ? data.versions.previous.map(n => 'v' + n).join(', ') : 'none kept';
   const current = data.versions && data.versions.current !== null && data.versions.current !== undefined ? 'v' + data.versions.current : 'not known';
   const disk = data.disk ? bytesText(data.disk.freeBytes) + ' free of ' + bytesText(data.disk.totalBytes) : 'not known';

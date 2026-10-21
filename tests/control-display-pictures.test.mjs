@@ -205,7 +205,7 @@ try {
     assert.equal(await page.locator('[data-theme-card] .trow').count(), 7, 'Theme rotation has a row for each day');
     assert.equal(await page.locator('[data-theme-card] [data-week-strip]').count(), 0);
     await page.locator('[data-theme-day="friday"]').selectOption({ index: 1 });
-    assert.match(await page.locator('[data-save-bar] .note').textContent(), /changes that are not saved/, 'a theme change shows in the one bar');
+    assert.match(await page.locator('[data-save-bar] [data-unsaved]').textContent(), /unsaved changes/, 'a theme change shows in the one bar');
     assert.equal(await page.locator('[data-save-bar] [data-action="save"]').isEnabled(), true);
     await context.close();
   });

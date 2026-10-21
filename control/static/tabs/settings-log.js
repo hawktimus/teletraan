@@ -4,6 +4,7 @@
 import { api, showResult, useStyles } from './api.js';
 import { logHtml, outcome, pageLoadsLine } from './render.js';
 import { switchHtml } from '../choice.js';
+import { moreToolsHtml, sentences, wireMoreTools } from '../guide.js';
 
 export const hiddenWords = 'Keys and calendar links are hidden in this file. It is safe to send to a coach.';
 
@@ -39,8 +40,9 @@ export async function mountLog(container) {
   useStyles();
   container.innerHTML = '<div class="buttons"><button type="button" class="act" data-refresh>Refresh</button>' +
     switchHtml({ label: 'Verbose (1000 lines)', attrs: 'data-verbose' }) + '</div>' +
-    '<div class="buttons"><button type="button" class="act quiet" data-download>Download the verbose log</button></div>' +
+    moreToolsHtml('log', '<div class="buttons"><button type="button" class="act quiet" data-download>Download the verbose log</button></div>', sentences['settings.more-log']) +
     '<p class="note">' + hiddenWords + '</p><p class="note" data-loads></p><div data-body></div>';
+  wireMoreTools(container);
   const body = container.querySelector('[data-body]');
   const refresh = container.querySelector('[data-refresh]');
   const verbose = container.querySelector('[data-verbose]');

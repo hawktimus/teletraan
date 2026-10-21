@@ -250,9 +250,9 @@ main:has(.wall-controls[data-width="medium"], .wall-controls[data-width="narrow"
 /* The shared parts of every tab: the sentence under a heading (guide.js), the What do I do here note, More tools, the one bar of
    Save to draft, Publish to the wall, Refresh from Sanity and Undo (actions.js), and the card for a newer Studio copy. */
 .lead { margin: 4px 0 12px; color: #5d5670; }
-.card .lead, .ct-block .lead, .more-tools .lead, .help-note .lead { color: #cfc6e4; }
-.ct-block > .lead { margin: 0 16px 12px; }
-.settings-page .fold > .lead { margin: 0 16px 12px; }
+.ct-block .lead, .more-tools .lead, .help-note .lead { color: #cfc6e4; }
+.ct-block > summary > .lead, .settings-page .fold > summary > .lead { display: block; margin: 4px 0 0; font-size: 16px; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.ct-block > summary > .lead { color: #cfc6e4; }
 .settings-page .fold-head { padding: 16px; }
 .settings-page .fold-head h2 { margin: 0 0 4px; font: 700 20px 'Tomorrow', system-ui, sans-serif; color: var(--purple-dark, #53048f); }
 .settings-page .fold-head .lead { margin: 0; color: #5d5670; }

@@ -38,21 +38,21 @@ export function drawContent(box, ctx = {}) {
     const title = document.createElement('span');
     title.className = 'ct-block-title';
     title.textContent = block.title;
-    const says = document.createElement('p');
+    const says = document.createElement('span');
     says.className = 'lead';
     says.id = leadIdOf('content.' + block.id);
     says.textContent = block.says;
     summary.setAttribute('aria-describedby', leadIdOf('content.' + block.id));
-    summary.append(title);
+    summary.append(title, says);
     const body = document.createElement('div');
     body.className = 'ct-block-body';
-    details.append(summary, says, body);
+    details.append(summary, body);
     let started = false;
     const start = () => {
       if (started || !details.open) return;
       started = true;
       body.textContent = 'Reading from Sanity.';
-      block.mount(body, ctx).catch(error => { body.textContent = 'This block could not load: ' + error.message; });
+      block.mount(body, ctx).catch(error => { body.textContent = 'This block could not load: ' + error.message + ' Close it and open it again, or reload the page.'; });
     };
     details.addEventListener('toggle', () => {
       start();
