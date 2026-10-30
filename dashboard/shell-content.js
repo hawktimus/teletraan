@@ -179,8 +179,8 @@ function useDeviceLines(lines) {
   drawConnectionText();
 }
 
-// The text at the bottom right (core/connection.js). It shows by itself while
-// status.offline is true, and all the time when Show connection status is on.
+// The text at the bottom right (core/connection.js). It shows only while Show connection status is on, and says
+// no error. The status pill is what tells the room that something is late (core/sync-pill.js).
 function drawConnectionText() {
   const lines = connectionLines({
     status: shellState.status,

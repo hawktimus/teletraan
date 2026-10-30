@@ -1,8 +1,7 @@
-// What the screen says about its connection to Sanity. A small text at the
-// bottom right comes up by itself when Sanity has been out of reach for over
-// two minutes, and says why. The Show connection status switch in Dashboard
-// Settings keeps it on screen, with the last read, the item counts and the
-// calendar time.
+// What the screen says about its content, for a person who asked. The Show connection status switch in Dashboard
+// Settings puts a small text at the bottom right, with the last read, the item counts and the calendar time. Nothing
+// comes up by itself and no error word is ever on it: when the sync service has gone quiet, the status pill says
+// Offline since a time (core/sync-pill.js), and the reason is in the log of the Teletraan computer (docs/OPERATIONS.md).
 //
 // The first half of this file is plain functions that take values and give
 // back values, so tests/content.test.mjs can try them. The second half puts
@@ -90,31 +89,27 @@ function countLine(pairs) {
 //   content          the content on screen, for the counts
 //   calendarsReadAt  a Date, or null while the calendars have not been read
 //   deviceLines      the Teletraan computer's name and ssh line (core/device.js), which only exist while offline
-// The text shows when Sanity is out of reach (status.offline) or the switch is on.
+// The text shows only while the switch is on, and then in plain words with no reason for a failure.
 // Every time is a time of day, so the text never goes out of date on its own.
 export function connectionLines(info) {
   const status = info.status;
-  if (!status) return [];
+  if (!status || !info.always) return [];
 
   const offline = Boolean(status.offline);
-  if (!offline && !info.always) return [];
-
   const sample = status.source === 'sample';
   const lastRead = status.updated ? formatTimeOfDay(status.updated) : '';
   const lines = [];
 
   if (offline && sample) {
-    lines.push('SAMPLE CONTENT FILE NOT READ');
+    lines.push('Sample content file not read');
   } else if (offline) {
-    lines.push('SANITY UNREACHABLE: ' + reasonText(status.reason).toUpperCase());
-    lines.push(reasonFix(status.reason));
-    lines.push(lastRead ? 'Last good read ' + lastRead : 'No good read yet');
+    lines.push(lastRead ? 'Content: last good read ' + lastRead : 'Content: no good read yet');
   } else if (sample) {
     lines.push('Sample content, Sanity not read');
   } else if (status.source === 'cache') {
-    lines.push(lastRead ? 'Saved copy from ' + lastRead : 'Saved copy, Sanity not read yet');
+    lines.push(lastRead ? 'Saved copy from ' + lastRead : 'Saved copy, content not read yet');
   } else {
-    lines.push(lastRead ? 'Sanity OK · last read ' + lastRead : 'Sanity not read yet');
+    lines.push(lastRead ? 'Content OK · last read ' + lastRead : 'Content not read yet');
   }
 
   if (info.always) {
@@ -128,7 +123,7 @@ export function connectionLines(info) {
 }
 
 // The text on the page is #connection-status in index.html. It is hidden when
-// there are no lines. tone is 'warning' while Sanity is out of reach, which
+// there are no lines. tone is 'warning' for a text with a problem in it, which
 // makes it red, and 'info' for the always-on text. A line that starts with
 // ssh is the command someone will type, so it gets its own colour.
 export function drawConnection(lines, tone) {

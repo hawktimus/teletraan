@@ -102,7 +102,8 @@ test('with no build.js, the page still starts and uses the time', async () => {
 });
 
 test('no script is loaded without the loader, build.js is ignored by git and its shape is committed', () => {
-  assert.ok(!/<script[^>]*\ssrc=/.test(html), 'index.html has no script with a src of its own');
+  // guard.js is the one plain script allowed before the loader: it keeps error text off the screen
+  assert.ok(!/<script[^>]*\ssrc=(?!"guard\.js")/.test(html), 'index.html has no script with a src of its own');
   assert.ok(/^dashboard\/build\.js$/m.test(read('.gitignore')));
   assert.ok(/export const build = "[^"]*";/.test(read('dashboard/build.example.js')));
   assert.ok(!fs.existsSync(path.join(repo, 'dashboard/build.js')), 'no build.js is committed');

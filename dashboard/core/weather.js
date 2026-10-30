@@ -1,9 +1,15 @@
-// Live weather from Open-Meteo, which is free and needs no key, so nothing about it is in computer/local.env. The newest
-// good reading is saved in the browser, so the screen has weather after a restart. Nothing in here throws at the
-// screen: a read that fails keeps the last reading until it is over two hours old, and then the temperature and the
-// icon are blank.
+// Live weather from Open-Meteo, which is free and needs no key, so nothing about it is in computer/local.env. The
+// screen does not ask Open-Meteo: the sync service of the Teletraan computer does (computer/scripts/sync-service.mjs, using
+// forecastUrl and parseForecast below) and writes data/live/weather.json, which this file reads from the same
+// server. The newest good reading is also saved in the browser, so the screen has weather after a restart. Nothing in
+// here throws at the screen: a read that fails keeps the last reading until it is over two hours old, and then the
+// temperature and the icon are blank.
 
-const refreshMinutes = 15;
+import { liveFolder } from '../config.js';
+
+// The file is on this computer, so it is read often. The reading in it has the time the sync service read Open-Meteo.
+const refreshMinutes = 1;
+export const weatherFile = liveFolder + 'weather.json';
 
 // A request that has not answered by then is given up, so one hanging
 // connection cannot stop the refreshes
@@ -72,7 +78,8 @@ export function parseForecast(answer) {
   };
 }
 
-function forecastUrl(place) {
+// The address of Open-Meteo for a place. Only the sync service uses it.
+export function forecastUrl(place) {
   return 'https://api.open-meteo.com/v1/forecast' +
     '?latitude=' + place.latitude +
     '&longitude=' + place.longitude +
@@ -151,13 +158,13 @@ function toWeather(saved, now) {
   };
 }
 
-// place is { latitude, longitude }. onChange(weather) is called with the
+// place is { latitude, longitude }, which the sync service uses and this file no longer needs. onChange(weather) is called with the
 // reading, or with null once the reading is too old to show. The result is a
 // function that stops everything. options replaces the browser pieces, which
 // is how the tests run without a network or a clock.
 export function startWeather(place, onChange, options = {}) {
   const parts = Object.assign(browserParts(), options);
-  const url = forecastUrl(place);
+  const url = weatherFile;
 
   let latest = loadSaved(parts.storage); // null until there has been a reading
   let sentEmpty = false;
@@ -192,10 +199,10 @@ export function startWeather(place, onChange, options = {}) {
 
     try {
       const response = await parts.fetch(url, controller.signal);
-      if (!response.ok) throw new Error('The weather service answered ' + response.status);
+      if (!response.ok) throw new Error('The weather file answered ' + response.status);
 
-      const reading = parseForecast(await response.json());
-      if (!reading) throw new Error('The weather answer was not in the expected shape');
+      const reading = await response.json();
+      if (!isSavedReading(reading)) throw new Error('The weather file was not in the expected shape');
       return reading;
     } finally {
       parts.clearTimeout(timer);
@@ -204,7 +211,9 @@ export function startWeather(place, onChange, options = {}) {
 
   async function refresh() {
     try {
-      latest = Object.assign(await readForecast(), { savedAt: parts.now() });
+      const reading = await readForecast();
+      // The same reading again changes nothing, and its age keeps counting from when the sync service read it
+      latest = Object.assign({}, reading);
       save(parts.storage, latest);
     } catch (error) {
       console.error('Could not refresh the weather, keeping the last reading', error);

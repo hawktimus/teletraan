@@ -1,29 +1,26 @@
-// Reading the content from Sanity or the sample, the saved copy and the stream (part of content.js).
+// Reading the content from the local snapshot or the sample, and the saved copy (part of content.js).
+//
+// The editors' content is not read from Sanity by the screen. The sync service of the Teletraan computer reads it and writes
+// data/live/content.json, and this file reads that file from the same server every few seconds (docs/OPERATIONS.md). So a
+// publish still shows within seconds, and a read that fails costs nothing: the screen keeps what it has and never says so.
 
-import { sampleFolder, sanity } from '../config.js';
+import { sampleFolder } from '../config.js';
 import { chosenSource } from './source.js';
-import { fetchRequests, fetchResult, liveEventsUrl, normalizeContent, normalizeSample } from './sanity.js';
-import { pickRequests, requestPollSeconds, sameRequests } from './request-poll.js';
-import { reasons } from './connection.js';
-import { markUnreachable } from './monday.js';
+import { contentFile, fetchLocalText, imageIndexFile, normalizeContent, normalizeSample, resultOf } from './sanity.js';
+import { useLocalImages } from './images.js';
 import { withDefaults } from './content-tidy.js';
 
-// The last content read from Sanity, written after every good read. A screen that was last run before this name
+// The last content read, written after every good read. A screen that was last run before this name
 // has its copy under the old one, which is read once and not written again.
 const storageKey = 'teletraan-last-content';
 const olderStorageKey = 'teletraan-content';
 const sampleRecheck = 30 * 1000;
-// Short: a publish should show within a second or two. Edits that come together still join one read.
-const waitForMoreEdits = 300;
-const pollEvery = 5 * 60 * 1000;
-const retryAfterFailure = 30 * 1000;
-const reopenStreamAfter = 60 * 1000;
-// Sanity counts as unreachable once reads have failed for this long, counted
-// from the first failed read. The screen then says so (core/connection.js).
-const unreachableAfter = 2 * 60 * 1000;
+// The file is on this computer, so asking is cheap. The sync service sees a publish within 10 seconds, and this read
+// follows within 5 more.
+const pollEvery = 5 * 1000;
 
-// The latest read from Sanity, for the status dots: when the last good one ended and whether the newest one threw.
-// A copy taken from localStorage is not a read.
+// The latest read of the local snapshot: when the last good one ended and whether the newest one threw.
+// A copy taken from localStorage is not a read. The Sanity dot uses the time of the sync service instead (core/sync-status.js).
 let lastRead = { at: null, failed: false };
 
 export function lastContentRead() {
@@ -34,8 +31,9 @@ export function lastContentRead() {
 // After that, onChange({ content, status }) is called each time either changes.
 // status is { source: 'sample' | 'sanity' | 'cache', updated: Date or null, offline: boolean, reason: string }
 // where updated is when the content was last read, and a new updated alone is not a change.
-// offline is true once Sanity has been out of reach for over two minutes, and reason then says
-// why: one of the words in core/connection.js. reason is '' when offline is false.
+// offline is true only for the sample file that cannot be read. The editors' content is never offline here: a read that
+// fails keeps the content, and the status pill says when the sync service has gone quiet (core/sync-pill.js).
+// reason is '' when offline is false.
 //
 // The content shown is what the editors published, or the sample when the
 // address has ?sample=1 (source.js). The choice is made once, when the page
@@ -187,53 +185,11 @@ function saveCopy(raw, savedAt) {
   }
 }
 
-// Sanity sends a message each time published content changes. A browser
-// reconnects a dropped stream by itself, but gives up after an error reply,
-// so that case is opened again after a pause. Returns a function that closes
-// the stream for good.
-function watchStream(onMessage) {
-  if (typeof EventSource === 'undefined') return () => {};
-
-  let complained = false;
-  let closed = false;
-  let stream = null;
-  let reopening = null;
-
-  function open() {
-    if (closed) return;
-
-    try {
-      const opened = new EventSource(liveEventsUrl(sanity));
-      stream = opened;
-      opened.addEventListener('message', onMessage);
-      opened.addEventListener('open', () => {
-        complained = false;
-      });
-      opened.addEventListener('error', () => {
-        if (!complained) console.error('The live change stream from Sanity is not working. Checking again every few minutes instead.');
-        complained = true;
-        if (opened.readyState === EventSource.CLOSED) reopening = setTimeout(open, reopenStreamAfter);
-      });
-    } catch (error) {
-      console.error('Could not open the live change stream', error);
-    }
-  }
-
-  open();
-
-  return function close() {
-    closed = true;
-    clearTimeout(reopening);
-    if (stream) stream.close();
-  };
-}
-
-// Reads from Sanity and keeps what it read in localStorage. With a saved
-// copy the screen starts at once and Sanity is read right after. Without
-// one it has to wait for Sanity, and shows empty content if Sanity is out of
-// reach. Sample content is never shown here: it would look like the real thing.
-// Returns { first, stop }. Stopping closes the stream and cancels the timers,
-// for when Dashboard Settings switches the screen to the sample.
+// Reads the local snapshot and keeps what it read in localStorage. With a saved
+// copy the screen starts at once and the file is read right after. Without
+// one it waits for the first read, and shows empty content if there is none.
+// Sample content is never shown here: it would look like the real thing.
+// Returns { first, stop }. Stopping cancels the timer, for when Dashboard Settings switches the screen to the sample.
 export async function startSanityContent(onChange) {
   const announcer = makeAnnouncer(onChange);
   const saved = readSavedCopy();
@@ -241,145 +197,80 @@ export async function startSanityContent(onChange) {
   let content = saved ? saved.content : withDefaults({});
   let source = saved ? 'cache' : 'sanity';
   let updated = saved ? saved.savedAt : null; // in milliseconds
-  let failed = false; // true when the latest read failed
-  let offline = false; // true once reads have failed for unreachableAfter
-  let reason = ''; // why the latest read failed, while there is a failure
-  let alarm = null; // the timer that sets offline. It starts at the first failed read.
   let busy = false;
-  let again = false;
   let nextRead = null;
-  let waiting = null;
   let stopped = false;
-  let latestRaw = null; // the last answer of the full read, as Sanity sent it, for the request poll below
+  let lastText = ''; // the text of content.json that content was made from, to skip a file that has not changed
+  let lastIndex = ''; // the same for images/index.json
 
   function current() {
     const date = updated === null ? null : new Date(updated);
-    // Out of reach, the Monday panels say the board is stale, whatever its age (core/monday.js)
-    return { content: offline ? markUnreachable(content) : content, status: { source: source, updated: date, offline: offline, reason: offline ? reason : '' } };
+    return { content: content, status: { source: source, updated: date, offline: false, reason: '' } };
   }
 
-  // The timer is real time from the first failed read. A good read stops it,
-  // so a read that fails again later starts a new two minutes.
-  function startAlarm() {
-    if (alarm !== null) return;
-
-    alarm = setTimeout(() => {
-      alarm = null;
-      if (stopped) return;
-
-      offline = true;
-      announcer.announce(current());
-    }, unreachableAfter);
+  // The list of pictures the sync service has downloaded. A missing or bad list leaves the one in use.
+  async function readImageIndex() {
+    try {
+      return await fetchLocalText(imageIndexFile);
+    } catch (error) {
+      return lastIndex;
+    }
   }
 
-  function stopAlarm() {
-    clearTimeout(alarm);
-    alarm = null;
-  }
-
-  // A failed read keeps the content on screen. It only counts as offline once
-  // the alarm goes off, two minutes after the first one that failed.
+  // A failed read keeps the content on screen and says nothing on it
   async function readOnce() {
     try {
-      const raw = await fetchResult(sanity);
-      latestRaw = raw;
-      content = normalizeContent(raw);
+      const text = await fetchLocalText(contentFile);
+      const indexText = await readImageIndex();
+      const changed = text !== lastText || indexText !== lastIndex;
+
+      // A file that is not the content (a page of a filter, an empty file) throws here, before anything is taken in
+      const raw = changed ? resultOf(text) : null;
       updated = Date.now();
       lastRead = { at: new Date(updated), failed: false };
       source = 'sanity';
-      failed = false;
-      offline = false;
-      reason = '';
-      stopAlarm();
+      if (!changed) return;
+
+      try {
+        useLocalImages(indexText ? JSON.parse(indexText) : {});
+      } catch (error) {
+        console.error('Could not read the list of downloaded pictures', error);
+      }
+      content = normalizeContent(raw);
+      lastText = text;
+      lastIndex = indexText;
       saveCopy(raw, updated);
     } catch (error) {
-      console.error('Could not read content from Sanity', error);
-      failed = true;
+      console.error('Could not read the local content, keeping what is on screen', error);
       lastRead = { at: lastRead.at, failed: true };
-      reason = error && reasons.includes(error.reason) ? error.reason : 'other';
-      startAlarm();
     }
   }
 
-  // Reads one at a time. A request that comes in while one is running makes
-  // it read again when it is done.
   async function refresh() {
     clearTimeout(nextRead);
-    if (stopped) return;
-    if (busy) {
-      again = true;
-      return;
-    }
+    if (stopped || busy) return;
 
     busy = true;
-    do {
-      again = false;
-      await readOnce();
-      announcer.announce(current());
-    } while (again && !stopped);
+    await readOnce();
+    announcer.announce(current());
     busy = false;
 
-    planRead(failed ? retryAfterFailure : pollEvery);
-  }
-
-  function planRead(delay) {
-    clearTimeout(nextRead);
-    if (!stopped) nextRead = setTimeout(refresh, delay);
-  }
-
-  // Edits tend to arrive together, so the first one starts a short wait and
-  // the ones after it join that wait
-  function onLiveChange() {
-    if (waiting) return;
-
-    waiting = setTimeout(() => {
-      waiting = null;
-      refresh();
-    }, waitForMoreEdits);
-  }
-
-  // Only the request fields, every 10 seconds (core/request-poll.js). A failure is reported by the full read, which
-  // is asked for now when the last one worked and is over a minute old: without it the screen would not notice an
-  // outage for up to five minutes, and the minute keeps a poll that always fails from making a full read every 10 seconds.
-  async function pollRequests() {
-    if (stopped || busy || !latestRaw) return;
-
-    let found = null;
-    try {
-      found = await fetchRequests(sanity);
-    } catch (error) {
-      if (!failed && !busy && Date.now() - updated > 60 * 1000) refresh();
-      return;
-    }
-    if (!found || stopped || busy || sameRequests(found, latestRaw.settings)) return;
-
-    latestRaw = Object.assign({}, latestRaw, { settings: Object.assign({}, latestRaw.settings, pickRequests(found)) });
-    content = normalizeContent(latestRaw);
-    announcer.announce(current());
+    if (!stopped) nextRead = setTimeout(refresh, pollEvery);
   }
 
   if (!saved) await readOnce();
   const first = current();
   announcer.announce(first);
 
-  const closeStream = watchStream(onLiveChange);
-  const requestTimer = setInterval(pollRequests, requestPollSeconds * 1000);
-
-  // With a saved copy the first read starts a moment later, so the caller
-  // has the first content before any change arrives
-  const delay = failed ? retryAfterFailure : pollEvery;
-  planRead(saved ? 0 : delay);
+  // With a saved copy the first read starts a moment later, so the caller has the first content before any change arrives
+  nextRead = setTimeout(refresh, saved ? 0 : pollEvery);
 
   return {
     first: first,
     stop() {
       stopped = true;
       announcer.stop();
-      stopAlarm();
       clearTimeout(nextRead);
-      clearTimeout(waiting);
-      clearInterval(requestTimer);
-      closeStream();
     },
   };
 }

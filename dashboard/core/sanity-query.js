@@ -1,7 +1,10 @@
-// The query for the content, the addresses and the fetch from Sanity (part of sanity.js).
+// The query for the content, the address of the query and the read of the local snapshot (part of sanity.js).
+//
+// The screen does not ask Sanity. The sync service of the Teletraan computer (computer/scripts/sync-service.mjs) asks it with
+// contentQuery and writes the answer to data/live/content.json, and this file reads that file from the same server. The
+// sync service uses queryUrl and contentQuery from here, so the question is written once.
 
-import { classifyFailure } from './connection.js';
-import { requestsQuery } from './request-poll.js';
+import { liveFolder } from '../config.js';
 
 // Everything the screen needs, in one request. Lists come back in the order
 // they were created, and normalizeContent puts the ones with an Order first.
@@ -13,8 +16,8 @@ import { requestsQuery } from './request-poll.js';
 // nameless place into no location at all. The task itself stays.
 // The Look document is read with the rest. Its empty schedule and its
 // missing fields are the defaults, so nothing special is needed (core/theme.js).
-// The Demo document is read with the rest too, and its changes come through the
-// same live stream, so a click on Run demo reaches the screen within seconds.
+// The Demo document is read with the rest too, and its changes reach the screen within seconds,
+// so a click on Run demo shows quickly.
 // No Demo document means no demo (core/demo.js).
 // Events come from the BAND calendars (core/calendar.js). The Events Calendar
 // entries in Studio are not read.
@@ -39,8 +42,8 @@ import { requestsQuery } from './request-poll.js';
 // The FRC news (frc-news) is one document that the Teletraan computer writes: the newest headlines of the FIRST blog, with
 // a title, a date, categories and an address, and never the text of an article. core/news.js cleans it. No document means the
 // FRC news panel has nothing to show.
-// The board status (monday-status) is one document that the Teletraan computer writes. Only the sync time and the
-// daily counts of open items are asked for, and core/monday.js cleans them. No document means the
+// The board status (monday-status) is one document that the Teletraan computer writes. Only the sync time, the last error, the
+// daily counts of open items and the list of projects are asked for, and core/monday.js cleans them. No document means the
 // progress card has no line to draw. The tasks from the board come with the other tasks, above, and
 // normalizeContent keeps only those (core/task-source.js).
 export const contentQuery = `{
@@ -161,107 +164,54 @@ export const contentQuery = `{
   },
   "frc": *[_id == "frc-status"][0],
   "news": *[_id == "frc-news"][0] { lastSyncAt, lastError, "items": coalesce(items, []) [] { title, link, date, categories, systemcore } },
-  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []) },
+  "monday": *[_id == "monday-status"][0] { lastSyncAt, lastError, "snapshots": coalesce(snapshots, []), "projects": coalesce(projects, []) },
   "mini": *[_id == "status-mini"][0] { lastCalendarSyncAt }
 }`;
 
-const requestSeconds = 15;
-const probeSeconds = 5;
+export const contentFile = liveFolder + 'content.json';
+export const imageIndexFile = liveFolder + 'images/index.json';
 
-// sanity is { projectId, dataset, apiVersion } from config.js. The ordinary
-// host is used, not the cached one, so a change shows at once.
-function addressOf(sanity, query) {
-  return 'https://' + sanity.projectId + '.api.sanity.io/v' + sanity.apiVersion +
+const requestSeconds = 15;
+
+// sanity is { projectId, dataset, apiVersion } from config.js. The ordinary host is used, not the cached one, so a
+// change shows at once. base replaces the host, which is how a test of the sync service points at a fake.
+export function addressOf(sanity, query, base) {
+  return (base || 'https://' + sanity.projectId + '.api.sanity.io') + '/v' + sanity.apiVersion +
     '/data/query/' + sanity.dataset +
     '?query=' + encodeURIComponent(query) +
     '&perspective=published';
 }
 
-// Only the request fields of Dashboard Settings (core/request-poll.js), asked every 10 seconds. It goes to the same
-// uncached host as the full read: the cached host may hand back an answer up to a minute old, which made a button
-// press in the Studio wait. It is one small document, so the reads cost little.
-export function requestsUrl(sanity) {
-  return addressOf(sanity, requestsQuery);
+export function queryUrl(sanity, base) {
+  return addressOf(sanity, contentQuery, base);
 }
 
-export function queryUrl(sanity) {
-  return addressOf(sanity, contentQuery);
-}
-
-// The stream that says "something changed"
-export function liveEventsUrl(sanity) {
-  return 'https://' + sanity.projectId + '.api.sanity.io/v' + sanity.apiVersion +
-    '/data/live/events/' + sanity.dataset;
-}
-
-// The front page of the same host. Nothing is read from it: it only has to answer.
-export function probeUrl(sanity) {
-  return 'https://' + sanity.projectId + '.api.sanity.io/';
-}
-
-// An error for a read that failed. Its reason is one of the words in
-// core/connection.js, which the status text on the screen shows.
-function readFailure(message, failure) {
-  const error = new Error(message);
-  error.reason = classifyFailure(failure);
-  return error;
-}
-
-// A plain request to the same host, with the mode 'no-cors'. The browser lets
-// it through but does not let the page read the answer, so all it can say is
-// whether the host answered. That is how a block by CORS (the host is there)
-// is told from no network (it is not).
-async function hostAnswers(sanity) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), probeSeconds * 1000);
-
-  try {
-    await fetch(probeUrl(sanity), { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
-    return true;
-  } catch (error) {
-    return false;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// Asks Sanity and returns the whole answer. Throws when there is no answer in
-// time or the status is bad, so the caller keeps what it has. The error has
-// a reason (see readFailure). Pass sanity to find out why a read with no
-// answer failed, which costs one more small request. Pass null to skip that.
-async function fetchBody(url, seconds, sanity) {
+// The text of a file of the data folder, or a thrown error. The error has no words for the screen: callers keep what they
+// have and log it (nothing here is ever drawn).
+export async function fetchLocalText(file, seconds = requestSeconds) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), seconds * 1000);
 
   try {
-    let response;
-    try {
-      response = await fetch(url, { cache: 'no-store', signal: controller.signal });
-    } catch (error) {
-      const timedOut = controller.signal.aborted;
-      const hostAnswered = sanity ? await hostAnswers(sanity) : null;
-      throw readFailure('Could not read from Sanity: ' + error.message, { timedOut: timedOut, hostAnswered: hostAnswered });
-    }
-    if (!response.ok) throw readFailure('Sanity answered with status ' + response.status, { status: response.status });
-
-    return await response.json();
+    const response = await fetch(file, { cache: 'no-store', signal: controller.signal });
+    if (!response.ok) throw new Error('The file ' + file + ' answered ' + response.status);
+    return await response.text();
   } finally {
     clearTimeout(timer);
   }
 }
 
-// Asks Sanity for everything and returns the query result as it came.
-// Throws when the answer cannot be used, so the caller keeps what it has.
-export async function fetchResult(sanity) {
-  const body = await fetchBody(queryUrl(sanity), requestSeconds, sanity);
-  if (!body || typeof body.result !== 'object' || body.result === null) {
-    throw new Error('Sanity sent no result');
+// What the content file holds: { syncedAt, result }, where result is the answer of contentQuery. Throws when the text is
+// not that, so the caller keeps what it has.
+export function resultOf(text) {
+  const body = JSON.parse(text);
+  if (!body || typeof body.result !== 'object' || body.result === null || Array.isArray(body.result)) {
+    throw new Error('The content file has no result');
   }
   return body.result;
 }
 
-// The request fields of Dashboard Settings as they are now, or null when there is no answer. Throws like fetchResult.
-export async function fetchRequests(sanity) {
-  const body = await fetchBody(requestsUrl(sanity), requestSeconds, null);
-  return body && body.result && typeof body.result === 'object' ? body.result : null;
+// Reads the content snapshot and returns the query result as the sync service got it
+export async function fetchResult() {
+  return resultOf(await fetchLocalText(contentFile));
 }

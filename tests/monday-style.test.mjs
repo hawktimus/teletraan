@@ -147,7 +147,7 @@ const step = (panel, team, view) => ({ panel: panel, show: true, team: team || '
 
 test('the Monday panels are Department tasks and the TV charts, a team is seeded with a chart, and the older ones are not panels', () => {
   const cards = registry.panels.filter(panel => panel.monday).map(panel => panel.id);
-  assert.deepEqual(cards, ['monday-department', 'monday-charts']);
+  assert.deepEqual(cards, ['monday-department', 'monday-charts', 'monday-projects']);
   assert.deepEqual(config.mondayRows, ['monday-charts']);
   cards.forEach(id => assert.equal(screens.isMondayPanel(id), true, id));
   ['tasks', 'events', 'photo', 'forecast', 'no-such-panel', 'monday-tasks', 'monday-pie'].forEach(id => assert.equal(screens.isMondayPanel(id), false, id));

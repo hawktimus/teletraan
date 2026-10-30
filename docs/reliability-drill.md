@@ -92,7 +92,7 @@ The owner's TV shows the red banner SANITY UNREACHABLE: NETWORK DOWN most days a
 | Case | What happens | Recovers | Tested |
 |------|--------------|----------|--------|
 | Network gone for 30 minutes on the page | Banner after 2 minutes. After 10 minutes down and one repair step, the extra line: The Teletraan computer is trying to fix this by itself (from `device.json`). Content stays. | Yes, within 35 seconds of the network returning (a read every 30 seconds after a failure), no page reload | `tests/reliability.test.mjs`, with the clock moved in 35 second jumps |
-| Network gone for 6 minutes on the computer | 3 failed checks, then one repair step at a time: dhcp, reconnect, service, screen, and a reboot only after 30 minutes | Usually at step 1 to 3 | `tests/network-watchdog.test.mjs` |
+| Network gone for 6 minutes on the computer | 3 failed checks, then restart the network service and renew DHCP, at 6 bounce the interface, at 15 (30 minutes) a reboot, at most once in 2 hours. The screen keeps the last content and the pill says Offline since a time | Usually at the first or second action | `tests/netwatch.test.mjs`, `tests/sync-service.test.mjs` |
 | Network gone for 14 hours | Steps 1 to 4 once each, a reboot at most every 6 hours, never in the first 10 minutes after boot, never within 6 hours of the scheduled reboot | When the network returns, which clears the count | the same |
 | Drops again within 30 minutes | The steps that ran less than 30 minutes ago are skipped | Yes | the same |
 | Sanity answers with an error page | Counts as a working network, nothing is repaired | n/a | the same |

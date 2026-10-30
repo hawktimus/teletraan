@@ -103,7 +103,7 @@ write_device_info() {
 
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ 2> /dev/null || true)
 
-  # When the network went away and the last repair step the network watchdog took (network-watchdog.sh). Empty while the
+  # When the network went away and the last repair step the network watchdog took (netwatch.sh). Empty while the
   # network works. The page says "trying to fix this by itself" only when both are there (dashboard/core/device.js).
   network_down=''
   network_step=''

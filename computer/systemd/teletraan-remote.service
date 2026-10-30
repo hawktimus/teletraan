@@ -1,0 +1,17 @@
+[Unit]
+Description=Run the remote actions that the Studio asks for (restart the screen, restart the services, reboot)
+After=network-online.target teletraan-control.socket
+Wants=network-online.target
+
+[Service]
+Type=simple
+# ACCOUNT is replaced by install-remote.sh with the account that owns the repository. That account owns the helper
+# socket in /run/teletraan, which is the only way this service starts a restart or a reboot. It reads SANITY_WRITE_TOKEN
+# from local.env and logs to /var/log/teletraan/remote.jsonl (remote-poller.mjs explains the order of work).
+User=ACCOUNT
+ExecStart=/usr/bin/node /opt/teletraan/computer/scripts/remote-poller.mjs
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -29,7 +29,7 @@ const motionTimeLimit = 3600 * 1000; // a real browser plays every transition
 const slowTests = [
   'backup-dataset', 'build-version', 'calendar-status', 'check-calendars', 'check-connection', 'control-display-pictures', 'control-helper', 'display', 'effects', 'expired-cleanup',
   'frc-event', 'frc-field', 'frc-sync', 'git-hook', 'install-calendars', 'install-console', 'install-sh', 'layouts', 'match13-sync',
-  'mirror', 'monday-sync', 'news-sync', 'nightly', 'no-old-code', 'panel-b', 'photos-drive', 'seasons', 'ship', 'slides-sync',
+  'mirror', 'monday-sync', 'net-tools', 'netwatch', 'network-install', 'news-sync', 'notify', 'nightly', 'no-old-code', 'panel-b', 'photos-drive', 'seasons', 'ship', 'slides-sync',
   'status-write', 'swap-smooth', 'sweep', 'team-colors', 'team-name', 'teletraan-tool', 'teletraan-tool-commands', 'templates',
   'theme-view-requests', 'watchdog',
 ].map(name => name + '.test.mjs');

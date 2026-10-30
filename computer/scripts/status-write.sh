@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|sync|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -18,8 +18,13 @@
 #                              deleted and why it stopped, if it did (lastCleanupAt, cleanupWouldDelete, cleanupDeleted,
 #                              cleanupError), from cleanup/status.json, which expired-cleanup.sh made in the data folder
 #   status-write.sh network    sends what the network watchdog knows (networkLastOkAt, networkDownSince, networkRecoveries,
-#                              networkLastStep, networkLastProblemAt), from network/status.json, which network-watchdog.sh
+#                              networkLastStep, networkLastProblemAt), from network/status.json, which netwatch.sh
 #                              made in the data folder. Only times, a count and the name of a step.
+#   status-write.sh sync       sends how each source of the sync service is doing and what netwatch last did
+#                              (syncSanityAt, syncWeatherAt, syncImagesAt, syncMondayAt, syncCompetitionAt, syncCalendarsAt,
+#                              syncLastFailure, netwatchLastAction, netwatchLastActionAt), from sync-status.json in the data
+#                              folder and /var/lib/teletraan/netwatch.json. It also writes status.json in the data folder,
+#                              the same facts for make net-status, and that part needs no token. Only times and short words.
 #   status-write.sh kiosk      the screen started
 #   status-write.sh version    the build on the wall: the version, the short hash, the date and the branch
 #                              (buildVersion, buildCommit, buildDate, buildBranch). From RELEASE.json of the
@@ -52,7 +57,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|cleanup|network|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|cleanup|network|sync|restart N" >&2
   exit 2
 }
 
@@ -75,6 +80,7 @@ case $1 in
   reboot) field=nextRebootAt ;;
   cleanup) field=lastCleanupAt ;;
   network) field=networkLastOkAt ;;
+  sync) field=syncSanityAt ;;
   kiosk) field=kioskStartedAt ;;
   version) field=version ;;
   backup) field=lastBackupAt ;;
@@ -98,6 +104,45 @@ explain() {
     *) echo "curl failed with exit code $1" ;;
   esac
 }
+
+# status.json in the data folder: the sources of the sync service and the last action of netwatch in one small file, for make
+# net-status. It needs no token and no network, so it is written before the token is looked for.
+if [ "$field" = syncSanityAt ]; then
+  data=$(setting TELETRAAN_DATA)
+  data=${data:-/var/lib/teletraan/data}
+  sync_file="$data/sync-status.json"
+  netwatch_file=${NETWATCH_STATE:-/var/lib/teletraan/netwatch.json}
+  command -v jq > /dev/null 2>&1 || exit 0
+  [ -f "$sync_file" ] || exit 0
+  netwatch_text='{}'
+  [ ! -f "$netwatch_file" ] || netwatch_text=$(jq -c . "$netwatch_file" 2> /dev/null || echo '{}')
+  sync_facts=$(jq -c --argjson n "$netwatch_text" '
+    def time: if type == "string" and test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$") then . else null end;
+    def text: if type == "string" and . != "" then (gsub("[^ -~]"; " ") | .[0:80]) else null end;
+    (.sources // {}) as $src
+    | ([$src | to_entries[] | select(.value.lastFailureAt != null and (.value.lastSuccessAt == null or .value.lastFailureAt > .value.lastSuccessAt))
+        | {name: .key, at: .value.lastFailureAt, why: .value.lastFailureReason}] | sort_by(.at) | last) as $worst
+    | {
+        syncSanityAt: ($src.sanity.lastSuccessAt | time),
+        syncWeatherAt: ($src.weather.lastSuccessAt | time),
+        syncImagesAt: ($src.images.lastSuccessAt | time),
+        syncMondayAt: ($src.monday.lastSuccessAt | time),
+        syncCompetitionAt: ($src.competition.lastSuccessAt | time),
+        syncCalendarsAt: ($src.calendars.lastSuccessAt | time),
+        syncLastFailure: (if $worst then ($worst.name + ": " + (($worst.why | text) // "failed")) else null end),
+        netwatchLastAction: ($n.lastAction | text),
+        netwatchLastActionAt: ($n.lastActionAt | time)
+      }' "$sync_file" 2> /dev/null || true)
+  [ -n "$sync_facts" ] || exit 0
+  temporary="$data/status.json.tmp.$$"
+  if printf '%s' "$sync_facts" | jq -c --slurpfile s "$sync_file" --argjson n "$netwatch_text" \
+    '{generatedAt: ($s[0].generatedAt // null), sources: ($s[0].sources // {}), netwatch: $n, facts: .}' > "$temporary" 2> /dev/null; then
+    chmod 644 "$temporary" 2> /dev/null || true
+    mv -f "$temporary" "$data/status.json" 2> /dev/null || rm -f "$temporary" 2> /dev/null || true
+  else
+    rm -f "$temporary" 2> /dev/null || true
+  fi
+fi
 
 token=''
 if [ "$field" != print ]; then
@@ -331,7 +376,7 @@ elif [ "$field" = lastCleanupAt ]; then
   fi
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
 elif [ "$field" = networkLastOkAt ]; then
-  # The file network-watchdog.sh wrote. A part that is empty (no outage now, none yet) is removed from the document. Each
+  # The file netwatch.sh wrote. A part that is empty (no outage now, none yet) is removed from the document. Each
   # part is checked, because it goes into a JSON body.
   data=$(setting TELETRAAN_DATA)
   file="${data:-/var/lib/teletraan/data}/network/status.json"
@@ -347,7 +392,7 @@ elif [ "$field" = networkLastOkAt ]; then
     ! printf '%s\n' "$problem_at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
     ! printf '%s\n' "$step_text" | grep -Eq '^[A-Za-z0-9 ]{0,40}$' ||
     ! printf '%s' "$recoveries" | grep -Eq '^[0-9]{1,4}$'; then
-    echo "status: network/status.json is not the file network-watchdog.sh writes, so nothing was written." >&2
+    echo "status: network/status.json is not the file netwatch.sh writes, so nothing was written." >&2
     exit 1
   fi
   set_list="\"networkRecoveries\":$recoveries"
@@ -364,6 +409,16 @@ elif [ "$field" = networkLastOkAt ]; then
   patch="\"id\":\"$document\",\"set\":{$set_list}"
   [ -z "$unset_list" ] || patch="$patch,\"unset\":[$unset_list]"
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
+elif [ "$field" = syncSanityAt ]; then
+  # The facts built above are already checked: times in one shape and words cut to 80 plain characters. A part that is
+  # empty is removed from the document.
+  body=$(printf '%s' "$sync_facts" | jq -c --arg id "$document" '
+    (with_entries(select(.value != null))) as $set
+    | (to_entries | map(select(.value == null) | .key)) as $unset
+    | {mutations: [
+        {createIfNotExists: {_id: $id, _type: "status"}},
+        {patch: ({id: $id, set: $set} + (if ($unset | length) == 0 then {} else {unset: $unset} end))}
+      ]}') || exit 0
 elif [ "$field" = newsAt ]; then
   # The line news-sync.sh wrote after a good run. Nothing is sent when it is not there. Each part is
   # checked, because it goes into a JSON body.

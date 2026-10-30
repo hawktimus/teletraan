@@ -47,7 +47,7 @@ test('block 1 is the six pairs of the split layout, then the open tasks of the f
   const first = blocks[0].rows;
   assert.deepEqual(first.slice(0, 6).map(item => [item.panel + (item.part ? ' ' + item.part : ''), item.side]), pairs);
   assert.deepEqual(line({ rows: first.slice(6) }), ['business', 'operations', 'marketing', 'strategy'].map(name => 'monday-department [' + name + '] open').concat([
-    'monday-charts status', 'monday-charts progress', 'monday-charts timeline', 'roster [business,marketing]',
+    'monday-charts status', 'monday-charts progress', 'monday-charts timeline', 'monday-projects', 'roster [business,marketing]',
   ]));
   first.slice(6).forEach(item => assert.equal(config.roboticsWidePanels.includes(item.panel), true, item.panel + ' is wide'));
   first.slice(0, 6).forEach(item => assert.equal(config.roboticsWidePanels.includes(item.panel), false, item.panel + ' is split'));
@@ -80,7 +80,7 @@ test('blocks 7 to 10 and 12 to 13 are Programming, Design and CNC, and Strategy,
 test('blocks 14 and 15 are the last four panels of Prime and of Nova', () => {
   assert.deepEqual(line(blocks[13]), lastFour);
   assert.deepEqual(line(blocks[14]), lastFour);
-  assert.equal(rows.length, 6 + 8 + 2 * (2 + 2) + 2 * 2 + 6 + 4 * 2 + 6 + 2 * 2 + 2 * 4 + 2 * 5, 'the count of rows adds up, the Department tasks rows of the two teams included');
+  assert.equal(rows.length, 6 + 9 + 2 * (2 + 2) + 2 * 2 + 6 + 4 * 2 + 6 + 2 * 2 + 2 * 4 + 2 * 5, 'the count of rows adds up, the Department tasks rows of the two teams included');
 });
 
 test('every default row is a registered panel the list accepts, and nothing is dropped by tidy', () => {

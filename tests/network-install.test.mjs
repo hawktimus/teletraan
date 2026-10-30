@@ -1,5 +1,6 @@
 // Tests for computer/scripts/install-network.sh, run in a folder that stands for the root of the Teletraan computer, with
-// id, stat, systemctl, nmcli, ip, ethtool, udevadm and visudo replaced by small fakes: the interface rules, the settings
+// id, stat, chown, systemctl, nmcli, ip, ethtool, udevadm and visudo replaced by small fakes: the netwatch timer and the
+// removal of the older one, the interface rules and the Wi-Fi driver rules, the files netwatch writes, the settings
 // that stop the network from sleeping, that running it twice changes nothing, and that --undo takes them away again.
 //
 //   node tests/network-install.test.mjs
@@ -37,6 +38,10 @@ function setup(options = {}) {
   fs.cpSync(path.join(repo, 'computer'), path.join(home, 'computer'), { recursive: true, filter: source => !source.endsWith('local.env') });
   ['etc/sudoers.d', 'etc/systemd/system', 'sys/class/net/wlp2s0', 'sys/class/net/enp3s0f0', 'sys/class/net/docker0'].forEach(folder => fs.mkdirSync(path.join(root, folder), { recursive: true }));
   fs.copyFileSync(path.join(repo, 'computer/sudoers/teletraan-control'), path.join(root, 'etc/sudoers.d/teletraan-control'));
+  // The driver of the Wi-Fi device, as /sys shows it: a link to the module
+  fs.mkdirSync(path.join(root, 'sys/modules/iwlwifi'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'sys/class/net/wlp2s0/device/driver'), { recursive: true });
+  fs.symlinkSync(path.join(root, 'sys/modules/iwlwifi'), path.join(root, 'sys/class/net/wlp2s0/device/driver/module'));
   ordinary.forEach(name => {
     const found = find(name);
     if (found && !fs.existsSync(path.join(bin, name))) fs.symlinkSync(found, path.join(bin, name));
@@ -45,6 +50,7 @@ function setup(options = {}) {
   fs.writeFileSync(log, '');
   tool(bin, 'id', '#!/bin/sh\n[ "$1" = -u ] && { echo 0; exit 0; }\nexit 0\n');
   tool(bin, 'stat', '#!/bin/sh\necho hawk\n');
+  tool(bin, 'chown', `#!/bin/sh\necho "chown $*" >> "${log}"\n`);
   tool(bin, 'curl', '#!/bin/sh\n');
   tool(bin, 'flock', '#!/bin/sh\n');
   tool(bin, 'ip', '#!/bin/sh\necho "default via 10.0.137.1 dev wlp2s0 proto dhcp"\n');
@@ -100,18 +106,44 @@ check('the sudo rules cover the Wi-Fi and Ethernet devices of NetworkManager and
   const rules = place.text('etc/sudoers.d/teletraan-network');
   assert.ok(rules.includes('/usr/bin/nmcli device reapply wlp2s0') && rules.includes('/usr/bin/nmcli device reapply enp3s0f0'));
   assert.ok(rules.includes('hawk ALL=(root) NOPASSWD:'));
+  // netwatch reloads the driver of the Wi-Fi device, and no other module
+  assert.ok(rules.includes('/usr/sbin/modprobe -r iwlwifi') && rules.includes('/usr/sbin/modprobe iwlwifi'));
+  assert.equal((rules.match(/modprobe/g) || []).length, 2);
   ['docker0', 'veth', 'tailscale0', 'br-'].forEach(word => assert.ok(!code(rules).includes(word), word));
   assert.ok(!/IFACE|ACCOUNT/.test(code(rules)), 'every placeholder is filled in');
   assert.ok(!/[*?]/.test(code(rules)), 'no wildcard');
   assert.equal(fs.statSync(place.file('etc/sudoers.d/teletraan-network')).mode & 0o777, 0o440);
 });
 
-check('the unit files are copied for the login user and the timer is turned on', () => {
+check('the netwatch unit files are copied for the login user and the timer is turned on', () => {
   const place = setup();
   place.run();
-  assert.match(place.text('etc/systemd/system/teletraan-network.service'), /^User=hawk$/m);
-  assert.ok(place.text('etc/systemd/system/teletraan-network.timer').includes('OnUnitActiveSec=2min'));
-  assert.ok(place.calls().includes('systemctl enable --now teletraan-network.timer') && place.calls().includes('systemctl restart teletraan-network.timer'));
+  assert.match(place.text('etc/systemd/system/teletraan-netwatch.service'), /^User=hawk$/m);
+  assert.ok(place.text('etc/systemd/system/teletraan-netwatch.timer').includes('OnUnitActiveSec=2min'));
+  assert.ok(place.calls().includes('systemctl enable --now teletraan-netwatch.timer') && place.calls().includes('systemctl restart teletraan-netwatch.timer'));
+});
+
+check('the older network timer is turned off and its unit files are removed, so there is one watchdog', () => {
+  const place = setup();
+  fs.writeFileSync(place.file('etc/systemd/system/teletraan-network.timer'), '[Timer]\n');
+  fs.writeFileSync(place.file('etc/systemd/system/teletraan-network.service'), '[Service]\n');
+  place.run();
+  assert.ok(place.calls().includes('systemctl disable --now teletraan-network.timer'));
+  assert.equal(place.text('etc/systemd/system/teletraan-network.timer'), null);
+  assert.equal(place.text('etc/systemd/system/teletraan-network.service'), null);
+});
+
+check('netwatch.json is made for the login user, with the shape the poller reads, and the log folder too; an existing file is kept', () => {
+  const place = setup();
+  place.run();
+  const state = JSON.parse(place.text('var/lib/teletraan/netwatch.json'));
+  assert.deepEqual(Object.keys(state), ['failures', 'lastCheckAt', 'lastOkAt', 'lastAction', 'lastActionAt', 'lastRebootAt']);
+  assert.equal(state.lastAction, 'none');
+  assert.ok(fs.statSync(place.file('var/log/teletraan')).isDirectory());
+  assert.ok(place.calls().includes('chown hawk:') && place.calls().includes('var/lib/teletraan/netwatch.json') && place.calls().includes('var/log/teletraan'));
+  fs.writeFileSync(place.file('var/lib/teletraan/netwatch.json'), '{"failures":4}\n');
+  place.run();
+  assert.equal(place.text('var/lib/teletraan/netwatch.json'), '{"failures":4}\n');
 });
 
 check('Wi-Fi power saving goes off through NetworkManager (drop-in and the active connection) when iw is not installed, and the output says so', () => {
@@ -185,7 +217,7 @@ check('--undo removes the settings, unmasks the targets and puts power saving ba
   ['etc/NetworkManager/conf.d/70-teletraan-network.conf', 'etc/udev/rules.d/70-teletraan-network.rules', 'etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf'].forEach(name => assert.equal(place.text(name), null, name));
   assert.ok(!fs.readdirSync(place.stub).some(name => name.startsWith('masked-')), 'unmasked');
   assert.equal(fs.readFileSync(path.join(place.stub, 'powersave'), 'utf8').trim(), '0');
-  assert.ok(place.text('etc/sudoers.d/teletraan-network') && place.text('etc/systemd/system/teletraan-network.timer'));
+  assert.ok(place.text('etc/sudoers.d/teletraan-network') && place.text('etc/systemd/system/teletraan-netwatch.timer'));
 });
 
 check('it refuses to run without root, for a repository owned by root, and with a word it does not know', () => {
@@ -204,7 +236,7 @@ check('the script is plain: no em or en dash, no root unit, and it asks before i
   const text = fs.readFileSync(path.join(repo, 'computer/scripts/install-network.sh'), 'utf8');
   assert.ok(!/[–—]/.test(text));
   assert.ok(text.indexOf('read -r answer') < text.indexOf('install -m 644 "$tmp"'));
-  const unit = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-network.service'), 'utf8');
+  const unit = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-netwatch.service'), 'utf8');
   assert.match(unit, /^User=ACCOUNT$/m);
   assert.ok(!/^NoNewPrivileges=/m.test(unit));
 });

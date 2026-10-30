@@ -24,7 +24,7 @@
 //             the Rotation list and in no older list (Panel order, the rows of a Screen)
 //   rotationOnly  a panel that is drawn only when a row of the rotation names it (core/rotation.js), as a large panel or as the side
 //             of a row. It is not a spare for the small frame, not in Panel order and not in the rows of a Screen
-//   monday    a Monday panel (docs/monday.md): Department tasks (monday-department) and the TV charts (monday-charts).
+//   monday    a Monday panel (docs/monday.md): Department tasks (monday-department), the TV charts (monday-charts) and Projects (monday-projects).
 //             A row of the rotation names the department, the list, the chart and the team, and the row is skipped while
 //             the panel has nothing to show. They are not in Panel order and have a topic of their own, as the
 //             competition cards do. The eleven Monday panels of the older sync are gone (retiredMondayPanels in config.js).
@@ -76,6 +76,7 @@ export const panels = [
   { id: 'competition-compare', region: 'grid1', topic: 'competition', competition: true },
   { id: 'monday-department', region: 'grid1', topic: 'monday', monday: true },
   { id: 'monday-charts', region: 'grid1', topic: 'monday', monday: true },
+  { id: 'monday-projects', region: 'grid1', topic: 'monday', monday: true },
 
   { id: 'task-counts', region: 'grid2', topic: 'tasks' },
   { id: 'next-event', region: 'grid2', topic: 'events' },

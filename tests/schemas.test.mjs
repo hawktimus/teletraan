@@ -423,6 +423,8 @@ const studioOnlyTypes = {
   status: 'the Teletraan computer writes it for the status block, and the dashboard never reads it',
   calendarStatus: 'the Teletraan computer writes it for the Calendars page, and the dashboard never reads it',
   rosterPerson: 'the roster is shown on the Control page, and no panel of the screen reads it yet (docs/roster.md)',
+  remoteControl: 'the Remote actions page sends it and the poller on the Teletraan computer reads it. The dashboard never does',
+  remoteStatus: 'the Teletraan computer writes it for the Remote actions folder, and the dashboard never reads it',
 };
 
 // Types the Teletraan computer writes and the dashboard reads as a whole. Their fields are checked together in
@@ -502,6 +504,8 @@ const listSort = {
 // The pages that exist once. Each is one document whose id is its type, except the three Screens, which are
 // three pages of the type screen with an id each.
 const pageTypes = ['dashboardSettings', 'theme', 'demo', 'screen', 'view'];
+// The two pages of the Remote actions folder, with their ids (the status page has the id the Teletraan computer writes)
+const remotePageIds = { remoteControl: 'remoteControl', remoteStatus: 'remote-status' };
 const screenPageIds = ['screen-original', 'screen-cybertron', 'screen-minimal'];
 const viewPageIds = ['view-general', 'view-prime', 'view-nova', 'view-family'];
 
@@ -558,7 +562,7 @@ const typeTitles = {
 // the colon, and the lines under it come after. The first group has no heading.
 const sidebarGroups = [
   'Start here, Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look, Competition',
-  'COACHES ONLY: Dashboard Settings, Extra panels, Check the screen, Kept data',
+  'COACHES ONLY: Dashboard Settings, Extra panels, Remote actions, Check the screen, Kept data',
 ];
 
 // What each folder holds, in order. A folder inside a folder has its lines in brackets.
@@ -567,6 +571,7 @@ const folderLines = {
   'People': 'Leadership, Roster, Team leads, Sponsors',
   'Teams and views': 'Hawktimus Prime, Hawktimus Nova, Views (Robotics, Prime, Nova)',
   'Views': 'Robotics, Prime, Nova',
+  'Remote actions': 'Send an action, Status of the computer',
 };
 
 // The types, or the templates of add-templates.js, that the plus button of a folder offers
@@ -2506,9 +2511,10 @@ function checkSidebarLines(problems) {
     named.push(entry.type);
 
     if (entry.kind === 'page') {
-      need(problems, pageTypes.indexOf(entry.type) !== -1 || entry.type === 'team', where + ' is a page, but "' + entry.type + '" is not one of the pages that exist once: ' + pageTypes.join(', '));
+      need(problems, pageTypes.indexOf(entry.type) !== -1 || entry.type === 'team' || remotePageIds[entry.type] !== undefined, where + ' is a page, but "' + entry.type + '" is not one of the pages that exist once: ' + pageTypes.join(', '));
       if (entry.type === 'screen') need(problems, screenPageIds.indexOf(entry.id) !== -1, where + ' should open one of the Screens: ' + screenPageIds.join(', ') + ', not ' + entry.id);
       else if (entry.type === 'view') need(problems, viewPageIds.indexOf(entry.id) !== -1, where + ' should open one of the Views: ' + viewPageIds.join(', ') + ', not ' + entry.id);
+      else if (remotePageIds[entry.type] !== undefined) need(problems, entry.id === remotePageIds[entry.type], where + ' should open the document with id ' + remotePageIds[entry.type] + ', not ' + entry.id);
       else if (entry.type === 'team') need(problems, ['team-prime', 'team-nova'].indexOf(entry.id) !== -1, where + ' should open one of the starting teams: team-prime, team-nova, not ' + entry.id);
       else need(problems, entry.id === entry.type, where + ' should open the document with id ' + entry.type + ', not ' + entry.id);
       return;
@@ -2601,7 +2607,7 @@ function checkSidebarGroups(problems) {
     if (want) need(problems, folderShape(folder.entries) === want, folder.title + ' should hold: ' + want + '. It holds: ' + folderShape(folder.entries));
     need(problems, (folder.add || []).join() === (folderAdds[folder.title] || ''), 'the plus button of ' + folder.title + ' should offer: ' + (folderAdds[folder.title] || 'nothing') + '. It offers: ' + ((folder.add || []).join() || 'nothing'));
   });
-  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 4, 'the sidebar should have four folders in all: Events, People, Teams and views, and Views inside it');
+  need(problems, allLines(entries).filter(entry => entry.kind === 'group').length === 5, 'the sidebar should have five folders in all: Events, People, Teams and views, Views inside it, and Remote actions');
 
   ['Start here', 'Calendars', 'Today'].forEach(title => {
     const entry = allLines(entries).filter(item => item.title === title)[0];
@@ -4780,7 +4786,9 @@ function checkFixedValues() {
   });
 
   const wantedConstants = Object.keys(fixedValues).map(pathText => fixedValues[pathText].constant).filter(Boolean);
-  need(problems, Object.keys(constants).sort().join() === wantedConstants.slice().sort().join(), 'dashboard/core/constants.js should export exactly: ' + wantedConstants.join(', '));
+  // The limits of the status pill are fixed values with no Studio field (docs/OPERATIONS.md)
+  const pillConstants = ['syncCheckSeconds', 'syncDownMinutes', 'syncSourceMinutes', 'syncStaleMinutes'];
+  need(problems, Object.keys(constants).sort().join() === wantedConstants.concat(pillConstants).sort().join(), 'dashboard/core/constants.js should export exactly: ' + wantedConstants.concat(pillConstants).join(', '));
   return problems;
 }
 
@@ -4866,7 +4874,7 @@ function checkPanelOrder() {
 // are marked older: the Studio does not offer them.
 function checkMondayCards() {
   const problems = [];
-  const ids = ['monday-department', 'monday-charts'];
+  const ids = ['monday-department', 'monday-charts', 'monday-projects'];
   const flagged = world.registry.panels.filter(panel => panel.monday).map(panel => panel.id);
   need(problems, flagged.join() === ids.join(), 'registry.js should have the panels ' + ids.join(', ') + ' with monday: true, in that order');
 
@@ -5114,7 +5122,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone', 'remoteControl', 'remoteStatus']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
@@ -5789,7 +5797,7 @@ function checkMondayTab() {
 
 // The Monday data document the Teletraan computer writes (schemas/mondayStatus.js, computer/scripts/monday-sync.sh) and the task
 // fields the script writes. The board list of the older sync is a field still, and the script takes it out.
-const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'departments', 'snapshots', 'taskCount', 'hiddenCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
+const mondayStatusFields = ['connectedAs', 'lastSyncAt', 'lastError', 'boards', 'readings', 'departments', 'projects', 'snapshots', 'taskCount', 'hiddenCount', 'hiddenUnassigned', 'callsToday', 'callsDate'];
 
 function checkMondayStatus() {
   const problems = [];
@@ -5912,7 +5920,7 @@ function checkScreenType() {
   const registered = area => world.registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly).map(panel => panel.id);
   const listOf = pathText => choicesOf(pathText).map(item => item.value + '=' + item.title).join();
   const titleFor = id => ({ tasks: 'Tasks', events: 'Upcoming events', tonight: 'Daily Agenda', spotlight: 'Subteam spotlight', 'sponsor-feature': 'Sponsor feature', photo: 'Photo', leadership: 'Leadership', 'team-leads': 'Team leads', roster: 'Subteam roster', custom: 'Extra panel', 'task-counts': 'Task counts', 'next-event': 'Next event', forecast: 'Weather forecast', 'safety-days': 'Safety days', 'sponsor-logo': 'Sponsor logo' }[id] || world.screenPanels.panelTitle(id)); // a new panel is titled in studio/inputs/screen-panels.js
-  const monday = ['monday-department=Monday: Department tasks', 'monday-charts=Monday: TV charts'];
+  const monday = ['monday-department=Monday: Department tasks', 'monday-charts=Monday: TV charts', 'monday-projects=Monday: Projects'];
 
   // the tabs are the five letters of the map, in order
   need(problems, type.type === 'document' && type.title === 'Screen', 'screen should be a document titled Screen');
@@ -5951,7 +5959,7 @@ function checkScreenType() {
   // B Main panel: the tip, then rows of a panel, a team and seconds. The Monday rows are offered like any other panel.
   const rows = at('mainRows');
   need(problems, rows && rows.type === 'array' && rows.description === mainRowTip, 'screen.mainRows should say Not used any more in its description: ' + mainRowTip);
-  need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the two Monday panels: ' + registered('grid1').concat(monday.map(line => line.split('=')[0])).join(', '));
+  need(problems, listOf('screen.mainRows.panel') === registered('grid1').map(id => id + '=' + titleFor(id)).concat(monday).join(), 'a row of the main panel should offer the large panels of registry.js and then the three Monday panels: ' + registered('grid1').concat(monday.map(line => line.split('=')[0])).join(', '));
   need(problems, fieldsIn(rows || {}).map(field => field.name).join() === 'panel,team,department,seconds,photoCount,secondsPerPhoto,photoTotal', 'a row of the main panel should have a panel, a team, a department (shown for the Monday tasks panel only) seconds and, for the Photos row, a count, the seconds of each photo and the total');
   const departmentField = fieldAt('screen.mainRows.department');
   need(problems, departmentField && departmentField.type === 'string' && departmentField.components && departmentField.components.input === world.screenFields.RowDepartmentInput && typeof departmentField.hidden === 'function' && departmentField.hidden({ parent: { panel: 'monday-department' } }) === false && departmentField.hidden({ parent: { panel: 'monday-charts' } }) === true && departmentField.hidden({ parent: { panel: 'photo' } }) === true, 'the department of a row should be drawn by RowDepartmentInput and shown for Department tasks only');

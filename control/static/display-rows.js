@@ -59,6 +59,8 @@ export const playsWords = { condensed: condensedWords, prime: 'Plays in the Prim
 
 // 'condensed', 'prime' or 'nova' for a Monday row, and for a Roster row of a Robotics block that names a team. '' for any other row.
 export function playsIn(row) {
+  // Projects is for both teams in the Robotics view: Condensed there, and nothing in a Prime or Nova block
+  if (row.panel === 'monday-projects') return row.view === 'robotics' ? 'condensed' : '';
   const older = row.panel === 'monday-tasks' && mondayDepartmentIds.indexOf(String(row.department || '').trim().toLowerCase()) !== -1;
   const monday = older || row.panel === 'monday-department' || row.panel === 'monday-charts';
   const team = row.team === 'prime' || row.team === 'nova' ? row.team : '';

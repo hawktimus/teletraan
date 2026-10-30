@@ -111,7 +111,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-const installNames = ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'news', 'match13', 'console', 'watchdog', 'network', 'backup', 'nightly', 'reboot', 'cleanup'];
+const installNames = ['calendars', 'slides', 'photos-drive', 'monday', 'frc', 'news', 'match13', 'console', 'watchdog', 'network', 'backup', 'nightly', 'reboot', 'cleanup', 'sync'];
 
 // Makes the Mac's home, the fake tools and the folder that stands for the Teletraan computer,
 // and returns how to run the tool in them.
@@ -637,7 +637,7 @@ test('copying from the Teletraan computer changes nothing when the computer has 
   assert.ok(!fs.existsSync(path.join(down.home, '.teletraan/pulled.tmp')));
 });
 
-test('install everything runs the installer, then the eight install scripts in order, then restarts the screen, and goes on after one script stops', () => {
+test('install everything runs the installer, then the install scripts in order, then restarts the screen, and goes on after one script stops', () => {
   const place = makePlace('install', { failInstall: 'monday' });
   const result = place.run(['1', '', 'q']);
   assert.equal(result.status, 0, result.errors);

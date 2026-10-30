@@ -67,7 +67,7 @@ function allows(commands, line) {
 const parsed = read(generated('hawk'));
 const commands = commandsOf(parsed);
 
-const timers = ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'network'];
+const timers = ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'netwatch', 'heartbeat'];
 const syncs = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 const networkServices = ['NetworkManager.service', 'systemd-networkd.service', 'systemd-resolved.service', 'networking.service'];
 const journalLine = '/usr/bin/journalctl -u NetworkManager.service -u wpa_supplicant.service -u systemd-networkd.service --no-pager -n 60 -o short-iso';
@@ -76,6 +76,7 @@ const expected = [
   '/usr/bin/systemctl start teletraan-mirror.service',
   ...timers.map(name => '/usr/bin/systemctl restart teletraan-' + name + '.timer'),
   ...syncs.map(name => '/usr/bin/systemctl start teletraan-' + name + '.service'),
+  '/usr/bin/systemctl restart teletraan-sync.service',
   ...networkServices.map(name => '/usr/bin/systemctl restart ' + name),
   journalLine,
   '/usr/bin/docker restart teletraan-web',
@@ -106,7 +107,8 @@ check('every command the scripts run through sudo is allowed, by the same path',
   const helper = fs.readFileSync(path.join(repo, 'computer/scripts/control-helper.sh'), 'utf8');
   assert.ok(helper.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl') && helper.includes('TELETRAAN_DOCKER:-/usr/bin/docker'));
   const loop = /for timer in ([a-z ]+); do/.exec(helper);
-  assert.deepEqual(loop[1].split(' '), timers, 'the helper restarts the six timers');
+  assert.deepEqual(loop[1].split(' '), timers, 'the helper restarts the timers');
+  assert.ok(helper.includes('restart teletraan-sync.service'), 'and the sync service');
   const list = /sync-now\)\n\s+case \$argument in\n\s+([a-z0-9|-]+)\) ;;/.exec(helper);
   assert.deepEqual(list[1].split('|'), syncs, 'the helper starts the six sync services');
 
@@ -117,11 +119,12 @@ check('every command the scripts run through sudo is allowed, by the same path',
     '/usr/bin/systemctl reboot',
     ...timers.map(name => '/usr/bin/systemctl restart teletraan-' + name + '.timer'),
     ...syncs.map(name => '/usr/bin/systemctl start teletraan-' + name + '.service'),
+    '/usr/bin/systemctl restart teletraan-sync.service',
   ];
   lines.forEach(line => assert.ok(allows(commands, line), line));
 
   // The watchdog restarts the screen. The nightly job restarts it and reboots. The scheduled reboot reboots.
-  const scripts = { watchdog: ['restart teletraan-kiosk.service'], nightly: ['restart teletraan-kiosk.service', 'reboot'], 'scheduled-reboot': ['reboot'], 'network-watchdog': ['restart teletraan-kiosk.service', 'reboot'] };
+  const scripts = { watchdog: ['restart teletraan-kiosk.service'], nightly: ['restart teletraan-kiosk.service', 'reboot'], 'scheduled-reboot': ['reboot'], netwatch: ['reboot'] };
   Object.keys(scripts).forEach(name => {
     const text = fs.readFileSync(path.join(repo, 'computer/scripts', name + '.sh'), 'utf8');
     assert.ok(text.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl'), name);
@@ -144,6 +147,9 @@ check('commands that are not listed are refused: other units, extra arguments, w
     '/usr/bin/systemctl start teletraan-backup.service',
     '/usr/bin/systemctl start teletraan-control.socket',
     '/usr/bin/systemctl restart teletraan-frc.timer',
+    '/usr/bin/systemctl restart teletraan-network.timer',
+    '/usr/bin/systemctl start teletraan-sync.service',
+    '/usr/bin/systemctl stop teletraan-sync.service',
     '/usr/bin/systemctl reboot --force',
     '/usr/bin/systemctl reboot now',
     '/usr/bin/systemctl poweroff',
@@ -192,9 +198,23 @@ check('the interface rules name each command with the interface, for the devices
     ['/usr/bin/nmcli device reapply ', '/usr/bin/nmcli device disconnect ', '/usr/bin/networkctl renew '].forEach(start => assert.ok(!allows(net, start + name), start + name));
   });
   assert.ok(!allows(net, '/usr/bin/nmcli device delete wlp2s0') && !allows(net, '/usr/bin/nmcli radio wifi off'));
-  const script = fs.readFileSync(path.join(repo, 'computer/scripts/network-watchdog.sh'), 'utf8');
+  const script = fs.readFileSync(path.join(repo, 'computer/scripts/netwatch.sh'), 'utf8');
   ['nmcli_bin\" device reapply', 'nmcli_bin\" device disconnect', 'nmcli_bin\" device connect', 'networkctl_bin\" renew', 'networkctl_bin\" reconfigure', 'ifup_bin\" --force', 'ifdown_bin\" \"$interface'].forEach(part => assert.ok(script.includes(part), part));
-  assert.ok(allows(commands, '/usr/bin/systemctl restart teletraan-kiosk.service') && allows(commands, '/usr/bin/systemctl reboot'), 'the watchdog reuses the kiosk and reboot rules');
+  assert.ok(allows(commands, '/usr/bin/systemctl reboot'), 'netwatch reuses the reboot rule');
+  ['NetworkManager.service', 'systemd-networkd.service', 'systemd-resolved.service', 'networking.service'].forEach(unit => assert.ok(allows(commands, '/usr/bin/systemctl restart ' + unit), unit));
+});
+
+check('the Wi-Fi driver rules name one module with and without -r, for the modules that were found only', () => {
+  const lines = netTemplate.split('\n');
+  const block = lines.slice(lines.indexOf('# --- module ---') + 1, lines.indexOf('# --- module end ---')).join('\n');
+  const text = ['iwlwifi', 'rtl8821ce'].map(name => block.replace(/MODULE/g, name).replace(/ACCOUNT/g, 'hawk')).join('\n') + '\n';
+  const net = commandsOf(read(text));
+  assert.deepEqual([...net].sort(), ['/usr/sbin/modprobe -r iwlwifi', '/usr/sbin/modprobe -r rtl8821ce', '/usr/sbin/modprobe iwlwifi', '/usr/sbin/modprobe rtl8821ce'].sort());
+  assert.ok(!/[*?[\]!]/.test(text), 'no wildcard');
+  ['/usr/sbin/modprobe -r iwlwifi extra', '/usr/sbin/modprobe ../x', '/usr/sbin/modprobe -r', '/usr/sbin/modprobe nfs', '/usr/sbin/insmod iwlwifi'].forEach(line => assert.ok(!allows(net, line), line));
+  const script = fs.readFileSync(path.join(repo, 'computer/scripts/netwatch.sh'), 'utf8');
+  assert.ok(script.includes('modprobe_bin\" -r \"$module') && script.includes('modprobe_bin\" \"$module'), 'the script runs those two forms');
+  assert.ok(script.includes("grep -Eq '^[a-z0-9_]{1,30}$'"), 'a module name is checked before it goes to sudo');
 });
 
 check('visudo accepts the generated file and refuses a broken one', () => {

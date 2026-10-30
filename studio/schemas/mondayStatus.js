@@ -98,6 +98,37 @@ const snapshot = defineArrayMember({
   },
 });
 
+const projectStatuses = [
+  { title: 'To do', value: 'up-next' },
+  { title: 'In progress', value: 'in-progress' },
+  { title: 'In review', value: 'in-review' },
+  { title: 'Stuck', value: 'blocked' },
+  { title: 'Done', value: 'done' },
+];
+
+// One project of the Projects (Mentors) board, as the Projects panel of the TV draws it. Mentors and helpers are first names, because the
+// dataset is public. A project that says Hide in Monday is not written, and Budget and Notes are never read.
+const project = defineArrayMember({
+  type: 'object',
+  title: 'Project',
+  fields: [
+    textField('id', 'Item number', 'The number of the item on the Projects board.'),
+    textField('title', 'Project', 'The name of the project as Monday shows it, 60 characters at most.'),
+    defineField({ name: 'status', title: 'Status', type: 'string', options: { list: projectStatuses }, description: 'To do, in progress, in review, stuck or done. A project in the Done group is done.' }),
+    textField('mentor', 'Mentor', 'The first name of the mentor, which is the first word of the Mentor label.'),
+    textField('mentorInitial', 'Mentor last initial', 'The first letter of the last name of the mentor, so the screen can tell two mentors with the same first name apart.'),
+    defineField({ name: 'helpers', title: 'Helpers', type: 'array', of: [{ type: 'string' }], description: 'The first names of the helpers, six at most.' }),
+    numberField('percent', 'Percent complete', 'The % Complete column, from 0 to 100. Empty when the project has none.'),
+    defineField({ name: 'completedOn', title: 'Date completed', type: 'date', description: 'The day the project was done, when the board says. A done project shows for 14 days after it.' }),
+  ],
+  preview: {
+    select: { title: 'title', status: 'status', mentor: 'mentor' },
+    prepare(entry) {
+      return { title: entry.title || 'Project with no name', subtitle: [entry.status, entry.mentor].filter(Boolean).join(', ') };
+    },
+  },
+});
+
 export default defineType({
   name: 'mondayStatus',
   title: 'Monday data from the Teletraan computer',
@@ -112,6 +143,7 @@ export default defineType({
     defineField({ name: 'boards', title: 'Boards', type: 'array', of: [board], description: 'Not written any more: the older sync listed every board the token could see here. The next read takes it out.' }),
     defineField({ name: 'readings', title: 'Board readings', type: 'array', of: [reading], description: 'One entry for each of the two boards: how many items the Teletraan computer read from it, when, and why a board gave none.' }),
     defineField({ name: 'departments', title: 'Departments', type: 'array', of: [departmentCount], description: 'The open and done tasks of each department on the TV, from the last read.' }),
+    defineField({ name: 'projects', title: 'Projects', type: 'array', of: [project], description: 'The projects of the Projects board that the TV draws, from the last read. A board that could not be read leaves the older list.' }),
     defineField({ name: 'snapshots', title: 'Daily counts', type: 'array', of: [snapshot], description: 'One count a day of the open items, 120 at most.' }),
     numberField('taskCount', 'Tasks', 'How many tasks the Teletraan computer read from the two boards the last time, the ones set to Hide included.'),
     numberField('hiddenCount', 'Hidden on Monday', 'How many of those say Hide in the Show on TV? column. They are counted and not written as tasks, because the dataset is public.'),

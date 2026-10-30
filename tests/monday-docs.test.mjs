@@ -29,18 +29,22 @@ function section(title) {
 }
 
 test('the page has the sections it should, in plain words, and is short', () => {
-  ['The two boards', 'How a task gets onto the TV', 'What the computer reads from each task', 'The two panels', 'Which view plays which tasks', 'Putting a department on the TV', 'The Monday page', 'How often it reads', 'What it writes', 'If nothing shows up', 'Setting it up'].forEach(title => section(title));
+  ['The boards', 'How a task gets onto the TV', 'What the computer reads from each task', 'The projects board', 'The panels', 'Which view plays which tasks', 'Putting a department on the TV', 'The Monday page', 'How often it reads', 'What it writes', 'If nothing shows up', 'Setting it up'].forEach(title => section(title));
   assert.ok(!/[—–!]/.test(doc), 'no em dash, en dash or exclamation mark');
   assert.ok(!/[\u{1F300}-\u{1FAFF}☀-➿]/u.test(doc), 'no emoji');
   doc.split('\n').forEach(line => assert.ok(!/\s+$/.test(line), 'no space at the end of a line: ' + line));
-  assert.ok(doc.split('\n').length < 170, 'the page is short');
+  assert.ok(doc.split('\n').length < 260, 'the page is short');
 });
 
 test('the boards, the columns and the label numbers are the ones of the contract', () => {
-  ['18435126893', '18435131682'].forEach(id => assert.ok(section('The two boards').includes(id) && script.includes(id), id));
-  ['color_mkv6tatz', 'color_mm82nvea', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'date_mm82kn5v', 'numeric_mm82pw1a', 'color_mm83p12x'].forEach(id => {
+  ['18435126893', '18435131682', '18437852059'].forEach(id => assert.ok(section('The boards').includes(id) && script.includes(id), id));
+  ['color_mkv6tatz', 'color_mm82nvea', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'color_mm82wfy', 'timerange_mkyp8kx7', 'date_mm82kn5v', 'numeric_mm82pw1a', 'color_mm83p12x'].forEach(id => {
     assert.ok(doc.includes('`' + id + '`') && script.includes(id), id);
   });
+  ['color_mm8ma465', 'dropdown_mm8mcqq', 'dropdown_mm8mtej2', 'numeric_mm8mmzv6', 'date_mm8mkgrg', 'color_mm8mtjwd'].forEach(id => {
+    assert.ok(section('The projects board').includes('`' + id + '`') && script.includes(id), id);
+  });
+  assert.ok(!/numeric_mm8mqqaf|text_mm8m2tw9/.test(script), 'Budget and Notes are never read');
   assert.ok(/To Do 5, In Progress 0, Done 1, Stuck 2, In Review 3/.test(doc));
   assert.ok(/Prime 1, Nova 0, General 5/.test(doc) && /High 2, Medium 0, Low 1/.test(doc));
   assert.ok(!/18435272887/.test(doc + script), 'the milestones board is not read');
@@ -54,8 +58,8 @@ test('the rules of a task are the ones of the sync: the group, the Done list, Hi
 });
 
 test('the panels, the rows and the retired ids are the ones of the registry and the rotation', () => {
-  const panels = section('The two panels');
-  ['monday-department', 'monday-charts'].forEach(id => assert.ok(panels.includes('`' + id + '`') && read('dashboard/registry.js').includes("id: '" + id + "'"), id));
+  const panels = section('The panels');
+  ['monday-department', 'monday-charts', 'monday-projects'].forEach(id => assert.ok(panels.includes('`' + id + '`') && read('dashboard/registry.js').includes("id: '" + id + "'"), id));
   assert.ok(panels.includes('| Status | Project | Contact | Priority | Estimated Completion Date |'));
   const rows = section('Putting a department on the TV');
   assert.ok(/Department: one of the nine/.test(rows) && /List: Open or Done/.test(rows) && /Team: Both, Prime or Nova/.test(rows));

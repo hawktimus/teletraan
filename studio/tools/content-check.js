@@ -45,6 +45,7 @@ export const contentQuestion = `{
   "tasks": *[_type == "task" && source == "monday" && show != false && showOnTv != false && showOnBoard != false && defined(department)] {
     "team": team->code, department, list, status, startDate, dueDate, expires
   },
+  "projects": *[_id == "monday-status"][0].projects[] { status, completedOn },
   "status": *[_id == "status-mini"][0] { lastCleanupAt, cleanupWouldDelete, cleanupDeleted, cleanupError }
 }`;
 
@@ -364,8 +365,8 @@ function checkSettings(add, doc, photos, now) {
 // All of it
 
 // Every finding for these documents, the problems first inside each area. documents are raw documents (drafts and published);
-// tasks is the list contentQuestion asks for. now is a date.
-export function checkContent(documents, now = new Date(), tasks = []) {
+// tasks and projects are the lists contentQuestion asks for (projects is null when they were not asked for). now is a date.
+export function checkContent(documents, now = new Date(), tasks = [], projects = null) {
   const current = currentDocuments(documents);
   const ofType = type => current.filter(doc => doc._type === type);
   const settings = ofType('dashboardSettings')[0] || {};
@@ -392,6 +393,7 @@ export function checkContent(documents, now = new Date(), tasks = []) {
       customPanels: ofType('customPanel'),
       photos: ofType('photo').filter(isOn).map(photo => ({ expires: photo.expires })),
       tasks: tasks,
+      projects: projects,
       teams: ofType('team'),
     };
     rotationTrouble(settings.rotationRows, data, now).forEach(item => {
@@ -435,7 +437,7 @@ export function cleanupLine(answer) {
 
 export function checkAnswer(answer, now = new Date()) {
   const given = answer && typeof answer === 'object' ? answer : {};
-  return checkContent(given.documents, now, given.tasks || []);
+  return checkContent(given.documents, now, given.tasks || [], Array.isArray(given.projects) ? given.projects : null);
 }
 
 

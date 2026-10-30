@@ -98,7 +98,8 @@ test('restart-services restarts the web container and the timers, and goes on wh
   const calls = h.ask('status\n').calls;
   assert.ok(calls.includes('sudo -n ' + path.join(h.bin, 'docker') + ' restart teletraan-web'), calls);
   assert.ok(!calls.includes('nginx'), 'no fallback to the nginx service');
-  ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'network'].forEach(name => assert.ok(calls.includes('restart teletraan-' + name + '.timer'), name));
+  ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'netwatch', 'heartbeat'].forEach(name => assert.ok(calls.includes('restart teletraan-' + name + '.timer'), name));
+  assert.ok(calls.includes('restart teletraan-sync.service'), 'the sync service is restarted too');
 });
 
 test('network-info prints the link, the signal, the addresses, the journal with secrets taken out and the watchdog record, and says when iw is missing', () => {

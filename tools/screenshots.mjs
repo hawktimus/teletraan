@@ -285,6 +285,7 @@ export async function runShots(options) {
         if (shot.kind === 'swap') made = await takeSwap(page, options.base, shot, options.outFolder, limits, log);
         else if (shot.kind === 'view') made = await takeView(page, options.base, shot, file, limits);
         else if (shot.kind === 'announcement') made = await takePlate(page, options.base, shot, file, limits);
+        else if (options.kinds && options.kinds[shot.kind]) made = await options.kinds[shot.kind](page, options.base, shot, file, limits);
         else made = await takeStill(page, options.base, shot, file, limits);
 
         if (made.skipped) {

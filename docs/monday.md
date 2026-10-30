@@ -2,19 +2,21 @@
 
 For the students and coaches who keep the task list. The team keeps its tasks in Monday. The Teletraan
 computer reads them, keeps a copy in Sanity, and the TV shows the copy. This page says which boards are read,
-how a task gets onto the TV, what the two Monday panels show, how to put them in the rotation, and what to
+how a task gets onto the TV, what the three Monday panels show, how to put them in the rotation, and what to
 do when nothing shows up.
 
-## The two boards
+## The boards
 
-The computer reads two boards, by their numbers. Nothing about them is typed in the Studio.
+The computer reads three boards, by their numbers. Nothing about them is typed in the Studio.
 
 | Board | Number | What it holds |
 |---|---|---|
 | Robotics Tasks | `18435126893` | Every task. One group for each department, and a Done group |
 | Completed Tasks | `18435131682` | Old tasks that are finished. Every task here counts as done |
+| Projects (Mentors) | `18437852059` | The projects of the mentors, in the groups Active and Done |
 
-Both are multi-level boards: a task is a parent item, and its steps are subitems. Subitems are never read.
+The first two are multi-level boards: a task is a parent item, and its steps are subitems. Subitems are never read.
+Projects is a classic board: a project is an item, with no subitems.
 
 The numbers, the column ids and the label numbers are in one file, `computer/scripts/monday-contract.sh`.
 If a column or a label changes in Monday, change that file and nothing else.
@@ -44,7 +46,8 @@ A task is in one of two lists:
 | Status | `color_mkv6tatz` | Status: To Do 5, In Progress 0, Done 1, Stuck 2, In Review 3 |
 | Department | `color_mm82nvea` | Department, when the group is not one |
 | Team | `color_mm82jgxg` | Prime 1, Nova 0, General 5. General shows for both teams |
-| Assigned | `multiple_person_mm82cqbx` | Contact: the first name of the first person, else Unassigned |
+| POC | `multiple_person_mm8331h1` | Contact: the first name of the first person |
+| Assigned | `multiple_person_mm82cqbx` | Contact when POC is empty: the first name of the first person, else Unassigned |
 | Priority | `color_mm82wfy` | High 2, Medium 0, Low 1. Empty is No Priority |
 | Timeline | `timerange_mkyp8kx7` | Estimated Completion Date: the last day. Empty is No Date |
 | Date Completed | `date_mm82kn5v` | The order of the Done list |
@@ -53,29 +56,80 @@ A task is in one of two lists:
 
 Only first names reach Sanity, because the dataset is public. No email, no last name, no notes.
 
-## The two panels
+## The projects board
 
-**Department tasks** (`monday-department`) is a table of one department, in one list, for both teams or one:
+Projects (Mentors) has one item for each project. The computer reads these columns and nothing else (Budget and
+Notes are never read):
+
+| Monday column | Id | On the TV |
+|---|---|---|
+| Name | | Project |
+| Status | `color_mm8ma465` | To Do, In Progress, In Review, Stuck or Done, read by the words of the label |
+| Mentor | `dropdown_mm8mcqq` | The first word of the label, the one mentor in charge |
+| Helpers | `dropdown_mm8mtej2` | The first word of each label, six at most |
+| % Complete | `numeric_mm8mmzv6` | The bar, when there is a number |
+| Date Completed | `date_mm8mkgrg` | A done project shows for 14 days after it |
+| Show on TV? | `color_mm8mtjwd` | Hide keeps the project off the TV and out of Sanity |
+
+Mentors and Helpers are dropdowns, and a new mentor is added in Monday by typing a name, so no name is in the code. The
+computer keeps the first word and the first letter of the last word. When two mentors on the screen share a first name,
+the screen adds the last initial to both, such as Dan K and Dan M. A project in the group Done is done, whatever its
+Status says. The projects are written as the list `projects` of the document `monday-status`; a board that could not be
+read to its end leaves the list of the read before, and says why in `lastError`. The board number is `projects_board` in
+the contract file, so a new board number is changed there and nowhere else.
+
+## The panels
+
+**Department tasks** (`monday-department`) is a list of one department, in one list, for both teams or one. A row is
+the project name, which takes all the room that is left on one line (an ellipsis when it is longer), then fixed
+columns at the right and the status chip last:
 
 | Status | Project | Contact | Priority | Estimated Completion Date |
 |---|---|---|---|---|
 
-The title is the department and the list, such as BUILD TASKS or BUILD DONE. When the row names one team,
-the team is at the right end of the header. The Open list is In Progress, In Review, Stuck, To Do, and the
-earliest date first in each. The Done list is the newest Date Completed first. Four rows are in view; a longer
-list moves up four rows at a time, and stops at 20 rows.
+- A column is drawn only when a task of the list has a value for it, so a board with no contact on any task has no
+  Contact column. A task with no value in a column that is drawn has an empty place.
+- A task past the end of its Timeline that is not done has a LATE chip in place of its date. It is never hidden.
+- A Stuck task with a note shows the note under its name, on one line with an ellipsis. No other task shows a note.
+  The sync does not read a Notes column of Robotics Tasks yet (its id is not in the contract file), so no note shows until it is added.
+- The Open list is Stuck first, then In Progress and In Review by the soonest Timeline end, then To Do by priority.
+  The Done list is the newest Date Completed first.
+- The title is the department and the list, such as BUILD TASKS or BUILD DONE. When the row names one team, the team
+  is at the right end of the header. Under the title one line counts the list, such as 6 IN PROGRESS · 2 STUCK · 4 TO DO,
+  with the totals and the place of the page at its right. A list with nothing in it says one line, Nothing in progress.
+- The page holds as many rows as fit the panel at 44px text and more (seven rows in the bar layout, four in the
+  standard layout, a row with a second line takes more). A longer list holds, then moves up one page, on the time of the
+  row, and stops at 20 rows with the rest counted.
+
+**Projects** (`monday-projects`) is the list of the Projects board: the mentor's first name, the project name, a bar with
+the percent complete and the status chip, and the helpers on a second line. Nothing is drawn for a value a project does
+not have, and no column that no project has. The order is Stuck, In Progress, In Review and To Do, then up to 3 projects
+done in the last 14 days, the newest first. It plays for both teams in the Robotics view only, with no Team on a row and no
+team label: in a Prime or Nova block it has nothing to show. A Projects row is added on the Rotation board and the Display
+tab like any other row, with its own seconds, and the default rotation has one after the three charts.
 
 **TV charts** (`monday-charts`) is one chart a row:
 
 - Status by department: a bar for each department, Done, In Progress (with In Review and Stuck) and To Do,
   with the counts.
-- Overall progress: the estimated hours of the done tasks over all the hours. When no task has hours, the
-  done tasks over all the tasks.
+- Overall progress: the estimated hours of the done tasks over all the hours. When the hours add up to 0 (the board
+  has none today), the done tasks over all the tasks. A progress of 0 percent draws no bar.
 - Timeline: the tasks with a Timeline in this month and the next two, by department, with a red line for today.
 
 A chart row can name one department. The Status chart is then one bar for that department with the numbers Tasks, Done, In Progress, To Do and Stuck under it (the bar counts Stuck inside In Progress). Progress and Timeline draw that department only. The title says which, such as BUILD STATUS or BUILD TIMELINE.
 
 A row whose panel has nothing to show is skipped, and the Rotation board says why under the row.
+
+The panels keep to the views of the Robotics Tasks board, which are in Monday and are not changed from here. Every panel
+reads only tasks whose Show on TV? is not Hide.
+
+| View in Monday | On the TV |
+|---|---|
+| TV: In Progress | Department tasks, Open: In Progress, In Review and Stuck come first |
+| TV: To Do Next | Department tasks, Open: the To Do tasks come after them |
+| TV: Done (recent) | Department tasks, List Done |
+| TV: Blocked | The Stuck tasks, first in Open, with their note |
+| TV Charts | TV charts: Status by department, Timeline and Overall progress |
 
 ## Which view plays which tasks
 
@@ -118,10 +172,11 @@ what is done in each department. It is read only. To change a task, change it in
 - Pick a Team: Both, Prime or Nova. A task with no team is for both teams, so it shows under Prime and under Nova. Both shows only those tasks, which is what Condensed plays.
 - A tile for each of the nine departments says how many tasks are to do and how many are done. A department with
   nothing in it is greyed and says so, and is not hidden.
+- The Projects table lists the projects the TV draws, in its order, with Mentor, Project, Helpers, % Complete and Status.
 - Below, each department has a table of the To Do and In Progress tasks and a table of the Done tasks, with the
   five columns of the TV: Status, Project, Contact, Priority and Estimated Completion Date (the TV says DUE DATE, and DUE in the narrow layout). A table stops at the 20
   rows the TV holds and says how many more are in Monday. A phone shows each row as a small card.
-- What the TV shows draws the first page (four rows) of one Department tasks row. Pick the Department, the List and
+- What the TV shows draws the first page (as many rows as the TV fits) of one Department tasks row. Pick the Department, the List and
   the Team, as in a Rotation row. It says when the TV would leave the row out.
 
 The page imports `departmentView` and its helpers from `dashboard/core/monday-views.js`, so the rows and their order
@@ -148,6 +203,7 @@ Daily read limit reached. Reads start again at midnight.
 - The document `monday-status`: when it last read (`lastSyncAt`), the last problem in plain words
   (`lastError`), the reads of the day (`callsToday`), what it read from each board (`readings`), and the
   open and done tasks of each department (`departments`) and how many tasks say Hide (`hiddenCount`).
+  The list `projects` has the projects of the Projects board.
 
 ## If nothing shows up
 
@@ -159,10 +215,18 @@ Daily read limit reached. Reads start again at midnight.
 6. Still nothing: press Monday debug on the control page, Settings, Monitor Monday, with the board number, and send
    the answer to a coach. It shows how Monday answers for two items, with no token and no names of people.
 
-On the computer, `computer/scripts/monday-sync.sh --check` checks the token, and
+On the computer, `computer/scripts/monday-sync.sh --check` checks the token and that the Projects board answers, and
 `computer/scripts/monday-sync.sh --debug 18435126893` prints the same answer as Monday debug.
 
 ## Setting it up
 
 The token goes in `local.env` on the computer as MONDAY_API_TOKEN, through Settings, Keys on the control page.
 The timer is installed once with `sudo computer/scripts/install-monday.sh`, and again when its unit files change.
+
+## The pictures
+
+`docs/reference/` has a picture of each panel at 1920 by 1080, in three states: full, half full and empty, in the themes
+and the views that can play it. The names say it, such as `monday-department-full-original-prime.png` and
+`monday-projects-half-original-condensed.png`. Not every theme and view is taken: the list is in `tools/monday-screens.mjs`. They are drawn from made-up tasks and projects in brackets, with dates
+counted from the day they are taken, so a LATE chip shows. They are taken again, after a change to a Monday panel, with
+`make monday-screens` (it runs `tools/monday-screens.mjs`, which needs Playwright on a laptop).

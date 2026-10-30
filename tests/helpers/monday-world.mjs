@@ -33,7 +33,7 @@ export const contentModule = await load('core/content.js');
 export const screens = await load('core/screens.js');
 export const teams = await load('core/teams.js');
 
-export const panelIds = ['monday-department', 'monday-charts'];
+export const panelIds = ['monday-department', 'monday-charts', 'monday-projects'];
 export const panels = {};
 for (const id of panelIds) panels[id] = await load('panels/' + id + '/panel.js');
 

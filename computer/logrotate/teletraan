@@ -1,0 +1,15 @@
+# The logs of the Teletraan computer: one JSON line for each event, one file for each service (docs/OPERATIONS.md).
+# install-sync.sh copies this file to /etc/logrotate.d/teletraan and puts the login user in place of ACCOUNT.
+# A file is kept for 14 days, and a file over 5 MB is rotated at the next run of logrotate whatever its age.
+# copytruncate lets the services keep writing to the file they have open.
+/var/log/teletraan/*.jsonl {
+  su ACCOUNT ACCOUNT
+  daily
+  rotate 14
+  maxsize 5M
+  compress
+  delaycompress
+  missingok
+  notifempty
+  copytruncate
+}

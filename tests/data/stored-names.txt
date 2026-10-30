@@ -888,6 +888,39 @@ presentationDay.team
 progressBlock
 progressBlock.label
 progressBlock.percent
+remoteControl
+remoteControl.action
+remoteControl.action = reboot_computer
+remoteControl.action = restart_dashboard
+remoteControl.action = restart_services
+remoteControl.lastHandledAt
+remoteControl.lastResult
+remoteControl.requestedAt
+remoteControl.requestedBy
+remoteStatus
+remoteStatus.lastRequest
+remoteStatus.lastRequest.action
+remoteStatus.lastRequest.handledAt
+remoteStatus.lastRequest.requestedBy
+remoteStatus.lastRequest.result
+remoteStatus.netwatch
+remoteStatus.netwatch.failures
+remoteStatus.netwatch.lastAction
+remoteStatus.netwatch.lastAction = bounce_interface
+remoteStatus.netwatch.lastAction = none
+remoteStatus.netwatch.lastAction = reboot
+remoteStatus.netwatch.lastAction = restart_network
+remoteStatus.netwatch.lastActionAt
+remoteStatus.netwatch.lastCheckAt
+remoteStatus.netwatch.lastOkAt
+remoteStatus.netwatch.lastRebootAt
+remoteStatus.sources
+remoteStatus.sources.<object>
+remoteStatus.sources.<object>.lastFailureAt
+remoteStatus.sources.<object>.lastFailureReason
+remoteStatus.sources.<object>.lastSuccessAt
+remoteStatus.sources.<object>.name
+remoteStatus.updatedAt
 rosterPerson
 rosterPerson.department
 rosterPerson.department = build
@@ -989,6 +1022,8 @@ status.lastSlidesFetchAt
 status.match13At
 status.match13Count
 status.match13State
+status.netwatchLastAction
+status.netwatchLastActionAt
 status.networkDownSince
 status.networkLastOkAt
 status.networkLastProblemAt
@@ -1001,6 +1036,13 @@ status.nextRebootText
 status.photosDriveAt
 status.photosDriveCount
 status.photosDriveState
+status.syncCalendarsAt
+status.syncCompetitionAt
+status.syncImagesAt
+status.syncLastFailure
+status.syncMondayAt
+status.syncSanityAt
+status.syncWeatherAt
 subteam
 subteam.expires
 subteam.lead

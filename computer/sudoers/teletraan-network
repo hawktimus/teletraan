@@ -1,4 +1,4 @@
-# The commands of the network watchdog that name an interface (network-watchdog.sh), one set for each interface that
+# The commands of netwatch, the network watchdog, that name an interface (netwatch.sh), one set for each interface that
 # NetworkManager manages as Ethernet or Wi-Fi. install-network.sh copies the block between the two marker lines once for
 # each such interface, puts the interface name in place of IFACE and the login user in place of ACCOUNT, checks the result
 # with visudo and installs it as /etc/sudoers.d/teletraan-network. There is no wildcard: a different interface or an extra
@@ -14,3 +14,12 @@ ACCOUNT ALL=(root) NOPASSWD: \
   /usr/sbin/ifup IFACE, \
   /usr/sbin/ifdown IFACE
 # --- end ---
+
+# The Wi-Fi driver is unloaded and loaded again at netwatch's second action. install-network.sh copies the block between the
+# next two marker lines once for each driver module of a Wi-Fi device it finds, puts the module name in place of MODULE
+# (letters, digits and underscores only) and the login user in place of ACCOUNT.
+# --- module ---
+ACCOUNT ALL=(root) NOPASSWD: \
+  /usr/sbin/modprobe -r MODULE, \
+  /usr/sbin/modprobe MODULE
+# --- module end ---

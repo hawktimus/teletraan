@@ -1,10 +1,13 @@
 #!/bin/bash
 # Usage: sudo install-network.sh [--undo]
-# Installs the network watchdog and the settings that stop a wall display from losing its network when it sits idle
-# (docs/network.md has the reasons and how to undo each one):
-#   1. teletraan-network.service and .timer, which run network-watchdog.sh every 2 minutes as the login user
+# Installs netwatch, the network watchdog, and the settings that stop a wall display from losing its network when it sits
+# idle (docs/network.md has the reasons and how to undo each one):
+#   1. teletraan-netwatch.service and .timer, which run netwatch.sh every 2 minutes as the login user. The older
+#      teletraan-network.timer is turned off and its unit files are removed, so there is one watchdog and not two.
 #   2. /etc/sudoers.d/teletraan-network: the commands that name an interface, for each Ethernet and Wi-Fi device that
-#      NetworkManager manages (never docker, tailscale, bridge or veth devices), checked with visudo
+#      NetworkManager manages (never docker, tailscale, bridge or veth devices), and the module commands for the driver of
+#      each Wi-Fi device, checked with visudo
+#   2b. /var/lib/teletraan/netwatch.json (owned by the login user) and /var/log/teletraan, which netwatch writes
 #   3. Wi-Fi power saving off: a NetworkManager drop-in, the active Wi-Fi connections, and iw when it is installed
 #   4. energy-efficient Ethernet off and USB autosuspend off for the network adapter, as udev rules
 #   5. suspend, hibernate and hybrid sleep masked, and logind told to ignore idle and the lid
@@ -22,6 +25,8 @@ root=${NETWORK_ROOT:-}
 target=$root/etc/systemd/system
 sudoers_dir=$root/etc/sudoers.d
 expected_repo=$root/opt/teletraan
+state_file=$root/var/lib/teletraan/netwatch.json
+log_folder=$root/var/log/teletraan
 nm_file=$root/etc/NetworkManager/conf.d/70-teletraan-network.conf
 udev_file=$root/etc/udev/rules.d/70-teletraan-network.rules
 logind_file=$root/etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf
@@ -101,20 +106,20 @@ if [ "$undo" = yes ]; then
 fi
 
 # ----- the timer and the sudoers file: checks first, nothing is changed until they pass -----
-for unit in teletraan-network.service teletraan-network.timer; do
+for unit in teletraan-netwatch.service teletraan-netwatch.timer; do
   if [ ! -s "$units/$unit" ]; then
     echo "The unit file $units/$unit is missing or empty. Pull the newest files first." >&2
     exit 1
   fi
 done
-for file in "$computer/scripts/network-watchdog.sh" "$computer/sudoers/teletraan-network"; do
+for file in "$computer/scripts/netwatch.sh" "$computer/scripts/notify.sh" "$computer/sudoers/teletraan-network"; do
   if [ ! -s "$file" ]; then
     echo "$file is missing. Pull the newest files first." >&2
     exit 1
   fi
 done
-if [ ! -x "$computer/scripts/network-watchdog.sh" ]; then
-  echo "$computer/scripts/network-watchdog.sh cannot be run." >&2
+if [ ! -x "$computer/scripts/netwatch.sh" ]; then
+  echo "$computer/scripts/netwatch.sh cannot be run." >&2
   exit 1
 fi
 
@@ -157,8 +162,10 @@ if [ -z "$interfaces" ]; then
 fi
 
 echo "This will:"
-echo "  1. copy teletraan-network.service and .timer to $target, set to run as the account $account, and turn the timer on"
+echo "  1. copy teletraan-netwatch.service and .timer to $target, set to run as the account $account, and turn the timer on"
+echo "     (the older teletraan-network timer is turned off and removed)"
 echo "  2. allow the repairs for these devices in $sudoers_dir/teletraan-network:" $interfaces
+echo "     and make $state_file and $log_folder, owned by $account"
 echo "  3. turn Wi-Fi power saving off, energy-efficient Ethernet off and USB autosuspend off for the network adapter"
 echo "  4. mask suspend, hibernate and hybrid sleep, and tell logind to ignore idle and the lid"
 echo "  5. tell NetworkManager never to give up on a connection"
@@ -170,7 +177,7 @@ read -r answer
 # 1. The units
 tmp=$(mktemp)
 mkdir -p "$target"
-for unit in teletraan-network.service teletraan-network.timer; do
+for unit in teletraan-netwatch.service teletraan-netwatch.timer; do
   sed "s/^User=ACCOUNT\$/User=$account/" "$units/$unit" > "$tmp"
   if [ ! -s "$tmp" ]; then
     echo "The copy of $unit came out empty, so nothing was installed." >&2
@@ -179,19 +186,35 @@ for unit in teletraan-network.service teletraan-network.timer; do
   fi
   install -m 644 "$tmp" "$target/$unit"
 done
-if ! grep -q "^User=$account\$" "$target/teletraan-network.service"; then
+if ! grep -q "^User=$account\$" "$target/teletraan-netwatch.service"; then
   echo "The account name was not filled in. Check the User= line in $units." >&2
   rm -f "$tmp"
   exit 1
 fi
 
-# 2. The sudo rules that name an interface: the block of the template once for each device
+# 2. The sudo rules that name an interface: the block of the template once for each device, and the module block once for
+# the driver of each Wi-Fi device (netwatch reloads the driver at its second action). A driver name is checked before it is
+# written, because it goes into a sudo rule.
 mkdir -p "$sudoers_dir"
 block=$(sed -n '/^# --- block ---$/,/^# --- end ---$/p' "$computer/sudoers/teletraan-network" | sed '1d;$d')
+module_block=$(sed -n '/^# --- module ---$/,/^# --- module end ---$/p' "$computer/sudoers/teletraan-network" | sed '1d;$d')
+modules=''
+for name in $interfaces; do
+  case $name in
+    wl*)
+      module=$(basename "$(readlink -f "$sys_net/$name/device/driver/module" 2> /dev/null)" 2> /dev/null || true)
+      if printf '%s' "$module" | grep -Eq '^[a-z0-9_]{1,30}$'; then modules="$modules $module"; fi
+      ;;
+  esac
+done
+modules=$(printf '%s\n' $modules | sort -u)
 {
   sed -n '/^# --- block ---$/q;p' "$computer/sudoers/teletraan-network"
   for name in $interfaces; do
     printf '%s\n' "$block" | sed "s/IFACE/$name/g; s/ACCOUNT/$account/g"
+  done
+  for module in $modules; do
+    printf '%s\n' "$module_block" | sed "s/MODULE/$module/g; s/ACCOUNT/$account/g"
   done
 } > "$tmp"
 if command -v visudo > /dev/null 2>&1 && ! visudo -cf "$tmp" > /dev/null; then
@@ -207,10 +230,20 @@ else
 fi
 rm -f "$tmp"
 
-# The data folder of the watchdog is made by the script itself, as the login user
+# 2b. The public state of netwatch and the log folder. /var/lib/teletraan belongs to root, so the file is made here and
+# netwatch writes it in place. The data folder of the watchdog is made by the script itself, as the login user.
+mkdir -p "$(dirname "$state_file")" "$log_folder"
+[ -f "$state_file" ] || echo '{"failures":0,"lastCheckAt":null,"lastOkAt":null,"lastAction":"none","lastActionAt":null,"lastRebootAt":null}' > "$state_file"
+chown "$account:$(id -gn "$account")" "$state_file" "$log_folder"
+chmod 644 "$state_file"
+chmod 755 "$log_folder"
+
+# One watchdog: the timer of the older name is turned off and its files are removed
+systemctl disable --now teletraan-network.timer > /dev/null 2>&1 || true
+rm -f "$target/teletraan-network.timer" "$target/teletraan-network.service"
 systemctl daemon-reload
-systemctl enable --now teletraan-network.timer
-systemctl restart teletraan-network.timer
+systemctl enable --now teletraan-netwatch.timer
+systemctl restart teletraan-netwatch.timer
 
 # 3 and 6. NetworkManager: Wi-Fi power saving off, and never give up on a connection. The DHCP client has no keepalive;
 # the nearest thing is a client that never stops asking (a 45 second wait and 4 tries is the default).
@@ -310,5 +343,5 @@ HandleHibernateKey=ignore"
 systemctl kill -s HUP systemd-logind.service > /dev/null 2>&1 || true
 
 rm -f "$tmp" 2> /dev/null || true
-systemctl list-timers 'teletraan-network*' || true
+systemctl list-timers 'teletraan-netwatch*' || true
 say "done."

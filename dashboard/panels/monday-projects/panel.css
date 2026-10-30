@@ -1,0 +1,116 @@
+/* Projects (panels/monday-projects). The same body as Department tasks (panels/monday-department): the count line, then a window of 476 with
+   a page of rows of 68, a second line of 48 under the name for the helpers. A row is the mentor's first name (40px, the size of an owner
+   name), the project name, which takes the room that is left, the percent bar and the status chip. panel.js makes the grid from the
+   columns a project has a value for, and core/monday-views.js (rowRoom) holds the same numbers for the pages. */
+.monday-projects {
+  --scroll-step: 476px;
+  --w-mentor: 300px;
+  --w-percent: 330px;
+  --w-chip: 232px;
+}
+
+.monday-projects .rows-window {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56px;
+  height: 476px;
+  overflow: hidden;
+}
+.monday-projects .rows-page { height: 476px; }
+
+.monday-projects .row {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: var(--cols, minmax(0, 1fr) var(--w-chip));
+  grid-template-rows: 64px;
+  grid-auto-rows: 48px;
+  column-gap: 14px;
+  align-items: center;
+  padding-bottom: 1px;
+  border-bottom: 3px solid var(--plate);
+}
+.monday-projects .details { display: contents; }
+/* The mentor comes first in the row, though the name is first in the markup */
+.monday-projects .mentor { order: -1; }
+
+.monday-projects .project {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 var(--size-label)/64px var(--font-text);
+}
+.monday-projects .cols-0 .project,
+.monday-projects .cols-1 .project,
+.monday-projects .cols-2 .project { font-size: var(--size-body); }
+
+.monday-projects .mentor {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--yellow);
+  font: 600 40px/64px var(--font-display);
+}
+
+/* The bar is the percent complete: a track and a fill drawn by width, and the number at its end */
+.monday-projects .percent {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.monday-projects .percent-track {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  background: var(--plate);
+}
+.monday-projects .percent-fill {
+  display: block;
+  height: 100%;
+  background: var(--status-done);
+}
+.monday-projects .percent b {
+  flex: none;
+  width: 112px;
+  text-align: right;
+  font: 700 var(--size-label)/64px var(--font-display);
+}
+
+.monday-projects .chip { width: var(--w-chip); }
+
+/* The helpers, the second line of a row that has some */
+.monday-projects .note {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 500 var(--size-label)/48px var(--font-text);
+}
+
+/* The standard layout (1104 wide) has two lines in a row: the name and the chip, and under them the mentor and the bar */
+html[data-layout="standard"] .monday-projects { --scroll-step: 384px; }
+html[data-layout="standard"] .monday-projects .rows-window { top: 112px; height: 384px; }
+html[data-layout="standard"] .monday-projects .rows-page { height: 384px; }
+html[data-layout="standard"] .monday-projects .row {
+  grid-template-columns: minmax(0, 1fr) var(--w-chip);
+  grid-template-rows: 48px 44px;
+}
+html[data-layout="standard"] .monday-projects .project { font: 500 var(--size-label)/48px var(--font-text); }
+html[data-layout="standard"] .monday-projects .details {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 0;
+}
+html[data-layout="standard"] .monday-projects .mentor { order: 0; line-height: 44px; }
+html[data-layout="standard"] .monday-projects .percent { flex: 1 1 0; }
+html[data-layout="standard"] .monday-projects .percent b { line-height: 44px; }
+html[data-layout="standard"] .monday-projects .chip { grid-row: 1; grid-column: 2; }
+html[data-layout="standard"] .monday-projects .note { grid-row: 3; }

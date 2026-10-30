@@ -2641,6 +2641,7 @@ test('every literal text size under 44 px in the dashboard stylesheets is on a l
   // the third line of a row of Leadership or Team leads, 36 px, which the order for those rows sets
   allowed.push({ file: 'dashboard/base.css', selector: '.person-line', size: 36 });
   allowed.push({ file: 'dashboard/panels/photo/panel.css', selector: '.photo .credit', size: 30 }); // the credit under the caption of a photo
+  allowed.push({ file: 'dashboard/sync-pill.css', selector: '#sync-pill', size: 30 }); // the offline pill in the bottom area
   allowed.push({ file: 'dashboard/family-line.css', selector: '.bar-column .bar-team .team-both em', size: 30 }); // the two numbers on the team plate of the Robotics view
   // and the sizes the order sets for the Monday cards and the season timeline (orderSmall, below)
   allowed.push.apply(allowed, orderSmall.map(item => ({ file: 'dashboard/' + item.file, selector: item.selector, size: item.size })));
@@ -2806,6 +2807,9 @@ Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'base.
 const photoCredit = { file: 'panels/photo/panel.css', selector: '.photo .credit', size: 30 };
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push(photoCredit));
 
+// and the offline pill at the bottom, 30 px, which every style draws
+Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'sync-pill.css', selector: '#sync-pill', size: 30 }));
+
 // and the two lines on the team plate of the Robotics view, 30 px, which every style draws
 Object.keys(smallTextOf).forEach(style => smallTextOf[style].push({ file: 'family-line.css', selector: '.bar-column .bar-team .team-both em', size: 30 }));
 
@@ -2825,9 +2829,11 @@ const orderSmall = [
   { file: 'panels/competition-preview/panel.css', selector: '.competition-preview .chip', size: 30 },
   { file: 'panels/competition-recap/panel.css', selector: '.competition-recap .axis', size: 28 },
 ].concat(
-  mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .fact-label': 36 }),
+  mondaySmall('monday.css', { '.monday .chip': 30, '.monday .stale-chip': 30, '.monday .fact-label': 36, '.monday .count-right': 36 }),
   // the first name of the contact is 40, the size of an owner name, in the bar and the standard layout
-  mondaySmall('panels/monday-department/panel.css', { '.monday-department .columns': 36, '.monday-department .contact': 40 }),
+  mondaySmall('panels/monday-department/panel.css', { '.monday-department .contact': 40 }),
+  // the mentor of a project is 40 as well
+  mondaySmall('panels/monday-projects/panel.css', { '.monday-projects .mentor': 40 }),
   mondaySmall('panels/monday-charts/panel.css', { '.monday-charts .legend': 36, '.monday-charts .month': 36 }),
   mondaySmall('panels/competition-forecast/panel.css', { '.competition-forecast .stale-chip': 30, '.competition-forecast .tick': 28 }),
   mondaySmall('panels/competition-qualify/panel.css', { '.competition-qualify .stale-chip': 30 }),

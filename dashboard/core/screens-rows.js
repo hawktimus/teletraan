@@ -84,6 +84,8 @@ export function tidyMainRow(raw, bothTeams = false, rotating = false) {
 // The settings of a row of a Monday panel: the team of its tasks, and the department and list or the chart. The charts take a
 // department too; empty is every department.
 function mondaySettingsOf(raw, tasksTeam, id) {
+  // Projects is for both teams and has nothing to name
+  if (id === 'monday-projects') return { tasksTeam: '' };
   const settings = { tasksTeam: tasksTeam === 'prime' || tasksTeam === 'nova' ? tasksTeam : '' };
   const department = typeof raw.department === 'string' ? raw.department.trim().toLowerCase() : '';
   const known = mondayDepartments.some(entry => entry.value === department) ? department : '';

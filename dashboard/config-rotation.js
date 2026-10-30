@@ -26,7 +26,7 @@ export const rosterPageRows = 6;
 // The Robotics view has two layouts, chosen for each row by its panel. wide is the bar layout (the countdown in the banner,
 // the side column at the left) and every other panel is split (the main panel at the left, the countdown at the top right and
 // Panel B at the bottom right, which is the standard layout).
-export const roboticsWidePanels = ['monday-department', 'monday-charts', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
+export const roboticsWidePanels = ['monday-department', 'monday-charts', 'monday-projects', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
 
 // The default rotation: what Dashboard Settings, Rotation, is filled with when it is empty, and what the screen plays when the
 // list has no row that is Shown (core/rotation.js). The same list is in studio/tools/default-rotation.js, and
@@ -50,7 +50,7 @@ function pairBlock() {
 }
 
 // The Monday block of the Robotics view: the open tasks of the four departments that belong to both teams (Business, Operations,
-// Marketing and Strategy), then the three TV charts. The Condensed view shows only tasks that are for both teams. The tasks
+// Marketing and Strategy), then the three TV charts and Projects. The Condensed view shows only tasks that are for both teams. The tasks
 // of one team play in that team's block, in departmentTaskRows.
 function mondayRows() {
   const departments = ['business', 'operations', 'marketing', 'strategy'];
@@ -58,6 +58,7 @@ function mondayRows() {
   return [].concat(
     departments.map(department => ({ view: 'robotics', panel: 'monday-department', department: department, list: 'open', seconds: 20, shown: true })),
     charts.map(chart => ({ view: 'robotics', panel: 'monday-charts', chart: chart, seconds: 30, shown: true })),
+    [{ view: 'robotics', panel: 'monday-projects', seconds: 20, shown: true }],
     [{ view: 'robotics', panel: 'roster', department: 'business,marketing', shown: true }],
   );
 }

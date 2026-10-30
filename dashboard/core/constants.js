@@ -14,3 +14,14 @@ export const nightEnd = '11:30';
 // same five minutes for every talk, so one talk cannot hold up the next.
 export const noShowMinutes = 5;
 export const graceMinutes = 5;
+
+// The status pill at the foot of the screen (core/sync-pill.js, docs/OPERATIONS.md). The sync service writes
+// data/live/sync-status.json every 10 seconds. The pill is amber, with the word Offline and the time of the last good read,
+// when a source has gone more than syncStaleMinutes without one (a slow source gets twice its own gap if that is longer, see
+// syncSourceMinutes), or when the status file itself is older than that. It is red when every source in use has gone more
+// than syncDownMinutes (three times the gap of a slow source, if longer). With everything fresh it is not drawn.
+export const syncCheckSeconds = 10;
+export const syncStaleMinutes = 10;
+export const syncDownMinutes = 30;
+// How often each source is read, in minutes. Monday is read by its own setting (Dashboard Settings, Monday tab).
+export const syncSourceMinutes = { sanity: 5, weather: 15, images: 5, monday: 30, competition: 10, calendars: 15 };

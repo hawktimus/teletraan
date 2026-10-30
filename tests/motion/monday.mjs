@@ -1,11 +1,11 @@
-// Department tasks, with more rows than fit, scrolls its list by one page of rows (scrollCard in dashboard/frame.js).
+// Department tasks, with more rows than fit, scrolls its list by one page (scrollCard in dashboard/frame.js). A page is a block of rows as
+// high as the window, so the blocks are what the harness measures, and one step is one block.
 
 import { drawing } from './lib/harness.mjs';
 
 const cards = ['monday-department'];
 // Each theme, and Minimal, which is the bar layout in the Original theme
 const looks = ['original', 'cybertron', 'retro', 'minimal'];
-const rowsPerPage = 4;
 const scrollMs = 600;
 const round = value => Math.round(value * 10) / 10;
 
@@ -36,17 +36,16 @@ function distance(scroll) {
   return first.map((row, index) => row.top - last[index].top);
 }
 
-function fourRows(ctx, rule, scroll, panel) {
+function onePage(ctx, rule, scroll, panel) {
   const failures = [];
   const first = scroll.samples[0].rows;
   const moved = distance(scroll);
-  const rowHeight = first.length > 1 ? first[1].top - first[0].top : first[0].height;
+  const pageHeight = first.length > 1 ? first[1].top - first[0].top : first[0].height;
 
   if (Math.abs(scroll.duration - scrollMs) > 1) failures.push(panel + ' at 0 ms: the scroll lasts ' + round(scroll.duration) + ' ms, not ' + scrollMs + ' ms');
   if (scroll.properties.some(name => name !== 'transform')) failures.push(panel + ' at 0 ms: the scroll animates ' + scroll.properties.join(', ') + ', not only transform');
   moved.forEach((distanceMoved, index) => {
-    const wanted = rowsPerPage * rowHeight;
-    if (Math.abs(distanceMoved - wanted) > 0.5) failures.push(first[index].name + ' at ' + scrollMs + ' ms: moved ' + round(distanceMoved) + 'px, four row heights are ' + round(wanted) + 'px');
+    if (Math.abs(distanceMoved - pageHeight) > 0.5) failures.push(first[index].name + ' at ' + scrollMs + ' ms: moved ' + round(distanceMoved) + 'px, one page is ' + round(pageHeight) + 'px');
   });
   if (failures.length > 0) ctx.keep(rule, { name: 'rows-at-600ms', drawing: drawing('rows-at-600ms', scroll.samples[scroll.samples.length - 1].rows.concat([Object.assign({ kind: 'plate', name: 'clip' }, scroll.clip)]), []) });
   return failures;
@@ -90,6 +89,6 @@ function rule(look, panel, name, check) {
 }
 
 export const tests = looks.flatMap(look => cards.flatMap(panel => [
-  rule(look, panel, 'four-row-heights-in-600ms', fourRows),
+  rule(look, panel, 'one-page-in-600ms', onePage),
   rule(look, panel, 'rows-stay-in-the-clip', insideClip),
 ]));

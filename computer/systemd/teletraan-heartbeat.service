@@ -1,0 +1,19 @@
+[Unit]
+Description=Ping the uptime monitor and raise the push messages of the Teletraan I computer
+After=network.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-sync.sh with the account that owns the repository. The script reads HEARTBEAT_URL and
+# NOTIFY_URL from local.env and does nothing when they are empty. It never needs more rights than it starts with.
+User=ACCOUNT
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ExecStart=/opt/teletraan/computer/scripts/heartbeat.sh
+# Each request gives up after 15 seconds
+TimeoutStartSec=2min

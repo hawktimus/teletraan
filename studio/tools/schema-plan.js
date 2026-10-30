@@ -136,4 +136,6 @@ export const leftOut = {
   frcNews: 'Written by the Teletraan computer.',
   mondayStatus: 'Written by the Teletraan computer.',
   milestone: 'Written by the Monday sync.',
+  remoteControl: 'The Remote actions page of the Studio sends it, and the Teletraan computer answers it.',
+  remoteStatus: 'Written by the Teletraan computer.',
 };

@@ -1,8 +1,9 @@
 // Tests for core/weather.js and core/weather-icons.js, using a pretend network,
-// clock and storage. Run them with:  node tests/weather.test.mjs
+// clock and storage. The screen reads data/live/weather.json, which the sync service writes from the answer of
+// Open-Meteo (tests/sync-service.test.mjs), so the pretend network answers with that file. Run them with:  node tests/weather.test.mjs
 
 import assert from 'node:assert/strict';
-import { startWeather, describeWeather, parseForecast } from '../dashboard/core/weather.js';
+import { startWeather, describeWeather, parseForecast, forecastUrl } from '../dashboard/core/weather.js';
 import { weatherIcon } from '../dashboard/core/weather-icons.js';
 
 const place = { latitude: 35.6513, longitude: -78.8336 };
@@ -33,6 +34,11 @@ function answer(values = {}) {
   };
 }
 
+// The file the sync service writes: the reading from parseForecast and the time it was read
+function fileOf(world, values) {
+  return Object.assign(parseForecast(answer(values)), { savedAt: world.time });
+}
+
 // What fetch gives back when the service answers
 function reply(data, status = 200) {
   return { ok: status >= 200 && status < 300, status: status, json: async () => data };
@@ -49,7 +55,7 @@ function pretendWorld() {
     timers: [],
     timeouts: [],
     sent: [],
-    answerWith: async () => reply(answer()),
+    answerWith: async () => reply(fileOf(world)),
   };
 
   // answerWith gets the signal that the request would be stopped with
@@ -174,12 +180,16 @@ test('parseForecast gives null for an answer that is not in the expected shape',
 
 // startWeather
 
-test('startWeather asks Open-Meteo for the right place and values', async () => {
+test('startWeather reads the file of the data folder and never asks Open-Meteo', async () => {
   const world = pretendWorld();
   await world.start();
 
   assert.equal(world.urls.length, 1);
-  assert.equal(world.urls[0],
+  assert.equal(world.urls[0], 'data/live/weather.json');
+});
+
+test('forecastUrl asks Open-Meteo for the right place and values, for the sync service', () => {
+  assert.equal(forecastUrl(place),
     'https://api.open-meteo.com/v1/forecast?latitude=35.6513&longitude=-78.8336' +
     '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min' +
     '&temperature_unit=fahrenheit&timezone=auto&forecast_days=1');
@@ -225,15 +235,15 @@ test('startWeather saves every good reading', async () => {
   assert.deepEqual(saved, { temperature: 83, high: 90, low: 64, code: 3, isDay: true, savedAt: startTime });
 });
 
-test('startWeather refreshes every 15 minutes and checks the age of the reading every minute', async () => {
+test('startWeather reads the local file every minute and checks the age of the reading every minute', async () => {
   const world = pretendWorld();
   await world.start();
 
   assert.equal(world.timers.length, 2);
-  assert.equal(world.timers[0].milliseconds, 15 * minute);
+  assert.equal(world.timers[0].milliseconds, minute);
   assert.equal(world.timers[1].milliseconds, minute);
 
-  world.answerWith = async () => reply(answer({ temperature: 90.2, code: 95 }));
+  world.answerWith = async () => reply(fileOf(world, { temperature: 90.2, code: 95 }));
   await world.tick(15 * minute);
 
   assert.equal(world.urls.length, 2);
@@ -301,7 +311,7 @@ test('startWeather gives up on a request that has not answered after 15 seconds'
   assert.equal(world.timeouts[0].cleared, true);
   assert.equal(world.sent.length, 0);
 
-  world.answerWith = async () => reply(answer());
+  world.answerWith = async () => reply(fileOf(world));
   await world.tick(15 * minute);
   assert.equal(world.sent.length, 1);
   assert.equal(world.sent[0].temperature, 83);
@@ -362,7 +372,7 @@ test('startWeather treats a reading older than 2 hours as no reading', async () 
   await world.tick(15 * minute);
   assert.equal(world.sent.length, 3, 'null is sent once, not every time');
 
-  world.answerWith = async () => reply(answer({ temperature: 61.6 }));
+  world.answerWith = async () => reply(fileOf(world, { temperature: 61.6 }));
   await world.tick(15 * minute);
   assert.equal(world.sent.length, 4);
   assert.equal(world.sent[3].temperature, 62);
@@ -427,7 +437,7 @@ test('startWeather still works when storage is missing or breaks', async () => {
 test('the function startWeather returns stops the timer and later answers', async () => {
   const world = pretendWorld();
   let release;
-  world.answerWith = () => new Promise(resolve => { release = () => resolve(reply(answer())); });
+  world.answerWith = () => new Promise(resolve => { release = () => resolve(reply(fileOf(world))); });
 
   const stop = await world.start();
   stop();

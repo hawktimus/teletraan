@@ -56,6 +56,9 @@ export function makeContext(browser, base) {
     page.on('pageerror', error => errors.push(error.message));
     // The page tells the control service what it shows. There is none here.
     await page.route('**/control/api/**', route => route.fulfill({ status: 204 }));
+    // The weather file is written by the sync service, so a fixed reading stands in for it. Without one the panels that need
+    // the weather leave the rotation and every rule would look at a different screen.
+    await page.route('**/data/live/weather.json', route => route.fulfill({ status: 200, json: { temperature: 61, high: 66, low: 48, code: 2, isDay: true, savedAt: Date.now() } }));
     if (options.content || options.look) {
       await page.route('**/data/sample/content.json', async route => {
         const response = await route.fetch();

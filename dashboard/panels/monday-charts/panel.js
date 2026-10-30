@@ -52,7 +52,7 @@ function progressMarkup(view) {
   return `
       <div class="progress">
         <span class="percent">${view.percent}%</span>
-        <div class="progress-track"><span class="progress-fill" style="width: ${view.percent}%"></span></div>
+        ${view.bar ? `<div class="progress-track"><span class="progress-fill" style="width: ${view.percent}%"></span></div>` : ''}
         <p class="progress-words">${view.done} OF ${view.total} ${view.unit} DONE</p>
       </div>
       ${countersMarkup([{ label: 'TASKS DONE', value: view.tasks.done }, { label: 'TASKS OPEN', value: view.tasks.open }])}`;

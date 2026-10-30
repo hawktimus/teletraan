@@ -107,6 +107,7 @@ const allowedSmall = {
   'panels/bar-column/panel.css': { 36: 'title and date line of a clock' },
   'panels/monday-department/panel.css': { 30: 'Monday card chip', 36: 'label', 40: 'owner names' },
   'panels/monday-charts/panel.css': { 30: 'Monday card chip', 36: 'label', 40: 'owner names' },
+  'panels/monday-projects/panel.css': { 30: 'Monday card chip', 36: 'label', 40: 'owner names' },
   'panels/photo/panel.css': { 30: 'photo credit' },
   'panels/leadership/panel.css': { 36: 'third line of a people row' },
   'panels/team-leads/panel.css': { 36: 'third line of a people row' },

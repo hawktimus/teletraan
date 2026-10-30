@@ -55,12 +55,22 @@ export default defineType({
     defineField({ name: 'cleanupWouldDelete', title: 'Clean up list', type: 'number', description: 'How many expired documents were on the list at the last clean up. The Teletraan computer writes this.' }),
     defineField({ name: 'cleanupDeleted', title: 'Clean up deleted', type: 'number', description: 'How many documents the last clean up deleted. Zero while Mode is Only show. The Teletraan computer writes this.' }),
     textField('cleanupError', 'Clean up problem', 'Why the last clean up stopped or could not delete something, or empty when it went well. The Teletraan computer writes this.'),
-    // The network watchdog (computer/scripts/network-watchdog.sh, status-write.sh network)
+    // The network watchdog (computer/scripts/netwatch.sh, status-write.sh network)
     timeField('networkLastOkAt', 'Network last worked', 'When the network watchdog last found the network working. The computer writes this about once an hour.'),
     timeField('networkDownSince', 'Network down since', 'When the network went away, or empty while it works. The computer writes this when the network is back.'),
     timeField('networkLastProblemAt', 'Last network problem', 'When the network last went away. The Teletraan computer writes this.'),
     defineField({ name: 'networkRecoveries', title: 'Network recoveries in 24 hours', type: 'number', description: 'How many times the network came back in the last 24 hours. The Teletraan computer writes this.' }),
     textField('networkLastStep', 'Last network repair step', 'The last repair step the network watchdog took, such as 2 reconnect. The Teletraan computer writes this.'),
+    // The sync service and netwatch (computer/scripts/sync-service.mjs, netwatch.sh, status-write.sh sync)
+    timeField('syncSanityAt', 'Content last read', 'When the sync service last read the content from Sanity well. The Teletraan computer writes this.'),
+    timeField('syncWeatherAt', 'Weather last read', 'When the sync service last read the weather well. The Teletraan computer writes this.'),
+    timeField('syncImagesAt', 'Pictures last current', 'When every picture of the content last had its file on the computer. The Teletraan computer writes this.'),
+    timeField('syncMondayAt', 'Monday last read (sync)', 'When the Monday boards were last read well, as the sync service sees it. The Teletraan computer writes this.'),
+    timeField('syncCompetitionAt', 'Competition last read (sync)', 'When the competition feed was last read well, as the sync service sees it. The Teletraan computer writes this.'),
+    timeField('syncCalendarsAt', 'Calendars last read (sync)', 'When a calendar was last downloaded well, as the sync service sees it. The Teletraan computer writes this.'),
+    textField('syncLastFailure', 'Source that is failing', 'The source that is failing now and why, in a few words, or empty when none is. The Teletraan computer writes this.'),
+    textField('netwatchLastAction', 'Last network action', 'What netwatch did last: none, restart_network, bounce_interface or reboot. The Teletraan computer writes this.'),
+    timeField('netwatchLastActionAt', 'Last network action at', 'When netwatch last took an action. The Teletraan computer writes this.'),
     timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
     defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],

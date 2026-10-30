@@ -36,7 +36,7 @@ An untouched Studio plays this list, and it is what the Rotation list is filled 
 
 | Block | View | Rows, in order |
 |-------|------|----------------|
-| 1 | Robotics | Six pairs of the split layout, large panel and small panel: Leadership with Sponsor logo, Events part 1 with Task counts, Events part 2 with Weather forecast, Sponsor feature with Next event, Subteam spotlight with Mini panel idea 1, Photos with Parts request. Then the wide layout: Department tasks, open, for each of the nine departments (Build, Electrical, Programming, Design, CNC, Strategy, Operations, Business, Marketing), the three TV charts (Status by department, Overall progress, Timeline), and one roster for Business and Marketing |
+| 1 | Robotics | Six pairs of the split layout, large panel and small panel: Leadership with Sponsor logo, Events part 1 with Task counts, Events part 2 with Weather forecast, Sponsor feature with Next event, Subteam spotlight with Mini panel idea 1, Photos with Parts request. Then the wide layout: Department tasks, open, for each of the nine departments (Build, Electrical, Programming, Design, CNC, Strategy, Operations, Business, Marketing), the three TV charts (Status by department, Overall progress, Timeline), Projects (`monday-projects`) and one roster for Business and Marketing |
 | 2 | Prime | Team leads page 1 and 2, then the two roster rows of Build |
 | 3 | Nova | The same for Nova |
 | 4, 5 | Prime, Nova | The two roster rows of Electrical |
@@ -89,6 +89,8 @@ The two rows of a department of a team view are Team roster part 1 and part 2 (`
 - Robot status (ROBOT STATUS) and Wireframe view (3D VIEW) are panels of the Rotation list that draw their title and a dashed inner frame, until they are designed.
 
 ## Monday rows
+
+Projects (`monday-projects`) has no department, list, chart or team. It plays for both teams in the Robotics view only (in the Condensed look, like the other Monday panels) and has nothing to show in a Prime or Nova block, where the Rotation board says so under the row.
 
 A Department tasks row plays one department, one list and both teams or one, and is left out while it has nothing to show. A row with no department plays nothing. A row of one of the eleven retired Monday panels plays nothing; an older tasks row with one of the nine departments plays as Department tasks, open, in the team of its view. The Team lead switch On the Monday board (`monday: false`) is hidden and not read any more: a row names its department.
 

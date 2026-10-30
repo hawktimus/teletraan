@@ -217,13 +217,18 @@ Choices 3 and `c` stay in the menu, because they ask questions.
 
 ## Turn on the scheduled reboot
 
-Choosing 1 (Install everything) also runs `install-network.sh`, which turns on the network watchdog (`teletraan-network.timer`, every 2 minutes, as the login user), writes `/etc/sudoers.d/teletraan-network` for the Wi-Fi and Ethernet devices that NetworkManager manages, and turns off Wi-Fi power saving, energy-efficient Ethernet, USB autosuspend and sleep (docs/network.md has each setting and how to undo it). It needs `curl`, `iproute2`, `flock` and `gawk`, which Debian has. It prints the `apt install` line when one is missing. To check afterwards, on the computer:
+Choosing 1 (Install everything) also runs `install-network.sh`, which turns on netwatch, the network watchdog (`teletraan-netwatch.timer`, every 2 minutes, as the login user; the older `teletraan-network` timer is removed), writes `/etc/sudoers.d/teletraan-network` for the Wi-Fi and Ethernet devices that NetworkManager manages, and turns off Wi-Fi power saving, energy-efficient Ethernet, USB autosuspend and sleep (docs/network.md has each setting and how to undo it). It needs `curl`, `iproute2`, `flock` and `gawk`, which Debian has. It prints the `apt install` line when one is missing. To check afterwards, on the computer:
 
-    systemctl list-timers 'teletraan-network*'
+    systemctl list-timers 'teletraan-netwatch*'
     sudo -l | grep -E "nmcli|journalctl|NetworkManager"
     cat /var/lib/teletraan/data/network/state
 
 The sudo list names `wlp2s0` and `enp3s0f0` command by command, with no `*`. `sudo /opt/teletraan/computer/scripts/install-network.sh --undo` takes the settings away again.
+
+Choosing 1 (Install everything) also runs `install-sync.sh` (the last of the list), which installs the sync service, the heartbeat timer and the rotation of the logs in `/var/log/teletraan`, and restarts the sync service so that it runs the new code (docs/OPERATIONS.md). It needs `curl`, `jq` and Node 18 or newer. To check afterwards:
+
+    systemctl status teletraan-sync --no-pager
+    make net-status
 
 Choosing 1 (Install everything) copies the units of the scheduled reboot and runs `install-reboot.sh`, so the timer is on after any update that has it. It reboots nothing yet, because Scheduled reboot is off to start with.
 

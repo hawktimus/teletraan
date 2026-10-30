@@ -1,4 +1,4 @@
-# The --check run: asks Monday who the token belongs to and writes nothing
+# The --check run: asks Monday who the token belongs to and whether the Projects board answers, and writes nothing
 run_check() {
   work=$(mktemp -d "${TMPDIR:-/tmp}/monday-check.XXXXXX")
   trap 'rm -rf "$work"' EXIT
@@ -17,6 +17,17 @@ run_check() {
       if [ "$outcome" = ok ]; then
         name=$(jq -r "$paths$helpers"'me_name | first_name(12) | strings' "$work/answer.json" 2> /dev/null || true)
         echo "OK    Monday accepts the token (connected as ${name:-nobody})"
+        # The Projects board is one question: its name and kind (a classic board), so a wrong number or a board that is not
+        # shared with the account of the token shows here and not as a panel that stays empty
+        jq -n --arg query "$monday_query_board" --arg board "$projects_board" '{query: $query, variables: {board: [$board]}}' > "$work/body.json"
+        ask "$work/body.json" "$work/board.json"
+        board_name=$(jq -r "$paths$helpers"'first_board_name | whole_text(60)' "$work/board.json" 2> /dev/null || true)
+        if [ "$outcome" = ok ] && [ -n "$board_name" ]; then
+          echo "OK    The Projects board $projects_board is there ($board_name)"
+        else
+          echo "FAIL  The Projects board $projects_board did not answer. Share it with the account of the Monday token."
+          failed=1
+        fi
       else
         echo "FAIL  $(tail -n 1 "$work/errors.txt")"
         failed=1

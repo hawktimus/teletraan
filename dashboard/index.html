@@ -7,6 +7,8 @@
        browser. The color is the --pure-black token. -->
   <meta name="color-scheme" content="dark">
   <style>html, body { background: black; }</style>
+  <!-- First of all scripts: no error text ever reaches the screen (guard.js). -->
+  <script src="guard.js"></script>
   <link rel="stylesheet" href="fonts/fonts.css?v=0">
   <link rel="stylesheet" href="themes/hawktimus.css?v=0">
   <link rel="stylesheet" href="tokens.css?v=0">
@@ -39,6 +41,7 @@
   <link rel="stylesheet" href="seasons/motion.css?v=0">
   <link rel="stylesheet" href="subthemes.css?v=0">
   <link rel="stylesheet" href="status-dots.css?v=0">
+  <link rel="stylesheet" href="sync-pill.css?v=0">
   <link rel="stylesheet" href="reform.css?v=0">
   <link rel="stylesheet" href="reform-kit.css?v=0">
   <link rel="stylesheet" href="styles/original/reform-kit.css?v=0">
@@ -536,6 +539,9 @@
       <!-- The three dots for Monday, Band and Sanity (core/dots-run.js), left of the ticker row. Hidden
            until the script draws them. -->
       <div id="status-dots" hidden></div>
+      <!-- The status pill (core/sync-pill.js): Offline since a time, in the bottom area, only while a source is late. Its
+           words are added by the script, and it fades with opacity. -->
+      <div id="sync-pill" aria-hidden="true"></div>
       <!-- The night screen, the screensaver (core/night-screen.js): black, with the
            logo and the team number. It is after the stage and the connection
            text, which it covers, and before the overlay, so an alert or an

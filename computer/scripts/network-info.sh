@@ -5,7 +5,7 @@
 # computer/sudoers/teletraan-control allows, because the login user is not in the systemd-journal group.
 # Nothing secret is printed: the Wi-Fi configuration is never read, and the journal lines pass through the same
 # cleaning as the control page's log (a password, a key or a long token becomes REDACTED).
-# --summary prints only the lines of the network watchdog's status.json, for the status word.
+# --summary prints only the lines of the status.json of netwatch, for the status word.
 # Tests set NETWORK_SYS (instead of /sys/class/net) and TELETRAAN_DATA through local.env.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
@@ -125,12 +125,12 @@ fi
 
 echo "---- watchdog ----"
 if [ -f "$folder/state" ]; then
-  grep -E '^(manager|interface|sanity|gateway|dns|fails|step|lastStep)=' "$folder/state" | sed 's/^/state: /'
-  for name in checkedAt downSince lastOkAt lastProblemAt; do
+  grep -E '^(manager|interface|sanity|gateway|dns|fails|step|level|lastAction|lastStep)=' "$folder/state" | sed 's/^/state: /'
+  for name in checkedAt downSince lastOkAt lastProblemAt lastActionAt lastRebootAt; do
     value=$(sed -n "s/^$name=//p" "$folder/state" | tail -n 1)
     case $value in ''|0|*[!0-9]*) echo "state: $name=never" ;; *) echo "state: $name=$(date -u -d "@$value" '+%Y-%m-%dT%H:%M:%SZ' 2> /dev/null || echo "$value")" ;; esac
   done
   tail -n 5 "$folder/history" 2> /dev/null | sed 's/^/history: /' || true
 else
-  echo "state: the network watchdog has not run yet"
+  echo "state: netwatch has not run yet"
 fi

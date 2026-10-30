@@ -1,4 +1,4 @@
-// Tests for the two Monday panels (dashboard/panels/monday-department and monday-charts), what they draw
+// Tests for the three Monday panels (dashboard/panels/monday-department, monday-charts and monday-projects), what they draw
 // (core/monday-views.js and core/monday-draw.js), how a row of the rotation plays them or skips them (core/rotation.js,
 // core/screens.js), and the rows of the eleven older Monday panels, which are retired. The board data is made up. The sizes
 // need a browser to be seen, so the stylesheets are read.
@@ -22,8 +22,8 @@ const department = page => views.departmentView(contentOf(page.tasks), now, page
 
 // The registry and the retired panels
 
-test('the registry has two Monday panels, and none of the eleven older ones', () => {
-  assert.deepEqual(registry.panels.filter(panel => panel.monday).map(panel => panel.id), ['monday-department', 'monday-charts']);
+test('the registry has three Monday panels, and none of the eleven older ones', () => {
+  assert.deepEqual(registry.panels.filter(panel => panel.monday).map(panel => panel.id), ['monday-department', 'monday-charts', 'monday-projects']);
   assert.equal(config.retiredMondayPanels.length, 11);
   config.retiredMondayPanels.forEach(id => {
     assert.equal(registry.panels.some(panel => panel.id === id), false, id + ' is still registered');
@@ -82,45 +82,104 @@ test('a task hidden by Show on TV? on the board or in the Studio, past its expir
   assert.deepEqual(department({ tasks: tasks, department: 'build', list: 'open' }).rows.map(row => row.project), ['[On]']);
 });
 
-test('open is In Progress, In Review, Stuck, To Do and then the earliest estimated completion date; done is the newest date completed first', () => {
+test('open is Stuck, then In Progress and In Review by the soonest end of the Timeline, then To Do by priority; done is the newest date completed first', () => {
   const open = [
-    task({ title: '[todo early]', status: 'up-next', dueDate: '2026-10-16' }),
+    task({ title: '[todo low]', status: 'up-next', priority: 'low', dueDate: '2026-10-16' }),
+    task({ title: '[todo high late date]', status: 'up-next', priority: 'high', dueDate: '2026-12-01' }),
+    task({ title: '[todo high early date]', status: 'up-next', priority: 'high', dueDate: '2026-10-20' }),
+    task({ title: '[todo no priority]', status: 'up-next', priority: undefined, dueDate: '2026-10-16' }),
     task({ title: '[stuck]', status: 'blocked', dueDate: '2026-10-20' }),
     task({ title: '[progress no date]', status: 'in-progress', dueDate: undefined }),
     task({ title: '[progress late]', status: 'in-progress', dueDate: '2026-11-20' }),
     task({ title: '[progress soon]', status: 'in-progress', dueDate: '2026-10-18' }),
-    task({ title: '[review]', status: 'in-review' }),
+    task({ title: '[review]', status: 'in-review', dueDate: '2026-10-19' }),
   ];
-  assert.deepEqual(department({ tasks: open, department: 'build', list: 'open' }).rows.map(row => row.project),
-    ['[progress soon]', '[progress late]', '[progress no date]', '[review]', '[stuck]', '[todo early]']);
-  assert.deepEqual(department({ tasks: open, department: 'build', list: 'open' }).rows.map(row => row.statusWord),
-    ['IN PROGRESS', 'IN PROGRESS', 'IN PROGRESS', 'IN REVIEW', 'STUCK', 'TO DO']);
+  const rows = department({ tasks: open, department: 'build', list: 'open' }).rows;
+  assert.deepEqual(rows.map(row => row.project), [
+    '[stuck]', '[progress soon]', '[review]', '[progress late]', '[progress no date]',
+    '[todo high early date]', '[todo high late date]', '[todo low]', '[todo no priority]',
+  ]);
+  assert.deepEqual(rows.map(row => row.statusWord), ['STUCK', 'IN PROGRESS', 'IN REVIEW', 'IN PROGRESS', 'IN PROGRESS', 'TO DO', 'TO DO', 'TO DO', 'TO DO']);
 
   const done = [
     task({ title: '[a]', list: 'done', status: 'done', completedOn: '2026-10-01' }),
     task({ title: '[b]', list: 'done', status: 'done', completedOn: '2026-10-12' }),
     task({ title: '[c]', list: 'done', status: 'up-next', completedOn: undefined }),
   ];
-  const rows = department({ tasks: done, department: 'build', list: 'done' }).rows;
-  assert.deepEqual(rows.map(row => row.project), ['[b]', '[a]', '[c]']);
-  assert.deepEqual(rows.map(row => row.status), ['done', 'done', 'done'], 'a task of the done list reads Done, whatever its status says');
+  const doneRows = department({ tasks: done, department: 'build', list: 'done' }).rows;
+  assert.deepEqual(doneRows.map(row => row.project), ['[b]', '[a]', '[c]']);
+  assert.deepEqual(doneRows.map(row => row.status), ['done', 'done', 'done'], 'a task of the done list reads Done, whatever its status says');
 });
 
-test('the five columns, and the words of a value the board does not have: Unassigned, No Priority, No Date', () => {
+test('the count in the header: how many are in progress, stuck and to do, or how many are done', () => {
+  const open = [task({ status: 'in-progress' }), task({ status: 'in-review' }), task({ status: 'blocked' }), task({ status: 'up-next' }), task({ status: 'up-next' }), task({ list: 'done', status: 'done' })];
+  assert.equal(department({ tasks: open, department: 'build', list: 'open' }).countWords, '2 IN PROGRESS · 1 STUCK · 2 TO DO');
+  assert.equal(department({ tasks: [task({ status: 'up-next' })], department: 'build', list: 'open' }).countWords, '0 IN PROGRESS · 1 TO DO', 'Stuck is left out when there is none');
+  assert.equal(department({ tasks: open, department: 'build', list: 'done' }).countWords, '1 DONE');
+  assert.equal(department({ tasks: open, department: 'build', list: 'open' }).tallyWords, '5 OPEN · 1 DONE');
+  const html = htmlOf('monday-department', contentOf(open), { department: 'build', list: 'open' });
+  assert.ok(html.includes('<span class="count-words">2 IN PROGRESS · 1 STUCK · 2 TO DO</span>') && html.includes('<span class="tally">5 OPEN · 1 DONE</span>'));
+});
+
+test('a column is drawn only when a task of the list has a value for it, and a value a task does not have is left empty', () => {
   const tasks = [
     task({ title: '[Full]', contact: 'Robin', priority: 'high', dueDate: '2026-10-30' }),
     task({ title: '[Bare]', contact: undefined, priority: undefined, dueDate: undefined }),
   ];
-  const rows = department({ tasks: tasks, department: 'build', list: 'open' }).rows;
-  assert.deepEqual(rows[0], { status: 'up-next', statusWord: 'TO DO', project: '[Full]', contact: 'Robin', priority: 'High', priorityLevel: 'high', date: 'Oct 30' });
-  assert.deepEqual([rows[1].contact, rows[1].priority, rows[1].date], ['Unassigned', 'No Priority', 'No Date']);
+  const view = department({ tasks: tasks, department: 'build', list: 'open' });
+  assert.deepEqual(view.rows[0], { status: 'up-next', statusWord: 'TO DO', project: '[Full]', contact: 'Robin', priority: 'High', priorityLevel: 'high', date: 'Oct 30', late: false, note: '', extra: false });
+  assert.deepEqual([view.rows[1].contact, view.rows[1].priority, view.rows[1].date], ['Unassigned', 'No Priority', 'No Date'], 'the page of the Studio and the control page still say these words');
+  assert.deepEqual(view.columns, { contact: true, priority: true, date: true });
 
   const html = htmlOf('monday-department', contentOf(tasks), { department: 'build', list: 'open' });
-  // The last name is DUE DATE on the TV (the board says Estimated Completion Date, which took three lines), and DATE is
-  // hidden in the standard layout by panels/monday-department/panel.css
-  const heads = Array.from(html.match(/<div class="columns">([\s\S]*?)<\/div>/)[1].matchAll(/<span>((?:[^<]|<span[^>]*>[^<]*<\/span>)*)<\/span>/g)).map(match => match[1].replace(/<[^>]*>/g, ''));
-  assert.deepEqual(heads, ['STATUS', 'PROJECT', 'CONTACT', 'PRIORITY', 'DUE DATE']);
-  assert.ok(html.includes('<span class="contact none">Unassigned</span>') && html.includes('<span class="priority priority-none">No Priority</span>') && html.includes('<span class="date none">No Date</span>'));
+  assert.ok(html.includes('<span class="contact">Robin</span>') && html.includes('<span class="contact"></span>'), 'the bare row has an empty place');
+  assert.ok(html.includes('priority priority-none"></span>') && html.includes('<span class="date blank"></span>'));
+  assert.equal(/Unassigned|No Priority|No Date/.test(html), false, 'a placeholder word is never drawn');
+  assert.equal(html.includes('class="columns"'), false, 'there is no line of column names');
+
+  // no task has a contact, a priority or a date: none of the three columns is drawn, and the project takes the room
+  const bare = [task({ title: '[One]', contact: undefined, priority: undefined, dueDate: undefined }), task({ title: '[Two]', contact: undefined, priority: undefined, dueDate: undefined })];
+  const none = department({ tasks: bare, department: 'build', list: 'open' });
+  assert.deepEqual(none.columns, { contact: false, priority: false, date: false });
+  const bareHtml = htmlOf('monday-department', contentOf(bare), { department: 'build', list: 'open' });
+  assert.equal(/class="(contact|priority|date)/.test(bareHtml), false);
+  assert.ok(bareHtml.includes('--cols: minmax(0, 1fr) var(--w-chip)') && bareHtml.includes('class="rows cols-0"'));
+  assert.ok(html.includes('--cols: minmax(0, 1fr) var(--w-date) var(--w-priority) var(--w-contact) var(--w-chip)') && html.includes('class="rows cols-3"'));
+});
+
+test('a task past the end of its Timeline that is not done is LATE, in a chip, in place of its date, and a done task never is', () => {
+  const tasks = [
+    task({ title: '[Past]', status: 'in-progress', dueDate: '2026-10-14' }),
+    task({ title: '[Today]', status: 'in-progress', dueDate: '2026-10-15' }),
+    task({ title: '[Future]', status: 'in-progress', dueDate: '2026-10-16' }),
+    task({ title: '[No date]', status: 'in-progress', dueDate: undefined }),
+  ];
+  const rows = department({ tasks: tasks, department: 'build', list: 'open' }).rows;
+  const late = Object.fromEntries(rows.map(row => [row.project, row.late]));
+  assert.deepEqual(late, { '[Past]': true, '[Today]': false, '[Future]': false, '[No date]': false });
+  const html = htmlOf('monday-department', contentOf(tasks), { department: 'build', list: 'open' });
+  assert.equal(html.split('chip chip-late">LATE</span>').length - 1, 1, 'one LATE chip');
+  assert.equal(html.includes('Oct 14'), false, 'the date of a late task is not printed');
+  assert.ok(html.includes('Oct 16'));
+
+  const done = department({ tasks: [task({ list: 'done', status: 'done', dueDate: '2026-06-01', completedOn: '2026-06-02' })], department: 'build', list: 'done' }).rows;
+  assert.equal(done[0].late, false);
+  assert.ok(read('panels/monday-department/panel.css').includes('.monday-department .chip-late { width: 104px;'));
+});
+
+test('the note of a Stuck task is its second line, one line, and no other task shows a note', () => {
+  const tasks = [
+    task({ title: '[Stuck]', status: 'blocked', note: 'Waiting for a part from the supplier' }),
+    task({ title: '[Going]', status: 'in-progress', note: 'A long sentence that the row never shows' }),
+    task({ title: '[Stuck bare]', status: 'blocked' }),
+  ];
+  const view = department({ tasks: tasks, department: 'build', list: 'open' });
+  assert.deepEqual(view.rows.map(row => [row.project, row.note, row.extra]), [['[Stuck bare]', '', false], ['[Stuck]', 'Waiting for a part from the supplier', true], ['[Going]', '', false]]);
+  const html = htmlOf('monday-department', contentOf(tasks), { department: 'build', list: 'open' });
+  assert.ok(html.includes('<span class="note">Waiting for a part from the supplier</span>'));
+  assert.equal(html.includes('never shows'), false);
+  const note = read('panels/monday-department/panel.css').match(/\.monday-department \.note \{([^}]*)\}/)[1];
+  assert.ok(/white-space: nowrap;/.test(note) && /text-overflow: ellipsis;/.test(note), 'one line with an ellipsis');
 });
 
 test('a task the older sync wrote, with no list, is done when its status is done', () => {
@@ -140,32 +199,171 @@ test('the title is the department and the list; the team the row names is at the
   assert.deepEqual(views.departmentView(content, now, { department: 'build', list: 'open' }).counts, { open: 1, done: 1 });
 });
 
-test('four rows are in view, the list scrolls four rows at a time, and stops at twenty rows with the rest counted', () => {
+test('as many rows are in view as fit the body, the list scrolls a page at a time, and stops at twenty rows with the rest counted', () => {
   const tasks = [];
   for (let at = 0; at < 23; at += 1) tasks.push(task({ title: '[T' + String(at).padStart(2, '0') + ']', dueDate: undefined }));
   const page = { department: 'build', list: 'open' };
   const view = views.departmentView(contentOf(tasks), now, page);
   assert.equal(view.rows.length, 20);
   assert.equal(view.more, 3);
-  assert.equal(view.pages, 5);
-  assert.equal(panels['monday-department'].scrollPages(contentOf(tasks), page), 5);
+  assert.deepEqual(view.pageRows.map(rows => rows.length), [7, 7, 6], 'seven rows of 68 fit the window of 476');
+  assert.equal(view.pages, 3);
+  assert.equal(panels['monday-department'].scrollPages(contentOf(tasks), page), 3);
   const html = htmlOf('monday-department', contentOf(tasks), page);
   assert.ok(html.includes('data-scroll-page="1"') && html.includes('data-scroll-list'));
-  assert.ok(html.includes('<span class="place place-5">5 OF 5</span>') && html.includes('+3 MORE ON MONDAY'));
-  assert.ok(read('panels/monday-department/panel.css').includes('--scroll-step: 336px'), 'four rows of 84');
+  assert.equal(html.split('class="rows-page"').length - 1, 3, 'a block for each page, so a step moves one window');
+  assert.ok(html.includes('<span class="place place-3">3 OF 3</span>') && html.includes('+3 MORE ON MONDAY'));
+  assert.ok(read('panels/monday-department/panel.css').includes('--scroll-step: 476px'), 'seven rows of 68');
+  assert.equal(views.rowRoom.bar.window, 7 * views.rowRoom.bar.row);
+
+  // The standard layout has two lines in a row (96) and a count of two lines, so four rows
+  assert.deepEqual(views.departmentView(contentOf(tasks), now, page, 'standard').pageRows.map(rows => rows.length), [4, 4, 4, 4, 4]);
+
+  // A row with a second line (a Stuck note) takes 48 more, so a page holds one row less
+  const noted = [];
+  for (let at = 0; at < 8; at += 1) noted.push(task({ title: '[N' + at + ']', status: 'blocked', note: '[note]', dueDate: undefined }));
+  assert.deepEqual(views.departmentView(contentOf(noted), now, page).pageRows.map(rows => rows.length), [4, 4], 'four rows of 116 fit 476');
+  assert.ok(views.pagesOf([{ extra: true }], 'bar').length === 1, 'a page holds one row at least');
 
   const few = contentOf([task({})]);
   assert.equal(panels['monday-department'].scrollPages(few, page), 1);
   assert.equal(htmlOf('monday-department', few, page).includes('data-scroll-page'), false, 'one page does not scroll');
 });
 
-test('a long project name is at 44px on two lines and a short one at the body size', () => {
+test('a long project name is on one line, and takes the room the fixed columns leave', () => {
   const html = htmlOf('monday-department', contentOf([task({ title: '[Short]' }), task({ title: '[A much longer project name]' })]), { department: 'build', list: 'open' });
-  assert.ok(html.includes('<span class="project">[Short]</span>'));
-  assert.ok(html.includes('<span class="project project-long">[A much longer project name]</span>'));
+  assert.ok(html.includes('<span class="project">[Short]</span>') && html.includes('<span class="project">[A much longer project name]</span>'));
   const css = read('panels/monday-department/panel.css');
-  assert.match(css, /\.monday-department \.project \{[^}]*font: 500 var\(--size-body\)\//);
-  assert.match(css, /\.monday-department \.project-long \{[^}]*-webkit-line-clamp: 2;[^}]*font: 500 var\(--size-label\)\//);
+  assert.match(css, /\.monday-department \.project \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;[^}]*font: 500 var\(--size-label\)\//);
+  assert.match(css, /\.monday-department \.cols-2 \.project \{ font-size: var\(--size-body\); \}/, 'with two columns or fewer the name is at the body size');
+  assert.match(css, /grid-template-columns: var\(--cols, /);
+});
+
+test('nothing to show is one line under the title, not a box', () => {
+  const content = contentOf([task({ list: 'done', status: 'done' })]);
+  const open = htmlOf('monday-department', content, { department: 'build', list: 'open' });
+  assert.ok(open.includes('<p class="empty">Nothing in progress</p>') && open.includes('BUILD TASKS'), 'the title is the department');
+  assert.ok(htmlOf('monday-department', contentOf([task({})]), { department: 'build', list: 'done' }).includes('<p class="empty">Nothing done yet</p>'));
+  assert.ok(htmlOf('monday-department', content, {}).includes('DEPARTMENT TASKS'));
+  const never = htmlOf('monday-department', contentOf([], raw => { raw.monday.lastSyncAt = ''; }), { department: 'build', list: 'open' });
+  assert.ok(never.includes('Waiting for the first read of the board.'));
+  const css = read('monday.css');
+  assert.match(css, /\.monday \.empty \{[^}]*white-space: nowrap;/);
+  assert.equal(/\.monday \.empty \{[^}]*height: 100%/.test(css), false, 'no box that fills the body');
+});
+
+
+// Projects
+
+const projectList = list => list.map((entry, at) => Object.assign({ id: String(at), title: '[Project ' + at + ']', status: 'in-progress' }, entry));
+const withProjects = (list, change) => contentOf([], raw => { raw.monday.projects = projectList(list); if (change) change(raw); });
+const projects = (list, page = { team: '' }) => views.projectsView(withProjects(list), now, page);
+
+test('projects: Stuck, In Progress, In Review and To Do first, then up to 3 done in the last 14 days, the newest first', () => {
+  const view = projects([
+    { title: '[todo]', status: 'up-next' }, { title: '[done old]', status: 'done', completedOn: '2026-09-30' },
+    { title: '[done 1]', status: 'done', completedOn: '2026-10-10' }, { title: '[done 2]', status: 'done', completedOn: '2026-10-14' },
+    { title: '[done 3]', status: 'done', completedOn: '2026-10-01' }, { title: '[done 4]', status: 'done', completedOn: '2026-10-12' },
+    { title: '[done none]', status: 'done' }, { title: '[done 5]', status: 'done', completedOn: '2026-10-13' },
+    { title: '[progress]', status: 'in-progress' }, { title: '[review]', status: 'in-review' }, { title: '[stuck]', status: 'blocked' },
+  ]);
+  assert.deepEqual(view.rows.map(row => row.project), ['[stuck]', '[progress]', '[review]', '[todo]', '[done 2]', '[done 5]', '[done 4]']);
+  assert.deepEqual(view.rows.map(row => row.statusWord), ['STUCK', 'IN PROGRESS', 'IN REVIEW', 'TO DO', 'DONE', 'DONE', 'DONE']);
+  assert.equal(view.title, 'PROJECTS');
+  assert.equal(view.countWords, '2 IN PROGRESS · 1 STUCK · 1 TO DO');
+  assert.equal(view.tallyWords, '3 DONE');
+  assert.equal(projects([{ status: 'done', completedOn: '2026-09-01' }]), null, 'only an old done project: nothing to show');
+  assert.equal(projects([]), null);
+});
+
+test('projects: the mentor first name, and the last initial for both when two mentors share a first name', () => {
+  const view = projects([
+    { title: '[a]', mentor: 'Dan', mentorInitial: 'K' }, { title: '[b]', mentor: 'Dan', mentorInitial: 'M' }, { title: '[c]', mentor: 'Cari-Ann' },
+    { title: '[d]', mentor: 'Dan', mentorInitial: 'K' }, { title: '[e]', mentor: 'Steve', mentorInitial: 'R' }, { title: '[f]' },
+  ]);
+  assert.deepEqual(view.rows.map(row => row.mentor), ['Dan K', 'Dan M', 'Cari-Ann', 'Dan K', 'Steve', ''], 'two Dans get an initial, one Steve with an initial does not');
+  // one Dan with no initial and one with: only the one that has an initial can be told apart
+  assert.deepEqual(projects([{ title: '[a]', mentor: 'Dan' }, { title: '[b]', mentor: 'Dan', mentorInitial: 'K' }]).rows.map(row => row.mentor), ['Dan', 'Dan K']);
+});
+
+test('projects: nothing is drawn for a value the project does not have, and no column no project has', () => {
+  const view = projects([{ title: '[Bare]' }, { title: '[Full]', mentor: 'Pat', helpers: ['Cari-Ann', 'Steve'], percent: 45 }]);
+  assert.deepEqual(view.rows.map(row => [row.mentor, row.helperWords, row.percent, row.extra]), [['', '', null, false], ['Pat', 'with Cari-Ann, Steve', 45, true]]);
+  assert.deepEqual(view.columns, { mentor: true, percent: true });
+  const html = htmlOf('monday-projects', withProjects([{ title: '[Bare]' }, { title: '[Full]', mentor: 'Pat', helpers: ['Cari-Ann'], percent: 45 }]), { team: '' });
+  assert.ok(html.includes('<span class="mentor">Pat</span>') && html.includes('45%') && html.includes('style="width: 45%"') && html.includes('<span class="note">with Cari-Ann</span>'));
+  assert.equal(/\[Bare\]<\/span><span class="details"><span class="mentor">/.test(html), true, 'a bare row has an empty mentor place');
+
+  const plain = htmlOf('monday-projects', withProjects([{ title: '[One]' }, { title: '[Two]' }]), { team: '' });
+  assert.equal(/class="(mentor|percent|note)/.test(plain), false, 'no mentor, bar or helpers drawn');
+  assert.ok(plain.includes('--cols: minmax(0, 1fr) var(--w-chip)') && plain.includes('class="rows cols-0"'));
+  assert.ok(html.includes('--cols: var(--w-mentor) minmax(0, 1fr) var(--w-percent) var(--w-chip)'));
+});
+
+test('projects: pages by the room they take, and a helpers line takes 48 more', () => {
+  const many = [];
+  for (let at = 0; at < 12; at += 1) many.push({ title: '[P' + at + ']', mentor: 'Pat' });
+  assert.deepEqual(projects(many).pageRows.map(rows => rows.length), [7, 5]);
+  const helped = many.map(entry => Object.assign({}, entry, { helpers: ['Sam'] }));
+  assert.deepEqual(projects(helped).pageRows.map(rows => rows.length), [4, 4, 4], 'four rows of 116 fit 476');
+  assert.equal(panels['monday-projects'].scrollPages(withProjects(many), { team: '' }), 2);
+  assert.equal(panels['monday-projects'].hasContent(withProjects(many), { team: '' }), true);
+});
+
+test('projects play only for both teams in the Robotics view: a Prime or Nova page has nothing, and so has a Prime or Nova block', () => {
+  assert.equal(projects([{ title: '[a]' }], { team: 'prime' }), null);
+  assert.equal(projects([{ title: '[a]' }], { team: 'nova' }), null);
+  const content = withProjects([{ title: '[a]', status: 'in-progress' }]);
+  const rows = [
+    { panel: 'monday-projects', team: '', tasksTeam: '' },
+    { panel: 'monday-projects', team: 'prime', tasksTeam: '' },
+    { panel: 'monday-projects', team: 'nova', tasksTeam: '' },
+  ];
+  assert.deepEqual(rows.map((row, at) => screens.stepsOfRow(row, at, rows, content, now).length), [1, 0, 0], 'the Prime and Nova blocks give their team to a row, and the page is for no team');
+  const steps = viewsPlay.viewSteps(content, 'general', now).filter(step => step.panel === 'monday-projects');
+  assert.deepEqual(steps.map(step => step.view), ['family'], 'the Robotics block plays it in the Condensed view, with no Team on the page');
+  assert.equal(steps[0].page.team, '');
+  assert.equal(viewsPlay.viewSteps(content, 'prime', now).some(step => step.panel === 'monday-projects'), false);
+  assert.equal(viewsPlay.viewSteps(content, 'nova', now).some(step => step.panel === 'monday-projects'), false);
+  assert.equal(viewsPlay.viewSteps(contentOf([]), 'general', now).some(step => step.panel === 'monday-projects'), false, 'no project, no step');
+  assert.ok(config.roboticsWidePanels.includes('monday-projects') && config.mondayKinds['monday-projects'] === 'projects');
+  const row = rotation.tidyRotationRow({ view: 'robotics', panel: 'monday-projects', seconds: 25, team: 'prime', department: 'build', chart: 'timeline' });
+  assert.deepEqual(row, { view: 'robotics', panel: 'monday-projects', shown: true, seconds: 25, department: 'build' }, 'a row of Projects has no team and no chart; its seconds are its own');
+});
+
+test('projects: the document of the sync is cleaned, so a last name or an address never reaches the screen', () => {
+  const tidy = monday.tidyMondayStatus({
+    lastSyncAt: '2026-10-15T15:59:00Z',
+    projects: [
+      { id: '1', title: '  Shelves  ', status: 'in-progress', mentor: 'Dan', mentorInitial: 'k', helpers: ['Cari-Ann', 'Steve Ray', 'a@b.com', 'Lee'], percent: 140 },
+      { id: '2', title: 'Odd status', status: 'waiting' }, { id: '3', title: '', status: 'done' },
+      { id: '4', title: 'Address', status: 'up-next', mentor: 'dan@example.com', percent: -5, completedOn: 'soon' },
+      'not a project', null,
+    ],
+  });
+  assert.deepEqual(tidy.projects, [
+    { id: '1', title: 'Shelves', status: 'in-progress', mentor: 'Dan', mentorInitial: 'K', helpers: ['Cari-Ann', 'Lee'], percent: 100 },
+    { id: '4', title: 'Address', status: 'up-next', percent: 0 },
+  ]);
+  assert.deepEqual(monday.tidyMondayStatus({ lastSyncAt: '2026-10-15T15:59:00Z' }).projects, [], 'a document with no list has no projects');
+});
+
+test('projects: the empty state is one line, and the sample content shows the panel', async () => {
+  assert.ok(htmlOf('monday-projects', contentOf([]), { team: '' }).includes('<p class="empty">Nothing in progress</p>'));
+  assert.ok(htmlOf('monday-projects', contentOf([], raw => { raw.monday.lastSyncAt = ''; }), { team: '' }).includes('Waiting for the first read'));
+  const sanity = await load('core/sanity.js');
+  const sample = sanity.normalizeSample(JSON.parse(read('data/sample/content.json')));
+  assert.ok(views.projectsView(sample, now, { team: '' }), 'the sample has projects');
+  sample.monday.projects.forEach(project => assert.match(project.title, /^\[.*\]$/, 'a sample project is a marked placeholder'));
+});
+
+test('the Projects chip is the same 30px chip, and the stylesheet draws the bar by width only', () => {
+  const css = read('panels/monday-projects/panel.css');
+  assert.match(css, /\.monday-projects \.percent-fill \{[^}]*width|\.percent-fill \{\s*display: block;/);
+  assert.equal(/transition|animation/.test(css), false);
+  const html = htmlOf('monday-projects', withProjects([{ title: '[a]', percent: 10 }]), { team: '' });
+  assert.ok(html.includes('<span class="chip chip-in-progress">IN PROGRESS</span>'));
+  assert.match(read('monday.css'), /\.monday \.chip \{[^}]*font: 700 30px\/48px/);
 });
 
 
@@ -193,11 +391,27 @@ test('status by department: Done, In Progress (with In Review and Stuck) and To 
 
 test('overall progress is the estimated hours done over all the hours, and the tasks done over all the tasks when no task has hours', () => {
   const hours = [task({ estHours: 6, list: 'done', status: 'done' }), task({ estHours: 2 }), task({ estHours: 0 }), task({})];
-  assert.deepEqual(chart(hours, { chart: 'progress' }), { title: 'OVERALL PROGRESS', team: '', department: '', chart: 'progress', percent: 75, done: 6, total: 8, unit: 'HOURS', tasks: { done: 1, open: 3 } });
+  assert.deepEqual(chart(hours, { chart: 'progress' }), { title: 'OVERALL PROGRESS', team: '', department: '', chart: 'progress', percent: 75, bar: true, done: 6, total: 8, unit: 'HOURS', tasks: { done: 1, open: 3 } });
   const counts = [task({ list: 'done', status: 'done' }), task({}), task({}), task({})];
   assert.deepEqual(chart(counts, { chart: 'progress' }).percent, 25);
   assert.equal(chart(counts, { chart: 'progress' }).unit, 'TASKS');
   assert.ok(wordsOf(htmlOf('monday-charts', contentOf(hours), { chart: 'progress' })).includes('75% 6 OF 8 HOURS DONE'));
+});
+
+test('overall progress counts tasks when the hours add up to 0, and draws no bar at 0 percent', () => {
+  // the board has no Estimated Hours today: the total is 0, so the percent is done tasks over all tasks
+  const none = [task({ estHours: 0 }), task({ list: 'done', status: 'done', estHours: 0 }), task({}), task({})];
+  const counted = chart(none, { chart: 'progress' });
+  assert.deepEqual([counted.percent, counted.unit, counted.done, counted.total, counted.bar], [25, 'TASKS', 1, 4, true]);
+  const html = htmlOf('monday-charts', contentOf(none), { chart: 'progress' });
+  assert.ok(html.includes('class="progress-track"') && html.includes('style="width: 25%"'));
+
+  const nothing = [task({}), task({})];
+  const zero = chart(nothing, { chart: 'progress' });
+  assert.deepEqual([zero.percent, zero.bar], [0, false]);
+  const empty = htmlOf('monday-charts', contentOf(nothing), { chart: 'progress' });
+  assert.equal(empty.includes('progress-track'), false, 'a 0 percent bar is not drawn');
+  assert.ok(wordsOf(empty).includes('0% 0 OF 2 TASKS DONE'));
 });
 
 test('the timeline: this month and the next two, the tasks with a Timeline by department in up to three lanes, and today', () => {
@@ -249,17 +463,18 @@ test('a department or a chart with nothing to show is left out of the steps, as 
   assert.equal(panels['monday-charts'].hasContent(content, { chart: 'status' }), true);
 });
 
-test('the default rotation has the four both-teams departments and the three charts in Robotics, and the five team departments in each team view', () => {
+test('the default rotation has the four both-teams departments, the three charts and Projects in Robotics, and the five team departments in each team view', () => {
   const monday = config.defaultRotationRows().filter(row => row.panel.startsWith('monday-'));
-  const words = row => row.view + ' ' + row.panel + ' ' + (row.department || row.chart) + ' ' + (row.list || '') + ' ' + (row.team || 'both');
+  const words = row => row.view + ' ' + row.panel + ' ' + (row.department || row.chart || '') + ' ' + (row.list || '') + ' ' + (row.team || 'both');
   assert.deepEqual(monday.filter(row => row.view === 'robotics').map(words), [
     'robotics monday-department business open both', 'robotics monday-department operations open both',
     'robotics monday-department marketing open both', 'robotics monday-department strategy open both',
     'robotics monday-charts status  both', 'robotics monday-charts progress  both', 'robotics monday-charts timeline  both',
+    'robotics monday-projects   both',
   ]);
   ['prime', 'nova'].forEach(team => assert.deepEqual(monday.filter(row => row.view === team).map(words),
     ['build', 'electrical', 'programming', 'design', 'cnc'].map(name => team + ' monday-department ' + name + ' open ' + team), team));
-  ['monday-department', 'monday-charts'].forEach(id => assert.ok(config.roboticsWidePanels.includes(id), id + ' is wide'));
+  ['monday-department', 'monday-charts', 'monday-projects'].forEach(id => assert.ok(config.roboticsWidePanels.includes(id), id + ' is wide'));
 
   // Business has a task for both teams, Build one for Prime and one for Nova
   const content = contentOf([task({ department: 'business' }), task({ team: 'prime' }), task({ team: 'nova', title: '[N]' })]);
@@ -268,7 +483,7 @@ test('the default rotation has the four both-teams departments and the three cha
   assert.deepEqual(steps.map(step => step.view), ['family', 'family', 'family', 'family']);
 });
 
-test('the sample content shows both panels', async () => {
+test('the sample content shows the department and chart panels', async () => {
   const sanity = await load('core/sanity.js');
   const sample = sanity.normalizeSample(JSON.parse(read('data/sample/content.json')));
   assert.ok(views.departmentView(sample, now, { department: 'build', list: 'open', team: 'prime' }).rows.length > 4, 'Build has more than one page');
@@ -298,7 +513,7 @@ test('the header says how old the board is, and an amber chip says STALE when it
 const exceptions = [30, 36, 40]; // the chips, the labels of the columns and the legend, and the first name of a contact (40, an owner name), which the order for the panels allows
 
 test('the stylesheets use no text under 44px but the chips and the labels, no colour of their own and nothing that moves', () => {
-  ['panels/monday-department/panel.css', 'panels/monday-charts/panel.css', 'monday.css'].forEach(file => {
+  ['panels/monday-department/panel.css', 'panels/monday-charts/panel.css', 'panels/monday-projects/panel.css', 'monday.css'].forEach(file => {
     const css = read(file).replace(/\/\*[\s\S]*?\*\//g, '');
     Array.from(css.matchAll(/font:\s*\d+\s+(\d+)px/g)).forEach(match => {
       const size = Number(match[1]);
@@ -307,36 +522,35 @@ test('the stylesheets use no text under 44px but the chips and the labels, no co
     assert.equal(/#[0-9a-f]{3,8}\b/i.test(css), false, file + ' has a colour of its own');
     assert.equal(/animation|transition|@keyframes|filter:|box-shadow|text-shadow/.test(css), false, file + ' moves or glows');
   });
-  ['panels/monday-department/panel.js', 'panels/monday-charts/panel.js'].forEach(file => {
+  ['panels/monday-department/panel.js', 'panels/monday-charts/panel.js', 'panels/monday-projects/panel.js'].forEach(file => {
     assert.equal(/animate\(|requestAnimationFrame|setTimeout|setInterval/.test(read(file)), false, file + ' has animation code');
   });
 });
 
 
-test('the standard layout stacks the contact under the status, has rows of 96 and says DUE, and the bar layout has room for a first name', () => {
-  const css = read('panels/monday-department/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  // the rules of the standard layout for a selector, as one text (a selector may be in a list, and in more than one rule)
-  const standard = selector => Array.from(css.matchAll(new RegExp('html\\[data-layout="standard"\\] \\.monday-department ' + selector.replace(/[.>:()]/g, '\\$&') + ' \\{([^}]*)\\}', 'g'))).map(match => match[1]).join(';');
-  const rule = (selector, name) => (standard(selector).match(new RegExp('(?:^|[;\\s])' + name + ':\\s*([^;]+);')) || [])[1];
+test('the standard layout has two lines in a row of 96, with the details under the name, and the bar layout one line of 68', () => {
+  ['monday-department', 'monday-projects'].forEach(id => {
+    const css = read('panels/' + id + '/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    const standard = selector => Array.from(css.matchAll(new RegExp('html\\[data-layout="standard"\\] \\.' + id + ' ' + selector.replace(/[.>:()]/g, '\\$&') + ' \\{([^}]*)\\}', 'g'))).map(match => match[1]).join(';');
+    const rule = (selector, name) => (standard(selector).match(new RegExp('(?:^|[;\\s])' + name + ':\\s*([^;]+);')) || [])[1];
 
-  // four rows of 96 are the window, the step of the scroll and, with the header of 64, end where the counts begin (452)
-  assert.equal(rule('.row', 'height'), '96px');
-  assert.equal(rule('.rows-window', 'height'), '384px');
-  assert.equal(rule('.rows-window', 'top'), '64px');
-  assert.ok(/html\[data-layout="standard"\] \.monday-department \{ --scroll-step: 384px; \}/.test(css));
-  assert.ok(64 + 4 * 96 <= 452, 'the rows end above the counts');
-  // the contact is in the first column, under the chip: 48 and 44 make 92 of the 96
-  assert.ok(/\.row > :nth-child\(3\)[^{]*\{ grid-column: 1; grid-row: 2; \}/.test(css), 'the contact is under the status');
-  assert.equal(rule('.row', 'grid-template-rows'), '48px 44px');
-  assert.ok(/grid-template-columns: 274px minmax\(0, 1fr\) 180px 150px;/.test(css), 'the project has what the three others leave');
-  assert.equal(rule('.project', '-webkit-line-clamp'), '2', 'a project has two full lines');
-  assert.ok(/\.date-more \{ display: none; \}/.test(css), 'DATE is dropped in the narrow layout, DUE stays');
-  // a first name is 40 and wraps, in both layouts; it is never cut with dots
+    // four rows of 96 are the window, which starts under a count of two lines (112) and ends inside the body of Cybertron (532)
+    assert.equal(rule('.rows-window', 'height'), '384px', id);
+    assert.equal(rule('.rows-window', 'top'), '112px', id);
+    assert.ok(112 + 4 * 96 <= 532, 'the rows end inside the body');
+    assert.equal(rule('.row', 'grid-template-rows'), '48px 44px', id + ': 48 and 44 make 92 of the 96');
+    assert.ok(new RegExp('html\\[data-layout="standard"\\] \\.' + id + ' \\{ --scroll-step: 384px; \\}').test(css), id);
+    assert.equal(rule('.details', 'grid-row'), '2', id + ': the details are under the name');
+    // the bar layout: one line of 64 in a row of 68, and seven rows are the window of 476
+    const bar = css.match(new RegExp('^\\.' + id + ' \\.row \\{([^}]*)\\}', 'm'))[1];
+    assert.ok(/grid-template-rows: 64px;/.test(bar) && /border-bottom: 3px solid/.test(bar) && /padding-bottom: 1px;/.test(bar), id);
+    assert.ok(new RegExp('\\.' + id + ' \\.rows-window \\{[^}]*top: 56px;[^}]*height: 476px;').test(css), id);
+  });
+  // a first name is 40, one line with an ellipsis
+  const css = read('panels/monday-department/panel.css').replace(/\/\*[\s\S]*?\*\//g, '');
   const contact = css.match(/^\.monday-department \.contact \{([^}]*)\}/m)[1];
-  assert.ok(/font: 500 40px/.test(contact) && /overflow-wrap: anywhere/.test(contact) && /white-space: normal/.test(contact) && !/ellipsis/.test(contact));
-  assert.ok(/grid-template-columns: 232px minmax\(0, 1fr\) 250px 180px 180px;/.test(css), 'the bar layout has 250 for a name (Bartholomew is 238 at 40px)');
-  // No Priority and No Date take two lines and are not cut
-  assert.ok(/\.monday-department \.priority,\s*\.monday-department \.date \{\s*white-space: normal;/.test(css));
+  assert.ok(/font: 500 40px/.test(contact) && /text-overflow: ellipsis/.test(contact) && /white-space: nowrap/.test(contact));
+  assert.ok(/--w-contact: 250px;/.test(css), '250 holds a first name of 12 letters at 40px');
 });
 
 
@@ -349,7 +563,7 @@ test('the Studio and the control page have the same department, list, chart and 
   assert.deepEqual(parts.mondayListChoices, lists.mondayLists);
   assert.deepEqual(parts.mondayChartChoices, lists.mondayCharts);
   assert.deepEqual(parts.olderMondayPanels.map(item => item.value), lists.retiredMondayPanels);
-  assert.deepEqual(parts.mondayPanels.map(item => item.value), ['monday-department', 'monday-charts']);
+  assert.deepEqual(parts.mondayPanels.map(item => item.value), ['monday-department', 'monday-charts', 'monday-projects']);
 
   const board = await studio('tools/rotation-board.js');
   assert.deepEqual(board.mondayTeamChoices, lists.mondayTeams);

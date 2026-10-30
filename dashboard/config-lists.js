@@ -73,10 +73,11 @@ export const teamPanels = ['tasks', 'tonight', 'spotlight', 'team-leads', 'roste
 // it (core/screen-seed.js), and the Studio fills an empty Screen with the same one (studio/tools/screen-seed.js).
 export const mondayRows = ['monday-charts'];
 
-// The two Monday panels (docs/monday.md) and what a row of each says:
+// The three Monday panels (docs/monday.md) and what a row of each says:
 //   monday-department  a department, a list (open or done) and a team (prime, nova, or empty for both)
 //   monday-charts      a chart (status, progress or timeline) and a team
-export const mondayKinds = { 'monday-department': 'department', 'monday-charts': 'chart' };
+//   monday-projects    nothing: it plays for both teams in the Robotics view and has nothing to show anywhere else
+export const mondayKinds = { 'monday-department': 'department', 'monday-charts': 'chart', 'monday-projects': 'projects' };
 
 // The nine departments of the boards, the two lists and the three charts, in the order the pickers offer them
 export const mondayDepartments = [

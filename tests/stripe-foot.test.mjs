@@ -174,10 +174,16 @@ const mondayBody = style => {
   return { top: top, height: pixels(valueIn(style, sheets.monday, '.monday .body', 'height')) };
 };
 const factNumber = () => lineOf(rule(sheets.monday, '.monday .fact-number').font);
-// Department tasks has its counts under the rows. The TV charts have at most: the legend of 48, 8 and nine rows of status; the
+// Department tasks and Projects have a count line at the top and a window of rows under it, which ends at the foot of the body.
+const windowEnd = name => (style, body) => {
+  const window = rule(panelCss(name), '.' + name + ' .rows-window');
+  return body.top + pixels(window.top) + pixels(window.height);
+};
+// Department tasks and Projects: see above. The TV charts have at most: the legend of 48, 8 and nine rows of status; the
 // progress counts; the legend, 4, the months of 48 and seven rows of the timeline. The note of the timeline is at the foot of the body.
 const mondayLowest = {
-  'monday-department': (style, body) => body.top + pixels(valueIn(style, panelCss('monday-department'), '.monday-department .facts', 'top')) + factNumber(),
+  'monday-department': windowEnd('monday-department'),
+  'monday-projects': windowEnd('monday-projects'),
   'monday-charts': (style, body) => {
     const css = panelCss('monday-charts');
     const status = 48 + 8 + 9 * pixels(rule(css, '.monday-charts .status-row').height);
@@ -364,12 +370,14 @@ test('Cybertron: the Monday panels fit a body of 532 with no word made smaller, 
   assert.equal(pixels(valueIn('cybertron', sheets.monday, '.monday .body', 'height')), 532);
   assert.equal(pixels(rule(sheets.monday, '.monday .body').height), 544, 'the body of Original is as it was');
 
-  // Department tasks: the names of the columns, four rows of 84 in the window, and the counts under them
-  const window = pixels(rule(department, '.monday-department .rows-window').top) + pixels(rule(department, '.monday-department .rows-window').height);
-  assert.equal(pixels(rule(department, '.monday-department .rows-window').height), 4 * pixels(rule(department, '.monday-department .row').height));
-  assert.ok(pixels(rule(department, '.monday-department .columns').height) <= pixels(rule(department, '.monday-department .rows-window').top));
-  assert.ok(window <= pixels(rule(department, '.monday-department .facts').top), 'the counts are under the rows');
-  assert.ok(pixels(rule(department, '.monday-department .facts').top) + factNumber() <= 532);
+  // Department tasks and Projects: the count line of 56, then a window of seven rows of 68, which ends inside the body of 532
+  ['monday-department', 'monday-projects'].forEach(name => {
+    const css = panelCss(name);
+    const window = rule(css, '.' + name + ' .rows-window');
+    assert.equal(pixels(window.height), 7 * 68, name + ' has seven rows in its window');
+    assert.ok(pixels(window.top) + pixels(window.height) <= 532, name + ' ends at ' + (pixels(window.top) + pixels(window.height)));
+    assert.ok(pixels(window.top) >= pixels(rule(sheets.monday, '.monday .count-line').height), 'the rows are under the count line');
+  });
 
   // the timeline: its rows end above the note at the foot
   const rows = 48 + 4 + pixels(rule(charts, '.monday-charts .months').height) + 7 * pixels(rule(charts, '.monday-charts .lane-row').height);

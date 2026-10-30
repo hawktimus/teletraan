@@ -20,7 +20,7 @@ import { asTeam } from '../../dashboard/core/teams.js';
 import { newsIsStale, newsItems } from '../../dashboard/core/news.js';
 import { photosToShow } from '../../dashboard/core/photos.js';
 import { recordText, teamEntry } from '../../dashboard/core/frc.js';
-import { chartsView, departmentTitle, departmentView } from '../../dashboard/core/monday-views.js';
+import { chartsView, departmentTitle, departmentView, projectsView } from '../../dashboard/core/monday-views.js';
 import { retiredWords } from '../../dashboard/config-lists.js';
 import { match13Stale, matchForecastFor, setMatch13, tidyMatch13 } from '../../dashboard/core/match13.js';
 import { metricsFor, pagesOf } from '../../dashboard/core/team-metrics.js';
@@ -150,6 +150,7 @@ function teamWords(team) {
 // row is a tidy row of the rotation, whose team is the team of the tasks. A row of a Prime or Nova block with no team of its own
 // has the tasks of that team and the General ones, the same as the wall.
 function mondayReason(row) {
+  if (row.panel === 'monday-projects') return row.view === 'prime' || row.view === 'nova' ? 'Projects plays only in the Robotics view.' : 'no project of the Projects board is showing.';
   const who = teamWords(row.team || (row.view === 'prime' || row.view === 'nova' ? row.view : ''));
   if (row.panel === 'monday-charts') {
     const own = departmentTitle(row.department);
@@ -179,6 +180,10 @@ function mondayLines(content, step, now) {
   if (step.panel === 'monday-charts') {
     const chart = chartsView(content, now, step.page);
     return chart && chart.chart === 'status' ? chart.rows.map(row => row.name + ': ' + row.done + ' done, ' + row.progress + ' in progress, ' + row.todo + ' to do') : [];
+  }
+  if (step.panel === 'monday-projects') {
+    const projects = projectsView(content, now, step.page);
+    return projects ? projects.rows.map(row => row.project + (row.mentor === '' ? '' : ', ' + row.mentor)) : [];
   }
   const view = departmentView(content, now, step.page);
   return view ? view.rows.map(row => row.project + ', ' + row.contact) : [];
@@ -224,7 +229,7 @@ function lineCount(count, noun) {
 async function itemsFor(step, content, now, match13) {
   let lines = [];
   if (step.panel === 'events') lines = eventLines(content, step, now);
-  else if (step.panel === 'monday-department' || step.panel === 'monday-charts') lines = mondayLines(content, step, now);
+  else if (step.panel === 'monday-department' || step.panel === 'monday-charts' || step.panel === 'monday-projects') lines = mondayLines(content, step, now);
   else if (step.panel === 'frc-news') lines = newsItems(content, now).map(item => item.title);
   else if (step.panel === 'competition-rank') lines = rankLines(content, step, match13);
   else if (step.panel === 'competition-team-metrics') lines = metricsLines(content, step, match13);

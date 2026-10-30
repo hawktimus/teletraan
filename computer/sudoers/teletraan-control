@@ -17,7 +17,9 @@ Cmnd_Alias TELETRAAN_TIMERS = \
   /usr/bin/systemctl restart teletraan-watchdog.timer, \
   /usr/bin/systemctl restart teletraan-nightly.timer, \
   /usr/bin/systemctl restart teletraan-reboot.timer, \
-  /usr/bin/systemctl restart teletraan-network.timer
+  /usr/bin/systemctl restart teletraan-netwatch.timer, \
+  /usr/bin/systemctl restart teletraan-heartbeat.timer, \
+  /usr/bin/systemctl restart teletraan-sync.service
 
 Cmnd_Alias TELETRAAN_SYNCS = \
   /usr/bin/systemctl start teletraan-calendars.service, \
@@ -27,7 +29,7 @@ Cmnd_Alias TELETRAAN_SYNCS = \
   /usr/bin/systemctl start teletraan-photos-drive.service, \
   /usr/bin/systemctl start teletraan-match13.service
 
-# The network watchdog restarts the network service of the computer (network-watchdog.sh). The commands that name an
+# The network watchdog restarts the network service of the computer (netwatch.sh). The commands that name an
 # interface are in /etc/sudoers.d/teletraan-network, which install-network.sh writes with the names found on the computer.
 # The journal line is how network-info reads why the network dropped: the login user is not in the systemd-journal group
 # (that would let it read every log), so this one command with these arguments is allowed instead.

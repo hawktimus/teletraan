@@ -7,7 +7,8 @@
 // reaches the dashboard folder through the Vite setting in sanity.cli.js.
 
 import { mondayDepartments } from '../../dashboard/config.js';
-import { boardTasks, departmentView, ofTeam, rowsPerPage } from '../../dashboard/core/monday-views.js';
+import { boardTasks, departmentView, ofTeam, projectsView } from '../../dashboard/core/monday-views.js';
+import { tidyMondayStatus } from '../../dashboard/core/monday.js';
 import { hasText } from '../../dashboard/core/text.js';
 import { ageText } from './time-text.js';
 import { isRecord, sentence } from './plain-values.js';
@@ -23,7 +24,7 @@ export const rotationPath = '/structure/rotation';
 
 export const words = {
   title: 'Monday',
-  intro: 'This is what the Teletraan computer read from the Monday boards Robotics Tasks and Completed Tasks. Pick a team to see the tasks of each department that are to do or in progress, and the ones that are done. Nothing here can be changed: change a task in Monday.',
+  intro: 'This is what the Teletraan computer read from the Monday boards Robotics Tasks, Completed Tasks and Projects (Mentors). Pick a team to see the tasks of each department that are to do or in progress, and the ones that are done. Nothing here can be changed: change a task in Monday.',
   reading: 'Reading the Monday tasks.',
   unreadable: 'The Monday tasks could not be read. Refresh the page to try again.',
   neverRead: 'The Teletraan computer has not read Monday yet. Open the control page, Settings, Sync and restart, and press Sync Monday now.',
@@ -43,6 +44,10 @@ export const words = {
   previewTeamLabel: 'Team',
   previewSkipped: 'The TV leaves this row out, because nothing is in this list.',
   columns: ['Status', 'Project', 'Contact', 'Priority', 'Estimated Completion Date'],
+  projectsTitle: 'Projects',
+  projectsHelp: 'The Projects board, as the Projects panel of the TV draws it in the Robotics view: Stuck, In Progress, In Review and To Do, then up to 3 projects done in the last 14 days. A project that says Hide in Monday is not kept.',
+  projectsNone: 'No project is showing on the TV.',
+  projectColumns: ['Mentor', 'Project', 'Helpers', '% Complete', 'Status'],
 };
 
 // The nine departments of the boards, in the order of the panels (mondayDepartments in dashboard/config-lists.js)
@@ -53,7 +58,7 @@ export const listChoices = [{ value: 'open', title: 'Open' }, { value: 'done', t
 
 // What the page reads: the status the Teletraan computer wrote, the tasks it made and the teams, published only
 export const question = `{
-  "status": *[_id == $statusId][0] { lastSyncAt, lastError, hiddenCount },
+  "status": *[_id == $statusId][0] { lastSyncAt, lastError, hiddenCount, "projects": coalesce(projects, []) },
   "tasks": *[_type == "task" && source == "monday" && !(_id in path("drafts.**"))] {
     title, source, department, list, status, "team": team->code, contact, priority, dueDate, completedOn, showOnBoard, showOnTv, show, expires
   },
@@ -111,15 +116,22 @@ export function hiddenOnMonday(status) {
   return isRecord(status) && Number.isInteger(status.hiddenCount) && status.hiddenCount > 0 ? status.hiddenCount : 0;
 }
 
+// The rows of the Projects panel, from the status document (core/monday-views.js, projectsView): every row the TV holds, in its order,
+// and how many more are on Monday. Mentor is the first name, with the last initial when two mentors share a first name.
+export function projectRows(status, now = new Date()) {
+  const view = projectsView({ monday: tidyMondayStatus(isRecord(status) ? status : null) }, now, { team: '' });
+  return view === null ? { rows: [], more: 0 } : { rows: view.rows, more: view.more };
+}
+
 // The tasks on the TV that have no team: they count for both teams
 export function generalCount(content, now = new Date()) {
   return boardTasks(content, now).filter(task => !hasText(task.team)).length;
 }
 
-// What a Department tasks row draws on its first page, or null when the TV leaves the row out
+// What a Department tasks row draws on its first page (as many rows as fit the TV), or null when the TV leaves the row out
 export function tvPreview(content, now, choice) {
   const view = departmentView(content, now, choice);
-  return view === null ? null : Object.assign({}, view, { rows: view.rows.slice(0, rowsPerPage) });
+  return view === null ? null : Object.assign({}, view, { rows: view.pageRows[0] });
 }
 
 // The counts of a department in words, such as "4 to do, 2 done"

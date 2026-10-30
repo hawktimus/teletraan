@@ -73,6 +73,38 @@ export function countersMarkup(facts) {
   return `<div class="facts">${facts.map(fact => `<div class="fact"><span class="fact-number">${escapeHtml(String(fact.value))}</span><span class="fact-label">${escapeHtml(fact.label)}</span></div>`).join('')}</div>`;
 }
 
+// The layout the page is drawn in. The Robotics view plays the Monday panels in the bar layout, which has the room for one line to a row.
+// Only the standard layout is narrower and puts the details of a row on a second line. This is the only place a Monday panel reads it.
+export function layoutNow() {
+  return typeof document !== 'undefined' && document.documentElement && document.documentElement.dataset.layout === 'standard' ? 'standard' : 'bar';
+}
+
+// The line at the top of the body: the count in words at the left (6 IN PROGRESS · 2 STUCK), and at the right the totals, how many
+// more are on Monday and the place of the page. rightWords is a list of words, and the page places are made by pagePlaces.
+export function countLineMarkup(words, rightWords, places) {
+  const right = rightWords.filter(hasText).map(text => `<span class="tally">${escapeHtml(text)}</span>`).join('');
+  return `<div class="count-line"><span class="count-words">${escapeHtml(words)}</span><span class="count-right">${right}${places}</span></div>`;
+}
+
+// The place of the page in words, 1 OF 3. The stylesheet shows the one of the page in view (data-scroll-page).
+export function pagePlaces(pages) {
+  if (pages < 2) return '';
+  const places = [];
+  for (let page = 1; page <= pages; page++) places.push(`<span class="place place-${page}">${page} OF ${pages}</span>`);
+  return places.join('');
+}
+
+// The rows, one block of the window's height for each page, so that the list moves up by one window to show the next page
+export function pagesMarkup(pageRows, rowMarkup) {
+  return `<div class="rows-window"><div data-scroll-list>${pageRows.map(rows => `<div class="rows-page">${rows.map(rowMarkup).join('')}</div>`).join('')}</div></div>`;
+}
+
+// The sentence a panel says when the screen shows it with nothing to draw (a preview of a department with no task, or a list that
+// has none): one line under the count, not a box. The rotation leaves such a row out.
+export function emptyLineMarkup(line) {
+  return `<p class="empty">${escapeHtml(line)}</p>`;
+}
+
 // The sentence a panel says when the screen shows it with nothing to draw (a preview of a department with no task). The
 // rotation leaves such a row out.
 export function boardEmptyMarkup(content) {

@@ -55,6 +55,9 @@ import { ImagesIcon } from '@sanity/icons/Images';
 import { MicrophoneIcon } from '@sanity/icons/Microphone';
 import { MoonIcon } from '@sanity/icons/Moon';
 import { PlayIcon } from '@sanity/icons/Play';
+import { RocketIcon } from '@sanity/icons/Rocket';
+import { EditIcon } from '@sanity/icons/Edit';
+import { InfoOutlineIcon } from '@sanity/icons/InfoOutline';
 import { PresentationIcon } from '@sanity/icons/Presentation';
 import { ProjectsIcon } from '@sanity/icons/Projects';
 import { SparkleIcon } from '@sanity/icons/Sparkle';
@@ -81,6 +84,8 @@ import { TodayView } from './inputs/today-view.js';
 import { PhotosView } from './inputs/photos-view.js';
 import { photosChild } from './inputs/photos-parts.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
+import { remoteControlType, remoteControlId } from './schemas/remoteControl.js';
+import { remoteStatusId } from './schemas/remoteStatus.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
 export const settingsType = 'dashboardSettings';
@@ -192,6 +197,16 @@ export const sidebarEntries = [
   { kind: 'divider', title: 'COACHES ONLY' },
   { kind: 'page', title: 'Dashboard Settings', icon: DesktopIcon, type: settingsType, id: settingsId },
   { kind: 'list', title: 'Extra panels', icon: ThLargeIcon, type: 'customPanel', sort: byOrder },
+  {
+    kind: 'group',
+    title: 'Remote actions',
+    icon: RocketIcon,
+    id: 'remoteActions',
+    entries: [
+      { kind: 'page', title: 'Send an action', icon: EditIcon, type: remoteControlType, id: remoteControlId },
+      { kind: 'page', title: 'Status of the computer', icon: InfoOutlineIcon, type: 'remoteStatus', id: remoteStatusId },
+    ],
+  },
   { kind: 'component', title: 'Check the screen', id: 'checkScreen', icon: CheckmarkCircleIcon, component: CheckScreenView },
   { kind: 'component', title: 'Kept data', id: 'keptData', icon: StackIcon, component: KeptDataView, children: keptChildren },
 ];

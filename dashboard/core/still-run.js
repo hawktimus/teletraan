@@ -7,7 +7,7 @@ import * as frame from '../frame.js';
 import { changePage } from './areas.js';
 import { buildPage, regionOf } from './panels.js';
 import { asTeam } from './teams.js';
-import { mainPlaylist, stepsOfRow, tidyMainRow, tidyScreen } from './screens.js';
+import { isMondayPanel, mainPlaylist, stepsOfRow, tidyMainRow, tidyScreen } from './screens.js';
 import { stillRow } from './still.js';
 import { viewSideSteps } from './views.js';
 import { viewKeys } from '../config.js';
@@ -37,7 +37,9 @@ function pageFor(ask, content) {
   }
   const screen = tidyScreen({ mainRows: [stillRow(ask)] }, ask.screen || 'original', 'original');
   const steps = mainPlaylist(content, new Date(), screen);
-  const step = steps.length > 0 ? steps[0] : { panel: ask.panel };
+  // A Monday panel with nothing to show is drawn for the department, list and chart of the address, so its empty page has the title
+  const wanted = { team: ask.team, department: ask.department, list: ask.list || 'open', chart: ask.chart || 'status' };
+  const step = steps.length > 0 ? steps[0] : { panel: ask.panel, page: isMondayPanel(ask.panel) ? wanted : undefined };
 
   return asTeam(ask.team, () => buildPage(step.panel, content, step.page, step));
 }

@@ -1,14 +1,14 @@
 #!/bin/bash
 # Usage: monday-sync.sh [--check | --debug <board number>]
-# Reads the two Monday boards of the team, Robotics Tasks and Completed Tasks (their numbers and columns are
-# in monday-contract.sh), and writes one task document for each parent item (task-monday-<item number>) into
+# Reads the two Monday boards of the team, Robotics Tasks and Completed Tasks, and the Projects board (their numbers and
+# columns are in monday-contract.sh), and writes one task document for each parent item (task-monday-<item number>) into
 # Sanity. A task whose item has gone is deleted. It also writes the document monday-status: when it last read,
-# what went wrong, and the open and done tasks of each department. Needs curl and jq (docs/monday.md).
+# what went wrong, the open and done tasks of each department and the list of the projects. Needs curl and jq (docs/monday.md).
 #
 #   monday-sync.sh           one run, which the timer starts every 5 minutes. The run reads Monday only when
 #                            the last read is older than "Read Monday every" in Dashboard Settings, Monday
 #                            tab, or when Sync Monday now on the control page asked for a read
-#   monday-sync.sh --check   asks Monday who the token belongs to, and writes nothing
+#   monday-sync.sh --check   asks Monday who the token belongs to and whether the Projects board answers, and writes nothing
 #   monday-sync.sh --debug <board number>
 #                            prints how Monday answers for the first two items of one board (no token, no
 #                            names of people), and writes nothing
@@ -155,6 +155,11 @@ tasks_read=$read_all
 read_board done "$done_board" "$(jq -c -n --argjson columns "$columns" --argjson names "$done_board_columns" '[$names[] | $columns[.]]')"
 done_read=$read_all
 
+# The Projects board, read with the same rules. It is a classic board, and its columns are its own. A board that could not be
+# read to its end leaves the projects of the last read as they were.
+read_board projects "$projects_board" "$(jq -c -n --argjson columns "$project_columns" --argjson names "$project_board_columns" '[$names[] | $columns[.]]')"
+projects_read=$read_all
+
 complete=no
 if [ "$tasks_read" = yes ] && [ "$done_read" = yes ]; then
   complete=yes
@@ -162,7 +167,7 @@ fi
 
 # The first names of the first person in Assigned of each parent item, in one question
 cat "$work/tasks-items.ndjson" "$work/done-items.ndjson" > "$work/all-items.ndjson"
-jq -s -c --argjson columns "$columns" '[.[] | select(.parent == null) | (.values[$columns.assigned].people // [])[0] | strings] | unique | .[0:200]' "$work/all-items.ndjson" > "$work/people.json"
+jq -s -c --argjson columns "$columns" '[.[] | select(.parent == null) | ((.values[$columns.poc].people // [])[0], (.values[$columns.assigned].people // [])[0]) | strings] | unique | .[0:200]' "$work/all-items.ndjson" > "$work/people.json"
 echo '{}' > "$work/names.json"
 if [ "$(jq 'length' "$work/people.json")" -gt 0 ]; then
   jq -n --arg query "$monday_query_users" --slurpfile ids "$work/people.json" '{query: $query, variables: {ids: $ids[0]}}' > "$work/body.json"
@@ -187,7 +192,13 @@ for board in tasks done; do
     "$helpers"'$names[0] as $names | '"$task_rows" >> "$work/rows.ndjson"
 done
 
+# One row for each project of the Projects board (the entries of the list projects of monday-status)
+jq -n -c --slurpfile items "$work/projects-items.ndjson" --argjson labels "$project_labels" --argjson columns "$project_columns" \
+  --argjson contact_limit "$contact_limit" --argjson helpers_most "$project_helpers_most" \
+  "$helpers$project_rows" > "$work/project-rows.ndjson"
+
 echo "monday: $(wc -l < "$work/rows.ndjson" | tr -d ' ') task(s) read"
+echo "monday: $(wc -l < "$work/project-rows.ndjson" | tr -d ' ') project(s) read"
 
 failed=0
 
@@ -217,6 +228,7 @@ calls_after=$((calls_before + requests))
 jq -n --slurpfile sanity "$work/sanity.json" --slurpfile readings "$work/readings.ndjson" --slurpfile rows "$work/rows.ndjson" \
   --rawfile errors "$work/errors.txt" --arg now "$now_iso" --arg today "$today" --argjson calls "$calls_after" \
   --arg complete "$complete" --argjson labels "$labels" --argjson snapshots_kept "$snapshots_kept" \
+  --slurpfile projects "$work/project-rows.ndjson" --arg projects_ok "$projects_read" \
   "$helpers$status_patch" > "$work/status-patch.json"
 jq '{mutations: [{createIfNotExists: {_id: "monday-status", _type: "mondayStatus"}}, {patch: ({id: "monday-status", set: .set} + (if (.unset | length) == 0 then {} else {unset: .unset} end))}]}' "$work/status-patch.json" > "$work/write.json"
 

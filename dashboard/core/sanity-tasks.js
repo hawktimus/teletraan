@@ -111,7 +111,7 @@ export function firstNameOf(text) {
 
 // The fields the board sync writes on a task (docs/monday.md). A task written before them lacks them, and
 // is left as it was. A date that is not a plain date, hours that are not a number and a list that is not a
-// list are left out. Notes are never read.
+// list are left out. Notes are read for a Stuck task only.
 function normalizeBoardFields(task) {
   ['startDate', 'dueDate', 'completedOn'].forEach(name => {
     if (task[name] !== undefined && !(typeof task[name] === 'string' && plainDate.test(task[name]))) delete task[name];
@@ -127,6 +127,10 @@ function normalizeBoardFields(task) {
   if (task.owners !== undefined) {
     task.owners = Array.isArray(task.owners) ? task.owners.map(firstNameOf).filter(name => name !== '') : [];
   }
+  // A note is kept for a Stuck task only, where the Monday panels show it on one line. The notes of every other task are never read.
+  const note = typeof task.note === 'string' ? task.note.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+  if (task.status === 'blocked' && note !== '') task.note = note;
+  else delete task.note;
   delete task.notes;
   return task;
 }

@@ -1,7 +1,7 @@
 // The outage drill in a real browser (docs/reliability-drill.md). Each case opens the dashboard as the wall runs it
-// (the editors' content, not the sample) with Sanity, the local data files or the saved copy made to fail in one way,
+// (the editors' content, not the sample) with the content snapshot, the local data files or the saved copy made to fail in one way,
 // and checks that the screen still came up: the page started, the title carries the heartbeat clock, the stage holds
-// drawn pieces and nothing was thrown. Nothing leaves this computer: every outside address is answered by the test.
+// drawn pieces and nothing was thrown. The page reads only files of its own server; the test fails a case when the page asks Sanity or the weather service itself.
 //
 // Playwright is not on the Teletraan computer. Without it, or without its browser, this file says so and exits 0,
 // like tests/motion. To run it on a laptop that has it: NODE_PATH=/path/to/node_modules node tests/reliability.test.mjs
@@ -37,7 +37,7 @@ const calendar = body => 'BEGIN:VCALENDAR\nVERSION:2.0\n' + body + 'END:VCALENDA
 const event = (number, day) => 'BEGIN:VEVENT\nUID:e' + number + '\nDTSTAMP:20260101T000000Z\nDTSTART:' + day + 'T100000\nDTEND:' + day + 'T110000\nSUMMARY:Event ' + number + '\nEND:VEVENT\n';
 const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10).replace(/-/g, '');
 
-// How Sanity answers the read of the content: ok, down, 500, 403, page (a login page), half (JSON cut short) or null
+// How the content snapshot (data/live/content.json) answers: ok, down, 500, 403, page (a login page), half (JSON cut short) or null
 function answerFor(mode, raw, route) {
   if (mode === 'down') return route.abort('internetdisconnected');
   if (mode === '500' || mode === '403') return route.fulfill({ status: Number(mode), body: 'no' });
@@ -54,19 +54,17 @@ async function open(options) {
   const page = await context.newPage();
   page.thrown = [];
   page.on('pageerror', error => page.thrown.push(error.message));
+  page.outside = [];
+  page.on('request', request => { if (/api\.sanity\.io|open-meteo\.com/.test(request.url())) page.outside.push(request.url()); });
 
   await page.route('**/control/api/**', route => route.fulfill({ status: 204 }));
   await page.route('**/data/live/**', route => {
     const name = route.request().url().split('/data/live/')[1].split('?')[0];
+    if (name === 'content.json') return answerFor(options.mode || 'ok', options.raw || sample, route);
     const text = (options.files || {})[name];
     return text === undefined ? route.fulfill({ status: 404 }) : route.fulfill({ status: 200, body: text });
   });
-  await page.route('https://*.api.sanity.io/**', route => {
-    const url = route.request().url();
-    if (url.includes('/data/live/events')) return route.abort('connectionrefused');
-    if (!url.includes('/data/query/')) return options.mode === 'down' ? route.abort('internetdisconnected') : route.fulfill({ status: 200, body: 'x' });
-    return answerFor(options.mode || 'ok', options.raw || sample, route);
-  });
+  await page.route('https://*.api.sanity.io/**', route => route.abort('internetdisconnected'));
   await page.route('https://api.open-meteo.com/**', route => (options.weatherDown ? route.abort('internetdisconnected') : route.fulfill({ status: 200, body: '{"current":null}' })));
   await page.route('https://cdn.sanity.io/**', route => (options.imagesMissing ? route.fulfill({ status: 404 }) : route.abort()));
   if (options.storedCopy) await page.addInitScript(text => localStorage.setItem('teletraan-last-content', text), options.storedCopy);
@@ -91,6 +89,7 @@ async function problemsOf(page) {
   if (state.pieces < 200) found.push('the stage holds only ' + state.pieces + ' pieces');
   if (state.words < 100) found.push('the screen has only ' + state.words + ' characters of text');
   page.thrown.slice(0, 2).forEach(message => found.push('the page threw: ' + message.slice(0, 120)));
+  page.outside.slice(0, 2).forEach(address => found.push('the page asked an outside address itself: ' + address.slice(0, 60)));
   return found;
 }
 
@@ -208,42 +207,45 @@ await Promise.all([1, 2, 3].map(async () => {
   await context.close();
 }
 
-// The network goes away for 30 minutes and comes back (docs/reliability-drill.md, "The network goes away when idle"). The clock
+// The network goes away for 30 minutes and comes back (docs/reliability-drill.md, "The network goes away when idle"). The page
+// only reads files of its own server, so what it shows comes from the sync service: content.json and sync-status.json. The clock
 // is the fake one of Playwright and jumps 35 seconds at a time, so every timer that is due fires once, as in a real half hour.
-// The banner must come up, say that the computer is fixing it once device.json has a step, and go away within 30 seconds of the
-// network returning, with the new content on screen and without the page being reloaded.
+// While the sync service cannot reach Sanity its status file keeps the old time of the last good read. The pill must stay hidden for
+// the first 10 minutes, turn amber with "Offline since" after that, turn red after 30, show no error words at any time, and go
+// away within 35 seconds of the network returning, with the new content on screen and without the page being reloaded.
 {
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 }, timezoneId: 'America/New_York' });
   const page = await context.newPage();
   page.thrown = [];
   page.on('pageerror', error => page.thrown.push(error.message));
-  const world = { up: true, tips: 'first tip', device: false, started: Date.now() };
+  const world = { up: true, tips: 'first tip', started: Date.now(), elapsed: 0, lastGood: Date.now() };
+  const nowIso = () => new Date(world.started + world.elapsed).toISOString();
   await page.route('**/control/api/**', route => route.fulfill({ status: 204 }));
   await page.route('**/data/live/**', route => route.fulfill({ status: 404 }));
-  await page.route('**/data/live/device.json', route => route.fulfill({
-    status: 200,
-    json: { hostname: 'hawktimus-mini', wifi: '10.0.137.149', tailscale: '', time: 'x', networkDownSince: world.device ? new Date(world.started + 5 * 60000).toISOString() : '', networkLastStep: world.device ? '2 reconnect' : '' },
-  }));
-  await page.route('https://*.api.sanity.io/**', route => {
-    const url = route.request().url();
-    if (url.includes('/data/live/events')) return route.abort('connectionrefused');
-    if (!world.up) return route.abort('internetdisconnected');
-    if (!url.includes('/data/query/')) return route.fulfill({ status: 200, body: 'x' });
+  await page.route('**/data/live/content.json', route => {
     const raw = clone(sample);
     raw.tipsAndNews = [{ _id: 'tip-one', text: world.tips, show: true }];
     return route.fulfill({ status: 200, json: { result: raw } });
   });
-  await page.route('https://api.open-meteo.com/**', route => route.fulfill({ status: 200, body: '{"current":null}' }));
-  await page.route('https://cdn.sanity.io/**', route => route.abort());
+  await page.route('**/data/live/sync-status.json', route => {
+    // The sync service writes the time of its last good read whenever the network answers
+    if (world.up) world.lastGood = world.started + world.elapsed;
+    return route.fulfill({
+    status: 200,
+    json: { generatedAt: nowIso(), sources: { sanity: { lastSuccessAt: new Date(world.lastGood).toISOString(), lastFailureAt: world.up ? null : nowIso(), lastFailureReason: world.up ? '' : 'no answer' } } },
+    });
+  });
+  await page.route('https://**', route => route.abort('internetdisconnected'));
   await page.clock.install({ time: world.started });
   await page.goto(base + '/index.html?motion=full&night=off', { waitUntil: 'load' });
   await page.waitForTimeout(2500);
   let loads = 0;
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) loads += 1; });
-  const bannerText = () => page.evaluate(() => { const box = document.getElementById('connection-status'); return box && !box.hidden ? box.innerText : ''; });
+  const pill = () => page.evaluate(() => { const box = document.getElementById('sync-pill'); return box ? { state: box.dataset.state || 'ok', text: box.innerText.trim() } : null; });
   const jump = async seconds => {
     for (let spent = 0; spent < seconds; spent += 35) {
       await page.clock.fastForward(35000);
+      world.elapsed += 35000;
       await page.waitForTimeout(120);
     }
   };
@@ -251,30 +253,29 @@ await Promise.all([1, 2, 3].map(async () => {
 
   world.up = false;
   await jump(5 * 60);
-  const early = await bannerText();
-  if (!early.includes('SANITY UNREACHABLE: NETWORK DOWN') || !early.includes('Check the cable and the router of the Teletraan computer') || !early.includes('Last good read')) problems.push('the banner after 5 minutes: ' + early.slice(0, 120));
-  if (early.includes('trying to fix this by itself')) problems.push('the repair line came before the watchdog took a step');
-  world.device = true;
+  const early = await pill();
+  if (!early || early.state !== 'ok') problems.push('the pill came up after 5 minutes: ' + JSON.stringify(early));
   await jump(12 * 60);
-  const middle = await bannerText();
-  if (!middle.includes('The Teletraan computer is trying to fix this by itself')) problems.push('no repair line after 17 minutes down with a step: ' + middle.slice(0, 200));
-  await jump(13 * 60);
-  if (!(await bannerText()).includes('SANITY UNREACHABLE')) problems.push('the banner was gone while still down at 30 minutes');
+  const middle = await pill();
+  if (!middle || middle.state !== 'late' || !/^Offline since \d{1,2}:\d\d [AP]M$/.test(middle.text)) problems.push('no amber pill with a time after 17 minutes down: ' + JSON.stringify(middle));
+  await jump(14 * 60);
+  const late = await pill();
+  if (!late || late.state !== 'down') problems.push('the pill was not red after 31 minutes down: ' + JSON.stringify(late));
+  if (late && /sanity|network|cors|denied|error/i.test(late.text)) problems.push('the pill shows error words: ' + late.text);
 
   world.up = true;
-  world.device = false;
   world.tips = 'tip after the outage';
   await jump(35);
   await page.waitForTimeout(400);
-  const after = await bannerText();
+  const after = await pill();
   const tipSeen = await page.evaluate(() => (localStorage.getItem('teletraan-last-content') || '').includes('tip after the outage'));
-  if (after.includes('SANITY UNREACHABLE')) problems.push('the banner is still up 35 seconds after the network returned: ' + after.slice(0, 120));
+  if (after && after.state !== 'ok') problems.push('the pill is still up 35 seconds after the network returned: ' + JSON.stringify(after));
   if (!tipSeen) problems.push('the new content was not read within 35 seconds of the network returning');
   if (loads !== 0) problems.push('the page reloaded ' + loads + ' times');
   page.thrown.slice(0, 2).forEach(message => problems.push('the page threw: ' + message.slice(0, 120)));
   finished += 1;
   if (problems.length === 0) {
-    console.log('ok    after 30 minutes without the network the banner shows the repair line, and the wall recovers by itself with no reload');
+    console.log('ok    after 30 minutes without the network the pill goes amber and then red with no error words, and the wall recovers by itself with no reload');
   } else {
     failures += 1;
     console.log('FAIL  after 30 minutes without the network');

@@ -188,6 +188,7 @@ async function run() {
 
       // The three dots and the report to the control page. The report asks the team of the page
       startOptional('./core/dots-run.js', module => module.startDots(getContent, shellState.showingSample));
+      startOptional('./core/sync-pill.js', module => module.startSyncPill(getContent, shellState.showingSample));
       startOptional('./core/now-report.js', module => module.startNowReport(getContent, currentTeam));
 
       // The views: the look of each step of the large panel, the swaps, and the Next look now button in the Studio.

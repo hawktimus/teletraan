@@ -497,8 +497,9 @@ test('the status document and the fields in the script are the ones the Studio h
   const studioFields = Array.from(schema.matchAll(/timeField\('(\w+)'/g)).map(match => match[1]);
   // photosDriveAt is written by the job photos-drive, which has its own test (tests/photos-drive.test.mjs),
   // newsAt by the job news (tests/news-sync.test.mjs), nextRebootAt and lastRebootAt by the job reboot (tests/scheduled-reboot.test.mjs),
-  // and lastCleanupAt by the job cleanup (tests/expired-cleanup.test.mjs)
-  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt', 'networkLastOkAt', 'networkDownSince', 'networkLastProblemAt']).sort());
+  // lastCleanupAt by the job cleanup (tests/expired-cleanup.test.mjs)
+  // and the netwatch and sync times by the job sync (tests/net-tools.test.mjs)
+  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt', 'networkLastOkAt', 'networkDownSince', 'networkLastProblemAt', 'netwatchLastActionAt', 'syncSanityAt', 'syncWeatherAt', 'syncImagesAt', 'syncMondayAt', 'syncCompetitionAt', 'syncCalendarsAt']).sort());
 
   const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));
@@ -592,7 +593,7 @@ test('network sends the five fields of network/status.json, removes the empty on
   fs.writeFileSync(file, '{"networkLastOkAt":"yesterday","networkDownSince":"","networkRecoveries":1,"networkLastStep":"","networkLastProblemAt":""}\n');
   const bad = t.run(['network']);
   assert.equal(bad.status, 1);
-  assert.ok(bad.errors.includes('is not the file network-watchdog.sh writes'));
+  assert.ok(bad.errors.includes('is not the file netwatch.sh writes'));
   assert.equal(t.run(['network', 'x']).status, 2);
 });
 

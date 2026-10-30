@@ -13,7 +13,7 @@ import { Link } from 'sanity/router';
 import { choiceButtons } from './field-editor.js';
 import {
   contentOf, controlLink, countLine, departmentTables, departments, generalCount, hiddenCount, hiddenOnMonday, lastReadLine, listChoices,
-  mondayStatusId, question, rotationPath, teamChoices, tvPreview, words,
+  mondayStatusId, projectRows, question, rotationPath, teamChoices, tvPreview, words,
 } from './monday-page-parts.js';
 
 const h = createElement;
@@ -133,6 +133,26 @@ function departmentBlock(table) {
       tableOf(table.doneRows, table.doneMore)));
 }
 
+// The projects of the Projects board, in a table of the five columns the TV draws
+function projectsBlock(status, now) {
+  const shown = projectRows(status, now);
+  const head = h('tr', null, words.projectColumns.map(name => h('th', { key: name, scope: 'col' }, name)));
+  const body = shown.rows.map((row, at) => h('tr', { key: at },
+    cell(words.projectColumns[0], row.mentor),
+    cell(words.projectColumns[1], row.project),
+    cell(words.projectColumns[2], row.helpers.join(', ')),
+    cell(words.projectColumns[3], row.percent === null ? '' : row.percent + '%'),
+    cell(words.projectColumns[4], row.statusWord)));
+  return h('section', { 'data-projects': shown.rows.length === 0 ? 'none' : 'some' },
+    h('h2', { style: styles.subheading }, words.projectsTitle),
+    h('p', { style: styles.muted }, words.projectsHelp),
+    shown.rows.length === 0
+      ? h('p', { style: styles.muted }, words.projectsNone)
+      : h('div', null,
+        h('table', { className: 'monday-table project-table' }, h('thead', null, head), h('tbody', null, body)),
+        shown.more > 0 ? h('p', { style: styles.muted }, '+' + shown.more + ' more in Monday') : null));
+}
+
 // What a Department tasks row draws on its first page
 function previewBlock(content, now, choice, change) {
   const view = tvPreview(content, now, choice);
@@ -142,7 +162,7 @@ function previewBlock(content, now, choice, change) {
       h('p', { style: styles.previewTitle }, view.title + (view.team ? ' (' + view.team + ')' : '')),
       tableOf(view.rows, 0),
       h('p', { style: styles.muted }, 'Open ' + view.counts.open + ', done ' + view.counts.done +
-        (view.pages > 1 ? '. The TV plays ' + view.pages + ' pages of four rows.' : '.') + (view.more > 0 ? ' +' + view.more + ' more in Monday.' : '')));
+        (view.pages > 1 ? '. The TV plays ' + view.pages + ' pages.' : '.') + (view.more > 0 ? ' +' + view.more + ' more in Monday.' : '')));
   return h('section', null,
     h('h2', { style: styles.subheading }, words.previewTitle),
     h('p', { style: styles.muted }, words.previewHelp),
@@ -187,6 +207,7 @@ export function MondayPage() {
         h('p', { key: 'help', style: styles.muted }, words.teamHelp + (general > 0 ? ' ' + general + ' of the tasks have no team.' : '') + (hidden > 0 ? ' ' + hidden + ' hidden from the TV.' : '') + (hiddenInMonday > 0 ? ' ' + hiddenInMonday + ' say Hide in Monday and are not kept here.' : '')),
         h('div', { key: 'tiles', style: styles.tiles }, tables.map(tileOf)),
         h('div', { key: 'departments' }, tables.map(departmentBlock)),
+        h('div', { key: 'projects' }, projectsBlock(state.status, now)),
         h('div', { key: 'preview' }, previewBlock(state.content, now, choice, change => setChoice(Object.assign({}, choice, change)))),
       ];
 

@@ -1,6 +1,7 @@
-// A publish in the Studio reaches the wall within a second or two. Nothing touches the network: fetch, EventSource and
-// the clock are fakes. Pins the wait between the change event and the new content, the host that is read after an event,
-// the host of the request poll, and that Publish all sleeps between documents.
+// A publish in the Studio reaches the wall within seconds. The screen reads the local snapshot that the sync service
+// writes (data/live/content.json), never Sanity. Nothing touches the network: fetch and the clock are fakes. Pins that every
+// read is a same-origin file read with no cache, that a changed file reaches the screen at the next poll, that a read that
+// fails keeps the content and says nothing, and that Publish all sleeps between documents.
 //
 //   node tests/live-update.test.mjs
 
@@ -31,7 +32,6 @@ fs.readdirSync(path.join(dashboardFolder, 'core')).filter(file => file.endsWith(
 const base = pathToFileURL(root).href + '/';
 const { startSanityContent } = await import(base + 'core/content-source.js');
 const sanityModule = await import(base + 'core/sanity.js');
-const { sanity } = await import(base + 'config.js');
 
 let failures = 0;
 async function test(name, run) {
@@ -46,14 +46,10 @@ async function test(name, run) {
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-function reply(result) {
-  return { ok: true, status: 200, json: async () => ({ result: result }) };
-}
-
-// One fake world: a clock that moves only when advance() is called, a fetch that records the address and the options
-// and answers from world.settings, and one stream that a test can send a message through
+// One fake world: a clock that moves only when advance() is called, and a fetch that records the address and the options and
+// answers the two files of the data folder from world.file and world.index. world.broken makes every read fail.
 async function inWorld(run) {
-  const world = { now: Date.UTC(2026, 9, 18, 15, 0, 0), timers: [], nextId: 1, calls: [], settings: { pageSeconds: 20 }, tips: [], streams: [], changes: [] };
+  const world = { now: Date.UTC(2026, 9, 18, 15, 0, 0), timers: [], nextId: 1, calls: [], settings: { pageSeconds: 20 }, tips: [], changes: [], broken: false, index: null, streams: 0 };
   const names = ['fetch', 'EventSource', 'localStorage', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'];
   const originals = {};
   names.forEach(name => { originals[name] = Object.getOwnPropertyDescriptor(globalThis, name); });
@@ -65,18 +61,20 @@ async function inWorld(run) {
     world.nextId += 1;
     return world.nextId - 1;
   };
+  world.file = () => JSON.stringify({ syncedAt: new Date(world.now).toISOString(), result: { settings: world.settings, tipsAndNews: world.tips } });
   const fakes = {
     fetch: async (url, options) => {
       world.calls.push({ at: world.now, url: String(url), options: options || {} });
-      const text = decodeURIComponent(String(url));
-      if (text.includes('[0] { announceRequest')) return reply(world.settings);
-      return reply({ settings: world.settings, tipsAndNews: world.tips });
+      if (world.broken) throw new TypeError('fetch failed');
+      if (String(url).endsWith('content.json')) return { ok: true, status: 200, text: async () => world.file() };
+      if (String(url).endsWith('images/index.json')) {
+        if (world.index === null) return { ok: false, status: 404, text: async () => '' };
+        return { ok: true, status: 200, text: async () => JSON.stringify(world.index) };
+      }
+      return { ok: false, status: 404, text: async () => '' };
     },
     EventSource: class {
-      constructor() { this.listeners = {}; this.readyState = 1; world.streams.push(this); }
-      addEventListener(type, run) { this.listeners[type] = (this.listeners[type] || []).concat(run); }
-      emit(type) { (this.listeners[type] || []).forEach(run => run({ type: type })); }
-      close() { this.readyState = 2; }
+      constructor() { world.streams += 1; }
     },
     localStorage: { getItem: () => null, setItem: () => {} },
     setTimeout: (fn, delay) => add(fn, delay, null),
@@ -84,7 +82,6 @@ async function inWorld(run) {
     clearTimeout: id => { world.timers = world.timers.filter(timer => timer.id !== id); },
     clearInterval: id => { world.timers = world.timers.filter(timer => timer.id !== id); },
   };
-  fakes.EventSource.CLOSED = 2;
   world.advance = async milliseconds => {
     const end = world.now + milliseconds;
     for (;;) {
@@ -115,82 +112,80 @@ async function inWorld(run) {
   }
 }
 
-const host = url => new URL(url).host;
-
-await test('a change event is followed by a read of the content within one second, and the new content is applied', async () => {
+await test('a changed file is applied at the next poll, within 5 seconds, and an unchanged file hands nothing on', async () => {
   await inWorld(async world => {
     const started = await startSanityContent(change => world.changes.push(change));
-    const reads = world.calls.length;
+    await world.advance(5 * 1000);
+    assert.equal(world.changes.length, 0, 'the same content again is not a change');
+
     world.tips = [{ _id: 't1', kind: 'tip', text: '[A new tip]', show: true }];
+    await world.advance(5 * 1000);
 
-    world.streams[0].emit('message');
-    await world.advance(999);
-
-    assert.equal(world.calls.length, reads + 1, 'one read follows the event');
     assert.equal(world.changes.length, 1, 'the new content was handed on');
     assert.equal(world.changes[0].content.tipsAndNews[0].text, '[A new tip]');
     started.stop();
   });
 });
 
-await test('edits that arrive together still make one read', async () => {
+await test('every read is a file of this server with no cache, and nothing asks Sanity or opens a stream', async () => {
   await inWorld(async world => {
     const started = await startSanityContent(() => {});
-    const reads = world.calls.length;
-    for (let edit = 0; edit < 5; edit += 1) {
-      world.streams[0].emit('message');
-      await world.advance(50);
-    }
-    await world.advance(1000);
-    assert.equal(world.calls.length, reads + 1);
+    await world.advance(60 * 1000);
+    assert.ok(world.calls.length >= 20, 'it polled: ' + world.calls.length);
+    world.calls.forEach(call => {
+      assert.ok(call.url.startsWith('data/live/'), 'a file of the data folder: ' + call.url);
+      assert.equal(call.options.cache, 'no-store');
+    });
+    assert.equal(world.streams, 0, 'no stream');
     started.stop();
   });
+  assert.equal(sanityModule.requestsUrl, undefined, 'the request poll is gone');
+  assert.equal(sanityModule.liveEventsUrl, undefined, 'the stream is gone');
+  assert.equal(sanityModule.probeUrl, undefined, 'the cross-origin probe is gone');
 });
 
-await test('the read after an event goes to the live host, with no cache', async () => {
+await test('a read that fails keeps the content, announces nothing and never says offline', async () => {
   await inWorld(async world => {
-    const started = await startSanityContent(() => {});
-    world.streams[0].emit('message');
-    await world.advance(1000);
-    const after = world.calls[world.calls.length - 1];
-    assert.ok(host(after.url).endsWith('.api.sanity.io') && !host(after.url).includes('apicdn'), 'the live host: ' + host(after.url));
-    assert.equal(after.options.cache, 'no-store');
-    started.stop();
-  });
-});
-
-await test('no read the screen makes goes to the cached host, the 5 minute read included', async () => {
-  await inWorld(async world => {
-    const started = await startSanityContent(() => {});
-    await world.advance(5 * 60 * 1000 + 1000);
-    assert.ok(world.calls.length >= 3, 'the full read and some polls ran');
-    world.calls.forEach(call => assert.ok(!host(call.url).includes('apicdn'), 'cached host used: ' + call.url));
-    started.stop();
-  });
-  assert.ok(!sanityModule.requestsUrl(sanity).includes('apicdn'));
-  assert.ok(!sanityModule.queryUrl(sanity).includes('apicdn'));
-  assert.ok(sanityModule.requestsUrl(sanity).includes('perspective=published'));
-});
-
-await test('the request poll asks every 10 seconds and a new request reaches the screen in that time', async () => {
-  await inWorld(async world => {
+    world.tips = [{ _id: 't1', kind: 'tip', text: '[Kept tip]', show: true }];
     const started = await startSanityContent(change => world.changes.push(change));
-    await world.advance(10 * 1000);
-    const before = world.changes.length;
+    assert.equal(started.first.content.tipsAndNews[0].text, '[Kept tip]');
 
-    world.settings = { pageSeconds: 20, announceRequest: { requestedAt: new Date(world.now).toISOString() } };
-    await world.advance(10 * 1000);
-    assert.equal(world.changes.length, before + 1);
+    world.broken = true;
+    await world.advance(10 * 60 * 1000);
+    assert.equal(world.changes.length, 0, 'no change event for a failed read');
+    assert.equal(started.first.status.offline, false);
+    assert.equal(started.first.status.reason, '');
+
+    world.broken = false;
+    world.tips = [{ _id: 't2', kind: 'tip', text: '[Later tip]', show: true }];
+    await world.advance(5 * 1000);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.offline, false);
     started.stop();
   });
 });
 
-await test('the source keeps the wait after an event short and the offline cache and the 5 minute read in place', () => {
+await test('the list of downloaded pictures reaches images.js before the content is cleaned, and a missing list is no problem', async () => {
+  await inWorld(async world => {
+    const { photoUrl, useLocalImages } = await import(base + 'core/images.js');
+    const photo = { url: 'https://cdn.sanity.io/images/p/production/a-100x100.jpg', width: 100, height: 100 };
+    const address = photoUrl(photo, 280, 280);
+    assert.ok(address.startsWith('https://cdn.sanity.io/'));
+
+    world.index = {};
+    world.index[address] = 'images/abc123.jpg';
+    const started = await startSanityContent(() => {});
+    assert.equal(photoUrl(photo, 280, 280), 'data/live/images/abc123.jpg');
+    started.stop();
+    useLocalImages({});
+  });
+});
+
+await test('the source keeps the saved copy and a short poll of a local file', () => {
   const source = fs.readFileSync(path.join(dashboardFolder, 'core/content-source.js'), 'utf8');
-  const wait = Number(/const waitForMoreEdits = (\d+);/.exec(source)[1]);
-  assert.ok(wait <= 500, 'the wait after an event is ' + wait + ' ms');
-  assert.ok(/const pollEvery = 5 \* 60 \* 1000;/.test(source));
+  assert.ok(/const pollEvery = 5 \* 1000;/.test(source));
   assert.ok(source.includes('saveCopy(raw, updated)') && source.includes('readSavedCopy'));
+  assert.ok(!source.includes('EventSource') && !source.includes('api.sanity.io'));
 });
 
 await test('Publish all has no sleep or delay between documents', () => {

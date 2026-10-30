@@ -19,9 +19,42 @@ export function tidyMondayStatus(raw) {
     lastSyncAt: typeof raw.lastSyncAt === 'string' && !isNaN(Date.parse(raw.lastSyncAt)) ? raw.lastSyncAt : '',
     lastError: typeof raw.lastError === 'string' ? raw.lastError.trim().slice(0, 300) : '',
     snapshots: tidySnapshots(raw.snapshots),
+    projects: tidyProjects(raw.projects),
   };
   if (raw.sample === true) status.sample = true;
   return status;
+}
+
+const projectStatuses = ['up-next', 'in-progress', 'in-review', 'blocked', 'done'];
+const mostProjects = 60;
+
+// A first name from the sync: one word of 12 characters at most. Anything with a space or an at sign, an address included, is
+// nothing, so a last name or an address never reaches the screen whatever the document holds. The sample has names in brackets.
+function firstName(value) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return /^[^\s@]{1,12}$/u.test(text) ? text : '';
+}
+
+// The projects of the Projects board as the sync writes them (docs/monday.md): a title, a status, the first name of the mentor and
+// the first letter of the mentor's last name, the first names of the helpers, the percent complete and the day it was done. A
+// value that is missing stays missing, and one that is not what it should be is left out.
+export function tidyProjects(list) {
+  return (Array.isArray(list) ? list : []).filter(isRecord).slice(0, mostProjects).map(raw => {
+    const title = typeof raw.title === 'string' ? raw.title.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+    if (title === '' || !projectStatuses.includes(raw.status)) return null;
+
+    const project = { id: typeof raw.id === 'string' ? raw.id : title, title: title, status: raw.status };
+    const mentor = firstName(raw.mentor);
+    if (mentor !== '') {
+      project.mentor = mentor;
+      if (typeof raw.mentorInitial === 'string' && /^\p{L}$/u.test(raw.mentorInitial)) project.mentorInitial = raw.mentorInitial.toUpperCase();
+    }
+    const helpers = (Array.isArray(raw.helpers) ? raw.helpers : []).map(firstName).filter(name => name !== '').slice(0, 6);
+    if (helpers.length > 0) project.helpers = helpers;
+    if (typeof raw.percent === 'number' && isFinite(raw.percent)) project.percent = Math.min(100, Math.max(0, Math.round(raw.percent)));
+    if (typeof raw.completedOn === 'string' && plainDate.test(raw.completedOn)) project.completedOn = raw.completedOn;
+    return project;
+  }).filter(project => project !== null);
 }
 
 // One count of open items for each day, oldest first. A day that comes twice keeps its last count, and a count that is not

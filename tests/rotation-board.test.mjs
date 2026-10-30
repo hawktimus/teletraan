@@ -74,7 +74,7 @@ test('rows of one view that follow each other are one block, with the count and 
   assert.equal(board.blocksOf(sample(), 10)[1].seconds, 40);
   const standard = board.blocksOf(board.standardRows());
   assert.equal(standard[0].view, 'robotics');
-  assert.equal(standard[0].count, 14, 'six pairs, four both-teams departments, three charts and the Business and Marketing roster');
+  assert.equal(standard[0].count, 15, 'six pairs, four both-teams departments, three charts, Projects and the Business and Marketing roster');
   assert.equal(standard.reduce((all, block) => all + block.count, 0), defaults.defaultRotationRows().length);
 });
 

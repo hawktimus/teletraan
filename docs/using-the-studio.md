@@ -2,7 +2,7 @@ The students' page is docs/students.md. The sidebar of the Studio, line by line,
 
 ## The sidebar
 
-The list on the left goes by what is on the screen, from top to bottom: Start here, Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look and Competition. Under the heading Coaches only are Dashboard Settings, Extra panels and Kept data.
+The list on the left goes by what is on the screen, from top to bottom: Start here, Rotation, Today, Ticker, Events, People, Photos, Monday, Teams and views, Look and Competition. Under the heading Coaches only are Dashboard Settings, Extra panels, Remote actions and Kept data.
 
 - Students use Start here, Rotation, Today, Ticker, Events, People, Photos and Monday.
 - Today holds the alert, the announcements on the bar and the full screen messages. It links to Agenda items, Presentations and Meeting days.

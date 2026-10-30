@@ -11,6 +11,11 @@ monday_version='2026-01'
 task_board='18435126893'
 done_board='18435131682'
 
+# The Projects board (Projects (Mentors)) is a classic board, not a multi-level one: a project is an item, in the group
+# Active or the group Done, with no subitems. It is read with the same rules as the other two and drawn by the Projects
+# panel only (monday-projects), in the Robotics view. The board number is here and nowhere else.
+projects_board='18437852059'
+
 # The columns read, by id. Completed Tasks has no Department, Date Completed or Show on TV? column, so
 # fewer of them are asked for there.
 columns='{
@@ -18,14 +23,38 @@ columns='{
   "status": "color_mkv6tatz",
   "team": "color_mm82jgxg",
   "assigned": "multiple_person_mm82cqbx",
+  "poc": "multiple_person_mm8331h1",
   "priority": "color_mm82wfy",
   "timeline": "timerange_mkyp8kx7",
   "hours": "numeric_mm82pw1a",
   "completed": "date_mm82kn5v",
   "show": "color_mm83p12x"
 }'
-task_board_columns='["department", "status", "team", "assigned", "priority", "timeline", "hours", "completed", "show"]'
+task_board_columns='["department", "status", "team", "assigned", "poc", "priority", "timeline", "hours", "completed", "show"]'
 done_board_columns='["status", "team", "assigned", "priority", "timeline", "hours"]'
+
+# The columns of the Projects board, by id. Status, Mentor, Helpers and Show on TV? are read as text (the words of the label),
+# so a mentor added in Monday by typing a new name needs nothing here. Budget and Notes are never read: the dataset is public.
+project_columns='{
+  "status": "color_mm8ma465",
+  "mentor": "dropdown_mm8mcqq",
+  "helpers": "dropdown_mm8mtej2",
+  "percent": "numeric_mm8mmzv6",
+  "completed": "date_mm8mkgrg",
+  "show": "color_mm8mtjwd"
+}'
+project_board_columns='["status", "mentor", "helpers", "percent", "completed", "show"]'
+
+# The words of the labels of the Projects board, in lowercase. Its label numbers are not recorded, so the words are read;
+# a word that is not here means To Do (and, for Show on TV?, Show). The group Done also means done.
+project_labels='{
+  "status": {"to do": "up-next", "in progress": "in-progress", "in review": "in-review", "stuck": "blocked", "done": "done"},
+  "hide": ["hide"],
+  "done_group": "done"
+}'
+
+# The most helpers kept for a project
+project_helpers_most=6
 
 # What each label number means. Students rename labels, so the number of a label is read and never
 # its words. A number that is not in a table means: Status To Do, Team General, Priority none, Show on TV
@@ -41,6 +70,9 @@ labels='{
 
 # Who the token belongs to (--check)
 monday_query_me='query { me { name } }'
+
+# The name of one board, for --check
+monday_query_board='query ($board: [ID!]) { boards(ids: $board) { name hierarchy_type } }'
 
 # The first page of the items of one board, and the pages after it. A status column of a multi-level board
 # answers only when the question asks for capabilities: [CALCULATED], and then as BatteryValue: a list of

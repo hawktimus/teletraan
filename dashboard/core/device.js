@@ -46,7 +46,7 @@ export function loginAddress(device) {
 }
 
 // The sentence under the banner once the network has been down this long and the network watchdog on the Teletraan computer
-// has taken a repair step (computer/scripts/network-watchdog.sh puts both in device.json by way of kiosk.sh)
+// has taken a repair step (computer/scripts/netwatch.sh puts both in device.json by way of kiosk.sh)
 export const repairAfterMinutes = 10;
 export const repairLine = 'The Teletraan computer is trying to fix this by itself';
 

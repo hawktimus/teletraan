@@ -26,6 +26,8 @@ import frcStatus from './frcStatus.js';
 import frcNews from './frcNews.js';
 import mondayStatus from './mondayStatus.js';
 import milestone from './milestone.js';
+import remoteControl from './remoteControl.js';
+import remoteStatus from './remoteStatus.js';
 import { customPanelBlocks } from './customPanelBlocks.js';
 
 export const schemaTypes = [
@@ -57,4 +59,6 @@ export const schemaTypes = [
   frcNews,
   mondayStatus,
   milestone,
+  remoteControl,
+  remoteStatus,
 ].concat(customPanelBlocks);

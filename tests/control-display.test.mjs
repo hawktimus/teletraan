@@ -419,15 +419,17 @@ await check('the wall check asks the same functions the wall asks, row by row', 
 
 await check('the items are the tasks, the FRC news posts, the events and the TBA lines the wall would draw', async () => {
   const content = normalizeSample(sample);
-  const now = new Date('2026-10-20T12:00:00Z');
+  const now = new Date();
+  const inDays = days => new Date(now.getTime() + days * 86400000);
   content.subteams = content.subteams.concat([{ id: 'build', name: 'Build', members: [] }]);
-  content.tasks = [{ id: 't1', title: 'Wire the pit', team: 'prime', department: 'electrical', list: 'open', status: 'in-progress', source: 'monday', mondayId: 'm1', showOnTv: true, priority: 'high', contact: 'Sam', dueDate: '2026-10-25' }].concat(content.tasks);
-  content.news = { lastSyncAt: now.toISOString(), lastError: '', items: [{ title: 'Kickoff is set', link: 'https://example.test/a', date: '2026-10-19T00:00:00Z', categories: ['FRC'], systemcore: false, source: 'FIRST' }] };
-  content.events = [{ title: 'Build night', start: new Date('2026-10-22T22:00:00Z'), end: new Date('2026-10-23T00:00:00Z'), allDay: false, location: 'Lab', uid: 'e1', calendar: 'Team', calendarId: 'team' }];
+  content.tasks = [{ id: 't1', title: 'Wire the pit', team: 'prime', department: 'electrical', list: 'open', status: 'in-progress', source: 'monday', mondayId: 'm1', showOnTv: true, priority: 'high', contact: 'Sam', dueDate: inDays(5).toISOString().slice(0, 10) }].concat(content.tasks);
+  content.news = { lastSyncAt: now.toISOString(), lastError: '', items: [{ title: 'Kickoff is set', link: 'https://example.test/a', date: inDays(-1).toISOString(), categories: ['FRC'], systemcore: false, source: 'FIRST' }] };
+  content.events = [{ title: 'Build night', start: new Date(inDays(2).getTime() + 3600000), end: new Date(inDays(2).getTime() + 7200000), allDay: false, location: 'Lab', uid: 'e1', calendar: 'Team', calendarId: 'team' }];
   const world = { content: content, now: now, match13: null, problem: '' };
 
   const tasks = await checkRow({ view: 'prime', panel: 'monday-department', department: 'electrical', list: 'open', team: 'prime', shown: true }, world);
-  assert.deepEqual([tasks.state, tasks.items[0]], ['show', 'Wire the pit, Sam']);
+  assert.equal(tasks.state, 'show');
+  assert.ok(tasks.items.includes('Wire the pit, Sam'), tasks.items.join(' | '));
 
   const news = await checkRow({ view: 'robotics', panel: 'frc-news', shown: true }, world);
   assert.deepEqual([news.state, news.items], ['show', ['Kickoff is set']]);

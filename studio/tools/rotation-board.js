@@ -19,7 +19,7 @@ export const startingPhotos = { count: 4, each: 10 };
 
 // The Robotics panels that use the wide layout. The other Robotics panels are split, so a small panel sits beside them.
 // tests/rotation-board.test.mjs compares this list with roboticsWidePanels in dashboard/config-rotation.js.
-export const wideRoboticsPanels = ['monday-department', 'monday-charts', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
+export const wideRoboticsPanels = ['monday-department', 'monday-charts', 'monday-projects', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
 
 // What the Team dropdown of the Monday rows does. Both is the Condensed view, which has the tasks that are for both teams only.
 const teamHelp = 'Both plays in the Condensed view and shows only tasks that are for both teams. Prime plays in the Prime view and Nova in the Nova view, each with its own tasks and the both-teams tasks.';
@@ -188,6 +188,8 @@ export const playsWords = { condensed: condensedWords, prime: 'Plays in the Prim
 
 // 'condensed', 'prime' or 'nova' for a Monday row, and for a Roster row of a Robotics block that names a team. '' for any other row.
 export function playsIn(row) {
+  // Projects is for both teams in the Robotics view: Condensed there, and nothing in a Prime or Nova block
+  if (row.panel === 'monday-projects') return (row.view || '') === 'robotics' ? 'condensed' : '';
   const monday = mondayPanels.indexOf((upgradedRow(row) || row).panel) !== -1;
   const team = row.team === 'prime' || row.team === 'nova' ? row.team : '';
   if (!monday && !(row.panel === 'roster' && (row.view || '') === 'robotics' && team !== '')) return '';
@@ -450,7 +452,8 @@ export const skipQuestion = `{
     dueDate,
     expires
   },
-  "photos": *[_type == "photo" && show != false] { expires }
+  "photos": *[_type == "photo" && show != false] { expires },
+  "projects": *[_id == "monday-status"][0].projects[] { status, completedOn }
 }`;
 
 function notExpired(item, now) {
@@ -490,6 +493,19 @@ function mondayNote(row, tasks) {
   return 'Skipped now: no ' + list + ' ' + department + ' task is on the TV for ' + teamWords(team) + '.';
 }
 
+// The note of a Projects row: it plays in the Robotics view only, and when the board has an open project or one done in the last 14 days
+// (projectDoneDays in dashboard/core/monday-views.js)
+function projectsNote(row, projects, now) {
+  if ((row.view || '') !== 'robotics') return 'Skipped now: Projects plays only in the Robotics view.';
+  // The projects were not asked for: nothing is said, as the board never says there is nothing when it does not know
+  if (!Array.isArray(projects)) return '';
+  const day = 86400000;
+  const list = projects;
+  const showing = list.some(project => project && (project.status !== 'done'
+    || (typeof project.completedOn === 'string' && now.getTime() - Date.parse(project.completedOn) <= 15 * day && now.getTime() >= Date.parse(project.completedOn))));
+  return showing ? '' : 'Skipped now: no project of the Projects board is showing.';
+}
+
 // { rowKey: 'Skipped now: ...' } for the shown rows that have nothing to show, and every row of a retired Monday panel. data is
 // what skipQuestion found, or null when it could not be read, and then only the retired rows have notes (the page says so in
 // general words).
@@ -510,6 +526,11 @@ export function skipNotes(rows, data, now = new Date()) {
 
     if (row.panel === 'photo' && photos.length === 0) {
       notes[row._key] = 'Skipped now: no photos (every photo is hidden or past its expiry).';
+      return;
+    }
+    if (row.panel === 'monday-projects') {
+      const note = projectsNote(row, data.projects, now);
+      if (note !== '') notes[row._key] = note;
       return;
     }
     const monday = upgraded || row;

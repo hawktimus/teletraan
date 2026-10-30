@@ -5,7 +5,7 @@ The list on the left of the Studio is one list in `studio/structure.js`, called
 order, move a line.
 
 The sidebar reads like this. COACHES ONLY is a divider with a title, not a folder. Events, People,
-Teams and views is a folder, and Views is a folder inside Teams and views. The lines go
+Teams and views is a folder, and Views is a folder inside Teams and views. Remote actions is a folder under Coaches only. The lines go
 by what is on the screen (docs/studio-map.md):
 
     Start here
@@ -33,6 +33,9 @@ by what is on the screen (docs/studio-map.md):
     COACHES ONLY
       Dashboard Settings
       Extra panels
+      Remote actions
+        Send an action
+        Status of the computer
       Kept data
 
 ## The five kinds of line

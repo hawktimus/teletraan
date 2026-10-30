@@ -102,7 +102,8 @@ const live = await loadCopy('live', text => text);
 const noProject = await loadCopy('no-project', text => text.replace(/projectId: '[^']*'/, "projectId: ''"));
 assert.equal(noProject.config.sanity.projectId, '');
 
-const { normalizeContent, contentQuery, queryUrl, liveEventsUrl, probeUrl, normalizeSample } = live.sanity;
+const { normalizeContent, contentQuery, queryUrl, normalizeSample } = live.sanity;
+const contentFile = 'data/live/content.json';
 const { withDefaults, isVisible, visibleItems, startContent, startSanityContent, startSampleContent } = live.content;
 const { askForSample, chosenSource } = live.source;
 const { escapeHtml, hasText } = live.text;
@@ -138,7 +139,7 @@ function settle() {
 
 function jsonResponse(body, status) {
   const code = status || 200;
-  return { ok: code < 400, status: code, json: async () => body };
+  return { ok: code < 400, status: code, json: async () => body, text: async () => JSON.stringify(body) };
 }
 
 function sanityReply(result) {
@@ -202,10 +203,8 @@ function makeWorld() {
   world.onChange = change => world.changes.push(change);
 
   world.fetch = async (url, options) => {
-    if (decodeURIComponent(String(url)).includes('[0] { announceRequest')) {
-      world.polls.push({ url: String(url), options: options || {} });
-      return world.pollHandler(String(url), options || {});
-    }
+    // The list of downloaded pictures is a second small file. It is not a read of the content and has no copy here.
+    if (String(url).endsWith('images/index.json')) return { ok: false, status: 404, text: async () => '' };
     world.fetches.push({ url: String(url), options: options || {} });
     world.inFlight += 1;
     world.mostInFlight = Math.max(world.mostInFlight, world.inFlight);
@@ -702,7 +701,7 @@ test('the query and the addresses', () => {
   assert.equal(url.searchParams.get('query'), contentQuery);
   assert.deepEqual(Array.from(url.searchParams.keys()).sort(), ['perspective', 'query']);
   assert.equal(url.searchParams.get('perspective'), 'published');
-  assert.equal(liveEventsUrl(project), 'https://abc123.api.sanity.io/v2025-02-19/data/live/events/production');
+  assert.equal(new URL(queryUrl(project, 'http://127.0.0.1:9')).origin, 'http://127.0.0.1:9', 'a test of the sync service can point it elsewhere');
 
   ['dashboardSettings', 'task', 'sponsor', 'tipOrNews', 'subteam', 'person', 'plan', 'customPanel', 'subteam->name'].forEach(word => {
     assert.ok(contentQuery.includes(word), 'the query does not mention ' + word);
@@ -1818,7 +1817,7 @@ function serve(world, server) {
   world.server = Object.assign({ content: sanityFixture(), file: JSON.parse(readModule(sampleFile, 'utf8')) }, server);
 
   world.handler = async url => {
-    if (url === queryUrl(live.config.sanity)) return sanityReply(copyOf(world.server.content));
+    if (url === contentFile) return sanityReply(copyOf(world.server.content));
     if (url === 'data/sample/content.json') return jsonResponse(copyOf(world.server.file));
     throw new Error('The test did not expect a request for ' + url);
   };
@@ -1829,7 +1828,7 @@ function requestsFor(world, url) {
 }
 
 function contentQueries(world) {
-  return requestsFor(world, queryUrl(live.config.sanity));
+  return requestsFor(world, contentFile);
 }
 
 function sampleReads(world) {
@@ -1878,9 +1877,9 @@ test('source: production runs the whole Sanity reader and asks nothing else, wha
       assert.equal(first.status.source, 'sanity', label);
       assert.deepEqual(first.content, normalizeContent(world.server.content), label);
 
-      // the content query and the open stream, and nothing else
-      assert.deepEqual(world.fetches.map(request => request.url), [queryUrl(live.config.sanity)], label);
-      assert.equal(world.streams.length, 1, label);
+      // the content file of the data folder, and nothing else: no question to Sanity and no stream
+      assert.deepEqual(world.fetches.map(request => request.url), [contentFile], label);
+      assert.equal(world.streams.length, 0, label);
       assert.equal(sampleReads(world), 0, label);
       assert.ok(world.storage.has(storageKey), label);
       assert.equal(world.storage.has('teletraan-source'), false, label);
@@ -1936,8 +1935,8 @@ test('source: the page keeps the source it started with, however long it runs an
     await world.advance(30 * minute);
     assert.ok(sourcesOf(world).every(source => source === 'sanity'));
     assert.equal(sampleReads(world), 0);
-    assert.equal(world.streams.length, 1);
-    world.fetches.forEach(request => assert.equal(request.url, queryUrl(live.config.sanity)));
+    assert.equal(world.streams.length, 0);
+    world.fetches.forEach(request => assert.equal(request.url, contentFile));
     assert.equal(world.errors.length, 0);
   });
 
@@ -1994,7 +1993,7 @@ test('source: shell.js reads ?sample= from the address before the style, the lay
   assert.ok(asked < code.indexOf('startContent('), 'before the content starts');
 });
 
-test('sanity: with no saved copy it waits for Sanity, saves the answer and listens for changes', async () => {
+test('sanity: with no saved copy it waits for the local file, saves the answer and opens no stream', async () => {
   await inWorld(async world => {
     const fixture = sanityFixture();
     world.handler = async () => sanityReply(fixture);
@@ -2007,11 +2006,9 @@ test('sanity: with no saved copy it waits for Sanity, saves the answer and liste
     assert.equal(first.status.updated.getTime(), start);
 
     assert.equal(world.fetches.length, 1);
-    assert.equal(world.fetches[0].url, queryUrl(live.config.sanity));
-    assert.ok(world.fetches[0].url.startsWith('https://' + live.config.sanity.projectId + '.api.sanity.io/v2025-02-19/data/query/production?'));
-    assert.equal(world.fetches[0].options.headers, undefined);
-    assert.equal(world.streams.length, 1);
-    assert.equal(world.streams[0].url, liveEventsUrl(live.config.sanity));
+    assert.equal(world.fetches[0].url, contentFile);
+    assert.equal(world.fetches[0].options.cache, 'no-store');
+    assert.equal(world.streams.length, 0);
 
     assert.deepEqual(JSON.parse(world.storage.get(storageKey)), { savedAt: start, raw: fixture });
     assert.equal(world.changes.length, 0);
@@ -2019,82 +2016,33 @@ test('sanity: with no saved copy it waits for Sanity, saves the answer and liste
   });
 });
 
-test('sanity: the request fields alone are read every 10 seconds, and a new request reaches the screen at once', async () => {
+test('sanity: reads the local file every 5 seconds, and identical content does not call onChange', async () => {
   await inWorld(async world => {
     const fixture = sanityFixture();
     world.handler = async () => sanityReply(copyOf(fixture));
     await readSanity(world.onChange);
 
-    await world.advance(10 * second);
-    assert.equal(world.polls.length, 1);
-    assert.equal(world.fetches.length, 1, 'the full read is still every 5 minutes');
-    assert.ok(world.polls[0].url.startsWith('https://' + live.config.sanity.projectId + '.api.sanity.io/'), 'the live host, never the cached one');
-    assert.ok(decodeURIComponent(world.polls[0].url).includes('presentationTestRequest') && !decodeURIComponent(world.polls[0].url).includes('"tasks"'), 'only the request fields');
-    assert.equal(world.changes.length, 0, 'no answer, nothing changes');
-
-    const requestedAt = new Date(world.now - 2000).toISOString();
-    world.pollHandler = async () => sanityReply({ presentationTestRequest: { requestedAt: requestedAt } });
-    await world.advance(10 * second);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].content.settings.presentationTestRequest.requestedAt, requestedAt);
-    assert.equal(world.changes[0].status.source, 'sanity');
-
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 1, 'the same request again is not a change');
-
-    // A failed poll is quiet, and asks for a full read once the last one is a minute old, which reports a failure itself (tests/outage.test.mjs)
-    const readsBefore = world.fetches.length;
-    world.pollHandler = () => unreachable();
-    await world.advance(30 * second);
-    assert.equal(world.fetches.length, readsBefore + 1, 'one full read, not one for every failed poll');
-    assert.equal(world.errors.length, 0);
-    assert.equal(world.changes.every(change => change.status.offline === false), true);
-  });
-});
-
-test('sanity: a full read keeps the request that the poll brought in until Sanity says otherwise', async () => {
-  await inWorld(async world => {
-    const fixture = sanityFixture();
-    const requestedAt = new Date(world.now + 1000).toISOString();
-    world.handler = async () => sanityReply(copyOf(fixture));
-    world.pollHandler = async () => sanityReply({ announceRequest: { requestedAt: requestedAt } });
-    await readSanity(world.onChange);
-    await world.advance(10 * second);
-    assert.equal(world.changes.at(-1).content.settings.announceRequest.requestedAt, requestedAt);
-
-    fixture.settings = Object.assign({}, fixture.settings, { announceRequest: { requestedAt: requestedAt } });
-    await world.advance(5 * minute);
-    assert.equal(world.changes.at(-1).content.settings.announceRequest.requestedAt, requestedAt);
-  });
-});
-
-test('sanity: reads again every 5 minutes, and identical content does not call onChange', async () => {
-  await inWorld(async world => {
-    const fixture = sanityFixture();
-    world.handler = async () => sanityReply(copyOf(fixture));
-    await readSanity(world.onChange);
-
-    await world.advance(5 * minute - 1);
+    await world.advance(5 * second - 1);
     assert.equal(world.fetches.length, 1);
     await world.advance(1);
     assert.equal(world.fetches.length, 2);
-    await world.advance(5 * minute);
-    assert.equal(world.fetches.length, 3);
+    await world.advance(minute);
+    assert.equal(world.fetches.length, 14);
     assert.equal(world.changes.length, 0);
-    assert.equal(JSON.parse(world.storage.get(storageKey)).savedAt, start + 10 * minute);
 
     fixture.tasks[0].title = '[A changed task]';
-    await world.advance(5 * minute);
+    await world.advance(5 * second);
     assert.equal(world.changes.length, 1);
     assert.equal(world.changes[0].content.tasks.some(task => task.title === '[A changed task]'), true);
-    assert.equal(world.changes[0].status.updated.getTime(), start + 15 * minute);
+    assert.equal(world.changes[0].status.updated.getTime(), start + 65 * second + 5 * second);
+    assert.equal(JSON.parse(world.storage.get(storageKey)).raw.tasks[0].title, '[A changed task]');
 
-    await world.advance(5 * minute);
+    await world.advance(minute);
     assert.equal(world.changes.length, 1);
   });
 });
 
-test('sanity: a saved copy starts the screen at once, then Sanity replaces it', async () => {
+test('sanity: a saved copy starts the screen at once, then the file replaces it', async () => {
   await inWorld(async world => {
     const saved = sanityFixture();
     const newer = sanityFixture();
@@ -2127,7 +2075,7 @@ test('sanity: a saved copy starts the screen at once, then Sanity replaces it', 
   });
 });
 
-test('sanity: a saved copy and no network shows the saved copy, says offline after 2 minutes, and tries again', async () => {
+test('sanity: a saved copy and a file that cannot be read keeps the saved copy for ever, never says offline, and keeps trying', async () => {
   await inWorld(async world => {
     const saved = sanityFixture();
     saveCopy(world, saved, start - 3 * minute);
@@ -2140,34 +2088,20 @@ test('sanity: a saved copy and no network shows the saved copy, says offline aft
     assert.equal(world.changes.length, 0);
     assert.equal(world.errors.length, 1);
 
-    await world.advance(30 * second - 1);
-    assert.equal(contentQueries(world), 1);
-    await world.advance(1);
-    assert.equal(contentQueries(world), 2);
-    assert.equal(world.errors.length, 2);
-    assert.equal(world.changes.length, 0);
-
-    // two minutes after the first failed read, which was at the start
-    await world.advance(90 * second - 1);
-    assert.equal(world.changes.length, 0);
-    await world.advance(1);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.source, 'cache');
-    assert.equal(world.changes[0].status.offline, true);
-    assert.equal(world.changes[0].status.reason, 'network');
-    // the Monday panels read the marked status as stale (core/monday.js, markUnreachable)
-    assert.deepEqual(world.changes[0].content, Object.assign({}, normalizeContent(saved), { monday: { lastSyncAt: '', lastError: '', snapshots: [], unreachable: true } }));
+    await world.advance(10 * minute);
+    assert.equal(contentQueries(world), 121, 'one read every 5 seconds');
+    assert.equal(world.changes.length, 0, 'nothing is announced for a failed read');
 
     world.handler = async () => sanityReply(saved);
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 2);
-    assert.equal(world.changes[1].status.source, 'sanity');
-    assert.equal(world.changes[1].status.offline, false);
-    assert.equal(world.changes[1].status.reason, '');
+    await world.advance(5 * second);
+    assert.equal(world.changes.length, 1);
+    assert.equal(world.changes[0].status.source, 'sanity');
+    assert.equal(world.changes[0].status.offline, false);
+    assert.equal(world.changes[0].status.reason, '');
   });
 });
 
-test('sanity: no saved copy and no network gives empty content, never the sample', async () => {
+test('sanity: no saved copy and no file gives empty content, never the sample, and never offline', async () => {
   await inWorld(async world => {
     world.handler = unreachable;
 
@@ -2183,208 +2117,23 @@ test('sanity: no saved copy and no network gives empty content, never the sample
     assert.equal(JSON.stringify(first.content).includes(sampleTitle), false);
 
     await world.advance(2 * minute);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.offline, true);
-    assert.equal(world.changes[0].status.updated, null);
-    assert.deepEqual(world.changes[0].content, Object.assign({}, withDefaults({}), { monday: { lastSyncAt: '', lastError: '', snapshots: [], unreachable: true } }));
-
-    world.handler = async () => sanityReply(sanityFixture());
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 2);
-    assert.equal(world.changes[1].status.offline, false);
-    assert.equal(world.changes[1].status.source, 'sanity');
-    assert.equal(world.changes[1].content.tasks.length, 4);
-  });
-});
-
-test('sanity: offline comes 2 minutes after the first failed read, and clears on the next good one', async () => {
-  await inWorld(async world => {
-    const fixture = sanityFixture();
-    world.handler = async () => sanityReply(fixture);
-    await readSanity(world.onChange);
-
-    // The first failed read is the next one, 5 minutes in. Its 2 minutes are up at 7:00.
-    world.handler = unreachable;
-    await world.advance(7 * minute - 1);
-    assert.equal(contentQueries(world), 5); // the first read, then 5:00, 5:30, 6:00 and 6:30, which all failed
-    assert.equal(world.errors.length, 4);
-    assert.equal(world.changes.length, 0);
-
-    await world.advance(1);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.offline, true);
-    assert.equal(world.changes[0].status.reason, 'network');
-    assert.equal(world.changes[0].status.source, 'sanity');
-    assert.equal(world.changes[0].status.updated.getTime(), start);
-    assert.deepEqual(world.changes[0].content, Object.assign({}, normalizeContent(fixture), { monday: { lastSyncAt: '', lastError: '', snapshots: [], unreachable: true } }));
-
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 1);
-
-    world.handler = async () => sanityReply(fixture);
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 2);
-    assert.equal(world.changes[1].status.offline, false);
-    assert.equal(world.changes[1].status.reason, '');
-    assert.equal(world.changes[1].status.updated.getTime(), world.now);
-  });
-});
-
-test('sanity: a good read stops the 2 minutes, and the next failure starts them again', async () => {
-  await inWorld(async world => {
-    const fixture = sanityFixture();
-    world.handler = async () => sanityReply(fixture);
-    await readSanity(world.onChange);
-
-    // fails from 5:00, would be offline at 7:00
-    world.handler = unreachable;
-    await world.advance(6 * minute);
-    assert.equal(world.changes.length, 0);
-
-    // a good read at 6:30 stops the count, so nothing happens at 7:00
-    world.handler = async () => sanityReply(fixture);
-    await world.advance(30 * second);
-    await world.advance(2 * minute);
-    assert.equal(world.changes.length, 0);
-
-    // now 8:30. The next read is 5 minutes after the good one, at 11:30, and
-    // fails. Its 2 minutes are up at 13:30.
-    world.handler = unreachable;
-    await world.advance(5 * minute - 1);
-    assert.equal(world.changes.length, 0);
-    await world.advance(1);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.offline, true);
-  });
-});
-
-test('sanity: the reason follows the latest failed read while it is offline', async () => {
-  await inWorld(async world => {
-    world.handler = unreachable;
-    await readSanity(world.onChange);
-    await world.advance(2 * minute);
-    assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.reason, 'network');
-
-    world.handler = async () => jsonResponse({ error: { description: 'Session not found' } }, 401);
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 2);
-    assert.equal(world.changes[1].status.offline, true);
-    assert.equal(world.changes[1].status.reason, 'denied');
-
-    await world.advance(30 * second);
-    assert.equal(world.changes.length, 2);
-  });
-});
-
-test('sanity: stopping the reader cancels the 2 minutes', async () => {
-  await inWorld(async world => {
-    world.handler = unreachable;
-    const reader = await startSanityContent(world.onChange);
-    assert.equal(reader.first.status.offline, false);
-
-    reader.stop();
-    await world.advance(10 * minute);
-    assert.equal(world.changes.length, 0);
-    assert.equal(world.timers.length, 0);
-  });
-});
-
-test('sanity: edits that arrive together cause one read, 0.3 seconds after the first', async () => {
-  await inWorld(async world => {
-    const fixture = sanityFixture();
-    world.handler = async () => sanityReply(copyOf(fixture));
-    await readSanity(world.onChange);
-    const stream = world.streams[0];
-
-    stream.emit('welcome');
-    stream.emit('restart');
-    await world.advance(5 * second);
-    assert.equal(world.fetches.length, 1);
-
-    fixture.tasks[0].title = '[Edited task]';
-    stream.emit('message');
-    await world.advance(100);
-    stream.emit('message');
-    await world.advance(100);
-    stream.emit('message');
-    await world.advance(99);
-    assert.equal(world.fetches.length, 1);
-    await world.advance(1);
-    assert.equal(world.fetches.length, 2);
-    assert.equal(world.changes.length, 1);
-
-    await world.advance(5 * second);
-    assert.equal(world.fetches.length, 2);
-
-    stream.emit('message');
-    await world.advance(300);
-    assert.equal(world.fetches.length, 3);
-    assert.equal(world.changes.length, 1);
-  });
-});
-
-test('sanity: reads never overlap, a change that comes during a read gets a read after it', async () => {
-  await inWorld(async world => {
-    const fixture = sanityFixture();
-    world.handler = async () => sanityReply(copyOf(fixture));
-    await readSanity(world.onChange);
-    const stream = world.streams[0];
-
-    let release = null;
-    world.handler = () => new Promise(resolve => {
-      release = () => resolve(sanityReply(copyOf(fixture)));
-    });
-    stream.emit('message');
-    await world.advance(300);
-    assert.equal(world.fetches.length, 2);
-
-    stream.emit('message');
-    await world.advance(300);
-    assert.equal(world.fetches.length, 2);
-
-    world.handler = async () => sanityReply(copyOf(fixture));
-    release();
-    await settle();
-    assert.equal(world.fetches.length, 3);
-    assert.equal(world.mostInFlight, 1);
-  });
-});
-
-test('sanity: a read that hangs is given up after 15 seconds, then asked about for 5 more, and the next one still works', async () => {
-  await inWorld(async world => {
-    saveCopy(world, sanityFixture(), start - minute);
-    world.handler = (url, options) => new Promise((resolve, reject) => {
-      options.signal.addEventListener('abort', () => reject(new Error('The request was aborted')));
-    });
-
-    await readSanity(world.onChange);
-    await world.advance(0);
-    await world.advance(15 * second - 1);
-    assert.equal(world.errors.length, 0);
-
-    // the read is given up, and one small request to the same host finds out why. It hangs too.
-    await world.advance(1);
-    assert.equal(world.errors.length, 0);
-    assert.equal(world.fetches.length, 2);
-    await world.advance(5 * second);
-    assert.equal(world.errors.length, 1);
     assert.equal(world.changes.length, 0);
 
     world.handler = async () => sanityReply(sanityFixture());
-    await world.advance(30 * second);
+    await world.advance(5 * second);
     assert.equal(world.changes.length, 1);
-    assert.equal(world.changes[0].status.source, 'sanity');
     assert.equal(world.changes[0].status.offline, false);
+    assert.equal(world.changes[0].status.source, 'sanity');
+    assert.equal(world.changes[0].content.tasks.length, 4);
   });
 });
 
-test('sanity: bad answers count as a failed read and keep what is on screen', async () => {
+test('sanity: bad answers count as a failed read and keep what is on screen, with nothing said on it', async () => {
   const badAnswers = {
     'an error status': () => jsonResponse({ error: { description: 'no' } }, 500),
     'no result': () => jsonResponse({ ms: 1 }),
     'a null result': () => jsonResponse({ result: null }),
-    'text instead of JSON': () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token'); } }),
+    'a page of a school filter': () => ({ ok: true, status: 200, text: async () => '<html>Blocked by your network filter</html>' }),
   };
 
   for (const name of Object.keys(badAnswers)) {
@@ -2395,13 +2144,8 @@ test('sanity: bad answers count as a failed read and keep what is on screen', as
       assert.equal(first.status.offline, false, name);
       assert.equal(world.errors.length, 1, name);
 
-      // An answer Sanity gave is never asked about again with the second request
-      assert.equal(world.fetches.length, 1, name);
-
       await world.advance(2 * minute);
-      assert.equal(world.changes.length, 1, name);
-      assert.equal(world.changes[0].status.offline, true, name);
-      assert.equal(world.changes[0].status.reason, 'other', name);
+      assert.equal(world.changes.length, 0, name);
     });
 
     await inWorld(async world => {
@@ -2411,88 +2155,23 @@ test('sanity: bad answers count as a failed read and keep what is on screen', as
       assert.equal(withCopy.status.source, 'cache', name);
 
       await world.advance(2 * minute);
-      assert.equal(world.changes.length, 1, name);
-      assert.equal(world.changes[0].status.source, 'cache', name);
-      assert.equal(world.changes[0].status.offline, true, name);
-      assert.equal(world.changes[0].content.tasks.length, 4, name);
+      assert.equal(world.changes.length, 0, name);
+      assert.equal(withCopy.content.tasks.length, 4, name);
     });
   }
 });
 
-// Why a read failed, in the four words of core/connection.js. The browser gives
-// the same error for no network and for a block by CORS, so the second request
-// to the same host, with the mode 'no-cors', tells them apart.
-
-function opaqueAnswer() {
-  return { type: 'opaque', ok: false, status: 0 };
-}
-
-// A read that hangs only ends when the clock moves, so a saved copy is needed
-// for the screen to start without waiting for it
-async function reasonAfterTwoMinutes(handler, savedCopy) {
-  let found = null;
+test('sanity: stopping the reader cancels the poll', async () => {
   await inWorld(async world => {
-    world.handler = handler;
-    if (savedCopy) saveCopy(world, sanityFixture(), start);
-    await readSanity(world.onChange);
-    await world.advance(savedCopy ? 3 * minute : 2 * minute);
-    assert.equal(world.changes.length, 1);
-    found = { status: world.changes[0].status, fetches: world.fetches };
+    world.handler = unreachable;
+    const reader = await startSanityContent(world.onChange);
+    assert.equal(reader.first.status.offline, false);
+
+    reader.stop();
+    await world.advance(10 * minute);
+    assert.equal(world.changes.length, 0);
+    assert.equal(world.timers.length, 0);
   });
-  return found;
-}
-
-test('sanity: no answer at all from the host is the network', async () => {
-  const found = await reasonAfterTwoMinutes(unreachable);
-  assert.equal(found.status.reason, 'network');
-});
-
-test('sanity: a host that answers the plain request while the read fails is CORS', async () => {
-  const found = await reasonAfterTwoMinutes((url, options) => (options.mode === 'no-cors' ? Promise.resolve(opaqueAnswer()) : unreachable()));
-  assert.equal(found.status.reason, 'cors');
-
-  // The second request goes to the same host, with no-cors, and nothing is read from it
-  const probes = found.fetches.filter(request => request.options.mode === 'no-cors');
-  assert.ok(probes.length >= 1);
-  probes.forEach(request => {
-    assert.equal(request.url, probeUrl(live.config.sanity));
-    assert.ok(request.url.startsWith('https://' + live.config.sanity.projectId + '.api.sanity.io/'));
-  });
-  assert.equal(found.fetches.length, probes.length * 2, 'every failed read makes one second request and no more');
-});
-
-test('sanity: 401 and 403 are access denied, and no second request is made', async () => {
-  for (const code of [401, 403]) {
-    const found = await reasonAfterTwoMinutes(async () => jsonResponse({ error: { description: 'no' } }, code));
-    assert.equal(found.status.reason, 'denied', 'status ' + code);
-    assert.equal(found.fetches.filter(request => request.options.mode === 'no-cors').length, 0, 'status ' + code);
-  }
-});
-
-test('sanity: a server error, a missing result and text that is not JSON are other', async () => {
-  const answers = [
-    async () => jsonResponse({ error: 'no' }, 500),
-    async () => jsonResponse({ error: 'no' }, 404),
-    async () => jsonResponse({ ms: 1 }),
-    async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token'); } }),
-  ];
-  for (const answer of answers) {
-    assert.equal((await reasonAfterTwoMinutes(answer)).status.reason, 'other');
-  }
-});
-
-test('sanity: a read that times out is other when the host answers, and the network when it does not', async () => {
-  function hangs(options) {
-    return new Promise((resolve, reject) => {
-      options.signal.addEventListener('abort', () => reject(new Error('The request was aborted')));
-    });
-  }
-
-  const slow = await reasonAfterTwoMinutes((url, options) => (options.mode === 'no-cors' ? Promise.resolve(opaqueAnswer()) : hangs(options)), true);
-  assert.equal(slow.status.reason, 'other');
-
-  const dead = await reasonAfterTwoMinutes((url, options) => hangs(options), true);
-  assert.equal(dead.status.reason, 'network');
 });
 
 test('sanity: a saved copy that cannot be used is the same as having none', async () => {
@@ -2532,57 +2211,6 @@ test('sanity: blocked storage does not stop the screen', async () => {
   });
 });
 
-test('sanity: the live stream may be missing, may fail to open, or may drop', async () => {
-  await inWorld(async world => {
-    Object.defineProperty(globalThis, 'EventSource', { value: undefined, configurable: true, writable: true });
-    world.handler = async () => sanityReply(sanityFixture());
-
-    await readSanity(world.onChange);
-    assert.equal(world.errors.length, 0);
-    await world.advance(5 * minute);
-    assert.equal(world.fetches.length, 2);
-  });
-
-  await inWorld(async world => {
-    Object.defineProperty(globalThis, 'EventSource', {
-      value: function () { throw new Error('not allowed'); },
-      configurable: true,
-      writable: true,
-    });
-    world.handler = async () => sanityReply(sanityFixture());
-
-    await readSanity(world.onChange);
-    assert.equal(world.errors.length, 1);
-    await world.advance(5 * minute);
-    assert.equal(world.fetches.length, 2);
-  });
-
-  await inWorld(async world => {
-    world.handler = async () => sanityReply(sanityFixture());
-    await readSanity(world.onChange);
-    const stream = world.streams[0];
-
-    stream.emit('error');
-    stream.emit('error');
-    stream.emit('error');
-    assert.equal(world.errors.length, 1);
-    stream.emit('open');
-    stream.emit('error');
-    assert.equal(world.errors.length, 2);
-
-    await world.advance(5 * minute);
-    assert.equal(world.streams.length, 1);
-
-    stream.readyState = 2;
-    stream.emit('error');
-    await world.advance(minute - 1);
-    assert.equal(world.streams.length, 1);
-    await world.advance(1);
-    assert.equal(world.streams.length, 2);
-    assert.equal(world.streams[1].url, liveEventsUrl(live.config.sanity));
-  });
-});
-
 test('sanity: a failing onChange does not stop the reading', async () => {
   await inWorld(async world => {
     const fixture = sanityFixture();
@@ -2592,12 +2220,11 @@ test('sanity: a failing onChange does not stop the reading', async () => {
     });
 
     fixture.tasks[0].title = '[Edited task]';
-    await world.advance(5 * minute);
+    await world.advance(5 * second);
     assert.equal(world.errors.length, 1);
 
     fixture.tasks[0].title = '[Edited again]';
-    await world.advance(5 * minute);
-    assert.equal(world.fetches.length, 3);
+    await world.advance(5 * second);
     assert.equal(world.errors.length, 2);
   });
 });
@@ -3127,9 +2754,7 @@ test('a change to a talk\'s start is a change of content, so the screen hears of
     await readSanity(world.onChange);
 
     fixture.presentations = [talkRecord({ start: '2026-10-08T19:00:00.000Z' })];
-    world.streams[0].emit('message');
-    await world.advance(2 * second);
-    await world.advance(0);
+    await world.advance(5 * second);
 
     assert.equal(world.changes.length, 1);
     assert.equal(world.changes[0].content.presentations[0].start.toISOString(), '2026-10-08T19:00:00.000Z');
@@ -3268,9 +2893,7 @@ test('a saved copy from before the filters existed gives an empty list, and a ch
     await readSanity(world.onChange);
 
     fixture.calendarFilters = [filterRecord({ days: [1, 2, 4] })];
-    world.streams[0].emit('message');
-    await world.advance(2 * second);
-    await world.advance(0);
+    await world.advance(5 * second);
 
     assert.equal(world.changes.length, 1);
     assert.deepEqual(world.changes[0].content.calendarFilters[0].days, [1, 2, 4]);
@@ -4971,11 +4594,11 @@ test('the banner says the computer is fixing the network only after 10 minutes d
   assert.equal(repairText(Object.assign({}, down, { networkDownSince: 'soon' }), at(30)), '');
   assert.deepEqual(deviceLines(down, at(30)), [repairLine, 'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103', 'ssh hawktimus@100.101.102.103']);
   assert.deepEqual(deviceLines(down, at(5)), deviceLines(fullDevice));
-  const lines = connectionLines({ status: { source: 'sanity', updated: new Date(Date.UTC(2026, 9, 21, 17, 12)), offline: true, reason: 'network' }, always: false, content: {}, calendarsReadAt: null, deviceLines: deviceLines(down, at(30)) });
-  assert.equal(lines[0], 'SANITY UNREACHABLE: NETWORK DOWN');
-  assert.equal(lines[1], 'Check the cable and the router of the Teletraan computer');
-  assert.ok(lines[2].startsWith('Last good read '));
-  assert.equal(lines[3], repairLine);
+  // Only a person who switched Show connection status on sees these lines, and no error word comes before them
+  const lines = connectionLines({ status: { source: 'sanity', updated: new Date(Date.UTC(2026, 9, 21, 17, 12)), offline: true, reason: 'network' }, always: true, content: {}, calendarsReadAt: null, deviceLines: deviceLines(down, at(30)) });
+  assert.ok(lines[0].startsWith('Content: last good read '));
+  assert.ok(lines.includes(repairLine));
+  assert.deepEqual(connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: 'network' }, always: false, deviceLines: deviceLines(down, at(30)) }), []);
 });
 
 test('deviceLines gives nothing for a file that is not an object, and tidyDevice drops values that are not names or addresses', () => {
@@ -5197,50 +4820,40 @@ test('itemCounts counts each kind of content, the agenda as one or none, and cop
   assert.deepEqual(itemCounts({ tasks: 'not a list', plan: {} }).map(pair => pair[1]), [0, 0, 0, 0, 0, 1, 0]);
 });
 
-test('connectionLines shows nothing while Sanity is reachable and the switch is off', () => {
+test('connectionLines shows nothing while the switch is off, whatever the state', () => {
   assert.deepEqual(connectionLines({ status: sanityStatus, always: false, content: someContent, calendarsReadAt: calendarsRead }), []);
   assert.deepEqual(connectionLines({ status: { source: 'cache', updated: null, offline: false, reason: '' }, always: false }), []);
   assert.deepEqual(connectionLines({ status: null, always: true }), []);
   assert.deepEqual(connectionLines({ always: true }), []);
-});
-
-test('connectionLines gives the reason and the last good read while Sanity is unreachable, then the Teletraan computer lines', () => {
-  const status = { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'cors' };
-  assert.deepEqual(connectionLines({ status: status, always: false, deviceLines: fullDeviceLines }), [
-    'SANITY UNREACHABLE: CORS BLOCKED',
-    'Add this address under API, CORS origins in Sanity',
-    'Last good read 2:31 PM',
-    'hawktimus-mini · Wi-Fi 192.168.1.23 · Tailscale 100.101.102.103',
-    'ssh hawktimus@100.101.102.103',
-  ]);
-});
-
-test('connectionLines names each of the four reasons, and says so when there has been no good read', () => {
-  const words = { network: 'NETWORK DOWN', cors: 'CORS BLOCKED', denied: 'ACCESS DENIED', other: 'OTHER ERROR' };
-  // and a sentence for the coach about what to do
-  const fixes = { network: 'Check the cable and the router of the Teletraan computer', cors: 'Add this address under API, CORS origins in Sanity', denied: 'Check that the dataset in Sanity is public', other: 'Sanity may be down. The last content stays on screen' };
-  Object.keys(words).forEach(reason => {
-    const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: reason }, always: false });
-    assert.deepEqual(lines, ['SANITY UNREACHABLE: ' + words[reason], fixes[reason], 'No good read yet']);
+  // The old text came up by itself when Sanity could not be reached. No state brings anything up now.
+  ['network', 'cors', 'denied', 'other'].forEach(reason => {
+    const lines = connectionLines({ status: { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: reason }, always: false, deviceLines: fullDeviceLines });
+    assert.deepEqual(lines, [], reason);
   });
+});
 
-  const unknown = connectionLines({ status: { source: 'sanity', updated: null, offline: true, reason: '' }, always: false });
-  assert.equal(unknown[0], 'SANITY UNREACHABLE: OTHER ERROR');
+test('connectionLines never says an error word, with the switch on or off', () => {
+  ['network', 'cors', 'denied', 'other', ''].forEach(reason => {
+    const lines = connectionLines({ status: { source: 'sanity', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: reason }, always: true, content: someContent, calendarsReadAt: calendarsRead });
+    const text = lines.join('\n');
+    assert.ok(!/UNREACHABLE|network down|CORS|denied|error|Check the cable/i.test(text), text);
+    assert.equal(lines[0], 'Content: last good read 2:31 PM');
+  });
 });
 
 test('connectionLines with the switch on gives the last read, the counts and the calendar time', () => {
   assert.deepEqual(connectionLines({ status: sanityStatus, always: true, content: someContent, calendarsReadAt: calendarsRead }), [
-    'Sanity OK · last read 2:31 PM',
+    'Content OK · last read 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Team leads 5',
     'People 8 · Agenda 1 · Extra panels 3',
     'Calendars read 2:30 PM',
   ]);
 });
 
-test('connectionLines says when the calendars have not been read, and when Sanity has not been read yet', () => {
+test('connectionLines says when the calendars have not been read, and when the content has not been read yet', () => {
   const lines = connectionLines({ status: { source: 'sanity', updated: null, offline: false, reason: '' }, always: true, content: withDefaults({}), calendarsReadAt: null });
   assert.deepEqual(lines, [
-    'Sanity not read yet',
+    'Content not read yet',
     'Tasks 0 · Sponsors 0 · Tips 0 · Team leads 0',
     'People 0 · Agenda 0 · Extra panels 0',
     'Calendars not read yet',
@@ -5252,19 +4865,17 @@ test('connectionLines says when the screen shows a saved copy, or the sample', (
   assert.equal(saved[0], 'Saved copy from 9:05 AM');
 
   const none = connectionLines({ status: { source: 'cache', updated: null, offline: false, reason: '' }, always: true, content: someContent });
-  assert.equal(none[0], 'Saved copy, Sanity not read yet');
+  assert.equal(none[0], 'Saved copy, content not read yet');
 
   const sample = connectionLines({ status: { source: 'sample', updated: null, offline: false, reason: '' }, always: true, content: someContent });
   assert.equal(sample[0], 'Sample content, Sanity not read');
 });
 
-test('connectionLines puts the reason first and the counts after it when the switch is on and Sanity is unreachable', () => {
-  const status = { source: 'cache', updated: new Date(2026, 9, 2, 14, 31), offline: true, reason: 'network' };
+test('connectionLines with the switch on adds the Teletraan computer lines after the counts', () => {
+  const status = { source: 'cache', updated: new Date(2026, 9, 2, 14, 31), offline: false, reason: '' };
   const lines = connectionLines({ status: status, always: true, content: someContent, calendarsReadAt: calendarsRead, deviceLines: ['ssh hawktimus@10.0.0.5'] });
   assert.deepEqual(lines, [
-    'SANITY UNREACHABLE: NETWORK DOWN',
-    'Check the cable and the router of the Teletraan computer',
-    'Last good read 2:31 PM',
+    'Saved copy from 2:31 PM',
     'Tasks 12 · Sponsors 4 · Tips 9 · Team leads 5',
     'People 8 · Agenda 1 · Extra panels 3',
     'Calendars read 2:30 PM',
@@ -5272,9 +4883,10 @@ test('connectionLines puts the reason first and the counts after it when the swi
   ]);
 });
 
-test('connectionLines says so when the sample file cannot be read, and never blames Sanity for it', () => {
-  const lines = connectionLines({ status: { source: 'sample', updated: null, offline: true, reason: 'other' }, always: false });
-  assert.deepEqual(lines, ['SAMPLE CONTENT FILE NOT READ']);
+test('connectionLines says so when the sample file cannot be read, only with the switch on, and never blames Sanity for it', () => {
+  assert.deepEqual(connectionLines({ status: { source: 'sample', updated: null, offline: true, reason: 'other' }, always: false }), []);
+  const lines = connectionLines({ status: { source: 'sample', updated: null, offline: true, reason: 'other' }, always: true, content: someContent });
+  assert.equal(lines[0], 'Sample content file not read');
 });
 
 test('no line is longer than the screen has room for at 44px', () => {

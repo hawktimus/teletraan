@@ -4,6 +4,7 @@
 
 import { dotNames, dotStates } from './dots.js';
 import { lastContentRead } from './content.js';
+import { sanityReadTime, watchSyncStatus } from './sync-status.js';
 
 const redrawSeconds = 5;
 
@@ -24,6 +25,7 @@ export function startDots(getContent, isSample) {
 
   build(host);
   host.hidden = false;
+  watchSyncStatus(() => {}); // keeps the status file read, for the Sanity dot below
 
   function redraw() {
     const content = getContent() || {};
@@ -34,8 +36,9 @@ export function startDots(getContent, isSample) {
       everyMinutes: content.settings ? content.settings.mondayEveryMinutes : undefined,
       calendarAt: mini.lastCalendarSyncAt,
       calendarErrors: mini.calendarErrors,
-      sanityAt: read.at,
-      sanityFailed: read.failed,
+      // The dot says how fresh the sync service's read of Sanity is. Without the status file (a laptop) it is the local read.
+      sanityAt: sanityReadTime() || read.at,
+      sanityFailed: false,
     }, new Date());
 
     dotNames.forEach(name => {

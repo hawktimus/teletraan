@@ -1,0 +1,25 @@
+[Unit]
+Description=Read the content and the weather for the Teletraan I dashboard and keep the last good copy
+After=network.target
+
+[Service]
+# ACCOUNT is replaced by install-sync.sh and install.sh with the account that owns the repository. The data folder is the
+# one in TELETRAAN_DATA of local.env, which install-sync.sh writes on the Environment line when it is not the usual one. The
+# service writes only that folder and the log folder /var/log/teletraan. It reads no key: the Sanity dataset is public.
+User=ACCOUNT
+Environment=TELETRAAN_DATA=/var/lib/teletraan/data
+UMask=0022
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ExecStart=/usr/bin/env node /opt/teletraan/computer/scripts/sync-service.mjs
+# A service that stops is started again after 5 seconds, whatever the reason
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

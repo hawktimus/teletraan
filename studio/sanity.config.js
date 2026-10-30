@@ -7,6 +7,7 @@ import { structure, settingsType, singletonTypes, viewType } from './structure.j
 import { addTemplates } from './tools/add-templates.js';
 import { screenType } from './inputs/screen-ids.js';
 import { useStandardColorsAction } from './tools/team-actions.js';
+import { remoteActionButtons } from './tools/remote-actions.js';
 import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewThemeActions, previewViewActions, previewActions, useBackToScheduleAction } from './tools/actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
@@ -18,10 +19,13 @@ import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAc
 // for each hidden transition, Play announcements, Run presentation test, a
 // Preview button for each theme and each view, the pack preview and Back to the schedule (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
-const pageTypes = singletonTypes.concat([screenType, viewType]);
+// The Remote actions page and the status page beside it exist once too, and are not in singletonTypes because the
+// Publish all tool and the Start here page do not know them.
+const pageTypes = singletonTypes.concat([screenType, viewType, 'remoteControl', 'remoteStatus']);
 
 const buttonsOf = {
   [settingsType]: playHiddenActions.concat([usePlayAnnouncementsAction, useRunPresentationTestAction], previewThemeActions, previewViewActions, previewActions, [useBackToScheduleAction]),
+  remoteControl: remoteActionButtons,
 };
 
 function actionsFor(actions, context) {
@@ -40,7 +44,7 @@ function actionsFor(actions, context) {
 // A place is offered only while a document is open, which is where the Location field of a task
 // offers Create new, and that is how a place is added now. A template of add-templates.js, such
 // as Agenda item, is offered by the folder or list that names it, and by nothing else.
-const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone'].concat(addTemplates.map(template => template.id));
+const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone', 'remoteControl', 'remoteStatus'].concat(addTemplates.map(template => template.id));
 const offeredInDocuments = ['place'];
 
 function newDocumentChoices(templates, context) {

@@ -158,10 +158,10 @@ test('a list that gets shorter while the wall runs does not leave the clock on a
   views.resetViews();
 });
 
-test('the screen reads new content from the stream and every 5 minutes, and the views take the newest content each second', () => {
+test('the screen reads the local snapshot every 5 seconds, and the views take the newest content each second', () => {
   const source = readModule(path.join(dashboardFolder, 'core/content-source.js'), 'utf8');
-  assert.ok(source.includes('new EventSource(liveEventsUrl(sanity))'), 'it listens for live changes');
-  assert.ok(/const pollEvery = 5 \* 60 \* 1000;/.test(source), 'it also reads every 5 minutes');
+  assert.ok(!source.includes('EventSource'), 'it asks Sanity for nothing and opens no stream');
+  assert.ok(/const pollEvery = 5 \* 1000;/.test(source), 'it reads the file of the sync service every 5 seconds');
   const run = readModule(path.join(dashboardFolder, 'core/views-run.js'), 'utf8');
   assert.ok(/const content = getContent\(\);/.test(run) && run.includes('frame.onSecond'), 'the views ask for the newest content every second');
   const shell = readModule(path.join(dashboardFolder, 'shell-content.js'), 'utf8');

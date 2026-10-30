@@ -83,8 +83,8 @@ test('What the TV shows is the first page of a Department tasks row, from the da
   for (let at = 1; at <= 9; at++) many.push(task({ title: '[task ' + at + ']', dueDate: '2026-10-' + String(10 + at) }));
   const view = parts.tvPreview(content(many), now, { team: '', department: 'build', list: 'open' });
   assert.equal(view.title, 'BUILD TASKS');
-  assert.equal(view.rows.length, 4);
-  assert.equal(view.pages, 3);
+  assert.equal(view.rows.length, 7, 'the first page has as many rows as the TV fits');
+  assert.equal(view.pages, 2);
   assert.equal(parts.tvPreview(content(many), now, { team: '', department: 'build', list: 'done' }), null);
   assert.equal(parts.tvPreview(content(many), now, { team: 'nova', department: 'electrical', list: 'open' }), null);
 });

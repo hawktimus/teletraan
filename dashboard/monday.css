@@ -63,20 +63,66 @@
   height: 544px;
 }
 
-/* One sentence in place of the rows, when there is nothing to show */
+/* One line in place of the rows, when there is nothing to show: it sits at the top of the body like the count line, and is not a box */
 .monday .empty {
   box-sizing: border-box;
-  height: 100%;
   margin: 0;
-  padding: 0 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--lilac);
   font: 500 var(--size-body)/72px var(--font-text);
 }
+
+/* The line at the top of the Department tasks and Projects bodies: the count in words at the left (6 IN PROGRESS · 2 STUCK), and at the
+   right the totals, how many more are on Monday and the place of the page, in 36px labels. Only the place of the page in view is shown. */
+.monday .count-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+.monday .count-words {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--yellow);
+  font: 700 var(--size-label)/56px var(--font-display);
+}
+.monday .count-right {
+  flex: none;
+  display: flex;
+  gap: 28px;
+  white-space: nowrap;
+  color: var(--lilac);
+  font: 600 36px/56px var(--font-display);
+}
+.monday .place { display: none; }
+.monday[data-scroll-page="1"] .place-1,
+.monday[data-scroll-page="2"] .place-2,
+.monday[data-scroll-page="3"] .place-3,
+.monday[data-scroll-page="4"] .place-4,
+.monday[data-scroll-page="5"] .place-5,
+.monday[data-scroll-page="6"] .place-6,
+.monday[data-scroll-page="7"] .place-7,
+.monday[data-scroll-page="8"] .place-8,
+.monday[data-scroll-page="9"] .place-9,
+.monday[data-scroll-page="10"] .place-10 { display: block; }
+/* The standard layout is 1104 wide: the count is one line and the totals and the page are a second line under it, right aligned */
+html[data-layout="standard"] .monday .count-line {
+  height: 112px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0;
+}
+html[data-layout="standard"] .monday .count-words { flex: 1 0 100%; }
+html[data-layout="standard"] .monday .count-right { flex: 1 0 100%; justify-content: flex-end; }
 
 /* The bar layout gives the large panel a page 1427 wide, where every other panel keeps the 1152 it was
    written for (docs/layouts.md, "The width of the main panel"). The Monday panels use all of it: the header and the
@@ -106,6 +152,8 @@ html[data-layout="bar"] .monday .body {
 .monday .chip-in-review { background: var(--prime-tag); }
 .monday .chip-blocked { background: var(--danger); }
 .monday .chip-done { background: var(--status-done); }
+
+.monday .chip-late { background: var(--danger); }
 
 /* The numbers along the bottom: a 72px number and its word beside it, each with a rule at its left. The top is in the
    stylesheet of the panel. */

@@ -27,6 +27,7 @@ export const panelTopics = {
   'competition-rank': ['competition', 'grid1'],
   'monday-department': ['monday', 'grid1'],
   'monday-charts': ['monday', 'grid1'],
+  'monday-projects': ['monday', 'grid1'],
   'task-counts': ['tasks', 'grid2'],
   'next-event': ['events', 'grid2'],
   forecast: ['weather', 'grid2'],
@@ -37,7 +38,7 @@ export const panelTopics = {
 };
 
 // The panels of the Robotics view that use the wide layout, which has no small panel (wideRoboticsPanels in rotation-board.js)
-const wideRoboticsPanels = ['monday-department', 'monday-charts', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
+const wideRoboticsPanels = ['monday-department', 'monday-charts', 'monday-projects', 'roster', 'driveHours', 'robotStatus', 'wireframe'];
 
 function rowWords(row, index) {
   return 'Row ' + (index + 1) + ' (' + (panelTitleOf(row.panel) || row.panel || 'no panel') + ')';
@@ -80,7 +81,7 @@ function sideNeeds(row, data, code) {
 }
 
 // The problems of the list, as { index, level, code, message, fix, field }. rows are the rows of the Rotation list, now is a
-// date, and data holds the live lists the wall reads: { people, subteams, sponsors, customPanels, tasks, photos, teams }, each
+// date, and data holds the live lists the wall reads: { people, subteams, sponsors, customPanels, tasks, photos, projects, teams }, each
 // item with its teamCode, show, expires and other fields. tasks and photos are in the shape of skipQuestion in rotation-board.js.
 export function rotationTrouble(rows, data, now = new Date()) {
   const list = (Array.isArray(rows) ? rows : []).map((row, index) => Object.assign({}, row, { _key: 'row' + index }));
@@ -95,7 +96,7 @@ export function rotationTrouble(rows, data, now = new Date()) {
     add(-1, 'warning', 'rotation-all-hidden', 'Every row of the Rotation is hidden, so the wall plays the standard list instead.', 'Turn Shown on for the rows you want, or leave it if the standard list is what you want.');
   }
 
-  const notes = skipNotes(list, { tasks: data.tasks || [], photos: data.photos || [] }, now);
+  const notes = skipNotes(list, { tasks: data.tasks || [], photos: data.photos || [], projects: data.projects }, now);
   const teamCodes = (data.teams || []).filter(team => team.active !== false).map(team => team.code);
   let before = null;
 

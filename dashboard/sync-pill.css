@@ -1,0 +1,33 @@
+/* The status pill (core/sync-pill.js): "Offline since 3:12 PM" in the bottom area, level with the ticker at its
+   right end, where the connection status text also sits. It is not drawn while everything is fresh. It is amber when a
+   source is late and red when every source is down. The label is 30px, a chip size the house rules name. It fades with
+   opacity only. It sits after the stage and before the overlay in index.html, so a full screen alert covers it. */
+#sync-pill {
+  position: absolute;
+  right: 40px;
+  bottom: 18px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 24px;
+  border-top: 4px solid var(--dot-amber);
+  background: var(--ground);
+  color: var(--dot-amber);
+  font: 600 30px/40px var(--font-display);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms linear;
+}
+#sync-pill[data-state="late"],
+#sync-pill[data-state="down"] { opacity: 1; }
+#sync-pill[data-state="down"] {
+  border-top-color: var(--danger);
+  background: var(--danger-plate);
+  color: var(--danger-bright);
+}
+
+/* The bar layout puts the ticker lower and narrower, so the pill goes to the ticker's corner like the connection text */
+html[data-layout="bar"] #sync-pill {
+  right: calc(1920px - var(--bar-ticker-x) - var(--bar-ticker-width));
+  bottom: calc(1080px - var(--bar-ticker-y) - var(--bar-ticker-height));
+}

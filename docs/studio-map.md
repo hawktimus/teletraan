@@ -19,7 +19,7 @@ Every change has three steps: open a line in the sidebar, make the change, click
 | Teams and views | Hawktimus Prime and Hawktimus Nova on a plain form, and the Views folder: Robotics, Prime and Nova |
 | Look | The theme of each weekday, the background, the seasonal decorations, motion, frame polish, and the logo and name effects, on one page |
 | Competition | The competition cards: the mode (Before and after, Auto, Always or Off), and one switch for each of the twelve cards. Below them the FRC news section: the headlines from the FIRST blog with a Show switch each, the news switches and the categories |
-| Coaches only | A heading. Under it: Dashboard Settings, Extra panels, Check the screen and Kept data |
+| Coaches only | A heading. Under it: Dashboard Settings, Extra panels, Remote actions, Check the screen and Kept data |
 
 Under Coaches only:
 
@@ -27,6 +27,7 @@ Under Coaches only:
 |------|------------|
 | Dashboard Settings | The settings that are set once, in five tabs: Timing, Countdown, Monday, Calendars and Advanced. Presentations, Night mode, Scheduled reboot, Hidden transitions and Screen fit are sections of Advanced. Scheduled reboot has the next and last reboot at the top, then the switch, the time, the days and the skip rule; the control page, Settings, shows the same values |
 | Extra panels | A panel you build from blocks |
+| Remote actions | A folder with two pages. Send an action has the buttons Restart dashboard, Restart services and Reboot computer in the menu beside Publish, and shows the last answer of the computer. Status of the computer is read only: the sources, the last repair of the network watchdog and the last request (docs/OPERATIONS.md) |
 | Check the screen | A read only report of what would make the TV look bad or show nothing: text too long for its panel, private details in text, photos that are small or tall, missing credits, portraits or logos, items past their dates, Rotation rows that will be skipped, two panels on one topic, and team colors that are hard to read. Drafts are checked too. Each finding has a level, a plain fix and a link to the document |
 | Kept data | The old Screens, the Condensed view and the old events calendar type. The wall does not use them. Do not delete them: some old values are read when a new list is empty |
 

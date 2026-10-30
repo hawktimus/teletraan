@@ -303,6 +303,7 @@ function filesUnder(folder) {
 // numbers, and made-up items in the multi-level shape (a status is a BatteryValue, a person is an id).
 const taskBoardId = '18435126893';
 const doneBoardId = '18435131682';
+const projectsBoardId = '18437852059';
 const todayText = '2027-01-12';
 const nowText = '2027-01-12T15:00:00Z';
 
@@ -360,6 +361,42 @@ function doneItems() {
   ];
 }
 
+// The Projects board is a classic board. Status, Mentor, Helpers and Show on TV? come back as the text of the label, with no
+// battery and no index that the script has to know. A status is still given its index, as Monday gives it for a status column.
+function projectValue(id, type, text, extra) {
+  return value(id, type, text, extra);
+}
+const pcol = {
+  state: (text, index) => projectValue('color_mm8ma465', 'status', text, { index: index }),
+  mentor: text => projectValue('dropdown_mm8mcqq', 'dropdown', text),
+  helpers: text => projectValue('dropdown_mm8mtej2', 'dropdown', text),
+  percent: text => projectValue('numeric_mm8mmzv6', 'numbers', text),
+  completed: day => projectValue('date_mm8mkgrg', 'date', day, { date: day }),
+  show: (text, index) => projectValue('color_mm8mtjwd', 'status', text, { index: index }),
+  budget: text => projectValue('numeric_mm8mqqaf', 'numbers', text),
+  notes: text => projectValue('text_mm8m2tw9', 'text', text),
+};
+
+// Projects (Mentors): made-up projects, one for each rule of docs/monday.md
+function projectItems() {
+  return [
+    // mentor with a last name, two helpers, a percent
+    item('3001', 'Build the shop shelves', [pcol.state('In Progress', 1), pcol.mentor('Dan Kelly'), pcol.helpers('Cari-Ann, Steve Ray'), pcol.percent('45'), pcol.show('Show', 1), pcol.budget('250'), pcol.notes('Long private sentence about money')], 'Active'),
+    // a second Dan: the screen tells them apart by the last initial
+    item('3002', 'Label the parts bins', [pcol.state('To Do', 0), pcol.mentor('Dan Moore')], 'Active'),
+    // no mentor, no helpers, no percent
+    item('3003', 'Replace the router', [pcol.state('Stuck', 2)], 'Active'),
+    // Done group, with a date
+    item('3004', 'Paint the pit table', [pcol.state('Done', 1), pcol.mentor('Pat'), pcol.completed('2027-01-05'), pcol.percent('100')], 'Done'),
+    // in the Done group whatever the status says
+    item('3005', 'Mount the wall rack', [pcol.state('In Progress', 1), pcol.mentor('Lee Wu')], 'Done'),
+    // Hide keeps it off the TV
+    item('3006', 'Hidden project', [pcol.state('To Do', 0), pcol.mentor('Sam'), pcol.show('Hide', 2)], 'Active'),
+    // a percent over 100 is held at 100, and a label that is not known is To Do
+    item('3007', 'Odd values', [pcol.state('Waiting', 9), pcol.percent('140.4'), pcol.mentor('mentor@example.com')], 'Active'),
+  ];
+}
+
 const leads = [{ _id: 'subteam-build', name: ' Build ' }, { _id: 'subteam-design', name: 'Design' }];
 
 function world(place, options) {
@@ -379,9 +416,10 @@ function world(place, options) {
   place.answer('users', { data: { users: [{ id: '71', name: 'Pat Kim' }, { id: 72, name: 'Jo Ray' }, { id: '73', name: 'sam@example.com' }] } });
   place.pages(taskBoardId, given.items || taskItems(), given.size || 200, 'Robotics Tasks');
   place.pages(doneBoardId, given.doneItems || doneItems(), 200, 'Completed Tasks');
+  place.pages(projectsBoardId, given.projectItems || projectItems(), 200, 'Projects (Mentors)', { hierarchy_type: 'classic' });
 }
 
-const sequence = ['sanity-query', 'monday items-' + taskBoardId, 'monday items-' + doneBoardId, 'monday users', 'sanity-write', 'sanity-write', 'status-write monday'];
+const sequence = ['sanity-query', 'monday items-' + taskBoardId, 'monday items-' + doneBoardId, 'monday items-' + projectsBoardId, 'monday users', 'sanity-write', 'sanity-write', 'status-write monday'];
 
 // The documents the run made, patched or deleted, by id
 function documentsOf(place) {
@@ -429,11 +467,13 @@ test('the boards are read by their numbers only, with the multi-level question, 
   place.run();
   const variables = place.variables();
   assert.deepEqual(variables[0].board, [taskBoardId]);
-  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x']);
+  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x']);
   assert.deepEqual(variables[1].board, [doneBoardId]);
   assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a'], 'Completed Tasks has fewer columns');
-  assert.deepEqual(variables[2].ids.sort(), ['71', '73'], 'the first person of each item, once');
-  assert.deepEqual(place.battery(), ['items-' + taskBoardId, 'items-' + doneBoardId], 'both boards ask for BatteryValue');
+  assert.deepEqual(variables[2].board, [projectsBoardId]);
+  assert.deepEqual(variables[2].columns, ['color_mm8ma465', 'dropdown_mm8mcqq', 'dropdown_mm8mtej2', 'numeric_mm8mmzv6', 'date_mm8mkgrg', 'color_mm8mtjwd'], 'Budget and Notes are never asked for');
+  assert.deepEqual(variables[3].ids.sort(), ['71', '73'], 'the first person of each item, once');
+  assert.deepEqual(place.battery(), ['items-' + taskBoardId, 'items-' + doneBoardId, 'items-' + projectsBoardId], 'every board asks with the same question');
 
   const text = textOf(syncFile);
   assert.ok(text.includes('capabilities: [CALCULATED]'));
@@ -441,6 +481,7 @@ test('the boards are read by their numbers only, with the multi-level question, 
   assert.ok(!/18435272887/.test(text), 'the milestones board is not read');
   assert.equal(text.split("task_board='18435126893'").length, 2, 'the board numbers are written once');
   assert.equal(text.split("done_board='18435131682'").length, 2);
+  assert.equal(text.split("projects_board='18437852059'").length, 2, 'the Projects board number is written once');
 });
 
 // Four items exactly as Monday answered the multi-level question for Robotics Tasks on 19 October 2026
@@ -630,7 +671,7 @@ test('a board of 450 items is read in pages', () => {
   world(place, { items: many, doneItems: [] });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(requestsOf(result.calls).filter(line => line.startsWith('monday ')), ['monday items-' + taskBoardId, 'monday more-cursor' + taskBoardId + 'n1', 'monday more-cursor' + taskBoardId + 'n2', 'monday items-' + doneBoardId]);
+  assert.deepEqual(requestsOf(result.calls).filter(line => line.startsWith('monday ')), ['monday items-' + taskBoardId, 'monday more-cursor' + taskBoardId + 'n1', 'monday more-cursor' + taskBoardId + 'n2', 'monday items-' + doneBoardId, 'monday items-' + projectsBoardId]);
   assert.ok(result.text.includes('monday: 450 task(s) read'), result.text);
 });
 
@@ -640,12 +681,12 @@ test('monday-status: last read, the error in plain words or none, the reads, the
   place.run();
   const patch = statusOf(place);
   assert.equal(patch.set.lastSyncAt, nowText);
-  assert.equal(patch.set.callsToday, 9, 'six before and three now');
+  assert.equal(patch.set.callsToday, 10, 'six before and four now');
   assert.equal(patch.set.callsDate, todayText);
   assert.equal(patch.set.taskCount, 9);
   assert.equal(patch.set.hiddenCount, 1, 'the hidden task is counted and not written');
   assert.deepEqual(patch.unset, ['boards', 'hiddenUnassigned', 'connectedAs', 'lastError']);
-  assert.deepEqual(patch.set.readings.map(reading => [reading.boardId, reading.boardName, reading.itemsRead]), [[taskBoardId, 'Robotics Tasks', 9], [doneBoardId, 'Completed Tasks', 2]]);
+  assert.deepEqual(patch.set.readings.map(reading => [reading.boardId, reading.boardName, reading.itemsRead]), [[taskBoardId, 'Robotics Tasks', 9], [doneBoardId, 'Completed Tasks', 2], [projectsBoardId, 'Projects (Mentors)', 7]]);
   const build = patch.set.departments.find(entry => entry.name === 'build');
   assert.deepEqual(build, { _key: 'build', name: 'build', open: 1, done: 2 });
   assert.deepEqual(patch.set.departments.map(entry => entry.name), ['build', 'electrical', 'programming', 'design', 'cnc', 'strategy', 'operations', 'business', 'marketing']);
@@ -745,13 +786,87 @@ test('without a token the run says so in one line and asks for nothing', () => {
   assert.equal(requestsOf(result.calls).length, 0);
 });
 
+// Projects (Mentors)
+
+function projectsOf(place) {
+  const list = statusOf(place).set.projects;
+  assert.ok(Array.isArray(list), 'the projects are in monday-status');
+  return Object.fromEntries(list.map(entry => [entry.id, entry]));
+}
+
+test('projects: the first word of a mentor and of each helper, the last initial, the status words, and nothing for a missing value', () => {
+  const place = setup('projects', { tools: true });
+  world(place);
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(result.text.includes('monday: 7 project(s) read'), result.text);
+
+  const projects = projectsOf(place);
+  assert.deepEqual(projects['3001'], { _key: '3001', id: '3001', title: 'Build the shop shelves', status: 'in-progress', mentor: 'Dan', mentorInitial: 'K', helpers: ['Cari-Ann', 'Steve'], percent: 45 });
+  assert.deepEqual(projects['3002'], { _key: '3002', id: '3002', title: 'Label the parts bins', status: 'up-next', mentor: 'Dan', mentorInitial: 'M' });
+  assert.deepEqual(projects['3003'], { _key: '3003', id: '3003', title: 'Replace the router', status: 'blocked' }, 'no mentor, helpers or percent: no keys');
+  assert.deepEqual(projects['3004'], { _key: '3004', id: '3004', title: 'Paint the pit table', status: 'done', mentor: 'Pat', percent: 100, completedOn: '2027-01-05' }, 'one name has no initial');
+  assert.equal(projects['3005'].status, 'done', 'the Done group means done');
+  assert.equal(projects['3007'].status, 'up-next', 'a label that is not known is To Do');
+  assert.equal(projects['3007'].percent, 100, 'a percent over 100 is held at 100');
+  assert.ok(!('mentor' in projects['3007']), 'an address is never a name');
+});
+
+test('projects: Show on TV? = Hide is not written, and Budget and Notes never leave Monday', () => {
+  const place = setup('projects-hidden', { tools: true });
+  world(place);
+  place.run();
+  assert.ok(!('3006' in projectsOf(place)), 'the hidden project is not in the list');
+  const text = JSON.stringify(place.writes());
+  assert.ok(!text.includes('Long private sentence') && !text.includes('"budget"') && !text.includes('Hidden project'));
+  assert.ok(!JSON.stringify(place.variables()).includes('numeric_mm8mqqaf') && !JSON.stringify(place.variables()).includes('text_mm8m2tw9'));
+});
+
+test('projects: a board that could not be read to its end leaves the projects of the last read, and says why', () => {
+  const place = setup('projects-failed', { tools: true });
+  world(place);
+  place.answer('items-' + projectsBoardId, { errors: [{ message: 'Board not found' }] });
+  const result = place.run();
+  const set = statusOf(place).set;
+  assert.ok(!('projects' in set), 'nothing replaces the old list');
+  assert.ok(String(set.lastError).includes('Board not found'));
+  assert.ok('lastSyncAt' in set, 'the tasks were read, so the last read still moves');
+  assert.equal(result.status, 1);
+});
+
+test('projects: a board with no item clears the list, and the readings name the board', () => {
+  const place = setup('projects-empty', { tools: true });
+  world(place, { projectItems: [] });
+  place.run();
+  assert.deepEqual(statusOf(place).set.projects, []);
+  assert.ok(statusOf(place).set.readings.some(reading => reading.boardId === projectsBoardId && reading.itemsRead === 0));
+});
+
+test('contact: the first POC person, else the first Assigned person', () => {
+  const place = setup('poc', { tools: true });
+  const poc = ids => value('multiple_person_mm8331h1', 'people', '', { persons_and_teams: ids.map(id => ({ id: id, kind: 'person' })) });
+  world(place, {
+    items: [
+      item('7001', 'Both', [col.state(0), col.assigned([71]), poc([72])], 'Build'),
+      item('7002', 'Assigned only', [col.state(0), col.assigned([71])], 'Build'),
+      item('7003', 'POC only', [col.state(0), poc([72])], 'Build'),
+    ],
+    doneItems: [],
+  });
+  place.run();
+  const found = documentsOf(place);
+  assert.equal(found['task-monday-7001'].set.contact, 'Jo');
+  assert.equal(found['task-monday-7002'].set.contact, 'Pat');
+  assert.equal(found['task-monday-7003'].set.contact, 'Jo');
+});
+
 test('--check asks who the token belongs to and writes nothing', () => {
   const place = setup('check', { tools: true });
   world(place);
   const result = place.run(['--check']);
   assert.equal(result.status, 0, result.errors);
-  assert.deepEqual(result.text.trim().split('\n'), ['OK    Monday accepts the token (connected as Jordan)', 'OK    SANITY_WRITE_TOKEN is in local.env']);
-  assert.deepEqual(requestsOf(result.calls), ['monday me']);
+  assert.deepEqual(result.text.trim().split('\n'), ['OK    Monday accepts the token (connected as Jordan)', 'OK    The Projects board ' + projectsBoardId + ' is there (Projects (Mentors))', 'OK    SANITY_WRITE_TOKEN is in local.env']);
+  assert.deepEqual(requestsOf(result.calls), ['monday me', 'monday items-' + projectsBoardId]);
   assert.equal(place.writes().length, 0);
 });
 

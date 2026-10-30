@@ -158,7 +158,7 @@ await test('In Progress and To Do are the same color to a person with protanopia
 });
 
 await test('every status, priority and tag that carries meaning is also a word, a shape or an outline', () => {
-  assert.ok(/priority-\$\{row\.priorityLevel\}">\$\{escapeHtml\(row\.priority\)\}/.test(read('dashboard/panels/monday-department/panel.js')), 'the priority is written');
+  assert.ok(/priority-\$\{row\.priorityLevel\}">\$\{row\.priorityLevel === 'none' \? '' : escapeHtml\(row\.priority\)\}/.test(read('dashboard/panels/monday-department/panel.js')), 'the priority is written');
   assert.ok(/the word is there for anyone who cannot tell the\s+colours apart/.test(read('dashboard/monday.css')), 'the status chip is a word');
 
   // A task row has its status as a word and as a shape of its own

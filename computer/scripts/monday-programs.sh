@@ -21,7 +21,8 @@ $items[]
 | ([($timeline.text // "") | scan("(?<![0-9])(?:19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}(?![0-9])") | select(real_day)]) as $text_days
 | (value_of($columns.hours).text | if type == "string" then (gsub(","; "") | try tonumber catch null) else null end) as $hours
 | (value_of($columns.assigned)) as $assigned
-| (($assigned.people // [])[0]) as $first
+| (value_of($columns.poc)) as $poc
+| ((($poc.people // [])[0]) // (($assigned.people // [])[0])) as $first
 | ((value_of($columns.show).index // "") | tostring) as $show
 | {
     id: (.id | if test("\\A[0-9]{1,20}\\z") then . else null end),
@@ -30,7 +31,7 @@ $items[]
     list: (if $status == "done" or ((.group | if type == "string" then plain | ascii_downcase else "" end) == "done") or $done == "yes" then "done" else "open" end),
     status: $status,
     team: (meaning("team"; $columns.team) // ""),
-    contact: ((if $first == null then null else $names[$first] end) // ($assigned.text | first_name($contact_limit))),
+    contact: ((if $first == null then null else $names[$first] end) // ($poc.text | first_name($contact_limit)) // ($assigned.text | first_name($contact_limit))),
     priority: meaning("priority"; $columns.priority),
     startDate: (($timeline.from | day_of) // $text_days[0]),
     dueDate: (($timeline.to | day_of) // $text_days[-1:][0]),
@@ -40,6 +41,40 @@ $items[]
     board: $board
   }
 | select(.id != null and .title != "" and .department != null)
+'
+
+# One row for each project of the Projects board (a classic board: every item is a project, there are no subitems). It is run with
+#   $items     the items of the board
+#   $columns   project_columns of monday-contract.sh, and $labels project_labels
+# A label is read by its words (lowercase). Mentor and Helpers are dropdowns, so their text is the label words, and only the first
+# word of a name is kept; the first letter of the last word goes in mentorInitial, so that the screen can tell two mentors with
+# the same first name apart. A project whose Show on TV? says Hide has showOnBoard false and is never written.
+project_rows='
+def value_of($column): (.values[$column] // {});
+def words_of($column): (value_of($column).text | if type == "string" then plain | ascii_downcase else "" end);
+def initial_of: if type != "string" then null else (plain | split(",")[0] // "" | plain | split(" ")) as $part
+  | if ($part | length) < 2 then null
+    else ($part[-1] | gsub("[^\\p{L}]"; "") | .[0:1] | if . == "" then null else ascii_upcase end) end end;
+$items[]
+| select(.parent == null)
+| (words_of($columns.status)) as $status_words
+| (words_of($columns.show)) as $show_words
+| (($labels.status[$status_words]) // "up-next") as $status
+| (value_of($columns.mentor).text) as $mentor
+| (value_of($columns.helpers).text) as $helpers
+| (value_of($columns.percent).text | if type == "string" then (gsub(","; "") | try tonumber catch null) else null end) as $percent
+| {
+    id: (.id | if test("\\A[0-9]{1,20}\\z") then . else null end),
+    title: (.name | whole_text(60)),
+    status: (if $status == "done" or ((.group | if type == "string" then plain | ascii_downcase else "" end) == $labels.done_group) then "done" else $status end),
+    mentor: ($mentor | first_name($contact_limit)),
+    mentorInitial: ($mentor | initial_of),
+    helpers: (if ($helpers | type) == "string" then [($helpers | split(",")[] | first_name($contact_limit)) | select(. != null)] | .[0:$helpers_most] else [] end),
+    percent: (if ($percent | type) == "number" and $percent >= 0 then ([$percent, 100] | min | round) else null end),
+    completedOn: (value_of($columns.completed) | (.date | day_of) // (.text | day_of)),
+    showOnBoard: (($labels.hide | index([$show_words])) == null)
+  }
+| select(.id != null and .title != "")
 '
 
 # What to send to Sanity, in groups of mutations. A task that is new is made and filled in by the same
@@ -143,6 +178,13 @@ def reading_list($old):
       }
     | with_entries(select(.value != null))];
 
+# The projects the TV draws, as the entries of the list projects of monday-status: the ones that are not hidden, without the keys that
+# have no value, 60 at most. The same list is written when the Projects board was read to its end, so a project that has gone leaves it.
+def project_list:
+  [$projects | unique_by(.id) | .[] | select(.showOnBoard)
+    | {_key: .id, id, title, status, mentor, mentorInitial, helpers, percent, completedOn}
+    | with_entries(select(.value != null and .value != []))] | .[0:60];
+
 def department_counts:
   ($rows | unique_by(.id) | map(select(.showOnBoard))) as $shown
   | [$labels.departments[] as $name
@@ -158,6 +200,7 @@ def department_counts:
         callsDate: $today,
         readings: reading_list($sanity[0].result.readings)
       }
+      + (if $projects_ok == "yes" then {projects: project_list} else {} end)
       + (if $complete == "yes" then {
           lastSyncAt: $now,
           taskCount: ($rows | unique_by(.id) | length),

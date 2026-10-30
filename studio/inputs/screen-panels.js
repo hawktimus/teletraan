@@ -40,10 +40,11 @@ export const smallPanels = [
   { title: 'Sponsor logo', value: 'sponsor-logo' },
 ];
 
-// The two Monday panels (docs/monday.md). The ids are the ones of dashboard/config.js (mondayKinds).
+// The three Monday panels (docs/monday.md). The ids are the ones of dashboard/config.js (mondayKinds).
 export const mondayPanels = [
   { title: 'Monday: Department tasks', value: 'monday-department' },
   { title: 'Monday: TV charts', value: 'monday-charts' },
+  { title: 'Monday: Projects', value: 'monday-projects' },
 ];
 
 // The eleven Monday panels of the older sync (retiredMondayPanels in dashboard/config.js). They are offered nowhere. A stored
@@ -57,7 +58,7 @@ export const olderMondayPanels = [
 export const seededMondayPanels = ['monday-charts'];
 
 // What a row of each Monday panel says (mondayKinds in dashboard/config.js)
-export const mondayKinds = { 'monday-department': 'department', 'monday-charts': 'chart' };
+export const mondayKinds = { 'monday-department': 'department', 'monday-charts': 'chart', 'monday-projects': 'projects' };
 
 // The nine departments, the lists and the charts the Rotation board offers for the two Monday panels (the same lists as
 // mondayDepartments, mondayLists and mondayCharts in dashboard/config-lists.js). The teams are in tools/rotation-board.js.

@@ -1,7 +1,8 @@
-// What the content reader does when Sanity goes away and comes back (core/content-source.js): the screen keeps its
-// content, says so after two minutes, asks again at a polite pace and recovers by itself. Also bad answers (a login
-// page, half a file, no result), and a saved copy that is damaged or cannot be written. Nothing touches the network:
-// fetch, EventSource, localStorage and the clock are fakes.
+// What the content reader does when the local snapshot goes away and comes back (core/content-source.js): the screen keeps
+// its content, says nothing about it, asks again every 5 seconds and recovers by itself. Also bad answers (a page of a
+// filter, half a file, no result), and a saved copy that is damaged or cannot be written. Nothing touches the network:
+// fetch, localStorage and the clock are fakes. The outage of Sanity itself is the sync service's to handle
+// (tests/sync-service.test.mjs) and the status pill's to show (tests/sync-pill.test.mjs).
 //
 //   node tests/outage.test.mjs
 
@@ -47,13 +48,13 @@ async function test(name, run) {
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const minute = 60 * 1000;
 
-// One fake world. world.mode says how Sanity answers: ok, down (no network), status (an HTTP error), page (a login page
-// instead of JSON), half (JSON cut short) or empty (no result). world.storage is the saved copy, and
-// world.storageFails makes it throw.
+// One fake world. world.mode says how the file answers: ok, down (the server does not answer), status (an HTTP error),
+// page (a page of a filter instead of JSON), half (JSON cut short) or empty (no result). world.storage is the saved copy,
+// and world.storageFails makes it throw.
 async function inWorld(run, options = {}) {
   const world = {
     now: Date.UTC(2026, 9, 18, 15, 0, 0), timers: [], nextId: 1, mode: options.mode || 'ok', tips: [{ text: 'first' }],
-    contentReads: [], requestReads: 0, streams: [], changes: [], saved: options.saved || null, storageFails: options.storageFails || false,
+    contentReads: [], streams: 0, changes: [], saved: options.saved || null, storageFails: options.storageFails || false,
   };
   const names = ['fetch', 'EventSource', 'localStorage', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'];
   const originals = {};
@@ -66,32 +67,19 @@ async function inWorld(run, options = {}) {
     world.nextId += 1;
     return world.nextId - 1;
   };
-  const answer = body => ({ ok: true, status: 200, json: async () => body });
   const fakes = {
     fetch: async url => {
-      const text = decodeURIComponent(String(url));
-      const isContent = text.includes('"settings": *[_id');
-      const isRequests = text.includes('[0] { announceRequest');
-      if (isContent) world.contentReads.push(world.now);
-      if (isRequests) world.requestReads += 1;
-      if (!isContent && !isRequests) {
-        if (world.mode === 'down') throw new TypeError('Failed to fetch');
-        return answer({});
-      }
-
+      if (String(url).endsWith('images/index.json')) return { ok: false, status: 404, text: async () => '' };
+      world.contentReads.push(world.now);
       if (world.mode === 'down') throw new TypeError('Failed to fetch');
-      if (world.mode === 'poll-down' && isRequests) throw new TypeError('Failed to fetch');
-      if (world.mode === 'status') return { ok: false, status: 503, json: async () => ({}) };
-      if (world.mode === 'page') return { ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } };
-      if (world.mode === 'half') return { ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected end of JSON input'); } };
-      if (world.mode === 'empty') return answer({ result: null });
-      if (isRequests) return answer({ result: { pageSeconds: 20 } });
-      return answer({ result: { settings: { pageSeconds: 20 }, tipsAndNews: world.tips } });
+      if (world.mode === 'status') return { ok: false, status: 503, text: async () => '' };
+      if (world.mode === 'page') return { ok: true, status: 200, text: async () => '<html>Blocked by the school filter</html>' };
+      if (world.mode === 'half') return { ok: true, status: 200, text: async () => '{"result": {"settings": ' };
+      if (world.mode === 'empty') return { ok: true, status: 200, text: async () => JSON.stringify({ result: null }) };
+      return { ok: true, status: 200, text: async () => JSON.stringify({ syncedAt: '2026-10-18T15:00:00Z', result: { settings: { pageSeconds: 20 }, tipsAndNews: world.tips } }) };
     },
     EventSource: class {
-      constructor() { this.listeners = {}; this.readyState = 1; world.streams.push(this); }
-      addEventListener(type, run) { this.listeners[type] = (this.listeners[type] || []).concat(run); }
-      close() { this.readyState = 2; }
+      constructor() { world.streams += 1; }
     },
     localStorage: {
       getItem: () => {
@@ -108,7 +96,6 @@ async function inWorld(run, options = {}) {
     clearTimeout: id => { world.timers = world.timers.filter(timer => timer.id !== id); },
     clearInterval: id => { world.timers = world.timers.filter(timer => timer.id !== id); },
   };
-  fakes.EventSource.CLOSED = 2;
   world.advance = async milliseconds => {
     const end = world.now + milliseconds;
     for (;;) {
@@ -146,33 +133,26 @@ async function inWorld(run, options = {}) {
 const lastState = world => world.changes[world.changes.length - 1];
 const tipCount = state => state.content.tipsAndNews.length;
 
-await test('an outage in the middle of a run is noticed within about two minutes, not after the next five minute read', async () => {
-  await inWorld(async world => {
+await test('an outage in the middle of a run changes nothing on the screen, however long it lasts, and never says offline', async () => {
+  await inWorld(async (world, reader) => {
     await world.advance(30 * 1000);
     world.mode = 'down';
-    const wentDown = world.now;
-    let noticed = null;
-    for (let second = 0; second < 6 * 60 && noticed === null; second += 5) {
-      await world.advance(5 * 1000);
-      const state = lastState(world);
-      if (state && state.status.offline) noticed = world.now - wentDown;
-    }
-    assert.ok(noticed !== null, 'the screen never said Sanity was unreachable');
-    assert.ok(noticed <= 2.5 * minute + 10 * 1000, 'noticed after ' + noticed / 1000 + ' seconds');
-    assert.equal(lastState(world).status.reason, 'network');
-    assert.equal(tipCount(lastState(world)), 1, 'the content stays on the screen');
+    await world.advance(30 * minute);
+    assert.equal(world.changes.length, 0, 'nothing is announced');
+    assert.equal(reader.first.status.offline, false);
+    assert.equal(tipCount(reader.first), 1, 'the content stays on the screen');
   });
 });
 
-await test('it recovers by itself within 30 seconds of Sanity coming back, and takes the new content', async () => {
+await test('it recovers by itself within 5 seconds of the file coming back, and takes the new content', async () => {
   await inWorld(async world => {
     world.mode = 'down';
     await world.advance(4 * minute);
-    assert.equal(lastState(world).status.offline, true);
+    assert.equal(world.changes.length, 0);
 
     world.tips = [{ text: 'a' }, { text: 'b' }];
     world.mode = 'ok';
-    await world.advance(35 * 1000);
+    await world.advance(5 * 1000);
     const state = lastState(world);
     assert.equal(state.status.offline, false);
     assert.equal(state.status.reason, '');
@@ -180,50 +160,36 @@ await test('it recovers by itself within 30 seconds of Sanity coming back, and t
   });
 });
 
-await test('a long outage is asked about politely: one read every 30 seconds and a request poll every 10', async () => {
+await test('a long outage is asked about at the same easy pace: one read of a local file every 5 seconds, no stream', async () => {
   await inWorld(async world => {
     world.mode = 'down';
     const before = world.contentReads.length;
-    const pollsBefore = world.requestReads;
     await world.advance(10 * minute);
     const reads = world.contentReads.length - before;
-    const polls = world.requestReads - pollsBefore;
-    assert.ok(reads <= 10 * 2 + 3, reads + ' full reads in 10 minutes');
-    assert.ok(polls <= 10 * 6 + 3, polls + ' request polls in 10 minutes');
+    assert.ok(reads <= 10 * 12 + 2, reads + ' reads in 10 minutes');
+    assert.equal(world.streams, 0);
   });
 });
 
-await test('a request poll that always fails while the content reads fine costs at most one full read a minute', async () => {
-  await inWorld(async world => {
-    world.mode = 'poll-down';
-    const before = world.contentReads.length;
-    await world.advance(10 * minute);
-    const reads = world.contentReads.length - before;
-    assert.ok(reads <= 10 + 3, reads + ' full reads in 10 minutes');
-    assert.equal(lastState(world) === undefined || lastState(world).status.offline === false, true, 'the screen does not say Sanity is unreachable');
-  });
-});
-
-await test('a login page, half a file, an error status and an empty result each keep the content and say other', async () => {
+await test('a page of a filter, half a file, an error status and an empty result each keep the content and say nothing', async () => {
   for (const mode of ['page', 'half', 'status', 'empty']) {
-    await inWorld(async world => {
+    await inWorld(async (world, reader) => {
       world.mode = mode;
-      // an empty result is a poll answer that is not a failure, so only the full read (every 5 minutes) finds it
       await world.advance(8 * minute);
-      const state = lastState(world);
-      assert.ok(state, mode + ': no state');
-      assert.equal(tipCount(state), 1, mode + ': the content stays');
-      assert.equal(state.status.offline, true, mode);
-      assert.equal(state.status.reason, 'other', mode);
+      assert.equal(world.changes.length, 0, mode + ': nothing is announced');
+      assert.equal(tipCount(reader.first), 1, mode + ': the content stays');
+      assert.equal(reader.first.status.offline, false, mode);
 
       world.mode = 'ok';
-      await world.advance(35 * 1000);
-      assert.equal(lastState(world).status.offline, false, mode + ': it recovers');
+      world.tips = [{ text: 'a' }, { text: 'b' }];
+      await world.advance(5 * 1000);
+      assert.equal(tipCount(lastState(world)), 2, mode + ': it recovers');
+      assert.equal(lastState(world).status.offline, false, mode);
     });
   }
 });
 
-await test('a damaged saved copy never stops the start, and the first read from Sanity replaces it', async () => {
+await test('a damaged saved copy never stops the start, and the first read of the file replaces it', async () => {
   for (const saved of ['{not json', 'null', '{"raw":5}', '{"raw":[1]}', '{"savedAt":1,"raw":{"settings":7,"tipsAndNews":"x","people":[null,5]}}', 'x'.repeat(100000)]) {
     await inWorld(async (world, reader) => {
       assert.ok(reader.first.content, saved.slice(0, 20));
@@ -235,11 +201,11 @@ await test('a damaged saved copy never stops the start, and the first read from 
   }
 });
 
-await test('with no saved copy and Sanity down, the screen starts empty and fills in when Sanity answers', async () => {
+await test('with no saved copy and no file, the screen starts empty and fills in when the file arrives', async () => {
   await inWorld(async (world, reader) => {
     assert.equal(tipCount(reader.first), 0, 'nothing invented');
     world.mode = 'ok';
-    await world.advance(35 * 1000);
+    await world.advance(5 * 1000);
     assert.equal(tipCount(lastState(world)), 1);
   }, { saved: null, mode: 'down' });
 });
@@ -249,7 +215,7 @@ await test('a saved copy that cannot be read or written never stops the reading'
     await inWorld(async (world, reader) => {
       assert.equal(tipCount(reader.first), 1, storageFails);
       world.tips = [{ text: 'a' }, { text: 'b' }];
-      await world.advance(6 * minute);
+      await world.advance(6 * 1000);
       assert.equal(tipCount(lastState(world)), 2, storageFails + ': the next read still arrives');
     }, { storageFails: storageFails });
   }

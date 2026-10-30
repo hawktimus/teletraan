@@ -181,13 +181,13 @@ test('every row gets a key of its own', () => {
   assert.equal(keyed[0].panel, 'tonight');
 });
 
-test('the lists of panels are the panels of the registry, and the Monday rows are the two Monday panels', () => {
+test('the lists of panels are the panels of the registry, and the Monday rows are the three Monday panels', () => {
   const registered = area => registry.panels.filter(panel => panel.region === area && !panel.testOnly && !panel.competition && !panel.monday && !panel.lastResort && !panel.placeholder && !panel.rotationOnly).map(panel => panel.id);
   assert.deepEqual(largePanels.map(panel => panel.value), registered('grid1'));
   assert.deepEqual(smallPanels.map(panel => panel.value), registered('grid2'));
   const monday = registry.panels.filter(panel => panel.monday).map(panel => panel.id);
   mondayPanels.forEach(panel => assert.ok(monday.indexOf(panel.value) !== -1, panel.value + ' should be a Monday card in registry.js'));
-  assert.deepEqual(mondayPanels.map(panel => panel.title), ['Monday: Department tasks', 'Monday: TV charts']);
+  assert.deepEqual(mondayPanels.map(panel => panel.title), ['Monday: Department tasks', 'Monday: TV charts', 'Monday: Projects']);
   assert.deepEqual(mondayPanels.map(panel => panel.value), monday, 'in the order of the registry');
   teamSpecificPanels.forEach(panel => assert.ok(registered('grid1').indexOf(panel) !== -1, panel + ' should be a large panel'));
 });

@@ -11,6 +11,30 @@
 // A portrait is asked for at the size it is shown, so no more is downloaded
 // than is drawn. A photo for the Photo panel is asked for as wide as the screen
 // at most (screenPhotoUrl).
+//
+// The sync service of the Teletraan computer downloads these same addresses to its data folder (computer/scripts/sync-service.mjs
+// builds them with the functions below) and lists them in images/index.json. useLocalImages gives that list to this file,
+// and an address that is in it is answered with the local file, so a school filter that blocks the picture host does not
+// leave a hole in the screen. An address that is not in the list is the Sanity address, as before.
+
+import { liveFolder } from '../config.js';
+
+let localImages = {};
+
+// index is { "<Sanity address>": "images/<file>" }. Anything else in it is ignored.
+export function useLocalImages(index) {
+  const kept = {};
+  if (index && typeof index === 'object' && !Array.isArray(index)) {
+    Object.keys(index).forEach(address => {
+      if (typeof index[address] === 'string' && /^images\/[A-Za-z0-9._-]+$/.test(index[address])) kept[address] = index[address];
+    });
+  }
+  localImages = kept;
+}
+
+function localOr(address) {
+  return localImages[address] ? liveFolder + localImages[address] : address;
+}
 
 // What Sanity stores for a photo, cleaned. Gives back null when it cannot be
 // used, and the panel then shows the silhouette. The crop is how much the
@@ -125,12 +149,12 @@ export function photoUrl(photo, width, height, scale = 1) {
   const high = Math.round(height * scale);
   const part = partToShow(clean, wide, high);
 
-  return clean.url +
+  return localOr(clean.url +
     '?rect=' + [part.left, part.top, part.width, part.height].join(',') +
     '&w=' + wide +
     '&h=' + high +
     '&fit=crop' +
-    '&auto=format';
+    '&auto=format');
 }
 
 // The widest a photo is ever asked for. The screen is 1920 pixels wide, so a
@@ -163,7 +187,7 @@ function fittedUrl(photo, width) {
   const wasCropped = kept.left > 0 || kept.top > 0 || kept.width < clean.width || kept.height < clean.height;
   const rect = wasCropped ? 'rect=' + [kept.left, kept.top, kept.width, kept.height].join(',') + '&' : '';
 
-  return clean.url + '?' + rect + 'w=' + width + '&fit=max&auto=format';
+  return localOr(clean.url + '?' + rect + 'w=' + width + '&fit=max&auto=format');
 }
 
 // The size in pixels of the part the editor kept. The Photo panel no longer reads

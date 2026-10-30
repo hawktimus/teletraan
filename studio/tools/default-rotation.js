@@ -29,6 +29,7 @@ function mondayRows() {
   return [].concat(
     departments.map(department => ({ view: 'robotics', panel: 'monday-department', department: department, list: 'open', seconds: 20, shown: true })),
     charts.map(chart => ({ view: 'robotics', panel: 'monday-charts', chart: chart, seconds: 30, shown: true })),
+    [{ view: 'robotics', panel: 'monday-projects', seconds: 20, shown: true }],
     [{ view: 'robotics', panel: 'roster', department: 'business,marketing', shown: true }],
   );
 }

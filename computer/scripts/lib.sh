@@ -17,6 +17,17 @@ setting() {
   sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
 }
 
+# One JSON line in /var/log/teletraan/<service>.jsonl, the same line jsonlog.mjs writes: ts, service, source, event,
+# detail. TELETRAAN_LOG_DIR moves the folder for tests. A log that cannot be written never stops the script.
+# Usage: log_json service source event detail
+log_json() {
+  local folder=${TELETRAAN_LOG_DIR:-/var/log/teletraan} line
+  # The detail is cleaned and cut so that a stray quote or a new line cannot break the line
+  line=$(printf '{"ts":"%s","service":"%s","source":"%s","event":"%s","detail":"%s"}' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" "$3" "$(printf '%s' "${4:-}" | tr -d '\000-\037"\\' | cut -c 1-300)")
+  { mkdir -p "$folder" && printf '%s\n' "$line" >> "$folder/$1.jsonl"; } 2> /dev/null || true
+}
+
 # The quoted value of "name: 'value'," in dashboard/config.js. The project ID,
 # the dataset and the API version are kept there and nowhere else.
 config_value() {

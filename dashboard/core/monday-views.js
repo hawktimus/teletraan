@@ -16,16 +16,26 @@ import { isFromBoard } from './task-source.js';
 import { teamNameOf } from './team-title.js';
 import { hasText, isRecord } from './text.js';
 
-// Four rows are in view at a time, and a list stops at 20 rows: five pages of four
+// A list stops at 20 rows. How many rows are in view at a time depends on the room: see pagesOf. The Studio page draws the first four.
 export const rowsPerPage = 4;
 export const mostRows = 20;
 
+// The room a page of rows has, in pixels, for each layout (bar is the one the Robotics view plays in). row is the height of a row
+// of one line of 44px text, and extra what a second line of 44px text adds (the note of a Stuck task, the helpers of a project). The
+// window is what is left of the body (544 high, 532 in Cybertron) under the count line: seven rows in the bar layout, and four in the
+// standard one, whose count is two lines. The stylesheets have the same numbers.
+export const rowRoom = {
+  bar: { window: 476, row: 68, extra: 48 },
+  standard: { window: 384, row: 96, extra: 48 },
+};
+
 // The order of the open list, and the words of each status
-export const openOrder = ['in-progress', 'in-review', 'blocked', 'up-next'];
+export const openOrder = ['blocked', 'in-progress', 'in-review', 'up-next'];
 export const statusWords = { 'up-next': 'TO DO', 'in-progress': 'IN PROGRESS', 'in-review': 'IN REVIEW', blocked: 'STUCK', done: 'DONE' };
 const priorityWords = { high: 'High', medium: 'Medium', low: 'Low' };
 
-// What a row says for a value the board does not have
+// What a row says for a value the board does not have. The panel draws a column only when a row of the list has a value in it, and
+// leaves the place of the others empty (columnsOf), so these words are for the Studio page and the control page, which print every row.
 export const emptyWords = { contact: 'Unassigned', priority: 'No Priority', date: 'No Date' };
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -96,17 +106,63 @@ function byTitle(a, b) {
   return first === second ? 0 : first < second ? -1 : 1;
 }
 
+// Stuck first, then In Progress (with In Review) and then To Do
 function openRank(task) {
-  const at = openOrder.indexOf(task.status);
-  return at === -1 ? openOrder.length - 1 : at;
+  if (task.status === 'blocked') return 0;
+  return task.status === 'in-progress' || task.status === 'in-review' ? 1 : 2;
 }
 
-// Open: In Progress, In Review, Stuck, To Do, and in each the earliest estimated completion date first. Done: the newest
-// date completed first. The list given is not changed.
+const priorityOrder = ['high', 'medium', 'low'];
+
+function priorityRank(task) {
+  const at = priorityOrder.indexOf(task.priority);
+  return at === -1 ? priorityOrder.length : at;
+}
+
+// Open: Stuck, then In Progress and In Review by the soonest end of the Timeline, then To Do by priority (High first) and then by the
+// soonest end. A task with no date comes after the ones that have one. Done: the newest date completed first. The list given is
+// not changed.
 export function sortTasks(tasks, list) {
   return tasks.slice().sort((a, b) => (list === 'done'
     ? byDate(dateOf(a, 'completedOn'), dateOf(b, 'completedOn'), true) || byTitle(a, b)
-    : openRank(a) - openRank(b) || byDate(dateOf(a, 'dueDate'), dateOf(b, 'dueDate'), false) || byTitle(a, b)));
+    : openRank(a) - openRank(b) || (openRank(a) === 2 ? priorityRank(a) - priorityRank(b) : 0) || byDate(dateOf(a, 'dueDate'), dateOf(b, 'dueDate'), false) || byTitle(a, b)));
+}
+
+// A task is late when it is not done and the last day of its Timeline is before today. The panel says LATE instead of the date.
+export function isLate(task, today) {
+  return listOf(task) === 'open' && dateOf(task, 'dueDate') !== '' && dateOf(task, 'dueDate') < today;
+}
+
+// The rows of a list cut into pages by the room they take: a page takes rows while they fit in the window of the layout, and a
+// page holds one row at least. A row with extra true has a second line of text under the name.
+export function pagesOf(rows, layout) {
+  const room = rowRoom[layout] || rowRoom.bar;
+  const pages = [];
+  let page = [];
+  let used = 0;
+
+  rows.forEach(row => {
+    const height = room.row + (row.extra ? room.extra : 0);
+    if (page.length > 0 && used + height > room.window) {
+      pages.push(page);
+      page = [];
+      used = 0;
+    }
+    page.push(row);
+    used += height;
+  });
+  if (page.length > 0) pages.push(page);
+  return pages;
+}
+
+// The columns a list needs: one is drawn when a row of the whole list has a value in it, so a board with no contact on any task
+// has no Contact column and the name takes its room.
+export function columnsOf(rows) {
+  return {
+    contact: rows.some(row => row.contact !== emptyWords.contact),
+    priority: rows.some(row => row.priorityLevel !== 'none'),
+    date: rows.some(row => row.late || row.date !== emptyWords.date),
+  };
 }
 
 // The status a row shows: a task of the open list is never DONE (it sits in the open list only while it is not done), and
@@ -119,10 +175,12 @@ function shownStatus(task, list) {
 
 // Department tasks
 
-// { title, team, rows, pages, counts } for a page, or null when the department has nothing in the list. A row is
-// { status, statusWord, project, contact, priority, date }, every value a word: an empty one reads Unassigned, No Priority or
-// No Date. counts are the open and done tasks of the department for the team.
-export function departmentView(content, now, page) {
+// { title, team, rows, pages, pageRows, columns, countWords, tallyWords, counts, more } for a page, or null when the department has nothing
+// in the list. A row is { status, statusWord, project, contact, priority, priorityLevel, date, late, note, extra }, every value a word:
+// an empty one reads Unassigned, No Priority or No Date. late says the task is past the end of its Timeline and not done; the panel
+// draws LATE in place of the date. note is the note of a Stuck task, one line, and nothing for any other task. counts are the open
+// and done tasks of the department for the team. layout is bar (the default) or standard, and says how many rows a page holds.
+export function departmentView(content, now, page, layout = 'bar') {
   const options = pageOptions(page);
   if (options.department === '') return null;
 
@@ -130,8 +188,10 @@ export function departmentView(content, now, page) {
   const listed = sortTasks(own.filter(task => listOf(task) === options.list), options.list);
   if (listed.length === 0) return null;
 
-  const rows = listed.slice(0, mostRows).map(task => {
+  const today = todayOf(content, now);
+  const rowOf = task => {
     const status = shownStatus(task, options.list);
+    const note = status === 'blocked' && hasText(task.note) ? String(task.note).replace(/\s+/g, ' ').trim() : '';
     return {
       status: status,
       statusWord: statusWords[status],
@@ -140,18 +200,146 @@ export function departmentView(content, now, page) {
       priority: priorityWords[task.priority] || emptyWords.priority,
       priorityLevel: priorityWords[task.priority] ? task.priority : 'none',
       date: dateWords(dateOf(task, 'dueDate')) || emptyWords.date,
+      late: isLate(task, today),
+      note: note,
+      extra: note !== '',
     };
-  });
+  };
+
+  const every = listed.map(rowOf);
+  const rows = every.slice(0, mostRows);
+  const pageRows = pagesOf(rows, layout);
+  const counts = { open: own.filter(task => listOf(task) === 'open').length, done: own.filter(task => listOf(task) === 'done').length };
 
   const name = departmentTitle(options.department).toUpperCase();
   return {
     title: name + (options.list === 'done' ? ' DONE' : ' TASKS'),
     team: teamWords(content, options.team),
+    list: options.list,
     rows: rows,
     more: listed.length - rows.length,
-    pages: Math.max(1, Math.ceil(rows.length / rowsPerPage)),
-    counts: { open: own.filter(task => listOf(task) === 'open').length, done: own.filter(task => listOf(task) === 'done').length },
+    pages: Math.max(1, pageRows.length),
+    pageRows: pageRows,
+    columns: columnsOf(every),
+    countWords: countWords(options.list, listed),
+    tallyWords: counts.open + ' OPEN · ' + counts.done + ' DONE',
+    counts: counts,
   };
+}
+
+// The count in the header: 6 IN PROGRESS · 2 STUCK · 4 TO DO for the open list, 5 DONE for the done one. In Review counts with In Progress.
+// Stuck and To Do are left out when there are none.
+function countWords(list, tasks) {
+  if (list === 'done') return tasks.length + ' DONE';
+  const stuck = tasks.filter(task => task.status === 'blocked').length;
+  const todo = tasks.filter(task => task.status !== 'blocked' && task.status !== 'in-progress' && task.status !== 'in-review').length;
+  const words = [(tasks.length - stuck - todo) + ' IN PROGRESS'];
+  if (stuck > 0) words.push(stuck + ' STUCK');
+  if (todo > 0) words.push(todo + ' TO DO');
+  return words.join(' · ');
+}
+
+// What a Department tasks page says when its list has nothing: { title, team, line }. The rotation leaves such a row out, so this is for
+// a preview and a held page. One line, with the title of the department when the row names one.
+export function departmentEmpty(content, page) {
+  const options = pageOptions(page);
+  const name = departmentTitle(options.department).toUpperCase();
+  const waiting = !(content && content.monday && content.monday.lastSyncAt);
+
+  return {
+    title: name === '' ? 'DEPARTMENT TASKS' : name + (options.list === 'done' ? ' DONE' : ' TASKS'),
+    team: teamWords(content, options.team),
+    line: waiting ? 'Waiting for the first read of the board.' : options.list === 'done' ? 'Nothing done yet' : 'Nothing in progress',
+  };
+}
+
+
+// Projects
+
+// A done project is drawn when it was finished in the last 14 days, and only the newest 3 of those
+export const projectDoneDays = 14;
+export const projectDoneMost = 3;
+const projectOrder = ['blocked', 'in-progress', 'in-review', 'up-next'];
+
+// The mentors by first name: when two different people on the page share one (their last initials differ), each gets the initial
+// after the name, Dan K and Dan M. A mentor with no initial is written as it is.
+function mentorWords(projects) {
+  const initials = {};
+  projects.forEach(project => {
+    if (!hasText(project.mentor)) return;
+    const key = project.mentor.toLowerCase();
+    initials[key] = initials[key] || new Set();
+    initials[key].add(project.mentorInitial || '');
+  });
+
+  return project => {
+    if (!hasText(project.mentor)) return '';
+    const same = initials[project.mentor.toLowerCase()];
+    return same.size > 1 && hasText(project.mentorInitial) ? project.mentor + ' ' + project.mentorInitial : project.mentor;
+  };
+}
+
+function byProjectTitle(a, b) {
+  return byTitle({ title: a.title }, { title: b.title });
+}
+
+// { title, team, rows, pages, pageRows, columns, countWords, tallyWords, more } for the Projects panel, or null when there is nothing
+// to draw. The panel plays only for both teams (the Robotics view): a page for Prime or Nova has nothing. A row is { status,
+// statusWord, project, mentor, helpers, helperWords, percent, extra }, with a mentor, helpers and percent only when the project has
+// them. Order: Stuck, In Progress, In Review, To Do, then up to 3 done in the last 14 days, the newest first.
+export function projectsView(content, now, page, layout = 'bar') {
+  if (pageOptions(page).team !== '') return null;
+
+  const today = dayNumber(todayOf(content, now));
+  const all = Array.isArray(content && content.monday && content.monday.projects) ? content.monday.projects : [];
+  const open = [].concat(...projectOrder.map(status => all.filter(project => project.status === status).sort(byProjectTitle)));
+  const age = project => today - dayNumber(project.completedOn);
+  const done = all
+    .filter(project => project.status === 'done' && dateOf(project, 'completedOn') !== '' && age(project) >= 0 && age(project) <= projectDoneDays)
+    .sort((a, b) => byDate(a.completedOn, b.completedOn, true) || byProjectTitle(a, b))
+    .slice(0, projectDoneMost);
+  const shown = open.concat(done);
+  if (shown.length === 0) return null;
+
+  const mentor = mentorWords(shown);
+  const rows = shown.slice(0, mostRows).map(project => {
+    const helpers = Array.isArray(project.helpers) ? project.helpers : [];
+    return {
+      status: project.status,
+      statusWord: statusWords[project.status],
+      project: String(project.title || '').trim(),
+      mentor: mentor(project),
+      helpers: helpers,
+      helperWords: helpers.length > 0 ? 'with ' + helpers.join(', ') : '',
+      percent: typeof project.percent === 'number' ? project.percent : null,
+      extra: helpers.length > 0,
+    };
+  });
+  const pageRows = pagesOf(rows, layout);
+  const going = shown.filter(project => project.status === 'in-progress' || project.status === 'in-review').length;
+  const stuck = shown.filter(project => project.status === 'blocked').length;
+  const todo = shown.filter(project => project.status === 'up-next').length;
+  const words = [going + ' IN PROGRESS'];
+  if (stuck > 0) words.push(stuck + ' STUCK');
+  if (todo > 0) words.push(todo + ' TO DO');
+
+  return {
+    title: 'PROJECTS',
+    team: '',
+    rows: rows,
+    more: shown.length - rows.length,
+    pages: Math.max(1, pageRows.length),
+    pageRows: pageRows,
+    columns: { mentor: rows.some(row => row.mentor !== ''), percent: rows.some(row => row.percent !== null) },
+    countWords: words.join(' · '),
+    tallyWords: done.length > 0 ? done.length + ' DONE' : '',
+  };
+}
+
+// What the Projects panel says with nothing to draw
+export function projectsEmpty(content) {
+  const waiting = !(content && content.monday && content.monday.lastSyncAt);
+  return { title: 'PROJECTS', team: '', line: waiting ? 'Waiting for the first read of the board.' : 'Nothing in progress' };
 }
 
 
@@ -183,8 +371,9 @@ function hoursOf(task) {
   return typeof task.estHours === 'number' && isFinite(task.estHours) && task.estHours > 0 ? task.estHours : 0;
 }
 
-// Overall progress: the estimated hours of the done tasks over the hours of every task. When no task has hours it is the
-// done tasks over every task. { percent, done, total, unit, tasks: { done, open } }
+// Overall progress: the estimated hours of the done tasks over the hours of every task. When no task has hours (the total is 0, which is
+// how the board is today) it is the done tasks over every task. { percent, bar, done, total, unit, tasks: { done, open } }. bar is false at
+// 0 percent: the panel draws no empty bar.
 export function progressChart(tasks) {
   if (tasks.length === 0) return null;
 
@@ -197,6 +386,7 @@ export function progressChart(tasks) {
   return {
     chart: 'progress',
     percent: Math.round(part / whole * 100),
+    bar: Math.round(part / whole * 100) > 0,
     done: Math.round(part),
     total: Math.round(whole),
     unit: byHours ? 'HOURS' : 'TASKS',
@@ -288,5 +478,6 @@ export function chartsView(content, now, page) {
 export function viewOf(panelId, content, now, page) {
   if (panelId === 'monday-department') return departmentView(content, now, page);
   if (panelId === 'monday-charts') return chartsView(content, now, page);
+  if (panelId === 'monday-projects') return projectsView(content, now, page);
   return null;
 }

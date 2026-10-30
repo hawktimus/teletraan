@@ -16,6 +16,10 @@ export const sanity = {
   apiVersion: '2025-02-19',
 };
 
+// The host that serves the pictures of the editors' content. The sync service downloads them from here
+// (computer/scripts/sync-service.mjs), and make allowlist lists it for the school.
+export const sanityImageHost = 'cdn.sanity.io';
+
 // Calendar files and sample content live in one of these folders. The sample
 // folder is kept in git. The live folder is filled in
 // by the Teletraan computer and is never committed.
