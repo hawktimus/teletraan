@@ -2,6 +2,7 @@
 // against the releases on the Teletraan computer, and the "v14 · a1b2c3d" label. The tests run this file in Node.
 
 import { isExcluded } from './tree-hash.js';
+import { apiPath } from './base.js';
 
 export const zipLimit = 100 * 1024 * 1024;
 
@@ -86,7 +87,7 @@ export async function waitUntilBack(fetcher = fetch, sleep = ms => new Promise(d
   for (let attempt = 0; attempt < tries; attempt++) {
     await sleep(2000);
     try {
-      const answer = await fetcher('/control/api/status', { cache: 'no-store' });
+      const answer = await fetcher(apiPath('status'), { cache: 'no-store' });
       if (answer.ok || answer.status === 401) return true;
     } catch (error) { /* still down */ }
   }

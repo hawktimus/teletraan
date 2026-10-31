@@ -1,5 +1,5 @@
-// The three dots at the foot of the screen, left of the ticker: Monday, Band (the calendars) and
-// Sanity (the content). Each says only how fresh its last read is, so a person across the room can
+// The four dots at the foot of the screen, left of the ticker: Monday, Band (the calendars),
+// Sanity (the content) and the network. Each says only how fresh its last read is, so a person across the room can
 // tell that something has stopped. The control page shows the same states with their reasons
 // (control/routes/status.js), so the rules are here once.
 //
@@ -7,13 +7,17 @@
 //   amber  it is older than that, or there has been no read yet
 //   red    the last read ended in an error
 //
+// The network dot is the sync service's own word (sync-status.json, network): green when it is ok, red when it is
+// not. It has no amber of its own: a short break is below the service's two minute window, and the Sanity dot goes
+// amber first. It is left out when the file has no network member (an older file, a laptop).
+//
 // Sanity is the exception: it is read when something changes and at least every 5 minutes, so
 // green means a good read inside 5 minutes (plus a short slack, because a read that is due
 // lands a moment after the 5 minutes are up).
 
 import { isRecord } from './text.js';
 
-export const dotNames = ['monday', 'band', 'sanity'];
+export const dotNames = ['monday', 'band', 'sanity', 'network'];
 
 const bandMinutes = 15;
 const sanityMinutes = 5;
@@ -51,13 +55,15 @@ export function mondayEvery(settings) {
   return typeof value === 'number' && isFinite(value) ? Math.min(120, Math.max(5, Math.round(value))) : 30;
 }
 
-// The three dots from what the Teletraan computer and Sanity say. Each field of facts is optional.
+// The dots from what the Teletraan computer and Sanity say. Each field of facts is optional.
 //   monday         { lastSyncAt, lastError } the monday-status document
 //   everyMinutes   mondayEveryMinutes
 //   calendarAt     when the calendars were last downloaded (status-mini lastCalendarSyncAt)
 //   calendarErrors how many calendars ended their last download in an error
 //   sanityAt       when the content was last read well (a Date or a string)
 //   sanityFailed   true when the latest content read threw
+//   network        { ok, since } from the sync service, or nothing: then the result has no network dot
+//                  (since is a time in milliseconds or null)
 export function dotStates(facts, now = new Date()) {
   const f = isRecord(facts) ? facts : {};
   const monday = isRecord(f.monday) ? f.monday : {};
@@ -68,7 +74,17 @@ export function dotStates(facts, now = new Date()) {
     monday: dotState({ at: monday.lastSyncAt, error: monday.lastError, limit: every * 2 }, now),
     band: dotState({ at: f.calendarAt, error: calendarErrors > 0 ? calendarErrors + ' calendar(s) could not be downloaded' : '', limit: bandMinutes * 2 }, now),
     sanity: dotState({ at: f.sanityAt, error: f.sanityFailed === true ? 'the content could not be read' : '', limit: sanityMinutes, slack: sanitySlackSeconds }, now),
+    ...networkDot(f.network, now),
   };
+}
+
+// { network: { color, reason } }, or nothing when the sync service did not say
+function networkDot(network, now) {
+  if (!isRecord(network) || typeof network.ok !== 'boolean') return {};
+  if (network.ok) return { network: { color: 'green', reason: 'The network works.' } };
+
+  const since = typeof network.since === 'number' ? minutesBetween(network.since, now) : null;
+  return { network: { color: 'red', reason: since === null ? 'The network is down.' : 'The network has been down for ' + Math.max(0, since) + ' minutes.' } };
 }
 
 // The part of status-mini and the calendar status document that the screen asks for (core/sanity.js). Empty when there is none.

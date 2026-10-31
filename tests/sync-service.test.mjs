@@ -207,7 +207,7 @@ await check('sync-status.json has the shape the status poller reads, every sourc
   await w.sync.syncWeather();
   fs.writeFileSync(path.join(w.folder, 'calendar-sync.txt'), 'team|2026-10-30T14:58:00Z|\nshop|2026-10-30T14:50:00Z|the server took too long to answer\n');
   const status = w.sync.writeStatus();
-  assert.deepEqual(Object.keys(status), ['generatedAt', 'sources']);
+  assert.deepEqual(Object.keys(status), ['generatedAt', 'sources', 'network']);
   assert.deepEqual(Object.keys(status.sources), ['sanity', 'weather', 'images', 'monday', 'competition', 'calendars']);
   Object.values(status.sources).forEach(source => assert.deepEqual(Object.keys(source), ['lastSuccessAt', 'lastFailureAt', 'lastFailureReason']));
   assert.equal(status.sources.monday.lastSuccessAt, '2026-10-30T12:00:00Z', 'read from the monday-status document in the content');
@@ -217,6 +217,40 @@ await check('sync-status.json has the shape the status poller reads, every sourc
   assert.deepEqual(w.read('sync-status.json'), status);
   const hosts = JSON.stringify(status);
   assert.ok(!/https?:\/\//.test(hosts), 'no address in the status');
+});
+
+await check('network is ok while a source was read well in the last 2 minutes, and records when it went down', async () => {
+  const w = world();
+  const sync = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/forecast', now: () => w.time, fetch: w.fetch, noProbe: true, netwatchFile: path.join(w.folder, 'no-netwatch.json') });
+  await sync.checkSanity();
+  assert.deepEqual(sync.writeStatus().network, { ok: true, since: null });
+  w.time += 60 * 1000;
+  assert.equal(sync.writeStatus().network.ok, true, 'one minute after a good read');
+  w.down = true;
+  w.time += 90 * 1000;
+  await sync.checkSanity();
+  const down = sync.writeStatus().network;
+  assert.equal(down.ok, false);
+  assert.equal(down.since, new Date(w.time).toISOString(), 'since is the last failure');
+  w.time += 30 * 1000;
+  await sync.checkSanity();
+  assert.equal(sync.writeStatus().network.since, down.since, 'since holds while it stays down');
+  w.down = false;
+  await sync.checkSanity();
+  assert.deepEqual(sync.writeStatus().network, { ok: true, since: null });
+});
+
+await check('netwatch.json with 3 failures makes the network not ok, whatever the sources say', async () => {
+  const w = world();
+  const file = path.join(w.folder, 'netwatch.json');
+  const sync = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/forecast', now: () => w.time, fetch: w.fetch, noProbe: true, netwatchFile: file });
+  await sync.checkSanity();
+  fs.writeFileSync(file, '{"failures":2}');
+  assert.equal(sync.writeStatus().network.ok, true);
+  fs.writeFileSync(file, '{"failures":3}');
+  assert.equal(sync.writeStatus().network.ok, false);
+  fs.writeFileSync(file, 'not json');
+  assert.equal(sync.writeStatus().network.ok, true, 'a bad file is ignored');
 });
 
 await check('a restart keeps the times of the last good reads, so the pill does not start from nothing', async () => {

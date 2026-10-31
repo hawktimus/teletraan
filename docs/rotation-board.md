@@ -77,7 +77,7 @@ it is in the table. It is open on a computer and closed on a phone. Each card sa
 in, and whether the same panel can also be a row.
 
 - The seven competition cards: Next match, Live rank, Results strip (the last matches, also called Match Statistics), Alliance
-  board, Season timeline, District points and Last season at a glance. In Auto they come in from 2 days before an event. Only
+  board, Season timeline, District points and Last season at a glance. In Auto they come in from 7 days before an event until 7 days after it. Only
   Live rank can also be a row (Competition: Rank).
 - Three more cards: Team metrics (one team, a page at a time: the season, the Match13 rating, the next match, the last results),
   Compare (Prime and Nova side by side) and the Match13 cards. Team metrics, Compare, Event preview, Our matches and Event recap come in

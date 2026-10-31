@@ -246,6 +246,8 @@ await check('the fields are always complete after tidying, and the defaults in c
 
 await check('the report of the wall is cut to size, keeps the hold and the pause, and only the Teletraan computer itself reports', () => {
   const report = makeReport({ view: 'v'.repeat(50), panel: 'tasks', requests: { holdPanel: 'tasks', pauseRotation: true }, dots: { monday: { color: 'green', reason: 'ok' } } }, at);
+  assert.equal('network' in report.dots, false, 'no network dot, none in the report');
+  assert.deepEqual(makeReport({ dots: { network: { color: 'red', reason: 'down' } } }, at).dots.network, { color: 'red', reason: 'down' });
   assert.equal(report.view.length, 20);
   assert.equal(report.hold, 'tasks');
   assert.equal(report.pause, true);

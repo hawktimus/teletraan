@@ -8,7 +8,6 @@
 // saves to the draft, and publishes with its own button. Before it saves it asks the service to compare the revision it
 // loaded with the one in Sanity, and it asks before replacing a newer Studio edit. The write key is never in the browser.
 
-import { registerTab } from '../tabs.js';
 import { api, useStyles } from './api.js';
 import { addChartRows, addDepartmentRows, addRow, copyRow, countWhere, isNovaRow, isPanelRow, mondayFieldNames, moveRow, photoRange, quickAction, removeRetired, removeRow, retiredCount, sameRows, secondsFrom, setPhotoValue, setRowValue, setShownWhere, wholeFrom, withKeys } from '../display-rows.js';
 import { addRowHtml, checkHtml, chipHtml, conflictHtml, controlsHtml, newerHtml, motionHtml, playlistWords, quickHtml, rowsHtml, sourceHtml, summaryWords, themeHtml, titlesOf } from './display-parts.js';
@@ -420,12 +419,3 @@ export async function mountDisplay(container) {
     container.removeEventListener('change', onChange);
   };
 }
-
-registerTab({
-  id: 'display',
-  title: 'Display',
-  order: 15,
-  render(container) {
-    return mountDisplay(container);
-  },
-});

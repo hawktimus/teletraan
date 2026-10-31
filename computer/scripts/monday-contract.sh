@@ -40,10 +40,11 @@ project_columns='{
   "mentor": "dropdown_mm8mcqq",
   "helpers": "dropdown_mm8mtej2",
   "percent": "numeric_mm8mmzv6",
+  "timeline": "timerange_mm8mp8wc",
   "completed": "date_mm8mkgrg",
   "show": "color_mm8mtjwd"
 }'
-project_board_columns='["status", "mentor", "helpers", "percent", "completed", "show"]'
+project_board_columns='["status", "mentor", "helpers", "percent", "timeline", "completed", "show"]'
 
 # The words of the labels of the Projects board, in lowercase. Its label numbers are not recorded, so the words are read;
 # a word that is not here means To Do (and, for Show on TV?, Show). The group Done also means done.

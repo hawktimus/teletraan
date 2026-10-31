@@ -119,6 +119,7 @@ const project = defineArrayMember({
     textField('mentorInitial', 'Mentor last initial', 'The first letter of the last name of the mentor, so the screen can tell two mentors with the same first name apart.'),
     defineField({ name: 'helpers', title: 'Helpers', type: 'array', of: [{ type: 'string' }], description: 'The first names of the helpers, six at most.' }),
     numberField('percent', 'Percent complete', 'The % Complete column, from 0 to 100. Empty when the project has none.'),
+    defineField({ name: 'timelineEnd', title: 'Timeline end', type: 'date', description: 'The last day of the Timeline column, a date only. A project past it that is not done shows a Late chip.' }),
     defineField({ name: 'completedOn', title: 'Date completed', type: 'date', description: 'The day the project was done, when the board says. A done project shows for 14 days after it.' }),
   ],
   preview: {

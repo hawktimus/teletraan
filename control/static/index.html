@@ -3,33 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
   <title>Teletraan I control</title>
   <style>
-    /* First paint if style.css has not loaded yet or does not load: dark, readable, the same colors.
+    /* First paint if style.css has not loaded yet or does not load: readable, the same purple and gold.
        Every rule here is also in style.css, which comes later and wins. */
     body { margin: 0; background: #1d1a24; color: #f3eefc; font: 18px/1.45 system-ui, sans-serif; }
-    header { background: #6c18b6; color: #fff; padding: 12px 16px 0; border-bottom: 4px solid #faca2a; }
-    header h1 { margin: 0; font: 700 24px/1.2 system-ui, sans-serif; }
+    .top { background: #6c18b6; color: #fff; padding: 12px 16px; border-bottom: 4px solid #faca2a; }
+    .top h1 { margin: 0; font: 700 24px/1.2 system-ui, sans-serif; }
     a { color: #faca2a; }
     main { padding: 16px; }
   </style>
   <link rel="stylesheet" href="style.css">
   <link id="tabs-css" rel="stylesheet" href="tabs/tabs.css">
   <link id="choice-css" rel="stylesheet" href="choice.css">
+  <link id="areas-css" rel="stylesheet" href="areas.css">
 </head>
 <body>
-  <header>
-    <h1>Teletraan I control</h1>
-    <p class="on-wall" id="on-wall"></p>
-    <div class="bar">
-      <nav id="tabs" role="tablist" aria-label="Pages of the control page"></nav>
-      <button type="button" class="help" id="help">Help</button>
-      <a class="studio" href="/studio/" target="_blank" rel="noopener">Studio</a>
+  <a class="skip" href="#page">Skip to the content</a>
+  <header class="top">
+    <div class="brand">
+      <h1>Teletraan I control</h1>
+      <p class="on-wall" id="on-wall"></p>
+    </div>
+    <div class="top-tools">
+      <button type="button" class="tool" id="theme">Theme</button>
+      <button type="button" class="tool" id="help">Help</button>
+      <a class="tool" href="../studio/" target="_blank" rel="noopener">Studio</a>
     </div>
   </header>
-  <main id="page" role="tabpanel" tabindex="-1">
-    <p class="boot">Loading the page. If this stays here, <a href="./">reload it</a>.</p>
-    <noscript><p>This page needs JavaScript. Turn it on in the browser settings, then <a href="./">reload</a>.</p></noscript>
+  <nav id="tabs" aria-label="Areas of the control page"></nav>
+  <main id="page" tabindex="-1">
+    <div id="offline" class="offline" role="status" aria-live="polite" hidden></div>
+    <div id="area">
+      <p class="boot">Loading the page. If this stays here, <a href="./">reload it</a>.</p>
+      <noscript><p>This page needs JavaScript. Turn it on in the browser settings, then <a href="./">reload</a>.</p></noscript>
+    </div>
   </main>
   <script type="module" src="app.js"></script>
 </body>

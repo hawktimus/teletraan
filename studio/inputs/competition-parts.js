@@ -15,8 +15,9 @@ export const words = {
   cardsSays: 'The mode says when the cards come. Each card has a switch of its own.',
   modesTitle: 'The modes',
   modeLines: [
-    'Before and after (recommended): a preview for the 14 days before an event, up to the day before it. Nothing while the event is on, because the team is away. A recap for 7 days from the day after it ends.',
-    'Auto: the older cards come from two days before an event and take turns with the other panels during it.',
+    'Before and after (recommended): a preview for the 7 days before an event, up to the day before it. Nothing while the event is on, because the team is away. A recap for 7 days from the day after it ends.',
+    'Auto: the older cards come from 7 days before an event until 7 days after it, and take turns with the other panels during it.',
+    'Auto and Before and after show nothing about a competition when no event is within 7 days of today.',
     'Always: every card that is on and has something to show, whatever the date.',
     'Off: no competition card.',
   ],

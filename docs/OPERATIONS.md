@@ -18,7 +18,7 @@ What the sync service writes, and how it keeps the last good copy:
 - `content.json`: the answer of the content query (the same query the dashboard used to send, in `dashboard/core/sanity-query.js`). Every 10 seconds the service asks one small question, how many documents there are and when the newest was edited. A change makes it read everything at once, so a publish shows on the TV within about 15 seconds. It also reads everything every 5 minutes in case a change was missed.
 - `weather.json`: the reading, every 15 minutes.
 - `images/`: every picture the content names, downloaded in the sizes the panels ask for, and `images/index.json`, the list that tells the dashboard which Sanity address has a local file. A picture is in the list only after its file is complete. A picture that has not arrived yet is still shown from the Sanity address, as before.
-- `sync-status.json`: every 10 seconds, `{ generatedAt, sources: { sanity, weather, images, monday, competition, calendars } }`, and for each source `lastSuccessAt`, `lastFailureAt` and `lastFailureReason` (a few words, no address). Monday, the competition feed and the calendars are read from what their own jobs already write.
+- `sync-status.json`: every 10 seconds, `{ generatedAt, sources: { sanity, weather, images, monday, competition, calendars }, network: { ok, since } }`, and for each source `lastSuccessAt`, `lastFailureAt` and `lastFailureReason` (a few words, no address). `network.ok` is true while any source was read well in the last 2 minutes, and false when none was or when `/var/lib/teletraan/netwatch.json` (netwatch.sh) counts 3 or more failures; `since` is the time it was first seen down, or null while it is up. A file without `network` (older, or a laptop) draws no network dot. The fourth dot on the TV, after Monday, Band and Sanity, shows it: green ok, red down. Monday, the competition feed and the calendars are read from what their own jobs already write.
 
 Every file is written under a temporary name and renamed, and only from an answer that was checked (JSON, with a result; a picture with a picture type). A failed read changes nothing, so a panel is never blanked and nothing says "error". A school filter that answers 200 with a page of its own is not JSON and counts as a failed read.
 
@@ -47,6 +47,10 @@ The laptop has no sync service. To fill `dashboard/data/live/` once, run `make s
     sudo /opt/teletraan/computer/scripts/install-network.sh
 
 It needs `curl`, `jq` and Node 18 or newer, and does not install them.
+
+### Wi-Fi only computers
+
+The Teletraan computer has no cable, and a Wi-Fi chip that saves power while idle is the classic reason for a connection that drops overnight. `install-network.sh` writes `/etc/NetworkManager/conf.d/teletraan-wifi.conf` with `wifi.powersave = 2` (power saving disabled) when NetworkManager is the manager in use. It writes the file only when it differs, restarts nothing, and the setting applies at the next reconnect (the active Wi-Fi connection is changed as well). The output of the script says what it did. With another manager (systemd-networkd, for example) it says so and changes nothing. `--undo` removes the file (docs/network.md).
 
 ## Reading the logs
 
@@ -109,23 +113,26 @@ All connections go out from the computer over HTTPS (port 443). Nothing connects
 
 ## Remote actions from Sanity
 
-Coaches can restart the screen, restart the services or reboot the Teletraan computer from the Studio, from anywhere, without the control page.
+Coaches can restart the screen, restart the services, reboot the Teletraan computer, sync a source now, show a view or theme and pause or resume the rotation from the Studio, from anywhere, without the control page. docs/remote-access.md has the plain steps and the design of the private tunnel (Layer B), which is not installed.
 
 ### How to trigger one
 
 1. In the Studio, open Coaches only, Remote actions, Send an action.
-2. Open the menu beside Publish and choose Restart dashboard, Restart services or Reboot computer. Reboot asks "Are you sure?" first.
+2. Open the menu beside Publish and choose a button: Restart dashboard, Restart services, Reboot computer, Sync now (a list: all sources, calendars, Monday, competition, news, Match13, photos), Show a view, Show a theme, Pause rotation or Resume rotation. Reboot and Restart services ask "Are you sure?" first.
 3. The button writes the action, the time now and your first name into the page and publishes it. Nothing else is needed.
 4. Within about 30 seconds the Teletraan computer answers. The fields Handled at and Result on the same page show what it did. Status of the computer, next to it, shows the sources, the last repair of the network watchdog and the last request.
 
-What each action does: Restart dashboard restarts the browser of the TV (the helper word `restart-kiosk`). Restart services restarts the timers and the web server (`restart-services`). Reboot computer restarts the whole machine (`reboot`).
+What each action does: Restart dashboard restarts the browser of the TV (the helper word `restart-kiosk`). Restart services restarts the timers and the web server (`restart-services`). Reboot computer restarts the whole machine (`reboot`). Sync now sends `sync-now` with one fixed source: calendars, monday, frc (Competition), news, match13 or photos-drive (Photos); Sync all sends the six in that order. Show a view, Show a theme, Pause rotation and Resume rotation write `showView`, `previewTheme` or `pauseRotation` into the published Dashboard Settings (with a revision check, once more if a Studio edit came in between), ending after 60 minutes by themselves. A value of `auto` or Resume clears the request.
 
 ### Rules the computer follows
 
 - Freshness: a request is run only when it is less than 10 minutes old. An older one is not run, but it is marked handled with the result `ignored: too old`. A computer that comes back online after an outage therefore never obeys an old click. If nothing happened, click the button again.
 - Once only: a request is run when its time is later than Handled at. The answer is written to Sanity before anything runs, so a request cannot run twice, even if the computer reboots at once.
 - One reboot in 10 minutes: a second reboot request inside that time is marked `ignored: a reboot already ran in the last 10 minutes`. The reboot itself starts 5 seconds after the answer is written. The time of the last reboot is kept in `remote-state.json` in the data folder.
-- Fixed words only: the stored action must be exactly one of the three names above. Anything else is marked `refused: unknown action` and nothing runs. No text from Sanity is ever passed to a shell or to the helper.
+- Fixed words only: the stored action must be exactly one of the names in `computer/scripts/remote-plan.mjs`, and a view or theme exactly one of its short lists. Anything else is marked `refused: unknown action` (or `refused: unknown view`, `refused: unknown theme`) and nothing runs. No text from Sanity is ever passed to a shell or to the helper; the helper lines come from a frozen table.
+- One sync in a minute: a second sync request of any kind inside a minute is marked `ignored: a sync already ran in the last minute`. The time is kept in `remote-state.json` with the reboot time.
+- The last answer is also written to `remote-last.json` in the data folder (`action`, `requestedBy`, `handledAt`, `result`, `via: sanity`), by a temporary file and a rename, so the control page can show the same last result.
+- The status document also carries the network state and the last check time, from `sync-status.json` (`network` is optional there) and the poller's own clock.
 - A push message "remote action received" goes out through `computer/scripts/notify.sh` when that script exists. It is optional: without it the action still runs.
 
 ### Limit of this path
@@ -136,4 +143,4 @@ It needs the Teletraan computer to reach Sanity (outbound only, no open port). I
 
 - `make remote-status` prints the last handled request and the last lines of the poller log.
 - The log is `/var/log/teletraan/remote.jsonl`, one JSON line for each poll, action and status write.
-- `systemctl status teletraan-remote` says whether the service runs. Install or reinstall it with `sudo /opt/teletraan/computer/scripts/install-remote.sh` (it needs `SANITY_WRITE_TOKEN` in `local.env` and the helper socket from `computer/install.sh`).
+- `systemctl status teletraan-remote` says whether the service runs. Install or reinstall it with `sudo /opt/teletraan/computer/scripts/install-remote.sh` (Install everything in the Mac tool and `computer/install.sh` run it for you, and with no key it prints one line and installs nothing; it needs `SANITY_WRITE_TOKEN` in `local.env` and the helper socket from `computer/install.sh`).

@@ -10,7 +10,7 @@
 #   2. migrate: today's /opt/teletraan becomes releases/1, local.env moves up to /opt/teletraan/local.env
 #   3. install the helper socket, its service and the sudoers file
 #   4. install the tree as the next release (control/bin/install-tree.js in the Node image), which builds the Studio
-#   5. start the containers, start the screen again, install the nightly timer
+#   5. start the containers, start the screen again, install the nightly timer and the remote action service
 #   6. make the bare git repository for the optional git path
 # It installs no package. The Node image and git have to be there already (the lines say what to run).
 #
@@ -235,6 +235,14 @@ if [ -x "$root/computer/scripts/install-nightly.sh" ]; then
   echo | "$root/computer/scripts/install-nightly.sh" || say "install-nightly.sh stopped (exit $?). Run it again by hand."
 else
   say "This release has no install-nightly.sh, so the nightly timer was skipped."
+fi
+
+# The remote action service (Studio buttons). It skips itself with one line when the key it needs is not in local.env.
+step "Install the remote action service"
+if [ -x "$root/computer/scripts/install-remote.sh" ]; then
+  echo | "$root/computer/scripts/install-remote.sh" || say "install-remote.sh stopped (exit $?). Run it again by hand."
+else
+  say "This release has no install-remote.sh, so the remote action service was skipped."
 fi
 
 # 6. The optional git path

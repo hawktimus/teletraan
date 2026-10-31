@@ -2,8 +2,10 @@
 // button that installs it. The steps are shown the same way as for a folder.
 
 import { api } from './api.js';
+import { apiPath } from './base.js';
 import { sentences } from './guide.js';
 import { versionLabel, restartWords, waitUntilBack } from './update-lib.js';
+import { confirmAction } from './action-run.js';
 
 function element(tag, text, className) {
   const made = document.createElement(tag);
@@ -12,8 +14,9 @@ function element(tag, text, className) {
   return made;
 }
 
-// stepNames: the plain words for each install step. reload: called when an install is over.
-export function githubCard(stepNames, reload) {
+// stepNames: the plain words for each install step. reload: called when an install is over. onEvent (optional) hears every step
+// as it happens, and { step: 'begin' } and { step: 'end', state } around the whole install, for the four step flow of Update.
+export function githubCard(stepNames, reload, onEvent) {
   const card = element('section', '', 'card');
   const github = element('p', 'Asking GitHub...');
   const wall = element('p', '');
@@ -50,6 +53,7 @@ export function githubCard(stepNames, reload) {
   }
 
   function show(event) {
+    if (onEvent) onEvent(event);
     if (event.step === 'finish') {
       steps.append(element('li', event.message, event.state));
       return;
@@ -66,7 +70,7 @@ export function githubCard(stepNames, reload) {
   }
 
   async function run() {
-    const response = await fetch('/control/api/github/update', { method: 'POST' });
+    const response = await fetch(apiPath('github/update'), { method: 'POST' });
     if (response.status === 401) location.reload();
     if (!response.ok) {
       const answer = await response.json().catch(() => ({}));
@@ -87,7 +91,10 @@ export function githubCard(stepNames, reload) {
   }
 
   button.addEventListener('click', async () => {
-    if (!found || !window.confirm('Update the wall to ' + found.short + ' from GitHub? The screen restarts and is black for about ten seconds.')) return;
+    if (!found) return;
+    const yes = await confirmAction({ title: 'Publish ' + found.short + ' to the wall?', body: 'The newest version from GitHub is downloaded, checked and put on the wall. The previous version is kept, so you can roll back.', dark: 'The screen restarts and the TV may be dark for about 30 seconds. This page may reconnect once.', confirmLabel: 'Publish to the wall' });
+    if (!yes) return;
+    if (onEvent) onEvent({ step: 'begin' });
     busy = true;
     button.disabled = true;
     problem.textContent = '';
@@ -108,6 +115,7 @@ export function githubCard(stepNames, reload) {
       }
     }
     busy = false;
+    if (onEvent) onEvent({ step: 'end', state: problem.textContent && problem.className === 'bad' ? 'fail' : 'done' });
     await reload();
     await check();
   });

@@ -9,7 +9,6 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
 import { helpNoteHtml, helpNotes, helpSeen, lead, markHelpSeen, moreOpen, moreToolsHtml, resetHelp, sentences } from '../control/static/guide.js';
-import { sections } from '../control/static/tabs/settings.js';
 import { blocks } from '../control/static/tabs/content-blocks.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -25,8 +24,8 @@ const pageFiles = walk('control/static');
 const scripts = pageFiles.filter(file => file.endsWith('.js'));
 
 test('every tab, every Settings section and every Content block has one plain sentence', () => {
-  ['status', 'display', 'content', 'settings'].forEach(id => assert.ok(sentences[id], id));
-  sections.forEach(section => assert.ok(sentences['settings.' + section.id], 'settings.' + section.id));
+  ['now', 'show', 'update', 'computer', 'details'].forEach(id => assert.ok(sentences[id], id));
+  ['update', 'keys', 'monday', 'sync', 'competition', 'screen', 'reboot', 'cleanup', 'log', 'all'].forEach(id => assert.ok(sentences['settings.' + id], 'settings.' + id));
   blocks.forEach(block => assert.ok(sentences['content.' + block.id], 'content.' + block.id));
   ['display.onwall', 'display.theme-card', 'display.announce', 'display.preview', 'display.rotation', 'display.rows', 'display.add', 'display.more', 'display.quick', 'display.motion', 'display.theme',
     'status.preview', 'status.now', 'status.health', 'health.dots', 'health.reads', 'health.running', 'health.computer', 'health.errors'].forEach(key => assert.ok(sentences[key], key));
@@ -56,8 +55,8 @@ test('the sentence is a paragraph with an id a section can point to', () => {
 });
 
 test('each tab has a short note for a student, with a button that dismisses it', () => {
-  assert.deepEqual(Object.keys(helpNotes), ['status', 'display', 'content', 'settings']);
-  ['status', 'display', 'content', 'settings'].forEach(id => {
+  assert.deepEqual(Object.keys(helpNotes), ['now', 'show', 'update', 'computer', 'details']);
+  ['now', 'show', 'update', 'computer', 'details'].forEach(id => {
     assert.ok(helpNotes[id].length >= 2 && helpNotes[id].length <= 4, id);
     const html = helpNoteHtml(id);
     assert.ok(html.includes('What do I do here?') && html.includes('data-help-done') && html.includes('Got it'), id);
@@ -67,19 +66,19 @@ test('each tab has a short note for a student, with a button that dismisses it',
 test('a browser remembers a dismissed note, the Help link brings them back, and a browser with no storage still works', () => {
   const store = {};
   globalThis.window = { localStorage: { getItem: key => (key in store ? store[key] : null), setItem: (key, value) => { store[key] = String(value); }, removeItem: key => { delete store[key]; } } };
-  assert.equal(helpSeen('display'), false, 'the first visit shows the note');
-  markHelpSeen('display');
-  assert.equal(helpSeen('display'), true);
-  assert.equal(helpSeen('status'), false, 'each tab is remembered on its own');
+  assert.equal(helpSeen('show'), false, 'the first visit shows the note');
+  markHelpSeen('show');
+  assert.equal(helpSeen('show'), true);
+  assert.equal(helpSeen('now'), false, 'each tab is remembered on its own');
   resetHelp();
-  assert.equal(helpSeen('display'), false, 'Help shows every note again');
+  assert.equal(helpSeen('show'), false, 'Help shows every note again');
   assert.equal(moreOpen('display'), false, 'More tools starts closed');
   store['teletraan.control.more.display'] = 'open';
   assert.equal(moreOpen('display'), true);
 
   globalThis.window = { get localStorage() { throw new Error('blocked'); } };
-  assert.equal(helpSeen('display'), false);
-  markHelpSeen('display');
+  assert.equal(helpSeen('show'), false);
+  markHelpSeen('show');
   assert.equal(moreOpen('display'), false);
   delete globalThis.window;
 });
@@ -94,17 +93,15 @@ test('More tools is a closed disclosure with its sentence and a name a screen re
   assert.ok(read('control/static/tabs/settings-log.js').includes("moreToolsHtml('log'"), 'the log download is under More tools');
 });
 
-test('the tab bar is a tablist with labelled tabs, a roving tab stop and arrow keys, and the header has a Help button', () => {
+test('the navigation is a nav of links with the current area marked, the header has a Help button and a theme button, and the focus ring shows', () => {
   const html = read('control/static/index.html');
-  assert.ok(html.includes('role="tablist" aria-label="Pages of the control page"'));
-  assert.ok(html.includes('<button type="button" class="help" id="help">Help</button>'));
-  assert.ok(html.includes('<main id="page" role="tabpanel"'));
+  assert.ok(html.includes('<nav id="tabs" aria-label="Areas of the control page">'));
+  assert.ok(html.includes('<button type="button" class="tool" id="help">Help</button>'));
+  assert.ok(html.includes('<main id="page" tabindex="-1">'));
   const app = read('control/static/app.js');
-  ["button.role = 'tab'", "setAttribute('aria-controls', 'page')", "setAttribute('aria-selected'", 'button.tabIndex = on ? 0 : -1', "page.setAttribute('aria-labelledby'", 'ArrowRight', 'ArrowLeft', 'Home', 'End', 'resetHelp()', 'mountHelpNote(page, tab.id)'].forEach(word => assert.ok(app.includes(word), word));
+  ["setAttribute('aria-current', 'page')", 'resetHelp()', 'mountHelpNote(area, tab.id)'].forEach(word => assert.ok(app.includes(word), word));
   const style = read('control/static/style.css');
   assert.ok(/:focus-visible \{[^}]*outline: 3px solid/.test(style), 'every control has a focus ring');
-  const guide = read('control/static/tabs/settings.js') + read('control/static/tabs/content-blocks.js');
-  assert.equal((guide.match(/aria-describedby/g) || []).length, 2, 'the section disclosures point at their sentence');
 });
 
 test('no string a person reads shows a stored name such as general, family, rotationRows or holdPanel', () => {

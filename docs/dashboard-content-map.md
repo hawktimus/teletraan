@@ -21,7 +21,7 @@ Who: S is students, L is leads, C is coaches. The Studio page is the sidebar lin
 | Clock, date, weather | nobody | The computer clock; a free weather service that needs no key | none | Time zone on the Look page. No other setting |
 | Countdown (Kickoff, then Rollout) | C | Settings only | Dashboard Settings, Countdown tab | Labels and dates. Where it sits (View, Countdown) |
 | Ticker: tips, news, reminders, sponsor thanks | S, L | Tips and News list typed by hand; sponsor thank-you lines | Tips and News; Sponsors | Seconds per ticker line (Screen tab); Ticker label (Team); per item Team, Order, Show, Hide after |
-| Three small dots (Monday, BAND, Sanity) | nobody | The computer | none | none |
+| Four small dots (Monday, BAND, Sanity, network) | nobody | The computer | none | none |
 | Build number on the wall | nobody | The computer | Control page | none |
 
 ### 1.2 The big panel (the Rotation plays these)

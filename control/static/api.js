@@ -1,7 +1,9 @@
 // One place for calls to the service. A 401 sends the person back to the sign-in form.
 
+import { apiPath } from './base.js';
+
 export async function api(path, options) {
-  const response = await fetch('/control/api/' + path, options);
+  const response = await fetch(apiPath(path), options);
   if (response.status === 401) {
     location.reload();
     throw new Error('Sign in again.');

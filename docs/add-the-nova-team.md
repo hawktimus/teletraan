@@ -37,7 +37,9 @@ team, and the Nova view stays on Prime.
 
 In Studio open Teams and views, then Hawktimus Nova. These are the fields.
 
-- Team name: up to 20 characters. It is the name in the banner.
+- Team name: up to 20 characters. It is the name in the banner. A name that still ends in "(?)" from the time it was
+  not settled is shown without it (`cleanTeamName` in `core/teams.js`), so nothing has to be edited to get a clean banner.
+  The name is only ever typed here, never in the code.
 - Short name: up to 8 characters, such as NOVA.
 - Team number: up to 6 characters. The file starts with 3426. Check that it is the
   right number.

@@ -1,5 +1,5 @@
 // GET /control/api/status: what the Teletraan computer is running and how fresh its reads are, with the reason
-// behind each of the three dots. Anything that cannot be found out shows as not known.
+// behind each of the dots. Anything that cannot be found out shows as not known.
 
 import fs from 'node:fs';
 import os from 'node:os';

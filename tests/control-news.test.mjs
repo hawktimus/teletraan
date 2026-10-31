@@ -83,7 +83,7 @@ test('Last reads shows FRC news with how long ago and how many headlines, and no
 test('there is a Sync news now button that sends sync-now with the target news, and its result is Done in words', () => {
   const tab = read('control/static/tabs/settings-sync.js');
   assert.match(tab, /\{ target: 'news', label: 'Sync news now'/);
-  assert.match(tab, /run\(button, 'sync-now', \{ target: item\.target \}/);
+  assert.match(read('control/static/sync-run.js'), /'POST', '\/helper\/sync-now', \{ target: target \}/);
   assert.equal(doneWords('sync-now', { target: 'news' }), 'The FRC news sync has started.');
   assert.deepEqual(outcome({ ok: true }, 'sync-now', { target: 'news' }), { state: 'done', words: 'Done. The FRC news sync has started.' });
   assert.equal(outcome({ ok: false, error: 'The helper refused sync-now' }, 'sync-now', { target: 'news' }).state, 'bad');

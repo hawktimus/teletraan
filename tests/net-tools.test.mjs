@@ -458,7 +458,7 @@ await check('the units: the sync service restarts by itself, runs as the login u
   assert.match(read('teletraan-heartbeat.timer'), /OnUnitActiveSec=5min/);
   assert.match(read('teletraan-heartbeat.service'), /^NoNewPrivileges=yes$/m);
   const deploy = fs.readFileSync(path.join(repo, 'tools/teletraan/teletraan-tool-deploy.sh'), 'utf8');
-  assert.ok(deploy.includes('cleanup sync; do'), 'Install everything installs the sync service');
+  assert.ok(deploy.includes('cleanup remote sync; do'), 'Install everything installs the remote service and then the sync service');
 });
 
 await check('local.example.env names the new values and holds no real one', () => {

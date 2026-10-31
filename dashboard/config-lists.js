@@ -113,12 +113,12 @@ export const lookSwaps = ['assemble', 'slats', 'cut'];
 
 // The competition cards setting in Dashboard Settings (Competition tab): when the cards of core/competition.js
 // are in the rotation. The Studio copies this list. The order is kept, so a new mode goes at the end.
-//   auto    each card comes in its own window: the cards about an event from two days before its first day to its last,
-//           with the next match first, the season timeline all season, the look back before the first event, and the
+//   auto    each card comes in its own window, inside the competition window (7 days before the next event starts to 7 days
+//           after the latest one ended, core/constants.js): the cards about an event, with the next match first, the season timeline all season, the look back before the first event, and the
 //           district points once the first event has started
 //   always  every card that is switched on, whatever the date
 //   off     no card
-//   around  Before and after: the cards play from 14 days before an event until the day before it (the preview),
+//   around  Before and after: the cards play from 7 days before an event until the day before it (the preview),
 //           stay off while the event is on, and play again for 7 days from the day after it (the recap). The team
 //           is not at the school during a competition, so the match by match cards are not used in this mode
 export const competitionModes = ['auto', 'always', 'off', 'around'];
@@ -141,13 +141,9 @@ export const competitionSwitches = [
   'competitionCompare',
 ];
 
-// Auto brings the cards about an event this many days before its first day
+// The competition-matches card says that the schedule is not posted yet in the last this many days before an event. The window
+// in which any competition card comes at all (7 days before the first event, 7 days after the last) is in core/constants.js.
 export const competitionLeadDays = 2;
-
-// Before and after: the preview starts this many days before the first day of an event, and the recap lasts this many days
-// from the day after the last day
-export const competitionPreviewDays = 14;
-export const competitionRecapDays = 7;
 
 // The estimate of a win chance from the EPA of the two alliances, used only when Statbotics has none: the chance is
 // the normal curve at the gap between the two sums, over this many points. It is a rough width of a match score, and

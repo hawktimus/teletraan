@@ -1265,8 +1265,8 @@ What plays on the screen is set by four View documents, Robotics (stored as gene
 **How the views play.** A view stays for its minutes, then the next view in the order that has something to show comes. A view with
 nothing to show is skipped. The main panel plays the rows of the view from the top to the bottom and then starts again. A swap plays
 at every change of view, in the theme of the day. The side panel plays its rows on its own timer and is never empty
-(`withStandIns` in `core/panel-order.js`, "No small frame" and "Panel B"). The competition cards still come in from two days before an
-event, as the Competition tab says, and they are not rows.
+(`withStandIns` in `core/panel-order.js`, "No small frame" and "Panel B"). The competition cards still come in from 7 days before an
+event until 7 days after it, as the Competition tab says, and they are not rows.
 
 A swap never starts while an alert, an announcement, a talk, the night screen or a hidden transition has the screen, and the
 theme and the team change in the same frame ("The swap" below). A change between the standard and the bar layout is a change of

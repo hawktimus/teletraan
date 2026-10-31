@@ -188,14 +188,14 @@ test('the result goes in a line right under the buttons that were pressed, and i
 });
 
 test('every button of the Display controls, Sync and restart and Logs reports through the result line, and the CSS colors it', () => {
-  ['push.js', 'settings-sync.js', 'settings-log.js'].forEach(file => {
+  ['push.js', 'settings-log.js'].forEach(file => {
     const text = read('control/static/tabs/' + file);
     assert.ok(text.includes('showResult(') && (text.includes('outcome(') || text.includes('doneWords(')), file);
     assert.ok(!text.includes('say('), file + ' still has the quiet note');
   });
   const css = read('control/static/tabs/tabs.css');
   ['done', 'bad', 'wait'].forEach(state => assert.ok(css.includes('.result[data-state="' + state + '"]'), state));
-  assert.ok(/\.result\[data-state="done"\] \{ color: #2fd27a/.test(css) && /\.result\[data-state="bad"\] \{ color: #ff8a8a/.test(css));
+  assert.ok(/\.result\[data-state="done"\] \{ color: var\(--ok\)/.test(css) && /\.result\[data-state="bad"\] \{ color: var\(--bad\)/.test(css));
 });
 
 test('the keys are read through the folder, so a key saved in the Keys section of Settings is seen without making the container again', () => {

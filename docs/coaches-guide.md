@@ -21,7 +21,7 @@ This is the table of the README. A file you want to change is in one of these fo
 | `studio/` | The Studio: `schemas/` (one file for each kind of content), `inputs/` (custom inputs, pages and the lists that copy the dashboard's), `tools/` (Publish all, the view defaults and the buttons), `structure.js` (the sidebar) and `static/` (made by the build, never committed) |
 | `control/` | The control page service (Node, standard library only) and its pages: updates (Update from GitHub, or a folder), rollback, what is on the wall, the keys and the log (docs/control-page.md) |
 | `computer/` | Everything that runs on the Teletraan computer: `install.sh`, `scripts/` (every script starts with `lib.sh`), `systemd/`, `nginx/`, `sudoers/`, `git/`, `console/`, `docker-compose.yml` and `local.example.env` |
-| `tools/` | Things a coach runs on a Mac: `teletraan/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `monday-screens.mjs` (the pictures of the Monday panels in docs/reference/), `anim-strip.mjs` (contact sheets of the transitions, docs/animation-review.md), `measure-display-pictures.mjs` (the cost of the Display tab pictures), `contrast-probe.mjs`, `color-vision.mjs` and `flash-probe.mjs` (the accessibility audit, docs/accessibility.md), `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
+| `tools/` | Things a coach runs on a Mac: `teletraan/` (the Mac tool), `mac/` (the Ship app), `screenshots.mjs`, `monday-screens.mjs` (the pictures of the Monday panels in docs/reference/), `control-screens.mjs` (the pictures of the Control page in docs/reference/control-page/), `anim-strip.mjs` (contact sheets of the transitions, docs/animation-review.md), `measure-display-pictures.mjs` (the cost of the Display tab pictures), `contrast-probe.mjs`, `color-vision.mjs` and `flash-probe.mjs` (the accessibility audit, docs/accessibility.md), `sweep.sh` with `sweep-words.txt`, `serve.py`, `frc-fixture.mjs`, the pages `icons.html`, `logo.html` and `zones.html`, and `perf/` |
 | `tests/` | Every test, one file for each module or script, and `run.mjs` to run them all |
 | `docs/` | The guides. `docs/paths.md` lists where every file moved to, `docs/where-things-are.md` is the long map and `docs/changelog.md` says what each round changed |
 
@@ -121,7 +121,7 @@ A row is a panel and, if you want, the seconds. Without seconds the row follows 
 - Panel: the large panels (Tasks, Upcoming events, Daily Agenda, Subteam spotlight, Sponsor feature, Photo, Leadership, Team leads, Subteam roster and Extra panel) and the Monday rows: Department tasks and TV charts (docs/monday.md). Upcoming events is one row that scrolls from its first four events to the next four.
 - The team of a row is the team of its view. A Monday row names its department, list or chart, and the team of its tasks. A Monday row with nothing to show, such as a department with no open task, is skipped (docs/monday.md).
 - Monday style: the style the Screen takes while a Monday row plays. It is a field of the Screen documents, which are in Old screens (not used) and kept for that. The screen swaps into it when the first Monday row begins and back to the theme of the day when the next row is not a Monday row.
-- The competition cards still come in by themselves, as the Competition page says (Before and after: 14 days before an event and 7 days after it). They are not rows.
+- The competition cards still come in by themselves, as the Competition page says (Before and after: 7 days before an event and 7 days after it). They are not rows. A row that names a competition card is skipped outside that time, in Auto and in Before and after.
 - When an alert, an announcement, a talk or the night screen has the screen, the minutes stand still. The view that was interrupted comes back at the panel that was next.
 
 ### Views
@@ -372,9 +372,9 @@ recap after it, and shows nothing while the event is on.
 - Teams: a team is read when it is Active and has a Team number in Settings,
   Teams. A team without a number is left out, and that is not an error.
 - Competition mode: the Competition page in the sidebar. Before and after (recommended)
-  plays a preview from 14 days before an event to the day before it, nothing while the
+  plays a preview from 7 days before an event to the day before it, nothing while the
   event is on, and a recap for 7 days from the day after it. Auto shows the older cards
-  from two days before an event and during it. Always shows every card that is on and has
+  from 7 days before an event until 7 days after it. Auto and Before and after show nothing about a competition when no event is within 7 days. Always shows every card that is on and has
   something to show, whatever the date. Off shows none. A settings page that never stored a
   mode plays Before and after. A mode that is already stored, Auto included, stays until you
   change it. A switch for each card is on to start with, and a card that is off never shows,
@@ -384,19 +384,19 @@ recap after it, and shows nothing while the event is on.
 
 | Card | What it shows | When it comes in Auto |
 |------|---------------|-----------------------|
-| Season timeline | The coming dates, each with the days left | All season, while a date is ahead |
+| Season timeline | The coming dates, each with the days left | From 7 days before an event until 7 days after it, while a date is ahead |
 | Last season at a glance | The record, the rank at each event and the rating line | Before the first event starts |
-| Live rank | The rank, the record and the ranking points | From two days before an event to its last day |
+| Live rank | The rank, the record and the ranking points | From 7 days before an event until 7 days after its last day |
 | Next match | The match, its time, the two alliances and the chance to win | The same days, and first |
 | Results strip | The last 8 matches with their scores | The same days |
 | Alliance board | The alliance number and its partners | The same days, once the selection is made |
-| District points | The points and the rank against the cutoff | All season once the first event has started |
+| District points | The points and the rank against the cutoff | Once the first event has started, from 7 days before an event until 7 days after it |
 
 The three newer cards come in Before and after and in Always. Auto does not show them.
 
 | Card | What it shows | When it comes in Before and after |
 |------|---------------|-----------------------------------|
-| Event preview | The event, its days, the time left, how many teams come, where each of our teams would rank by EPA, the best eight teams, and our EPA over the season | From 14 days before an event to the day before |
+| Event preview | The event, its days, the time left, how many teams come, where each of our teams would rank by EPA, the best eight teams, and our EPA over the season | From 7 days before an event to the day before |
 | Our matches | Our qualification matches with the time, the chance to win each, the expected record, the hardest and the easiest match and a line about the best opponent | Once the schedule is posted, usually the evening before. Before that it says the schedule is not posted yet, in the last 2 days |
 | Event recap | The final rank, the record, the ranking points, the change in EPA, the district points gained, the awards and the EPA over the season | For 7 days from the day after the event |
 

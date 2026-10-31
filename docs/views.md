@@ -70,6 +70,7 @@ The two rows of a department of a team view are Team roster part 1 and part 2 (`
 - The Parts request panel draws a QR code of `partsRequestUrl` (Dashboard Settings, Screen tab, Parts request address). The address must start with https:// and be 200 characters or fewer. With none it shows PARTS REQUEST and LINK NOT SET and the rotation skips it. `core/qr.js` makes the code (byte mode, level M, versions 1 to 10), and `tests/qr.test.mjs` reads it back.
 - Drive hours adds the hours of the Monday board for each person, the most hours first, six rows a page, scrolled, up to 18 people. The people and hours are those of the roster.
 - The status pie shows the tasks of the team, or of the department of its row, by status, with the words of each status and its count beside it.
+- A saved list that has no Projects row at all, in any view and shown or hidden, gets the default Projects row on the screen: Robotics, 20 seconds, after the last Department tasks or TV charts row of its first Robotics block that has one (`withProjectsRow` in `core/rotation.js`). Nothing is saved or changed in Studio. A Projects row that is saved always wins, so hide it there to keep Projects off the screen. A list with no Robotics Monday row is left as it is.
 - Daily Agenda is not in the default rotation. Add a row for it in Dashboard Settings if it is wanted. The older lists of the views are kept and `migrateRotationFromViews` builds a list from them.
 
 ## Robotics

@@ -445,6 +445,7 @@ dashboardSettings.rotationRows.<object>.panel = monday-overall
 dashboardSettings.rotationRows.<object>.panel = monday-pie
 dashboardSettings.rotationRows.<object>.panel = monday-progress
 dashboardSettings.rotationRows.<object>.panel = monday-progress-both
+dashboardSettings.rotationRows.<object>.panel = monday-projects
 dashboardSettings.rotationRows.<object>.panel = monday-status-depts
 dashboardSettings.rotationRows.<object>.panel = monday-tasks
 dashboardSettings.rotationRows.<object>.panel = monday-timeline
@@ -807,6 +808,21 @@ mondayStatus.hiddenCount
 mondayStatus.hiddenUnassigned
 mondayStatus.lastError
 mondayStatus.lastSyncAt
+mondayStatus.projects
+mondayStatus.projects.<object>
+mondayStatus.projects.<object>.completedOn
+mondayStatus.projects.<object>.helpers
+mondayStatus.projects.<object>.id
+mondayStatus.projects.<object>.mentor
+mondayStatus.projects.<object>.mentorInitial
+mondayStatus.projects.<object>.percent
+mondayStatus.projects.<object>.status
+mondayStatus.projects.<object>.status = blocked
+mondayStatus.projects.<object>.status = done
+mondayStatus.projects.<object>.status = in-progress
+mondayStatus.projects.<object>.status = in-review
+mondayStatus.projects.<object>.status = up-next
+mondayStatus.projects.<object>.title
 mondayStatus.readings
 mondayStatus.readings.<object>
 mondayStatus.readings.<object>.boardId
@@ -890,19 +906,44 @@ progressBlock.label
 progressBlock.percent
 remoteControl
 remoteControl.action
+remoteControl.action = pause_rotation
 remoteControl.action = reboot_computer
 remoteControl.action = restart_dashboard
 remoteControl.action = restart_services
+remoteControl.action = resume_rotation
+remoteControl.action = show_theme
+remoteControl.action = show_view
+remoteControl.action = sync_all
+remoteControl.action = sync_calendars
+remoteControl.action = sync_competition
+remoteControl.action = sync_match13
+remoteControl.action = sync_monday
+remoteControl.action = sync_news
+remoteControl.action = sync_photos
 remoteControl.lastHandledAt
 remoteControl.lastResult
 remoteControl.requestedAt
 remoteControl.requestedBy
+remoteControl.theme
+remoteControl.theme = auto
+remoteControl.theme = cybertron
+remoteControl.theme = foundry
+remoteControl.theme = original
+remoteControl.theme = retro
+remoteControl.view
+remoteControl.view = auto
+remoteControl.view = family
+remoteControl.view = general
+remoteControl.view = nova
+remoteControl.view = prime
 remoteStatus
+remoteStatus.checkedAt
 remoteStatus.lastRequest
 remoteStatus.lastRequest.action
 remoteStatus.lastRequest.handledAt
 remoteStatus.lastRequest.requestedBy
 remoteStatus.lastRequest.result
+remoteStatus.lastRequest.via
 remoteStatus.netwatch
 remoteStatus.netwatch.failures
 remoteStatus.netwatch.lastAction
@@ -914,6 +955,9 @@ remoteStatus.netwatch.lastActionAt
 remoteStatus.netwatch.lastCheckAt
 remoteStatus.netwatch.lastOkAt
 remoteStatus.netwatch.lastRebootAt
+remoteStatus.network
+remoteStatus.network.ok
+remoteStatus.network.since
 remoteStatus.sources
 remoteStatus.sources.<object>
 remoteStatus.sources.<object>.lastFailureAt
@@ -958,6 +1002,7 @@ screen.mainRows.<object>.panel = events
 screen.mainRows.<object>.panel = leadership
 screen.mainRows.<object>.panel = monday-charts
 screen.mainRows.<object>.panel = monday-department
+screen.mainRows.<object>.panel = monday-projects
 screen.mainRows.<object>.panel = photo
 screen.mainRows.<object>.panel = roster
 screen.mainRows.<object>.panel = sponsor-feature
@@ -1305,6 +1350,7 @@ view.panels.<object>.panel = events
 view.panels.<object>.panel = leadership
 view.panels.<object>.panel = monday-charts
 view.panels.<object>.panel = monday-department
+view.panels.<object>.panel = monday-projects
 view.panels.<object>.panel = photo
 view.panels.<object>.panel = roster
 view.panels.<object>.panel = sponsor-feature

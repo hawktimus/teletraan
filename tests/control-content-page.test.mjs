@@ -66,8 +66,14 @@ function documents() {
   ]);
 }
 
+// The blocks used to fold on one page; now each is a section of the Show area. This page folds them the old way so each block can be tried alone.
 const body = '<body><main id="page" style="padding:16px"><div id="box"></div></main>' +
-  '<script type="module">import { drawContent } from "/control/tabs/content-blocks.js"; drawContent(document.getElementById("box"), { section: new URLSearchParams(location.search).get("section") || "" }); window.ready = true;</script></body>';
+  '<script type="module">import { blocks, mountBlock } from "/control/tabs/content-blocks.js";' +
+  'const root = document.createElement("div"); root.className = "tab ct"; document.getElementById("box").append(root);' +
+  'blocks.forEach(block => { const details = document.createElement("details"); details.className = "ct-block"; details.dataset.block = block.id;' +
+  'details.innerHTML = "<summary><span class=ct-block-title>" + block.title + "</span></summary><div class=ct-block-body></div>"; let started = false;' +
+  'details.addEventListener("toggle", () => { if (started || !details.open) return; started = true; mountBlock(details.querySelector(".ct-block-body"), block.id); }); root.append(details); });' +
+  'window.ready = true;</script></body>';
 
 let passed = 0;
 async function check(name, test) {
@@ -118,9 +124,8 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
   const label = ' at ' + width;
   const harness = await startHarness({ documents: documents(), routes: [settingsRoutes, collectionRoutes, contentRoutes, uploadRoutes], body: body });
 
-  await check('Content is one heading with five blocks that fold, in the order ticker, calendar, roster, announcements, photos' + label, async () => {
+  await check('the five blocks are in the order ticker, calendar, roster, announcements, photos, and nothing is read before one is opened' + label, async () => {
     const page = await open(harness, width, height);
-    assert.equal(await page.locator('.ct > .card h2').textContent(), 'Content');
     assert.deepEqual(await page.locator('.ct-block-title').allTextContents(), ['Ticker and news', 'Calendar', 'Roster', 'Announcements', 'Photos']);
     assert.equal(await page.locator('.ct-block[open]').count(), 0, 'every block starts folded');
     assert.equal(harness.ctx.state.settingsSpec, undefined, 'nothing is read before a block is opened');
@@ -415,18 +420,6 @@ for (const [width, height] of [[1600, 1000], [390, 844]]) {
     assert.ok(harness.sanity.stored['lead-1']);
     assert.ok(!(await page.content()).includes('skFAKEtoken'), 'no key reaches the page');
     assert.deepEqual(page.trouble, []);
-    await page.close();
-  });
-
-  await check('the address names a block and it opens by itself; on a phone opening one closes the others' + label, async () => {
-    const page = await open(harness, width, height, '', 'photos');
-    assert.equal(await page.locator('.ct-block[open]').count(), 1);
-    assert.equal(await page.locator('.ct-block[open]').getAttribute('data-block'), 'photos');
-    await page.waitForSelector('.ct-block[data-block="photos"] .ct-grid');
-    await page.click('.ct-block[data-block="roster"] > summary');
-    await page.waitForSelector('.ct-block[data-block="roster"] .ct-bar');
-    const opened = await page.locator('.ct-block[open]').count();
-    assert.equal(opened, width < 600 ? 1 : 2, width < 600 ? 'one block at a time on a phone' : 'blocks stay open on a wide page');
     await page.close();
   });
 

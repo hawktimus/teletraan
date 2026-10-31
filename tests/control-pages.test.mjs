@@ -96,10 +96,10 @@ check('the health block has a Network line: ok with the last problem and the rec
   assert.ok(html.includes('Network</dt><dd>ok, last problem 3 days ago, 2 recoveries in 24 hours'), html);
 });
 
-check('Settings, Sync and restart has the Check the network now button, and it asks for the network-info word', async () => {
+check('Computer, Network has the Run network check button, and it asks for the network-info word', async () => {
   const fs = await import('node:fs');
-  const text = fs.readFileSync(new URL('../control/static/tabs/settings-sync.js', import.meta.url), 'utf8');
-  assert.ok(text.includes('Check the network now') && text.includes("'/helper/network-info'"));
+  const text = fs.readFileSync(new URL('../control/static/areas/computer.js', import.meta.url), 'utf8');
+  assert.ok(text.includes('Run network check') && text.includes("helperRun('network-info')"));
 });
 
 check('the card of the wall names the build, view, theme, layout, team, panel, page and the age of the report', () => {
@@ -116,7 +116,7 @@ check('the Keys section of Settings never holds a value, only the mask, and has 
 });
 
 check('each tab file registers itself with an id and a title, and parses', () => {
-  const expected = { 'status.js': 'Status', 'settings.js': 'Settings' };
+  const expected = {};
   const sections = ['now.js', 'health.js', 'arrange.js', 'render-health.js', 'settings-update.js', 'settings-keys.js', 'settings-monday.js', 'settings-sync.js', 'settings-reboot.js', 'settings-cleanup.js', 'settings-log.js', 'settings-all.js'];
   sections.forEach(file => assert.ok(!fs.readFileSync(path.join(folder, file), 'utf8').includes('registerTab('), file + ' is a part of a tab, not a tab'));
   [...Object.keys(expected), ...sections].forEach(file => {
@@ -190,21 +190,23 @@ check('after a press the page says what the wall reports, and after 20 seconds w
 
 check('the Monday section of Settings has Check the token and Monday debug, sends a board number of digits only, and holds no key', () => {
   const text = fs.readFileSync(path.join(folder, 'settings-monday.js'), 'utf8');
-  const settings = fs.readFileSync(path.join(folder, 'settings.js'), 'utf8');
-  assert.ok(settings.includes("id: 'monday', title: 'Monitor Monday'") && settings.includes('mountMonday'));
+  const settings = fs.readFileSync(path.join(folder, '../areas/update.js'), 'utf8');
+  assert.ok(settings.includes("id: 'monday', title: 'Monday check'") && settings.includes('mountMonday'));
   assert.ok(text.includes('>Check the token<') && text.includes('>Monday debug<'));
   assert.ok(text.includes("'/helper/monday-check'") && text.includes("'/helper/monday-debug', { board: number }"));
   assert.ok(text.includes('[0-9]{1,20}'), 'the board number is checked before it is sent');
   assert.ok(!/MONDAY_API_TOKEN|local\.env|Authorization/.test(text), 'the page names no key');
 });
 
-check('the old addresses land on Status or on a section of Settings', async () => {
+check('the old addresses land on an area or on a section of one', async () => {
   const { resolveAddress } = await import('../control/static/tabs.js');
-  assert.deepEqual(resolveAddress('now'), { id: 'status', section: '' });
-  assert.deepEqual(resolveAddress('status'), { id: 'status', section: '' });
-  ['update', 'keys', 'log'].forEach(name => assert.deepEqual(resolveAddress(name), { id: 'settings', section: name }));
-  assert.deepEqual(resolveAddress('settings/log'), { id: 'settings', section: 'log' });
-  assert.deepEqual(resolveAddress('settings/monday'), { id: 'settings', section: 'monday' });
+  assert.deepEqual(resolveAddress('now'), { id: 'now', section: '' });
+  assert.deepEqual(resolveAddress('status'), { id: 'now', section: '' });
+  assert.deepEqual(resolveAddress('update'), { id: 'update', section: '' });
+  assert.deepEqual(resolveAddress('keys'), { id: 'update', section: 'keys' });
+  assert.deepEqual(resolveAddress('log'), { id: 'details', section: 'log' });
+  assert.deepEqual(resolveAddress('settings/log'), { id: 'details', section: 'log' });
+  assert.deepEqual(resolveAddress('settings/monday'), { id: 'update', section: 'monday' });
   assert.deepEqual(resolveAddress(''), { id: '', section: '' });
 });
 

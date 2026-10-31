@@ -227,13 +227,13 @@ left out, and a sentence says so.
 
 | Card | Header | What it shows | When it comes in Auto |
 |------|--------|---------------|-----------------------|
-| Season timeline | SEASON | A line from today to the last coming date, with a numbered dot for each date, and a legend under it with a row for each dot. The dates are the next date of the countdown (Kickoff, then Rollout), each event of the team that is not over, and the state championship. | All season, while there is a date ahead. |
+| Season timeline | SEASON | A line from today to the last coming date, with a numbered dot for each date, and a legend under it with a row for each dot. The dates are the next date of the countdown (Kickoff, then Rollout), each event of the team that is not over, and the state championship. | In the competition window (see below), while there is a date ahead. |
 | Last season at a glance | the year, such as 2026 | The record of the whole season, the rank at each event, and the EPA after each event as a short line. | Before the first event of the season starts, when the Teletraan computer has kept last season. |
-| Live rank | RANK | The rank as the biggest number, how many teams are ranked, the record and the ranking points. | From two days before an event to its last day. |
+| Live rank | RANK | The rank as the biggest number, how many teams are ranked, the record and the ranking points. | From 7 days before an event until 7 days after its last day (the competition window). |
 | Next match | MATCH | The match and its time, the three teams on each alliance with their EPA, which side the team is on, and the chance that red wins as one bar split red and blue. | The same days, and it comes first. |
 | Results strip | RESULTS | The last 8 matches as chips in red or blue, the colour the team was on, with the score and a tick for a win. A lost match is dimmer. | The same days. |
 | Alliance board | ALLIANCE | The number of the alliance and the teams on it. | The same days, once the selection has been made. |
-| District points | DISTRICT | The points, the rank and a bar that fills toward the cutoff for the state championship. | All season once the first event has started, when the computer has the points. |
+| District points | DISTRICT | The points, the rank and a bar that fills toward the cutoff for the state championship. | Once the first event has started, inside the competition window, when the computer has the points. |
 | Event preview | PREVIEW | Page one: the event, its city and days, the time left to its first day, how many teams come and a line for each of our teams, such as "Prime would rank 7th of 42 by EPA". Page two: the best eight teams by EPA with ours marked in their colors, and the average EPA of the field. Page three: the EPA of the team over the season. | Not in Auto. In Before and after, from 14 days before an event to the day before it. |
 | Our matches | MATCHES | Page one: the first match, the time left, the expected record, the hardest and the easiest match. Page two: those two matches in full, our alliance against the opponents with the EPA of each team, and a line about the best opponent. Then the qualification matches in time order, six to a page. | Not in Auto. In Before and after, in the preview days once the schedule is posted, and in the last 2 days before an event even when it is not. |
 | Team metrics | the team, PRIME or NOVA | The team on the screen, a page at a time: the season record, rank, ranking points, average score and win streak, then the Match13 rating, then the Match13 points a match in auto, teleop and endgame, then the next match with its win chance, then the matches still to play, then the last three results with their margin, and the events of the season. A number that is not there yet says NOT YET. | Not in Auto. In Before and after with the preview and the recap, and in Always. It can also be a row of the Rotation, with the team of the row. |
@@ -284,7 +284,7 @@ Competition cards is one of four:
 
 - Before and after (recommended, stored as `around`): the team is not at the school during a
   competition, so the cards come only before and after an event, and not while it is on.
-  - The preview is from 14 days before the first day of an event to the day before it. It
+  - The preview is from 7 days before the first day of an event to the day before it. It
     has the Event preview card, the Our matches card (see below), the season timeline, and last
     season or the district points as in Auto.
   - While the event is on, from its first day to its last day, no card comes. The match by match
@@ -297,18 +297,27 @@ Competition cards is one of four:
 - Auto: each card comes in the time of its own, in the last column of the table.
   On the days of an event the cards take priority: the large panel shows a card,
   then an ordinary panel, then a card, and so on, starting with the next match.
-  On the two days before an event, and for the cards that run all season, the
+  Before an event and after it, inside the competition window, the
   cards are spread evenly through the ordinary panels and come once in each time
   round. The three newer cards do not come in Auto.
 - Always: every card that is switched on and has something to show, whatever the
   date. Use it to try the cards, or if the team wants them up all the time.
 - Off: no card.
 
+The competition window. In Auto and in Before and after, nothing about a competition draws unless
+today is inside a window: from 7 days before the next event of the team starts to 7 days after the
+most recent one ended. Outside it no card comes, the cards are not mixed into the rotation, and a
+row of the Rotation list that names a competition card is skipped (the rest of the rotation moves up,
+there is no gap). Two events less than 14 days apart make one long window. The two numbers are
+`competitionDaysBefore` and `competitionDaysAfter` in `dashboard/core/constants.js`. Always, Off and
+Preview competition do not use the window. The Teletraan computer does not use it either: `frc-sync.sh`
+and `match13-sync.sh` keep reading on their own timers, so the data is fresh when the window opens.
+
 A settings page that has never stored a mode plays Before and after. A mode that is stored, Auto
 included, is kept as it is. The coaches change it on the Competition page.
 
 The Our matches card comes with the preview once the match schedule of the event is posted, which is
-usually the evening before. In the last 2 days before an event it comes even when the schedule is not
+usually the evening before. In the last 2 days before an event (`competitionLeadDays`) it comes even when the schedule is not
 posted, and then says so in one sentence. Before that it is left out, and the preview card carries on.
 
 Each card has a switch of its own, all on to start with except Championship chances (Match13), which is off until a coach

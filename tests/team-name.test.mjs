@@ -154,6 +154,19 @@ const textOf = (html, cssClass) => Array.from(html.matchAll(new RegExp('<span cl
   });
 });
 
+test('a trailing (?) and the space before it are dropped from a name the screen reads, and nothing else is changed', async () => {
+  assert.equal(teams.cleanTeamName('FNORD GLEAM (?)'), 'FNORD GLEAM');
+  assert.equal(teams.cleanTeamName('FNORD GLEAM  (?)  '), 'FNORD GLEAM');
+  assert.equal(teams.cleanTeamName('FNORD GLEAM'), 'FNORD GLEAM');
+  assert.equal(teams.cleanTeamName('FNORD (?) GLEAM'), 'FNORD (?) GLEAM', 'only a trailing mark');
+  assert.equal(teams.cleanTeamName(undefined), undefined);
+  await withFakePage(async () => {
+    const content = contentOf([], []);
+    content.teams.forEach(team => { team.name = nonsense[team.code].name + ' (?)'; });
+    onTeamScreen(content, 'nova', () => assert.equal(teams.teamShown(content).name, nonsense.nova.name));
+  });
+});
+
 test('a team with no short name is written by its name, and never by a name from the seed', () => {
   const content = contentOf([board({ team: 'prime' })], ['[Subteam A]']);
   content.teams[0].shortName = '';

@@ -276,6 +276,18 @@ test('projects: Stuck, In Progress, In Review and To Do first, then up to 3 done
   assert.equal(projects([]), null);
 });
 
+test('projects: a project past the end of its Timeline that is not done is late, and a missing Timeline never is', () => {
+  const view = projects([
+    { title: '[past]', timelineEnd: '2026-10-01' }, { title: '[today]', timelineEnd: '2026-10-15' }, { title: '[none]' },
+    { title: '[done past]', status: 'done', completedOn: '2026-10-14', timelineEnd: '2026-10-01' }, { title: '[future]', status: 'up-next', timelineEnd: '2027-01-01' },
+  ]);
+  const late = Object.fromEntries(view.rows.map(row => [row.project, row.late]));
+  assert.deepEqual(late, { '[past]': true, '[today]': false, '[none]': false, '[done past]': false, '[future]': false });
+  assert.match(htmlOf('monday-projects', withProjects([{ title: '[past]', timelineEnd: '2026-10-01' }]), { team: '' }), /chip chip-late">LATE</);
+  assert.doesNotMatch(htmlOf('monday-projects', withProjects([{ title: '[none]' }]), { team: '' }), /chip-late/);
+  assert.match(fs.readFileSync(new URL('../dashboard/monday.css', import.meta.url), 'utf8'), /\.monday \.chip \{[^}]*font: 700 30px/);
+});
+
 test('projects: the mentor first name, and the last initial for both when two mentors share a first name', () => {
   const view = projects([
     { title: '[a]', mentor: 'Dan', mentorInitial: 'K' }, { title: '[b]', mentor: 'Dan', mentorInitial: 'M' }, { title: '[c]', mentor: 'Cari-Ann' },
@@ -292,7 +304,7 @@ test('projects: nothing is drawn for a value the project does not have, and no c
   assert.deepEqual(view.columns, { mentor: true, percent: true });
   const html = htmlOf('monday-projects', withProjects([{ title: '[Bare]' }, { title: '[Full]', mentor: 'Pat', helpers: ['Cari-Ann'], percent: 45 }]), { team: '' });
   assert.ok(html.includes('<span class="mentor">Pat</span>') && html.includes('45%') && html.includes('style="width: 45%"') && html.includes('<span class="note">with Cari-Ann</span>'));
-  assert.equal(/\[Bare\]<\/span><span class="details"><span class="mentor">/.test(html), true, 'a bare row has an empty mentor place');
+  assert.equal(/\[Bare\]<\/span><\/span><span class="details"><span class="mentor">/.test(html), true, 'a bare row has an empty mentor place');
 
   const plain = htmlOf('monday-projects', withProjects([{ title: '[One]' }, { title: '[Two]' }]), { team: '' });
   assert.equal(/class="(mentor|percent|note)/.test(plain), false, 'no mentor, bar or helpers drawn');
@@ -335,14 +347,14 @@ test('projects: the document of the sync is cleaned, so a last name or an addres
   const tidy = monday.tidyMondayStatus({
     lastSyncAt: '2026-10-15T15:59:00Z',
     projects: [
-      { id: '1', title: '  Shelves  ', status: 'in-progress', mentor: 'Dan', mentorInitial: 'k', helpers: ['Cari-Ann', 'Steve Ray', 'a@b.com', 'Lee'], percent: 140 },
+      { id: '1', title: '  Shelves  ', status: 'in-progress', mentor: 'Dan', mentorInitial: 'k', helpers: ['Cari-Ann', 'Steve Ray', 'a@b.com', 'Lee'], percent: 140, timelineEnd: '2026-10-01' },
       { id: '2', title: 'Odd status', status: 'waiting' }, { id: '3', title: '', status: 'done' },
-      { id: '4', title: 'Address', status: 'up-next', mentor: 'dan@example.com', percent: -5, completedOn: 'soon' },
+      { id: '4', title: 'Address', status: 'up-next', mentor: 'dan@example.com', percent: -5, completedOn: 'soon', timelineEnd: 'later' },
       'not a project', null,
     ],
   });
   assert.deepEqual(tidy.projects, [
-    { id: '1', title: 'Shelves', status: 'in-progress', mentor: 'Dan', mentorInitial: 'K', helpers: ['Cari-Ann', 'Lee'], percent: 100 },
+    { id: '1', title: 'Shelves', status: 'in-progress', mentor: 'Dan', mentorInitial: 'K', helpers: ['Cari-Ann', 'Lee'], percent: 100, timelineEnd: '2026-10-01' },
     { id: '4', title: 'Address', status: 'up-next', percent: 0 },
   ]);
   assert.deepEqual(monday.tidyMondayStatus({ lastSyncAt: '2026-10-15T15:59:00Z' }).projects, [], 'a document with no list has no projects');

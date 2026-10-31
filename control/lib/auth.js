@@ -169,8 +169,9 @@ export function createAuth(options) {
     return { ok: false, triesLeft: triesAllowed - recent.length };
   }
 
-  function cookieHeader(value) {
-    return cookieName + '=' + value + '; Path=/control; HttpOnly; SameSite=Strict; Max-Age=' + cookieDays * 86400;
+  // secure is true when the page came over HTTPS (through a private tunnel or a proxy), so the browser never sends the cookie in the clear
+  function cookieHeader(value, secure) {
+    return cookieName + '=' + value + '; Path=/control; HttpOnly; SameSite=Strict; Max-Age=' + cookieDays * 86400 + (secure ? '; Secure' : '');
   }
 
   return { isAuthed: isAuthed, attempt: attempt, blockedFor: blockedFor, cookieHeader: cookieHeader, cookieOf: cookieOf };
@@ -183,6 +184,12 @@ export function clientAddress(req) {
   return (req.socket && req.socket.remoteAddress) || 'unknown';
 }
 
+// True when the request reached this service over HTTPS: a proxy says so in X-Forwarded-Proto, or the socket itself is TLS
+export function isSecure(req) {
+  const headers = (req && req.headers) || {};
+  return String(headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https' || Boolean(req && req.socket && req.socket.encrypted);
+}
+
 // A call that changes something must come from the page itself. A browser sends Origin on every POST and names the
 // site that made the call; when it is another address than the one asked, the call is refused. A call with no
 // Origin (the Mac tool, curl) is not made by a web page, and still needs the cookie.
@@ -192,8 +199,11 @@ export function sameOrigin(req) {
   if (site === 'cross-site') return false;
   const origin = headers.origin;
   if (origin === undefined) return true;
+  // A proxy that serves the page under another name sends the name the browser used in X-Forwarded-Host
+  const forwarded = String(headers['x-forwarded-host'] || '').split(',')[0].trim();
   try {
-    return new URL(origin).host === String(headers.host || '');
+    const host = new URL(origin).host;
+    return host === String(headers.host || '') || (forwarded !== '' && host === forwarded);
   } catch (error) {
     return false;
   }

@@ -48,11 +48,11 @@ export function networkWords(network, now = new Date()) {
   return 'ok, ' + (problem && problem !== 'not yet' ? 'last problem ' + problem : 'no problem seen') + ', ' + count + (count === 1 ? ' recovery' : ' recoveries') + ' in 24 hours';
 }
 
-// The three dots on the TV, with the reason behind each
+// The dots on the TV, with the reason behind each
 export function dotsHtml(data) {
-  if (!data) return card('The three dots on the TV', '<p>The Teletraan computer did not answer. Check that it is on and on the WiFi, then reload this page.</p>');
+  if (!data) return card('The dots on the TV', '<p>The Teletraan computer did not answer. Check that it is on and on the WiFi, then reload this page.</p>');
   const dots = data.dots || {};
-  return card('The three dots on the TV', dotRow('Monday', dots.monday) + dotRow('Band (calendars)', dots.band) + dotRow('Sanity (content)', dots.sanity), '', 'health.dots');
+  return card('The dots on the TV', dotRow('Monday', dots.monday) + dotRow('Band (calendars)', dots.band) + dotRow('Sanity (content)', dots.sanity) + (dots.network ? dotRow('Network', dots.network) : ''), '', 'health.dots');
 }
 
 // When the Teletraan computer last read each source
@@ -101,7 +101,7 @@ export function healthHtml(data, wall, now = new Date()) {
     row('Network', esc(networkWords(data.network, now))) +
     row('Sanity', data.sanity && data.sanity.reachable ? 'Reachable' : 'Not reachable' + (data.sanity && data.sanity.error ? ': ' + esc(data.sanity.error) : '')) +
     row('Studio can reach this page', corsWords(data.cors)) +
-    row('Tailscale address', esc(data.tailscale || 'not known')) + '</dl>', '', 'health.computer');
+    row('Private tunnel address', esc(data.tailscale || 'not known')) + '</dl>', '', 'health.computer');
 
   const errors = Array.isArray(data.lastErrors) ? data.lastErrors : [];
   const last = card('Last errors', errors.length

@@ -7,6 +7,7 @@
 // data-view and data-theme. The panel is the one in the large frame.
 
 import { dotStates } from './dots.js';
+import { networkReading } from './sync-status.js';
 import { hiddenRunReport } from './hidden-log.js';
 import { lastContentRead } from './content.js';
 import { activeRequests } from './screen-requests.js';
@@ -66,6 +67,7 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
       calendarErrors: mini.calendarErrors,
       sanityAt: read.at,
       sanityFailed: read.failed,
+      network: networkReading(),
     }, now),
   };
 }

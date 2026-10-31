@@ -1,6 +1,8 @@
 // The Update section of Settings: pick the repository folder on this computer, see how it compares with the wall, push it, and roll back.
 
 import { api, shortDate } from '../api.js';
+import { apiPath } from '../base.js';
+import { confirmAction } from '../action-run.js';
 import { sentences } from '../guide.js';
 import { treeHashOfFiles } from '../tree-hash.js';
 import { githubCard } from '../github-card.js';
@@ -60,7 +62,7 @@ function upload(blob, note, commit, onUpload, onEvent) {
       });
       read = end;
     };
-    request.open('POST', '/control/api/releases');
+    request.open('POST', apiPath('releases'));
     request.upload.onprogress = event => onUpload(event.loaded, event.total);
     request.onprogress = take;
     request.onload = () => {
@@ -74,18 +76,19 @@ function upload(blob, note, commit, onUpload, onEvent) {
       take();
       resolve();
     };
-    request.onerror = () => reject(new Error('The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name, then try again.'));
+    request.onerror = () => reject(new Error('The Teletraan computer could not be reached. Check the WiFi, or use the private tunnel name, then try again.'));
     request.send(form);
   });
 }
 
-export function mountUpdate(page) {
+// onEvent (optional) hears every step of a push and { step: 'begin' } and { step: 'end', state } around it (the four step flow)
+export function mountUpdate(page, onEvent) {
   const columns = element('div', '', 'columns');
   const push = element('section', '', 'card');
   const back = element('section', '', 'card');
   columns.append(push, back);
   // The GitHub card is first; the folder upload stays below it
-  page.append(githubCard(stepNames, () => loadReleases().catch(() => {})), columns);
+  page.append(githubCard(stepNames, () => loadReleases().catch(() => {}), onEvent), columns);
 
   const wall = element('p', 'Loading the releases...');
   const pick = element('label', 'Pick the repository folder', 'action');
@@ -161,13 +164,17 @@ export function mountUpdate(page) {
   });
 
   button.addEventListener('click', async () => {
+    const yes = await confirmAction({ title: 'Publish this folder to the wall?', body: 'The folder is zipped, sent to the computer, checked and put on the wall. The previous version is kept, so you can roll back.', dark: 'The screen restarts and the TV may be dark for about 30 seconds. This page may reconnect once.', confirmLabel: 'Publish to the wall' });
+    if (!yes) return;
+    if (onEvent) onEvent({ step: 'begin' });
     problem.textContent = '';
     steps.replaceChildren();
     button.disabled = true;
     bar.hidden = false;
     bar.value = 0;
     const lines = {};
-    const onEvent = event => {
+    const onStep = event => {
+      if (onEvent) onEvent(event);
       if (event.step === 'finish') {
         const line = element('li', event.message, event.state);
         steps.append(line);
@@ -186,7 +193,7 @@ export function mountUpdate(page) {
     let switched = false;
     try {
       const blob = await makeZip(files);
-      await upload(blob, note.value, shortCommit(folderCommit), (loaded, total) => { bar.value = total ? loaded / total : 0; }, onEvent);
+      await upload(blob, note.value, shortCommit(folderCommit), (loaded, total) => { bar.value = total ? loaded / total : 0; }, onStep);
     } catch (error) {
       if (switched) {
         problem.textContent = restartWords;
@@ -199,6 +206,7 @@ export function mountUpdate(page) {
       }
     }
     bar.hidden = true;
+    if (onEvent) onEvent({ step: 'end', state: problem.textContent && problem.className === 'bad' ? 'fail' : 'done' });
     await loadReleases();
   });
 
@@ -228,7 +236,9 @@ export function mountUpdate(page) {
 
   go.addEventListener('click', async () => {
     const picked = releases.find(release => String(release.version) === choose.value);
-    if (!picked || !window.confirm('Switch the wall to ' + versionLabel(picked.version, picked.commit) + '? The screen restarts and is black for about ten seconds.')) return;
+    if (!picked) return;
+    const yes = await confirmAction({ title: 'Roll back to ' + versionLabel(picked.version, picked.commit) + '?', body: 'The wall switches back to this older version. Nothing is deleted, and you can switch forward again.', dark: 'The screen restarts and the TV may be dark for about 30 seconds.', confirmLabel: 'Roll back' });
+    if (!yes) return;
     backNote.textContent = 'Switching...';
     try {
       const answer = await api('releases/' + picked.version + '/activate', { method: 'POST' });

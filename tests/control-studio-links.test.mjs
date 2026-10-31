@@ -56,8 +56,8 @@ test('the landing page has the two buttons, 44px or more high, in the colors of 
 
 test('the header of the control page has a Studio button that opens /studio/ in a new tab', () => {
   const html = read('control/static/index.html');
-  assert.ok(/<a class="studio" href="\/studio\/" target="_blank" rel="noopener">Studio<\/a>/.test(html));
-  assert.ok(/\.studio, button\.help \{[^}]*min-height: 44px/.test(read('control/static/style.css')));
+  assert.ok(/<a class="tool" href="\.\.\/studio\/" target="_blank" rel="noopener">Studio<\/a>/.test(html), 'a relative link, so it works on any host name');
+  assert.ok(/\.tool \{[^}]*min-height: 48px/.test(read('control/static/style.css')));
 });
 
 test('the CORS hint names the same address on port 3426, for the WiFi name, a Tailscale address and a name with no port', () => {
@@ -85,15 +85,15 @@ test('the control page doc names the landing page, port 3426 and the extra CORS 
 
 test('the Studio links name tabs and sections the control page has, and the older addresses still reach them', async () => {
   const { resolveAddress } = await import('../control/static/tabs.js');
-  const settings = fs.readFileSync(repo + 'control/static/tabs/settings.js', 'utf8');
-  const known = { status: ['status'], display: ['display'], content: ['content'], settings: ['settings'] };
+  const settings = fs.readFileSync(repo + 'control/static/areas/update.js', 'utf8');
+  const known = { now: ['now'], show: ['show'], update: ['update'], computer: ['computer'], details: ['details'] };
   Object.values(controlSections).forEach(address => {
     assert.ok(address.startsWith(controlAddress + '#'), address);
     const found = resolveAddress(address.slice(controlAddress.length + 1));
     assert.ok(known[found.id], 'the control page has a tab ' + found.id);
   });
-  assert.deepEqual(resolveAddress('settings/monday'), { id: 'settings', section: 'monday' });
-  assert.deepEqual(resolveAddress('settings/sync'), { id: 'settings', section: 'sync' });
+  assert.deepEqual(resolveAddress('settings/monday'), { id: 'update', section: 'monday' });
+  assert.deepEqual(resolveAddress('settings/sync'), { id: 'update', section: 'sync' });
   ['keys', 'monday', 'sync'].forEach(id => assert.ok(settings.includes("{ id: '" + id + "'"), 'Settings has a section ' + id));
   const monday = fs.readFileSync(repo + 'studio/tools/monday-check.js', 'utf8');
   assert.ok(monday.includes("controlAddress + '#settings/monday'"));

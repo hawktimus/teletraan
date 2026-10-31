@@ -6,7 +6,7 @@
 //   content.json      the answer of the content query of Sanity: { syncedAt, result }
 //   weather.json      the reading of Open-Meteo, as core/weather.js keeps it
 //   images/           the pictures of the content, and images/index.json: the address that the dashboard asks for -> the file
-//   sync-status.json  { generatedAt, sources: { name: { lastSuccessAt, lastFailureAt, lastFailureReason } } }, every 10 seconds
+//   sync-status.json  { generatedAt, sources: { name: { lastSuccessAt, lastFailureAt, lastFailureReason } }, network: { ok, since } }, every 10 seconds
 //
 // A file is written to a temporary name and renamed, and only from an answer that was checked, so a failed fetch leaves
 // the last good copy where it is and never blanks anything. Monday, the competition feed and the calendars are read by
@@ -43,6 +43,8 @@ export const timing = {
   probeEveryWhenWell: 900,
   probeEveryWhenFailing: 60,
   noteEveryWhenWell: 300,
+  networkWindow: 120, // the network is up when any source was read well inside this many seconds
+  netwatchFailures: 3, // failures counted by netwatch.sh from which the network is down whatever the sources say
   requestLimit: 20,
   imageLimit: 40,
 };
@@ -131,6 +133,7 @@ export function createSync(options = {}) {
   const doFetch = options.fetch || fetch;
   const imageFolder = path.join(dataDir, 'images');
   const statusFile = path.join(dataDir, 'sync-status.json');
+  const netwatchFile = options.netwatchFile || process.env.SYNC_NETWATCH_FILE || '/var/lib/teletraan/netwatch.json';
 
   const state = {};
   sourceNames.forEach(name => {
@@ -152,6 +155,7 @@ export function createSync(options = {}) {
     result: readJson(path.join(dataDir, 'content.json'), { result: null }).result,
     imageIndex: readJson(path.join(imageFolder, 'index.json'), {}),
     imagesBusy: false,
+    networkSince: null,
     imagesRun: null,
   };
 
@@ -374,9 +378,29 @@ export function createSync(options = {}) {
     }
   }
 
+  // The network as the dot on the TV and the control page show it: { ok, since }. Up when any source was read well in the
+  // last two minutes, down when netwatch.sh has counted three failed checks. Nothing known yet counts as up. since is when it
+  // went down and is null while it is up.
+  function networkState() {
+    const nowMs = now();
+    const times = sourceNames.map(name => Date.parse(state[name].lastSuccessAt)).filter(time => !isNaN(time));
+    const failures = sourceNames.map(name => Date.parse(state[name].lastFailureAt)).filter(time => !isNaN(time));
+    const recent = times.some(time => nowMs - time <= timing.networkWindow * 1000);
+    const watch = readJson(netwatchFile, null);
+    const watchDown = watch !== null && typeof watch === 'object' && Number(watch.failures) >= timing.netwatchFailures;
+    const ok = watchDown ? false : (recent || failures.length === 0);
+
+    if (ok) {
+      memory.networkSince = null;
+    } else if (!memory.networkSince) {
+      memory.networkSince = new Date(failures.length > 0 ? Math.max(...failures) : nowMs).toISOString();
+    }
+    return { ok: ok, since: ok ? null : memory.networkSince };
+  }
+
   function writeStatus() {
     readOthers();
-    const status = { generatedAt: stamp(), sources: {} };
+    const status = { generatedAt: stamp(), sources: {}, network: networkState() };
     sourceNames.forEach(name => {
       status.sources[name] = Object.assign({}, state[name]);
     });

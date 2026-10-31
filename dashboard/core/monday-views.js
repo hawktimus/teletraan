@@ -133,6 +133,11 @@ export function isLate(task, today) {
   return listOf(task) === 'open' && dateOf(task, 'dueDate') !== '' && dateOf(task, 'dueDate') < today;
 }
 
+// A project is late the same way, by the end of its Timeline. A project with no Timeline end is never late.
+export function isProjectLate(project, today) {
+  return project.status !== 'done' && dateOf(project, 'timelineEnd') !== '' && project.timelineEnd < today;
+}
+
 // The rows of a list cut into pages by the room they take: a page takes rows while they fit in the window of the layout, and a
 // page holds one row at least. A row with extra true has a second line of text under the name.
 export function pagesOf(rows, layout) {
@@ -285,12 +290,13 @@ function byProjectTitle(a, b) {
 
 // { title, team, rows, pages, pageRows, columns, countWords, tallyWords, more } for the Projects panel, or null when there is nothing
 // to draw. The panel plays only for both teams (the Robotics view): a page for Prime or Nova has nothing. A row is { status,
-// statusWord, project, mentor, helpers, helperWords, percent, extra }, with a mentor, helpers and percent only when the project has
-// them. Order: Stuck, In Progress, In Review, To Do, then up to 3 done in the last 14 days, the newest first.
+// statusWord, project, mentor, helpers, helperWords, percent, late, extra }, with a mentor, helpers and percent only when the project has
+// them. late is true past the end of the Timeline for a project that is not done (a LATE chip beside the status). Order: Stuck, In Progress, In Review, To Do, then up to 3 done in the last 14 days, the newest first.
 export function projectsView(content, now, page, layout = 'bar') {
   if (pageOptions(page).team !== '') return null;
 
-  const today = dayNumber(todayOf(content, now));
+  const todayWords = todayOf(content, now);
+  const today = dayNumber(todayWords);
   const all = Array.isArray(content && content.monday && content.monday.projects) ? content.monday.projects : [];
   const open = [].concat(...projectOrder.map(status => all.filter(project => project.status === status).sort(byProjectTitle)));
   const age = project => today - dayNumber(project.completedOn);
@@ -312,6 +318,7 @@ export function projectsView(content, now, page, layout = 'bar') {
       helpers: helpers,
       helperWords: helpers.length > 0 ? 'with ' + helpers.join(', ') : '',
       percent: typeof project.percent === 'number' ? project.percent : null,
+      late: isProjectLate(project, todayWords),
       extra: helpers.length > 0,
     };
   });

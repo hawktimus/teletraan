@@ -172,6 +172,21 @@ test('a block with nothing to show is skipped, and with a hidden row between vie
   views.resetViews();
 });
 
+test('a stored list with no Projects row at all gets the default one after the Robotics Monday rows, and a stored row always wins', () => {
+  const listed = rows => rotation.rotationRowsOf(contentWith(raw => { raw.settings.rotationRows = rows; })).map(item => item.panel + (item.shown ? '' : '(hidden)'));
+  const stored = [row('robotics', 'events', 30), row('robotics', 'monday-department', 20), row('robotics', 'monday-charts', 30), row('robotics', 'roster', 30), row('prime', 'leadership', 20)];
+  assert.deepEqual(listed(stored), ['events', 'monday-department', 'monday-charts', 'monday-projects', 'roster', 'leadership']);
+  const projects = rotation.rotationRowsOf(contentWith(raw => { raw.settings.rotationRows = stored; })).find(item => item.panel === 'monday-projects');
+  assert.deepEqual([projects.view, projects.shown, projects.seconds], ['robotics', true, 20]);
+
+  const hidden = stored.concat(row('robotics', 'monday-projects', 20, false));
+  assert.equal(listed(hidden).filter(panel => panel.startsWith('monday-projects')).length, 1, 'a hidden stored row is not added again');
+  assert.ok(listed(hidden).includes('monday-projects(hidden)'));
+  assert.equal(listed(stored.concat(row('prime', 'monday-projects', 20))).filter(panel => panel === 'monday-projects').length, 1, 'a row in another view counts');
+  assert.deepEqual(listed([row('robotics', 'events', 30)]), ['events'], 'no Monday row, nothing added');
+  assert.deepEqual(listed([row('prime', 'monday-department', 20)]), ['monday-department'], 'only the Robotics block gets it');
+});
+
 test('an untouched Studio plays the default rotation, and the new fields have their starting values', () => {
   const content = contentWith();
   views.resetViews();

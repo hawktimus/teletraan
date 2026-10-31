@@ -5,9 +5,11 @@
 // Putting a page in its area, and taking it out again, is areas.js.
 
 import { panels } from '../registry.js';
+import { competitionRowMayPlay } from './competition.js';
 import * as frame from '../frame.js';
 
 const modules = {};
+const competitionIds = new Set(panels.filter(item => item.competition).map(item => item.id));
 
 function findPanel(id) {
   const panel = panels.find(item => item.id === id);
@@ -64,6 +66,7 @@ export function hostFor(region) {
 export function canShow(id, content, page = 1) {
   const module = modules[id];
   if (!module) return false;
+  if (competitionIds.has(id) && !competitionRowMayPlay(content)) return false;
   if (!module.hasContent) return true;
 
   try {

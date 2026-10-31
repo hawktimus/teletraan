@@ -122,7 +122,7 @@ editors can sign in from anywhere.
                               and transitions.js. core/style-loader.js finds the folder from the theme id
                               (docs/layouts.md, "Cybertron"; docs/views-and-themes.md)
       subthemes.css           the layer of pictures over a theme and a view (docs/subthemes.md)
-      status-dots.css         the three dots at the foot of the screen (core/dots.js)
+      status-dots.css         the four dots at the foot of the screen (core/dots.js)
       build.example.js        the shape of build.js, which the control service writes for each release and
                               kiosk.sh writes when the screen starts. Git ignores build.js itself
       base.css                the fixed 1920x1080 screen and the shared metal shapes. Nothing is responsive:
@@ -878,7 +878,7 @@ alone.
 - **The competition cards.** Dashboard Settings, Competition tab (docs/frc-feed.md). The mode, Before and after, Auto, Always or
   Off, and a switch for each of the ten cards are in `studio/schemas/settingsCompetition.js`, with the
   starting values in `defaultSettings`, the lists in `competitionModes` and `competitionSwitches` and
-  `competitionLeadDays` (2 days) and `competitionPreviewSeconds` (120) in `dashboard/config.js`. The cards
+  `competitionLeadDays` (2 days) and `competitionPreviewSeconds` (120) in `dashboard/config.js`, and the competition window (`competitionDaysBefore` and `competitionDaysAfter`, 7 days each) in `dashboard/core/constants.js`. The cards
   are the panels `dashboard/panels/competition-*`, flagged `competition: true` in `registry.js`, and the
   list of them with the rule for each is `cards` in `dashboard/core/competition.js`. The data is the
   document `frc-status` (type `frcStatus`, `studio/schemas/frcStatus.js`), which `computer/scripts/frc-sync.sh`

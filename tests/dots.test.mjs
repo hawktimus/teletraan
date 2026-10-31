@@ -1,11 +1,11 @@
-// Tests for the three dots on the TV (dashboard/core/dots.js): green inside twice the interval, amber past
+// Tests for the four dots on the TV (dashboard/core/dots.js): green inside twice the interval, amber past
 // it or with no read, red on an error, and Sanity green inside 5 minutes.
 //
 //   node tests/dots.test.mjs
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { dotState, dotStates, mondayEvery, tidyMini } from '../dashboard/core/dots.js';
+import { dotNames, dotState, dotStates, mondayEvery, tidyMini } from '../dashboard/core/dots.js';
 
 let passed = 0;
 function check(name, test) {
@@ -62,11 +62,24 @@ check('the part of status-mini the screen asks for is always complete', () => {
   assert.equal(tidyMini({ lastCalendarSyncAt: 'x', calendarErrors: -1 }).calendarErrors, 0);
 });
 
-check('the dots are 16px, 28px apart, in the ticker row, and the page has the element', () => {
+check('the network dot is green when ok, red when not, and absent when the sync service did not say', () => {
+  assert.equal(dotStates({ network: { ok: true, since: null } }, now).network.color, 'green');
+  const down = dotStates({ network: { ok: false, since: now.getTime() - 7 * 60000 } }, now).network;
+  assert.equal(down.color, 'red');
+  assert.match(down.reason, /7 minutes/);
+  assert.equal(dotStates({ network: { ok: false, since: null } }, now).network.color, 'red');
+  assert.equal('network' in dotStates({}, now), false, 'no member, no dot');
+  assert.equal('network' in dotStates({ network: 'yes' }, now), false);
+  assert.deepEqual(Object.keys(dotStates({ network: { ok: true } }, now)), dotNames);
+});
+
+check('the dots are 16px, 22px apart, in the ticker row, inside the 1080 canvas, and the page has the element', () => {
   const css = fs.readFileSync(new URL('../dashboard/status-dots.css', import.meta.url), 'utf8');
   assert.match(css, /width: 16px;\s*height: 16px/);
-  assert.match(css, /data-dot="band"\] \{ top: 28px/);
-  assert.match(css, /data-dot="sanity"\] \{ top: 56px/);
+  assert.match(css, /data-dot="band"\] \{ top: 22px/);
+  assert.match(css, /data-dot="sanity"\] \{ top: 44px/);
+  assert.match(css, /data-dot="network"\] \{ top: 66px/);
+  assert.ok(984 + 66 + 16 <= 1080, 'the last dot stays on the canvas');
   const page = fs.readFileSync(new URL('../dashboard/index.html', import.meta.url), 'utf8');
   assert.match(page, /id="status-dots"/);
   assert.match(page, /status-dots\.css/);

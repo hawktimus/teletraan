@@ -36,7 +36,7 @@ export {
   speeds, metals, looks, themeIds, barStyle, styles, screenIds, weekdays, defaultSchedule, standardSwapSeconds,
   defaultScreen, teamPanels, mondayRows, mondayKinds, mondayDepartments, mondayLists, mondayCharts, mondayTeams,
   retiredMondayPanels, retiredWords, teamModes, lookSwaps, competitionModes,
-  competitionSwitches, competitionLeadDays, competitionPreviewDays, competitionRecapDays, competitionEstimateSpread,
+  competitionSwitches, competitionLeadDays, competitionEstimateSpread,
   competitionTrendPoints, competitionPreviewSeconds, pageChangeStyles, frameFinishes,
   photoOrders, photoSources, photoFits, portraitShapes, portraitFrames, nightStyles, nightSpeeds, nightFirstHit, limits,
   defaultPhotoRow, screenLimits, viewKeys, scheduledThemeIds, defaultThemeByWeekday, viewIds, viewTeams,

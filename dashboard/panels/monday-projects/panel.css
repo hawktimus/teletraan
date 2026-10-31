@@ -36,11 +36,18 @@
 
 .monday-projects .project {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 500 var(--size-label)/64px var(--font-text);
+}
+.monday-projects .name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 500 var(--size-label)/64px var(--font-text);
 }
+.monday-projects .chip-late { width: 104px; }
 .monday-projects .cols-0 .project,
 .monday-projects .cols-1 .project,
 .monday-projects .cols-2 .project { font-size: var(--size-body); }

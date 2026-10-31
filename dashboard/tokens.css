@@ -398,7 +398,7 @@ html.palette-inverted {
   --pure-white: #ffffff;
   --plate-ink: #05070a; /* the dark seam lines of the plates */
 
-  /* the three status dots (status-dots.css) */
+  /* the four status dots (status-dots.css) */
   --dot-off: #9a9a9a;
   --dot-green: #2fd27a;
   --dot-amber: #ffb300;

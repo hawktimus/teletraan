@@ -124,6 +124,15 @@ await check('a file with a missing or odd source still gives an answer', () => {
   assert.equal(pillState(parsed, now).state, 'ok');
 });
 
+await check('the network member is read when it is there and null when it is not', () => {
+  const file = statusFile();
+  assert.equal(parseSyncStatus(file).network, null, 'an older file has none');
+  file.network = { ok: false, since: '2026-10-30T14:00:00Z' };
+  assert.deepEqual(parseSyncStatus(file).network, { ok: false, since: Date.parse('2026-10-30T14:00:00Z') });
+  file.network = { ok: 'no' };
+  assert.equal(parseSyncStatus(file).network, null);
+});
+
 await check('the words are Offline and a time, and nothing else: no host, no reason, no error', () => {
   const text = pillText({ state: 'down', since: new Date(2026, 9, 30, 15, 12) });
   assert.equal(text, 'Offline since 3:12 PM');
@@ -150,7 +159,7 @@ await check('the pill is in index.html after the dots, drawn by shell.js, and ha
 await check('the Sanity dot follows the sync service, and no panel is changed', () => {
   const dots = read('core/dots-run.js');
   assert.ok(dots.includes('sanityReadTime()') && dots.includes("from './sync-status.js'"));
-  ['monday', 'band', 'sanity'].forEach(name => assert.ok(read('core/dots.js').includes("'" + name + "'")));
+  ['monday', 'band', 'sanity', 'network'].forEach(name => assert.ok(read('core/dots.js').includes("'" + name + "'")));
 });
 
 // ----- the guard -----

@@ -46,7 +46,7 @@ function test(name, run) {
 
 const names = ['nightStart', 'nightEnd', 'noShowMinutes', 'graceMinutes'];
 // The limits of the status pill are fixed values too (docs/OPERATIONS.md). They are not hidden settings, so they are named apart.
-const syncNames = ['syncCheckSeconds', 'syncDownMinutes', 'syncSourceMinutes', 'syncStaleMinutes'];
+const syncNames = ['syncCheckSeconds', 'syncDownMinutes', 'syncSourceMinutes', 'syncStaleMinutes', 'competitionDaysBefore', 'competitionDaysAfter'];
 const eastern = 'America/New_York';
 const at = text => new Date(text); // always written with a Z, so it means the same on every computer
 
@@ -64,7 +64,7 @@ const oddStored = [
 
 // The fixed values
 
-test('constants.js holds the four values with the numbers the Studio fields start as, the limits of the status pill, and nothing else', () => {
+test('constants.js holds the four values with the numbers the Studio fields start as, the limits of the status pill, the competition window, and nothing else', () => {
   assert.deepEqual(Object.keys(constants).sort(), names.concat(syncNames).sort());
   assert.equal(constants.syncStaleMinutes, 10);
   assert.equal(constants.syncDownMinutes, 30);
@@ -72,6 +72,8 @@ test('constants.js holds the four values with the numbers the Studio fields star
   assert.equal(constants.nightEnd, '11:30');
   assert.equal(constants.noShowMinutes, 5);
   assert.equal(constants.graceMinutes, 5);
+  assert.equal(constants.competitionDaysBefore, 7);
+  assert.equal(constants.competitionDaysAfter, 7);
 });
 
 test('config.js has no default and no limit for the four any more', () => {

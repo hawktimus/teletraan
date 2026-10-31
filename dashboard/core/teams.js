@@ -275,6 +275,12 @@ export function teamPending() {
   return showing !== null && wanted.code !== showing.code;
 }
 
+// A team name as the screen shows it: a trailing "(?)" and the space before it are dropped. A stored name that still has the
+// mark of a name that was not settled yet reads clean this way, and a new name is never written into the code.
+export function cleanTeamName(name) {
+  return typeof name === 'string' ? name.replace(/\s*\(\?\)\s*$/, '').trim() : name;
+}
+
 // The team the banner and the sidebar draw. The team the screen starts with, when the Studio has
 // no Teams, takes its name and number from the Team box in Dashboard Settings (content.team), as the
 // banner always has. A page that is built for the team that is about to go on gives it as team.
@@ -283,7 +289,7 @@ export function teamShown(content, team = currentTeam()) {
 
   const details = content && content.team ? content.team : {};
   return Object.assign({}, team, {
-    name: typeof details.name === 'string' ? details.name : team.name,
+    name: typeof details.name === 'string' ? cleanTeamName(details.name) : team.name,
     number: typeof details.number === 'string' ? details.number : team.number,
   });
 }
@@ -306,7 +312,7 @@ export function useTeams(content, now = new Date()) {
   const settings = source.settings || {};
   const before = wanted.code;
 
-  teams = Array.isArray(source.teams) && source.teams.length > 0 ? source.teams : [primeTeam];
+  teams = Array.isArray(source.teams) && source.teams.length > 0 ? source.teams.map(team => (team && typeof team.name === 'string' ? Object.assign({}, team, { name: cleanTeamName(team.name) }) : team)) : [primeTeam];
   wanted = rotatedTeam(teams, now) || chooseTeam(teams, modeFor(settings, now), settings.alternateMinutes, now);
   let changed = wanted.code !== before;
 

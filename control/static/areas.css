@@ -1,0 +1,174 @@
+/* The five areas: Now, Show, Update, Computer and Details. Phone first (one column), two columns where there is room. The colors
+   are the tokens of style.css, so light and dark work without a rule of their own here. */
+
+.area { display: grid; gap: 16px; min-width: 0; }
+.area > * { min-width: 0; }
+.area-head h2 { margin: 0; font: 700 28px/1.2 var(--display); color: var(--accent); }
+.lead { margin: 4px 0 0; color: var(--muted); }
+.empty { display: flex; gap: 10px; align-items: center; margin: 0; color: var(--muted); }
+.boot { color: var(--muted); }
+
+/* ----- sections of an area ----- */
+.subnav { display: flex; flex-wrap: wrap; gap: 8px; }
+.subnav-link {
+  display: inline-flex; align-items: center; min-height: 48px; padding: 0 16px; border: 2px solid var(--edge); border-radius: 999px;
+  color: var(--text); font: 600 16px var(--display); text-decoration: none;
+}
+.subnav-link[aria-current="page"] { background: var(--fill); border-color: var(--fill); color: var(--on-fill); }
+.section-body { min-width: 0; }
+.section-body.tab { max-width: none; margin: 0; padding: 0; }
+
+/* ----- Now: the banner ----- */
+.now { display: grid; gap: 16px; }
+.banner { display: flex; gap: 14px; align-items: center; padding: 16px 20px; border: 3px solid var(--muted); border-radius: 16px; background: var(--surface-2); color: var(--text); }
+.banner p { margin: 0; }
+.banner-words { font: 700 26px/1.2 var(--display); }
+.banner-time { margin-top: 4px; font-size: 16px; color: var(--muted); }
+.banner-icon { flex: none; display: inline-flex; }
+.banner[data-state="good"] { border-color: var(--ok); background: var(--ok-bg); }
+.banner[data-state="good"] .banner-words, .banner[data-state="good"] .banner-icon { color: var(--ok); }
+.banner[data-state="attention"] { border-color: var(--warn); background: var(--warn-bg); }
+.banner[data-state="attention"] .banner-words, .banner[data-state="attention"] .banner-icon { color: var(--warn); }
+.banner[data-state="attention"][data-severity="bad"] { border-color: var(--bad); background: var(--bad-bg); }
+.banner[data-state="attention"][data-severity="bad"] .banner-words, .banner[data-state="attention"][data-severity="bad"] .banner-icon { color: var(--bad); }
+
+/* ----- Now: the five dots ----- */
+.dots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.dot-button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 84px; padding: 8px 2px;
+  border: 2px solid var(--edge); border-radius: 12px; background: var(--surface); color: var(--text); font: 600 14px/1.15 var(--display); cursor: pointer;
+}
+.dot-button[aria-expanded="true"] { border-color: var(--accent); background: var(--surface-2); }
+.dot { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 2px solid currentColor; border-radius: 50%; }
+.dot[data-state="ok"] { color: var(--ok); background: var(--ok-bg); }
+.dot[data-state="warn"] { color: var(--warn); background: var(--warn-bg); }
+.dot[data-state="bad"] { color: var(--bad); background: var(--bad-bg); }
+.dot[data-state="unknown"] { color: var(--muted); background: var(--surface-2); }
+.dot-word { font-weight: 700; color: var(--muted); font-size: 14px; }
+.dot-button[data-state="ok"] .dot-word { color: var(--ok); }
+.dot-button[data-state="warn"] .dot-word { color: var(--warn); }
+.dot-button[data-state="bad"] .dot-word { color: var(--bad); }
+.dot-detail { margin-top: 8px; }
+.dot-detail[hidden] { display: none; }
+.facts-list { margin: 0 0 8px; padding-left: 20px; }
+
+@media (min-width: 700px) {
+  .dot-button { flex-direction: row; justify-content: flex-start; gap: 10px; min-height: 64px; padding: 8px 14px; font-size: 17px; }
+  .dot-word { font-size: 15px; margin-left: auto; }
+}
+
+/* ----- Now: the primary buttons ----- */
+.primary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.primary-grid .btn { width: 100%; min-height: 60px; font-size: 19px; }
+@media (min-width: 700px) { .primary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ----- Now: what needs attention ----- */
+.problems { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.problem { padding: 12px 14px; border: 2px solid var(--edge); border-left-width: 8px; border-radius: 12px; background: var(--surface); }
+.problem[data-severity="bad"] { border-left-color: var(--bad); }
+.problem[data-severity="warn"] { border-left-color: var(--warn); }
+.problem p { margin: 4px 0; }
+.problem-message { display: flex; gap: 10px; align-items: flex-start; font-size: 19px; }
+.problem-message .icon { margin-top: 2px; }
+.problem[data-severity="bad"] .problem-message .icon { color: var(--bad); }
+.problem[data-severity="warn"] .problem-message .icon { color: var(--warn); }
+.problem-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.problem-actions .act-box { flex: 1 1 220px; }
+.problem-actions .btn { width: 100%; }
+
+.disclosure { margin-top: 8px; }
+.disclosure > summary { display: flex; align-items: center; min-height: 48px; color: var(--accent); font-weight: 700; cursor: pointer; }
+.raw { max-height: 320px; margin: 4px 0 8px; overflow: auto; font-size: 14px; background: var(--inset); color: var(--text); }
+
+.facts { margin: 0; }
+.facts > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 0; border-top: 1px solid var(--edge); }
+.facts > div:first-child { border-top: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; text-align: right; }
+
+/* ----- the computer cannot be reached ----- */
+.offline { margin: 0 0 16px; padding: 12px 16px; border: 3px solid var(--bad); border-radius: 14px; background: var(--bad-bg); color: var(--text); }
+.offline[hidden] { display: none; }
+.offline p { margin: 4px 0; }
+.offline strong { color: var(--bad); font: 700 20px var(--display); margin-left: 8px; }
+.offline .icon { color: var(--bad); }
+
+/* ----- the primary action of the area stays in reach on a phone ----- */
+.sticky-action {
+  position: fixed; z-index: 25; left: 0; right: 0; bottom: calc(var(--navbar) + env(safe-area-inset-bottom)); padding: 8px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  background: var(--surface); border-top: 2px solid var(--edge);
+}
+.sticky-action .btn { width: 100%; min-height: 52px; }
+.sticky-action[hidden] { display: none; }
+@media (min-width: 900px) { .sticky-action { display: none; } }
+
+/* ----- Update: Sync ----- */
+.update-sync { display: grid; gap: 16px; }
+.sync-results .sync-lines { margin: 12px 0 0; padding: 0; list-style: none; }
+.sync-results .sync-lines li { padding: 8px 0; border-top: 1px solid var(--edge); }
+.sync-results .state { font-weight: 700; }
+.sync-results li[data-state="ok"] .state { color: var(--ok); }
+.sync-results li[data-state="skipped"] .state { color: var(--warn); }
+.sync-results li[data-state="failed"] .state { color: var(--bad); }
+.source-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.source-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.source-head h3 { margin: 0; }
+.source-when { margin: 8px 0; color: var(--muted); }
+.source-problem { margin: 8px 0; padding: 10px 12px; border-left: 6px solid var(--bad); border-radius: 8px; background: var(--bad-bg); }
+.source-problem p { margin: 4px 0; }
+.source-foot { display: grid; gap: 12px; margin-top: 12px; }
+.source-foot .btn { width: 100%; }
+@media (min-width: 700px) { .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .source-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ----- Update: Publish ----- */
+.update-publish { display: grid; gap: 16px; }
+.release-pair { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.release-name { margin: 0; font: 700 22px var(--display); }
+@media (min-width: 700px) { .release-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.flow { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.flow li { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 2px solid var(--edge); border-radius: 12px; background: var(--surface); }
+.flow-number { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); font: 700 16px var(--display); }
+.flow-says, .flow-state { display: block; color: var(--muted); font-size: 16px; }
+.flow li[data-state="working"] { border-color: var(--warn); }
+.flow li[data-state="working"] .flow-state { color: var(--warn); font-weight: 700; }
+.flow li[data-state="done"] { border-color: var(--ok); }
+.flow li[data-state="done"] .flow-state { color: var(--ok); font-weight: 700; }
+.flow li[data-state="bad"] { border-color: var(--bad); }
+.flow li[data-state="bad"] .flow-state { color: var(--bad); font-weight: 700; }
+.tab-cards { display: grid; gap: 16px; }
+.tab-cards .card { background: var(--surface); }
+
+/* ----- Computer ----- */
+.computer-restart, .computer-network, .computer-copy { display: grid; gap: 16px; }
+.action-list { display: grid; gap: 16px; }
+.action-list .btn { width: 100%; }
+@media (min-width: 900px) { .action-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.guided { margin: 12px 0 0; padding-left: 24px; }
+.guided li { margin: 0 0 16px; }
+
+/* ----- Details ----- */
+.output { display: grid; gap: 16px; }
+.entries { margin: 12px 0 0; padding: 0; list-style: none; }
+.entries li { border-top: 1px solid var(--edge); }
+.entry-state { font-weight: 700; }
+.entry-state[data-ok="true"] { color: var(--ok); }
+.entry-state[data-ok="false"] { color: var(--bad); }
+
+/* ----- Show ----- */
+.show-top { display: grid; gap: 16px; margin-bottom: 16px; }
+.show-live { display: grid; gap: 16px; }
+@media (min-width: 1100px) { .show-live { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: start; } }
+
+@media (min-width: 900px) {
+  .now { gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .now > .area-head, .now > .banner, .now > section[aria-labelledby="dots-title"], .now > .primary { grid-column: 1 / -1; }
+}
+
+/* ----- Show: who decides what the TV plays ----- */
+.held { margin: 0; padding: 12px 16px; font-weight: 700; background: var(--surface); border: 2px solid var(--edge); border-radius: 12px; }
+.held[data-held="yes"] { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+
+/* Words in a narrow button are never cut in the middle */
+.dot-button, #tabs a { overflow-wrap: normal; word-break: normal; }
+.dot-button { font-size: 14px; }

@@ -80,6 +80,7 @@ export function cleanReport(raw, now = new Date()) {
 
   dotNames.forEach(name => {
     const state = source.dots && source.dots[name];
+    if (name === 'network' && !state) return; // an older screen, or a laptop, has no network dot
     dots[name] = state ? { color: text(state.color, 10), reason: text(state.reason, 200) } : { color: '', reason: '' };
   });
 

@@ -371,6 +371,7 @@ const pcol = {
   mentor: text => projectValue('dropdown_mm8mcqq', 'dropdown', text),
   helpers: text => projectValue('dropdown_mm8mtej2', 'dropdown', text),
   percent: text => projectValue('numeric_mm8mmzv6', 'numbers', text),
+  timeline: (from, to) => projectValue('timerange_mm8mp8wc', 'timeline', from + ' - ' + to, { from: from, to: to }),
   completed: day => projectValue('date_mm8mkgrg', 'date', day, { date: day }),
   show: (text, index) => projectValue('color_mm8mtjwd', 'status', text, { index: index }),
   budget: text => projectValue('numeric_mm8mqqaf', 'numbers', text),
@@ -381,7 +382,7 @@ const pcol = {
 function projectItems() {
   return [
     // mentor with a last name, two helpers, a percent
-    item('3001', 'Build the shop shelves', [pcol.state('In Progress', 1), pcol.mentor('Dan Kelly'), pcol.helpers('Cari-Ann, Steve Ray'), pcol.percent('45'), pcol.show('Show', 1), pcol.budget('250'), pcol.notes('Long private sentence about money')], 'Active'),
+    item('3001', 'Build the shop shelves', [pcol.state('In Progress', 1), pcol.mentor('Dan Kelly'), pcol.helpers('Cari-Ann, Steve Ray'), pcol.percent('45'), pcol.timeline('2026-12-01', '2027-01-20'), pcol.show('Show', 1), pcol.budget('250'), pcol.notes('Long private sentence about money')], 'Active'),
     // a second Dan: the screen tells them apart by the last initial
     item('3002', 'Label the parts bins', [pcol.state('To Do', 0), pcol.mentor('Dan Moore')], 'Active'),
     // no mentor, no helpers, no percent
@@ -471,7 +472,7 @@ test('the boards are read by their numbers only, with the multi-level question, 
   assert.deepEqual(variables[1].board, [doneBoardId]);
   assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a'], 'Completed Tasks has fewer columns');
   assert.deepEqual(variables[2].board, [projectsBoardId]);
-  assert.deepEqual(variables[2].columns, ['color_mm8ma465', 'dropdown_mm8mcqq', 'dropdown_mm8mtej2', 'numeric_mm8mmzv6', 'date_mm8mkgrg', 'color_mm8mtjwd'], 'Budget and Notes are never asked for');
+  assert.deepEqual(variables[2].columns, ['color_mm8ma465', 'dropdown_mm8mcqq', 'dropdown_mm8mtej2', 'numeric_mm8mmzv6', 'timerange_mm8mp8wc', 'date_mm8mkgrg', 'color_mm8mtjwd'], 'Budget and Notes are never asked for');
   assert.deepEqual(variables[3].ids.sort(), ['71', '73'], 'the first person of each item, once');
   assert.deepEqual(place.battery(), ['items-' + taskBoardId, 'items-' + doneBoardId, 'items-' + projectsBoardId], 'every board asks with the same question');
 
@@ -802,7 +803,7 @@ test('projects: the first word of a mentor and of each helper, the last initial,
   assert.ok(result.text.includes('monday: 7 project(s) read'), result.text);
 
   const projects = projectsOf(place);
-  assert.deepEqual(projects['3001'], { _key: '3001', id: '3001', title: 'Build the shop shelves', status: 'in-progress', mentor: 'Dan', mentorInitial: 'K', helpers: ['Cari-Ann', 'Steve'], percent: 45 });
+  assert.deepEqual(projects['3001'], { _key: '3001', id: '3001', title: 'Build the shop shelves', status: 'in-progress', mentor: 'Dan', mentorInitial: 'K', helpers: ['Cari-Ann', 'Steve'], percent: 45, timelineEnd: '2027-01-20' });
   assert.deepEqual(projects['3002'], { _key: '3002', id: '3002', title: 'Label the parts bins', status: 'up-next', mentor: 'Dan', mentorInitial: 'M' });
   assert.deepEqual(projects['3003'], { _key: '3003', id: '3003', title: 'Replace the router', status: 'blocked' }, 'no mentor, helpers or percent: no keys');
   assert.deepEqual(projects['3004'], { _key: '3004', id: '3004', title: 'Paint the pit table', status: 'done', mentor: 'Pat', percent: 100, completedOn: '2027-01-05' }, 'one name has no initial');

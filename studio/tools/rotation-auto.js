@@ -5,15 +5,16 @@
 
 import { panelTitleOf } from './rotation-titles.js';
 
-// competitionLeadDays in dashboard/config-lists.js
+// competitionLeadDays in dashboard/config-lists.js: the days before an event in which the Our matches card says the schedule is
+// not posted. The window of every card (7 days before, 7 days after) is in dashboard/core/constants.js.
 export const leadDays = 2;
 export const competitionModes = ['auto', 'always', 'off', 'around'];
 export const modeTitles = { auto: 'Auto', always: 'Always', off: 'Off', around: 'Before and after' };
 
 export const addedByWall = 'Added by the wall, not a row.';
 
-const cardWhen = 'From 2 days before an event while the mode is Auto.';
-const eventDays = 'Comes in from 2 days before an event to its last day while the mode is Auto.';
+const cardWhen = 'From 7 days before an event until 7 days after its last day, while the mode is Auto.';
+const eventDays = 'Comes in from 7 days before an event until 7 days after its last day, while the mode is Auto.';
 
 // Each card is { id, title, shows, when, panels, row }. panels are registry ids the card explains. row says whether the same
 // panel can also be put in the list as a row of its own.
@@ -22,16 +23,16 @@ export const autoCards = [
   { id: 'competition-rank', title: 'Live rank', shows: 'The rank, how many teams are ranked, the record and the ranking points.', when: cardWhen, panels: [], row: true },
   { id: 'competition-results', title: 'Results strip (Match Statistics)', shows: 'The last 8 matches as red and blue chips with the score.', when: eventDays, panels: ['competition-results'], row: false },
   { id: 'competition-alliance', title: 'Alliance board', shows: 'The alliance number and the teams on it, once the selection has been made.', when: eventDays, panels: ['competition-alliance'], row: false },
-  { id: 'competition-timeline', title: 'Season timeline', shows: 'A line of the coming dates: the countdown date, each event and the state championship.', when: 'All season while Auto is on and a date is ahead.', panels: ['competition-timeline'], row: false },
-  { id: 'competition-district', title: 'District points', shows: 'The district points, the rank and a bar toward the state cutoff.', when: 'Once the first event of the season has started, while the mode is Auto.', panels: ['competition-district'], row: false },
+  { id: 'competition-timeline', title: 'Season timeline', shows: 'A line of the coming dates: the countdown date, each event and the state championship.', when: 'From 7 days before an event until 7 days after its last day, while Auto is on and a date is ahead.', panels: ['competition-timeline'], row: false },
+  { id: 'competition-district', title: 'District points', shows: 'The district points, the rank and a bar toward the state cutoff.', when: 'Once the first event of the season has started, inside the 7 day window around an event, while the mode is Auto.', panels: ['competition-district'], row: false },
   { id: 'competition-forecast', title: 'Event forecast (Match13)', shows: 'How Match13 expects the event to end for each team: the most likely rank and its range.', when: cardWhen, panels: ['competition-forecast'], row: false },
-  { id: 'competition-qualify', title: 'Championship chances (Match13)', shows: 'The chance of the District and the World Championship for each team, with the cutline.', when: 'Off until its switch is turned on in the Competition page. Then, once the first event of the season has started, while the mode is Auto.', panels: ['competition-qualify'], row: false },
+  { id: 'competition-qualify', title: 'Championship chances (Match13)', shows: 'The chance of the District and the World Championship for each team, with the cutline.', when: 'Off until its switch is turned on in the Competition page. Then, once the first event of the season has started, inside the 7 day window around an event, while the mode is Auto.', panels: ['competition-qualify'], row: false },
   { id: 'competition-team-metrics', title: 'Team metrics (Match13 and TBA)', shows: 'For the team on the screen: the season record, the rank, the Match13 rating and its split into auto, teleop and endgame, the next match with its win chance, the matches still to play, the last three results and the events of the season. A number that is not there yet says NOT YET.', when: 'With the preview and the recap while the mode is Before and after, and all season in Always. Not in Auto.', panels: [], row: true },
   { id: 'competition-compare', title: 'Both teams side by side', shows: 'Prime and Nova in their own colors: the season record, the rank, the Match13 rating, the points a match and the next match.', when: 'With the preview and the recap while the mode is Before and after, and all season in Always. Not in Auto.', panels: ['competition-compare'], row: false },
-  { id: 'competition-preview', title: 'Event preview', shows: 'The next event, the time left, how many teams come, where each of our teams would rank, the best eight teams and the season trend. Ratings from Match13 when it has them, otherwise Statbotics.', when: 'From 14 days before an event to the day before it, while the mode is Before and after.', panels: ['competition-preview'], row: false },
+  { id: 'competition-preview', title: 'Event preview', shows: 'The next event, the time left, how many teams come, where each of our teams would rank, the best eight teams and the season trend. Ratings from Match13 when it has them, otherwise Statbotics.', when: 'From 7 days before an event to the day before it, while the mode is Before and after.', panels: ['competition-preview'], row: false },
   { id: 'competition-matches', title: 'Our matches', shows: 'Our qualification matches with the chance of winning each, the expected record, the hardest and the easiest match.', when: 'In the preview days once the match schedule is posted, while the mode is Before and after.', panels: ['competition-matches'], row: false },
   { id: 'competition-recap', title: 'Event recap', shows: 'The final rank, record, ranking points, the change in EPA, the district points gained, the awards and the trend.', when: 'For 7 days from the day after an event, while the mode is Before and after.', panels: ['competition-recap'], row: false },
-  { id: 'competition-last-season', title: 'Last season at a glance', shows: 'The record of last season, the rank at each event and the EPA after each.', when: 'Before the first event of the season starts, while the mode is Auto.', panels: ['competition-last-season'], row: false },
+  { id: 'competition-last-season', title: 'Last season at a glance', shows: 'The record of last season, the rank at each event and the EPA after each.', when: 'Before the first event of the season starts, inside the 7 day window before it, while the mode is Auto.', panels: ['competition-last-season'], row: false },
 ];
 
 // The cards that are not competition cards. The panels are the ones the card explains that no picker offers.

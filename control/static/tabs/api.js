@@ -1,13 +1,17 @@
 // Calls to the control API for the tabs. A failed call gives a plain sentence, never a status code alone.
 
-export async function api(method, path, body) {
+import { apiPath } from '../base.js';
+
+// signal is optional: the action runner aborts a call that takes longer than a minute
+export async function api(method, path, body, signal) {
   try {
-    const response = await fetch('/control/api' + path, {
+    const response = await fetch(apiPath(path), {
       method: method,
       headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: 'no-store',
       credentials: 'same-origin',
+      signal: signal,
     });
     let data = null;
     try {
@@ -20,7 +24,8 @@ export async function api(method, path, body) {
     if (!response.ok) return { ok: false, data: data, error: (data && data.error) || 'The Teletraan computer answered with a problem (' + response.status + ').' };
     return { ok: true, data: data, error: '' };
   } catch (error) {
-    return { ok: false, unreachable: true, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name.' };
+    if (error && error.name === 'AbortError') return { ok: false, aborted: true, data: null, error: 'It took longer than a minute, so the page stopped waiting. The computer may still be working on it.' };
+    return { ok: false, unreachable: true, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the private tunnel name.' };
   }
 }
 

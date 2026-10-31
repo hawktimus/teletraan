@@ -36,7 +36,7 @@ function firstName(value) {
 }
 
 // The projects of the Projects board as the sync writes them (docs/monday.md): a title, a status, the first name of the mentor and
-// the first letter of the mentor's last name, the first names of the helpers, the percent complete and the day it was done. A
+// the first letter of the mentor's last name, the first names of the helpers, the percent complete, the last day of the Timeline and the day it was done. A
 // value that is missing stays missing, and one that is not what it should be is left out.
 export function tidyProjects(list) {
   return (Array.isArray(list) ? list : []).filter(isRecord).slice(0, mostProjects).map(raw => {
@@ -52,6 +52,7 @@ export function tidyProjects(list) {
     const helpers = (Array.isArray(raw.helpers) ? raw.helpers : []).map(firstName).filter(name => name !== '').slice(0, 6);
     if (helpers.length > 0) project.helpers = helpers;
     if (typeof raw.percent === 'number' && isFinite(raw.percent)) project.percent = Math.min(100, Math.max(0, Math.round(raw.percent)));
+    if (typeof raw.timelineEnd === 'string' && plainDate.test(raw.timelineEnd)) project.timelineEnd = raw.timelineEnd;
     if (typeof raw.completedOn === 'string' && plainDate.test(raw.completedOn)) project.completedOn = raw.completedOn;
     return project;
   }).filter(project => project !== null);

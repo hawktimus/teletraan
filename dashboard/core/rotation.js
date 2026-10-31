@@ -119,11 +119,31 @@ export function savedRotationRows(content) {
   return tidyRotationRows(settings.rotationRows);
 }
 
+// The Projects row the default rotation has, for a saved list that never had one (docs/views.md). It goes after the last
+// Department tasks or TV charts row of the first Robotics block that has one, which is where the default list has it. A list
+// with no such row is left as it is. A saved row for Projects, shown or hidden, in any view, means the editors have decided.
+function withProjectsRow(saved) {
+  if (saved.some(row => row.panel === 'monday-projects')) return saved;
+
+  const projectsRow = tidyRotationRows(defaultRotationRows()).find(row => row.panel === 'monday-projects');
+  const isMonday = row => row.view === 'robotics' && (row.panel === 'monday-department' || row.panel === 'monday-charts');
+  const first = saved.findIndex(isMonday);
+  if (!projectsRow || first < 0) return saved;
+
+  let end = first;
+  while (end + 1 < saved.length && saved[end + 1].view === 'robotics') end += 1;
+  let last = first;
+  for (let index = first; index <= end; index += 1) {
+    if (isMonday(saved[index])) last = index;
+  }
+  return saved.slice(0, last + 1).concat(projectsRow, saved.slice(last + 1));
+}
+
 // The rows the screen plays: the saved ones, or the default rotation (config-rotation.js) while the list has no row that is
-// shown, so an untouched Studio plays the fifteen blocks
+// shown, so an untouched Studio plays the fifteen blocks. A saved list with no Projects row at all gets the default one.
 export function rotationRowsOf(content) {
   const saved = savedRotationRows(content);
-  return saved.some(row => row.shown) ? saved : tidyRotationRows(defaultRotationRows());
+  return saved.some(row => row.shown) ? withProjectsRow(saved) : tidyRotationRows(defaultRotationRows());
 }
 
 // True when the Studio has a list with a row that is shown, which is the list that is played instead of the default one

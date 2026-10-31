@@ -1,14 +1,16 @@
 // The remote action poller, started by teletraan-remote.service (computer/systemd). Every 30 seconds it asks Sanity
-// for the document remoteControl, which the Studio buttons Restart dashboard, Restart services and Reboot computer
-// fill in, and runs the action once. It only makes outbound requests, so it works behind a school firewall as long as
+// for the document remoteControl, which the Studio buttons (restart, reboot, sync now, show a view or theme, pause
+// and resume the rotation) fill in, and runs the action once. It only makes outbound requests, so it works behind a school firewall as long as
 // Sanity itself can be reached.
 //
 // Order of work, and why:
 //   1. remote-plan.mjs decides: is the request new, fresh (10 minutes), allowed, and is a reboot permitted now.
 //   2. The answer is written to Sanity first (lastHandledAt, lastResult). If that write fails nothing runs, so a
 //      request can never run twice.
-//   3. Then the fixed word goes to the host helper (control-helper.sh) through its socket. A reboot waits 5 seconds
-//      after the write, and its time is saved before it is asked for, so a reboot loop is not possible.
+//   3. Then the fixed lines go to the host helper (control-helper.sh) through its socket, or the checked word goes into
+//      the request field of Dashboard Settings (show actions). A reboot waits 5 seconds after the write, and its time
+//      is saved before it is asked for, so a reboot loop is not possible. A sync is kept to one a minute the same way.
+//   4. The answer is also written to remote-last.json in the data folder, for the control page.
 // After each round it also keeps the read only document remote-status up to date for the Studio (every 5 minutes, or
 // at once when it changed).
 //
@@ -20,15 +22,16 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { logEvent } from './jsonlog.mjs';
-import { decide, firstNameOf, statusOf, statusDue, wordOf, rebootDelaySeconds } from './remote-plan.mjs';
+import { decide, firstNameOf, statusOf, statusDue, lastRecordOf, linesOf, showActions, rebootDelaySeconds } from './remote-plan.mjs';
 
 const service = 'remote';
 const pollSeconds = 30;
 const documentId = 'remoteControl';
+const settingsId = 'dashboardSettings';
 
 // The poll loop. Everything that touches the outside is in deps, so a test can fake it:
 //   fetch, now() in milliseconds, readJson(file), writeJson(file, value), helper(word), notify(text), sleep(ms),
-//   log(event, detail), and config { project, dataset, version, token, stateFile, syncFile, netwatchFile }
+//   log(event, detail), and config { project, dataset, version, token, stateFile, syncFile, netwatchFile, lastFile }
 export function createPoller(deps) {
   const config = deps.config;
   let written = null;
@@ -37,7 +40,7 @@ export function createPoller(deps) {
   const headers = { Authorization: 'Bearer ' + config.token, 'Content-Type': 'application/json' };
 
   async function readDocument() {
-    const query = '*[_id == "' + documentId + '"][0]{_rev, action, requestedAt, requestedBy, lastHandledAt, lastResult}';
+    const query = '*[_id == "' + documentId + '"][0]{_rev, action, view, theme, requestedAt, requestedBy, lastHandledAt, lastResult}';
     const answer = await deps.fetch(base + '/query/' + config.dataset + '?query=' + encodeURIComponent(query), { headers: headers });
     if (!answer.ok) throw new Error('Sanity answered ' + answer.status);
     const body = await answer.json();
@@ -62,18 +65,66 @@ export function createPoller(deps) {
     }
   }
 
+  // The state file keeps the time of the last reboot and the last sync; a write adds to it and drops nothing
+  function saveState(extra) {
+    deps.writeJson(config.stateFile, Object.assign({}, deps.readJson(config.stateFile) || {}, extra));
+  }
+
+  // The last answer in a file of the data folder, so the control page shows the same result as the Studio. Optional.
+  function recordLast(doc, handledAt, result) {
+    try {
+      deps.writeJson(config.lastFile, lastRecordOf(doc, handledAt, result));
+    } catch (error) {
+      deps.log('last', { result: 'not written', reason: String(error.message).slice(0, 120) });
+    }
+  }
+
+  // The request fields of Dashboard Settings, written to the published page with a revision check, once more with a
+  // fresh revision if a Studio edit came in between. The fields come from remote-plan.mjs, checked words only.
+  async function writeSettings(fields) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const query = '*[_id == "' + settingsId + '"][0]{_rev}';
+      const answer = await deps.fetch(base + '/query/' + config.dataset + '?query=' + encodeURIComponent(query), { headers: headers });
+      if (!answer.ok) throw new Error('Sanity answered ' + answer.status);
+      const found = (await answer.json()).result;
+      if (!found || typeof found._rev !== 'string') throw new Error('Dashboard Settings is not published');
+      try {
+        await mutate([{ patch: { id: settingsId, ifRevisionID: found._rev, set: fields } }]);
+        return;
+      } catch (error) {
+        if (attempt === 1) throw error;
+      }
+    }
+  }
+
   async function runAction(doc, plan) {
-    // The reboot time is saved before the reboot is asked for
-    if (plan.word === 'reboot') deps.writeJson(config.stateFile, { lastRebootAt: new Date(deps.now()).toISOString() });
+    // The reboot and sync times are saved before the command is asked for
+    if (plan.word === 'reboot') saveState({ lastRebootAt: new Date(deps.now()).toISOString() });
+    if (plan.word === 'sync-now') saveState({ lastSyncAt: new Date(deps.now()).toISOString() });
     saySomething('remote action received: ' + plan.action);
 
-    if (plan.word === 'reboot') await deps.sleep(rebootDelaySeconds * 1000);
-    try {
-      await deps.helper(plan.word);
-    } catch (error) {
-      deps.log('action', { action: plan.action, result: 'failed', reason: String(error.message).slice(0, 120) });
-      return 'failed';
+    if (plan.settingsFields) {
+      try {
+        await writeSettings(plan.settingsFields);
+      } catch (error) {
+        deps.log('action', { action: plan.action, result: 'failed', reason: String(error.message).slice(0, 120) });
+        return 'failed';
+      }
+      deps.log('action', { action: plan.action, result: 'done' });
+      return 'done';
     }
+
+    if (plan.word === 'reboot') await deps.sleep(rebootDelaySeconds * 1000);
+    let failures = 0;
+    for (const line of plan.lines) {
+      try {
+        await deps.helper(line);
+      } catch (error) {
+        failures += 1;
+        deps.log('action', { action: plan.action, line: line, result: 'failed', reason: String(error.message).slice(0, 120) });
+      }
+    }
+    if (failures > 0) return 'failed';
     deps.log('action', { action: plan.action, result: 'done' });
     return 'done';
   }
@@ -89,8 +140,9 @@ export function createPoller(deps) {
     }
 
     const state = deps.readJson(config.stateFile) || {};
-    const plan = decide(doc, deps.now(), state.lastRebootAt || null);
+    const plan = decide(doc, deps.now(), state.lastRebootAt || null, state.lastSyncAt || null);
     let outcome = plan.kind;
+    const known = doc && (Object.hasOwn(linesOf, doc.action) || Object.hasOwn(showActions, doc.action));
 
     if (plan.kind === 'skip' || plan.kind === 'run') {
       const first = plan.kind === 'run' ? 'accepted: ' + plan.action : plan.result;
@@ -102,15 +154,19 @@ export function createPoller(deps) {
       }
       doc = Object.assign({}, doc, { lastHandledAt: plan.handledAt, lastResult: first });
       if (plan.kind === 'skip') {
-        deps.log('action', { action: Object.hasOwn(wordOf, doc.action) ? doc.action : 'unknown', result: plan.result });
-        saySomething('remote action received: ' + (Object.hasOwn(wordOf, doc.action) ? doc.action : 'unknown') + ', not run');
+        deps.log('action', { action: known ? doc.action : 'unknown', result: plan.result });
+        saySomething('remote action received: ' + (known ? doc.action : 'unknown') + ', not run');
+        recordLast(doc, plan.handledAt, plan.result);
       } else {
+        // A reboot never gets to write its end, so the file says accepted
+        if (plan.word === 'reboot') recordLast(doc, plan.handledAt, first);
         const result = await runAction(doc, plan);
         if (plan.word !== 'reboot') {
           const last = result === 'done' ? 'done: ' + plan.action : 'failed: ' + plan.action;
           // The revision changed with the first write, so this one is unconditional
           await mutate([{ patch: { id: documentId, set: { lastResult: last } } }]).catch(() => {});
           doc.lastResult = last;
+          recordLast(doc, plan.handledAt, last);
         }
         outcome = result;
       }
@@ -125,12 +181,13 @@ export function createPoller(deps) {
   async function keepStatus(doc) {
     try {
       const lastRequest = doc && doc.lastHandledAt
-        ? { action: Object.hasOwn(wordOf, doc.action) ? doc.action : '', requestedBy: firstNameOf(doc.requestedBy), handledAt: doc.lastHandledAt, result: String(doc.lastResult || '').slice(0, 120) }
+        ? { action: Object.hasOwn(linesOf, doc.action) || Object.hasOwn(showActions, doc.action) ? doc.action : '', requestedBy: firstNameOf(doc.requestedBy), handledAt: doc.lastHandledAt, result: String(doc.lastResult || '').slice(0, 120), via: 'sanity' }
         : null;
       const status = statusOf(deps.readJson(config.syncFile), deps.readJson(config.netwatchFile), lastRequest);
       const now = deps.now();
       if (!statusDue(status, written, now)) return;
-      await mutate([{ createOrReplace: Object.assign({}, status, { updatedAt: new Date(now).toISOString() }) }]);
+      const stamp = new Date(now).toISOString();
+      await mutate([{ createOrReplace: Object.assign({}, status, { updatedAt: stamp, checkedAt: stamp }) }]);
       written = { at: now, text: JSON.stringify(status) };
       deps.log('status', { result: 'written', sources: status.sources.length });
     } catch (error) {
@@ -181,9 +238,12 @@ function readJson(file) {
   }
 }
 
+// Written to a temporary file and renamed, so a reader never sees half a file
 function writeJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(value) + '\n');
+  const temporary = file + '.tmp';
+  fs.writeFileSync(temporary, JSON.stringify(value) + '\n', { mode: 0o644 });
+  fs.renameSync(temporary, file);
 }
 
 function main() {
@@ -220,6 +280,7 @@ function main() {
       stateFile: path.join(data, 'remote-state.json'),
       syncFile: path.join(data, 'sync-status.json'),
       netwatchFile: '/var/lib/teletraan/netwatch.json',
+      lastFile: path.join(data, 'remote-last.json'),
     },
   });
 

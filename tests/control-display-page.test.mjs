@@ -186,10 +186,10 @@ check('the add row card and the competition card say where the data is from', ()
 
 const files = ['control/static/tabs/settings-competition.js', 'control/static/tabs/display.js', 'control/static/tabs/display-parts.js', 'control/static/display-rows.js', 'control/support/display.js', 'control/support/display-wall.js', 'control/routes/display.js'];
 
-check('the tab file registers itself as Display, the parts files do not, and every file parses', () => {
+check('Display is a page of the Show area (it exports mountDisplay and registers nothing), the parts files do not register either, and every file parses', () => {
   const tab = fs.readFileSync(path.join(repo, 'control/static/tabs/display.js'), 'utf8');
-  assert.match(tab, /registerTab\(\{/);
-  assert.ok(tab.includes("id: 'display'") && tab.includes("title: 'Display'"));
+  assert.ok(tab.includes('export async function mountDisplay') && !tab.includes('registerTab('));
+  assert.ok(fs.readFileSync(path.join(repo, 'control/static/areas/show.js'), 'utf8').includes('mountDisplay'));
   ['control/static/tabs/display-parts.js', 'control/static/display-rows.js'].forEach(file => assert.ok(!fs.readFileSync(path.join(repo, file), 'utf8').includes('registerTab(')));
   files.forEach(file => {
     const copy = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-display-')), path.basename(file).replace('.js', '.mjs'));

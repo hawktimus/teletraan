@@ -9,13 +9,15 @@
 // Dashboard Settings.
 //
 //   off     no card
-//   auto    each card comes in the window of its own (cards below). The cards about an event
-//           come from two days before its first day until its last day, and on the days of
-//           the event they take priority: the rotation alternates a card and an ordinary panel
+//   auto    each card comes in the window of its own (cards below), and only inside the competition window: from 7
+//           days before the next event starts until 7 days after the latest one ended (competitionDaysBefore and
+//           competitionDaysAfter in core/constants.js). Outside it nothing about a competition draws. The cards about
+//           an event come in the whole window, and on the days of the event they take priority: the rotation
+//           alternates a card and an ordinary panel
 //   always  every card that is switched on and has something to show, whatever the date
 //   around  Before and after: the cards play only in two phases of an event, and not while it is on. The preview is
-//           from 14 days before its first day to the day before it, and the recap is from the day after its last
-//           day for 7 days. The newer cards (competition-preview, competition-matches, competition-recap and the two
+//           from 7 days before its first day to the day before it, and the recap is from the day after its last
+//           day for 7 days (the competition window, which also gates this mode). The newer cards (competition-preview, competition-matches, competition-recap and the two
 //           metrics cards, competition-team-metrics and competition-compare) come in this mode and in Always
 //           only. The cards that follow the match by match course of an event (next match, rank, results, alliance) are marked during and never play in this mode.
 //
@@ -27,7 +29,8 @@
 // cards in it each time the next page is chosen (core/schedule.js asks for the playlist
 // again every time).
 
-import { competitionLeadDays, competitionModes, competitionPreviewDays, competitionPreviewSeconds, competitionRecapDays, defaultSettings } from '../config.js';
+import { competitionLeadDays, competitionModes, competitionPreviewSeconds, defaultSettings } from '../config.js';
+import { competitionDaysAfter, competitionDaysBefore } from './constants.js';
 import { addDays, daysFromTo, eventName, teamEntry } from './frc.js';
 import { hasForecast, hasQualify, setMatch13Preview } from './match13.js';
 import { compareTeams, hasMetrics } from './team-metrics.js';
@@ -94,7 +97,7 @@ function startOrder(first, second) {
 
 // What today is for the events of the team, as { during, preview, recap }, each an event or null. during is an
 // event that is on (its first day to its last). While one is on, the other two are null, because nothing
-// plays in Before and after on the days of an event. preview is the event that starts in the next 14 days, the
+// plays in Before and after on the days of an event. preview is the event that starts in the next 7 days, the
 // nearest one, and recap is the event that ended in the last 7 days, the latest one. Two events close together
 // can give a preview and a recap on the same day. Dates are plain dates (core/frc.js).
 export function eventPhases(events, today) {
@@ -104,9 +107,9 @@ export function eventPhases(events, today) {
   const during = dated.filter(event => event.startDate <= today && today <= endOf(event))[0] || null;
   if (during) return Object.assign(none, { during: during });
 
-  const preview = dated.filter(event => addDays(event.startDate, -competitionPreviewDays) <= today && today < event.startDate).sort(startOrder)[0] || null;
+  const preview = dated.filter(event => addDays(event.startDate, -competitionDaysBefore) <= today && today < event.startDate).sort(startOrder)[0] || null;
   const recap = dated
-    .filter(event => endOf(event) < today && today <= addDays(endOf(event), competitionRecapDays))
+    .filter(event => endOf(event) < today && today <= addDays(endOf(event), competitionDaysAfter))
     .sort((first, second) => (endOf(first) < endOf(second) ? 1 : -1))[0] || null;
   return { during: null, preview: preview, recap: recap };
 }
@@ -116,11 +119,11 @@ export function daysToFirstDay(event, today) {
   return daysFromTo(today, event.startDate);
 }
 
-// The event the preview card is about: the one in its 14 days, and otherwise the first that is not over. The card
+// The event the preview card is about: the one in its 7 days, and otherwise the first that is not over. The card
 // can be asked for by hand on any day, and it still has an event to write about.
 export function previewEventOf(entry, today) {
   const coming = entry.events.filter(event => event.startDate !== '' && endOf(event) >= today).sort(startOrder);
-  const near = coming.filter(event => addDays(event.startDate, -competitionPreviewDays) <= today && today < event.startDate)[0];
+  const near = coming.filter(event => addDays(event.startDate, -competitionDaysBefore) <= today && today < event.startDate)[0];
   return near || coming[0] || null;
 }
 
@@ -128,7 +131,7 @@ export function previewEventOf(entry, today) {
 // for sample data the last that has a rank
 export function recapEventOf(entry, today) {
   const over = entry.events.filter(event => event.startDate !== '' && endOf(event) < today).sort((first, second) => (endOf(first) < endOf(second) ? 1 : -1));
-  const near = over.filter(event => today <= addDays(endOf(event), competitionRecapDays))[0];
+  const near = over.filter(event => today <= addDays(endOf(event), competitionDaysAfter))[0];
   return near || over.filter(event => recapHasData(entry, event))[0] || entry.events.filter(event => event.rank !== null).slice(-1)[0] || null;
 }
 
@@ -167,14 +170,20 @@ function endOf(event) {
   return event.endDate || event.startDate;
 }
 
-// What the days of the team's events say about today. near is true from two days before the
-// first day of an event to its last day, onNow on those days of the event, and started once
-// the first event of the season has begun. Dates are plain dates (core/frc.js).
-function eventFacts(entry, today, leadDays = competitionLeadDays) {
+// True inside the competition window: from competitionDaysBefore days before the first day of an event to competitionDaysAfter
+// days after its last day. Two events close together make one long window. An event with no date does not open one.
+export function inCompetitionWindow(events, today) {
+  return events.some(event => event.startDate !== '' && addDays(event.startDate, -competitionDaysBefore) <= today && today <= addDays(endOf(event), competitionDaysAfter));
+}
+
+// What the days of the team's events say about today. near is true in the competition window (the days before an event, the
+// event itself and the days after it), onNow on the days of the event, and started once the first event of the season has
+// begun. Dates are plain dates (core/frc.js).
+function eventFacts(entry, today) {
   const events = entry.events;
 
   return {
-    near: events.some(event => addDays(event.startDate, -leadDays) <= today && today <= endOf(event)),
+    near: inCompetitionWindow(events, today),
     onNow: events.some(event => event.startDate <= today && today <= endOf(event)),
     started: events.some(event => event.startDate <= today),
   };
@@ -253,6 +262,8 @@ export function competitionPlan(content, now = new Date()) {
   if (!entry) return none;
 
   const today = todayOf(content, now);
+  if (mode !== 'always' && !inCompetitionWindow(entry.events, today)) return none;
+
   const phases = eventPhases(entry.events, today);
   const facts = Object.assign({ entry: entry, frc: frcOf(content, now), markers: timelineMarkers(content, entry, now), mode: mode, today: today, phases: phases }, eventFacts(entry, today));
   const inPhase = phases.preview !== null || phases.recap !== null;
@@ -298,6 +309,20 @@ export function mixIn(playlist, steps, priority) {
     }
   });
   return mixed.concat(steps.slice(placed));
+}
+
+// True when a row of the rotation that names a competition card may play. Outside the competition window it may not in Auto and
+// in Before and after, so the row is skipped as a row with nothing to show is. Always and Off leave the row as it was, and a
+// Preview competition plays whatever the date.
+export function competitionRowMayPlay(content, now = new Date()) {
+  if (previewIsOn(now)) return true;
+
+  const settings = content && content.settings ? content.settings : defaultSettings;
+  const mode = modeOf(settings);
+  if (mode === 'always' || mode === 'off') return true;
+
+  const entry = teamEntry(frcOf(content, now));
+  return entry !== null && inCompetitionWindow(entry.events, todayOf(content, now));
 }
 
 let complained = false; // a problem is written in the console once, not at every page

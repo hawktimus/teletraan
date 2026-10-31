@@ -4786,8 +4786,8 @@ function checkFixedValues() {
   });
 
   const wantedConstants = Object.keys(fixedValues).map(pathText => fixedValues[pathText].constant).filter(Boolean);
-  // The limits of the status pill are fixed values with no Studio field (docs/OPERATIONS.md)
-  const pillConstants = ['syncCheckSeconds', 'syncDownMinutes', 'syncSourceMinutes', 'syncStaleMinutes'];
+  // The limits of the status pill and the competition window are fixed values with no Studio field (docs/OPERATIONS.md, docs/frc-feed.md)
+  const pillConstants = ['syncCheckSeconds', 'syncDownMinutes', 'syncSourceMinutes', 'syncStaleMinutes', 'competitionDaysBefore', 'competitionDaysAfter'];
   need(problems, Object.keys(constants).sort().join() === wantedConstants.concat(pillConstants).sort().join(), 'dashboard/core/constants.js should export exactly: ' + wantedConstants.concat(pillConstants).join(', '));
   return problems;
 }

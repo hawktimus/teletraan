@@ -84,6 +84,8 @@ export function buildStatus(facts, now = new Date()) {
       screenStarted: text(mini.kioskStartedAt),
       photos: text(mini.photosDriveAt),
     },
+    mondayError: text(monday.lastError),
+    calendarErrors: calendarErrors,
     mondayCallsToday: number(monday.callsToday),
     mondayCallsDate: text(monday.callsDate, 10),
     lastBackupAt: text(mini.lastBackupAt),

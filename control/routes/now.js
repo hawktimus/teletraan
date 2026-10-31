@@ -41,6 +41,8 @@ export function register(router, ctx) {
     }
     // The time is the Teletraan computer's own, so a wrong clock on the page cannot make a report look fresh
     received = new Date();
+    // The overview route (routes/overview.js) reads this to say whether the screen is reporting
+    if (ctx.state) ctx.state.wallSeen = { report: report, received: received };
     send(res, 200, { ok: true });
   }, { open: true });
 

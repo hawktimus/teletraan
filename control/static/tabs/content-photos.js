@@ -5,6 +5,7 @@
 // Settings, All settings.
 
 import { api as realApi } from './api.js';
+import { apiPath } from '../base.js';
 import { h } from '../settings-all-fields.js';
 import { button, mountList } from './content-list.js';
 import { creditProblem, fitWords, photoFileProblem, sortPhotos } from './content-items.js';
@@ -105,13 +106,13 @@ async function sendPicture(file, caption, credit) {
   if (caption) headers['X-Caption'] = encodeURIComponent(caption);
   if (credit) headers['X-Credit'] = encodeURIComponent(credit);
   try {
-    const response = await fetch('/control/api/photo-upload', { method: 'POST', headers: headers, body: file, credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(apiPath('photo-upload'), { method: 'POST', headers: headers, body: file, credentials: 'same-origin', cache: 'no-store' });
     let data = null;
     try { data = await response.json(); } catch (error) { data = null; }
     if (response.ok) return { ok: true, data: data, error: '' };
     return { ok: false, data: data, error: response.status === 401 ? 'Enter the PIN first. Reload the page.' : (data && data.error) || 'The Teletraan computer answered with a problem (' + response.status + ').' };
   } catch (error) {
-    return { ok: false, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name.' };
+    return { ok: false, data: null, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the private tunnel name.' };
   }
 }
 

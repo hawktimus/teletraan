@@ -2,6 +2,7 @@
 // download of one text file for a coach. The service takes the keys and calendar links out of everything it sends.
 
 import { api, showResult, useStyles } from './api.js';
+import { apiPath } from '../base.js';
 import { logHtml, outcome, pageLoadsLine } from './render.js';
 import { switchHtml } from '../choice.js';
 import { moreToolsHtml, sentences, wireMoreTools } from '../guide.js';
@@ -16,7 +17,7 @@ function fileNameOf(response) {
 
 async function download() {
   try {
-    const response = await fetch('/control/api/log/download', { credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(apiPath('log/download'), { credentials: 'same-origin', cache: 'no-store' });
     if (!response.ok) {
       let reason = 'The log file could not be made (' + response.status + ').';
       try { reason = (await response.json()).error || reason; } catch (error) { /* keep the status text */ }
@@ -32,7 +33,7 @@ async function download() {
     setTimeout(() => URL.revokeObjectURL(link.href), 10000);
     return { ok: true, name: name };
   } catch (error) {
-    return { ok: false, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the Tailscale name.' };
+    return { ok: false, error: 'The Teletraan computer could not be reached. Check the WiFi, or use the private tunnel name.' };
   }
 }
 

@@ -1,6 +1,5 @@
-// The four tabs of the control page (Status, Display, Content, Settings): the order, where every old address goes, that Status has no
-// button that changes the wall, the sections of Settings, and Sync all (order, skipped syncs, a failure that does not stop
-// the rest).
+// The five areas of the control page (Now, Show, Update, Computer, Details): the order, the sections of each, where every old address
+// goes, where each old function lives now, and Sync all (order, skipped syncs, a failure that does not stop the rest).
 //
 //   node tests/control-tabs.test.mjs
 
@@ -11,124 +10,91 @@ import { test, finish } from './helpers/runner.mjs';
 import { makeWorld } from './helpers/control-world.mjs';
 import * as syncAllRoute from '../control/routes/sync-all.js';
 import { isNotInstalled, runSyncAll, summaryWords, syncTargets } from '../control/support/sync-all.js';
-import { resolveAddress, tabs, extendTab, extensionsFor } from '../control/static/tabs.js';
+import { resolveAddress, tabs, areaIds } from '../control/static/tabs.js';
 import { syncLinesHtml, syncs, readOff } from '../control/static/tabs/settings-sync.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(repo + name, 'utf8');
 const helperTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
+const sectionIds = text => Array.from(text.matchAll(/\{ id: '([a-z]+)', title: '([^']+)'/g)).map(found => found[1] + ':' + found[2]);
 
-test('the page has four tabs in this order: Status, Display, Content, Settings', async () => {
-  await import('../control/static/tabs/status.js');
-  await import('../control/static/tabs/display.js');
-  await import('../control/static/tabs/content-blocks.js');
-  await import('../control/static/tabs/settings.js');
-  assert.deepEqual(tabs.map(tab => tab.title), ['Status', 'Display', 'Content', 'Settings']);
-  assert.deepEqual(tabs.map(tab => tab.id), ['status', 'display', 'content', 'settings']);
+test('the page has five areas in this order: Now, Show, Update, Computer, Details, each in a file of its own', async () => {
+  for (const name of ['now', 'show', 'update', 'computer', 'details']) await import('../control/static/tab-' + name + '.js');
+  assert.deepEqual(tabs.map(tab => tab.title), ['Now', 'Show', 'Update', 'Computer', 'Details']);
+  assert.deepEqual(tabs.map(tab => tab.id), areaIds);
+  tabs.forEach(tab => assert.ok(tab.icon && typeof tab.render === 'function', tab.id));
 });
 
-test('Content has the five blocks in this order, and the Display tab no longer mounts any of them', async () => {
-  const { blocks } = await import('../control/static/tabs/content-blocks.js');
-  assert.deepEqual(blocks.map(block => block.id), ['ticker', 'calendar', 'roster', 'announcements', 'photos']);
-  assert.deepEqual(blocks.map(block => block.title), ['Ticker and news', 'Calendar', 'Roster', 'Announcements', 'Photos']);
-  assert.equal(extensionsFor('display', 'after').length, 0, 'nothing is added under the Display tab');
-  assert.ok(!read('control/static/tabs/content-blocks.js').includes('extendTab('), 'Content is a tab of its own');
-  assert.ok(!/content-blocks|drawContent|ct-block/.test(read('control/static/tabs/display.js')), 'display.js knows nothing of the Content blocks');
+test('each area has these sections, in this order', () => {
+  assert.deepEqual(sectionIds(read('control/static/areas/show.js')), ['playing:On the TV']);
+  assert.deepEqual(sectionIds(read('control/static/areas/update.js')), ['sync:Sync', 'publish:Publish', 'keys:Keys', 'monday:Monday check', 'competition:Competition data']);
+  assert.deepEqual(sectionIds(read('control/static/areas/computer.js')), ['restart:Restart', 'network:Network', 'schedule:Scheduled reboot', 'screen:Screen fit', 'cleanup:Clean up', 'copy:Copy project']);
+  assert.deepEqual(sectionIds(read('control/static/areas/details.js')), ['health:Health', 'output:Action output', 'log:Logs', 'settings:All settings']);
+  assert.ok(read('control/static/areas/details.js').includes("box.id = 'settings-all'"), 'the settings editor keeps its fixed id');
+  assert.ok(/export function mountAll\(body\)[\s\S]*mountSettingsAll\(body/.test(read('control/static/tabs/settings-all.js')), 'the section mounts the settings editor');
 });
 
-test('every old address goes to the right tab and section', () => {
+test('every old address goes to the right area and section', () => {
   const goes = {
     '': { id: '', section: '' },
-    status: { id: 'status', section: '' },
-    now: { id: 'status', section: '' },
-    health: { id: 'status', section: '' },
-    display: { id: 'display', section: '' },
-    playlist: { id: 'display', section: '' },
-    hold: { id: 'display', section: '' },
-    messages: { id: 'display', section: '' },
-    theme: { id: 'display', section: '' },
-    update: { id: 'settings', section: 'update' },
-    keys: { id: 'settings', section: 'keys' },
-    monday: { id: 'settings', section: 'monday' },
-    sync: { id: 'settings', section: 'sync' },
-    restart: { id: 'settings', section: 'sync' },
-    reboot: { id: 'settings', section: 'reboot' },
-    competition: { id: 'settings', section: 'competition' },
-    'settings/competition': { id: 'settings', section: 'competition' },
-    log: { id: 'settings', section: 'log' },
-    settings: { id: 'settings', section: '' },
-    content: { id: 'content', section: '' },
-    'content/ticker': { id: 'content', section: 'ticker' },
-    'content/calendar': { id: 'content', section: 'calendar' },
-    'content/roster': { id: 'content', section: 'roster' },
-    'content/announcements': { id: 'content', section: 'announcements' },
-    'content/photos': { id: 'content', section: 'photos' },
-    'content/nothing': { id: 'content', section: '' },
-    'display/content': { id: 'content', section: '' },
-    'display/content/photos': { id: 'content', section: 'photos' },
-    'display/ticker': { id: 'content', section: 'ticker' },
-    'display/news': { id: 'content', section: 'ticker' },
-    'display/calendar': { id: 'content', section: 'calendar' },
-    'display/roster': { id: 'content', section: 'roster' },
-    'display/announcements': { id: 'content', section: 'announcements' },
-    'display/photos': { id: 'content', section: 'photos' },
-    ticker: { id: 'content', section: 'ticker' },
-    roster: { id: 'content', section: 'roster' },
-    photos: { id: 'content', section: 'photos' },
-    'display/other': { id: 'display', section: 'other' },
-    'settings/monday': { id: 'settings', section: 'monday' },
-    'settings/reboot': { id: 'settings', section: 'reboot' },
-    'settings/sync': { id: 'settings', section: 'sync' },
-    'settings/all': { id: 'settings', section: 'all' },
+    now: { id: 'now', section: '' },
+    status: { id: 'now', section: '' },
+    health: { id: 'details', section: 'health' },
+    display: { id: 'show', section: '' },
+    playlist: { id: 'show', section: '' },
+    hold: { id: 'show', section: '' },
+    theme: { id: 'show', section: '' },
+    update: { id: 'update', section: '' },
+    'update/keys': { id: 'update', section: 'keys' },
+    keys: { id: 'update', section: 'keys' },
+    monday: { id: 'update', section: 'monday' },
+    sync: { id: 'update', section: 'sync' },
+    restart: { id: 'computer', section: 'restart' },
+    reboot: { id: 'computer', section: 'schedule' },
+    competition: { id: 'update', section: 'competition' },
+    log: { id: 'details', section: 'log' },
+    settings: { id: 'update', section: 'sync' },
+    'settings/update': { id: 'update', section: 'publish' },
+    'settings/keys': { id: 'update', section: 'keys' },
+    'settings/sync': { id: 'update', section: 'sync' },
+    'settings/screen': { id: 'computer', section: 'screen' },
+    'settings/reboot': { id: 'computer', section: 'schedule' },
+    'settings/cleanup': { id: 'computer', section: 'cleanup' },
+    'settings/log': { id: 'details', section: 'log' },
+    'settings/all': { id: 'details', section: 'settings' },
+    content: { id: 'show', section: '' },
+    'content/ticker': { id: 'show', section: 'ticker' },
+    'content/calendar': { id: 'show', section: 'calendar' },
+    'content/roster': { id: 'show', section: 'roster' },
+    'content/announcements': { id: 'show', section: 'announcements' },
+    'content/photos': { id: 'show', section: 'photos' },
+    'display/photos': { id: 'show', section: 'photos' },
+    'display/news': { id: 'show', section: 'ticker' },
+    ticker: { id: 'show', section: 'ticker' },
+    photos: { id: 'show', section: 'photos' },
+    'show/photos': { id: 'show', section: 'photos' },
+    'computer/network': { id: 'computer', section: 'network' },
+    'details/output': { id: 'details', section: 'output' },
   };
   Object.keys(goes).forEach(address => assert.deepEqual(resolveAddress(address), goes[address], '#' + address));
 });
 
-test('Settings has these sections, in this order, and the last one has a fixed id for the settings editor', () => {
-  const text = read('control/static/tabs/settings.js');
-  const ids = Array.from(text.matchAll(/\{ id: '([a-z]+)', title: '([^']+)'/g)).map(found => found[1] + ':' + found[2]);
-  assert.deepEqual(ids, ['update:Updates', 'keys:Keys', 'monday:Monitor Monday', 'sync:Sync and restart', 'competition:Competition data', 'screen:Screen', 'reboot:Scheduled reboot', 'cleanup:Clean up expired items', 'log:Logs', 'all:All settings']);
-  assert.ok(text.includes("bodyId: 'settings-all'") && text.includes('body.id = item.bodyId'));
-  assert.ok(text.includes("widthWord(window.innerWidth) !== 'wide'"), 'one section at a time unless the screen is wide');
-  assert.ok(/export function mountAll\(body\)[\s\S]*mountSettingsAll\(body/.test(read('control/static/tabs/settings-all.js')), 'the section mounts the settings editor');
-});
-
-test('a file can add a block to a tab or to the settings-all section without editing them', async () => {
-  const mount = () => {};
-  extendTab('settings-all', { mount: mount });
-  extendTab('display', { place: 'before', mount: mount });
-  assert.equal(extensionsFor('settings-all').length, 1);
-  assert.equal(extensionsFor('display', 'before').length, 1, 'this one only: the wall controls are part of Display now');
-  assert.equal(extensionsFor('display', 'after').length, 0);
-});
-
-test('Status only shows: no write call and no button that changes the wall', () => {
-  const status = read('control/static/tabs/status.js');
-  const health = read('control/static/tabs/health.js');
-  const now = read('control/static/tabs/now.js');
-  const card = now.slice(now.indexOf('export async function mountCard'));
-  const preview = read('control/static/tabs/preview.js');
-  [['status.js', status], ['health.js', health], ['the card in now.js', card]].forEach(([name, text]) => {
-    assert.ok(!/api\('(POST|PUT|PATCH|DELETE)'/.test(text), name + ' makes no write call');
-    assert.ok(!text.includes('data-action') && !text.includes('confirmed('), name + ' has no action button');
-  });
-  assert.ok(!preview.includes('/helper/') && !preview.includes('restart-kiosk'), 'the live view has no restart button');
-  assert.ok(preview.includes("'/mirror/watch'"), 'the one POST of the live view only starts the picture of the TV');
-  const markup = read('control/static/tabs/render.js');
-  const previewHtml = markup.slice(markup.indexOf('export function previewCardHtml'), markup.indexOf('// The mirror: a moving picture'));
-  assert.deepEqual(previewHtml.match(/<button[^>]*>[^<]*/g).map(found => found.replace(/<[^>]*>/, '')), ['Show live preview']);
-  assert.ok(status.includes("address: '#content', label: 'Change what it says: Content'"), 'Status links to Content');
-  assert.ok(status.includes("address: '#display', label: 'Change what is shown: Display'") && status.includes("address: '#settings/sync', label: 'Sync and restart: Settings'"));
-  assert.ok(!markup.slice(markup.indexOf('export function nowCardHtml'), markup.indexOf('// A copy of the screen')).includes('<button'));
-});
-
-test('the buttons that moved are where the owner asked: wall controls on Display, sync and restart in Settings', () => {
+test('every function of the old four tabs has a place in the new areas', () => {
+  const show = read('control/static/areas/show.js');
+  ['mountCard', 'mountDisplay', 'wirePreview', 'mountBlock'].forEach(word => assert.ok(show.includes(word), 'Show has ' + word));
   const push = read('control/static/tabs/push.js');
-  assert.ok(push.includes("'/request'") && push.includes("'/push'"), 'Display sends the Status requests and the pushes');
+  assert.ok(push.includes("'/request'") && push.includes("'/push'"), 'Show sends the requests and the pushes');
   assert.ok(read('control/static/tabs/display.js').includes('quickBarHtml'));
-  const sync = read('control/static/tabs/settings-sync.js');
-  ['restart-kiosk', 'restart-services', 'reboot', 'Sync all', "'/sync-all'", 'dotsHtml', 'readsHtml'].forEach(word => assert.ok(sync.includes(word), word));
+  const computer = read('control/static/areas/computer.js');
+  ['mountReboot', 'mountScreen', 'mountCleanup', 'network-info', '/update-info'].forEach(word => assert.ok(computer.includes(word), 'Computer has ' + word));
+  const actions = read('control/static/areas/actions.js');
+  ['restart-kiosk', 'restart-services', "'reboot'"].forEach(word => assert.ok(actions.includes(word), word));
+  const update = read('control/static/areas/update.js');
+  ['mountSync', 'mountPublish', 'mountKeys', 'mountMonday', 'mountCompetition'].forEach(word => assert.ok(update.includes(word), 'Update has ' + word));
+  const details = read('control/static/areas/details.js');
+  ['mountHealth', 'dotsHtml', 'readsHtml', 'mountLog', 'mountAll'].forEach(word => assert.ok(details.includes(word), 'Details has ' + word));
   assert.deepEqual(syncs.map(item => item.target), ['calendars', 'monday', 'frc', 'news', 'match13', 'photos-drive'], 'the order Sync all runs them in');
+  assert.ok(read('control/static/sync-run.js').includes('sources.map') || read('control/static/sync-run.js').includes('for (const item of sources)'));
 });
 
 // A helper that records what it is asked and fails the words it is told to
@@ -220,15 +186,14 @@ test('the real helper client accepts photos-drive as an argument, so Sync all an
   await assert.rejects(createHelper('x', 1000, connect)('sync-now', ['photos drive']), /not a word the helper knows/);
 });
 
-test('the phone has four tab buttons in one row, each 44px high or more', () => {
+test('the phone has five navigation links in one fixed bar, each 48px high or more, and a sidebar from 900px', () => {
   const style = read('control/static/style.css');
-  assert.ok(/nav button \{[^}]*min-height: 44px/.test(style));
-  const phone = style.slice(style.indexOf('@media (max-width: 600px)'));
-  assert.ok(/nav \{[^}]*position: fixed[^}]*bottom: 0[^}]*flex-wrap: nowrap/.test(phone), 'on a phone the tabs are a bar fixed to the bottom');
-  assert.ok(phone.includes('nav button { flex: 1 1 0;') && /nav button \{[^}]*min-height: calc\(var\(--tabbar\) - 4px\)/.test(phone) && style.includes('--tabbar: 56px'), 'the buttons are at least 44px high');
-  assert.ok(/main \{ padding-bottom: calc\(16px \+ var\(--tabbar\)/.test(phone), 'the page keeps clear of the bar');
-  assert.ok(read('control/static/tabs/tabs.css').includes('bottom: calc(var(--tabbar, 56px) + env(safe-area-inset-bottom))'), 'the Next, Pause and Reset bar sits above the tab bar');
-  assert.ok(read('control/static/index.html').includes('<nav id="tabs" role="tablist"'));
+  assert.ok(/#tabs \{[^}]*position: fixed[^}]*bottom: 0[^}]*grid-template-columns: repeat\(5/.test(style), 'on a phone the areas are a bar fixed to the bottom');
+  assert.ok(/#tabs a \{[^}]*min-height: calc\(var\(--navbar\) - 4px\)/.test(style) && /--navbar: 60px/.test(style), 'the links are at least 48px high');
+  assert.ok(/@media \(min-width: 900px\)[\s\S]*#tabs \{[^}]*position: sticky/.test(style), 'from 900px the bar is a sidebar');
+  assert.ok(read('control/static/index.html').includes('<nav id="tabs" aria-label="Areas of the control page">'));
+  assert.ok(read('control/static/tabs/tabs.css').includes('bottom: calc(var(--tabbar, 56px) + env(safe-area-inset-bottom))'), 'the Next, Pause and Reset bar sits above the bar');
+  assert.ok(style.includes('--tabbar: var(--navbar)'));
 });
 
 await finish();

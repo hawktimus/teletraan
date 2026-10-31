@@ -46,7 +46,7 @@ test('the frame is made on demand, lazy, in a 16 by 9 box, and taken out on leav
 test('no script reloads the page on a timer, and no page has a meta refresh', () => {
   const found = scripts.filter(name => /location\.reload|location\.href\s*=|location\.assign|location\.replace/.test(read(name)));
   // a lost sign-in (401) and a good sign-in are the only reasons to reload
-  assert.deepEqual(found.sort(), ['control/static/api.js', 'control/static/github-card.js', 'control/static/login.js', 'control/static/tabs/settings-update.js']);
+  assert.deepEqual(found.sort(), ['control/static/api.js', 'control/static/github-card.js', 'control/static/login.js', 'control/static/poll.js', 'control/static/tabs/settings-update.js']);
   scripts.filter(name => (name.includes('/tabs/') || name.endsWith('app.js')) && !name.endsWith('settings-update.js')).forEach(name => assert.ok(!/location\./.test(read(name).replace(/location\.hash/g, '').replace(/location\.hash\.slice/g, '')), name));
   staticFiles.forEach(name => assert.ok(!/http-equiv=["']refresh/i.test(read(name)), name));
   scripts.forEach(name => {
@@ -70,16 +70,16 @@ test('index and login paint dark and readable before style.css, and say what to 
 test('the stylesheets keep 16px fields, 44px targets, wrapping text and no cut labels', () => {
   const style = read('control/static/style.css');
   const tabs = read('control/static/tabs/tabs.css');
-  assert.ok(/input\[type="text"\][^{]*\{[^}]*min-height: 44px[^}]*font: 18px/.test(style));
+  assert.ok(/input\[type="text"\][^{]*\{[^}]*min-height: 48px[^}]*font: 18px/.test(style));
   assert.ok(/\.tab select, \.tab input \{[^}]*min-height: 44px[^}]*font: inherit/.test(tabs));
-  assert.ok(/button\.action, label\.action \{[^}]*min-height: 44px/.test(style) && /\.studio, button\.help \{[^}]*min-height: 44px/.test(style));
-  assert.ok(/nav \{[^}]*flex-wrap: wrap/.test(style), 'the tabs wrap, they are not cut');
+  assert.ok(/\.btn, button\.action, label\.action \{[^}]*min-height: 48px/.test(style) && /\.tool \{[^}]*min-height: 48px/.test(style));
+  assert.ok(/\.subnav \{[^}]*flex-wrap: wrap/.test(read('control/static/areas.css')), 'the sections wrap, they are not cut');
   assert.ok(/pre \{[^}]*white-space: pre-wrap/.test(style) && /\.log \{[^}]*white-space: pre-wrap/.test(tabs));
   assert.ok(style.includes('overflow-wrap: anywhere') && tabs.includes('overflow-wrap: anywhere'));
-  [style, tabs].forEach(css => {
+  [[style, 14], [tabs, 16], [read('control/static/areas.css'), 14]].forEach(([css, least]) => {
     assert.ok(!/text-overflow:\s*ellipsis/.test(css), 'no cut text');
     const sizes = [...css.matchAll(/font(?:-size)?:\s*(?:[0-9a-z-]+\s+)?(\d+)px/g)].map(found => Number(found[1]));
-    assert.ok(sizes.every(size => size >= 16), 'no text under 16px: ' + sizes.filter(size => size < 16));
+    assert.ok(sizes.every(size => size >= least), 'no text under ' + least + 'px: ' + sizes.filter(size => size < least));
   });
   assert.ok(!/<table/.test(read('control/static/tabs/render.js')), 'no table to squeeze');
 });

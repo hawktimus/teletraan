@@ -22,6 +22,17 @@ export default defineType({
   __experimental_omnisearch_visibility: false,
   fields: [
     timeField('updatedAt', 'Updated at', 'When the Teletraan computer last wrote this page.'),
+    timeField('checkedAt', 'Last check', 'When the Teletraan computer last asked Sanity for a request. It is written at most every 5 minutes.'),
+    defineField({
+      name: 'network',
+      title: 'Network',
+      type: 'object',
+      description: 'Whether the Teletraan computer could reach the internet at its last sync, and since when.',
+      fields: [
+        defineField({ name: 'ok', title: 'Reachable', type: 'boolean', description: 'On when the last check worked.' }),
+        timeField('since', 'Since', 'When it has been in this state.'),
+      ],
+    }),
     defineField({
       name: 'sources',
       title: 'Sources',
@@ -74,6 +85,7 @@ export default defineType({
         textField('requestedBy', 'Asked by', 'The first name of the person who asked.'),
         timeField('handledAt', 'Answered at', 'When the computer answered.'),
         textField('result', 'Result', 'What the computer did.'),
+        textField('via', 'Asked through', 'How the request came in: sanity for this page.'),
       ],
     }),
   ],

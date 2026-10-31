@@ -1,6 +1,6 @@
 // Projects: the projects of the Projects (Mentors) board, for the Robotics view only (both teams, no Team on a row). A row is the mentor's first
 // name, the project name, an optional bar with the percent complete and the status chip; the helpers are a second line when a project
-// has some. A value the project does not have is not drawn, and a column no project has is not drawn either. The order is Stuck, In
+// has some. A project past the end of its Timeline that is not done has a LATE chip after its name. A value the project does not have is not drawn, and a column no project has is not drawn either. The order is Stuck, In
 // Progress, In Review, To Do and then up to 3 done in the last 14 days (core/monday-views.js, projectsView). A longer list holds, then
 // moves up one page at a time (scrollPages). With no project to show the rotation leaves the row out.
 
@@ -27,7 +27,7 @@ function rowMarkup(row, columns) {
   if (columns.percent) cells.push(row.percent === null ? '<span class="percent"></span>' : percentMarkup(row.percent));
 
   const helpers = row.helperWords === '' ? '' : `<span class="note">${escapeHtml(row.helperWords)}</span>`;
-  return `<div class="row"><span class="project">${escapeHtml(row.project)}</span><span class="details">${cells.join('')}</span>${chipMarkup(row.status)}${helpers}</div>`;
+  return `<div class="row"><span class="project"><span class="name">${escapeHtml(row.project)}</span>${row.late ? '<span class="chip chip-late">LATE</span>' : ''}</span><span class="details">${cells.join('')}</span>${chipMarkup(row.status)}${helpers}</div>`;
 }
 
 // The grid of a row: the mentor at the left, the name, the bar and the chip. The widths are in panel.css.

@@ -13,6 +13,12 @@ function esc(value) {
 }
 
 export const sentences = {
+  now: 'Is everything fine? This page says so in one line, shows the five sources and lists what needs attention.',
+  show: 'What is on the TV: what it plays now, how it plays and what it says. Changes to the rotation reach the TV after you save and publish.',
+  update: 'Read the outside sources again and put a new version of the dashboard on the TV. Sync never asks first. Publish and Roll back do.',
+  computer: 'The Teletraan computer itself: restart the screen, restart services, reboot, check the network and set when it restarts by itself.',
+  details: 'The technical side: health, the output of every button, the logs and every setting. Raw text only appears here.',
+
   status: 'This tab only shows what the wall is doing. Nothing on it changes the wall.',
   'status.preview': 'A picture of the TV. Show live preview loads it and the same button hides it again. It changes nothing on the wall.',
   'status.now': 'What the TV says about itself every 10 seconds. It is read only.',
@@ -62,10 +68,11 @@ export const sentences = {
 };
 
 export const helpNotes = {
-  status: ['Status shows what the TV is doing right now.', 'Nothing here changes the wall. To change it, use Display or Content.', 'If a line is red or amber, open Health and read what it says.'],
-  display: ['Display decides what the wall plays and in what order.', 'The cards at the top act at once and end by themselves.', 'The rows and the theme days are different. Change them, press Save to draft, then press Publish to the wall. Undo takes back your last change.'],
-  content: ['Content is the words and pictures on the wall: the ticker, the calendar, the roster, announcements and photos.', 'Open one block, change something, then press Publish to the wall.', 'Nothing reaches the TV until you publish.'],
-  settings: ['Settings is for coaches and for fixing the Teletraan computer.', 'Open one section at a time. Most sections have a button that does what the section is named after.', 'If you are not sure, leave it alone and ask a coach.'],
+  now: ['Now says whether everything is fine.', 'A coloured dot always has a word next to it. Tap a dot to see why.', 'A problem lists what the TV still shows and a button where a fix is safe.'],
+  show: ['Show is what is on the TV.', 'On the TV holds the rotation, the themes and Pause. Photos, Announcements, Roster, Ticker and Calendar are what it says.', 'Rows and themes reach the TV after Save to draft and Publish to the wall.'],
+  update: ['Update reads the outside sources and publishes new versions.', 'Sync now is safe at any time. Publish and Roll back restart the screen, so they ask first.', 'Keys holds the secret links. Change one only when a coach says so.'],
+  computer: ['Computer is for the machine behind the TV.', 'Restart the dashboard is the smallest step. Restart services and Reboot are bigger and ask first.', 'The network check changes nothing. Its report is in Details.'],
+  details: ['Details is for coaches and for sending to a coach.', 'The raw text of every button is kept here for this browser.', 'If you are not sure, leave it alone.'],
 };
 
 export const helpTitle = 'What do I do here?';

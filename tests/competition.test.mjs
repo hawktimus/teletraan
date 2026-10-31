@@ -291,24 +291,28 @@ test('dates are plain text and the helpers are the same on every computer', () =
 // Which cards are due
 
 // The cards due on a day in Auto, for the first team, with the sample's events: the first one on 2027-03-11 to 13, the second
-// on 2027-04-01 to 03 and the state championship on 2027-04-14 to 17. The window of an event opens two days before.
+// on 2027-04-01 to 03 and the state championship on 2027-04-14 to 17. The competition window opens 7 days before the first day of an event and closes 7 days after its last day (core/constants.js).
 const dueByDay = [
-  ['2026-10-09', 'long before the season: the timeline, and last season', ['timeline', 'last-season'], false],
-  ['2027-01-08', 'the day before Kickoff', ['timeline', 'last-season'], false],
-  ['2027-01-10', 'after Kickoff, with no Rollout date', ['timeline', 'last-season'], false],
-  ['2027-03-08', 'three days before the first event', ['timeline', 'last-season'], false],
-  ['2027-03-09', 'two days before the first event: the cards of an event come in', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'last-season'], false],
+  ['2026-10-09', 'long before the season: no competition is near, nothing draws', [], false],
+  ['2027-01-08', 'the day before Kickoff', [], false],
+  ['2027-01-10', 'after Kickoff, with no Rollout date', [], false],
+  ['2027-03-03', 'eight days before the first event: still nothing', [], false],
+  ['2027-03-04', 'seven days before the first event: the window opens and the cards of an event come in', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'last-season'], false],
   ['2027-03-10', 'the day before the first event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'last-season'], false],
   ['2027-03-11', 'the first day of the first event: last season goes, district points come, and the cards take priority', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], true],
   ['2027-03-12', 'the middle of the event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], true],
   ['2027-03-13', 'the last day of the event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], true],
-  ['2027-03-14', 'the day after: only the cards of the whole season', ['timeline', 'district'], false],
-  ['2027-03-29', 'three days before the second event', ['timeline', 'district'], false],
-  ['2027-03-30', 'two days before the second event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], false],
+  ['2027-03-14', 'the day after: the window is still open, with no priority', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], false],
+  ['2027-03-20', 'seven days after the first event: the last day of its window', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], false],
+  ['2027-03-21', 'eight days after the first event, and the second is more than 7 days away: nothing', [], false],
+  ['2027-03-24', 'eight days before the second event', [], false],
+  ['2027-03-25', 'seven days before the second event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], false],
   ['2027-04-01', 'the second event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], true],
-  ['2027-04-04', 'after the second event', ['timeline', 'district'], false],
-  ['2027-04-17', 'the last day of the state championship, which is on the timeline', ['timeline', 'district'], false],
-  ['2027-04-18', 'after the whole season: the timeline has no date left', ['district'], false],
+  ['2027-04-04', 'after the second event', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], false],
+  ['2027-04-10', 'seven days after the second event, the last day', ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district'], false],
+  ['2027-04-11', 'eight days after the last event of the team: nothing, though the state championship is on the timeline', [], false],
+  ['2027-04-17', 'the last day of the state championship', [], false],
+  ['2027-04-18', 'after the whole season', [], false],
 ];
 
 test('Auto: the cards due on each day of the season, with the next match first and priority only on the days of an event', () => {
@@ -324,9 +328,9 @@ test('Auto: the cards due on each day of the season, with the next match first a
 
 test('the window follows the date in the time zone of the Look page, not the computer', () => {
   const content = contentWith();
-  // 2027-03-09 at 02:00 in Holly Springs is 07:00 in Z. At 01:00 Z it is still 03-08 there, and the window is not open.
-  assert.deepEqual(idsOf(competition.competitionPlan(content, at('2027-03-09T07:30:00Z'))), ['next-match', 'rank', 'results', 'alliance', 'timeline', 'last-season']);
-  assert.deepEqual(idsOf(competition.competitionPlan(content, at('2027-03-09T03:00:00Z'))), ['timeline', 'last-season']);
+  // 2027-03-04 at 02:00 in Holly Springs is 07:00 in Z. At 03:00 Z it is still 03-03 there, and the window is not open.
+  assert.deepEqual(idsOf(competition.competitionPlan(content, at('2027-03-04T07:30:00Z'))), ['next-match', 'rank', 'results', 'alliance', 'timeline', 'last-season']);
+  assert.deepEqual(idsOf(competition.competitionPlan(content, at('2027-03-04T03:00:00Z'))), []);
   // 2027-03-13 at 23:30 in Holly Springs is 04:30 Z on the 14th: still the last day of the event
   assert.equal(competition.competitionPlan(content, at('2027-03-14T04:30:00Z')).priority, true);
   assert.equal(competition.competitionPlan(content, at('2027-03-14T05:30:00Z')).priority, false);
@@ -335,6 +339,24 @@ test('the window follows the date in the time zone of the Look page, not the com
   assert.equal(competition.todayOf(west, at('2027-03-12T05:00:00Z')), '2027-03-11');
   assert.equal(competition.competitionPlan(west, at('2027-03-12T05:00:00Z')).priority, true, 'the first day there');
   assert.equal(competition.todayOf(contentWith(raw => { raw.theme.timeZone = 'Not/AZone'; }), at('2027-03-12T05:00:00Z')), '2027-03-12', 'a zone that does not exist is the one of config.js');
+});
+
+test('a row that names a competition card is skipped outside the competition window in Auto and Before and after, and the window is 7 days on each side', () => {
+  const auto = contentWith();
+  const around = contentWith(raw => { raw.settings.competitionMode = 'around'; });
+  [auto, around].forEach(content => {
+    assert.equal(competition.competitionRowMayPlay(content, noon('2026-10-09')), false, 'far from any event');
+    assert.equal(competition.competitionRowMayPlay(content, noon('2027-03-03')), false, '8 days before the first event');
+    assert.equal(competition.competitionRowMayPlay(content, noon('2027-03-04')), true, '7 days before');
+    assert.equal(competition.competitionRowMayPlay(content, noon('2027-03-20')), true, '7 days after the end');
+    assert.equal(competition.competitionRowMayPlay(content, noon('2027-03-21')), false, '8 days after the end');
+  });
+  assert.equal(competition.competitionRowMayPlay(contentWith(raw => { raw.settings.competitionMode = 'always'; }), noon('2026-10-09')), true, 'Always is as it was');
+  assert.equal(competition.competitionRowMayPlay(contentWith(raw => { raw.settings.competitionMode = 'off'; }), noon('2026-10-09')), true, 'Off is as it was');
+  assert.equal(competition.competitionRowMayPlay({}, noon('2027-03-10')), false, 'no data, no competition');
+  assert.equal(competition.inCompetitionWindow([], '2027-03-10'), false);
+  assert.equal(competition.inCompetitionWindow([{ startDate: '', endDate: '' }], '2027-03-10'), false, 'an event with no date opens no window');
+  assert.ok(fs.readFileSync(new URL('../dashboard/core/panels.js', import.meta.url), 'utf8').includes('competitionRowMayPlay(content)'), 'canShow asks');
 });
 
 test('Always shows every card with something to show whatever the date, Off shows none, and a switch takes its card out', () => {
@@ -391,7 +413,8 @@ test('no frc data, a team the Teletraan computer did not read, or a problem with
   // content with no settings uses the starting values: Before and after, every card on. October is no phase of an event.
   const bare = { frc: contentWith().frc };
   assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2026-10-09'))), []);
-  assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2027-03-02'))), ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare'], 'nine days before the first event: the preview, and our matches because the schedule is posted');
+  assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2027-03-02'))), [], 'nine days before the first event: outside the window, nothing');
+  assert.deepEqual(idsOf(competition.competitionPlan(bare, noon('2027-03-05'))), ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare'], 'six days before the first event: the preview, and our matches because the schedule is posted');
   // a mode that is not one is the starting value
   const odd = contentWith(); odd.settings.competitionMode = 'sometimes';
   assert.deepEqual(idsOf(competition.competitionPlan(odd, noon('2026-10-09'))), []);
@@ -494,7 +517,8 @@ test('withCompetition puts the due cards in the list of the large panel, and a p
   assert.equal(names(event), 'competition-next-match A competition-rank B competition-results C competition-alliance D competition-timeline E competition-district F G H I J');
   event.filter(step => step.panel.startsWith('competition-')).forEach(step => assert.deepEqual(step, { panel: step.panel, show: true }, 'a card has no seconds of its own, so it follows Seconds per page'));
 
-  assert.equal(names(competition.withCompetition(playlist, contentWith(), noon('2026-10-09'))), 'A B C competition-timeline D E F G competition-last-season H I J', 'out of an event the cards are spread through the panels');
+  assert.equal(names(competition.withCompetition(playlist, contentWith(), noon('2027-03-05'))), 'A competition-next-match B C competition-rank D competition-results E F competition-alliance G competition-timeline H I competition-last-season J', 'before an event the cards are spread through the panels');
+  assert.equal(names(competition.withCompetition(playlist, contentWith(), noon('2026-10-09'))), 'A B C D E F G H I J', 'outside the competition window nothing is added');
   assert.equal(names(competition.withCompetition(playlist, contentWith(raw => { raw.settings.competitionMode = 'off'; }), noon('2027-03-12'))), 'A B C D E F G H I J');
   assert.equal(competition.withCompetition(playlist, {}, noon('2027-03-12')), playlist, 'no data is the same list');
 

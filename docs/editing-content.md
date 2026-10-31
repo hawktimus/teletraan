@@ -180,7 +180,7 @@ Leadership are uploaded to Studio.
 The first line of the sidebar. It is a page, not a document, so there is nothing to publish on it. It has these parts, top to bottom:
 
 1. What Teletraan I is, that Publish all is the last step of every change, and the five groups of the sidebar in one line each.
-2. A picture of the screen. The boxes A to E are the banner, the main panel, the countdown, the side panel and the ticker, drawn in the shape of the screen. Each box names the sidebar items that fill it. The line under it says what Rotation does and what the three small dots at the foot of the screen mean (Monday, the calendars and Sanity: green is good).
+2. A picture of the screen. The boxes A to E are the banner, the main panel, the countdown, the side panel and the ticker, drawn in the shape of the screen. Each box names the sidebar items that fill it. The line under it says what Rotation does and what the small dots at the foot of the screen mean (Monday, the calendars, Sanity and the network: green is good).
 3. The three steps of every meeting: open Daily Agenda or Monday Tasks, make the change, click Publish all in the top bar. You edit on Draft, and the screen shows Published.
 4. The status of the Teletraan computer.
 5. Links: the control page, the Studio on the web and the guides. A link whose address has not been set is shown as plain words.
@@ -1015,10 +1015,10 @@ Sanity, and the screen draws it.
   has to add the key for the data on the computer (docs/rebuilding-the-computer.md,
   step 17) and the first read comes within an hour.
 - Competition cards: Auto, Always or Off, and Auto to start with. Auto shows each
-  card in the time of its own: the cards about an event from two days before its
-  first day to its last day, with the next match first and the cards taking turns
-  with the other panels, the season timeline all season, last season until the
-  first event starts, and the district points once the first event has started.
+  card in the time of its own, and only from 7 days before an event until 7 days after its
+  last day (nothing about a competition draws outside that): the cards about an event with the
+  next match first and the cards taking turns with the other panels, the season timeline, last
+  season until the first event starts, and the district points once the first event has started.
   Always shows every card that is on and has something to show, whatever the date.
   Off shows none.
 - One switch for each card, all on to start with: Season timeline, Last season at

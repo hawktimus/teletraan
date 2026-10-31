@@ -1,4 +1,4 @@
-// The four tabs of the control page in a real browser (Playwright), at a computer and a phone width, over the real control service
+// The five areas of the control page (Now, Show, Update, Computer, Details) in a real browser (Playwright), at a computer and a phone width, over the real control service
 // and a fake Sanity: the bottom tab bar on a phone and that nothing hides behind it, the What do I do here note and the Help
 // link, More tools remembered by the browser, the arrow keys on the tabs, the look of a chosen button and a switch, and the one
 // action bar on Scheduled reboot from the first change to the publish. Skipped when Playwright is not installed.
@@ -60,7 +60,7 @@ async function open(width, height, tab) {
   await page.goto(base + '/control/login.html');
   await page.evaluate(() => fetch('/control/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: '123456' }) }));
   await page.goto(base + '/control/#' + tab);
-  await page.waitForSelector('#tabs button');
+  await page.waitForSelector('#tabs a');
   await page.waitForTimeout(600);
   return { context, page };
 }
@@ -71,33 +71,33 @@ try {
   for (const [width, height] of [[1600, 1000], [390, 844]]) {
     const label = ' at ' + width;
 
-    await check('every tab opens with its heading and sentence, nothing wider than the screen, and the tab buttons are 44px' + label, async () => {
-      for (const tab of ['status', 'display', 'content', 'settings']) {
+    await check('every area opens with its heading and sentence, nothing wider than the screen, and the links are 48px' + label, async () => {
+      for (const tab of ['now', 'show', 'update', 'computer', 'details']) {
         const { context, page } = await open(width, height, tab);
-        assert.equal(await page.locator('#tabs button[aria-selected="true"]').getAttribute('data-id'), tab);
+        assert.equal(await page.locator('#tabs a[aria-current="page"]').getAttribute('data-id'), tab);
         assert.ok((await page.locator('#page .lead').count()) >= 1, tab + ' has a sentence');
         assert.equal(await sideways(page), 0, tab + ' scrolls sideways');
-        const small = await page.evaluate(() => Array.from(document.querySelectorAll('#tabs button, .help, .studio')).map(element => element.getBoundingClientRect().height).filter(high => high < 43.5));
-        assert.deepEqual(small, [], tab + ' has a target under 44px');
-        if (shots) await page.screenshot({ path: path.join(shots, 'tab-' + tab + '-' + width + '.png'), clip: { x: 0, y: 0, width: width, height: height } });
+        const small = await page.evaluate(() => Array.from(document.querySelectorAll('#tabs a, .tool, .subnav-link')).map(element => element.getBoundingClientRect().height).filter(high => high < 47.5));
+        assert.deepEqual(small, [], tab + ' has a target under 48px');
+        if (shots) await page.screenshot({ path: path.join(shots, 'area-' + tab + '-' + width + '.png'), clip: { x: 0, y: 0, width: width, height: height } });
         await context.close();
       }
     });
   }
 
-  await check('on a phone the four tabs are a bar fixed to the bottom, and the end of the page is not hidden behind it', async () => {
-    const { context, page } = await open(390, 844, 'settings');
+  await check('on a phone the five areas are a bar fixed to the bottom, and the end of the page is not hidden behind it', async () => {
+    const { context, page } = await open(390, 844, 'computer');
     const nav = await page.locator('#tabs').boundingBox();
     assert.ok(Math.abs(nav.y + nav.height - 844) < 1, 'the bar is at the bottom of the screen');
     assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('tabs')).position), 'fixed');
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    const last = await page.evaluate(() => { const box = document.getElementById('page').lastElementChild.getBoundingClientRect(); return box.bottom; });
+    const last = await page.evaluate(() => document.getElementById('area').getBoundingClientRect().bottom);
     assert.ok(last <= nav.y + 1, 'the last card ends above the tab bar');
     await context.close();
   });
 
   await check('on a phone the Next, Pause and Reset bar sits just above the tab bar and the two do not overlap', async () => {
-    const { context, page } = await open(390, 844, 'display');
+    const { context, page } = await open(390, 844, 'show');
     await page.waitForSelector('.quickbar');
     const bar = await page.locator('.quickbar').boundingBox();
     const nav = await page.locator('#tabs').boundingBox();
@@ -107,30 +107,29 @@ try {
   });
 
   await check('the first visit shows the What do I do here note, Got it keeps it away after a reload, and Help brings it back', async () => {
-    const { context, page } = await open(1600, 1000, 'content');
+    const { context, page } = await open(1600, 1000, 'show');
     assert.equal(await page.locator('.help-note').count(), 1);
     assert.match(await page.locator('.help-note').textContent(), /What do I do here\?/);
     await page.click('[data-help-done]');
     assert.equal(await page.locator('.help-note').count(), 0);
     await page.reload();
-    await page.waitForSelector('.ct-block');
+    await page.waitForSelector('.subnav');
     assert.equal(await page.locator('.help-note').count(), 0, 'it stays dismissed');
     await page.click('#help');
     assert.equal(await page.locator('.help-note').count(), 1, 'Help brings it back');
     await context.close();
   });
 
-  await check('the arrow keys move between the tabs, and only the open tab is in the tab order', async () => {
-    const { context, page } = await open(1600, 1000, 'status');
-    await page.focus('#tabs button[data-id="status"]');
-    await page.keyboard.press('ArrowRight');
-    assert.equal(await page.locator('#tabs button[aria-selected="true"]').getAttribute('data-id'), 'display');
-    await page.keyboard.press('End');
-    assert.equal(await page.locator('#tabs button[aria-selected="true"]').getAttribute('data-id'), 'settings');
-    await page.keyboard.press('ArrowRight');
-    assert.equal(await page.locator('#tabs button[aria-selected="true"]').getAttribute('data-id'), 'status');
-    assert.deepEqual(await page.locator('#tabs button').evaluateAll(list => list.map(button => button.tabIndex)), [0, -1, -1, -1]);
-    assert.equal(await page.locator('#page').getAttribute('aria-labelledby'), 'tab-status');
+  await check('the keyboard reaches every area link in order, Enter opens one, and the current one is marked', async () => {
+    const { context, page } = await open(1600, 1000, 'now');
+    await page.focus('#tabs a[data-id="now"]');
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.id), 'show');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#tabs a[data-id="show"][aria-current="page"]');
+    assert.equal(await page.evaluate(() => location.hash), '#show');
+    assert.deepEqual(await page.locator('#tabs a').evaluateAll(list => list.map(link => link.dataset.id)), ['now', 'show', 'update', 'computer', 'details']);
+    assert.equal(await page.locator('#tabs a[aria-current="page"]').count(), 1);
     await context.close();
   });
 

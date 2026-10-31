@@ -8,7 +8,9 @@
 #      NetworkManager manages (never docker, tailscale, bridge or veth devices), and the module commands for the driver of
 #      each Wi-Fi device, checked with visudo
 #   2b. /var/lib/teletraan/netwatch.json (owned by the login user) and /var/log/teletraan, which netwatch writes
-#   3. Wi-Fi power saving off: a NetworkManager drop-in, the active Wi-Fi connections, and iw when it is installed
+#   3. Wi-Fi power saving off: a NetworkManager drop-in of its own (teletraan-wifi.conf), the active Wi-Fi connections, and iw
+#      when it is installed. The drop-in is written only when NetworkManager is the manager in use, and nothing is restarted:
+#      a new setting applies at the next reconnect. With another manager the output says so and nothing is changed.
 #   4. energy-efficient Ethernet off and USB autosuspend off for the network adapter, as udev rules
 #   5. suspend, hibernate and hybrid sleep masked, and logind told to ignore idle and the lid
 #   6. NetworkManager told never to give up on a connection (it stops after 4 tries by default)
@@ -28,6 +30,7 @@ expected_repo=$root/opt/teletraan
 state_file=$root/var/lib/teletraan/netwatch.json
 log_folder=$root/var/log/teletraan
 nm_file=$root/etc/NetworkManager/conf.d/70-teletraan-network.conf
+wifi_file=$root/etc/NetworkManager/conf.d/teletraan-wifi.conf
 udev_file=$root/etc/udev/rules.d/70-teletraan-network.rules
 logind_file=$root/etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf
 sys_net=$root/sys/class/net
@@ -49,6 +52,11 @@ if [ "$(id -u)" -ne 0 ]; then
   echo "  sudo $0${1:+ $1}" >&2
   exit 1
 fi
+
+# True when NetworkManager is the manager that runs the network here: nmcli is installed and the service is active
+network_manager_in_use() {
+  command -v nmcli > /dev/null 2>&1 && systemctl is-active --quiet NetworkManager.service 2> /dev/null
+}
 
 # Writes a file only when its text is different. Says what it did.
 put_file() {
@@ -87,6 +95,7 @@ find_interfaces() {
 # ----- undo -----
 if [ "$undo" = yes ]; then
   remove_file "$nm_file"
+  remove_file "$wifi_file"
   remove_file "$udev_file"
   remove_file "$logind_file"
   for name in "${sleep_targets[@]}"; do
@@ -246,11 +255,15 @@ systemctl enable --now teletraan-netwatch.timer
 systemctl restart teletraan-netwatch.timer
 
 # 3 and 6. NetworkManager: Wi-Fi power saving off, and never give up on a connection. The DHCP client has no keepalive;
-# the nearest thing is a client that never stops asking (a 45 second wait and 4 tries is the default).
-if command -v nmcli > /dev/null 2>&1; then
+# the nearest thing is a client that never stops asking (a 45 second wait and 4 tries is the default). Idle Wi-Fi drops are
+# a power saving problem, so the power saving setting has a drop-in of its own. Nothing is restarted: the drop-in applies at
+# the next reconnect, and the connections that are up are changed below.
+if network_manager_in_use; then
+  put_file "$wifi_file" "# Written by computer/scripts/install-network.sh. Undo: sudo computer/scripts/install-network.sh --undo
+[connection]
+wifi.powersave = 2"
   put_file "$nm_file" "# Written by computer/scripts/install-network.sh. Undo: sudo computer/scripts/install-network.sh --undo
 [connection]
-wifi.powersave = 2
 connection.autoconnect-retries = 0
 ipv4.dhcp-timeout = 2147483647"
   nmcli general reload conf > /dev/null 2>&1 || true
@@ -269,7 +282,7 @@ ipv4.dhcp-timeout = 2147483647"
     fi
   done
 else
-  say "NetworkManager (nmcli) is not here, so its settings are skipped. See docs/network.md for the other managers."
+  say "NetworkManager is not the network manager in use here (nmcli is missing or the service is not running), so the Wi-Fi power saving drop-in $wifi_file and the other NetworkManager settings were not written. Nothing was changed. See docs/network.md for the other managers."
 fi
 
 # 3 and 4. udev rules: they hold at every start, and the same commands are run now

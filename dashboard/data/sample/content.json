@@ -394,7 +394,7 @@
     "lastSyncAt": "2026-10-08T14:00:00Z",
     "projects": [
       { "id": "[project 1]", "title": "[Project that is stuck]", "status": "blocked", "mentor": "[Mentor-A]", "mentorInitial": "K", "helpers": ["[Helper-A]"], "percent": 20 },
-      { "id": "[project 2]", "title": "[Project in progress]", "status": "in-progress", "mentor": "[Mentor-B]", "percent": 60 },
+      { "id": "[project 2]", "title": "[Project in progress]", "status": "in-progress", "mentor": "[Mentor-B]", "percent": 60, "timelineEnd": "2026-10-01" },
       { "id": "[project 3]", "title": "[Second project in progress]", "status": "in-progress", "mentor": "[Mentor-A]", "mentorInitial": "M", "helpers": ["[Helper-A]", "[Helper-B]"] },
       { "id": "[project 4]", "title": "[Project to do]", "status": "up-next", "mentor": "[Mentor-C]" },
       { "id": "[project 5]", "title": "[Project with no mentor]", "status": "up-next" }

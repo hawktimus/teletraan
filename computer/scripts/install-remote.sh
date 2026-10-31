@@ -3,7 +3,8 @@
 # Installs the remote action poller: copies teletraan-remote.service, makes the log folder and turns the service on.
 # The service polls Sanity every 30 seconds and runs the Studio buttons Restart dashboard, Restart services and
 # Reboot computer through the helper socket. It runs as the login user. It installs no package: it needs node.
-# Run it again when the unit file changes.
+# Run it again when the unit file changes. It is one of the steps of Install everything, so without SANITY_WRITE_TOKEN in
+# local.env it says so in one line, changes nothing and ends with success: the rest of the install goes on.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
@@ -12,6 +13,12 @@ repo=$(cd "$computer/.." && pwd -P)
 target=/etc/systemd/system
 log_folder=/var/log/teletraan
 expected_repo=/opt/teletraan
+
+# The poller needs the token to write the answer. Only the name is looked for, the value is never shown.
+if [ -z "$(setting SANITY_WRITE_TOKEN)" ]; then
+  echo "install-remote: SANITY_WRITE_TOKEN is not in local.env yet, so the remote action service was not installed. Add the key with the Keys tab of the control page and install again."
+  exit 0
+fi
 
 if [ ! -s "$unit" ]; then
   echo "The unit file $unit is missing or empty. Pull the newest files first." >&2
@@ -45,11 +52,6 @@ if [ "$account" = root ] || [ "$account" = UNKNOWN ] || ! id "$account" > /dev/n
   echo "The repository at $repo is owned by $account, and the service should not run as that." >&2
   echo "Give it to the account the Teletraan computer logs in with, then run this again." >&2
   exit 1
-fi
-
-# The poller needs the token to write the answer. Only the name is looked for, the value is never shown.
-if [ -z "$(setting SANITY_WRITE_TOKEN)" ]; then
-  echo "Note: SANITY_WRITE_TOKEN is not in local.env, so the service will stop at once. Add it with the Keys tab of the control page." >&2
 fi
 
 if [ ! -S /run/teletraan/control.sock ]; then

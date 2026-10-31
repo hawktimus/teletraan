@@ -48,7 +48,7 @@ $items[]
 #   $columns   project_columns of monday-contract.sh, and $labels project_labels
 # A label is read by its words (lowercase). Mentor and Helpers are dropdowns, so their text is the label words, and only the first
 # word of a name is kept; the first letter of the last word goes in mentorInitial, so that the screen can tell two mentors with
-# the same first name apart. A project whose Show on TV? says Hide has showOnBoard false and is never written.
+# the same first name apart. timelineEnd is the last day of its Timeline, a date only, for the Late chip. A project whose Show on TV? says Hide has showOnBoard false and is never written.
 project_rows='
 def value_of($column): (.values[$column] // {});
 def words_of($column): (value_of($column).text | if type == "string" then plain | ascii_downcase else "" end);
@@ -63,6 +63,8 @@ $items[]
 | (value_of($columns.mentor).text) as $mentor
 | (value_of($columns.helpers).text) as $helpers
 | (value_of($columns.percent).text | if type == "string" then (gsub(","; "") | try tonumber catch null) else null end) as $percent
+| (value_of($columns.timeline)) as $timeline
+| ([($timeline.text // "") | scan("(?<![0-9])(?:19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}(?![0-9])") | select(real_day)]) as $text_days
 | {
     id: (.id | if test("\\A[0-9]{1,20}\\z") then . else null end),
     title: (.name | whole_text(60)),
@@ -71,6 +73,7 @@ $items[]
     mentorInitial: ($mentor | initial_of),
     helpers: (if ($helpers | type) == "string" then [($helpers | split(",")[] | first_name($contact_limit)) | select(. != null)] | .[0:$helpers_most] else [] end),
     percent: (if ($percent | type) == "number" and $percent >= 0 then ([$percent, 100] | min | round) else null end),
+    timelineEnd: (($timeline.to | day_of) // $text_days[-1:][0]),
     completedOn: (value_of($columns.completed) | (.date | day_of) // (.text | day_of)),
     showOnBoard: (($labels.hide | index([$show_words])) == null)
   }
@@ -182,7 +185,7 @@ def reading_list($old):
 # have no value, 60 at most. The same list is written when the Projects board was read to its end, so a project that has gone leaves it.
 def project_list:
   [$projects | unique_by(.id) | .[] | select(.showOnBoard)
-    | {_key: .id, id, title, status, mentor, mentorInitial, helpers, percent, completedOn}
+    | {_key: .id, id, title, status, mentor, mentorInitial, helpers, percent, timelineEnd, completedOn}
     | with_entries(select(.value != null and .value != []))] | .[0:60];
 
 def department_counts:

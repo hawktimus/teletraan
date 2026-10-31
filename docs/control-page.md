@@ -2,11 +2,43 @@
 
 The control page runs on the Teletraan computer. Coaches use it from a phone or a laptop on the WiFi to update the dashboard and the Studio, see what is running and roll back. Nobody needs SSH for it.
 
-Address: `http://teletraan.local:3229/`. It opens a small page with two big buttons, Control page and Studio. The control page itself is `http://teletraan.local:3229/control/`. The Tailscale name of the Teletraan computer works the same way: `http://<tailscale name>:3229/`. If the school WiFi blocks traffic between devices, `teletraan.local` will not open. Use the Tailscale name then.
+Address: `http://teletraan.local:3229/`. It opens a small page with two big buttons, Control page and Studio. The control page itself is `http://teletraan.local:3229/control/`. The private tunnel name of the Teletraan computer works the same way: `http://<private tunnel name>:3229/`. If the school WiFi blocks traffic between devices, `teletraan.local` will not open. Use the private tunnel name then.
 
 The Studio has two ways in: the Studio button on the landing page and in the header of the control page (both open `/studio/` on port 3229), and port 3426, which goes straight to the Studio: `http://teletraan.local:3426/`. Port 3426 serves the Studio and nothing else.
 
-The page has four tabs, in this order: Status, Display, Content and Settings, and a Help link and the Studio button in the header. On a phone the four tabs are a bar of buttons fixed to the bottom of the screen, each at least 44 px high. The page keeps clear of the bar, and the Next, Pause and Reset bar of Display sits just above it. The arrow keys, Home and End move between the tabs.
+The page has five areas, in this order: Now, Show, Update, Computer and Details, and a Theme button, a Help button and the Studio button in the header. On a phone the five areas are a bar fixed to the bottom of the screen, each at least 48 px high. From 900 px wide the same five are a sidebar on the left. Each area and each section has one address that survives a reload: `#now`, `#show`, `#show/photos`, `#update/publish`, `#computer/network`, `#details/log`. Every address that worked before the redesign (`#status`, `#display`, `#content/photos`, `#settings/reboot`, `#settings/all`) still lands in the right place (`control/static/tabs.js`, `resolveAddress`).
+
+## The five areas
+
+`docs/control-page-inventory.md` lists every control and where it is now. In short:
+
+- **Now.** One banner, All good or Needs attention with the number of problems and the time of the last check. Five status dots (Sanity, Monday, Band, Network, Screen), each a button that opens the facts behind it, and each with a word and a shape as well as a color. Three large buttons: Sync everything, Refresh the screen (puts the TV back on its schedule, ending any hold or pause) and Restart the dashboard. The Attention list: each problem is one plain sentence, what the TV still shows, a button where a fix is safe, and a Show details drawer. Last remote action (from the Studio) and the last action of this page.
+- **Show.** What is on the TV. Sections: On the TV (the old Status card and live picture, then the whole Display page: rotation, themes by weekday, Pause, Next, Show on the wall, previews, quick hide), Photos, Announcements, Roster, Ticker and news, Calendar (the old Content blocks).
+- **Update.** Sync (Sync everything, and a card for each source with its last good time, a status chip, Sync now and the switch that includes it in Sync everything), Publish (the release on the wall and the one before it, a four step flow Upload, Check, Publish, Roll back, and the GitHub, folder and rollback cards), Keys, Monday check, Competition data.
+- **Computer.** Restart (Restart the dashboard, Restart services, Reboot the computer, with uptime, connection and address), Network (the network check), Scheduled reboot, Screen fit, Clean up, Copy project (guided steps).
+- **Details.** The only place raw text appears: Health (with the dots and last reads), Action output (the technical text of every button this browser pressed), Logs, All settings.
+
+### Actions
+
+Every button that does something behaves the same way (`control/static/action-run.js`): it is disabled and shows a spinner while it runs, its line says what is happening, after 10 seconds the line adds "Still working", and after 60 seconds the page stops waiting and says so. The end is one line in an `aria-live` region, "Done at 3:12 PM" or "Didn't finish: <reason>", and the last result is kept in this browser for each action, so it is still there after you leave and come back. Only a restart, a reboot, a rollback and a publish ask first, and the question says what will happen and how long the TV may go dark. Sync never asks. Sync everything calls the helper once for each source (so each call has its own 60 seconds and the cards show which source is running); `POST sync-all` is still there for the tools.
+
+### Plain messages for failures
+
+`control/static/words.js` turns a raw reason into one short sentence and the fixes that are safe: a calendar feed that cannot be reached ("Calendars didn't update. The last good copy from 3:12 PM is still showing.", with Sync calendars now and Run network check), an address that was refused ("A calendar link may have expired. Replace it in the settings file.", pointing at Update, Keys), no internet ("The computer can't reach the internet. The screen shows saved data.", with Run network check), a source that is not installed ("<Source> isn't set up on this computer, so it was skipped.", with Remove from Sync all), a job that timed out ("<Source> took too long and was stopped.", with Try again) and anything else ("<Source> didn't finish."). The raw reason is kept in the problem and shown only in a Show details drawer and in Details. While the internet is down only the network problem is listed.
+
+### How the page learns the state
+
+The page asks `GET overview` every 10 seconds while the tab is visible and not at all while it is hidden. The answer holds the same status as `GET status`, plus `sync-status.json` (written by the sync service, its `network` member is optional), the network watchdog's `netwatch.json` (if the control service can read it; the status helper carries the same facts otherwise), `remote-last.json` (the last action handled from the Studio) and whether the screen is reporting. A part that is missing is null, never an error. `GET remote-last` returns just the last remote action. When the computer does not answer, a banner says "Can't reach the computer" with the last known status and its time, and the page asks again after 10, 20, 40 and at most 60 seconds.
+
+### Ready for a private tunnel
+
+The page and its calls use relative addresses only (`control/static/base.js` works out where the service is from where the script was loaded), so it works at any host name and over HTTPS from another name. The cookie gets `Secure` when the request came over HTTPS (`X-Forwarded-Proto`), and a call from the page under a forwarded host name is accepted. The PIN, the cookie and the lockout (six wrong tries in ten minutes block the address for an hour, kept across restarts) are unchanged; the sign-in screen shows the tries left and, when blocked, how long to wait. `docs/remote-access.md` describes the tunnel and the control from the Studio. Nothing here turns a tunnel on.
+
+### Pictures
+
+`make control-screens` writes pictures of the five areas at 390 by 844, 768 by 1024 and 1440 by 900, in light and dark, for the states all good, calendar failed, syncing, computer unreachable, publish in progress and empty, to `docs/reference/control-page/`. The states that are about one part of the page are drawn only on the areas they change (the plan is in `tools/control-screens.mjs`). `tests/control-areas-page.test.mjs` checks the states, the questions, the timings, a keyboard only pass, contrast at both color schemes and that no request goes to another host. The accessibility checks done by hand are in `docs/control-page-inventory.md`.
+
+The sections below were written for the four tabs the page had before. Display is now the second half of On the TV in Show, Content is the other sections of Show, and Settings is spread over Update, Computer and Details; the inventory says where each part went.
 
 ### Finding your way
 
@@ -36,7 +68,7 @@ Old addresses still work: `#now`, `#health` and `#status` open Status; `#playlis
 
 ### Sync and restart
 
-The section of Settings that holds what used to be on Status: Sync all, one button for each sync (calendars, Monday, competition, FRC news, Match13, Drive photos), Last reads (when each source was read), the three dots that the TV shows, and Restart screen, Restart services and Reboot the computer, each with a 10 second countdown to cancel.
+The section of Settings that holds what used to be on Status: Sync all, one button for each sync (calendars, Monday, competition, FRC news, Match13, Drive photos), Last reads (when each source was read), the dots that the TV shows (Monday, Band, Sanity and the network), and Restart screen, Restart services and Reboot the computer, each with a 10 second countdown to cancel.
 
 Sync all calls `POST /control/api/sync-all`, which asks the helper for `sync-now` in this order: calendars, monday, frc, news, match13, photos-drive. It answers with a line for each: Ran, Skipped or Failed, with the reason in plain words. A sync that is not installed on the computer (systemd says the unit was not found) is skipped. A sync that fails never stops the ones after it. Under Which syncs Sync all runs, a box for each sync switches it off for Sync all; the choice is kept in this browser and sent as `skip`. The call can take a few minutes, so the page says to keep it open.
 
@@ -95,7 +127,7 @@ The service stops by itself when the watch file is older than 2 minutes (nobody 
 
 If no picture arrives within 10 seconds, the card says `The mirror could not start. Showing the copy that follows the screen.` and shows the copy below. If python3 is missing on the computer the helper says `mirror: no python3` and the card says `The mirror needs python3 on the computer.` The installer checks `python3 --version`. Without it, it skips the unit and says so, and the rest of the install goes on. Python 3 is on a standard Debian install. Nothing is installed by the page.
 
-What is exposed: the browser's debug port stays on 127.0.0.1 and nothing serves it. The web server on port 3229 serves two files from the data folder, read only and never cached: `/mirror/frame.jpg` and `/mirror/frame.n`. Like the dashboard on that port, they need no PIN, so anyone on the same WiFi or Tailscale network who knows the address can see the picture while the mirror runs. It is a picture of the TV and nothing else. The watch file is not served. Starting the mirror needs the PIN, because `/control/api/mirror/watch` is a control route.
+What is exposed: the browser's debug port stays on 127.0.0.1 and nothing serves it. The web server on port 3229 serves two files from the data folder, read only and never cached: `/mirror/frame.jpg` and `/mirror/frame.n`. Like the dashboard on that port, they need no PIN, so anyone on the same WiFi or The private tunnel network who knows the address can see the picture while the mirror runs. It is a picture of the TV and nothing else. The watch file is not served. Starting the mirror needs the PIN, because `/control/api/mirror/watch` is a control route.
 
 The mirror is made at 960 by 540, JPEG quality 45, about 30 frames a second at most. The page shows fewer when the network is slow.
 
@@ -268,7 +300,7 @@ To turn it on, see docs/updating-the-computer.md ("Turn on the scheduled reboot"
 
 ## On a phone
 
-The page is made for a phone first. It fits 320 to 430 pixels with no sideways scroll, the four tabs are a bar fixed to the bottom, long values such as commit hashes and addresses wrap, and every field is 16px or larger so iOS does not zoom. The Live preview does not load by itself under 900px wide: tap Show live preview. It is taken out again when you change tab or the page goes to the background, because the whole dashboard in a frame is too heavy for a phone. If the page still does not finish loading, it shows a line with a Reload link instead of a bare page.
+The page is made for a phone first. It fits 320 to 430 pixels with no sideways scroll, the five areas are a bar fixed to the bottom, long values such as commit hashes and addresses wrap, and every field is 16px or larger so iOS does not zoom. The Live preview does not load by itself under 900px wide: tap Show live preview. It is taken out again when you change tab or the page goes to the background, because the whole dashboard in a frame is too heavy for a phone. If the page still does not finish loading, it shows a line with a Reload link instead of a bare page.
 
 ## First time
 
@@ -282,7 +314,7 @@ Do these once, in this order. The team mentor says yes to the Docker downloads i
    - starts the web server and the control service with `docker compose`, run as root, and turns on the nightly timer.
 
    The tool then installs the services and timers and restarts the screen (docs/updating-the-computer.md).
-2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<tailscale name>:3229`. If you open the Studio on port 3426, add `http://teletraan.local:3426` and `http://<tailscale name>:3426` too, because Sanity checks the address exactly as the browser shows it. The Status tab says "CORS origin missing" until this is done, and then names the 3426 address as well. On a shared Wi-Fi, leave Allow credentials off for the teletraan.local addresses and use the Tailscale name: a page on plain HTTP can be changed on the way, and with credentials allowed it could act as the signed-in editor (docs/security-review.md).
+2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<private tunnel name>:3229`. If you open the Studio on port 3426, add `http://teletraan.local:3426` and `http://<private tunnel name>:3426` too, because Sanity checks the address exactly as the browser shows it. The Status tab says "CORS origin missing" until this is done, and then names the 3426 address as well. On a shared Wi-Fi, leave Allow credentials off for the teletraan.local addresses and use the private tunnel name: a page on plain HTTP can be changed on the way, and with credentials allowed it could act as the signed-in editor (docs/security-review.md).
 3. Open the address above and type the PIN: 3229 or 3426. Nothing has to be set up for it.
 
 Release 1 is the old tree. It stays in the list as a record. It cannot be switched back to, because its folders are from before round 6.

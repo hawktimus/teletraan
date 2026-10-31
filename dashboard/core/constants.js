@@ -25,3 +25,9 @@ export const syncStaleMinutes = 10;
 export const syncDownMinutes = 30;
 // How often each source is read, in minutes. Monday is read by its own setting (Dashboard Settings, Monday tab).
 export const syncSourceMinutes = { sanity: 5, weather: 15, images: 5, monday: 30, competition: 10, calendars: 15 };
+
+// The competition window (core/competition.js, docs/frc-feed.md). In Auto and in Before and after, nothing about a competition
+// draws until this many days before the next event of the team starts, and nothing after this many days from the end of the
+// latest one. Always and Off ignore it.
+export const competitionDaysBefore = 7;
+export const competitionDaysAfter = 7;

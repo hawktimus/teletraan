@@ -68,6 +68,7 @@ Notes are never read):
 | Mentor | `dropdown_mm8mcqq` | The first word of the label, the one mentor in charge |
 | Helpers | `dropdown_mm8mtej2` | The first word of each label, six at most |
 | % Complete | `numeric_mm8mmzv6` | The bar, when there is a number |
+| Timeline | `timerange_mm8mp8wc` | Only the last day, as a date (`timelineEnd`): a project past it that is not Done shows a LATE chip. Nothing is shown for a missing Timeline |
 | Date Completed | `date_mm8mkgrg` | A done project shows for 14 days after it |
 | Show on TV? | `color_mm8mtjwd` | Hide keeps the project off the TV and out of Sanity |
 
@@ -105,8 +106,8 @@ columns at the right and the status chip last:
 the percent complete and the status chip, and the helpers on a second line. Nothing is drawn for a value a project does
 not have, and no column that no project has. The order is Stuck, In Progress, In Review and To Do, then up to 3 projects
 done in the last 14 days, the newest first. It plays for both teams in the Robotics view only, with no Team on a row and no
-team label: in a Prime or Nova block it has nothing to show. A Projects row is added on the Rotation board and the Display
-tab like any other row, with its own seconds, and the default rotation has one after the three charts.
+team label: in a Prime or Nova block it has nothing to show. A project past the end of its Timeline that is not done has a LATE chip (30px, as in Department tasks) after its name. A Projects row is added on the Rotation board and the Display
+tab like any other row, with its own seconds, and the default rotation has one after the three charts. A saved rotation that has no Projects row at all, shown or hidden, plays the default one anyway, so nobody has to add it. To keep Projects off the TV, save a Projects row and hide it (docs/views.md).
 
 **TV charts** (`monday-charts`) is one chart a row:
 

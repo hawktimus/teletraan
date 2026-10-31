@@ -46,6 +46,7 @@ function setup(options = {}) {
     const found = find(name);
     if (found && !fs.existsSync(path.join(bin, name))) fs.symlinkSync(found, path.join(bin, name));
   });
+  if (options.manager === 'networkd') fs.writeFileSync(path.join(stub, 'not-networkmanager'), '');
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
   tool(bin, 'id', '#!/bin/sh\n[ "$1" = -u ] && { echo 0; exit 0; }\nexit 0\n');
@@ -56,6 +57,7 @@ function setup(options = {}) {
   tool(bin, 'ip', '#!/bin/sh\necho "default via 10.0.137.1 dev wlp2s0 proto dhcp"\n');
   tool(bin, 'systemctl', `#!/bin/sh
 echo "systemctl $*" >> "${log}"
+if [ "$1" = is-active ] && [ -f "${stub}/not-networkmanager" ]; then exit 3; fi
 if [ "$1" = is-enabled ]; then [ -f "${stub}/masked-$2" ] && echo masked || echo static; exit 0; fi
 if [ "$1" = mask ]; then shift; for n in "$@"; do : > "${stub}/masked-$n"; done; fi
 if [ "$1" = unmask ]; then shift; for n in "$@"; do rm -f "${stub}/masked-$n"; done; fi
@@ -150,11 +152,25 @@ check('Wi-Fi power saving goes off through NetworkManager (drop-in and the activ
   const place = setup();
   const result = place.run();
   const conf = place.text('etc/NetworkManager/conf.d/70-teletraan-network.conf');
-  assert.ok(conf.includes('wifi.powersave = 2') && conf.includes('connection.autoconnect-retries = 0') && conf.includes('ipv4.dhcp-timeout = 2147483647'));
+  assert.ok(conf.includes('connection.autoconnect-retries = 0') && conf.includes('ipv4.dhcp-timeout = 2147483647') && !conf.includes('powersave'));
+  const wifi = place.text('etc/NetworkManager/conf.d/teletraan-wifi.conf');
+  assert.match(wifi, /^\[connection\]\nwifi\.powersave = 2$/m);
+  assert.ok(result.text.includes('wrote ' + place.file('etc/NetworkManager/conf.d/teletraan-wifi.conf')), result.text);
+  assert.ok(!/restart NetworkManager|systemctl restart NetworkManager/.test(place.calls()), 'nothing is restarted: the drop-in applies at the next reconnect');
   assert.ok(place.calls().includes('nmcli connection modify uuid aaaa-bbbb 802-11-wireless.powersave 2'));
   assert.ok(!place.calls().includes('cccc-dddd'), 'only the Wi-Fi connection is changed');
   assert.ok(result.text.includes('iw is not installed'), result.text);
   assert.ok(!(place.text('etc/udev/rules.d/70-teletraan-network.rules') || '').includes('power_save'), 'no iw rule without iw');
+});
+
+check('with another network manager the output says so and no NetworkManager file is written', () => {
+  const place = setup({ manager: 'networkd' });
+  const result = place.run();
+  assert.equal(result.status, 0, result.errors);
+  assert.ok(result.text.includes('NetworkManager is not the network manager in use here'), result.text);
+  assert.equal(place.text('etc/NetworkManager/conf.d/teletraan-wifi.conf'), null);
+  assert.equal(place.text('etc/NetworkManager/conf.d/70-teletraan-network.conf'), null);
+  assert.ok(!place.calls().includes('powersave 2'), 'no connection is changed');
 });
 
 check('with iw installed the udev rule and the command turn power saving off too; energy-efficient Ethernet is turned off when reported', () => {
@@ -196,7 +212,7 @@ check('suspend, hibernate and hybrid sleep are masked and logind ignores idle an
 check('running it again changes nothing and says so', () => {
   const place = setup({ iw: true });
   place.run();
-  const files = ['etc/sudoers.d/teletraan-network', 'etc/NetworkManager/conf.d/70-teletraan-network.conf', 'etc/udev/rules.d/70-teletraan-network.rules', 'etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf'];
+  const files = ['etc/sudoers.d/teletraan-network', 'etc/NetworkManager/conf.d/70-teletraan-network.conf', 'etc/NetworkManager/conf.d/teletraan-wifi.conf', 'etc/udev/rules.d/70-teletraan-network.rules', 'etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf'];
   const before = files.map(name => [place.text(name), fs.statSync(place.file(name)).mtimeMs]);
   fs.writeFileSync(place.log, '');
   const again = place.run();
@@ -214,7 +230,7 @@ check('--undo removes the settings, unmasks the targets and puts power saving ba
   place.run();
   const undone = place.run(['--undo']);
   assert.equal(undone.status, 0, undone.errors);
-  ['etc/NetworkManager/conf.d/70-teletraan-network.conf', 'etc/udev/rules.d/70-teletraan-network.rules', 'etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf'].forEach(name => assert.equal(place.text(name), null, name));
+  ['etc/NetworkManager/conf.d/70-teletraan-network.conf', 'etc/NetworkManager/conf.d/teletraan-wifi.conf', 'etc/udev/rules.d/70-teletraan-network.rules', 'etc/systemd/logind.conf.d/70-teletraan-no-sleep.conf'].forEach(name => assert.equal(place.text(name), null, name));
   assert.ok(!fs.readdirSync(place.stub).some(name => name.startsWith('masked-')), 'unmasked');
   assert.equal(fs.readFileSync(path.join(place.stub, 'powersave'), 'utf8').trim(), '0');
   assert.ok(place.text('etc/sudoers.d/teletraan-network') && place.text('etc/systemd/system/teletraan-netwatch.timer'));

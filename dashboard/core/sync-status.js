@@ -1,6 +1,7 @@
 // How fresh the sources of the sync service are (computer/scripts/sync-service.mjs). The service writes
 // data/live/sync-status.json every 10 seconds:
-//   { generatedAt, sources: { sanity, weather, images, monday, competition, calendars: { lastSuccessAt, lastFailureAt, lastFailureReason } } }
+//   { generatedAt, sources: { sanity, weather, images, monday, competition, calendars: { lastSuccessAt, lastFailureAt, lastFailureReason } }, network: { ok, since } }
+// network is newer than the rest: an older file or a laptop has none, and then no network dot is drawn.
 // The first half of this file is plain functions that take values and give values back, so tests can try them. The second half
 // reads the file and keeps the newest answer. The status pill (core/sync-pill.js) and the Sanity dot (core/dots-run.js) draw from it.
 //
@@ -26,7 +27,8 @@ export function parseSyncStatus(raw) {
     const source = raw.sources[name] && typeof raw.sources[name] === 'object' ? raw.sources[name] : {};
     sources[name] = { success: toMs(source.lastSuccessAt), failure: toMs(source.lastFailureAt) };
   });
-  return { generatedAt: toMs(raw.generatedAt), sources: sources };
+  const network = raw.network && typeof raw.network === 'object' && typeof raw.network.ok === 'boolean' ? { ok: raw.network.ok, since: toMs(raw.network.since) } : null;
+  return { generatedAt: toMs(raw.generatedAt), sources: sources, network: network };
 }
 
 // How old a source may be before it counts as late (amber) and as down (red), in minutes. A slow source (the calendars
@@ -78,6 +80,11 @@ const listeners = [];
 
 export function currentSyncStatus() {
   return latest;
+}
+
+// The network as the sync service saw it: { ok, since (ms or null) }, or null while the file has none
+export function networkReading() {
+  return latest ? latest.network : null;
 }
 
 // When the content was last read well from Sanity, as a Date, or null while that is not known

@@ -7,7 +7,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRouter, sendJson, readJson } from './lib/router.js';
-import { createAuth, clientAddress, sameOrigin } from './lib/auth.js';
+import { createAuth, clientAddress, isSecure, sameOrigin } from './lib/auth.js';
 import { parseEnv } from './lib/env-merge.js';
 import { createReleases } from './lib/releases.js';
 import { createHelper } from './lib/helper-client.js';
@@ -20,7 +20,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const staticFolder = path.join(here, 'static');
 
 // What anyone may fetch before signing in
-const openFiles = ['login.html', 'login.js', 'style.css'];
+const openFiles = ['login.html', 'login.js', 'base.js', 'words.js', 'style.css'];
 
 export function readConfig(env = process.env) {
   const root = env.CONTROL_ROOT || '/opt/teletraan';
@@ -32,6 +32,7 @@ export function readConfig(env = process.env) {
     dataDir: env.CONTROL_DATA || '/var/lib/teletraan/data',
     envFile: env.CONTROL_ENV_FILE || path.join(root, 'local.env'),
     secretFile: env.CONTROL_SECRET_FILE || path.join(root, 'control-secret'),
+    netwatchFile: env.CONTROL_NETWATCH || '/var/lib/teletraan/netwatch.json',
     lockoutFile: env.CONTROL_LOCKOUT_FILE || path.join(root, 'control-lockout.json'),
     socket: env.CONTROL_SOCKET || '/run/teletraan/control.sock',
     logFile: env.CONTROL_LOG_FILE || path.join(root, 'logs', 'control.log'),
@@ -80,6 +81,7 @@ export async function createService(config, overrides = {}) {
 
   const ctx = {
     dataDir: config.dataDir,
+    netwatchFile: config.netwatchFile,
     releasesDir: config.releasesDir,
     rootDir: config.rootDir,
     envFile: config.envFile,
@@ -122,7 +124,7 @@ export async function createService(config, overrides = {}) {
     return false;
   });
 
-  // The tab files in static/: tab-*.js here and the tabs of the other pages in tabs/. A file that calls registerTab adds a tab and
+  // The area files in static/: tab-*.js. A file that calls registerTab adds an area to the navigation (static/tabs.js). Files in tabs/ that
   // one that calls extendTab adds a block to a tab (static/tabs.js).
   function tabFiles() {
     const found = fs.readdirSync(staticFolder).filter(name => /^tab-[a-z-]+\.js$/.test(name) && fs.readFileSync(path.join(staticFolder, name), 'utf8').includes('registerTab('));
@@ -144,7 +146,7 @@ export async function createService(config, overrides = {}) {
     const body = await readJson(req);
     const result = auth.attempt(clientAddress(req), body.pin);
     if (result.ok) {
-      sendJson(res, 200, { ok: true }, { 'Set-Cookie': auth.cookieHeader(result.cookie) });
+      sendJson(res, 200, { ok: true }, { 'Set-Cookie': auth.cookieHeader(result.cookie, isSecure(req)) });
     } else if (result.blockedSeconds) {
       log('sign-in blocked for ' + clientAddress(req));
       sendJson(res, 429, { error: 'Too many wrong tries. Try again in ' + Math.ceil(result.blockedSeconds / 60) + ' minutes.', blockedSeconds: result.blockedSeconds });

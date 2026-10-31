@@ -1,147 +1,283 @@
-/* The control page: one column on a phone, two columns above 900px. Targets are at least 44px high. */
+/* The control page: the colors, the shell (a bar at the bottom of a phone, a sidebar from 900px), and the parts every area shares:
+   buttons, chips, cards, the banner and the dots. Phone first: it works from 360px wide, every target is at least 48px, and
+   nothing scrolls sideways. Light and dark follow the system unless the Theme button chose one. Purple and gold.
+   A status is always a word and a shape as well as a color. The area pages are in areas.css, the older cards in tabs/tabs.css. */
 
 @font-face { font-family: 'Tomorrow'; font-weight: 600; src: url('fonts/tomorrow-600.woff2') format('woff2'); }
 @font-face { font-family: 'Tomorrow'; font-weight: 700; src: url('fonts/tomorrow-700.woff2') format('woff2'); }
 @font-face { font-family: 'Atkinson Hyperlegible Next'; font-weight: 200 800; src: url('fonts/atkinson-hyperlegible-next.woff2') format('woff2'); }
 
 :root {
+  color-scheme: light dark;
   --purple: #6c18b6;
   --purple-dark: #53048f;
   --yellow: #faca2a;
-  --ink: #1d1a24;
-  --paper: #f6f4fa;
-  --card: #ffffff;
-  --line: #d9d2e6;
-  --good: #1d7a3e;
-  --bad: #b3261e;
+  --gold: #faca2a;
+  --on-gold: #1a1228;
+  --bg: #f6f4fa;
+  --surface: #ffffff;
+  --surface-2: #f0ecf7;
+  --inset: #f3effa;
+  --edge: #d9d2e6;
+  --text: #1d1a24;
+  --muted: #5d5670;
+  --accent: #53048f;
+  --fill: #6c18b6;
+  --on-fill: #ffffff;
+  --ok: #1d7a3e;
   --warn: #8a5a00;
+  --bad: #b3261e;
+  --info: #0b5cad;
+  --ok-bg: #e3f5e9;
+  --warn-bg: #fff2d1;
+  --bad-bg: #fde8e6;
+  --ok-fill: #2fd27a;
+  --warn-fill: #ffb300;
+  --bad-fill: #d9423a;
+  --off-fill: #9a9a9a;
+  --danger-fill: #b3261e;
+  --on-danger: #ffffff;
+  --header-bg: #6c18b6;
+  --nav-bg: #6c18b6;
+  --ring: #7c3aed;
+  --halo: #ffffff;
   --display: 'Tomorrow', 'Trebuchet MS', sans-serif;
-  --text: 'Atkinson Hyperlegible Next', Verdana, sans-serif;
+  --body: 'Atkinson Hyperlegible Next', Verdana, sans-serif;
+  --navbar: 60px;
+  --tabbar: var(--navbar);
+  /* The names the older cards use */
+  --card-bg: var(--surface);
+  --card-edge: var(--edge);
+  --page-text: var(--text);
+  --paper: var(--bg);
+  --card: var(--surface);
+  --line: var(--edge);
+  --ink: var(--text);
+  --good: var(--ok);
+  --text-font: var(--body);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14101c;
+    --surface: #1f1830;
+    --surface-2: #2a2040;
+    --inset: #120b20;
+    --edge: #3f3060;
+    --text: #f3eefc;
+    --muted: #c3bad8;
+    --accent: #faca2a;
+    --fill: #faca2a;
+    --on-fill: #1a1228;
+    --ok: #4ade80;
+    --warn: #ffc233;
+    --bad: #ff9b94;
+    --info: #7fd4ff;
+    --ok-bg: #11301f;
+    --warn-bg: #362a0a;
+    --bad-bg: #3d1816;
+    --danger-fill: #ff9b94;
+    --on-danger: #2a0a08;
+    --header-bg: #3d0c70;
+    --nav-bg: #3d0c70;
+    --ring: #faca2a;
+    --halo: #14101c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14101c;
+  --surface: #1f1830;
+  --surface-2: #2a2040;
+  --inset: #120b20;
+  --edge: #3f3060;
+  --text: #f3eefc;
+  --muted: #c3bad8;
+  --accent: #faca2a;
+  --fill: #faca2a;
+  --on-fill: #1a1228;
+  --ok: #4ade80;
+  --warn: #ffc233;
+  --bad: #ff9b94;
+  --info: #7fd4ff;
+  --ok-bg: #11301f;
+  --warn-bg: #362a0a;
+  --bad-bg: #3d1816;
+  --danger-fill: #ff9b94;
+  --on-danger: #2a0a08;
+  --header-bg: #3d0c70;
+  --nav-bg: #3d0c70;
+  --ring: #faca2a;
+  --halo: #14101c;
 }
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 120px; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: 160px; }
 
-/* The ring that shows where the keyboard is: purple with a white halo, so it reads on the dark cards and on the light page */
-:focus-visible { outline: 3px solid #7c3aed; outline-offset: 2px; box-shadow: 0 0 0 7px #ffffff; }
-header :focus-visible { outline-color: #ffffff; box-shadow: none; }
+/* The ring that shows where the keyboard is: a color that reads on the card, with a halo of the page color around it */
+:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; box-shadow: 0 0 0 7px var(--halo); }
+.top :focus-visible, #tabs :focus-visible { outline-color: #ffffff; box-shadow: none; }
 
 body {
   margin: 0;
   overflow-wrap: anywhere;
-  background: var(--paper);
-  color: var(--ink);
-  font: 18px/1.45 var(--text);
+  background: var(--bg);
+  color: var(--text);
+  font: 18px/1.5 var(--body);
 }
 
-header {
-  background: var(--purple);
-  color: #fff;
-  padding: calc(12px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
-  border-bottom: 4px solid var(--yellow);
+.skip { position: absolute; left: 8px; top: -80px; z-index: 100; padding: 12px 16px; background: var(--gold); color: var(--on-gold); font: 700 18px var(--display); border-radius: 0 0 10px 10px; }
+.skip:focus { top: 0; }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
+/* ----- the top bar ----- */
+.top {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  padding: calc(10px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+  background: var(--header-bg); color: #ffffff; border-bottom: 4px solid var(--gold);
+}
+.top h1 { margin: 0; font: 700 22px/1.2 var(--display); }
+.top .on-wall { margin: 2px 0 0; font-size: 15px; }
+.top-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.tool {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 48px; min-height: 48px; padding: 0 14px;
+  border: 2px solid #ffffff; border-radius: 10px; background: transparent; color: #ffffff; font: 600 16px var(--display); text-decoration: none; cursor: pointer;
+}
+a.tool { border-color: var(--gold); color: var(--gold); }
+.tool-word { display: none; }
+
+/* ----- the navigation: a bar at the bottom of a phone ----- */
+#tabs {
+  position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--nav-bg); border-top: 4px solid var(--gold);
+}
+#tabs a {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: calc(var(--navbar) - 4px); padding: 4px 2px;
+  color: #ffffff; font: 600 14px/1.1 var(--display); text-decoration: none;
+}
+#tabs a[aria-current="page"] { background: var(--gold); color: var(--on-gold); }
+#tabs :focus-visible { outline-offset: -5px; }
+
+main {
+  max-width: 1280px; margin: 0 auto; outline: none;
+  padding: 16px max(16px, env(safe-area-inset-right)) calc(24px + var(--navbar) + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+main:has(.sticky-action:not([hidden])) { padding-bottom: calc(96px + var(--navbar) + env(safe-area-inset-bottom)); }
+
+@media (min-width: 600px) {
+  .tool-word { display: inline; }
+  .top h1 { font-size: 24px; }
 }
 
-header h1 { margin: 0; font: 700 24px/1.2 var(--display); }
-header .on-wall { margin: 2px 0 8px; font-size: 16px; opacity: .9; }
-:root { --tabbar: 56px; }
-
-/* The tabs wrap into rows instead of being cut off or scrolled out of sight */
-nav { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 280px; min-width: 0; }
-.bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
-.studio, button.help {
-  display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 6px; padding: 0 16px;
-  border: 2px solid var(--yellow); border-radius: 8px; background: transparent; color: var(--yellow); font: 600 18px var(--display); text-decoration: none; cursor: pointer;
+/* ----- a sidebar from 900px ----- */
+@media (min-width: 900px) {
+  body:has(> #tabs) { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 100vh; }
+  .top { grid-column: 1 / -1; }
+  #tabs {
+    position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: 4px; width: 240px; height: auto; min-height: calc(100vh - 80px);
+    padding: 16px 12px; background: var(--surface); border-top: 0; border-right: 1px solid var(--edge);
+  }
+  #tabs a { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 52px; padding: 0 16px; border-radius: 10px; color: var(--text); font-size: 18px; }
+  #tabs a[aria-current="page"] { background: var(--fill); color: var(--on-fill); }
+  #tabs :focus-visible { outline-color: var(--ring); outline-offset: 2px; }
+  main { width: 100%; max-width: 1200px; margin: 0; padding: 24px 32px 48px; }
+  main:has(.sticky-action:not([hidden])) { padding-bottom: 48px; }
 }
-.studio { margin-left: 4px; }
-button.help { margin-left: auto; border-color: #ffffff; color: #ffffff; }
-nav button {
-  min-height: 44px;
-  padding: 0 16px;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font: 600 18px var(--display);
-  border-radius: 8px 8px 0 0;
-  cursor: pointer;
+
+.icon { flex: none; vertical-align: -4px; }
+
+/* ----- buttons: primary, secondary, danger ----- */
+.btn, button.action, label.action {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 20px;
+  border: 2px solid transparent; border-radius: 12px; font: 600 17px/1.2 var(--display); text-align: center; text-decoration: none; cursor: pointer;
 }
-nav button[aria-selected="true"] { background: var(--paper); color: var(--purple-dark); }
+.btn-primary, button.action, label.action { background: var(--fill); color: var(--on-fill); }
+.btn-secondary, button.quiet { background: transparent; color: var(--accent); border-color: var(--accent); }
+.btn-danger { background: var(--danger-fill); color: var(--on-danger); }
+.btn:disabled, button.action:disabled { opacity: .6; cursor: not-allowed; }
+button.quiet { min-height: 48px; padding: 0 18px; border-radius: 12px; border: 2px solid var(--accent); font: 600 17px var(--display); }
 
-main { max-width: 1600px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.spinner {
+  flex: none; width: 18px; height: 18px; border: 3px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .9s linear infinite;
+}
+.spinner[hidden] { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; border-style: dotted; border-top-color: currentColor; }
+  * { scroll-behavior: auto !important; transition: none !important; }
+}
 
+/* An action: the button and the line under it that says what is happening and how it ended */
+.act-box { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.action-status { margin: 0; min-height: 1.5em; font-size: 16px; color: var(--muted); }
+.action-status[data-state="done"] { color: var(--ok); font-weight: 700; }
+.action-status[data-state="bad"] { color: var(--bad); font-weight: 700; }
+.action-status[data-state="working"] { color: var(--warn); font-weight: 700; }
+.action-status:empty { display: none; }
+
+/* ----- chips: a word, a shape and a color ----- */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border: 2px solid currentColor; border-radius: 999px;
+  font: 700 14px/1.2 var(--display); white-space: nowrap;
+}
+.chip[data-state="ok"], .chip[data-state="done"] { color: var(--ok); background: var(--ok-bg); }
+.chip[data-state="failed"], .chip[data-state="bad"] { color: var(--bad); background: var(--bad-bg); }
+.chip[data-state="skipped"], .chip[data-state="warn"], .chip[data-state="syncing"] { color: var(--warn); background: var(--warn-bg); }
+.chip[data-state="never"], .chip[data-state="unknown"] { color: var(--muted); background: var(--surface-2); }
+
+/* ----- cards, rows and plain text ----- */
+.card { min-width: 0; padding: 16px; background: var(--surface); border: 1px solid var(--edge); border-radius: 14px; }
+.card h2 { margin: 0 0 8px; font: 700 20px var(--display); color: var(--accent); }
+.card h3 { margin: 0 0 8px; font: 700 18px var(--display); color: var(--accent); }
 .columns { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
-.columns > *, .card { min-width: 0; }
+.columns > * { min-width: 0; }
 @media (min-width: 900px) { .columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
-.card h2 { margin: 0 0 8px; font: 700 20px var(--display); color: var(--purple-dark); }
-
-button.action, label.action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--purple);
-  color: #fff;
-  font: 600 18px var(--display);
-  cursor: pointer;
-}
-button.action:disabled { background: #b9b2c7; cursor: not-allowed; }
-button.quiet { background: #fff; color: var(--purple-dark); border: 2px solid var(--purple); }
-
 input[type="text"], input[type="password"], input[type="number"], select {
-  width: 100%;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 2px solid var(--line);
-  border-radius: 8px;
-  font: 18px var(--text);
-  background: #fff;
-  color: var(--ink);
+  width: 100%; max-width: 100%; min-height: 48px; padding: 0 12px; border: 2px solid var(--edge); border-radius: 10px;
+  font: 18px var(--body); background: var(--surface); color: var(--text);
 }
 
 .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 8px 0; }
-.muted { color: #5d5670; font-size: 16px; }
-.good { color: var(--good); }
+.muted { color: var(--muted); font-size: 16px; }
+.good { color: var(--ok); }
 .bad { color: var(--bad); }
-.note { color: var(--muted, #5a4b78); }
+.note { color: var(--muted); }
 .warn { color: var(--warn); }
-code, pre { font: 16px ui-monospace, Menlo, monospace; background: #f0ecf7; border-radius: 6px; }
+.link, a.link, button.link { color: var(--accent); text-decoration: underline; }
+button.link { background: none; border: 0; font: inherit; min-height: 48px; min-width: 48px; padding: 0 12px; cursor: pointer; }
+code, pre { font: 16px ui-monospace, Menlo, monospace; background: var(--surface-2); border-radius: 8px; }
 code { padding: 1px 5px; }
 pre { padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
-
 progress { width: 100%; height: 18px; }
 
 ol.steps { list-style: none; margin: 8px 0 0; padding: 0; }
-ol.steps li { padding: 6px 0; border-top: 1px solid var(--line); }
-ol.steps li.done::before { content: "done  "; color: var(--good); font-weight: 600; }
+ol.steps li { padding: 6px 0; border-top: 1px solid var(--edge); }
+ol.steps li.done::before { content: "done  "; color: var(--ok); font-weight: 600; }
 ol.steps li.fail::before { content: "failed  "; color: var(--bad); font-weight: 600; }
 ol.steps li.start::before { content: "working  "; color: var(--warn); font-weight: 600; }
 ol.steps li.info::before { content: "note  "; color: var(--warn); font-weight: 600; }
 
-.sign-in { max-width: 420px; margin: 48px auto; }
+/* ----- the sign-in screen ----- */
+.sign-in { max-width: 440px; margin: 48px auto; }
+.sign-in .card { padding: 24px; }
+.sign-in label { display: block; margin: 12px 0 4px; }
+.sign-in .btn { width: 100%; margin-top: 16px; }
+.sign-in .notice { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; padding: 12px; border: 2px solid var(--bad); border-radius: 10px; background: var(--bad-bg); color: var(--bad); font-weight: 700; }
 
-button.link { background: none; border: 0; color: var(--purple-dark); text-decoration: underline; font: inherit; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+/* ----- a question before an action that can hurt ----- */
+dialog.ask { width: min(92vw, 480px); padding: 24px; border: 2px solid var(--accent); border-radius: 16px; background: var(--surface); color: var(--text); }
+dialog.ask::backdrop { background: rgba(10, 6, 20, .6); }
+dialog.ask h2 { margin: 0 0 8px; font: 700 22px var(--display); color: var(--accent); }
+.ask-dark { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-weight: 700; }
+.ask-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.ask-buttons .btn { flex: 1 1 140px; }
 
 @media (max-width: 600px) {
-  header h1 { font-size: 22px; }
-  .bar { justify-content: flex-end; }
-  .studio, button.help { margin-bottom: 8px; }
-  /* The four tabs are a bar fixed to the bottom of the phone, one row of buttons at least 44px high. The page gets room under it,
-     and the bars that other tabs fix to the bottom sit above it (--tabbar). */
-  nav {
-    position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; flex: none; flex-wrap: nowrap; gap: 0;
-    padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    background: var(--purple); border-top: 4px solid var(--yellow);
-  }
-  nav button { flex: 1 1 0; min-width: 0; min-height: calc(var(--tabbar) - 4px); padding: 0 2px; border-radius: 0; font-size: 18px; }
-  nav button[aria-selected="true"] { background: var(--yellow); color: var(--ink); }
-  nav :focus-visible { outline-offset: -5px; }
-  main { padding-bottom: calc(16px + var(--tabbar) + env(safe-area-inset-bottom)); }
   .card { padding: 12px; }
   button.action, label.action { white-space: normal; text-align: center; }
 }

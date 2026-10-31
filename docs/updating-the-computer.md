@@ -225,6 +225,8 @@ Choosing 1 (Install everything) also runs `install-network.sh`, which turns on n
 
 The sudo list names `wlp2s0` and `enp3s0f0` command by command, with no `*`. `sudo /opt/teletraan/computer/scripts/install-network.sh --undo` takes the settings away again.
 
+Choosing 1 (Install everything) also runs `install-remote.sh`, which installs the remote action service for the Studio buttons (docs/OPERATIONS.md). Without `SANITY_WRITE_TOKEN` in `local.env` it prints one line, installs nothing and the install goes on; add the key with the Keys tab and choose 1 again. `computer/install.sh` runs it too, so Update from GitHub on the control page installs it.
+
 Choosing 1 (Install everything) also runs `install-sync.sh` (the last of the list), which installs the sync service, the heartbeat timer and the rotation of the logs in `/var/log/teletraan`, and restarts the sync service so that it runs the new code (docs/OPERATIONS.md). It needs `curl`, `jq` and Node 18 or newer. To check afterwards:
 
     systemctl status teletraan-sync --no-pager

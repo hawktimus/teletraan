@@ -78,15 +78,15 @@ const event = (start, end, more) => Object.assign({ key: 'e' + start, name: 'Eve
 
 // The phases
 
-test('eventPhases: the preview is the 14 days before the first day, the event is off, and the recap is the 7 days after the last day', () => {
+test('eventPhases: the preview is the 7 days before the first day, the event is off, and the recap is the 7 days after the last day', () => {
   const events = [event('2027-03-12', '2027-03-14')];
   const phase = date => {
     const result = competition.eventPhases(events, date);
     return result.during ? 'during' : result.preview ? 'preview' : result.recap ? 'recap' : 'none';
   };
 
-  assert.equal(phase('2027-02-25'), 'none', '15 days before');
-  assert.equal(phase('2027-02-26'), 'preview', '14 days before');
+  assert.equal(phase('2027-03-04'), 'none', '8 days before');
+  assert.equal(phase('2027-03-05'), 'preview', '7 days before');
   assert.equal(phase('2027-03-11'), 'preview', 'the day before');
   assert.equal(phase('2027-03-12'), 'during', 'the first day');
   assert.equal(phase('2027-03-13'), 'during', 'the middle of a three day event');
@@ -111,7 +111,7 @@ test('two events close together: the recap of the first and the preview of the s
   assert.equal(on.preview, null);
   assert.equal(on.recap, null, 'the second event is on, so the recap of the first waits');
 
-  const nearest = competition.eventPhases([event('2027-03-25', '2027-03-26', { key: 'far' }), event('2027-03-18', '2027-03-19', { key: 'near' })], '2027-03-10');
+  const nearest = competition.eventPhases([event('2027-03-19', '2027-03-20', { key: 'far' }), event('2027-03-16', '2027-03-17', { key: 'near' })], '2027-03-12');
   assert.equal(nearest.preview.key, 'near', 'the nearest event is the one that is previewed');
   const latest = competition.eventPhases([event('2027-03-01', '2027-03-02', { key: 'old' }), event('2027-03-05', '2027-03-06', { key: 'new' })], '2027-03-08');
   assert.equal(latest.recap.key, 'new', 'the latest event is the one that is recapped');
@@ -119,17 +119,20 @@ test('two events close together: the recap of the first and the preview of the s
 
 // Which cards are due in each mode, with the sample's events: the first on 2027-03-11 to 13, the second on 2027-04-01 to 03
 const aroundByDay = [
-  ['2027-02-24', 'more than 14 days before the first event', []],
-  ['2027-02-25', '14 days before: the preview opens', ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare']],
+  ['2027-03-03', 'more than 7 days before the first event', []],
+  ['2027-03-04', '7 days before: the preview opens', ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare']],
   ['2027-03-10', 'the day before the first event', ['timeline', 'last-season', 'preview', 'matches', 'team-metrics', 'compare']],
   ['2027-03-11', 'the first day of the event: nothing', []],
   ['2027-03-12', 'the middle of the event: nothing', []],
   ['2027-03-13', 'the last day: nothing', []],
   ['2027-03-14', 'the day after: the recap, with the cards of the whole season', ['timeline', 'district', 'recap', 'team-metrics', 'compare']],
   ['2027-03-17', 'the second event is 15 days away: only the recap', ['timeline', 'district', 'recap', 'team-metrics', 'compare']],
-  ['2027-03-18', 'the second event is 14 days away: both the recap and the preview', ['timeline', 'district', 'preview', 'recap', 'team-metrics', 'compare']],
-  ['2027-03-20', '7 days after the first event: both', ['timeline', 'district', 'preview', 'recap', 'team-metrics', 'compare']],
-  ['2027-03-21', '8 days after the first event: only the preview of the second', ['timeline', 'district', 'preview', 'team-metrics', 'compare']],
+  ['2027-03-18', 'the second event is 14 days away: only the recap', ['timeline', 'district', 'recap', 'team-metrics', 'compare']],
+  ['2027-03-20', '7 days after the first event: the last day of the recap', ['timeline', 'district', 'recap', 'team-metrics', 'compare']],
+  ['2027-03-21', '8 days after the first event and the second is 11 days away: no competition is near, nothing', []],
+  ['2027-03-25', '7 days before the second event: its preview opens', ['timeline', 'district', 'preview', 'team-metrics', 'compare']],
+  ['2027-04-10', '7 days after the second event: the last day of its window (the sample has no rank for it, so no recap card)', ['timeline', 'district', 'team-metrics', 'compare']],
+  ['2027-04-11', 'after the last event of the team: nothing', []],
 ];
 
 test('Before and after: the preview, nothing while an event is on, the recap, and never the cards of the match by match course', () => {
@@ -146,7 +149,7 @@ test('Before and after: the preview, nothing while an event is on, the recap, an
 
 test('Auto keeps today: the newer cards never come in it, and the older ones are as they were', () => {
   const auto = contentWith(raw => { raw.settings.competitionMode = 'auto'; });
-  ['2027-02-25', '2027-03-10', '2027-03-12', '2027-03-15'].forEach(date => {
+  ['2027-03-05', '2027-03-10', '2027-03-12', '2027-03-15'].forEach(date => {
     idsOf(competition.competitionPlan(auto, noon(date))).forEach(name => assert.ok(!['preview', 'matches', 'recap'].includes(name), name + ' on ' + date));
   });
   assert.deepEqual(idsOf(competition.competitionPlan(auto, noon('2027-03-12'))), ['next-match', 'rank', 'results', 'alliance', 'timeline', 'district']);
@@ -171,13 +174,13 @@ test('Always shows the newer cards that have data, Off shows none, and a switch 
 
 test('our matches come with the preview once the schedule is posted, and in the last 2 days without a schedule they say it is not posted', () => {
   const unposted = day => contentWith(raw => { primeOf(raw.frc).schedule.matches = []; });
-  assert.ok(!idsOf(competition.competitionPlan(unposted(), noon('2027-03-02'))).includes('matches'), '9 days before, nothing to say yet');
-  assert.ok(idsOf(competition.competitionPlan(unposted(), noon('2027-03-02'))).includes('preview'), 'the preview is there');
+  assert.ok(!idsOf(competition.competitionPlan(unposted(), noon('2027-03-05'))).includes('matches'), '6 days before, nothing to say yet');
+  assert.ok(idsOf(competition.competitionPlan(unposted(), noon('2027-03-05'))).includes('preview'), 'the preview is there');
   assert.ok(idsOf(competition.competitionPlan(unposted(), noon('2027-03-09'))).includes('matches'), '2 days before the card comes and says so');
   assert.ok(idsOf(competition.competitionPlan(unposted(), noon('2027-03-10'))).includes('matches'));
 
   const none = contentWith(raw => { delete primeOf(raw.frc).schedule; });
-  assert.ok(!idsOf(competition.competitionPlan(none, noon('2027-03-02'))).includes('matches'), 'a status from an older run has no schedule');
+  assert.ok(!idsOf(competition.competitionPlan(none, noon('2027-03-05'))).includes('matches'), 'a status from an older run has no schedule');
 
   const html = panels.matches.markupFor(unposted(), noon('2027-03-10'));
   assert.ok(html.includes('The match schedule is not posted yet.'), 'the sentence');
@@ -621,7 +624,7 @@ test('the Match13 cards follow the phase rule in Before and after: preview and r
   match13.setMatch13(match13Data());
   try {
     const content = contentWith(raw => { raw.settings.competitionQualify = true; }); // Chances starts off, so these days switch it on
-    ['2027-03-02', '2027-03-10'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-forecast'), 'forecast in the preview ' + day));
+    ['2027-03-05', '2027-03-10'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-forecast'), 'forecast in the preview ' + day));
     ['2027-03-15', '2027-03-20'].forEach(day => assert.ok(competition.competitionPlan(content, noon(day)).cards.includes('competition-qualify'), 'qualify in the recap ' + day));
     ['2027-03-11', '2027-03-12', '2027-03-13', '2027-02-10'].forEach(day => {
       const plan = competition.competitionPlan(content, noon(day)).cards;

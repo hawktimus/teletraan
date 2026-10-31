@@ -3,27 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Teletraan I control</title>
+  <meta name="color-scheme" content="light dark">
+  <title>Sign in - Teletraan I control</title>
   <style>
     /* First paint if style.css has not loaded yet or does not load; style.css comes later and wins */
     body { margin: 0; background: #1d1a24; color: #f3eefc; font: 18px/1.45 system-ui, sans-serif; }
-    header { background: #6c18b6; color: #fff; padding: 12px 16px 0; border-bottom: 4px solid #faca2a; }
-    header h1 { margin: 0; font: 700 24px/1.2 system-ui, sans-serif; }
+    .top { background: #6c18b6; color: #fff; padding: 12px 16px; border-bottom: 4px solid #faca2a; }
+    .top h1 { margin: 0; font: 700 24px/1.2 system-ui, sans-serif; }
     a { color: #faca2a; }
     main { padding: 16px; }
   </style>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <header><h1>Teletraan I control</h1></header>
+<body class="login">
+  <header class="top"><div class="brand"><h1>Teletraan I control</h1></div></header>
   <main class="sign-in">
     <div class="card" id="box">
       <h2>Sign in</h2>
-      <p id="message" class="muted">Type the PIN.</p>
+      <p id="message" class="muted" role="status" aria-live="polite">Type the PIN to open the control page.</p>
       <form id="form">
-        <label for="pin" class="muted">PIN</label>
-        <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*">
-        <div class="row"><button class="action" type="submit">Sign in</button></div>
+        <label for="pin">PIN</label>
+        <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" pattern="[0-9]*" aria-describedby="message" required>
+        <button class="btn btn-primary" type="submit" id="go">Sign in</button>
       </form>
       <noscript><p>This page needs JavaScript. Turn it on in the browser settings, then <a href="./">reload</a>.</p></noscript>
     </div>
