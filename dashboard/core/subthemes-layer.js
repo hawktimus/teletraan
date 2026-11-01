@@ -10,6 +10,7 @@
 import { liveSubtheme, spritesFor } from './subthemes.js';
 import { drawingMarkup } from './subtheme-art.js';
 import { escapeHtml } from './text.js';
+import { activeRequests } from './screen-requests.js';
 
 const layerId = 'subtheme-layer';
 const checkEvery = 5000;
@@ -56,7 +57,8 @@ function draw(getContent) {
   const view = page().dataset.view || '';
   const layout = page().dataset.layout || 'standard';
   const settings = content && content.theme ? content.theme : {};
-  const live = content ? liveSubtheme(content.subthemes, new Date(), settings.timeZone) : null;
+  const hidden = Boolean(content) && activeRequests(content.settings, new Date()).hideSubtheme;
+  const live = content && !hidden ? liveSubtheme(content.subthemes, new Date(), settings.timeZone) : null;
   const sprites = live ? spritesFor(live, theme, view, layout) : [];
   const html = sprites.length > 0 ? layerMarkup(sprites) : '';
 

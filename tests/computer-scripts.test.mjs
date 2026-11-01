@@ -12,8 +12,9 @@ import { test, finish } from './helpers/runner.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const folder = path.join(repo, 'computer/scripts');
-// Files that other scripts read: lib.sh, display.sh and the parts of monday-sync.sh and frc-sync.sh
-const library = fs.readdirSync(folder).filter(name => name === 'lib.sh' || name === 'display.sh' || /^(monday|frc)-(?!sync\.sh)/.test(name));
+// Files that other scripts read: lib.sh, display.sh and the parts of monday-sync.sh and frc-sync.sh. net-root.sh is installed alone
+// as /usr/local/sbin/teletraan-net, so it cannot read lib.sh
+const library = fs.readdirSync(folder).filter(name => name === 'lib.sh' || name === 'display.sh' || name === 'net-root.sh' || /^(monday|frc)-(?!sync\.sh)/.test(name));
 const scripts = fs.readdirSync(folder).filter(name => name.endsWith('.sh') && !library.includes(name)).sort();
 
 function read(name) {

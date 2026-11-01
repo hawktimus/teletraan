@@ -17,6 +17,7 @@ root=${TELETRAAN_ROOT:-/opt/teletraan}
 log_file="$root/logs/helper.log"
 systemctl_bin=${TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl}
 docker_bin=${TELETRAAN_DOCKER:-/usr/bin/docker}
+net_bin=${TELETRAAN_NET:-/usr/local/sbin/teletraan-net}
 
 log() {
   printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$log_file" 2> /dev/null || true
@@ -60,7 +61,7 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|display-info|network-info|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
+  restart-kiosk|restart-services|reboot|status|display-info|network-info|wifi-scan|wifi-status|restart-network|dns-public|dns-default|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   cleanup-preview|cleanup-delete)
@@ -76,7 +77,7 @@ case $word in
     # The argument is a board number and nothing else, because it ends up on a command line
     printf '%s' "$argument" | grep -Eq '^[0-9]{1,20}$' || refuse "$shown"
     ;;
-  write-env)
+  write-env|wifi-connect)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   *) refuse "$shown" ;;
@@ -157,6 +158,36 @@ case $word in
       : > /tmp/teletraan-monday-force && chmod 666 /tmp/teletraan-monday-force || true
     fi
     as_root "$systemctl_bin" start "teletraan-$argument.service" || code=$?
+    finish "$code"
+    ;;
+  wifi-scan|restart-network|dns-public|dns-default)
+    # The tool is a root-owned copy of computer/scripts/net-root.sh. It checks its own word and prints plain lines.
+    case $word in wifi-scan) tool_word=scan ;; restart-network) tool_word=restart ;; *) tool_word=$word ;; esac
+    code=0
+    as_root "$net_bin" "$tool_word" || code=$?
+    finish "$code"
+    ;;
+  wifi-status)
+    # What the last switch did, from the file the tool writes (plain label: value lines)
+    if [ -f "${TELETRAAN_WIFI_LAST:-/var/lib/teletraan/wifi-last}" ]; then
+      head -n 6 "${TELETRAAN_WIFI_LAST:-/var/lib/teletraan/wifi-last}" | tr -c '[:print:]\n' '?' | cut -c 1-200
+    else
+      echo "state: none"
+    fi
+    finish 0
+    ;;
+  wifi-connect)
+    # The rest of the input is the network name and then the password, one line each. The password goes straight to the
+    # tool and is never put in a variable that is logged, in the log line or in the answer.
+    IFS= read -r wifi_name || refuse "$shown"
+    IFS= read -r wifi_password || wifi_password=''
+    wifi_host=$(setting NETWATCH_HOST)
+    if [ -z "$wifi_host" ]; then
+      wifi_host="$(config_value projectId).api.sanity.io"
+    fi
+    code=0
+    printf '%s\n%s\n%s\n' "$wifi_name" "$wifi_password" "$wifi_host" | as_root "$net_bin" switch || code=$?
+    wifi_password=''
     finish "$code"
     ;;
   log-bundle)

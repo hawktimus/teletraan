@@ -45,9 +45,39 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
+});
+
+test('the Wi-Fi words go to the network tool by its words, the password goes in as input only and is never logged or answered', () => {
+  const h = setup();
+  const tool = path.join(h.bin, 'teletraan-net');
+  const seen = path.join(h.root, 'tool-input');
+  fs.writeFileSync(tool, '#!/bin/sh\necho "tool $*" >> "' + path.join(h.root, 'calls.log') + '"\ncat > "' + seen + '"\necho "network: 70|yes|0|Guest"\nexit 0\n', { mode: 0o755 });
+  // This sudo drops -n and runs the command, so the tool sees the input the helper pipes in
+  fs.writeFileSync(path.join(h.bin, 'sudo'), '#!/bin/sh\nshift\nexec "$@"\n', { mode: 0o755 });
+  const env = { TELETRAAN_NET: tool, TELETRAAN_WIFI_LAST: path.join(h.root, 'wifi-last') };
+
+  assert.equal(h.ask('wifi-scan\n', env).status, 'ok');
+  assert.ok(h.ask('wifi-scan\n', env).calls.includes('tool scan'));
+  assert.equal(h.ask('wifi-scan now\n', env).status, 'refused', 'no argument');
+  assert.ok(h.ask('restart-network\n', env).calls.includes('tool restart'));
+  assert.ok(h.ask('dns-public\n', env).calls.includes('tool dns-public'));
+  assert.ok(h.ask('dns-default\n', env).calls.includes('tool dns-default'));
+
+  const answer = h.ask('wifi-connect\nGuest\nhunter2 hunter2\n', env);
+  assert.equal(answer.status, 'ok');
+  assert.ok(answer.calls.includes('tool switch') && !answer.calls.includes('hunter2'), 'not on a command line');
+  // The third line is the host to test: NETWATCH_HOST, or the Sanity host of the project
+  assert.match(fs.readFileSync(seen, 'utf8'), /^Guest\nhunter2 hunter2\n[A-Za-z0-9.-]+\n$/);
+  assert.ok(!answer.output.includes('hunter2') && !h.log().includes('hunter2'), 'not in the answer or the log');
+  assert.ok(h.log().includes('wifi-connect'), 'the word is logged');
+  assert.equal(h.ask('wifi-connect now\nGuest\nx\n', env).status, 'refused', 'no argument');
+
+  assert.equal(h.ask('wifi-status\n', env).output, 'state: none');
+  fs.writeFileSync(env.TELETRAAN_WIFI_LAST, 'state: done\nnetwork: Guest\nat: 2026-11-01T10:00:00Z\n');
+  assert.match(h.ask('wifi-status\n', env).output, /^state: done\nnetwork: Guest/);
 });
 
 test('display-info lists the connected output and its modes with xrandr, asks for no sudo, and answers ok when xrandr is missing', () => {

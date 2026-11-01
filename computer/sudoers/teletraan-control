@@ -54,3 +54,8 @@ ACCOUNT ALL=(root) NOPASSWD: TELETRAAN_SCREEN, TELETRAAN_TIMERS, TELETRAAN_SYNCS
 # The git hook runs the install as root through this wrapper, which checks its two arguments itself (computer/git/install-tree-as-root.sh).
 # With no argument list in the rule, sudo allows any arguments, so the wrapper is the check. Only this path may run.
 ACCOUNT ALL=(root) NOPASSWD: /usr/local/sbin/teletraan-install-tree
+
+# The network tool (computer/scripts/net-root.sh, installed root-owned by computer/install.sh) scans for Wi-Fi networks,
+# switches the Wi-Fi with a rollback, restarts the network service and changes the name servers. It takes five words and
+# reads the password from its input, so it is allowed by path, with no argument list, like the wrapper above.
+ACCOUNT ALL=(root) NOPASSWD: /usr/local/sbin/teletraan-net

@@ -27,7 +27,7 @@ function put(file, text, mode) {
 // A staging tree: the files of this repository the installer reads
 function staging(base, options = {}) {
   const tree = path.join(base, 'staging');
-  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/systemd/teletraan-watchdog.service', 'computer/systemd/teletraan-watchdog.timer', 'computer/systemd/teletraan-nightly.service', 'computer/systemd/teletraan-nightly.timer', 'computer/systemd/teletraan-console.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh']) {
+  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/systemd/teletraan-watchdog.service', 'computer/systemd/teletraan-watchdog.timer', 'computer/systemd/teletraan-nightly.service', 'computer/systemd/teletraan-nightly.timer', 'computer/systemd/teletraan-console.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh', 'computer/scripts/net-root.sh']) {
     put(path.join(tree, name), fs.readFileSync(path.join(repo, name)));
   }
   put(path.join(tree, 'dashboard/index.html'), '<html></html>');
@@ -244,6 +244,18 @@ test('the root wrapper and its config are installed on every install, and the su
   const sudoers = fs.readFileSync(path.join(s.places.sudoers, 'teletraan-control'), 'utf8');
   const lines = sudoers.split('\n').filter(line => line.includes('install-tree'));
   assert.deepEqual(lines.filter(line => !line.startsWith('#')), [account + ' ALL=(root) NOPASSWD: /usr/local/sbin/teletraan-install-tree']);
+});
+
+test('the network tool is installed root-owned at the path the sudo rule names, on every install', () => {
+  const s = setup();
+  const first = s.run();
+  assert.equal(first.status, 0, first.errors);
+  const tool = path.join(s.places.sbin, 'teletraan-net');
+  assert.equal(fs.readFileSync(tool, 'utf8'), fs.readFileSync(path.join(repo, 'computer/scripts/net-root.sh'), 'utf8'));
+  assert.equal(fs.statSync(tool).mode & 0o777, 0o755);
+  assert.ok(first.calls.includes('chown root:root ' + tool), first.calls);
+  const sudoers = fs.readFileSync(path.join(s.places.sudoers, 'teletraan-control'), 'utf8');
+  assert.deepEqual(sudoers.split('\n').filter(line => line.endsWith('/usr/local/sbin/teletraan-net')), [account + ' ALL=(root) NOPASSWD: /usr/local/sbin/teletraan-net']);
 });
 
 test('the data folder from local.env is made and given to the login user, also when root owns it', () => {

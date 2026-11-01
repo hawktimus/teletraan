@@ -60,8 +60,9 @@ function commandsOf(parsed) {
 // sudo allows a command line when the path and every argument match one rule word for word. A rule with no arguments
 // allows no arguments, except the wrapper rule, which checks its own arguments.
 const wrapper = '/usr/local/sbin/teletraan-install-tree';
+const netTool = '/usr/local/sbin/teletraan-net';
 function allows(commands, line) {
-  return commands.some(command => command === line || (command === wrapper && (line === wrapper || line.startsWith(wrapper + ' '))));
+  return commands.some(command => command === line || ((command === wrapper || command === netTool) && (line === command || line.startsWith(command + ' '))));
 }
 
 const parsed = read(generated('hawk'));
@@ -85,11 +86,12 @@ const expected = [
   '/usr/sbin/reboot',
   '/sbin/reboot',
   wrapper,
+  netTool,
 ];
 
 check('the file allows exactly the listed commands, each with its unit and arguments', () => {
   assert.deepEqual([...commands].sort(), [...expected].sort());
-  assert.deepEqual(parsed.rules.map(rule => rule.account), ['hawk', 'hawk'], 'only the login user has a rule');
+  assert.deepEqual(parsed.rules.map(rule => rule.account), ['hawk', 'hawk', 'hawk'], 'only the login user has a rule');
 });
 
 check('no wildcard, no open command and no way to change the environment', () => {
@@ -97,7 +99,7 @@ check('no wildcard, no open command and no way to change the environment', () =>
   assert.ok(!/[*?[\]!]/.test(body), 'no wildcard or negation');
   assert.ok(!/\bALL\b/.test(body.replace(/ALL=\(root\)/g, '')), 'no ALL command');
   assert.ok(!/SETENV|EXEC|sudoedit|\(ALL|ALL:/.test(body));
-  commands.filter(command => command !== wrapper && command !== journalLine && !/reboot$/.test(command)).forEach(command => {
+  commands.filter(command => command !== wrapper && command !== netTool && command !== journalLine && !/reboot$/.test(command)).forEach(command => {
     assert.match(command, /^\/usr\/bin\/(systemctl (restart|start) (teletraan-[a-z0-9-]+\.(service|timer)|NetworkManager\.service|systemd-networkd\.service|systemd-resolved\.service|networking\.service)|docker restart teletraan-web)$/, command);
   });
   commands.forEach(command => assert.ok(command.startsWith('/'), 'a full path: ' + command));

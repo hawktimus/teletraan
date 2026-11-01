@@ -10,6 +10,8 @@ There are three ways. The first that applies is used.
 2. A rule of the schedule. In Settings, then Look, a rule for a seasonal pack has a Subtheme field: leave it empty for the pack's own, pick Halloween, Winter or Kickoff, or pick None to draw no subtheme while that pack is on.
 3. A Subtheme document. Open EVENTS, then Subthemes, click the plus button, pick the subtheme in the Subtheme field, and set the first day and the last day. This is how to run Kickoff in January, with no pack.
 
+A coach can also switch the subtheme off for a while from the control page (Show, On the TV, Theme card: Turn the subtheme off). That hides every subtheme, shipped or from a document, until the time ends, and only an `?subtheme=` address draws one anyway.
+
 When none of them names one, a pack brings its own: the Halloween pack brings Halloween and the Christmas pack brings Winter. The other packs bring none.
 
 ## What each one draws

@@ -70,6 +70,7 @@ export function pushWords(push, names) {
     case 'view': return { title: 'View', detail: pick(names.views, push.id) };
     case 'panel': return { title: 'Panel', detail: push.row ? rowWords(push.row, names) : pick(names.panels, push.id) };
     case 'pause': return { title: 'Rotation paused', detail: 'The panel on the wall stays where it is.' };
+    case 'subtheme': return { title: 'Subtheme off', detail: 'The screen draws no holiday or season pictures.' };
     case 'announcement': return { title: 'Announcement', detail: push.id };
     case 'hidden': return { title: 'Hidden transition', detail: pick(names.hidden, push.id) + ' was sent to the wall.' };
     default: return { title: push.kind, detail: '' };

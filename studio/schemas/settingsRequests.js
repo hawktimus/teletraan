@@ -121,5 +121,6 @@ export function screenRequestFields() {
     controlField('showView', 'Show view', 'The screen shows one view.', [wordField('key', 'View', ['general', 'prime', 'nova', 'family'])]),
     controlField('previewTheme', 'Preview theme', 'The screen shows one theme.', [wordField('theme', 'Theme', ['original', 'cybertron', 'retro', 'foundry'])]),
     controlField('pauseRotation', 'Pause rotation', 'The rotation stops.', []),
+    controlField('hideSubtheme', 'Hide subtheme', 'The screen draws no subtheme.', []),
   ];
 }

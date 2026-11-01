@@ -53,8 +53,9 @@ A task is in one of two lists:
 | Date Completed | `date_mm82kn5v` | The order of the Done list |
 | Estimated Hours | `numeric_mm82pw1a` | The Overall progress chart |
 | Show on TV? | `color_mm83p12x` | Hide keeps the task off the TV |
+| Notes | `text_mm82s03v` | A text column. Read for a Stuck task only: the first 90 characters, as plain text, shown under the task |
 
-Only first names reach Sanity, because the dataset is public. No email, no last name, no notes.
+Only first names reach Sanity, because the dataset is public. No email and no last name are read. The one note that is stored is the Notes text of a Stuck task, so write nothing private in the Notes of a task that may be stuck: anyone can read the dataset. The notes of every other task, and of the Projects board, are never stored.
 
 ## The projects board
 
@@ -92,7 +93,7 @@ columns at the right and the status chip last:
   Contact column. A task with no value in a column that is drawn has an empty place.
 - A task past the end of its Timeline that is not done has a LATE chip in place of its date. It is never hidden.
 - A Stuck task with a note shows the note under its name, on one line with an ellipsis. No other task shows a note.
-  The sync does not read a Notes column of Robotics Tasks yet (its id is not in the contract file), so no note shows until it is added.
+  The sync reads the Notes column of Robotics Tasks (`text_mm82s03v`) for a Stuck task only, 90 characters at most, and writes it in the field note of the task.
 - The Open list is Stuck first, then In Progress and In Review by the soonest Timeline end, then To Do by priority.
   The Done list is the newest Date Completed first.
 - The title is the department and the list, such as BUILD TASKS or BUILD DONE. When the row names one team, the team

@@ -6,6 +6,7 @@
 // only, and hides the layer while the frames fly apart in a swap.
 
 import { chooseShipped } from './subthemes.js';
+import { activeRequests } from './screen-requests.js';
 import { presetMarkup, presetPieces } from './subtheme-presets.js';
 
 const layerId = 'subtheme-frame-layer';
@@ -38,7 +39,11 @@ function draw(getContent) {
   const theme = root.dataset.theme || 'original';
   const layout = root.dataset.layout || 'standard';
   const options = { mirrored: root.classList.contains('mirrored'), flipped: root.classList.contains('corner-cut-tr') };
-  const preset = chooseShipped(getContent(), askedPreset(), new Date());
+  const content = getContent();
+  const asked = askedPreset();
+  // The control page switch hides the subtheme; an address that names one is a preview and still draws it
+  const hidden = asked === '' && Boolean(content) && activeRequests(content.settings, new Date()).hideSubtheme;
+  const preset = hidden ? '' : chooseShipped(content, asked, new Date());
   const html = preset === '' ? '' : presetMarkup(presetPieces(preset, theme, layout, options));
 
   const key = preset + '|' + html;

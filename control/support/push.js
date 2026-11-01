@@ -13,7 +13,7 @@ import { longestHoldRow, tidyHoldRow } from '../../dashboard/core/screen-request
 
 export const pushMinutes = { least: 1, most: 60, usual: 15, choices: [1, 5, 15, 30, 60] };
 export const noticeId = 'push-notice';
-export const pushKinds = ['theme', 'view', 'panel', 'pause', 'hidden', 'announcement'];
+export const pushKinds = ['theme', 'view', 'panel', 'pause', 'subtheme', 'hidden', 'announcement'];
 export const noticeLevels = ['notice', 'important'];
 // A hidden transition is one shot. The page offers Cancel for this long after it was sent, and no longer.
 export const hiddenWindowSeconds = 120;
@@ -23,6 +23,7 @@ const empty = {
   view: { showView: { key: '', until: '' } },
   panel: { holdPanel: { panel: '', until: '' }, holdRow: '' },
   pause: { pauseRotation: { until: '' } },
+  subtheme: { hideSubtheme: { until: '' } },
 };
 
 function stamp(now) {
@@ -93,6 +94,9 @@ export function buildPush(kind, input, now = new Date(), teamId = '') {
     case 'pause':
       return { set: { pauseRotation: { until: later(now, minutesOf(body.minutes)) } } };
 
+    case 'subtheme':
+      return { set: { hideSubtheme: { until: later(now, minutesOf(body.minutes)) } } };
+
     case 'hidden':
       if (!hiddenKinds.includes(body.transition)) throw new Refusal(400, 'Pick one of the hidden transitions: ' + hiddenKinds.join(', ') + '.');
       return { set: { hiddenRequest: { kind: body.transition, requestedAt: new Date(now).toISOString() } } };
@@ -121,7 +125,7 @@ export function buildCancel(kind, now = new Date()) {
 
 // Every push at once
 export function buildReset() {
-  return { set: Object.assign({}, empty.theme, empty.view, empty.panel, empty.pause), unset: ['hiddenRequest'] };
+  return { set: Object.assign({}, empty.theme, empty.view, empty.panel, empty.pause, empty.subtheme), unset: ['hiddenRequest'] };
 }
 
 export function settingsMutations(change) {
@@ -173,6 +177,8 @@ export function pushesOf(settings, notice, now = new Date()) {
   }
   const pause = source.pauseRotation;
   if (pause && running(pause.until, now)) found.push({ kind: 'pause', id: '', until: pause.until });
+  const subtheme = source.hideSubtheme;
+  if (subtheme && running(subtheme.until, now)) found.push({ kind: 'subtheme', id: '', until: subtheme.until });
   if (notice && typeof notice.text === 'string' && running(notice.end, now) && Date.parse(notice.start) <= new Date(now).getTime()) {
     found.push({ kind: 'announcement', id: notice.text, until: notice.end, level: notice.level || 'notice', team: notice.team || '' });
   }

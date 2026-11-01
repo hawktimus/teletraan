@@ -42,6 +42,7 @@ const settingsSkip = {
   showView: oneTime,
   previewTheme: oneTime,
   pauseRotation: oneTime,
+  hideSubtheme: oneTime,
   previewRequest: oneTime,
   nextLookRequest: oneTime,
   competitionPreviewRequest: oneTime,

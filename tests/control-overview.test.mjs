@@ -15,7 +15,7 @@ import * as statusRoute from '../control/routes/status.js';
 import { createService, readConfig } from '../control/server.js';
 import { isSecure, sameOrigin, triesAllowed } from '../control/lib/auth.js';
 import { classify, plainProblem, plainReason, whenWords, agoWords, waitWords } from '../control/static/words.js';
-import { buildBanner, buildDots, buildProblems, networkDown, remoteWords, sourceState } from '../control/static/overview.js';
+import { buildBanner, buildDots, buildProblems, networkActionWords, networkDown, remoteWords, sourceState } from '../control/static/overview.js';
 import { waitAfter } from '../control/static/poll.js';
 
 const now = new Date('2026-10-31T15:30:00');
@@ -224,6 +224,15 @@ test('no file of the page names a host, an address or an absolute /control path:
     assert.ok(!/teletraan\.local|\b192\.168\.|\b10\.\d+\.\d+\.\d+|https?:\/\/[A-Za-z0-9]/.test(code.replace(/http:\/\/www\.w3\.org\/2000\/svg/g, '')), path.relative(folder, file) + ' names a host');
     assert.ok(!/['"`]\/control\//.test(code), path.relative(folder, file) + ' has an absolute /control path');
   });
+});
+
+test('the last network repair reads in words, and the compose file lets the control service see netwatch.json read only', () => {
+  assert.equal(networkActionWords({ lastAction: 'restart_network', lastActionAt: at(20) }, now), 'Restarted the network service, 3:10 PM, 20 min ago');
+  assert.equal(networkActionWords({ lastAction: 'none' }, now), '');
+  assert.equal(networkActionWords(null, now), '');
+  const compose = fs.readFileSync(new URL('../computer/docker-compose.yml', import.meta.url), 'utf8');
+  assert.match(compose, /CONTROL_NETWATCH: \/var\/lib\/teletraan-state\/netwatch\.json/);
+  assert.match(compose, /target: \/var\/lib\/teletraan-state\n\s+read_only: true/);
 });
 
 await finish();

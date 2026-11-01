@@ -318,6 +318,8 @@ dashboardSettings.pageSeconds
 dashboardSettings.partsRequestUrl
 dashboardSettings.pauseRotation
 dashboardSettings.pauseRotation.until
+dashboardSettings.hideSubtheme
+dashboardSettings.hideSubtheme.until
 dashboardSettings.photoDriveFolder
 dashboardSettings.photoFit
 dashboardSettings.photoFit = fill
@@ -1172,6 +1174,7 @@ task.list = open
 task.location
 task.manualNote
 task.milestoneIds
+task.note
 task.mondayBoardId
 task.mondayBoardName
 task.mondayId

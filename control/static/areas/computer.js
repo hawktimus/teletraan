@@ -16,6 +16,7 @@ import { mountReboot } from '../tabs/settings-reboot.js';
 import { mountScreen } from '../tabs/settings-screen.js';
 import { mountCleanup } from '../tabs/settings-cleanup.js';
 import { sentences } from '../guide.js';
+import { mountWifiSection } from './wifi.js';
 
 // The "label: value" lines that network-info prints, as an object (the first of each label wins)
 export function parseInfo(text) {
@@ -118,6 +119,7 @@ function mountCopy(box) {
 export const sections = [
   { id: 'restart', title: 'Restart', mount: mountRestart },
   { id: 'network', title: 'Network', mount: mountNetwork },
+  { id: 'wifi', title: 'Wi-Fi', mount: mountWifiSection },
   { id: 'schedule', title: 'Scheduled reboot', lead: sentences['settings.reboot'], mount: mountReboot },
   { id: 'screen', title: 'Screen fit', lead: sentences['settings.screen'], mount: mountScreen },
   { id: 'cleanup', title: 'Clean up', lead: sentences['settings.cleanup'], mount: mountCleanup },

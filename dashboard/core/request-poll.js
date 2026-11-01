@@ -8,7 +8,7 @@ export const requestPollSeconds = 10;
 
 export const requestFields = [
   'announceRequest', 'presentationTestRequest', 'nextLookRequest', 'competitionPreviewRequest', 'previewRequest', 'hiddenRequest',
-  'holdPanel', 'holdRow', 'showView', 'previewTheme', 'pauseRotation',
+  'holdPanel', 'holdRow', 'showView', 'previewTheme', 'pauseRotation', 'hideSubtheme',
 ];
 
 export const requestsQuery = '*[_id == "dashboardSettings"][0] { ' + requestFields.join(', ') + ' }';

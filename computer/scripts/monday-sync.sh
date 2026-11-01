@@ -188,7 +188,7 @@ for board in tasks done; do
   fi
   jq -n -c --slurpfile items "$work/$board-items.ndjson" --slurpfile names "$work/names.json" \
     --argjson labels "$labels" --argjson columns "$columns" --arg board "$board_id" --arg done "$is_done" \
-    --argjson title_limit "$title_limit" --argjson contact_limit "$contact_limit" \
+    --argjson title_limit "$title_limit" --argjson contact_limit "$contact_limit" --argjson note_limit "$note_limit" \
     "$helpers"'$names[0] as $names | '"$task_rows" >> "$work/rows.ndjson"
 done
 

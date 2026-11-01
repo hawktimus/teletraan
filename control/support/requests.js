@@ -79,7 +79,7 @@ function holdMinutesOf(input) {
   return wanted;
 }
 
-const nothing = { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } };
+const nothing = { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' }, hideSubtheme: { until: '' } };
 
 // The change to Dashboard Settings that an action makes, as { set } for a patch, or { create } for a new document
 export function buildRequest(action, input, now = new Date()) {

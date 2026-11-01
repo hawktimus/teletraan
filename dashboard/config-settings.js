@@ -188,11 +188,13 @@ export const defaultSettings = {
   //   showView       show one view (general, prime, nova or family)
   //   previewTheme   show one theme (original, cybertron, retro or foundry)
   //   pauseRotation  stop the rotation
+  //   hideSubtheme   draw no subtheme (core/subthemes.js), whatever the calendar says; empty follows the calendar
   holdPanel: { panel: '', until: '' },
   holdRow: '',
   showView: { key: '', until: '' },
   previewTheme: { theme: '', until: '' },
   pauseRotation: { until: '' },
+  hideSubtheme: { until: '' },
   countdown: {
     kickoffLabel: 'KICKOFF IN',
     kickoff: '2027-01-09T12:00',

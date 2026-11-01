@@ -328,6 +328,7 @@ const col = {
   timeline: (from, to) => value('timerange_mkyp8kx7', 'timeline', from + ' - ' + to, { from: from, to: to }),
   hours: text => value('numeric_mm82pw1a', 'numbers', text),
   completed: day => value('date_mm82kn5v', 'date', day, { date: day }),
+  notes: text => value('text_mm82s03v', 'text', text),
 };
 
 // Robotics Tasks: one item for each rule of docs/monday.md
@@ -340,8 +341,8 @@ function taskItems() {
     // Status Done is done in any group
     item('1003', 'Mount the camera', [col.state(1), col.team(5), col.completed('2027-01-05')], 'Electrical'),
     // Stuck, In Review, no priority, nobody assigned
-    item('1004', 'Waiting on a part', [col.state(2), col.priority(5), col.show(5)], 'Programming'),
-    item('1005', 'Check the bumpers', [col.state(3), col.team(1), col.assigned([73])], 'Design'),
+    item('1004', 'Waiting on a part', [col.state(2), col.priority(5), col.show(5), col.notes('  Waiting for the\nmotor controller to ship from the vendor, expected after the next meeting date')], 'Programming'),
+    item('1005', 'Check the bumpers', [col.state(3), col.team(1), col.assigned([73]), col.notes('Not a stuck task, so never stored')], 'Design'),
     // Hide keeps it off the TV
     item('1006', 'Hidden from the TV', [col.state(0), col.show(2)], 'CNC'),
     // a group that is not a department and no Department column: left out
@@ -468,7 +469,7 @@ test('the boards are read by their numbers only, with the multi-level question, 
   place.run();
   const variables = place.variables();
   assert.deepEqual(variables[0].board, [taskBoardId]);
-  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x']);
+  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x', 'text_mm82s03v']);
   assert.deepEqual(variables[1].board, [doneBoardId]);
   assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a'], 'Completed Tasks has fewer columns');
   assert.deepEqual(variables[2].board, [projectsBoardId]);
@@ -578,6 +579,21 @@ test('status, team, priority, contact, dates, hours and Show on TV come from the
   assert.equal(docs['task-monday-1006'], undefined, 'Hide is not written at all, because the dataset is public');
   assert.equal(docs['task-monday-1009'].set.status, 'up-next', 'no status is To Do');
   assert.equal(docs['task-monday-1009'].set.showOnBoard, true, 'no Show on TV is Show');
+});
+
+test('the Notes column is kept for a Stuck task only, as plain text of 90 characters at most', () => {
+  const place = setup('notes', { tools: true });
+  world(place);
+  place.run();
+  const docs = documentsOf(place);
+  const note = docs['task-monday-1004'].set.note;
+  assert.equal(note, 'Waiting for the motor controller to ship from the vendor, expected after the next meeting date'.slice(0, 90).replace(/ $/, ''));
+  assert.ok(note.length <= 90 && !/[\n]/.test(note));
+  assert.equal(docs['task-monday-1005'].set.note, undefined, 'a task that is not stuck has no note');
+  assert.equal(docs['task-monday-1001'].set.note, undefined);
+  assert.ok(!JSON.stringify(place.writes()).includes('Not a stuck task'), 'the note of another task is never sent to Sanity');
+  assert.ok(place.variables()[0].columns.includes('text_mm82s03v'), 'the Notes column of Robotics Tasks is asked for');
+  assert.ok(!place.variables()[1].columns.includes('text_mm82s03v'), 'Completed Tasks is not asked for it');
 });
 
 test('empty values are left out: no contact, no priority, no dates, no hours; an email is never a contact', () => {

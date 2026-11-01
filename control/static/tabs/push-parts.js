@@ -9,7 +9,7 @@ import { lead } from '../guide.js';
 
 const hiddenOrder = ['desktop', 'redEyes'];
 // What a push of these kinds is called in the Held line of the status
-const heldKinds = ['theme', 'view', 'panel', 'pause'];
+const heldKinds = ['theme', 'view', 'panel', 'pause', 'subtheme'];
 
 function field(label, control) {
   return '<label class="field"><span>' + esc(label) + '</span>' + control + '</label>';
@@ -136,6 +136,9 @@ export function themeCardHtml(state, draft, names) {
     '<div class="buttons"><button type="button" class="act" data-action="push-theme"' + off + '>Switch to this theme</button>' +
     '<button type="button" class="act quiet" data-action="preview-theme"' + off + '>Preview for 10 minutes</button>' +
     '<button type="button" class="act quiet" data-action="cancel" data-kind="theme">Back to the schedule</button></div>' +
+    '<div class="buttons"><button type="button" class="act quiet" data-action="push-subtheme"' + off + '>Turn the subtheme off for the hold time</button>' +
+    '<button type="button" class="act quiet" data-action="cancel" data-kind="subtheme">Follow the calendar again</button></div>' +
+    '<p class="note">The subtheme is the holiday or season picture on the frames. It follows the calendar until you turn it off here.</p>' +
     '<p class="note" data-theme-note>Pick a theme to see it in the picture on the right. It goes on the wall only when you press a button here.' + (line ? ' ' + esc(line) : '') + '</p>' +
     '</section>';
 }

@@ -169,6 +169,18 @@ const remoteNames = {
   'restart-services': 'Restart services', reboot: 'Reboot the computer',
 };
 
+const networkActionNames = {
+  restart_network: 'Restarted the network service', renew_dhcp: 'Renewed the network address', bounce_interface: 'Reset the network connection', reboot: 'Rebooted the computer',
+};
+
+// What the network check last did to repair the connection, in words. Empty when the file is missing or it never acted.
+export function networkActionWords(watch, now = new Date()) {
+  if (!watch || !watch.lastAction || watch.lastAction === 'none') return '';
+  const what = networkActionNames[watch.lastAction] || 'Network repair (' + watch.lastAction.replace(/_/g, ' ') + ')';
+  const when = whenWords(watch.lastActionAt, now);
+  return what + (when ? ', ' + when : '');
+}
+
 export function remoteWords(remote, now = new Date()) {
   if (!remote || !remote.present) return '';
   const what = remoteNames[remote.action] || remote.action || 'An action';

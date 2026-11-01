@@ -13,7 +13,7 @@ import { panelNamesOf } from '../support/names.js';
 const optionsQuery = '{ "teams": *[_type == "team"] | order(order asc) { code, name, shortName, number }, ' +
   '"live": count(*[_type == "announcement" && dateTime(start) <= dateTime(now()) && dateTime(end) > dateTime(now())]), ' +
   '"talks": *[_type == "presentation" && status == "scheduled" && dateTime(start) > dateTime(now()) - 14400 && dateTime(start) < dateTime(now()) + 86400] | order(start asc) { name, topic, start }, ' +
-  '"requests": *[_id == "dashboardSettings"][0] { holdPanel, showView, previewTheme, pauseRotation }, ' +
+  '"requests": *[_id == "dashboardSettings"][0] { holdPanel, showView, previewTheme, pauseRotation, hideSubtheme }, ' +
   '"today": { "themeByWeekday": *[_id == "dashboardSettings"][0].themeByWeekday, "viewOrder": *[_id == "dashboardSettings"][0].viewOrder, "timeZone": *[_id == "theme"][0].timeZone } }';
 
 // The names of the four views. The two team views take the name of their Team document.

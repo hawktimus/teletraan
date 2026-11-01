@@ -245,6 +245,13 @@ else
   say "This release has no install-remote.sh, so the remote action service was skipped."
 fi
 
+# 5b. The network tool for the Wi-Fi page: a root-owned copy of net-root.sh, because the sudo rule allows that one path
+step "Install the network tool"
+mkdir -p "$sbin_dir"
+install -m 755 "$tree/computer/scripts/net-root.sh" "$sbin_dir/teletraan-net"
+chown root:root "$sbin_dir/teletraan-net"
+say "The control page can scan for Wi-Fi networks and switch the Wi-Fi."
+
 # 6. The optional git path
 step "Make the bare git repository"
 if command -v git > /dev/null 2>&1; then

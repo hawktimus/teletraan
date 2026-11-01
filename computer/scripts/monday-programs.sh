@@ -38,6 +38,7 @@ $items[]
     completedOn: (value_of($columns.completed) | (.date | day_of) // (.text | day_of)),
     estHours: (if ($hours | type) == "number" and $hours >= 0 and $hours < 100000 then ($hours * 100 | round / 100) else null end),
     showOnBoard: (($labels.hide | index([$show])) == null),
+    note: (if $status == "blocked" and $done != "yes" then (value_of($columns.notes).text | whole_text($note_limit) | if . == "" then null else . end) else null end),
     board: $board
   }
 | select(.id != null and .title != "" and .department != null)
@@ -111,13 +112,14 @@ def wanted_task($row):
     completedOn: $row.completedOn,
     estHours: $row.estHours,
     showOnBoard: $row.showOnBoard,
+    note: $row.note,
     show: true,
     mondayBoardId: $row.board,
     mondayBoardName: board_name($row.board)
   };
 
 def stored_task:
-  {title, department, list, status, team, subteam, contact, priority, startDate, dueDate, completedOn, estHours, showOnBoard,
+  {title, department, list, status, team, subteam, contact, priority, startDate, dueDate, completedOn, estHours, showOnBoard, note,
    show: (if .show == false then false else true end), mondayBoardId, mondayBoardName};
 
 def older_fields: {owners: null, milestoneIds: null, hiddenReason: null};

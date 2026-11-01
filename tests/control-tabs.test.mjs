@@ -28,7 +28,7 @@ test('the page has five areas in this order: Now, Show, Update, Computer, Detail
 test('each area has these sections, in this order', () => {
   assert.deepEqual(sectionIds(read('control/static/areas/show.js')), ['playing:On the TV']);
   assert.deepEqual(sectionIds(read('control/static/areas/update.js')), ['sync:Sync', 'publish:Publish', 'keys:Keys', 'monday:Monday check', 'competition:Competition data']);
-  assert.deepEqual(sectionIds(read('control/static/areas/computer.js')), ['restart:Restart', 'network:Network', 'schedule:Scheduled reboot', 'screen:Screen fit', 'cleanup:Clean up', 'copy:Copy project']);
+  assert.deepEqual(sectionIds(read('control/static/areas/computer.js')), ['restart:Restart', 'network:Network', 'wifi:Wi-Fi', 'schedule:Scheduled reboot', 'screen:Screen fit', 'cleanup:Clean up', 'copy:Copy project']);
   assert.deepEqual(sectionIds(read('control/static/areas/details.js')), ['health:Health', 'output:Action output', 'log:Logs', 'settings:All settings']);
   assert.ok(read('control/static/areas/details.js').includes("box.id = 'settings-all'"), 'the settings editor keeps its fixed id');
   assert.ok(/export function mountAll\(body\)[\s\S]*mountSettingsAll\(body/.test(read('control/static/tabs/settings-all.js')), 'the section mounts the settings editor');

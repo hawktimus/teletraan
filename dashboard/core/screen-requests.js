@@ -1,5 +1,5 @@
-// The four requests a coach makes from the control page (control/routes/request.js): hold a
-// panel, show a view, preview a theme, pause the rotation. Each one is a hidden object in Dashboard
+// The requests a coach makes from the control page (control/routes/request.js): hold a
+// panel, show a view, preview a theme, pause the rotation, hide the subtheme. Each one is a hidden object in Dashboard
 // Settings with an until time, so a request that is forgotten ends on its own. The runtime asks
 // activeRequests once a second or so and acts on what it gives back.
 
@@ -49,6 +49,10 @@ function tidyPauseRotation(raw) {
   return pieces(raw, '', null);
 }
 
+function tidyHideSubtheme(raw) {
+  return pieces(raw, '', null);
+}
+
 // The row a hold carries (holdRow of Dashboard Settings): the one row the control page showed in its picture, as JSON in at
 // most this many characters. It has the fields of a row of the Rotation (core/row-preview.js reads the same ones).
 export const longestHoldRow = 400;
@@ -79,7 +83,7 @@ export function tidyHoldRow(raw, panel) {
   return { row: row, view: named };
 }
 
-// The four fields of the settings, always complete
+// The fields of the settings, always complete
 export function tidyScreenRequests(settings) {
   const source = isRecord(settings) ? settings : {};
 
@@ -88,6 +92,7 @@ export function tidyScreenRequests(settings) {
     showView: tidyShowView(source.showView),
     previewTheme: tidyPreviewTheme(source.previewTheme),
     pauseRotation: tidyPauseRotation(source.pauseRotation),
+    hideSubtheme: tidyHideSubtheme(source.hideSubtheme),
   };
 }
 
@@ -117,5 +122,6 @@ export function activeRequests(settings, now = new Date()) {
     showView: view ? tidy.showView.key : '',
     previewTheme: theme ? tidy.previewTheme.theme : '',
     pauseRotation: pause,
+    hideSubtheme: stillRunning(tidy.hideSubtheme.until, now),
   };
 }

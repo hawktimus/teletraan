@@ -66,6 +66,7 @@ services:
       CONTROL_DATA: /var/lib/teletraan/data
       HOME: /opt/teletraan/cache/home
       NPM_CONFIG_CACHE: /opt/teletraan/cache/npm
+      CONTROL_NETWATCH: /var/lib/teletraan-state/netwatch.json
     # Reached by nginx on this Docker network only. No port is published.
     expose:
       - "3230"
@@ -79,6 +80,15 @@ services:
       - type: bind
         source: ${TELETRAAN_DATA:-/var/lib/teletraan/data}
         target: /var/lib/teletraan/data
+        read_only: true
+        bind:
+          create_host_path: false
+      # The network watchdog writes netwatch.json in the folder above the data folder. It is mounted as a folder, read
+      # only, because the watchdog replaces the file by renaming a new one over it. A missing folder is harmless: the
+      # Now area then shows no network action.
+      - type: bind
+        source: ${TELETRAAN_STATE:-/var/lib/teletraan}
+        target: /var/lib/teletraan-state
         read_only: true
         bind:
           create_host_path: false

@@ -59,8 +59,8 @@ await check('Show view takes the four views for 30 minutes unless told, and Prev
   assert.throws(() => buildRequest('theme', { theme: 'neon-prime' }, at), error => error.status === 400);
 });
 
-await check('Back to schedule empties all four holds at once', () => {
-  assert.deepEqual(buildRequest('schedule', {}, at).set, { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } });
+await check('Back to schedule empties every hold at once', () => {
+  assert.deepEqual(buildRequest('schedule', {}, at).set, { holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' }, hideSubtheme: { until: '' } });
 });
 
 await check('Post an announcement makes a published announcement for both teams, two hours, 90 characters at most', () => {
@@ -214,10 +214,10 @@ await check('the screen reads a request only until its time, and not a time more
     previewTheme: { theme: 'retro', until: plus(10) },
     pauseRotation: { until: plus(60) },
   };
-  assert.deepEqual(activeRequests(settings, at), { holdPanel: 'tasks', heldRow: null, heldRowView: '', showView: 'nova', previewTheme: 'retro', pauseRotation: true });
+  assert.deepEqual(activeRequests(settings, at), { holdPanel: 'tasks', heldRow: null, heldRowView: '', showView: 'nova', previewTheme: 'retro', pauseRotation: true, hideSubtheme: false });
   const later = new Date(at.getTime() + 11 * 60000);
-  assert.deepEqual(activeRequests(settings, later), { holdPanel: '', heldRow: null, heldRowView: '', showView: 'nova', previewTheme: '', pauseRotation: true });
-  assert.deepEqual(activeRequests(settings, new Date(at.getTime() + 61 * 60000)), { holdPanel: '', heldRow: null, heldRowView: '', showView: '', previewTheme: '', pauseRotation: false });
+  assert.deepEqual(activeRequests(settings, later), { holdPanel: '', heldRow: null, heldRowView: '', showView: 'nova', previewTheme: '', pauseRotation: true, hideSubtheme: false });
+  assert.deepEqual(activeRequests(settings, new Date(at.getTime() + 61 * 60000)), { holdPanel: '', heldRow: null, heldRowView: '', showView: '', previewTheme: '', pauseRotation: false, hideSubtheme: false });
 
   assert.equal(longestMinutes, 24 * 60);
   assert.equal(stillRunning(plus(longestMinutes), at), true);
@@ -235,13 +235,19 @@ await check('a forgotten hold ends on its own, and nothing wrong in the stored f
   assert.equal(activeRequests({ showView: { key: 'minimal', until: plus(10) } }, at).showView, '');
   assert.equal(activeRequests({ previewTheme: { theme: 'neon', until: plus(10) } }, at).previewTheme, '');
   assert.equal(activeRequests({ holdPanel: 'tasks', pauseRotation: [1] }, at).pauseRotation, false);
-  assert.deepEqual(activeRequests(null, at), { holdPanel: '', heldRow: null, heldRowView: '', showView: '', previewTheme: '', pauseRotation: false });
+  assert.deepEqual(activeRequests(null, at), { holdPanel: '', heldRow: null, heldRowView: '', showView: '', previewTheme: '', pauseRotation: false, hideSubtheme: false });
+});
+
+await check('hideSubtheme is on only while its time is ahead', () => {
+  assert.equal(activeRequests({ hideSubtheme: { until: plus(30) } }, at).hideSubtheme, true);
+  assert.equal(activeRequests({ hideSubtheme: { until: plus(-1) } }, at).hideSubtheme, false);
+  assert.equal(activeRequests({ hideSubtheme: { until: plus(60 * 25) } }, at).hideSubtheme, false, 'a time more than 24 hours off is a mistake');
 });
 
 await check('the fields are always complete after tidying, and the defaults in config.js are the empty ones', () => {
   const tidy = tidyScreenRequests({});
-  assert.deepEqual(tidy, { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } });
-  ['holdPanel', 'showView', 'previewTheme', 'pauseRotation'].forEach(name => assert.deepEqual(defaultSettings[name], tidy[name]));
+  assert.deepEqual(tidy, { holdPanel: { panel: '', until: '' }, showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' }, hideSubtheme: { until: '' } });
+  ['holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'hideSubtheme'].forEach(name => assert.deepEqual(defaultSettings[name], tidy[name]));
 });
 
 await check('the report of the wall is cut to size, keeps the hold and the pause, and only the Teletraan computer itself reports', () => {

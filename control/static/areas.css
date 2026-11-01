@@ -172,3 +172,12 @@
 /* Words in a narrow button are never cut in the middle */
 .dot-button, #tabs a { overflow-wrap: normal; word-break: normal; }
 .dot-button { font-size: 14px; }
+
+/* ----- Computer: Wi-Fi ----- */
+.wifi-form { display: grid; gap: 12px; margin-top: 12px; }
+.wifi-list { margin: 0; padding: 0; border: 0; min-width: 0; }
+.wifi-list legend { padding: 0; font: 700 18px var(--display); }
+.wifi-hidden, .wifi-secret { display: grid; gap: 6px; }
+.wifi-hidden input, .wifi-secret input[type="password"], .wifi-secret input[type="text"] { min-height: 48px; }
+.wifi-result, .wifi-now { margin: 8px 0 0; }
+.wifi-warning { border-left: 4px solid var(--warn); padding-left: 10px; }

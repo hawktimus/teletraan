@@ -50,6 +50,8 @@ await check('each push writes the field the wall reads and holds for the minutes
   assert.deepEqual(buildPush('view', { key: 'family', minutes: 60 }, at).set, { showView: { key: 'family', until: plus(60) } });
   assert.deepEqual(buildPush('panel', { panel: 'monday-board' }, at).set, { holdPanel: { panel: 'monday-board', until: plus(15) }, holdRow: '' });
   assert.deepEqual(buildPush('pause', { minutes: 1 }, at).set, { pauseRotation: { until: plus(1) } });
+  assert.deepEqual(buildPush('subtheme', { minutes: 5 }, at).set, { hideSubtheme: { until: plus(5) } });
+  assert.deepEqual(buildCancel('subtheme').set, { hideSubtheme: { until: '' } });
   assert.deepEqual(buildPush('hidden', { transition: 'redEyes' }, at).set, { hiddenRequest: { kind: 'redEyes', requestedAt: at.toISOString() } });
   [0, 61, 1.5, 'abc', true].forEach(minutes => {
     assert.throws(() => buildPush('theme', { theme: 'retro', minutes: minutes }, at), error => error.status === 400 && error.message === 'Hold for a whole number of minutes from 1 to 60.', String(minutes));
@@ -78,18 +80,18 @@ await check('cancel clears one field, and reset clears the four holds and the ro
   assert.equal(buildCancel('announcement', at).endNotice, plus(0));
   assert.throws(() => buildCancel('everything'), error => error.status === 400);
   const reset = buildReset();
-  assert.deepEqual(Object.keys(reset.set).sort(), ['holdPanel', 'holdRow', 'pauseRotation', 'previewTheme', 'showView']);
+  assert.deepEqual(Object.keys(reset.set).sort(), ['hideSubtheme', 'holdPanel', 'holdRow', 'pauseRotation', 'previewTheme', 'showView']);
   assert.deepEqual(reset.unset, ['hiddenRequest']);
 });
 
 await check('pushesOf lists what runs now: a push that has ended is gone, a hidden transition is listed for two minutes', () => {
   const settings = {
     previewTheme: { theme: 'retro', until: plus(10) }, showView: { key: 'nova', until: plus(-1) }, holdPanel: { panel: 'tasks', until: plus(5) },
-    pauseRotation: { until: '' }, hiddenRequest: { kind: 'desktop', requestedAt: plus(-1) },
+    pauseRotation: { until: '' }, hideSubtheme: { until: plus(30) }, hiddenRequest: { kind: 'desktop', requestedAt: plus(-1) },
   };
   const notice = { text: 'Pizza', start: plus(-1), end: plus(20), level: 'notice' };
-  assert.deepEqual(pushesOf(settings, notice, at).map(item => item.kind), ['theme', 'panel', 'announcement', 'hidden']);
-  assert.deepEqual(pushesOf(settings, { text: 'Old', start: plus(-60), end: plus(-1) }, new Date(at.getTime() + 3 * 60000)).map(item => item.kind), ['theme', 'panel']);
+  assert.deepEqual(pushesOf(settings, notice, at).map(item => item.kind), ['theme', 'panel', 'subtheme', 'announcement', 'hidden']);
+  assert.deepEqual(pushesOf(settings, { text: 'Old', start: plus(-60), end: plus(-1) }, new Date(at.getTime() + 3 * 60000)).map(item => item.kind), ['theme', 'panel', 'subtheme']);
   assert.deepEqual(pushesOf({}, null, at), []);
   assert.equal(weekdayOf('America/New_York', at), 'tuesday');
   assert.equal(weekdayOf('Nowhere/Land', at), 'tuesday');

@@ -163,6 +163,13 @@ const fields = [
     description: 'Not written any more: the older sync marked a task with no department here.' + reading,
     options: { list: [{ title: 'No department', value: 'unassigned' }] },
   }),
+  defineField({
+    name: 'note',
+    title: 'Note of a stuck task',
+    type: 'string',
+    description: 'The Notes column of the board, up to 90 characters, kept for a Stuck task only. The screen shows it under the task.' + reading,
+    validation: Rule => tooLong(Rule, 90),
+  }),
   teamField(),
   orderField(),
   defineField({

@@ -232,6 +232,8 @@ export function startPush(root, boxes, hooks) {
     else if (action === 'push-theme') {
       if (!draft.theme) return bad(button, 'Pick a theme first.');
       send(button, '/push', { kind: 'theme', theme: draft.theme, minutes: draft.hold }, 'Switched to ' + (names.themes[draft.theme] || draft.theme) + ' for ' + forHold + '.');
+    } else if (action === 'push-subtheme') {
+      send(button, '/push', { kind: 'subtheme', minutes: draft.hold }, 'Subtheme off for ' + forHold + '.');
     } else if (action === 'preview-theme') {
       if (!draft.theme) return bad(button, 'Pick a theme first.');
       send(button, '/push', { kind: 'theme', theme: draft.theme, minutes: previewThemeMinutes }, 'Previewing ' + (names.themes[draft.theme] || draft.theme) + ' for ' + holdWords(previewThemeMinutes) + '.');

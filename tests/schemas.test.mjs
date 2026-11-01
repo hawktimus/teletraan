@@ -65,6 +65,7 @@ const contract = {
     milestoneIds: strings(20, 50),
     showOnBoard: 'boolean',
     hiddenReason: 'string',
+    note: text(90),
   }),
   milestone: { name: text(40), targetDate: 'date', team: teamRef, subteam: { kind: 'reference', to: 'subteam' }, status: 'string', show: 'boolean' },
   place: { name: text(16), show: 'boolean' },
@@ -240,6 +241,7 @@ const contract = {
     showView: object({ key: 'plainString', until: 'plainString' }),
     previewTheme: object({ theme: 'plainString', until: 'plainString' }),
     pauseRotation: object({ until: 'plainString' }),
+    hideSubtheme: object({ until: 'plainString' }),
     countdown: object({ kickoffLabel: titleOfClock, kickoff: 'datetime', rolloutLabel: titleOfClock, rollout: 'datetime' }),
     alert: object({ on: 'boolean', headline: text(24), message: text(90), until: 'datetime' }),
     rotation: object({ order: rows(panelStep), grid1: rows(olderStep), grid2: rows(olderStep), tickerSeconds: number(6, 120) }),
@@ -1986,7 +1988,7 @@ function checkPreviewButtons() {
   // Back to the schedule clears the four fields of the control page
   const back = buttons.filter(candidate => candidate.action === 'backToSchedule')[0];
   const cleared = press(back, null);
-  need(problems, cleared.state.label === 'Back to the schedule' && JSON.stringify(setOf(cleared)) === JSON.stringify({ holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' } }), 'Back to the schedule should clear holdPanel, holdRow, showView, previewTheme and pauseRotation');
+  need(problems, cleared.state.label === 'Back to the schedule' && JSON.stringify(setOf(cleared)) === JSON.stringify({ holdPanel: { panel: '', until: '' }, holdRow: '', showView: { key: '', until: '' }, previewTheme: { theme: '', until: '' }, pauseRotation: { until: '' }, hideSubtheme: { until: '' } }), 'Back to the schedule should clear holdPanel, holdRow, showView, previewTheme, pauseRotation and hideSubtheme');
   need(problems, cleared.calls.length === 2 && cleared.calls[1].publish === true && cleared.toasts.length === 1, 'Back to the schedule should publish and show a toast');
 
   // The Studio lists are the same as the dashboard's and the control page's
@@ -4367,7 +4369,7 @@ const settingsTabTitles = ['Timing', 'Countdown', 'Monday', 'Calendars', 'Advanc
 const logoNames = logoSwitches.concat(logoNumbers);
 const competitionNames = ['competitionTimeline', 'competitionLastSeason', 'competitionRank', 'competitionNextMatch', 'competitionResults', 'competitionAlliance', 'competitionDistrict', 'competitionPreview', 'competitionMatches', 'competitionRecap', 'competitionForecast', 'competitionQualify', 'competitionTeamMetrics', 'competitionCompare'];
 const settingsTabs = {
-  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'motionOnKiosk', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'holdRow', 'showView', 'previewTheme', 'pauseRotation', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
+  screen: ['miniStatus', 'generalViewTitle', 'team', 'motion', 'motionOnKiosk', 'speed', 'frameMetal', 'glint', 'look', 'crt', 'previewRequest', 'nextLookRequest', 'competitionPreviewRequest', 'holdPanel', 'holdRow', 'showView', 'previewTheme', 'pauseRotation', 'hideSubtheme', 'alert', 'pageSeconds', 'partsRequestUrl', 'rotation', 'doneDays', 'safetyDaysSince']
     .concat(photoNames, ['announcements', 'announceRequest']),
   countdown: ['countdown'],
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],

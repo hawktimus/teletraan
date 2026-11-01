@@ -351,6 +351,8 @@ export function heldLine(requests, names = {}, now = new Date()) {
   if (panel) parts.push('panel ' + ((names.panel && names.panel[r.holdPanel.panel]) || words(r.holdPanel.panel)) + ' ' + ending(panel));
   const pause = r.pauseRotation && live(r.pauseRotation.until);
   if (pause) parts.push('rotation paused ' + ending(pause));
+  const bare = r.hideSubtheme && live(r.hideSubtheme.until);
+  if (bare) parts.push('subtheme off ' + ending(bare));
 
   return parts.length === 0 ? 'Following the schedule.' : 'Held by you: ' + parts.join(', ') + '.';
 }

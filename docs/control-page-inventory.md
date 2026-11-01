@@ -51,7 +51,7 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | Save bar: Save to draft, Publish to the wall, Refresh from Sanity, Undo, unsaved count | One bar for every draft | `POST display/save`, `POST display/publish`, `GET display` | C | Show, On the TV; the same bar on every page that saves a draft | [x] |
 | Revision check and the Studio has a newer copy card (Replace, Refresh, Keep editing) | Catches a change made in the Studio meanwhile | `GET display/rev`, `POST display/check` | C | Show, On the TV | [x] |
 | Next, Pause and Reset bar fixed above the bottom bar on a phone | Thumb reach | none | C S | Show, On the TV, above the navigation bar | [x] |
-| Subtheme | There is no control for it on the old page: subthemes are dated layers set in the Studio | none | C | Not a control. The page does not show it, as before | [x] |
+| Subtheme off, Follow the calendar again | Turns the subtheme off for the hold time (1 to 60 minutes), then it follows the calendar by itself. Subthemes are still dated layers set in the Studio | `POST push` kind `subtheme`, field `hideSubtheme` | C M | Show, On the TV, Theme card | [x] |
 
 ## Content (the old Content tab)
 
@@ -117,12 +117,14 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | Sync everything, Refresh the screen, Restart the dashboard | The three large buttons | `POST helper/sync-now`, `POST push/reset`, `POST helper/restart-kiosk` | all | Now | [x] |
 | Attention list with a plain sentence, what the TV still shows, a safe fix and Show details | Failures in plain words | `GET overview`, `control/static/words.js` | all | Now | [x] |
 | Last remote action | The last thing done from the Studio | `GET remote-last` (`remote-last.json`) | C M | Now and Computer, Restart | [x] |
+| Last network repair | What the network check last did to bring the connection back, and when | `GET overview` (`netwatch.json`, mounted read only in `computer/docker-compose.yml`) | C M | Now, Last actions and the Network dot | [x] |
 | Last action of this page | The last result of any button, kept per browser | browser storage | all | Now and Computer, Restart | [x] |
 | Can't reach the computer banner with the last known status and time, backoff 10, 20, 40, 60 s | The computer is away | `GET overview` fails | all | Every area | [x] |
 | Action output | The technical text of every button, 40 entries in this browser | none | C M | Details, Action output | [x] |
 | Sticky Sync everything on a phone | Reach | none | all | Now and Update, Sync | [x] |
 | Uptime, connection, signal and address | Facts of the computer | `GET status`, `POST helper/network-info` | C M | Computer, Restart | [x] |
-| Restart network, DNS actions | Not in this version of the helper (the helper has no word for them), so no button | none | M | Not added. The computer repairs the network by itself and Run network check shows what it did | [x] |
+| Restart the network, public name servers, the network's name servers | Network repairs card | `POST helper/restart-network` (asks first), `dns-public`, `dns-default` | C M | Computer, Wi-Fi | [x] |
+| Wi-Fi: look for networks, choose one, type the password, Connect | Switches the Wi-Fi of the computer, with a way back | `POST helper/wifi-scan`, `wifi-connect` (asks first), `wifi-status` | C M | Computer, Wi-Fi | [x] |
 
 ## Manual checks for accessibility
 

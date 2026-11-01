@@ -28,9 +28,12 @@ columns='{
   "timeline": "timerange_mkyp8kx7",
   "hours": "numeric_mm82pw1a",
   "completed": "date_mm82kn5v",
-  "show": "color_mm83p12x"
+  "show": "color_mm83p12x",
+  "notes": "text_mm82s03v"
 }'
-task_board_columns='["department", "status", "team", "assigned", "poc", "priority", "timeline", "hours", "completed", "show"]'
+# Notes is a text column. It is kept for a Stuck task only (the reason it is stuck), cut to note_limit characters. The dataset
+# is public, so the note of every other task is read here and dropped by monday-programs.sh without being stored.
+task_board_columns='["department", "status", "team", "assigned", "poc", "priority", "timeline", "hours", "completed", "show", "notes"]'
 done_board_columns='["status", "team", "assigned", "priority", "timeline", "hours"]'
 
 # The columns of the Projects board, by id. Status, Mentor, Helpers and Show on TV? are read as text (the words of the label),
@@ -126,6 +129,7 @@ def error_messages: [(.errors[]?.message?), .error_message?] | map(strings);
 # The longest project name (studio/schemas/task.js) and the longest first name
 title_limit=40
 contact_limit=12
+note_limit=90
 
 # Items asked for in one page, and requests to Monday in one run: a page or two of each board and the
 # names. A run that reaches the limit stops, says so, and deletes nothing.
@@ -162,7 +166,7 @@ query='{
   "teams": *[_type == "team" && !(_id in path("drafts.**"))] { _id, code },
   "subteams": *[_type == "subteam" && !(_id in path("drafts.**"))] { _id, name },
   "tasks": *[_type == "task" && source == "monday" && !(_id in path("drafts.**"))] {
-    _id, title, department, list, status, "team": team._ref, "subteam": subteam._ref, contact, priority,
+    _id, title, department, list, status, "team": team._ref, "subteam": subteam._ref, contact, priority, note,
     startDate, dueDate, completedOn, estHours, showOnBoard, show, mondayBoardId, mondayBoardName,
     "old": defined(owners) || defined(milestoneIds) || defined(hiddenReason)
   },
