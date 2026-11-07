@@ -169,10 +169,14 @@ json_time() {
 
 # /var/lib/teletraan/netwatch.json: the shape the status poller reads. The folder may belong to root, so the file is
 # written in place (install-network.sh made it, owned by the login user).
+#
+# probes is what the three checks of this run said. The health timer (computer/scripts/health.sh) reads them instead of
+# asking the network again, so the gateway and the name lookup are probed in one place only.
 write_public_state() {
   local text
-  text=$(printf '{"failures":%s,"lastCheckAt":"%s","lastOkAt":%s,"lastAction":"%s","lastActionAt":%s,"lastRebootAt":%s}' \
-    "$fails" "$(iso_at "$now")" "$(json_time "$last_ok")" "$last_action" "$(json_time "$last_action_at")" "$(json_time "$last_reboot")")
+  text=$(printf '{"failures":%s,"lastCheckAt":"%s","lastOkAt":%s,"lastAction":"%s","lastActionAt":%s,"lastRebootAt":%s,"probes":{"https":"%s","gateway":"%s","dns":"%s"}}' \
+    "$fails" "$(iso_at "$now")" "$(json_time "$last_ok")" "$last_action" "$(json_time "$last_action_at")" "$(json_time "$last_reboot")" \
+    "$https_result" "$gateway_result" "$dns_result")
   printf '%s\n' "$text" > "$public_state" 2> /dev/null || say "could not write $public_state. install-network.sh makes it." >&2
 }
 
@@ -425,6 +429,16 @@ try_reboot() {
       note "down for $((down_for / 60)) minutes, but the computer rebooted less than 2 hours ago, so it does not reboot again."
       return 0
     fi
+  fi
+
+  # The gate has the last word (computer/scripts/gate.sh). This script's own guards above are about its own ladder;
+  # the gate is about every repair path at once, so a network reboot cannot follow a watchdog or scheduled one. It
+  # also refuses when the network is down but a source is the only thing failing, and when the computer has already
+  # shown that rebooting does not help.
+  if ! gate_why=$("$computer/scripts/gate.sh" allow netwatch network 2>&1); then
+    note "down for $((down_for / 60)) minutes, but the computer is not rebooted: $gate_why"
+    log_json netwatch network reboot_refused "$gate_why"
+    return 0
   fi
 
   level=3

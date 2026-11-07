@@ -6,7 +6,7 @@
 import { el, esc } from '../dom.js';
 import { icon, stateIcon } from '../icons.js';
 import { subscribe } from '../poll.js';
-import { buildBanner, buildDots, buildProblems, networkActionWords, remoteWords, sourceFacts } from '../overview.js';
+import { buildBanner, buildDots, buildProblems, networkActionWords, remoteWords, sourceFacts, supervisorWords } from '../overview.js';
 import { clockWords, nameOf, whenWords } from '../words.js';
 import { actionButton, helperRun, latestResult } from '../action-run.js';
 import { specs, make } from './actions.js';
@@ -34,6 +34,9 @@ function dotFacts(id, overview, now) {
     lines.push('Checks failed in a row: ' + (typeof watch.failures === 'number' ? watch.failures : 'not known'));
     lines.push('Last network repair: ' + (networkActionWords(watch, now) || 'none recorded'));
   } else if (id === 'screen') {
+    const health = (overview && overview.health) || {};
+    if (health.frames === true) lines.push('The screen is painting.');
+    else if (health.frames === false) lines.push('The screen is not painting. Its timers run, but nothing is being drawn.');
     lines.push(wall.reporting ? 'The screen reported ' + wall.ageSeconds + ' seconds ago.' : 'The screen has not reported yet.');
     if (wall.showing && wall.showing.build) lines.push('Version on the screen: ' + wall.showing.build);
     if (status.kiosk) lines.push('Screen service: ' + status.kiosk);
@@ -194,6 +197,7 @@ export function mountNow(box) {
     const latest = latestResult();
     const remote = remoteWords(overview && overview.remoteLast, now);
     q('data-last').innerHTML =
+      '<div><dt>Fixing itself</dt><dd>' + esc(supervisorWords(overview) || 'The computer does not check itself yet. Run Install everything.') + '</dd></div>' +
       '<div><dt>Last remote action</dt><dd>' + esc(remote || 'None yet. Actions from the Studio show here.') + '</dd></div>' +
       '<div><dt>Last network repair</dt><dd>' + esc(networkActionWords(overview && overview.netwatch, now) || 'None recorded.') + '</dd></div>' +
       '<div><dt>Last action on this page</dt><dd>' + esc(latest ? latest.label + ': ' + latest.words + ' (' + clockWords(latest.at) + ')' : 'None yet.') + '</dd></div>';

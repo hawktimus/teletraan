@@ -134,6 +134,15 @@ fi
 save_state
 write_status
 
+# And the gate has the last word (computer/scripts/gate.sh): one record for all five repair paths, so a scheduled
+# reboot cannot land ten minutes after one the watchdog or the network watchdog already made. The slot stays handled
+# either way, so a refusal is not tried again every five minutes.
+if ! gate_why=$("$computer/scripts/gate.sh" allow nightly 2>&1); then
+  say "the slot was not acted on: $gate_why"
+  log_json reboot screen reboot_refused "$gate_why"
+  exit 0
+fi
+
 systemctl_bin=${TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl}
 code=0
 sudo -n "$systemctl_bin" reboot > /dev/null 2>&1 || code=$?

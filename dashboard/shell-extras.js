@@ -13,6 +13,10 @@ import { viewNameOf, viewShowsTag, viewTitleOf } from './core/views.js';
 import { updatePanel } from './core/panels.js';
 import { runAnnouncement, takeoverRunning } from './core/takeover.js';
 import { startHeartbeat } from './core/heartbeat.js';
+import { startFrames } from './core/frames.js';
+import { startRecovery } from './core/recover.js';
+import { moveOn } from './core/schedule-hold.js';
+import { readSyncStatusNow } from './core/sync-status.js';
 import { noteReload } from './core/page-loads.js';
 import { getContent, mergedEvents, rebuild, redrawWhatStays, useLayout } from './shell-content.js';
 import { params, rowPreview, screen, extras, shellState } from './shell-state.js';
@@ -72,7 +76,21 @@ export async function startExtras() {
   }, 60 * 1000);
 
   watchVersion();
-  if (!rowPreview) startHeartbeat(); // the watchdog reads the page of the wall, never a preview
+  if (!rowPreview) {
+    // Before the heartbeat, because the heartbeat only writes a healthy title while frames are being painted
+    startFrames();
+    startHeartbeat(); // the watchdog reads the page of the wall, never a preview
+
+    // When the TV comes back after being off or on another input, a transition that stopped half way is still on the
+    // screen. This settles it, reads the computer's files again so the dots tell the truth, and moves the rotation on.
+    startRecovery({
+      restart: () => {
+        redrawWhatStays();
+        moveOn(['grid1', 'grid2', 'ticker']);
+      },
+      reread: readSyncStatusNow,
+    });
+  }
   await Promise.race([Promise.all(ready), frame.wait(3000)]);
 }
 

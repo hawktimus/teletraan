@@ -111,6 +111,13 @@ async function readFile() {
   });
 }
 
+// Reads the file now, without waiting for the next turn of the timer. core/recover.js calls it after the page has been
+// away: the dots and the pill would otherwise go on showing how things were before, which is exactly the complaint
+// that a restarted screen shows amber dots while everything is in fact fine.
+export function readSyncStatusNow() {
+  return readFile();
+}
+
 // onChange(status) is called after every read, with the newest cleaned answer or null. One timer serves every caller.
 export function watchSyncStatus(onChange) {
   listeners.push(onChange);

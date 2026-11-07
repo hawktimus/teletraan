@@ -7,6 +7,10 @@ export const hidden = '<hidden>';
 // The names of the keys in local.env, and any other setting whose name says it holds a secret
 const named = /\b((?:export\s+)?(?:SANITY_WRITE_TOKEN|MONDAY_API_TOKEN|TBA_AUTH_KEY|GOOGLE_API_KEY|MATCH13_API_KEY|CONTROL_PIN|CALENDAR_[A-Za-z0-9_]*_URL|[A-Za-z0-9_]*(?:TOKEN|SECRET|PASSWORD|API_KEY)[A-Za-z0-9_]*))\s*[=:]\s*("[^"]*"|'[^']*'|\S*)/g;
 const bearer = /\bBearer\s+[^\s"']+/gi;
+// How a Wi-Fi password is written by the things that handle one: the NetworkManager keyfile the Wi-Fi switch writes
+// (psk=), nmcli, and wpa_supplicant's own log lines. These names are lower case and short, so the rule above misses
+// them. Taking out a harmless "key=" now and then is the right way round for text that is about to be shared.
+const wifiSecret = /\b(psk|passphrase|pre-shared-key|wep_key[0-9]?|key|password|pass)\s*[=:]\s*("[^"]*"|'[^']*'|\S+)/gi;
 // A JWT: three base64url parts joined by dots
 const jwt = /\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g;
 // Calendar links: webcal, an .ics file, or an address with calendar in it
@@ -21,6 +25,7 @@ const longToken = /\b[A-Za-z0-9_-]{40,}\b/g;
 export function redactLine(line) {
   return String(line)
     .replace(named, (all, name) => name + '=' + hidden)
+    .replace(wifiSecret, (all, name) => name + '=' + hidden)
     .replace(bearer, 'Bearer ' + hidden)
     .replace(calendarLink, hidden)
     .replace(queryKey, '$1' + hidden)

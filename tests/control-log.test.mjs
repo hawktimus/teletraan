@@ -47,7 +47,10 @@ test('the helper accepts the log-bundle word and the shell script runs it withou
   const part = script.slice(script.indexOf('  log-bundle)\n'), script.indexOf('  monday-check)\n    code=0'));
   assert.ok(part.includes('journalctl -u "$unit" -n 300 --no-pager') && part.includes('docker_bin" ps'));
   assert.ok(!/\bsudo\b/.test(part.replace(/uses sudo|without sudo/g, '')), 'no sudo in the bundle part');
-  assert.ok(script.includes('mirror-status|log-bundle)'));
+  // log-bundle is one of the words that take no argument. The list is checked by name rather than by what sits
+  // next to it, so adding another word to it does not fail this test.
+  const noArgument = (script.match(/^ {2}(restart-kiosk\|[^)]*)\)$/m) || [])[1] || '';
+  assert.ok(noArgument.split('|').includes('log-bundle'), 'log-bundle takes no argument: ' + noArgument);
 });
 
 async function worldWithSecrets() {

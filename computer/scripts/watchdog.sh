@@ -71,9 +71,16 @@ else
   else
     # The title looks like: Teletraan I (a middle dot) 14:07. The dot may arrive
     # as itself or as an escape, so only the clock at the end is read.
+    #
+    # FROZEN in place of the clock is the page saying that its timers are running but nothing is being painted
+    # (dashboard/core/heartbeat.js). That is the half-drawn screen, and it is worth telling apart from a page whose
+    # timers have stopped as well: the first is a browser that has given up painting, the second a browser that is
+    # wedged. Both are restarted, and the log says which it was.
     clock=$(printf '%s' "$list" | sed -n 's/.*"title": *"Teletraan I [^"]* \([0-9][0-9]:[0-9][0-9]\)".*/\1/p' | head -n 1)
-    if [ -z "$clock" ]; then
-      problem='the page title has no time'
+    if printf '%s' "$list" | grep -q '"title": *"Teletraan I [^"]*FROZEN'; then
+      problem='no frames: the page says it has stopped painting'
+    elif [ -z "$clock" ]; then
+      problem='no heartbeat: the page title has no time'
     else
       # Minutes between the title and now, across midnight. A title a minute or
       # two ahead of this clock is a rounding difference, not a stale page.
@@ -181,6 +188,11 @@ if ! save_state "$count" 0 "$(printf '%s\n%s' "$recent" "$now")"; then
 fi
 
 say "$problem. Restarting $service (restart $count today)."
+log_json watchdog screen restart "$problem"
+# The supervisor keeps the record of everything that has been tried (computer/scripts/ledger.mjs), so a restart made
+# here shows up in its ladder, on the control page and in a diagnostic report. The limits above are this script's own;
+# only a reboot has to ask the gate for permission, and this script never reboots.
+"${TELETRAAN_NODE:-node}" "$computer/scripts/ledger.mjs" action frames 3 restart-kiosk "watchdog: $problem" > /dev/null 2>&1 || true
 # The path is the one in the sudoers file, which allows this unit and no other
 if ! sudo -n "$systemctl_bin" restart "$service" > /dev/null 2>&1; then
   say "the restart was refused. Check that computer/sudoers/teletraan-control is installed (docs/updating-the-computer.md)." >&2

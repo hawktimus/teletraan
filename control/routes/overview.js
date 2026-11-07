@@ -59,6 +59,31 @@ export function cleanNetwatch(raw) {
   };
 }
 
+// What the health timer and the supervisor wrote, cut down to what the page shows: the one sentence, whether it is
+// allowed to act, and the checks that are failing with the plain detail of each. The page never shows the whole file.
+export function cleanHealth(health, supervisor) {
+  const checks = health && typeof health.checks === 'object' && health.checks ? health.checks : null;
+  if (!checks) return { present: false, words: '', mode: '', failing: [], frames: null };
+
+  const failing = Object.keys(checks)
+    .filter(name => checks[name] && checks[name].ok === false)
+    .slice(0, 12)
+    .map(name => ({ id: text(name, 30), detail: text(checks[name].detail, 120), since: text(checks[name].since, 40) || null }));
+  const frames = checks.frames && typeof checks.frames.ok === 'boolean' ? checks.frames.ok : null;
+  const said = supervisor && typeof supervisor === 'object' ? supervisor : {};
+
+  return {
+    present: true,
+    at: text(health.generatedAt, 40) || null,
+    words: text(said.words, 140),
+    mode: said.mode === 'fix' ? 'fix' : 'watch',
+    firstDay: said.firstDay === 'yes',
+    failing: failing,
+    // Whether the screen is painting, which is the one fact that decides the Screen dot
+    frames: frames,
+  };
+}
+
 export function cleanRemoteLast(raw) {
   if (!raw) return { present: false };
   return { present: true, action: text(raw.action, 60), requestedBy: text(raw.requestedBy, 40), handledAt: text(raw.handledAt, 40) || null, result: text(raw.result, 200), via: text(raw.via, 20) || 'sanity' };
@@ -80,6 +105,9 @@ function wallFacts(ctx, now) {
 
 export function register(router, ctx) {
   const netwatchFile = () => ctx.netwatchFile || path.join(path.dirname(ctx.dataDir || '.'), 'netwatch.json');
+  // The health file and the supervisor's own answer sit beside netwatch.json, in the state folder the container reads
+  // only (computer/docker-compose.yml). A missing file means the health timer is not installed, and the page says so.
+  const stateFile = name => (ctx.stateDir ? path.join(ctx.stateDir, name) : path.join(path.dirname(netwatchFile()), name));
 
   // The status call asks the helper and Sanity, so one answer is kept for a few seconds and shared by every open page
   async function statusNow(now) {
@@ -97,6 +125,8 @@ export function register(router, ctx) {
       status: await statusNow(now),
       syncStatus: cleanSyncStatus(readJsonFile(path.join(ctx.dataDir, 'sync-status.json'))),
       netwatch: cleanNetwatch(readJsonFile(netwatchFile())),
+      health: cleanHealth(readJsonFile(stateFile('health.json')), readJsonFile(stateFile('supervisor.json'))),
+      buildVersion: typeof ctx.buildVersion === 'string' ? ctx.buildVersion : '',
       remoteLast: cleanRemoteLast(readJsonFile(path.join(ctx.dataDir, 'remote-last.json'))),
       wall: wallFacts(ctx, now),
     });

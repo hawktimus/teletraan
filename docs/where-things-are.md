@@ -439,6 +439,18 @@ editors can sign in from anywhere.
                               reboot, the browser, and the detection of the connected display.
                               install-watchdog.sh, install-nightly.sh and install-backup.sh turn on their
                               timers. scripts/control-helper.sh is the host side of the control page.
+                              scripts/health.sh looks the computer over every minute and health-checks.mjs
+                              decides which checks pass; scripts/supervisor.sh acts on them and
+                              supervisor-plan.mjs holds the ladder and the reboot gate, with the record in
+                              ledger.mjs and gate.sh the way a shell script asks it. Every reboot on the
+                              computer goes through that one door. scripts/display-watch.sh notices the TV
+                              being switched away and sets the display again, scripts/page-command.py asks
+                              the page to load again or to settle over the browser's debugging port, and
+                              scripts/diag.sh writes a diagnostic report with redact.mjs taking every key
+                              out of it first. supervisor-status.sh and watchdog-device.sh are what
+                              make supervisor-status and make watchdog-test print. install-health.sh turns
+                              the three timers on (docs/OPERATIONS.md, "When the screen goes wrong by
+                              itself").
                               install.sh installs a release of the repository and sets the control page
                               up, sudoers/ lets the helper run the few commands it needs, nginx/ and
                               docker-compose.yml are the web server, and git/ is the optional bare

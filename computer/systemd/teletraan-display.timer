@@ -1,0 +1,11 @@
+[Unit]
+Description=Look at the Teletraan I screen every 15 seconds
+
+[Timer]
+# The screen has to be up first, and the first look only writes down what is there
+OnBootSec=90sec
+OnUnitActiveSec=15sec
+AccuracySec=1sec
+
+[Install]
+WantedBy=timers.target

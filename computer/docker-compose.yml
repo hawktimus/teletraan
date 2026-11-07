@@ -67,6 +67,7 @@ services:
       HOME: /opt/teletraan/cache/home
       NPM_CONFIG_CACHE: /opt/teletraan/cache/npm
       CONTROL_NETWATCH: /var/lib/teletraan-state/netwatch.json
+      CONTROL_STATE: /var/lib/teletraan-state
     # Reached by nginx on this Docker network only. No port is published.
     expose:
       - "3230"

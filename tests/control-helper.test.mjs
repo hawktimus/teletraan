@@ -45,7 +45,8 @@ function setup() {
 }
 
 test('the words the client sends are the words the helper has', () => {
-  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default']);
+  assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default',
+    'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
 });

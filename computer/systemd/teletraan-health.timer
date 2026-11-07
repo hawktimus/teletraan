@@ -1,0 +1,11 @@
+[Unit]
+Description=Look the Teletraan I computer over every minute
+
+[Timer]
+# A boot gets two minutes before the first look, so the screen and the services are up and nothing is called broken
+# for being slow to start
+OnBootSec=2min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target

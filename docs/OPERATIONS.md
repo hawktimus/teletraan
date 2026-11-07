@@ -11,6 +11,9 @@ The dashboard in the browser asks the internet for nothing. It reads plain files
 | `teletraan-sync.service` | all the time, started again by systemd if it stops | Reads Sanity, the weather and the pictures on its own timers and writes them to the data folder (`/var/lib/teletraan/data`, shown to the dashboard as `data/live/`). `computer/scripts/sync-service.mjs` |
 | `teletraan-netwatch.timer` | every 2 minutes | Checks the network and repairs it when it is down (docs/network.md). `computer/scripts/netwatch.sh` |
 | `teletraan-heartbeat.timer` | every 5 minutes | Pings the uptime monitor and raises the push messages (below). `computer/scripts/heartbeat.sh` |
+| `teletraan-health.timer` | every 1 minute | Looks the computer over and writes `/var/lib/teletraan/health.json`: one line for each check. It decides nothing. `computer/scripts/health.sh` |
+| `teletraan-supervisor.timer` | every 1 minute | Reads that file and repairs what it can, gently first. The only thing on the computer that escalates. `computer/scripts/supervisor.sh` |
+| `teletraan-display.timer` | every 15 seconds | Notices the TV being switched off or to another input and puts the picture right. `computer/scripts/display-watch.sh` |
 | Monday, the competition feed, the calendars | their own timers | Unchanged. The sync service only reports how they are doing |
 
 What the sync service writes, and how it keeps the last good copy:
@@ -110,6 +113,108 @@ Any script can raise a message with one argument:
 `make allowlist` prints the hostnames the computer contacts, one line each with its purpose, ready to send. It is built from the files that use each address, so it follows a change: the Sanity project host and its picture host from `dashboard/config.js`, the weather host from `dashboard/core/weather.js`, the Monday, Blue Alliance, Statbotics, Match13, Drive and Slides hosts from the scripts that call them, and from `local.env` the host of every `CALENDAR_<ID>_URL`, of `HEARTBEAT_URL`, of `NOTIFY_URL` and of `NETWATCH_HOST`. Only the hostname of an address is ever printed, never its path or its token.
 
 All connections go out from the computer over HTTPS (port 443). Nothing connects in from outside. If the computer is reached over a private network service for remote login, that service has its own hosts and is not in this list; ask its documentation. Pulling an update from the code host is done from the Mac or the control page and is not part of the screen.
+
+## When the screen goes wrong by itself
+
+The computer checks itself every minute and can repair itself. This section is what to read when the wall looks wrong
+and nobody is in the room.
+
+### What it checks
+
+`make health` prints the lot. Each check says whether it passes, since when, and one plain line of detail:
+
+- **frames** — the page is painting. This is the important one. A page whose timers run and whose painting has stopped
+  looks healthy from everywhere except here, and it is what leaves the screen half drawn.
+- **page** — the page answers on this computer at all.
+- **display** — a screen is connected and the framebuffer is the size the dashboard draws into.
+- **screenStuck** — the picture has changed in the last fifteen minutes, and is not one flat colour.
+- **network**, **dns** — what the network watchdog last found. Nothing is probed twice.
+- **sanity**, **calendars**, **monday**, **competition** — each source was read inside three times its own interval.
+- **services** — every service is running, and none is restarting over and over.
+- **memory**, **disk**, **clock** — the browser is under 1.5 GB, a tenth of the disk is free, the clock is set.
+
+A check whose facts cannot be gathered is left out rather than failed: a fact nobody could read is not a fault.
+
+### The ladder
+
+One problem, one step at a time, by how long it has been failing without a break. Each step waits to see whether it
+worked, and a problem that clears starts again at the bottom.
+
+| After | Step | What people in the room see |
+|-------|------|------------------------------|
+| 1 min | load the page again | nothing |
+| 5 min | run or restart that service | nothing |
+| 10 min | restart the screen session and set the display again | a few seconds of black |
+| 20 min | repair the network (network problems only) | nothing on screen |
+| 30 min | reboot, if the gate allows it | one to two minutes dark |
+
+A problem only gets the steps that could help it: the display has no service of its own, a source never gets the
+network step, and a source that fails while the network is fine never gets a reboot at all.
+
+### Why it cannot get into a reboot loop
+
+Every reboot on this computer goes through one door (`computer/scripts/gate.sh`) and one record
+(`/var/lib/teletraan/reboot-ledger.json`), written before the machine goes down so it survives. The five repair paths —
+the screen watchdog, the network watchdog, the scheduled reboot, the nightly one and the buttons — therefore share one
+budget instead of keeping four of their own:
+
+- One automatic reboot in six hours, three in a day, counted across all of them together.
+- No reboot of any kind within ten minutes of another. The nightly and the buttons are outside the budget, because a
+  person asked, but not outside this.
+- Nothing above restarting the screen in the first ten minutes after a boot.
+- Never a reboot for a source that is failing while the network works. That is the school filter or someone else's
+  outage, and rebooting this computer cannot fix it.
+- A dead internet gets one network restart and one reboot, and then stops. A router or a provider is not fixed by
+  rebooting the Mini.
+
+### When it stops trying
+
+If a reboot happens for a problem and the same problem is failing again within half an hour of the computer coming
+back, rebooting plainly does not help. The computer then **stops rebooting for that problem** for a day: the gentle
+steps keep running, the last good content stays on the screen, and one message says
+"automatic reboot did not fix &lt;problem&gt;; stopped rebooting". Three boots in an hour, for any reason, stops it
+rebooting at all until a person says otherwise.
+
+It lets go by itself after a day of quiet. To let go now:
+
+- Control page: Details, Debug.
+- Studio: Coaches only, Remote actions, Clear degraded.
+- On the computer: `node computer/scripts/ledger.mjs clear`.
+
+### Watching first
+
+It starts out watching only. It does every check and writes down what it would have done, and does nothing. That is
+deliberate: read a day of it before letting it restart anything on a wall people are using.
+
+- For its first day after being installed it watches whatever the setting says.
+- After that it acts only while **Dashboard Settings, Advanced, Fixing itself, May the computer fix itself?** says Fix.
+- `TELETRAAN_SUPERVISOR_DRY_RUN=1` forces watching whatever the setting says.
+
+`make supervisor-status` says which mode it is in, what is failing, what it has tried and whether it has stopped
+trying.
+
+### The diagnostic report
+
+One file with everything needed to work out what happened, so nobody has to log in over ssh.
+
+- Control page: **Details, Debug, Create a report**, then read, copy or download it.
+- On the computer: `make diag`, or `make diag-last` to print the newest.
+- Studio: Coaches only, Remote actions, Collect diagnostics. Only a one line summary comes back to Sanity; the report
+  stays on the computer.
+
+The computer also writes one by itself, into `/var/lib/teletraan/incidents`, before it restarts or reboots anything.
+Those are the ones worth reading after the wall went wrong overnight. Twenty of each are kept.
+
+Every line of a report goes through the same rules as the log download: the keys file is never opened, and tokens,
+passwords, Wi-Fi passwords, the PIN and calendar links are taken out of everything else. A report is safe to send to a
+coach. `tests/diag-redaction.test.mjs` feeds made-up keys and feed links through the whole thing and fails if any of
+them comes out.
+
+### The hardware watchdog
+
+Not turned on. `make watchdog-test` says whether this computer even has the device and what turning it on would mean;
+it changes nothing. A watchdog that does not work resets the computer for no reason and nothing says why, so it is a
+decision to make deliberately, not a default.
 
 ## Remote actions from Sanity
 

@@ -125,8 +125,36 @@ export async function kitNow() {
   }
 }
 
+// Waits for the next painted frame, but never for ever. A browser that has stopped painting (the TV switched off or to
+// another input) never calls back, and every transition is built out of these waits: one that never returns leaves the
+// run half drawn on the screen, holds the rotation clock and keeps the busy flag set. That is the frozen screen.
+//
+// So the wait gives up after frameWaitMs and lets the run carry on. The run then finishes on its clock, which is made
+// of timers and keeps running, and the screen is left in its end state instead of half way through.
+export const frameWaitMs = 1000;
+
 export function nextFrame() {
-  return new Promise(resolve => requestAnimationFrame(() => resolve()));
+  if (typeof requestAnimationFrame !== 'function') return Promise.resolve();
+
+  return new Promise(resolve => {
+    let done = false;
+    const once = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    requestAnimationFrame(once);
+    setTimeout(once, frameWaitMs);
+  });
+}
+
+// Waits for these animations to finish, and gives up after their own length plus two seconds. An animation of a page
+// that is not being painted never resolves on its own.
+export function animationsDone(animations, maxMs) {
+  const waiting = Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+  if (!(maxMs > 0)) return waiting;
+
+  return Promise.race([waiting, new Promise(resolve => setTimeout(resolve, maxMs + guardSlackMs))]);
 }
 
 // Starts every track of a run on one clock: one animation for each track, as long as the transition, all with the same start time, so
@@ -161,12 +189,15 @@ export function playTracks(run, scale, extra = []) {
   run.tracks.list.forEach(item => begin(item.element, item.property, item.stops, false, item.windowed === true));
   begin(layerOf().firstElementChild, 'transform', cameraStops(), false, false);
   extra.forEach(item => begin(item.element, item.property, item.stops, item.element.closest('#reform') === null, false));
+  const restore = () => written.forEach(([element, property]) => element.style.removeProperty(property));
+  // The guard in takeRun has to be able to take this back without the run's own closure
+  noteRestore(restore);
   return {
     animations: animations,
     start: start,
     duration: duration,
     at: () => (document.timeline.currentTime - start) / scale,
-    restore: () => written.forEach(([element, property]) => element.style.removeProperty(property)),
+    restore: restore,
   };
 }
 
@@ -178,18 +209,69 @@ export async function until(clock, normalMs, scale) {
   while (window.__reformHold === true && normalMs >= reformTimes.totalMs) await new Promise(resolve => setTimeout(resolve, 50));
 }
 
+// How long after a run should have finished the guard below steps in
+export const guardSlackMs = 2000;
+
+// What the last run left on the real elements of the page, so the guard can take it back if the run cannot
+let lastRestore = () => {};
+
+export function noteRestore(restore) {
+  lastRestore = typeof restore === 'function' ? restore : () => {};
+}
+
+// Puts the screen in the end state of a run that did not finish: every part of the transition cancelled, the layer
+// emptied and hidden, and whatever was written on the real elements taken back. Safe to call at any time.
+export function forceEnd() {
+  try {
+    const layer = layerOf();
+    delete layer.dataset.ready;
+    delete layer.dataset.weight;
+    if (typeof document.getAnimations === 'function') {
+      document.getAnimations().filter(animation => animation.id === 'reform').forEach(animation => animation.cancel());
+    }
+    const camera = layer.firstElementChild;
+    if (camera) camera.replaceChildren();
+    layer.hidden = true;
+  } catch (error) {
+    console.error('A transition could not be put in its end state', error);
+  }
+  try {
+    lastRestore();
+  } catch (error) {
+    console.error('A transition could not give back what it wrote on the page', error);
+  }
+  lastRestore = () => {};
+}
+
 // Takes the lock for a run, and gives back the way to let it go. hold(on) stops and starts the clock of the rotation.
-export function takeRun(reason, hold) {
+//
+// A run that has not let go by its own length plus two seconds is forced to its end state and the lock is released.
+// Nothing should ever need this: nextFrame gives up by itself and the run's clock is made of timers. It is here because
+// a transition that keeps the lock stops the rotation for ever, and a screen in a meeting room must not need a person.
+export function takeRun(reason, hold, maxMs = reformTimes.totalMs * 4) {
   if (running) return null;
 
   running = true;
   setBusy(true, reason);
   hold(true);
-  return () => {
+
+  let letGo = false;
+  const release = () => {
+    if (letGo) return;
+    letGo = true;
+    clearTimeout(guard);
     hold(false);
     setBusy(false, reason);
     running = false;
   };
+  const guard = setTimeout(() => {
+    if (letGo) return;
+    console.warn('A ' + reason + ' transition did not finish in time, so the screen was put in its end state.');
+    forceEnd();
+    release();
+  }, maxMs + guardSlackMs);
+
+  return release;
 }
 
 // The counts of a run that is built, on the layer, for the tests and for ?debug=1. The elements are all the elements of the

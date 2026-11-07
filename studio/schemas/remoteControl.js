@@ -13,9 +13,12 @@ export const remoteControlId = 'remoteControl';
 // The stored values and what the editor reads. computer/scripts/remote-plan.mjs maps each value to fixed words, and
 // tests/remote-actions.test.mjs fails if the two lists differ.
 export const remoteActions = [
+  { title: 'Refresh the screen', value: 'refresh_screen' },
   { title: 'Restart dashboard', value: 'restart_dashboard' },
   { title: 'Restart services', value: 'restart_services' },
   { title: 'Reboot computer', value: 'reboot_computer' },
+  { title: 'Collect diagnostics', value: 'collect_diagnostics' },
+  { title: 'Let it fix itself again', value: 'clear_degraded' },
   { title: 'Sync all', value: 'sync_all' },
   { title: 'Sync calendars', value: 'sync_calendars' },
   { title: 'Sync Monday', value: 'sync_monday' },

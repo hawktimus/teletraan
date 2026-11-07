@@ -23,6 +23,7 @@ export const sentences = {
   'status.preview': 'A picture of the TV. Show live preview loads it and the same button hides it again. It changes nothing on the wall.',
   'status.now': 'What the TV says about itself every 10 seconds. It is read only.',
   'status.health': 'Whether the Teletraan computer and its services are working. A red or amber line says what to check.',
+  'details.debug': 'One file with everything needed to work out why the screen is wrong, written on the computer. It holds no keys and is safe to send to a coach.',
   'status.links': 'These links take you to the tab where the wall can be changed.',
   'health.dots': 'The three small dots drawn on the TV. Green means up to date, amber means late and red means failed.',
   'health.reads': 'When the Teletraan computer last read each outside source. Old times mean a sync has stopped.',

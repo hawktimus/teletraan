@@ -14,7 +14,7 @@
 import * as frame from '../frame.js';
 import { lightTimes } from './reform-plan.js';
 import { rectOf, screenOrigin } from './reform-bake.js';
-import { kitNow, layerOf, nextFrame, takeRun } from './reform-run.js';
+import { animationsDone, kitNow, layerOf, nextFrame, takeRun } from './reform-run.js';
 import { otherRegions, regionWait, reloadWait, rolesOnPage, waitForRest } from './reform-view.js';
 
 const platesClosed = 'scaleX(1)';
@@ -84,7 +84,9 @@ function play(run, phase, ms) {
   });
 
   run.animations = run.animations.concat(animations);
-  return Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+  // A browser that has stopped painting never finishes an animation, and this wait is what the whole Light transition
+  // hangs on, so it gives up after the phase's own length plus two seconds (reform-run.js, animationsDone)
+  return animationsDone(animations, ms);
 }
 
 // The counts that the tests and ?debug=1 read, as the heavy runs write them

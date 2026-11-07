@@ -1,0 +1,10 @@
+[Unit]
+Description=Act on the Teletraan I health checks every minute
+
+[Timer]
+# After the first health check has had time to write a file, and after the boot grace the ladder keeps anyway
+OnBootSec=3min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target

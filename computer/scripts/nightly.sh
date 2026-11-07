@@ -72,8 +72,19 @@ esac
 
 if [ "$job" = kiosk ]; then
   say "restarting teletraan-kiosk."
+  log_json nightly screen restart "the nightly $job"
   sudo -n "$systemctl_bin" restart teletraan-kiosk.service
 else
-  say "rebooting the Teletraan computer."
+  # Every reboot on this computer asks the gate first (computer/scripts/gate.sh), which holds one record for all five
+  # repair paths. The nightly reboot is outside the automatic budget, because a person asked for it by turning it on,
+  # but it still cannot follow another reboot inside ten minutes, and it waits while the computer is in a boot loop.
+  # A refusal is not a failure: it is the gate saying the computer has already been restarted enough.
+  if ! why=$("$computer/scripts/gate.sh" allow nightly 2>&1); then
+    say "the $job was not done: $why"
+    log_json nightly screen reboot_refused "$why"
+    exit 0
+  fi
+  say "rebooting the Teletraan computer ($why)."
+  log_json nightly screen reboot "the nightly $job"
   sudo -n "$systemctl_bin" reboot
 fi

@@ -22,9 +22,16 @@ const sourceOfAction = Object.freeze({
 // The fixed lines sent to the helper for each action that runs a command
 export const linesOf = Object.freeze(Object.assign(
   {
+    // Gentlest first. Loading the page again restarts nothing and nothing goes black, so it is the one to try first,
+    // and it is what the supervisor's own step 1 does.
+    refresh_screen: Object.freeze(['refresh-screen']),
     restart_dashboard: Object.freeze(['restart-kiosk']),
     restart_services: Object.freeze(['restart-services']),
     reboot_computer: Object.freeze(['reboot']),
+    // One diagnostic report on the computer. Only a one line summary comes back to Sanity; the report stays there.
+    collect_diagnostics: Object.freeze(['diag-create']),
+    // Turns the automatic fixes back on after the computer stopped trying (docs/OPERATIONS.md, "When it stops trying")
+    clear_degraded: Object.freeze(['clear-degraded']),
     sync_all: Object.freeze(Object.values(sourceOfAction).map(source => 'sync-now ' + source)),
   },
   Object.fromEntries(Object.entries(sourceOfAction).map(([action, source]) => [action, Object.freeze(['sync-now ' + source])])),

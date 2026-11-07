@@ -1,0 +1,14 @@
+[Unit]
+Description=Notice when the Teletraan I screen is switched away and put the picture right
+After=teletraan-kiosk.service
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-health.sh and install.sh with the account that owns the repository. It reads xrandr on
+# the kiosk's own display, calls the same set_display that kiosk.sh uses, and asks the page to load again. It changes no
+# TV setting and adds no mode: it only chooses from the modes the TV lists (computer/scripts/display-watch.sh).
+# Restarting the screen session goes through sudo, so do not add NoNewPrivileges here.
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/display-watch.sh
+# It waits three seconds for a mode to settle and up to fifteen to see whether frames came back
+TimeoutStartSec=90

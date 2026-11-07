@@ -31,6 +31,7 @@ export function staleFields(extra = {}) {
 }
 
 const explain = {
+  refresh_screen: 'Loads the page again without restarting the browser. Nothing goes black. Try this first.',
   restart_dashboard: 'Restarts the browser that shows the screen. It takes about a minute.',
   restart_services: 'Restarts the services of the Teletraan computer, including the web server. The screen goes blank for a moment.',
   reboot_computer: 'Restarts the whole Teletraan computer. The screen is off for a few minutes.',
@@ -39,6 +40,8 @@ const explain = {
   show_theme: 'Shows one theme on the screen for an hour, or goes back to the schedule.',
   pause_rotation: 'Stops the pages changing for an hour, or until Resume rotation.',
   resume_rotation: 'Starts the pages changing again.',
+  collect_diagnostics: 'Writes one report on the computer with everything needed to work out what is wrong. Only a one line summary comes back here; the report stays on the computer.',
+  clear_degraded: 'The computer stops repairing itself when a restart did not help. This lets it try again.',
 };
 
 const question = {
@@ -154,9 +157,12 @@ function makeChooser(name, label, key, items, pick) {
 const choiceOf = Object.fromEntries(remoteActions.map(choice => [choice.value, choice]));
 
 export const remoteActionButtons = [
+  makeRemoteAction(choiceOf.refresh_screen),
   makeRemoteAction(choiceOf.restart_dashboard),
   makeRemoteAction(choiceOf.restart_services),
   makeRemoteAction(choiceOf.reboot_computer),
+  makeRemoteAction(choiceOf.collect_diagnostics),
+  makeRemoteAction(choiceOf.clear_degraded),
   makeChooser('syncNow', 'Sync now', 'sync_now', syncChoices, item => ({ action: item.value, extra: {} })),
   makeChooser('showView', 'Show a view', 'show_view', viewChoices, item => ({ action: 'show_view', extra: { view: item.value } })),
   makeChooser('showTheme', 'Show a theme', 'show_theme', themeChoices, item => ({ action: 'show_theme', extra: { theme: item.value } })),

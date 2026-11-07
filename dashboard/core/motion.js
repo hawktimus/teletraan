@@ -8,6 +8,7 @@
 // Light from then on, until the page is loaded again.
 
 import { motions } from '../config.js';
+import { refreshMs } from './frames.js';
 
 const askable = motions.concat(['none']);
 
@@ -27,15 +28,28 @@ export function motionOf(params, settings) {
 }
 
 // The frame budget of a transition
+//
+// slowMs is the floor, not the budget: it is a frame and a half of a 60 Hz screen. The budget itself is a frame and a
+// half of this screen, measured (core/frames.js). The TV in the lab offers only 3840x2160 at 30 Hz, where every frame
+// takes 33.3 ms, so against a fixed 34 ms every frame counted as slow and a Full transition gave itself up for Light
+// after two changes. On that screen the budget is 50 ms and Full plays as it was meant to.
 
 export const budget = { slowMs: 34, slowShare: 0.2, worstMs: 200, missesInARow: 2 };
 
+// How long a frame of this screen may take before it counts as slow: a frame and a half of its measured refresh, and
+// never less than the 60 Hz floor.
+export function slowFrameMs(measuredMs = refreshMs()) {
+  const measured = typeof measuredMs === 'number' && isFinite(measuredMs) && measuredMs > 0 ? measuredMs : 0;
+  return Math.max(budget.slowMs, measured * 1.5);
+}
+
 // Did this transition keep up? gaps are the milliseconds between the frames while it played. It missed when more than a
-// fifth of its frames took longer than two refreshes of a 60 Hz screen, or one frame took over 200 ms.
-export function missedBudget(gaps) {
+// fifth of its frames took longer than a frame and a half of this screen, or one frame took over 200 ms.
+export function missedBudget(gaps, measuredMs) {
   if (gaps.length < 10) return false;
 
-  const slow = gaps.filter(gap => gap > budget.slowMs).length;
+  const limit = slowFrameMs(measuredMs);
+  const slow = gaps.filter(gap => gap > limit).length;
   return slow / gaps.length > budget.slowShare || Math.max(...gaps) > budget.worstMs;
 }
 
@@ -51,7 +65,7 @@ export function noteRun(gaps) {
   if (misses < budget.missesInARow) return false;
 
   degraded = true;
-  console.warn('Two transitions in a row missed their frame budget, so this screen plays Light transitions from now on.');
+  console.warn('Two transitions in a row took longer than ' + Math.round(slowFrameMs()) + ' ms a frame, so this screen plays Light transitions from now on.');
   listeners.forEach(listener => listener());
   return true;
 }

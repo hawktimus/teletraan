@@ -1,0 +1,13 @@
+[Unit]
+Description=Look the Teletraan I computer over and write what each check says
+After=network.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-health.sh and install.sh with the account that owns the repository. The script only
+# reads: the browser's debugging port on this machine, xrandr, the files the collectors leave, systemctl and /proc. It
+# writes /var/lib/teletraan/health.json and nothing else, uses no sudo and reads no key (health.sh explains each check).
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/health.sh
+# One look is a few seconds. Every five minutes it also captures one frame of the picture, which takes about ten.
+TimeoutStartSec=90

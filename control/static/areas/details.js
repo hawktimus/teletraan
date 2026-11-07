@@ -11,6 +11,7 @@ import { mountAll } from '../tabs/settings-all.js';
 import { clearOutput, onOutput, outputEntries } from '../output-log.js';
 import { whenWords } from '../words.js';
 import { mountSections } from './sections.js';
+import { mountDebug } from './debug.js';
 import { sentences } from '../guide.js';
 
 // Health, the three dots of the TV and when each source was last read
@@ -56,6 +57,7 @@ function mountSettings(box) {
 
 export const sections = [
   { id: 'health', title: 'Health', lead: sentences['status.health'], mount: mountHealthSection },
+  { id: 'debug', title: 'Debug', lead: sentences['details.debug'], mount: mountDebug },
   { id: 'output', title: 'Action output', mount: mountOutput },
   { id: 'log', title: 'Logs', lead: sentences['settings.log'], mount: mountLog },
   { id: 'settings', title: 'All settings', lead: sentences['settings.all'], mount: mountSettings },

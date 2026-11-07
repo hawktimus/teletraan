@@ -237,6 +237,16 @@ else
   say "This release has no install-nightly.sh, so the nightly timer was skipped."
 fi
 
+# The health checks, the supervisor and the display watch. The supervisor starts in watching mode: it writes what it
+# would have done and acts only after its first day and only while the Mode field on the Computer tab says Fix
+# (docs/OPERATIONS.md, "Watching first").
+step "Install the health checks and the supervisor"
+if [ -x "$root/computer/scripts/install-health.sh" ]; then
+  echo | "$root/computer/scripts/install-health.sh" || say "install-health.sh stopped (exit $?). Run it again by hand."
+else
+  say "This release has no install-health.sh, so the health checks were skipped."
+fi
+
 # The remote action service (Studio buttons). It skips itself with one line when the key it needs is not in local.env.
 step "Install the remote action service"
 if [ -x "$root/computer/scripts/install-remote.sh" ]; then

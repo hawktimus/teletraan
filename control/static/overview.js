@@ -87,14 +87,32 @@ export function buildDots(overview, now = new Date()) {
   else if (overview.netwatch || (overview.syncStatus && overview.syncStatus.network) || (status.network && status.network.state === 'ok')) dots.network = { state: 'ok', reason: 'The last network check passed.' };
   else dots.network = { state: 'unknown', reason: 'The network check has not reported yet.' };
 
+  // The Screen dot is green only when the page is actually painting. A page whose timers run and whose painting has
+  // stopped reports in and looks healthy from here, and that is the screen that sits half drawn on the wall: the
+  // health timer on the computer is the only thing that knows the difference (computer/scripts/health.sh, frames).
+  const health = (overview && overview.health) || {};
   if (!overview) dots.screen = { state: 'unknown', reason: '' };
+  else if (health.frames === false) dots.screen = { state: 'bad', reason: "The screen isn't updating. Restart the dashboard screen." };
   else if (!wall.reporting) dots.screen = { state: 'warn', reason: 'The screen has not reported since this service started.' };
   else if (wall.quiet) dots.screen = { state: 'bad', reason: 'The screen has not reported for ' + wall.ageSeconds + ' seconds.' };
   else if (status.kiosk && status.kiosk !== 'active' && !/running|active/.test(status.kiosk)) dots.screen = { state: 'warn', reason: 'The screen service says: ' + status.kiosk };
-  else dots.screen = { state: 'ok', reason: 'The screen reported ' + wall.ageSeconds + ' seconds ago.' };
+  else dots.screen = { state: 'ok', reason: 'The screen reported ' + wall.ageSeconds + ' seconds ago.' + (health.frames === true ? ' It is painting.' : '') };
 
   const words = { ok: 'OK', warn: 'Late', bad: 'Problem', unknown: 'Not known' };
   return dotOrder.map(id => ({ id: id, label: dotLabels[id], state: dots[id].state, words: words[dots[id].state], raw: dots[id].reason }));
+}
+
+// What the computer is doing about its own problems, as the one line Now shows. Empty when the health timer is not
+// installed, so an older computer simply shows nothing rather than an error.
+export function supervisorWords(overview) {
+  const health = (overview && overview.health) || {};
+  if (!health.present) return '';
+  if (health.words === '') return health.failing.length === 0 ? 'Everything is fine.' : health.failing.length + ' checks are failing.';
+  if (health.mode === 'fix') return health.words;
+  // Watching only is worth saying, because nothing is being fixed and the line would otherwise read as if it were
+  return health.words + (health.firstDay
+    ? ' Watching only for its first day, so nothing is being restarted.'
+    : ' Watching only, so nothing is being restarted.');
 }
 
 // The Attention list: one plain problem for each thing that is not fine, worst first. See words.js for the sentences.

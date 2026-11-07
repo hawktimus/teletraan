@@ -139,10 +139,18 @@ export function createSync(options = {}) {
   sourceNames.forEach(name => {
     state[name] = { lastSuccessAt: null, lastFailureAt: null, lastFailureReason: '' };
   });
+  // The failures of the last run are worth keeping: they say what went wrong before this service started, and the
+  // control page shows the reason. The successes are not. A stamp from before a reboot says "Monday was read at 14:02"
+  // when nothing has been read since the computer came back, and the dots on the wall then stay amber for up to half an
+  // hour while the control page, which looks at the live files, shows green. Starting with no success stamp is the
+  // truth: nothing has been read yet in this run, and the dots say "not known yet" until the first read lands.
   const before = readJson(statusFile, null);
   if (before && before.sources) {
     sourceNames.forEach(name => {
-      if (before.sources[name]) Object.assign(state[name], before.sources[name]);
+      const kept = before.sources[name];
+      if (!kept) return;
+      state[name].lastFailureAt = kept.lastFailureAt || null;
+      state[name].lastFailureReason = kept.lastFailureReason || '';
     });
   }
 

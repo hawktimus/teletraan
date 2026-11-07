@@ -11,6 +11,7 @@ import { transitionsFields } from './settingsTransitions.js';
 import { photosFields, portraitFieldsets } from './settingsPhotos.js';
 import { nightFields } from './settingsNight.js';
 import { rebootFields } from './settingsReboot.js';
+import { supervisorFields } from './settingsSupervisor.js';
 import { screenFitFields } from './settingsScreen.js';
 import { cleanupFields } from './settingsCleanup.js';
 import { hiddenFields } from './settingsHidden.js';
@@ -53,6 +54,7 @@ const sectionFieldsets = [
   { name: 'presentations', title: 'Presentations', description: 'Booked talks take the whole screen at their start time. Turn them off to keep the screen as it is.', options: open },
   { name: 'night', title: 'Night mode', description: 'The screen at night, from 23:30 to 11:30: a bouncing logo or a dark screen.', options: open },
   { name: 'reboot', title: 'Scheduled reboot', description: 'Reboot the Teletraan computer at a time of day. The control page, Settings, shows the same values.', options: open },
+  { name: 'supervisor', title: 'Fixing itself', description: 'What the Teletraan computer does when it finds something wrong with itself. It checks every minute either way; this says whether it may act.', options: open },
   { name: 'cleanup', title: 'Clean up expired items', description: 'Delete items that expired a while ago, with a backup first. Off to start with, and it only lists them until Mode says Delete.', options: open },
   { name: 'hiddenTransitions', title: 'Hidden transitions', description: 'The desktop reveal and the red eyes, which come about once every few hours of screen time.', options: open },
   { name: 'screenFit', title: 'Screen fit', description: 'How the picture sits in the window of the TV computer. The control page, Settings, Screen, has a button that sets it for you.', options: open },
@@ -66,6 +68,7 @@ sectionOf.generalViewTitle = 'banner';
 presentationsFields().concat([presentationTestRequestField()]).forEach(field => { sectionOf[field.name] = 'presentations'; });
 nightFields().forEach(field => { sectionOf[field.name] = 'night'; });
 rebootFields().forEach(field => { sectionOf[field.name] = 'reboot'; });
+supervisorFields().forEach(field => { sectionOf[field.name] = 'supervisor'; });
 screenFitFields().forEach(field => { sectionOf[field.name] = 'screenFit'; });
 cleanupFields().forEach(field => { sectionOf[field.name] = 'cleanup'; });
 hiddenFields().forEach(field => { sectionOf[field.name] = 'hiddenTransitions'; });
@@ -474,6 +477,7 @@ export default defineType({
     presentationTestRequestField(),
     ...nightFields(),
     ...rebootFields(),
+    ...supervisorFields(),
     ...cleanupFields(),
     ...hiddenFields(),
     ...screenFitFields(),

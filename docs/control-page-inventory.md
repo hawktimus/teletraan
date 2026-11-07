@@ -125,6 +125,10 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | Uptime, connection, signal and address | Facts of the computer | `GET status`, `POST helper/network-info` | C M | Computer, Restart | [x] |
 | Restart the network, public name servers, the network's name servers | Network repairs card | `POST helper/restart-network` (asks first), `dns-public`, `dns-default` | C M | Computer, Wi-Fi | [x] |
 | Wi-Fi: look for networks, choose one, type the password, Connect | Switches the Wi-Fi of the computer, with a way back | `POST helper/wifi-scan`, `wifi-connect` (asks first), `wifi-status` | C M | Computer, Wi-Fi | [x] |
+| Fixing itself | What the computer found wrong with itself, what it is trying, and whether it is allowed to act at all | `GET overview` (`health.json` and `supervisor.json`, mounted read only in `computer/docker-compose.yml`) | C M | Now, Last actions | [x] |
+| Screen dot green only while the page is painting | A page whose timers run and whose painting has stopped looks healthy from everywhere else | `GET overview` (`health.json`, the frames check) | all | Now, the Screen dot | [x] |
+| Create a diagnostic report | One file with everything needed to work out why the screen is wrong, with no key in it | `POST helper/diag-create` | C M | Details, Debug | [x] |
+| The reports on the computer, read, copy, download | The last 20 written by hand and the last 20 the computer wrote before it restarted something | `POST helper/diag-list`, `diag-read` | C M | Details, Debug | [x] |
 
 ## Manual checks for accessibility
 

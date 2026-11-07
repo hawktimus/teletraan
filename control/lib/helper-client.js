@@ -5,14 +5,25 @@
 
 import net from 'node:net';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default', 'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen'];
+
+// An argument is lower case letters, digits and dashes, which covers every word above except one: the name of a
+// diagnostic report, which carries the time it was written (report-20261106T140701Z-restart-kiosk). The helper and
+// diag.sh check the name again at their end, and neither ever puts it in a shell command.
+const reportName = /^report-[0-9TZ-]{1,24}(-[a-z0-9-]{1,24})?(\.txt)?$/;
+
+export function argumentAllowed(word, arg) {
+  if (word === 'diag-read') return reportName.test(arg);
+  return /^[a-z0-9-]{1,20}$/.test(arg);
+}
 
 export function createHelper(socketPath, timeout = 30000, connect = net.createConnection) {
   return function helper(word, args = [], body = '') {
     return new Promise((resolve, reject) => {
-      // A clean up reads and deletes document by document, which takes longer than the other words
-      const wait = word.startsWith('cleanup-') ? Math.max(timeout, 180000) : timeout;
-      if (!words.includes(word) || !args.every(arg => /^[a-z0-9-]{1,20}$/.test(arg))) {
+      // A clean up reads and deletes document by document, and a diagnostic report gathers a lot of output: both take
+      // longer than the other words
+      const wait = word.startsWith('cleanup-') ? Math.max(timeout, 180000) : word === 'diag-create' ? Math.max(timeout, 120000) : timeout;
+      if (!words.includes(word) || !args.every(arg => argumentAllowed(word, arg))) {
         reject(new Error('That is not a word the helper knows.'));
         return;
       }

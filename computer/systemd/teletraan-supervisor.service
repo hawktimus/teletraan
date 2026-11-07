@@ -1,0 +1,17 @@
+[Unit]
+Description=Fix what the Teletraan I health checks say is wrong, without ever rebooting in a loop
+After=network.target teletraan-health.service
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-health.sh and install.sh with the account that owns the repository. This is the only
+# thing on the computer that escalates: it climbs the ladder in computer/scripts/supervisor-plan.mjs and every reboot,
+# wherever it is asked for, goes through the gate and the one ledger. Its repairs go through sudo, which
+# computer/sudoers/teletraan-control allows command by command, so do not add NoNewPrivileges here.
+#
+# It starts in watching mode and writes what it would have done. The Mode field on the Computer tab of Dashboard
+# Settings has to say Fix before it acts, and it watches for the first day after it is installed whatever that says.
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/supervisor.sh
+# A step waits to see whether it worked, and a kiosk restart waits for the display
+TimeoutStartSec=3min

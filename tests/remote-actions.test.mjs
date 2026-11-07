@@ -84,7 +84,7 @@ test('only one reboot in 10 minutes, and the limit does not touch the other acti
 });
 
 test('the only words that can be sent are the table, and they are all in the helper', () => {
-  assert.deepEqual([...new Set(Object.values(plan.wordOf))].sort(), ['reboot', 'restart-kiosk', 'restart-services', 'sync-now']);
+  assert.deepEqual([...new Set(Object.values(plan.wordOf))].sort(), ['clear-degraded', 'diag-create', 'reboot', 'refresh-screen', 'restart-kiosk', 'restart-services', 'sync-now']);
   const helper = fs.readFileSync(path.join(repo, 'computer/scripts/control-helper.sh'), 'utf8');
   Object.values(plan.wordOf).forEach(word => assert.ok(helper.includes(word), word));
   assert.ok(Object.isFrozen(plan.wordOf) && Object.isFrozen(plan.linesOf) && Object.isFrozen(plan.linesOf.sync_all));
@@ -545,7 +545,7 @@ test('the Studio has the page, the status page and one button for each action', 
     assert.ok(status.fields.some(field => field.name === 'network') && status.fields.some(field => field.name === 'checkedAt'));
 
     const tools = await studio.load('tools/remote-actions.js');
-    assert.deepEqual(tools.remoteActionButtons.map(button => button.action), ['restartDashboard', 'restartServices', 'rebootComputer', 'syncNow', 'showView', 'showTheme', 'pauseRotation', 'resumeRotation']);
+    assert.deepEqual(tools.remoteActionButtons.map(button => button.action), ['refreshScreen', 'restartDashboard', 'restartServices', 'rebootComputer', 'collectDiagnostics', 'clearDegraded', 'syncNow', 'showView', 'showTheme', 'pauseRotation', 'resumeRotation']);
     assert.deepEqual(tools.syncChoices.map(item => item.value), ['sync_all', 'sync_calendars', 'sync_monday', 'sync_competition', 'sync_news', 'sync_match13', 'sync_photos']);
     assert.deepEqual(tools.viewChoices.map(item => item.value), [...plan.viewValues]);
     assert.deepEqual(tools.themeChoices.map(item => item.value), [...plan.themeValues]);

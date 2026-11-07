@@ -33,6 +33,9 @@ export function readConfig(env = process.env) {
     envFile: env.CONTROL_ENV_FILE || path.join(root, 'local.env'),
     secretFile: env.CONTROL_SECRET_FILE || path.join(root, 'control-secret'),
     netwatchFile: env.CONTROL_NETWATCH || '/var/lib/teletraan/netwatch.json',
+    // The folder the health timer and the supervisor keep their files in. The container reads it only
+    // (computer/docker-compose.yml mounts it read only), so nothing here can change what the computer decided.
+    stateDir: env.CONTROL_STATE || path.dirname(env.CONTROL_NETWATCH || '/var/lib/teletraan/netwatch.json'),
     lockoutFile: env.CONTROL_LOCKOUT_FILE || path.join(root, 'control-lockout.json'),
     socket: env.CONTROL_SOCKET || '/run/teletraan/control.sock',
     logFile: env.CONTROL_LOG_FILE || path.join(root, 'logs', 'control.log'),
@@ -48,6 +51,15 @@ function readText(file) {
 }
 
 // The project, dataset and API version the dashboard reads, taken from its config file
+// The build version of the release this service runs from (the VERSION file). It is not the release number: that is a
+// counter the control page keeps, and two different builds can share one. The version is what docs, the changelog and a
+// diagnostic report all name, so the page shows it too.
+function readVersion(rootDir) {
+  const text = readText(path.join(releaseRoot(rootDir), 'VERSION'));
+  const found = /^([0-9]+\.[0-9]+\.[0-9]+)$/m.exec(String(text).trim());
+  return found ? found[1] : '';
+}
+
 function readProject(rootDir) {
   const text = readText(path.join(rootDir, 'current', 'dashboard', 'config.js'));
   const pick = name => (new RegExp(name + ":\\s*'([^']+)'").exec(text) || [])[1] || '';
@@ -78,10 +90,13 @@ export async function createService(config, overrides = {}) {
   const env = () => parseEnv(readText(config.envFile));
   const auth = createAuth({ getOverride: () => env().CONTROL_PIN, secretFile: config.secretFile, stateFile: config.lockoutFile });
   const project = readProject(config.rootDir);
+  const buildVersion = readVersion(config.rootDir);
 
   const ctx = {
     dataDir: config.dataDir,
     netwatchFile: config.netwatchFile,
+    stateDir: config.stateDir,
+    buildVersion: buildVersion,
     releasesDir: config.releasesDir,
     rootDir: config.rootDir,
     envFile: config.envFile,

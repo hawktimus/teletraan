@@ -4,12 +4,14 @@
 // (routes/env.js) may send it, with a merged file.
 
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
+import { argumentAllowed } from '../lib/helper-client.js';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default', 'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen'];
 const syncTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 
-// These stop or restart something people are watching, so the request must say it was confirmed
-const needsConfirm = ['restart-kiosk', 'restart-services', 'reboot', 'cleanup-delete', 'wifi-connect', 'restart-network'];
+// These stop or restart something people are watching, or turn the computer's automatic repairs back on, so the
+// request must say it was confirmed
+const needsConfirm = ['restart-kiosk', 'restart-services', 'reboot', 'cleanup-delete', 'wifi-connect', 'restart-network', 'clear-degraded'];
 
 function checkRequest(word, body) {
   if (!words.includes(word)) throw new Refusal(400, 'The Teletraan computer does not know that word.');
@@ -22,6 +24,12 @@ function checkRequest(word, body) {
   if (word === 'monday-debug') {
     if (typeof body.board !== 'string' || !/^[0-9]{1,20}$/.test(body.board)) throw new Refusal(400, 'Type the board number, digits only.');
     return [body.board];
+  }
+  if (word === 'diag-read') {
+    // The name comes from the list this page was given. It names a file on the computer, so its shape is checked here
+    // and again by the helper, and it never reaches a shell command.
+    if (typeof body.report !== 'string' || !argumentAllowed('diag-read', body.report)) throw new Refusal(400, 'Pick a report from the list.');
+    return [body.report];
   }
   return [];
 }
@@ -51,6 +59,9 @@ export function register(router, ctx) {
       if (typeof ctx.log === 'function') ctx.log('helper ' + word + ' failed' + (error && error.code ? ' (' + error.code + ')' : '') + ': ' + String(error && error.message).slice(0, 200));
       throw new Refusal(502, String((error && error.message) || 'The helper did not answer.'));
     }
-    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, word === 'monday-debug' ? 8000 : word === 'network-info' ? 6000 : word === 'wifi-scan' ? 4000 : word.startsWith('cleanup-') ? 20000 : 2000) });
+    // A diagnostic report is the whole point of being able to read one without ssh, so it is not cut to 2000
+    const limits = { 'monday-debug': 8000, 'network-info': 6000, 'wifi-scan': 4000, 'diag-read': 400000, 'diag-list': 8000, 'health-read': 20000, 'supervisor-read': 20000 };
+    const limit = limits[word] || (word.startsWith('cleanup-') ? 20000 : 2000);
+    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, limit) });
   });
 }

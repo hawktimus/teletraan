@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|sync|--print|restart N
+# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|sync|supervisor|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
 # calendar and slides services run it after each job, and kiosk.sh runs it when
@@ -14,6 +14,9 @@
 #                              from news/status.json, which news-sync.sh made in the data folder
 #   status-write.sh reboot     sends the next and the last scheduled reboot (nextRebootAt, nextRebootText, lastRebootAt,
 #                              lastRebootWhy), from reboot/status.json, which scheduled-reboot.sh made in the data folder
+#   status-write.sh supervisor  sends what the computer is fixing (supervisorWords, supervisorMode, supervisorAt,
+#                              supervisorFailing), from supervisor.json and health.json in /var/lib/teletraan. One
+#                              sentence, one word and a count: no detail of a check and nothing anyone typed.
 #   status-write.sh cleanup    sends when the clean up of expired items last ran, how many documents were on its list, how many it
 #                              deleted and why it stopped, if it did (lastCleanupAt, cleanupWouldDelete, cleanupDeleted,
 #                              cleanupError), from cleanup/status.json, which expired-cleanup.sh made in the data folder
@@ -87,6 +90,7 @@ case $1 in
   restart) field=lastKioskRestartAt ;;
   calendar-status) field=calendar-status ;;
   photos-drive) field=photosDriveAt ;;
+  supervisor) field=supervisorWords ;;
   match13) field=match13At ;;
   --print) field=print ;;
   *) usage ;;
@@ -348,6 +352,41 @@ elif [ "$field" = nextRebootAt ]; then
   done
   patch="\"id\":\"$document\""
   [ -z "$set_list" ] || patch="$patch,\"set\":{$set_list}"
+  [ -z "$unset_list" ] || patch="$patch,\"unset\":[$unset_list]"
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
+elif [ "$field" = supervisorWords ]; then
+  # What the supervisor is doing, for the read-only block in the Studio (studio/inputs/supervisor-status-input.js).
+  # Only the one sentence, whether it may act, and how many checks are failing: no detail of a check, no address and
+  # nothing a person typed, because this goes into the public dataset.
+  state_dir=${TELETRAAN_STATE_DIR:-/var/lib/teletraan}
+  [ -f "$state_dir/supervisor.json" ] || exit 0
+  text=$(head -c 1000 "$state_dir/supervisor.json")
+  words=$(printf '%s' "$text" | sed -n 's/.*"words":"\([^"]*\)".*/\1/p')
+  mode=$(printf '%s' "$text" | sed -n 's/.*"mode":"\([a-z]*\)".*/\1/p')
+  at=$(printf '%s' "$text" | sed -n 's/.*"generatedAt":"\([^"]*\)".*/\1/p')
+  failing=0
+  if [ -f "$state_dir/health.json" ]; then
+    failing=$(grep -o '"ok": *false' "$state_dir/health.json" 2> /dev/null | wc -l | tr -d ' ')
+  fi
+  case $failing in ''|*[!0-9]*) failing=0 ;; esac
+  if ! printf '%s\n' "$at" | grep -Eq '^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z)?$' ||
+    ! printf '%s\n' "$words" | grep -Eq "^[A-Za-z0-9 :,.()'-]{0,160}\$" ||
+    ! printf '%s\n' "$mode" | grep -Eq '^(watch|fix)?$'; then
+    echo "status: supervisor.json is not the line supervisor.sh writes, so nothing was written." >&2
+    exit 1
+  fi
+  set_list="\"supervisorFailing\":$failing"
+  unset_list=""
+  for pair in "supervisorWords:$words" "supervisorMode:$mode" "supervisorAt:$at"; do
+    name=${pair%%:*}
+    value=${pair#*:}
+    if [ -n "$value" ]; then
+      set_list="$set_list${set_list:+,}\"$name\":\"$value\""
+    else
+      unset_list="$unset_list${unset_list:+,}\"$name\""
+    fi
+  done
+  patch="\"id\":\"$document\",\"set\":{$set_list}"
   [ -z "$unset_list" ] || patch="$patch,\"unset\":[$unset_list]"
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{%s}}]}' "$document" "$patch")
 elif [ "$field" = lastCleanupAt ]; then

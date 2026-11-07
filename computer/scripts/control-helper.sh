@@ -61,8 +61,12 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|display-info|network-info|wifi-scan|wifi-status|restart-network|dns-public|dns-default|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle)
+  restart-kiosk|restart-services|reboot|status|display-info|network-info|wifi-scan|wifi-status|restart-network|dns-public|dns-default|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle|diag-create|diag-list|health-read|supervisor-read|clear-degraded|refresh-screen)
     [ -z "$argument" ] || refuse "$shown"
+    ;;
+  diag-read)
+    # The name of a report and nothing else. It names a file, so only the shape diag.sh writes is accepted.
+    printf '%s' "$argument" | grep -Eq '^report-[0-9TZ-]{1,24}(-[a-z0-9-]{1,24})?(\.txt)?$' || refuse "$shown"
     ;;
   cleanup-preview|cleanup-delete)
     [ -z "$argument" ] || refuse "$shown"
@@ -104,6 +108,24 @@ case $word in
     finish "$code"
     ;;
   reboot)
+    # A person asked for this one: the Reboot button on the control page, or the reboot action from the Studio, which
+    # the remote poller sends through this same word. It is outside the automatic budget for that reason, but the gate
+    # still refuses it inside ten minutes of another reboot, and while the computer is in a boot loop it is the only
+    # kind allowed (computer/scripts/gate.sh). A refusal is printed for the page to show and is not a failure.
+    gate_code=0
+    gate_why=$("$root/computer/scripts/gate.sh" allow control 2>&1) || gate_code=$?
+    if [ "$gate_code" -eq 3 ]; then
+      # The gate said no, and its reason is a plain sentence for the page
+      echo "The computer was not rebooted: $gate_why"
+      log "reboot refused by the gate"
+      finish 0
+    fi
+    if [ "$gate_code" -ne 0 ]; then
+      # The gate itself could not be asked. For a reboot the computer decides on its own that means do nothing, but a
+      # person is standing at this button: refusing them because node is missing would be the worse mistake, so the
+      # reboot goes ahead and the log says the limits were not checked.
+      log "reboot: the gate could not be asked (code $gate_code), going ahead because a person asked"
+    fi
     code=0
     as_root "$systemctl_bin" reboot || code=$?
     [ "$code" -ne 0 ] || echo "The Teletraan computer is rebooting."
@@ -188,6 +210,66 @@ case $word in
     code=0
     printf '%s\n%s\n%s\n' "$wifi_name" "$wifi_password" "$wifi_host" | as_root "$net_bin" switch || code=$?
     wifi_password=''
+    finish "$code"
+    ;;
+  refresh-screen)
+    # The page loads itself again over the browser's debugging port. Nothing restarts and the screen never goes black,
+    # which is why this is the first repair to try (computer/scripts/page-command.py).
+    if ! command -v python3 > /dev/null 2>&1; then
+      echo "python3 is not installed, so the page cannot be loaded again."
+      finish 1
+    fi
+    code=0
+    python3 "$root/computer/scripts/page-command.py" reload || code=$?
+    [ "$code" -ne 0 ] || echo "The page is loading again."
+    finish "$code"
+    ;;
+  diag-create)
+    # Writes a report and prints where it went. diag.sh cleans every line of keys before it writes anything.
+    code=0
+    "$root/computer/scripts/diag.sh" || code=$?
+    finish "$code"
+    ;;
+  diag-list)
+    code=0
+    "$root/computer/scripts/diag.sh" --list || code=$?
+    finish "$code"
+    ;;
+  diag-read)
+    # One report, by the name diag-list gave. Only the two folders reports go in are looked in, and the name was
+    # checked above, so nothing here can reach another file.
+    state_dir=${TELETRAAN_STATE_DIR:-/var/lib/teletraan}
+    wanted=${argument%.txt}.txt
+    found=''
+    for place in "$state_dir/reports" "$state_dir/incidents"; do
+      [ -f "$place/$wanted" ] && found="$place/$wanted" && break
+    done
+    if [ -z "$found" ]; then
+      echo "There is no report called $wanted."
+      finish 1
+    fi
+    head -c 400000 "$found"
+    finish 0
+    ;;
+  health-read)
+    show=${TELETRAAN_STATE_DIR:-/var/lib/teletraan}/health.json
+    if [ -s "$show" ]; then
+      head -c 20000 "$show"
+    else
+      echo '{"checks":{}}'
+    fi
+    finish 0
+    ;;
+  supervisor-read)
+    # What the supervisor is doing, what it has tried and what it has stopped trying, in plain lines
+    code=0
+    "$root/computer/scripts/supervisor-status.sh" || code=$?
+    finish "$code"
+    ;;
+  clear-degraded)
+    # Turns the automatic fixes back on after the computer stopped trying (docs/OPERATIONS.md, "When it stops trying")
+    code=0
+    "${TELETRAAN_NODE:-node}" "$root/computer/scripts/ledger.mjs" clear || code=$?
     finish "$code"
     ;;
   log-bundle)
