@@ -53,8 +53,11 @@ function run(when, booked) {
   fs.mkdirSync(stub);
   fs.copyFileSync(path.join(repo, 'computer/scripts/nightly.sh'), path.join(root, 'computer/scripts/nightly.sh'));
   fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
+  // The reboot asks the gate first (computer/scripts/gate.sh), which needs these three and node
+  ['gate.sh', 'ledger.mjs', 'supervisor-plan.mjs'].forEach(name => fs.copyFileSync(path.join(repo, 'computer/scripts', name), path.join(root, 'computer/scripts', name)));
+  fs.chmodSync(path.join(root, 'computer/scripts/gate.sh'), 0o755);
   fs.writeFileSync(path.join(root, 'dashboard/config.js'), "export const sanity = {\n  projectId: 'abc123',\n  dataset: 'production',\n  apiVersion: '2024-01-01',\n};\n");
-  ['sed', 'head', 'grep', 'date', 'dirname', 'cat'].forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
+  ['sed', 'head', 'grep', 'date', 'dirname', 'cat', 'node'].forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   writeTool(bin, 'curl', fakeCurl);
   writeTool(bin, 'systemctl', fakeSystemctl);
   writeTool(bin, 'sudo', fakeSudo);
@@ -64,7 +67,7 @@ function run(when, booked) {
   else fs.writeFileSync(path.join(stub, 'answer.txt'), '{"ms":3,"query":"x","result":' + booked + '}');
 
   const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/nightly.sh')], {
-    env: { PATH: bin, TZ: 'UTC', NIGHTLY_NOW: when, STUB_LOG: log, STUB_DIR: stub, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl') },
+    env: { PATH: bin, TZ: 'UTC', NIGHTLY_NOW: when, STUB_LOG: log, STUB_DIR: stub, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_LEDGER: path.join(root, 'reboot-ledger.json'), TELETRAAN_UPTIME_SECONDS: String(40 * 3600), NETWATCH_STATE: path.join(root, 'no-netwatch.json') },
     encoding: 'utf8',
   });
   const calls = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);

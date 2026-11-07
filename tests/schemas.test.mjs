@@ -393,6 +393,8 @@ const studioOnlyFields = {
   'view.rotationNote': 'the note on the Main panel tab of a view, which points to the Rotation list. It stores nothing',
   'dashboardSettings.cycleNote': 'the second note on the Look tab, which says what a cycle is. It stores nothing',
   'dashboardSettings.rebootStatus': 'the next and last reboot line at the top of the Scheduled reboot section. It stores nothing',
+  'dashboardSettings.supervisorStatus': 'the line at the top of the Fixing itself section. It stores nothing',
+  'dashboardSettings.supervisorMode': 'the Teletraan computer reads it (computer/scripts/supervisor.sh), and the dashboard never does',
   'dashboardSettings.rebootEnabled': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.rebootTime': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.rebootDays': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
@@ -1232,6 +1234,7 @@ function checkLogoTab(problems) {
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
 const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 const rebootNames = ['rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes'];
+const supervisorNames = ['supervisorStatus', 'supervisorMode'];
 const screenFitNames = ['screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY'];
 const cleanupNames = ['cleanupEnabled', 'cleanupDeleteAfterDays', 'cleanupMode'];
 const nightNames = ['nightEnabled', 'nightStyle', 'nightStart', 'nightEnd', 'nightLogoWidth', 'nightSpeed', 'nightPreview'];
@@ -4375,7 +4378,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, supervisorNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {

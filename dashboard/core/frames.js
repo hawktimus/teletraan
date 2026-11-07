@@ -36,6 +36,7 @@ let lastFrameAt = 0;
 let waiting = false;
 let waitingSince = 0;
 let started = false;
+let timerId = 0;
 const samples = [];
 const stallListeners = [];
 
@@ -119,11 +120,11 @@ export function startFrames() {
   started = true;
   lastFrameAt = now();
   const again = () => {
-    setTimeout(again, probeEveryMs);
+    timerId = setTimeout(again, probeEveryMs);
     probe();
   };
   probe();
-  setTimeout(again, probeEveryMs);
+  timerId = setTimeout(again, probeEveryMs);
 
   // The computer reads this over the debugging port (computer/scripts/page-command.py frames), which is how the health
   // timer there can tell a page that is painting from one that only looks alive.
@@ -134,8 +135,16 @@ export function startFrames() {
   }
 }
 
+// Ends the probe. The page never calls this; a test does, so that its process can end.
+export function stopFrames() {
+  clearTimeout(timerId);
+  timerId = 0;
+  started = false;
+}
+
 // For the tests
 export function forgetFrames() {
+  stopFrames();
   lastFrameAt = 0;
   waiting = false;
   waitingSince = 0;

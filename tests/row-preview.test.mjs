@@ -141,7 +141,7 @@ await check('shell.js installs the guard first and leaves the rotation, the take
   assert.ok(shell.includes("if (params.has('night') || (!params.get('show') && !stress))"), 'the night screen is left out of a held page');
 
   const extras = source('shell-extras.js');
-  assert.ok(extras.includes('if (!rowPreview) startHeartbeat();'), 'the watchdog heartbeat is the wall page only');
+  assert.ok(/if \(!rowPreview\) \{[\s\S]*?startHeartbeat\(\);/.test(extras), 'the watchdog heartbeat is the wall page only');
   const state = source('shell-state.js');
   assert.ok(state.indexOf('useRowPreview(params, rowPreview)') < state.indexOf('readStill(params)'), 'the row is turned into the still address before it is read');
 });

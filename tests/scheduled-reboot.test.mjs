@@ -59,7 +59,7 @@ function makePlace() {
   fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'dashboard/core'), { recursive: true });
   [bin, stub, data].forEach(folder => fs.mkdirSync(folder));
-  ['scheduled-reboot.sh', 'lib.sh', 'reboot-plan.mjs'].forEach(name => fs.copyFileSync(path.join(repo, 'computer/scripts', name), path.join(root, 'computer/scripts', name)));
+  ['scheduled-reboot.sh', 'lib.sh', 'reboot-plan.mjs', 'gate.sh', 'ledger.mjs', 'supervisor-plan.mjs'].forEach(name => fs.copyFileSync(path.join(repo, 'computer/scripts', name), path.join(root, 'computer/scripts', name)));
   fs.chmodSync(path.join(root, 'computer/scripts/scheduled-reboot.sh'), 0o755);
   fs.copyFileSync(path.join(repo, 'dashboard/core/constants.js'), path.join(root, 'dashboard/core/constants.js'));
   fs.writeFileSync(path.join(root, 'package.json'), '{ "type": "module" }\n');
@@ -95,7 +95,10 @@ function offline(place) {
 
 function run(place, when, uptime) {
   const result = spawnSync('/bin/bash', [path.join(place.root, 'computer/scripts/scheduled-reboot.sh')], {
-    env: { PATH: place.bin, TZ: 'UTC', REBOOT_NOW: String(when), REBOOT_UPTIME: String(uptime === undefined ? 40 * 3600 : uptime), STUB_LOG: place.log, STUB_DIR: place.stub, TELETRAAN_SYSTEMCTL: '/usr/bin/systemctl' },
+    env: { PATH: place.bin, TZ: 'UTC', REBOOT_NOW: String(when), REBOOT_UPTIME: String(uptime === undefined ? 40 * 3600 : uptime), STUB_LOG: place.log, STUB_DIR: place.stub, TELETRAAN_SYSTEMCTL: '/usr/bin/systemctl',
+      // The gate every reboot asks (computer/scripts/gate.sh) keeps its record in a file of its own, and is told what the
+      // uptime and the clock are, so these runs do not touch the real one
+      TELETRAAN_LEDGER: path.join(place.data, 'reboot-ledger.json'), TELETRAAN_NOW_MS: String(when * 1000), TELETRAAN_UPTIME_SECONDS: String(uptime === undefined ? 40 * 3600 : uptime), NETWATCH_STATE: path.join(place.data, 'no-netwatch.json') },
     encoding: 'utf8',
     timeout: 30000,
     input: '',

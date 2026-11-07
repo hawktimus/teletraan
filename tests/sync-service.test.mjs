@@ -253,12 +253,12 @@ await check('netwatch.json with 3 failures makes the network not ok, whatever th
   assert.equal(sync.writeStatus().network.ok, true, 'a bad file is ignored');
 });
 
-await check('a restart keeps the times of the last good reads, so the pill does not start from nothing', async () => {
+await check('a restart keeps the last failures but not the last good reads, so a stamp from before the restart is never shown as a read that has not happened', async () => {
   const w = world();
   await w.sync.checkSanity();
   w.sync.writeStatus();
   const again = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/forecast', now: () => w.time, fetch: w.fetch, noProbe: true });
-  assert.equal(again.state.sanity.lastSuccessAt, '2026-10-30T15:00:00.000Z');
+  assert.equal(again.state.sanity.lastSuccessAt, null);
 });
 
 await check('a file is written by way of a temporary name, so no half file is ever read', async () => {

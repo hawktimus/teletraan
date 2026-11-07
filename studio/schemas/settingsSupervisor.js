@@ -35,7 +35,7 @@ export function supervisorFields() {
       type: 'string',
       group: 'advanced',
       initialValue: 'watch',
-      description: 'Watch: it checks itself every minute and writes down what it would do, and does nothing. Fix: it may load the page again, restart a service or the screen, repair the network, and reboot as a last resort. It always watches only for its first day.',
+      description: 'Watch only writes down what it would do. Fix lets it repair itself, rebooting last. It always watches only for its first day.',
       options: {
         list: [
           { title: 'Watch only (write down what it would do)', value: 'watch' },

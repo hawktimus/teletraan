@@ -57,7 +57,9 @@ function test(name, run) {
 
 const now = new Date('2026-10-09T12:00:00Z');
 const past = '2026-10-01T12:00:00.000Z';
-const future = '2026-11-01T12:00:00.000Z';
+// Far ahead on purpose: the Tasks panel counts against the real clock, so a date a few weeks after the fixed `now` above
+// stopped being in the future the day it passed
+const future = '2046-11-01T12:00:00.000Z';
 
 // A task the way the query sends it: with the names Sanity keeps to itself
 function document(id, fields) {

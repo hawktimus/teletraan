@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-network-'));
 const scriptFile = path.join(repo, 'computer/scripts/netwatch.sh');
-const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'awk', 'tr', 'mv', 'rm', 'cut', 'wc', 'mkdir', 'chmod', 'ls', 'sleep', 'jq', 'printf', 'cp', 'readlink', 'basename', 'sort'];
+const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'awk', 'tr', 'mv', 'rm', 'cut', 'wc', 'mkdir', 'chmod', 'ls', 'sleep', 'jq', 'printf', 'cp', 'readlink', 'basename', 'sort', 'node'];
 
 function findTool(name) {
   const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
@@ -91,6 +91,9 @@ function setup(options = {}) {
   fs.symlinkSync(path.join(root, 'modules/iwlwifi'), path.join(sys, 'wlp2s0/device/driver/module'));
   fs.copyFileSync(scriptFile, path.join(root, 'computer/scripts/netwatch.sh'));
   fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
+  // Every reboot asks the gate first (computer/scripts/gate.sh), which needs these three and node
+  ['gate.sh', 'ledger.mjs', 'supervisor-plan.mjs'].forEach(name => fs.copyFileSync(path.join(repo, 'computer/scripts', name), path.join(root, 'computer/scripts', name)));
+  fs.chmodSync(path.join(root, 'computer/scripts/gate.sh'), 0o755);
   writeTool(path.join(root, 'computer/scripts'), 'status-write.sh', `#!/bin/sh\necho "status-write $*" >> "$STUB_LOG"\n[ -f "$STUB_DIR/fail-status" ] && exit 1\nexit 0\n`);
   writeTool(path.join(root, 'computer/scripts'), 'notify.sh', `#!/bin/sh\necho "notify $*" >> "$STUB_LOG"\nexit 0\n`);
   fs.writeFileSync(path.join(root, 'dashboard/config.js'), "export const sanity = {\n  projectId: 'abc123',\n  dataset: 'production',\n  apiVersion: '2025-02-19',\n};\n");
@@ -144,6 +147,7 @@ function setup(options = {}) {
         NETWORK_SYS: sys, NETWORK_INTERFACES_FILE: path.join(root, 'interfaces'), NETWATCH_STATE: publicFile, TELETRAAN_LOG_DIR: logs,
         TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_NMCLI: path.join(bin, 'nmcli'), TELETRAAN_NETWORKCTL: path.join(bin, 'networkctl'),
         TELETRAAN_IFUP: path.join(bin, 'ifup'), TELETRAAN_IFDOWN: path.join(bin, 'ifdown'), TELETRAAN_MODPROBE: path.join(bin, 'modprobe'),
+        TELETRAAN_LEDGER: path.join(root, 'reboot-ledger.json'), TELETRAAN_NOW_MS: String((base + at) * 1000), TELETRAAN_UPTIME_SECONDS: String(place.uptime + at),
       }, extra);
       const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/netwatch.sh')], { env, encoding: 'utf8', input: '' });
       const calls = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean).slice(before);
@@ -193,7 +197,7 @@ test('netwatch.json has exactly the fields the status poller reads, and the time
   const place = setup();
   place.run(0);
   const good = place.netwatch();
-  assert.deepEqual(Object.keys(good), ['failures', 'lastCheckAt', 'lastOkAt', 'lastAction', 'lastActionAt', 'lastRebootAt']);
+  assert.deepEqual(Object.keys(good), ['failures', 'lastCheckAt', 'lastOkAt', 'lastAction', 'lastActionAt', 'lastRebootAt', 'probes']);
   assert.equal(good.failures, 0);
   assert.equal(good.lastCheckAt, new Date((base) * 1000).toISOString().replace('.000', ''));
   assert.equal(good.lastOkAt, good.lastCheckAt);
@@ -292,8 +296,9 @@ test('a long outage never loops: each action once per boot, and the reboot at mo
   const later = every(place, rebootAt + 4 * minute, rebootAt + 4 * hour, 4 * minute);
   const reboots = later.filter(item => item.call === 'systemctl reboot').map(item => item.at);
   assert.ok(later.some(item => item.call === 'systemctl restart NetworkManager.service'), 'the new boot climbs the ladder again');
-  assert.equal(reboots.length >= 1 && reboots.length <= 2, true, 'reboots: ' + reboots.length);
-  assert.ok(reboots[0] - rebootAt >= 2 * hour, 'not before 2 hours after the last reboot');
+  // netwatch alone would allow a second reboot after 2 hours. Every reboot now asks the gate (computer/scripts/gate.sh),
+  // which counts all five repair paths together and allows one automatic reboot in 6 hours, so in these 4 hours there is none
+  assert.equal(reboots.length, 0, 'no second automatic reboot inside 6 hours of the first: ' + reboots.length);
 });
 
 test('no reboot within 10 minutes of boot, or within 2 hours of a reboot the scheduled job made', () => {

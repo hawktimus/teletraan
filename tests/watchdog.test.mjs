@@ -366,6 +366,10 @@ test('the heartbeat puts Teletraan I, a middle dot and HH:MM in the title, and k
   globalThis.document = { title: '' };
   globalThis.window = { localStorage: { setItem: (key, value) => { stored[key] = value; } } };
   const heartbeat = await import(pathToFileURL(path.join(repo, 'dashboard/core/heartbeat.js')).href);
+  const frames = await import(pathToFileURL(path.join(repo, 'dashboard/core/frames.js')).href);
+  // The clock is written only while frames are being painted (core/frames.js), so the page here paints at once
+  globalThis.requestAnimationFrame = callback => { callback(performance.now()); return 1; };
+  frames.startFrames();
 
   assert.equal(heartbeat.heartbeatSeconds, 30);
   assert.equal(heartbeat.heartbeatTitle(new Date(2026, 9, 15, 7, 5)), 'Teletraan I · 07:05');
@@ -380,6 +384,13 @@ test('the heartbeat puts Teletraan I, a middle dot and HH:MM in the title, and k
   delete globalThis.window;
   heartbeat.beat(new Date(2026, 9, 15, 14, 9));
   assert.equal(document.title, 'Teletraan I · 14:09');
+
+  // And when nothing is being painted the title says so instead of carrying a clock, which is what the watchdog reads
+  frames.forgetFrames();
+  globalThis.requestAnimationFrame = () => 0;
+  heartbeat.beat(new Date(2026, 9, 15, 14, 10));
+  assert.equal(document.title, heartbeat.frozenTitle);
+  delete globalThis.requestAnimationFrame;
 
   const shell = readModule(path.join(repo, 'dashboard/shell.js'), 'utf8');
   assert.ok(shell.includes("from './core/heartbeat.js'") && shell.includes('startHeartbeat();'), 'shell.js starts the heartbeat');
