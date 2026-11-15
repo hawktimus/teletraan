@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="monday.css?v=0">
   <link rel="stylesheet" href="family-line.css?v=0">
   <link rel="stylesheet" href="notice.css?v=0">
+  <link rel="stylesheet" href="decks.css?v=0">
   <link rel="stylesheet" href="layouts/sidebar.css?v=0">
   <link rel="stylesheet" href="layouts/bar.css?v=0">
   <link rel="stylesheet" href="styles/original/tokens.css?v=0">
@@ -554,6 +555,9 @@
            an announcement still shows over it. It is empty and hidden until a talk starts.
            tabindex lets it hold focus, which the keys of the clicker need. -->
       <div id="talk" tabindex="-1" hidden></div>
+      <!-- The list of presentations from the Google Drive folder (core/decks-run.js,
+           docs/presentations-drive.md). It is empty and hidden until a key opens it. -->
+      <div id="decks" hidden></div>
       <div id="overlay"></div>
     </div>
     <div id="crt">

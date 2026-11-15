@@ -6,6 +6,10 @@ its time the TV shows the student's slides. The script lives in the team's Googl
 Apps Script project and is not in this repository. The talks of the day also
 show in the Daily Agenda panel (docs/up-next.md).
 
+A deck can also be played with no booking at all: put it in the Google Drive
+folder of presentations and pick it on the TV or on the control page
+(docs/presentations-drive.md).
+
 Talk titles and first names are public. The Sanity dataset can be read by anyone
 (docs/laptop-setup.md), so anything a student types as a title or a name can be read
 by anyone. Tell students to use a first name only and a title they are happy for

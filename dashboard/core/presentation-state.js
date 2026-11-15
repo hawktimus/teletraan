@@ -45,14 +45,24 @@ export function slidePages(manifest) {
 
 // The address of the folder that holds a talk's manifest.json and its pictures
 // (computer/scripts/slides-sync.sh), with the slash at the end. The sample content has
-// its own folder, like its calendars.
+// its own folder, like its calendars. A deck picked from the Google Drive folder (deckTalk in
+// decks.js) names its own folder, which decks-sync.sh made, and that is never a sample.
 export function slidesFolder(sample, talk) {
+  if (typeof talk.deck === 'string' && talk.deck !== '') return liveFolder + 'decks/' + encodeURIComponent(talk.deck) + '/';
   return (sample ? sampleFolder : liveFolder) + 'slides/' + encodeURIComponent(talk.id) + '/';
 }
 
-// The address of one picture of the manifest, so a file name can never leave the folder
-export function slideAddress(folder, page) {
-  return folder + encodeURIComponent(page);
+// The address of one picture of the manifest, so a file name can never leave the folder. The web
+// server lets the browser keep a picture for a week, and a deck that is made again keeps its file
+// names, so the time the pictures were made (slidesVersion) goes on the end: new pictures have a
+// new address, and old ones are never shown in their place.
+export function slideAddress(folder, page, version = '') {
+  return folder + encodeURIComponent(page) + (version === '' ? '' : '?v=' + encodeURIComponent(version));
+}
+
+// When the pictures of a manifest were made, as the text the manifest holds, or '' when it does not say
+export function slidesVersion(manifest) {
+  return isRecord(manifest) && typeof manifest.fetchedAt === 'string' ? manifest.fetchedAt : '';
 }
 
 export function idleState() {
@@ -86,6 +96,7 @@ function copyOfTalk(talk) {
   const copy = { id: talk.id, name: talk.name, topic: talk.topic, start: new Date(asDate(talk.start).getTime()), minutes: talk.minutes };
   if (talk.subteam) copy.subteam = talk.subteam;
   if (talk.deckLink) copy.deckLink = talk.deckLink;
+  if (talk.deck) copy.deck = talk.deck;
   return copy;
 }
 

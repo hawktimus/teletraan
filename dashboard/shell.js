@@ -174,6 +174,9 @@ async function run() {
       // that comes due on the same second plays first, and the title card waits for it
       startOptional('./core/presentation-run.js', module => module.startPresentations(getContent));
 
+      // The list of presentations from the Google Drive folder. After the talk screen, which plays the deck that is picked
+      startOptional('./core/decks-run.js', module => module.startDecks(getContent));
+
       // The Run presentation test button in the Studio. After the talk screen, which it starts the sample talk on
       startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent));
 

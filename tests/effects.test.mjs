@@ -5177,6 +5177,10 @@ function manifestOf(pages) {
   return { ok: true, pages: pages, fetchedAt: '2026-10-08T18:00:00Z', refreshed: false };
 }
 
+// The end of the address of a picture of that manifest: the time it was made, so a deck that is made again is
+// never read from the browser's cache (slideAddress in core/presentation-state.js)
+const madeAt = '?v=2026-10-08T18%3A00%3A00Z';
+
 // options: manifest (what the server sends: an object, null for a 404, 'down' for no network or 'hangs'
 // for no answer), talks, start (the time of the talk in ms, so that two pages can have the same one),
 // settings, status and store (an object that stands for localStorage, or 'off' when asking for it
@@ -5307,7 +5311,7 @@ test('a talk puts up its title card at its start, holds the screen, and reads th
 
     await world.settleAll();
     assert.equal(world.page.dataset.talk, 'on', 'the dashboard is not drawn under the card once it has come in');
-    assert.deepEqual(world.images.map(image => image.src), [talkAddress + '001.jpg', talkAddress + '002.jpg', talkAddress + '003.jpg'], 'the first slides are decoded while the title is up');
+    assert.deepEqual(world.images.map(image => image.src), [talkAddress + '001.jpg' + madeAt, talkAddress + '002.jpg' + madeAt, talkAddress + '003.jpg' + madeAt], 'the first slides are decoded while the title is up');
     assert.deepEqual(world.images.map(image => image.decoded), [1, 1, 1]);
   });
 });
@@ -5333,7 +5337,7 @@ test('the sample talk of Run presentation test starts at once, reads the sample 
 
     await world.settleAll();
     world.press(' ');
-    assert.deepEqual(world.slideAddressNow(), [sampleAddress + '001.svg']);
+    assert.deepEqual(world.slideAddressNow(), [sampleAddress + '001.svg' + madeAt]);
     world.press(' ');
     world.press(' ');
     assert.equal(world.cards('thanks'), 1, 'after the last slide');
@@ -5395,7 +5399,7 @@ test('a forward key starts the talk: the first slide shows at once, the title ca
     const view = world.view();
     assert.equal(world.layer.children[0], view, 'the slides are under the title card');
     assert.equal(world.layer.dataset.ground, 'black');
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg' + madeAt]);
     assert.equal(view.named['progress-line'].style.transform, 'scaleX(' + 1 / 3 + ')');
     assert.equal(view.named['chip-count'].textContent, '1 / 3');
     assert.equal(view.named.chip.dataset.shown, 'on');
@@ -5414,10 +5418,10 @@ test('the keys move through the slides at once, black comes and goes, home and e
     const view = world.view();
 
     world.press('ArrowRight');
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg'], 'one slide in the view at a time');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg' + madeAt], 'one slide in the view at a time');
     assert.equal(view.named['chip-count'].textContent, '2 / 3');
     world.press('p');
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg' + madeAt]);
     world.press('ArrowLeft');
     assert.equal(view.named['chip-count'].textContent, '1 / 3', 'not before the first');
 
@@ -5435,7 +5439,7 @@ test('the keys move through the slides at once, black comes and goes, home and e
     assert.equal(view.named['progress-line'].style.transform, 'scaleX(1)');
     world.press('Home');
     assert.equal(view.named['chip-count'].textContent, '1 / 3');
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg' + madeAt]);
   });
 });
 
@@ -5701,17 +5705,17 @@ test('a left click starts the talk and moves on, a right click goes back, the mi
     assert.equal(world.mouse(0, 1000).defaultPrevented, true);
     const view = world.view();
     assert.equal(world.layer.children[0], view, 'the slides are under the title card');
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg' + madeAt]);
     assert.equal(view.named['chip-count'].textContent, '1 / 3');
     assert.equal(view.named.chip.dataset.shown, 'on', 'a click shows the chip, as a key does');
     assert.equal(world.log.includes('exit title'), true);
 
     world.mouse(0, 5000);
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg' + madeAt]);
     world.mouse(1, 8000);
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg'], 'the middle button changes nothing');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg' + madeAt], 'the middle button changes nothing');
     world.mouse(2, 10000);
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg' + madeAt]);
     world.mouse(2, 12000);
     assert.equal(view.named['chip-count'].textContent, '1 / 3', 'not before the first');
 
@@ -5732,13 +5736,13 @@ test('a double click moves one slide and not two, and starts the talk without sk
 
     world.mouse(0, 1000);
     world.mouse(0, 1200);
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg'], 'the second click of the double click is left out');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '001.jpg' + madeAt], 'the second click of the double click is left out');
 
     world.mouse(0, 5000);
     world.mouse(0, 5300);
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg']);
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '002.jpg' + madeAt]);
     world.mouse(0, 6000);
-    assert.deepEqual(world.slideAddressNow(), [talkAddress + '003.jpg'], 'a second later is a new click');
+    assert.deepEqual(world.slideAddressNow(), [talkAddress + '003.jpg' + madeAt], 'a second later is a new click');
   });
 });
 

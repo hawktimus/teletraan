@@ -5,12 +5,16 @@
 // The POST comes through nginx from the Teletraan computer itself and carries no PIN. nginx sets X-Real-IP, and
 // this route accepts only 127.0.0.1 and ::1 in it (nginx must also refuse every other address for
 // this one path). The report is checked and cut to size before it is kept.
+//
+// The answer to a report is { ok: true }, with deck: { id, requestedAt } for a minute after a presentation was
+// picked in the Show area (routes/decks.js). The screen plays a pick once (dashboard/core/decks-run.js).
 
 import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
 import { rowsFor } from '../support/now-rows.js';
 import { cleanReport } from '../../dashboard/core/now-report-parts.js';
 import { namesFor } from '../support/names.js';
+import { pickFor } from '../support/decks.js';
 
 export const quietSeconds = 40;
 const localAddresses = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
@@ -43,7 +47,9 @@ export function register(router, ctx) {
     received = new Date();
     // The overview route (routes/overview.js) reads this to say whether the screen is reporting
     if (ctx.state) ctx.state.wallSeen = { report: report, received: received };
-    send(res, 200, { ok: true });
+    // A presentation picked on the control page rides back on the answer (support/decks.js)
+    const pick = pickFor(ctx, received);
+    send(res, 200, pick ? { ok: true, deck: pick } : { ok: true });
   }, { open: true });
 
   mount(router, ctx, 'GET', '/now', async (req, res) => {

@@ -38,7 +38,7 @@ export {
   doubleClickMs, mouseButton, clickAction, talkEnd, skipKey,
 } from './presentation-input.js';
 export {
-  canRun, dueTalk, slidePages, slidesFolder, slideAddress, idleState, holdsScreen, pictureOf, cardLines, nextState,
+  canRun, dueTalk, slidePages, slidesFolder, slideAddress, slidesVersion, idleState, holdsScreen, pictureOf, cardLines, nextState,
   escapeTwice, pressKey, secondOfDoubleClick, pressMouse, restartsRotation, blocksContextMenu, chipShown,
   slideNumberText, progressOf, preloadIndexes, skippedStorageKey, readSkipped, rememberEnded,
 } from './presentation-state.js';

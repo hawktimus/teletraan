@@ -342,6 +342,7 @@ dashboardSettings.portraitShape
 dashboardSettings.portraitShape = circle
 dashboardSettings.portraitShape = rounded
 dashboardSettings.portraitShape = square
+dashboardSettings.presentationDriveFolder
 dashboardSettings.presentationTestRequest
 dashboardSettings.presentationTestRequest.requestedAt
 dashboardSettings.presentationsEnabled
