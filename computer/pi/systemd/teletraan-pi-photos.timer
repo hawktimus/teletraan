@@ -1,0 +1,7 @@
+[Unit]
+Description=Copy the Google Drive photo folder for Teletraan I on the Raspberry Pi, every 15min
+PartOf=teletraan-pi.target
+
+[Timer]
+OnActiveSec=20s
+OnUnitActiveSec=15min

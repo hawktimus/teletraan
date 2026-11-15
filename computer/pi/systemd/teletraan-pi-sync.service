@@ -1,0 +1,15 @@
+# computer/systemd/teletraan-sync.service for the Raspberry Pi: the same service, with its log in memory.
+[Unit]
+Description=Read the content and the weather for Teletraan I on the Raspberry Pi
+After=network.target
+PartOf=teletraan-pi.target
+
+[Service]
+User=ACCOUNT
+Environment=TELETRAAN_DATA=/var/lib/teletraan/data
+Environment=TELETRAAN_LOG_DIR=/run/teletraan-logs
+UMask=0022
+NoNewPrivileges=yes
+ExecStart=/usr/bin/env node /opt/teletraan/computer/scripts/sync-service.mjs
+Restart=always
+RestartSec=5
