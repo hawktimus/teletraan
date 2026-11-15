@@ -25,6 +25,7 @@ EmulationStation comes back as it was.
 | `teletraan-pi-calendars` | Downloads the team calendars, every 15 minutes | the calendar addresses |
 | `teletraan-pi-photos` | Copies the Drive photo folder, every 15 minutes | `GOOGLE_API_KEY` |
 | `teletraan-pi-slides` | Downloads the slides of the next talks, every 2 minutes | no |
+| `teletraan-pi-decks` | Watches the Google Drive folder of presentations, every 20 seconds (docs/presentations-drive.md) | `GOOGLE_API_KEY` |
 
 Monday cards and the competition data are written into Sanity by the Teletraan computer at school, and the Pi reads them
 from there like any other content. The Pi does not run the Monday sync, the competition sync, the news, the status
@@ -36,7 +37,7 @@ writer, the cleanup or the backup. Two computers writing the same documents woul
 While the Pi is the home copy it needs only these:
 
 - the `CALENDAR_..._URL` lines, for the calendar events
-- `GOOGLE_API_KEY`, for the Drive photo folder
+- `GOOGLE_API_KEY`, for the Drive photo folder and the folder of presentations
 
 Leave `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY` out. They are for the computer that writes.
 
@@ -45,7 +46,10 @@ Leave `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY` out. They are 
     nano /opt/teletraan/local.env
 
 Without the file the dashboard still runs: content, weather, Monday cards and competition data show, and the calendar
-events and Drive photos do not.
+events, the Drive photos and the list of presentations do not.
+
+The list of presentations opens with F5 or P on a keyboard, or the play button of a clicker. The control page is not
+part of the Pi copy, so a deck is picked on the TV.
 
 ## Where things are
 

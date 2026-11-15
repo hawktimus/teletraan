@@ -1,0 +1,16 @@
+# Only reads. It looks at the Google Drive folder of presentations every 20 seconds while the dashboard is on the
+# TV and makes the pictures of each deck (docs/presentations-drive.md).
+[Unit]
+Description=Watch the Google Drive folder of presentations for Teletraan I on the Raspberry Pi
+After=network-online.target
+Wants=network-online.target
+PartOf=teletraan-pi.target
+
+[Service]
+Type=simple
+User=ACCOUNT
+Environment=TELETRAAN_LOG_DIR=/run/teletraan-logs
+NoNewPrivileges=yes
+ExecStart=/opt/teletraan/computer/scripts/decks-sync.sh --watch
+Restart=always
+RestartSec=30
