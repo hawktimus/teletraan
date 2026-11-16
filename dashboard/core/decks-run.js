@@ -10,7 +10,6 @@
 import * as frame from '../frame.js';
 import { liveFolder } from '../config.js';
 import { readHandled, rememberHandled } from './demo.js';
-import { leaveAddress, meetingOn } from './console-keys.js';
 import { answerEvent } from './now-report.js';
 import { startDeckTalk, talkOnScreen } from './presentation-run.js';
 import { takeoverRunning } from './takeover.js';
@@ -31,11 +30,6 @@ let list = tidyDeckList(null);
 let readAt = 0; // when the list was last asked for, in milliseconds
 let reads = 0; // how many times the list was asked for, so an answer that arrives late is dropped
 let drawn = ''; // what is on the screen, so the list is drawn again only when it changes
-// The Meeting system of the Pi (core/console-keys.js): the list is the page. It opens by itself, stays open, opens again
-// after a talk or an alert, and Esc in it leaves instead of closing it.
-let meeting = false;
-let closedAt = 0; // when the list was last closed, in milliseconds
-const reopenAfterMs = 1500;
 
 // Even asking for localStorage can throw, for example when the browser has storage switched off
 function savedStorage() {
@@ -52,8 +46,6 @@ export function startDecks(contentGetter) {
   getContent = contentGetter;
   storage = savedStorage();
   handled = readHandled(storage, handledKey);
-  meeting = meetingOn(window.location.search);
-  layer.dataset.meeting = meeting ? 'yes' : 'no';
 
   window.addEventListener('keydown', onKey, true);
   layer.addEventListener('mousedown', onMouse);
@@ -95,12 +87,9 @@ function refresh() {
 // Once a second: the list closes when something else takes the screen or nobody has pressed a
 // key for a while, and it is read again every few seconds while it is open
 function look(now) {
-  if (!picker.open) {
-    if (meeting && getContent() && !takeoverRunning() && !talkOnScreen() && now.getTime() - closedAt >= reopenAfterMs) open(now);
-    return;
-  }
+  if (!picker.open) return;
 
-  if (takeoverRunning() || talkOnScreen() || (!meeting && pickerTimedOut(picker, now))) {
+  if (takeoverRunning() || talkOnScreen() || pickerTimedOut(picker, now)) {
     close();
     return;
   }
@@ -117,7 +106,6 @@ function open(now) {
 
 function close() {
   picker = closedPicker();
-  closedAt = Date.now();
   reads += 1;
   drawn = '';
   layer.hidden = true;
@@ -140,14 +128,6 @@ function onKey(event) {
     event.preventDefault();
     event.stopImmediatePropagation();
     if (!event.repeat) open(new Date());
-    return;
-  }
-
-  // In the meeting page Esc is the way out: the watcher of the Pi closes the browser and EmulationStation is back
-  if (meeting && event.key === 'Escape') {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (!event.repeat) fetch(leaveAddress, { cache: 'no-store', keepalive: true }).catch(() => null);
     return;
   }
 
@@ -219,7 +199,7 @@ function draw(now) {
     '<div class="decks-rows">' + rows.decks.map((deck, place) => rowMarkup(deck, rows.first + place === marked)).join('') + '</div>' +
     '<div class="decks-more"><span>' + escapeHtml(more) + '</span><span>' + escapeHtml(checkedText(list, now)) + '</span></div>' +
     notes.map(note => '<div class="decks-warning">' + escapeHtml(note) + '</div>').join('') +
-    '<div class="decks-foot">Next or Back: choose. Enter or B: start. ' + (meeting ? 'Esc: back to the menu.' : 'Esc: close.') + '</div>' +
+    '<div class="decks-foot">Next or Back: choose. Enter or B: start. Esc: close.</div>' +
     '</section>';
 
   if (markup === drawn) return;

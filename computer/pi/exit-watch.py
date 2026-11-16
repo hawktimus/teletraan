@@ -18,7 +18,7 @@ written to the choice file (teletraan-choice, beside the browser profile) and th
 choice and starts what it names. Any other name is not found, and nothing is written.
 
 The browser is found by its profile folder (the first argument), so nothing else on the Pi is touched. The second
-argument is the page the browser starts on: dashboard, control, launcher or stream. session.sh starts this and stops it.
+argument is the page the browser starts on: dashboard, control, launcher, stream or meeting. session.sh starts this and stops it.
 """
 import os
 import selectors
@@ -36,7 +36,7 @@ KEYS_CTRL = {ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL}
 KEYS_ALT = {ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT}
 RESCAN_SECONDS = 3
 LISTEN = ('127.0.0.1', 8079)
-PAGES = ('dashboard', 'control', 'launcher', 'stream')
+PAGES = ('dashboard', 'control', 'launcher', 'stream', 'meeting')
 # Pages where Esc on the keyboard means leave, because the page cannot say it itself
 ESC_LEAVES = ('control', 'stream')
 # What the home screen may choose

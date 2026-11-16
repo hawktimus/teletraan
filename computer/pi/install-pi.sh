@@ -30,7 +30,7 @@ done
 python3 -c 'import evdev' 2> /dev/null || stop "python3-evdev is not installed."
 
 release=$root/releases/1
-mkdir -p "$release" "$root/web" "$data" /var/lib/teletraan-state
+mkdir -p "$release" "$root/web" "$data" /var/lib/teletraan/meeting /var/lib/teletraan-state
 
 # The tree, without the things that are made here (the link to the data, the build stamp) and without any key file
 rsync -a --delete \
@@ -65,7 +65,13 @@ for unit in "$here"/systemd/teletraan-pi*; do
   sed "s/ACCOUNT/$account/g" "$unit" > "/etc/systemd/system/$(basename "$unit")"
   chmod 644 "/etc/systemd/system/$(basename "$unit")"
 done
+# The watcher of the Mac-style list is not used on the Pi any more: Meeting has its own (teletraan-pi-meeting)
+rm -f /etc/systemd/system/teletraan-pi-decks.service
 systemctl daemon-reload
+# The one service that is up all the time: it keeps the presentations of the Drive folder made ahead, so Meeting opens
+# a deck from the disk. It is light when nothing has changed and runs at the lowest priority when it works.
+systemctl enable teletraan-pi-meeting.service > /dev/null 2>&1
+systemctl restart teletraan-pi-meeting.service
 
 # The systems of EmulationStation: Teletraan (Dashboard, Control), Meeting (Presentations), the Arcade entry and the
 # Main Menu entry. Each has a folder of entries and a theme.xml of its own, which EmulationStation reads before the

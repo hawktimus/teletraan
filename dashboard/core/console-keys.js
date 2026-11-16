@@ -12,13 +12,9 @@
 //
 // A talk and the list of presentations keep their own keys: while one of them has the screen, and for a moment
 // after, these keys do nothing, so the Esc that ends a talk or closes the list does not also leave the dashboard.
-//
-// The Meeting system of EmulationStation adds &meeting=1 to the address. The page then opens on the list of
-// presentations, shows it again when a talk is over, and Esc in the list leaves (core/decks-run.js).
 
 export const consoleParameter = 'keys';
 export const consoleValue = 'console';
-export const meetingParameter = 'meeting';
 export const quietMs = 1500; // how long the keys stay off after a talk or the list had the screen
 export const controlAddress = '/control/';
 export const leaveAddress = '/pi/leave';
@@ -28,15 +24,6 @@ export const pageAddress = '/pi/page/';
 export function consoleKeysOn(search) {
   try {
     return new URLSearchParams(search || '').get(consoleParameter) === consoleValue;
-  } catch (error) {
-    return false;
-  }
-}
-
-// True when the Pi launcher asked for the meeting page: the console keys are on and the address says meeting=1
-export function meetingOn(search) {
-  try {
-    return consoleKeysOn(search) && new URLSearchParams(search || '').get(meetingParameter) === '1';
   } catch (error) {
     return false;
   }

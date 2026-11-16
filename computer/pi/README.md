@@ -30,7 +30,7 @@ This is what EmulationStation shows when the home screen is not in use (or has s
 The console starts at a short menu: Teletraan, Meeting, Arcade, Lo-Fi.
 
 - Teletraan has two entries, Dashboard and Control.
-- Meeting opens the list of presentations from the Google Drive folder.
+- Meeting opens the list of presentations from the Google Drive folder (see Meeting below).
 - Arcade is every game system (NES, N64, PSP, the real Arcade and the rest). Its entry, "Enter the Arcade", shows them.
   The first system in there is Main Menu, and its entry, "Back to the Main Menu", brings the short menu back.
 - Lo-Fi is the radio (see Lo-Fi below).
@@ -56,12 +56,34 @@ Teletraan has two entries:
 
 ## Meeting
 
-Meeting, then Presentations: the list of presentations from the Google Drive folder fills the TV on black. Next and Back
-choose, Enter or B starts the deck, and the deck plays like a booked talk (the clicker keys of docs/presentations.md).
-Esc ends the deck and shows the list again, and Esc in the list goes back to EmulationStation, which is on the menu.
-The list needs what the other part of the presentations needs (docs/presentations-drive.md): Run presentations on in
-Dashboard Settings, the folder link in the same place, and `GOOGLE_API_KEY` in `/opt/teletraan/local.env`. Without them
-the list says which one is missing.
+The presentations of the Pi. They are separate from how the Teletraan computer at school plays a presentation: Meeting has
+its own page (`meeting/`), its own list and pictures (`meeting-sync.sh`) and its own keys, and nothing of the dashboard is
+used.
+
+1. Meeting on the home screen opens the list of the Google Drive folder: Google Slides decks and PowerPoint files (.pptx,
+   .ppt) only, the one added last at the top, with its number of slides and the day it was added. A deck that is still
+   being made says Getting ready and cannot be opened yet.
+2. Up and Down choose, Enter (or Space, or X) opens the deck.
+3. Any key goes to the next slide. Left (or Page Up) goes back one. Esc leaves for the Dashboard. After the last slide the
+   next key shows the list again. Esc in the list goes back to the home screen.
+
+**Why it opens with no wait.** `teletraan-pi-meeting` runs all the time, not only while Teletraan is on the TV. Every 15
+seconds it asks Google for the folder, and every deck that is new or changed is saved as 1920 wide pictures on the disk
+of the Pi, newest added first. Opening Meeting asks it to look at once. A deck opens from the disk, and the page keeps the
+slides around the one on screen already loaded, so a key press shows the next one with no wait. A deck that was put
+in the folder a moment ago has to be made first: Google makes the pictures, which takes some seconds for a short deck and a
+minute or two for a long one. The list shows it as Getting ready until then.
+
+**What it needs** (in `/opt/teletraan/local.env`, made by hand): `GOOGLE_API_KEY`, and `MEETING_DRIVE_FOLDER=<the folder
+link>`. The folder must be shared with Anyone with the link, as Viewer. Without the folder line, the folder of Dashboard
+Settings in Sanity is read (read only). Without the key or the folder the list says which one is missing. The key is the
+one the Drive photos use (docs/photos-drive.md).
+
+**Limits.** Each slide is one still picture, as in a PDF: animations, videos and sounds do not play. A PowerPoint file is
+drawn by Google, so fonts can differ a little. A deck is cut at 150 slides, and the 50 added last are kept. A file that has
+its own sharing tighter than the folder shows Could not be made: not shared. To look at the folder by hand, with every
+step printed: `/opt/teletraan/computer/pi/meeting-sync.sh`. The service log: `journalctl -u teletraan-pi-meeting -n 30`.
+The list and the pictures are in `/var/lib/teletraan/meeting`.
 
 ## Lo-Fi
 
@@ -93,8 +115,7 @@ These work on the Pi only. The screen at school does not have them.
 | Esc | | Leaves, back to EmulationStation |
 | Right Shift | Select | Opens the control page |
 
-X and Z wait while a swap is playing or an alert, a talk or the night screen has the TV. While a talk or the list
-of presentations is up, Esc belongs to them (it ends the talk or closes the list) and does not leave.
+X and Z wait while a swap is playing or an alert, a talk or the night screen has the TV.
 
 The letters are the keyboard keys that EmulationStation has for A, B and Select on this Pi. A controller is not
 read for them yet: none is set up in EmulationStation.
@@ -110,7 +131,8 @@ EmulationStation comes back as it was.
 
 ## What runs while it is up
 
-`teletraan-pi.target` is started by the launcher and stopped when you leave.
+`teletraan-pi.target` is started by the launcher and stopped when you leave. The one thing that is up all the time is
+`teletraan-pi-meeting` (Meeting, above): it only reads, and works at the lowest priority.
 
 | Unit | What it does | Needs a key |
 | --- | --- | --- |
@@ -120,7 +142,6 @@ EmulationStation comes back as it was.
 | `teletraan-pi-photos` | Copies the Drive photo folder, every 15 minutes | `GOOGLE_API_KEY` |
 | `teletraan-pi-slides` | Downloads the slides of the next talks, every 2 minutes | no |
 | `teletraan-pi-control` | The control page, on this computer only | no |
-| `teletraan-pi-decks` | Watches the Google Drive folder of presentations, every 20 seconds (docs/presentations-drive.md) | `GOOGLE_API_KEY` |
 | `teletraan-pi-frc` | Reads The Blue Alliance and Statbotics and writes the competition feed (`frc-status`) into Sanity, about hourly, every 5 minutes during an event | `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` |
 
 Sanity is the source of truth and the dashboard only reads it, so more than one computer may write to it. The Pi writes
@@ -136,7 +157,7 @@ shows the time of the last write from either. Without the two keys below the uni
 While the Pi is the home copy it needs only these:
 
 - the `CALENDAR_..._URL` lines, for the calendar events
-- `GOOGLE_API_KEY`, for the Drive photo folder and the folder of presentations
+- `GOOGLE_API_KEY`, for the Drive photo folder and for Meeting, and `MEETING_DRIVE_FOLDER`, the folder link for Meeting
 - `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN`, for the competition feed. Leave `MONDAY_API_TOKEN` out: the Monday sync is not
   run here. The key file is made by hand on the Pi and is never copied from the school computer by a script. To see that
   the Blue Alliance key works: `/opt/teletraan/computer/scripts/frc-sync.sh --check` (it writes nothing).
@@ -146,9 +167,9 @@ While the Pi is the home copy it needs only these:
     nano /opt/teletraan/local.env
 
 Without the file the dashboard still runs: content, weather, Monday cards and competition data show, and the calendar
-events, the Drive photos and the list of presentations do not.
+events, the Drive photos and Meeting do not.
 
-The list of presentations opens with F5 or P on a keyboard, or the play button of a clicker.
+The Pi does not run the list of presentations of the dashboard (F5 or P). Presentations are Meeting.
 
 ## The control page here
 
@@ -196,6 +217,8 @@ Do not copy the whole folder: it holds things that are not part of Teletraan.
   TV and a stream that is live. `KICKOFF_URL` in `local.env` can point at a particular stream.
 - The menu is wrong, or a system is missing: `/opt/teletraan/computer/pi/menu.sh full restart` brings the whole list back, and
   `sudo computer/pi/install-pi.sh` makes the two short lists again from it.
+- Meeting says the list is not ready: `systemctl status teletraan-pi-meeting`. A deck stays on Getting ready: run
+  `/opt/teletraan/computer/pi/meeting-sync.sh` by hand and read what it says.
 - Esc in Meeting does nothing: the page has not loaded. Hold Select and press Start, or press Ctrl + Alt + Backspace.
 - A black screen that does not leave: from the Mac, `ssh pi@retropie5`, then `sudo systemctl stop teletraan-pi.target` and
   `sudo systemctl restart getty@tty1`. That restarts EmulationStation.
@@ -208,6 +231,7 @@ Do not copy the whole folder: it holds things that are not part of Teletraan.
 ## Remove it
 
     sudo systemctl stop teletraan-pi.target
+    sudo systemctl disable --now teletraan-pi-meeting.service
     sudo rm /etc/systemd/system/teletraan-pi* /etc/tmpfiles.d/teletraan-pi.conf
     sudo systemctl daemon-reload
     rm -r ~/RetroPie/roms/teletraan ~/RetroPie/roms/meeting ~/RetroPie/roms/arcademenu ~/RetroPie/roms/mainmenu

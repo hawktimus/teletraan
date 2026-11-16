@@ -1,7 +1,7 @@
 #!/bin/bash
 # Teletraan on the TV of the Raspberry Pi, started from EmulationStation (Teletraan, then Dashboard or Control; Meeting).
 # $1 says what to show: dashboard, which is also what it shows with nothing, control, or meeting, which is the list of
-# presentations from the Google Drive folder (docs/presentations-drive.md), and Esc leaves it. Two more are for the
+# presentations from the Google Drive folder (computer/pi/README.md, "Meeting"), which is its own page for the Pi. Two more are for the
 # home screen (home.sh): home, the page of tiles ($2 is the tile that is marked, the one chosen last), and stream, the
 # live stream of the FIRST Kickoff in the browser (KICKOFF_URL in /opt/teletraan/local.env, or the channel of FIRST).
 # It starts the web server, the sync service and the control service, shows the page full screen, and when the
@@ -42,9 +42,11 @@ case $mode in
     address=$base/control/
     ;;
   meeting)
-    # The page is the dashboard, with the list of presentations open and nothing else showing (dashboard/core/decks-run.js)
-    page=dashboard
-    address="$base/dashboard/?keys=console&meeting=1"
+    # The presentations of the Pi: a page of its own (computer/pi/meeting), not the list of the dashboard. The pictures are
+    # kept by the service teletraan-pi-meeting, which is up all the time; this only asks it to look at the folder now.
+    page=meeting
+    address="$base/meeting/"
+    touch /var/lib/teletraan/meeting/.wake 2> /dev/null || true
     ;;
   *)
     page=dashboard
@@ -53,9 +55,9 @@ case $mode in
     ;;
 esac
 
-# The home screen needs only the web server, and the stream needs none of it
+# The home screen and Meeting need only the web server, and the stream needs none of it
 case $mode in
-  home) sudo systemctl start teletraan-pi-web.service ;;
+  home | meeting) sudo systemctl start teletraan-pi-web.service ;;
   stream) ;;
   *) sudo systemctl start teletraan-pi.target ;;
 esac
@@ -73,7 +75,7 @@ fi
 sudo xinit "$here/session.sh" "$address" "$page" "$extra" -- :0 vt1 -nolisten tcp -quiet > /dev/null 2>&1
 
 case $mode in
-  home) sudo systemctl stop teletraan-pi-web.service ;;
+  home | meeting) sudo systemctl stop teletraan-pi-web.service ;;
   stream) ;;
   *) sudo systemctl stop teletraan-pi.target ;;
 esac

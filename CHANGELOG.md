@@ -32,6 +32,10 @@ folder, pick it from a list, and the clicker runs it like a booked talk.
 - **The Raspberry Pi 5 starts at a menu**: Teletraan, Meeting, Arcade, Lo-Fi. Meeting opens the list of presentations on
   black, and Esc in the list goes back to the menu. Arcade holds every game system, with Main Menu first to come back.
   The full list of the console is not changed (`menu.sh full restart` brings it back).
+- **Meeting on the Raspberry Pi is its own thing.** It lists the Google Drive folder with the deck added last at the top
+  (Google Slides, .pptx and .ppt only). Choose one and any key goes to the next slide, Left goes back, Esc leaves for the
+  Dashboard. The pictures are made ahead on the Pi all the time, so a deck opens at once. The Teletraan computer at school
+  plays presentations as before.
 - **Lo-Fi Radio has a CityPop channel** (the Japan City Pop stream). A channel can take a looping clip from a site with a
   clear licence, played under the stream (`computer/pi/lofi-scene.sh`, which records the source and the licence).
 

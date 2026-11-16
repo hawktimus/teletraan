@@ -10,7 +10,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test, finish } from './helpers/runner.mjs';
-import { consoleKeysOn, meetingOn } from '../dashboard/core/console-keys.js';
 
 const repo = new URL('../', import.meta.url);
 const root = repo.pathname;
@@ -36,23 +35,32 @@ function lists() {
   return { folder, run, names };
 }
 
-test('the meeting page is asked for only by the Pi launcher, and only with the console keys on', () => {
-  assert.equal(meetingOn('?keys=console&meeting=1'), true);
-  ['', '?meeting=1', '?keys=console', '?keys=console&meeting=0', '?keys=other&meeting=1', undefined, null].forEach(search => assert.equal(meetingOn(search), false, String(search)));
-  assert.equal(consoleKeysOn('?keys=console&meeting=1'), true);
-  assert.ok(read('computer/pi/launch.sh').includes('address="$base/dashboard/?keys=console&meeting=1"'));
+test('Meeting is a page of the Pi alone: its own page, its own service, and nothing of the Teletraan computer changed', () => {
+  const launch = read('computer/pi/launch.sh');
+  assert.ok(launch.includes('address="$base/meeting/"') && launch.includes('page=meeting'));
+  assert.ok(launch.includes('touch /var/lib/teletraan/meeting/.wake'), 'opening Meeting asks the service to look at the folder now');
   assert.ok(read('computer/pi/Presentations.sh').includes('launch.sh meeting'));
+  // The dashboard files that the Teletraan computer runs have nothing of Meeting in them
+  ['dashboard/core/decks-run.js', 'dashboard/core/console-keys.js', 'dashboard/decks.css'].forEach(file => assert.ok(!/meeting/i.test(read(file)), file + ' is as it was'));
+  const nginx = read('computer/pi/nginx.conf');
+  assert.ok(nginx.includes('alias /opt/teletraan/current/computer/pi/meeting/;') && nginx.includes('alias /var/lib/teletraan/meeting/;'));
+  const unit = read('computer/pi/systemd/teletraan-pi-meeting.service');
+  assert.ok(unit.includes('ExecStart=/opt/teletraan/computer/pi/meeting-sync.sh --watch') && unit.includes('WantedBy=multi-user.target') && unit.includes('Nice=19'));
+  assert.ok(!read('computer/pi/systemd/teletraan-pi.target').includes('teletraan-pi-decks'), 'the watcher of the Teletraan-style list is not run on the Pi');
+  assert.ok(fs.existsSync(new URL('computer/pi/systemd/teletraan-pi-decks.service', repo)) === false);
+  const install = read('computer/pi/install-pi.sh');
+  assert.ok(install.includes('systemctl enable teletraan-pi-meeting.service') && install.includes('/var/lib/teletraan/meeting'));
 });
 
-test('in the meeting page Esc leaves, the list opens by itself and does not time out, and nothing else changes', () => {
-  const run = read('dashboard/core/decks-run.js');
-  assert.ok(run.includes("if (meeting && event.key === 'Escape') {"), 'Esc leaves');
-  assert.ok(run.includes('fetch(leaveAddress, { cache: \'no-store\', keepalive: true })'), 'with a plain address, no body');
-  assert.ok(run.includes('(!meeting && pickerTimedOut(picker, now))'), 'no time out in the meeting page');
-  assert.ok(run.includes('if (meeting && getContent() && !takeoverRunning() && !talkOnScreen() && now.getTime() - closedAt >= reopenAfterMs) open(now);'), 'it opens again after a talk or an alert');
-  assert.ok(run.includes("meeting = meetingOn(window.location.search);"), 'the page decides from its own address');
-  assert.ok(!/method:/.test(run), 'nothing is sent');
-  assert.ok(read('dashboard/decks.css').includes('#decks[data-meeting="yes"] { background: var(--pure-black); }'));
+test('Meeting: any key goes on, Left goes back, Esc leaves for the Dashboard, Esc in the list goes home', () => {
+  const page = read('computer/pi/meeting/meeting.js');
+  assert.ok(page.includes("ask('/pi/go/dashboard'"), 'Esc in a presentation goes to the Dashboard directly');
+  assert.ok(page.includes("ask('/pi/leave'"), 'Esc in the list goes back to the home screen');
+  assert.ok(page.includes("event.key === 'ArrowLeft' || event.key === 'PageUp'"));
+  assert.ok(/MODIFIERS = \['Shift', 'Control', 'Alt'/.test(page), 'a modifier alone is not a key press');
+  assert.ok(page.includes("DATA = '/meeting-data/'") && !/\/dashboard\/data|decks\/manifest/.test(page), 'its own list and pictures');
+  assert.ok(page.includes('?v=') && page.includes('AHEAD'), 'the slides ahead are loaded before they are needed');
+  assert.ok(read('computer/pi/exit-watch.py').includes("'meeting')") || read('computer/pi/exit-watch.py').includes("'stream', 'meeting'"));
 });
 
 test('the menu is Teletraan, Meeting, Arcade, Lo-Fi, and the Arcade holds the game systems and a way back', () => {
