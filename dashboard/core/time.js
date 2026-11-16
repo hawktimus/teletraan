@@ -24,6 +24,12 @@ export function formatClock(date) {
   };
 }
 
+// Oct 31, for the status pill when the time it names is not from today
+export function formatShortDate(date) {
+  const month = monthNames[date.getMonth()];
+  return month.charAt(0) + month.slice(1).toLowerCase() + ' ' + date.getDate();
+}
+
 // 3:07 PM as one piece of text
 export function formatTimeOfDay(date) {
   const clock = formatClock(date);

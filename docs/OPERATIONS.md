@@ -31,9 +31,9 @@ The dashboard reads `content.json` every 5 seconds, `weather.json` every minute 
 
 At the foot of the screen, level with the ticker at its right end, a small pill with a 30 pixel label. It is not drawn while everything is fresh.
 
-- Amber, "Offline since 3:12 PM": a source has had no good read for more than 10 minutes. The time is the last good read of the oldest late source, in the time of the computer. The status file itself being older than 10 minutes counts as every source late.
+- Amber, "Offline since 3:12 PM": a source has had no good read for more than 10 minutes. The time is the last good read of the oldest late source, in the time of the computer, and it carries its date when it is from an earlier day ("Offline since Oct 31, 7:40 PM"). The status file itself being older than 10 minutes counts as every source late.
 - Red: every source in use has had no good read for more than 30 minutes.
-- A slow source gets more room: it is late after twice its own gap and down after three times, if that is more than 10 and 30 minutes (the calendars are read every 15 minutes, Monday by its own setting).
+- A slow source gets more room: it is late after twice its own gap and down after three times, if that is more than 10 and 30 minutes (the calendars are read every 15 minutes, Monday by its own setting, the competition feed is written about every hour).
 - A source that has never run and never failed (the competition feed in the off season) is not in use and is left out.
 
 The limits are in `dashboard/core/constants.js`. The pill fades with opacity only. There is no pill on `?sample=1`, and none on a laptop with no sync service.

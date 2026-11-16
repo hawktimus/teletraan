@@ -3,14 +3,17 @@
 // core/sync-status.js and the limits in core/constants.js. The pill says no error and no host, only the word and a time.
 // The sample content has no sync service, so there is no pill on ?sample=1.
 
-import { formatTimeOfDay } from './time.js';
+import { formatShortDate, formatTimeOfDay, localDay } from './time.js';
 import { mondayEvery } from './dots.js';
 import { pillState, watchSyncStatus } from './sync-status.js';
 
-// The words of the pill for a state, or '' when it is not drawn
-export function pillText(state) {
+// The words of the pill for a state, or '' when it is not drawn. A time from an earlier day carries its date
+// ("Offline since Oct 31, 7:40 PM"), so an old failure does not read as one from tonight.
+export function pillText(state, now = new Date()) {
   if (state.state === 'ok') return '';
-  return state.since ? 'Offline since ' + formatTimeOfDay(state.since) : 'Offline';
+  if (!state.since) return 'Offline';
+  const clock = formatTimeOfDay(state.since);
+  return 'Offline since ' + (localDay(state.since) === localDay(now) ? clock : formatShortDate(state.since) + ', ' + clock);
 }
 
 export function startSyncPill(getContent, isSample) {

@@ -22,6 +22,9 @@ folder, pick it from a list, and the clicker runs it like a booked talk.
 - **The Raspberry Pi 5 can run the dashboard** as its own system in RetroPie, with Dashboard and Control in it, without
   Docker and without the jobs that write to Sanity. On the Pi only, X is next, Z is back, Esc leaves and Right Shift
   opens the control page (computer/pi/README.md).
+- **The Offline pill says which day.** "Offline since 7:40 PM" now reads "Offline since Oct 31, 7:40 PM" when that time
+  is from an earlier day, so an old failure does not look like one from tonight. The competition feed is written to
+  Sanity about once an hour when nothing changes, and the pill no longer calls that late after 20 minutes: it waits 70.
 
 docs/presentations-drive.md has the set-up, the keys and what each message means.
 
