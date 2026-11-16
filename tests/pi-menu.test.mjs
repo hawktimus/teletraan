@@ -136,4 +136,12 @@ test('lofi-scene.sh will not take a clip without a source and a licence, or for 
   assert.ok(read('computer/pi/lofi-scene.sh').includes('LICENCES.tsv'));
 });
 
+test('the Pi writes the competition feed only while Teletraan is up, with the keys it is given by hand, and writes no status', () => {
+  const service = read('computer/pi/systemd/teletraan-pi-frc.service');
+  assert.ok(service.includes('ExecStart=/opt/teletraan/computer/scripts/frc-sync.sh') && service.includes('PartOf=teletraan-pi.target'));
+  assert.ok(!/ExecStartPost|status-write|MONDAY_API_TOKEN|SANITY_WRITE_TOKEN=|TBA_AUTH_KEY=/.test(service.replace(/#.*$/gm, '')), 'no status writer and no key in the unit');
+  assert.ok(read('computer/pi/systemd/teletraan-pi-frc.timer').includes('OnUnitActiveSec=5min'));
+  assert.ok(read('computer/pi/systemd/teletraan-pi.target').includes('teletraan-pi-frc.timer'));
+});
+
 await finish();

@@ -1,0 +1,23 @@
+# Writes the competition feed (the frc-status document) into Sanity, the same job as computer/systemd/teletraan-frc.service.
+# It needs TBA_AUTH_KEY and SANITY_WRITE_TOKEN in /opt/teletraan/local.env, which Jason puts there by hand. Without them
+# the script says which one is missing and stops. It does not write the status of the sync pill (status-write.sh).
+[Unit]
+Description=Read the FRC competition data for Teletraan I on the Raspberry Pi
+After=network-online.target
+Wants=network-online.target
+PartOf=teletraan-pi.target
+
+[Service]
+Type=oneshot
+User=ACCOUNT
+Environment=TELETRAAN_DATA=/var/lib/teletraan/data
+Environment=TELETRAAN_LOG_DIR=/run/teletraan-logs
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ExecStart=/opt/teletraan/computer/scripts/frc-sync.sh
+TimeoutStartSec=15min

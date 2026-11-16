@@ -1,0 +1,8 @@
+[Unit]
+Description=Wake the FRC feed on the Raspberry Pi every 5 minutes
+PartOf=teletraan-pi.target
+
+[Timer]
+# The script decides whether it is time: about once an hour, or every 5 minutes while a team has an event on
+OnActiveSec=60s
+OnUnitActiveSec=5min

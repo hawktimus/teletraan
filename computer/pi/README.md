@@ -99,10 +99,14 @@ EmulationStation comes back as it was.
 | `teletraan-pi-slides` | Downloads the slides of the next talks, every 2 minutes | no |
 | `teletraan-pi-control` | The control page, on this computer only | no |
 | `teletraan-pi-decks` | Watches the Google Drive folder of presentations, every 20 seconds (docs/presentations-drive.md) | `GOOGLE_API_KEY` |
+| `teletraan-pi-frc` | Reads The Blue Alliance and Statbotics and writes the competition feed (`frc-status`) into Sanity, about hourly, every 5 minutes during an event | `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` |
 
-Monday cards and the competition data are written into Sanity by the Teletraan computer at school, and the Pi reads them
-from there like any other content. The Pi does not run the Monday sync, the competition sync, the news, the status
-writer, the cleanup or the backup. Two computers writing the same documents would overwrite each other.
+Sanity is the source of truth and the dashboard only reads it, so more than one computer may write to it. The Pi writes
+one thing: the competition feed (`teletraan-pi-frc`), and only while Teletraan is up on the TV, so the feed is not
+kept up when the console is on games. The Monday cards still come from the Teletraan computer at school. The Pi does
+not run the Monday sync, the news, the status writer, the cleanup or the backup. The competition feed is one document
+that a run replaces whole from the same public data, so two computers writing it give the same result; the sync pill
+shows the time of the last write from either. Without the two keys below the unit says which one is missing and stops.
 
 ## The keys
 
@@ -111,8 +115,9 @@ While the Pi is the home copy it needs only these:
 
 - the `CALENDAR_..._URL` lines, for the calendar events
 - `GOOGLE_API_KEY`, for the Drive photo folder and the folder of presentations
-
-Leave `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY` out. They are for the computer that writes.
+- `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN`, for the competition feed. Leave `MONDAY_API_TOKEN` out: the Monday sync is not
+  run here. The key file is made by hand on the Pi and is never copied from the school computer by a script. To see that
+  the Blue Alliance key works: `/opt/teletraan/computer/scripts/frc-sync.sh --check` (it writes nothing).
 
     cp /opt/teletraan/computer/local.example.env /opt/teletraan/local.env
     chmod 600 /opt/teletraan/local.env
@@ -127,7 +132,7 @@ The list of presentations opens with F5 or P on a keyboard, or the play button o
 
 It is the same control page as at school, open to this computer only. What works without more keys: Now, the
 Presentations section of Show, and everything that only reads. What does not: anything that saves to Sanity, because
-this copy has no `SANITY_WRITE_TOKEN` and should not get one while the school computer runs, and the buttons that
+this copy has no `SANITY_WRITE_TOKEN` unless the competition feed is set up here, and the buttons that
 update, reboot or save keys, because the helper they use is not installed here.
 
 ## Where things are
