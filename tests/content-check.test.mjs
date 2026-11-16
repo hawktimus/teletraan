@@ -500,7 +500,10 @@ test('the schemas warn while typing about private text, full names, tall photos 
     assert.match(warningsOn(field(photo, 'image'), picture('image-a-1500x2000-jpg'), { fit: 'setting' })[0], /taller than it is wide/);
     assert.deepEqual(warningsOn(field(photo, 'image'), picture('image-a-1500x2000-jpg'), { fit: 'whole' }), []);
     const person = await type('person');
-    assert.match(warningsOn(field(person, 'name'), 'Sam Smith')[0], /full name/);
+    assert.equal(warningsOn(field(person, 'name'), 'Sam Smith').length, 0, 'a full name for a person is an error now, not a warning');
+    const personRules = constraints(field(person, 'name'));
+    const nameAt = personRules.findIndex(item => item.name === 'custom' && typeof item.args[0]('Sam Smith') === 'string' && /full name/.test(item.args[0]('Sam Smith')));
+    assert.ok(nameAt >= 0 && personRules[nameAt + 1].name === 'error', 'the full name rule of person.name is an error');
     assert.equal(warningsOn(field(person, 'name'), 'Sam K.').length, 0);
     assert.match(warningsOn(field(person, 'photo'), undefined, {})[0], /silhouette/);
     assert.equal(warningsOn(field(person, 'photo'), undefined, { showPhoto: false }).length, 0);

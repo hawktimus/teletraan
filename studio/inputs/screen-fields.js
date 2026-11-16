@@ -23,6 +23,7 @@ import { choiceButtons } from './field-editor.js';
 import { ScreenContext } from './screen-context.js';
 import { words, countdownLines, departmentChoices, leadsQuestion, teamTarget, countdownTarget, tipsAndNewsPath } from './screen-parts.js';
 import { teamChoices } from './screen-panels.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
@@ -154,7 +155,7 @@ export function RowTeamInput(props) {
 // The department of a row: the Team leads, as a list beside the team. It is stored as the id of the Team lead. The
 // list is read when the row is drawn.
 export function RowDepartmentInput(props) {
-  const client = useClient({ apiVersion: '2025-02-19' });
+  const client = useClient({ apiVersion: apiVersion });
   const team = useFormValue(props.path.slice(0, -1).concat('team'));
   const [leads, setLeads] = useState(null);
   const current = typeof props.value === 'string' ? props.value : '';

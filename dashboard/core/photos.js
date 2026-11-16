@@ -4,6 +4,7 @@
 
 import { defaultSettings, photoFits, speeds } from '../config.js';
 import { visibleItems } from './content.js';
+import { hasLocalImages, isRemoteAddress } from './images.js';
 
 // Photos that are switched on, have not expired and have a picture to show
 export function photosToShow(content, now = new Date()) {
@@ -199,4 +200,21 @@ export function photoStay(settings) {
   const row = (Array.isArray(rows) ? rows : []).find(step => step && step.panel === 'photo');
 
   return ownSeconds(row || { panel: 'photo' }, source) * (speeds[source.speed] || speeds.normal);
+}
+
+// Whether any of these photos can be drawn. With the local list of pictures present (images/index.json, from the sync
+// service) only a photo in it counts: one that is not would be fetched from the internet, the school filter may block the
+// host, and the frame would show NO PHOTO for a whole turn. With no list (a laptop) every photo counts.
+export function photosAreReady(photos) {
+  if (!hasLocalImages()) return photos.length > 0;
+  return photos.some(photo => !isRemoteAddress(photo.address));
+}
+
+// Calls late() when a picture has neither loaded nor failed after this many seconds. The timer lives here and not in the
+// panel, which holds no timers of its own (tests/house-rules.test.mjs). A picture that is no longer on the page is left alone.
+export function watchLoad(image, seconds, late) {
+  setTimeout(() => {
+    if (!image.isConnected || (image.complete && image.naturalWidth > 0)) return;
+    late();
+  }, seconds * 1000);
 }

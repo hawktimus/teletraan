@@ -31,7 +31,7 @@ async function check(name, test) {
 }
 
 function find(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -105,8 +105,9 @@ await check('log_json in lib.sh writes the same five fields, cleans the detail, 
 await check('the logrotate rule keeps 14 days, caps a file at 5 MB, compresses, and copies then truncates', () => {
   const text = fs.readFileSync(path.join(repo, 'computer/logrotate/teletraan'), 'utf8');
   assert.ok(text.includes('/var/log/teletraan/*.jsonl {'));
+  assert.ok(text.includes('/opt/teletraan/logs/*.log {'), 'the helper log and the control log are rotated too');
   ['rotate 14', 'maxsize 5M', 'compress', 'copytruncate', 'daily', 'su ACCOUNT ACCOUNT'].forEach(word => assert.ok(text.includes(word), word));
-  const logrotate = spawnSync('/bin/sh', ['-c', 'command -v logrotate'], { encoding: 'utf8' }).stdout.trim();
+  const logrotate = spawnSync('/bin/bash', ['-c', 'command -v logrotate'], { encoding: 'utf8' }).stdout.trim();
   if (logrotate) {
     const file = path.join(work, 'rotate.conf');
     fs.writeFileSync(file, text.replace(/ACCOUNT/g, os.userInfo().username).replace('/var/log/teletraan', path.join(work, 'mainlog')));
@@ -339,7 +340,7 @@ await check('the Makefile has help and the commands, and includes the fragments 
   const text = fs.readFileSync(path.join(repo, 'Makefile'), 'utf8');
   assert.ok(text.includes('-include computer/make/*.mk'));
   ['help', 'logs', 'net-status', 'net-test', 'heartbeat-test', 'allowlist'].forEach(target => assert.match(text, new RegExp('^' + target + ':', 'm'), target));
-  const make = spawnSync('/bin/sh', ['-c', 'command -v make'], { encoding: 'utf8' }).stdout.trim();
+  const make = spawnSync('/bin/bash', ['-c', 'command -v make'], { encoding: 'utf8' }).stdout.trim();
   if (!make) return;
 
   const folder = path.join(work, 'makefolder');
@@ -418,7 +419,7 @@ await check('install-sync.sh makes the log folder and the rotation rule, copies 
   fs.cpSync(path.join(repo, 'computer'), path.join(home, 'computer'), { recursive: true, filter: source => !source.endsWith('local.env') });
   fs.writeFileSync(path.join(home, 'computer/local.env'), "TELETRAAN_DATA='" + path.join(root, 'data') + "'\n");
   ['sed', 'head', 'tail', 'grep', 'awk', 'cat', 'mkdir', 'chmod', 'install', 'mktemp', 'rm', 'cmp', 'dirname', 'sort', 'ls', 'tr', 'printf', 'readlink', 'cut', 'echo', 'basename', 'node', 'jq', 'curl'].forEach(name => {
-    const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+    const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
     if (found) fs.symlinkSync(found, path.join(bin, name));
   });
   const log = path.join(root, 'calls.log');

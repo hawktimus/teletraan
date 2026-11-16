@@ -171,6 +171,12 @@ for old in mini deploy; do
 done
 chown -R "$account:$(id -gn "$account")" "$root"
 
+# The control page has no PIN of its own. Without CONTROL_PIN in local.env nobody could sign in, so the control service
+# is not started: the line is checked here, by its shape only, and its value is never printed.
+if ! grep -Eq "^CONTROL_PIN=['\"]?[0-9]{4,12}['\"]?[[:space:]]*$" "$root/local.env"; then
+  stop "$root/local.env has no CONTROL_PIN (4 to 12 digits), and the control page accepts no other PIN. Add the line CONTROL_PIN='...' to that file by hand, then run this again (docs/control-page.md, The PIN)."
+fi
+
 # 3. The helper socket, its service and the sudoers file
 step "Install the helper socket and the sudoers file"
 group=$(id -gn "$account")
@@ -262,6 +268,19 @@ install -m 755 "$tree/computer/scripts/net-root.sh" "$sbin_dir/teletraan-net"
 chown root:root "$sbin_dir/teletraan-net"
 say "The control page can scan for Wi-Fi networks and switch the Wi-Fi."
 
+# The name servers are desired state (computer/config/network.conf). The root-owned copy is made only when it is not
+# there, so a change made on the computer is kept; the tool reads it, applies it at boot (teletraan-dns.service) and now.
+mkdir -p "$conf_dir"
+if [ ! -f "$conf_dir/teletraan-network.conf" ]; then
+  install -m 644 "$tree/computer/config/network.conf" "$conf_dir/teletraan-network.conf"
+  chown root:root "$conf_dir/teletraan-network.conf"
+  say "Made $conf_dir/teletraan-network.conf, the name servers of this computer."
+fi
+if [ -f "$systemd_dir/teletraan-dns.service" ]; then
+  systemctl enable teletraan-dns.service 2> /dev/null || say "Could not turn on teletraan-dns.service."
+fi
+"$sbin_dir/teletraan-net" dns-apply || say "The name servers could not be applied now. They are applied at the next boot."
+
 # 6. The optional git path
 step "Make the bare git repository"
 if command -v git > /dev/null 2>&1; then
@@ -289,4 +308,4 @@ fi
 
 step "Done"
 say "The control page is at http://$(hostname):3229/control/ (the Tailscale name works too)."
-say "Next: add the origin to Sanity (docs/control-page.md, First time). The PIN is 3229 or 3426."
+say "Next: add the origin to Sanity (docs/control-page.md, First time). The PIN is the CONTROL_PIN line in local.env."

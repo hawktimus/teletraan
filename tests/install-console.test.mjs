@@ -31,7 +31,7 @@ const debianIssue = 'Debian GNU/Linux 12 \\n \\l\n\n';
 const ordinaryTools = ['pr', 'cmp', 'cp', 'install', 'mkdir', 'tail', 'grep', 'mktemp', 'rm', 'dirname', 'cat'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -80,7 +80,7 @@ function setup(name, options) {
     unit: path.join(root, 'etc/systemd/system/teletraan-console.service'),
     install(extra) {
       const env = Object.assign({ PATH: bin, CONSOLE_ROOT: root, STUB_LOG: log, STUB_UID: '0' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(home, 'computer/scripts/install-console.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(home, 'computer/scripts/install-console.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     // Every file under etc, with its text, so a run that must change nothing can be compared
@@ -401,7 +401,7 @@ test('it installs and turns on the console unit only, never runs apt, and never 
 });
 
 test('the script has valid sh syntax and is executable', () => {
-  const syntax = spawnSync('/bin/sh', ['-n', installFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', installFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
   assert.ok(read(installFile).startsWith('#!/bin/bash\n'));
   assert.ok((fs.statSync(installFile).mode & 0o111) !== 0, 'the script should be executable');

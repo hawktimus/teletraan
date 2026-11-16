@@ -8,6 +8,7 @@
 // Nothing here ever shows an error. A file that cannot be read keeps the last answer, whose age then grows by itself.
 
 import { liveFolder } from '../config.js';
+import { factsFromSyncStatus } from './dots.js';
 import { syncCheckSeconds, syncDownMinutes, syncSourceMinutes, syncStaleMinutes } from './constants.js';
 
 export const syncStatusFile = liveFolder + 'sync-status.json';
@@ -25,10 +26,10 @@ export function parseSyncStatus(raw) {
   const sources = {};
   sourceNames.forEach(name => {
     const source = raw.sources[name] && typeof raw.sources[name] === 'object' ? raw.sources[name] : {};
-    sources[name] = { success: toMs(source.lastSuccessAt), failure: toMs(source.lastFailureAt) };
+    sources[name] = { success: toMs(source.lastSuccessAt), failure: toMs(source.lastFailureAt), reason: typeof source.lastFailureReason === 'string' ? source.lastFailureReason : '' };
   });
   const network = raw.network && typeof raw.network === 'object' && typeof raw.network.ok === 'boolean' ? { ok: raw.network.ok, since: toMs(raw.network.since) } : null;
-  return { generatedAt: toMs(raw.generatedAt), sources: sources, network: network };
+  return { generatedAt: toMs(raw.generatedAt), startedAt: toMs(raw.startedAt), sources: sources, network: network };
 }
 
 // How old a source may be before it counts as late (amber) and as down (red), in minutes. A slow source (the calendars
@@ -85,6 +86,12 @@ export function currentSyncStatus() {
 // The network as the sync service saw it: { ok, since (ms or null) }, or null while the file has none
 export function networkReading() {
   return latest ? latest.network : null;
+}
+
+// The Monday, calendar and Sanity reads of the sync service in the form the dots want (core/dots.js), or null when
+// there is no status file
+export function dotFacts() {
+  return latest ? factsFromSyncStatus(latest) : null;
 }
 
 // When the content was last read well from Sanity, as a Date, or null while that is not known

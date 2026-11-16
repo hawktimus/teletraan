@@ -18,7 +18,7 @@ let counter = 0;
 let passed = 0;
 
 function find(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }

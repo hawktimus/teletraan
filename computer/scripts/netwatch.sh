@@ -11,6 +11,12 @@
 #   15 failures (30 minutes) reboot             at most once in 2 hours
 # A run where the host answers resets the count and the ladder.
 #
+# One step comes before the ladder, because a restart or a bounce cannot fix it: when the gateway answers and the name
+# lookup fails, the name servers are the problem. From the second failed run, once for each outage, the computer switches
+# between the configured name servers (/usr/local/etc/teletraan-network.conf) and the ones the network hands out, keeps the
+# one that works, and writes which in /var/lib/teletraan/dns.json. When the configured servers answer again, it goes back
+# to them by itself (at least 10 minutes later, so it cannot flap). With DNS_ENFORCE=no it leaves the name servers alone.
+#
 # So that it can never loop:
 #   - an action waits at least 3 minutes after the one before it
 #   - each action is taken at most once per outage, and nothing is taken in the first 5 minutes after boot
@@ -273,6 +279,102 @@ check_dns() {
   fi
 }
 
+# ----- the name servers -----
+# What the control page shows on Computer: whether the configured servers are the ones in use, or the network's own are
+# in use for the time being. The file says only what the computer chose, never a key.
+net_tool=${TELETRAAN_NET:-/usr/local/sbin/teletraan-net}
+dns_state=${NETWATCH_DNS_STATE:-/var/lib/teletraan/dns.json}
+network_conf=${TELETRAAN_NETWORK_CONF:-/usr/local/etc/teletraan-network.conf}
+dns_restore_gap=600
+
+conf_item() {
+  [ -f "$network_conf" ] || return 0
+  sed -n "s/^$1=//p" "$network_conf" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
+}
+dns_enforce=yes
+[ "$(conf_item DNS_ENFORCE)" != no ] || dns_enforce=no
+dns_first=$(conf_item DNS_PRIMARY | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' || true)
+dns_second=$(conf_item DNS_SECONDARY | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' || true)
+dns_first=${dns_first:-8.8.8.8}
+dns_second=${dns_second:-8.8.4.4}
+
+# mode is configured (the servers of the conf file) or network (the ones the network hands out)
+dns_mode=$(sed -n 's/.*"mode":"\([a-z]*\)".*/\1/p' "$dns_state" 2> /dev/null | head -n 1 || true)
+dns_mode=${dns_mode:-configured}
+dns_since=$(sed -n 's/.*"sinceEpoch":\([0-9]*\).*/\1/p' "$dns_state" 2> /dev/null | head -n 1 || true)
+dns_since=$(number "${dns_since:-0}")
+dns_tried_for=$(sed -n 's/.*"triedFor":\([0-9]*\).*/\1/p' "$dns_state" 2> /dev/null | head -n 1 || true)
+dns_tried_for=$(number "${dns_tried_for:-0}")
+dns_reason=''
+
+write_dns_state() {
+  local text
+  text=$(printf '{"enforce":"%s","configured":"%s %s","mode":"%s","since":"%s","sinceEpoch":%s,"triedFor":%s,"reason":"%s","checkedAt":"%s"}' \
+    "$dns_enforce" "$dns_first" "$dns_second" "$dns_mode" "$(iso_at "$dns_since")" "$dns_since" "$dns_tried_for" \
+    "$(printf '%s' "$dns_reason" | tr -c 'A-Za-z0-9 .,()-' '?' | cut -c 1-160)" "$(iso_at "$now")")
+  printf '%s\n' "$text" > "$dns_state" 2> /dev/null || true
+}
+
+# Does a name server answer? A connection to its port 53 is enough to tell a resolver that is reachable from one that is not
+dns_probe() {
+  if [ -n "${NETWATCH_DNS_PROBE:-}" ]; then
+    "$NETWATCH_DNS_PROBE" "$1"
+  else
+    timeout 3 bash -c "exec 3<>/dev/tcp/$1/53" > /dev/null 2>&1
+  fi
+}
+
+# The gateway answers and the name lookup fails: try the other set of name servers, once for this outage
+dns_fallback_try() {
+  [ "$dns_enforce" = yes ] || return 0
+  [ "$gateway_result" = ok ] && [ "$dns_result" = fail ] || return 0
+  [ "$dns_tried_for" -ne "$first_fail" ] || return 0
+  [ -x "$net_tool" ] || [ -n "${TELETRAAN_NET:-}" ] || return 0
+
+  local other word back
+  dns_tried_for=$first_fail
+  if [ "$dns_mode" = configured ]; then other=network; word=dns-default; back=dns-public; else other=configured; word=dns-public; back=dns-default; fi
+  say "the gateway answers and the name lookup fails, so the name servers are tried the other way round ($word) before anything is restarted."
+  if as_root "$net_tool" "$word"; then
+    sleep "$settle"
+    check_dns
+    if [ "$dns_result" = ok ]; then
+      dns_mode=$other
+      dns_since=$now
+      dns_reason="the ${back#dns-} name servers did not answer, so the $other ones are in use for now"
+      say "name lookups work again with the $other name servers."
+      log_json netwatch network dns_switched "$dns_reason"
+      "$computer/scripts/notify.sh" "netwatch: name servers switched to the $other ones" > /dev/null 2>&1 || true
+      write_dns_state
+      return 0
+    fi
+    # Neither set works: put the first one back and let the ladder go on
+    as_root "$net_tool" "$back" || true
+  fi
+  dns_reason='neither set of name servers answered; the ladder goes on'
+  log_json netwatch network dns_tried "$dns_reason"
+  write_dns_state
+  return 1
+}
+
+# The network's own name servers are in use only because the configured ones stopped answering. When they answer again,
+# and the switch is at least ten minutes old, the configured ones are put back.
+dns_restore_try() {
+  [ "$dns_enforce" = yes ] && [ "$dns_mode" = network ] || return 0
+  if [ "$dns_since" -gt 0 ] && [ "$dns_since" -le "$now" ] && [ $((now - dns_since)) -lt "$dns_restore_gap" ]; then
+    return 0
+  fi
+  if dns_probe "$dns_first" || dns_probe "$dns_second"; then
+    if as_root "$net_tool" dns-public; then
+      dns_mode=configured
+      dns_since=$now
+      dns_reason='the configured name servers answer again and are back in use'
+      say "$dns_reason."
+      log_json netwatch network dns_restored "$dns_reason"
+    fi
+  fi
+}
+
 # ----- the ladder -----
 # Says a reason at most once in 30 minutes, so a long wait is not a line every 2 minutes
 note() {
@@ -525,10 +627,23 @@ if [ "$network_ok" -eq 1 ]; then
   level=0
   level_at=0
   last_ok=$now
+  dns_restore_try
+  write_dns_state
 else
   fails=$((fails + 1))
   [ "$fails" -gt 1 ] || first_fail=$now
   [ "$first_fail" -gt 0 ] || first_fail=$now
+  # The name servers first, from the second failed run: no restart or bounce changes them
+  if [ "$fails" -ge 2 ] && dns_fallback_try; then
+    check_https
+    if [ "$https_result" = ok ]; then
+      save_state || true
+      write_public_state
+      write_status_file
+      exit 0
+    fi
+  fi
+  write_dns_state
   if [ "$fails" -lt "$restart_at" ]; then
     say "check failed ($fails of $restart_at): https $https_result, gateway $gateway_result, dns $dns_result."
   else

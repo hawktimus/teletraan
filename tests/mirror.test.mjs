@@ -484,7 +484,7 @@ function helperWorld({ python = true, active = true } = {}) {
     data,
     ask(word) {
       const dirs = python ? [bin, tools, '/usr/bin', '/bin'] : [bin, tools];
-      const result = spawnSync('sh', [path.join(repo, 'computer/scripts/control-helper.sh')], {
+      const result = spawnSync('/bin/bash', [path.join(repo, 'computer/scripts/control-helper.sh')], {
         input: word + '\n', encoding: 'utf8',
         env: { PATH: dirs.join(':'), TELETRAAN_ROOT: root, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_DATA_DIR: data },
       });

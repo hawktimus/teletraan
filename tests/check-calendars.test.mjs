@@ -21,7 +21,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendars-'));
 const ordinaryTools = ['sed', 'tail', 'tr', 'grep', 'mktemp', 'rm', 'dirname', 'cat', 'cp'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -91,7 +91,7 @@ function setup(name, options) {
     log: log,
     run() {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub };
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/check-calendars.sh')], { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/check-calendars.sh')], { env: env, encoding: 'utf8', input: '' });
       const text = result.stdout + result.stderr;
       return {
         lines: result.stdout.split('\n').filter(line => line !== ''),
@@ -321,7 +321,7 @@ test('a missing local.env, no calendar lines, no curl and no node each end with 
 });
 
 test('the script has valid sh syntax, is executable, and never prints local.env', () => {
-  const syntax = spawnSync('/bin/sh', ['-n', scriptFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', scriptFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
 
   const text = fs.readFileSync(scriptFile, 'utf8');

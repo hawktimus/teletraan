@@ -7,10 +7,10 @@
 
 import { defineType, defineField } from 'sanity';
 import { teamField } from './fields.js';
-import { clockIn, dayIn, fallbackTimeZone, isTimeZone } from './presentationTimes.js';
+import { clockIn, datetimeOptions, dayIn, fallbackTimeZone, isTimeZone, oddHour } from './presentationTimes.js';
+import { apiVersion } from '../project.js';
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // The kiosk shows times in the zone of the Look page. Without an answer from
 // Sanity, or with a name Intl does not know, it is the zone the Look page starts with.
@@ -45,15 +45,17 @@ export default defineType({
       name: 'firstSlotAt',
       title: 'First talk starts',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When the first talk starts. Leave a gap after the announcement, so the first talk does not start while it plays.',
-      validation: Rule => Rule.required().error('Pick when the first talk starts.'),
+      validation: Rule => [Rule.required().error('Pick when the first talk starts.'), Rule.custom(oddHour).warning()],
     }),
     defineField({
       name: 'lastSlotAt',
       title: 'Last talk starts',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When the last talk starts. It is on the same day as the first talk, and not before it.',
-      validation: Rule => [Rule.required().error('Pick when the last talk starts.'), Rule.custom(lastTalkFitsDay)],
+      validation: Rule => [Rule.required().error('Pick when the last talk starts.'), Rule.custom(lastTalkFitsDay), Rule.custom(oddHour).warning()],
     }),
     defineField({
       name: 'slotMinutes',

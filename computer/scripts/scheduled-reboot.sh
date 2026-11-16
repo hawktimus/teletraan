@@ -68,7 +68,7 @@ query="{\"setting\": *[_id == \"dashboardSettings\"][0]{rebootEnabled, rebootTim
 
 fetched=0
 status=0
-curl --disable --silent --get --max-time 20 --connect-timeout 10 --max-filesize 1000000 --proto '=https' \
+sanity_curl --disable --silent --get --max-time 20 --connect-timeout 10 --max-filesize 1000000 --proto '=https' \
   --data-urlencode "query=$query" --data-urlencode 'perspective=published' \
   --output "$work/sanity.json" "https://$project.api.sanity.io/v$version/data/query/$dataset" 2> /dev/null || status=$?
 if [ "$status" -eq 0 ] && jq -e '.result | objects' "$work/sanity.json" > /dev/null 2>&1; then

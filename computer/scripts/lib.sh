@@ -17,6 +17,34 @@ setting() {
   sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
 }
 
+# The token for reading Sanity: SANITY_READ_TOKEN, else SANITY_WRITE_TOKEN, else nothing. A line that still starts with [
+# is the placeholder and counts as nothing. Never printed by any script; it only goes to sanity_curl.
+sanity_read_token() {
+  local token
+  token=$(setting SANITY_READ_TOKEN)
+  case $token in '' | \[*) token=$(setting SANITY_WRITE_TOKEN) ;; esac
+  case $token in \[*) token= ;; esac
+  printf '%s' "$token"
+}
+
+# curl for a read from Sanity's API. With a token in local.env the request carries it, handed to curl on its standard
+# input so that it is never on a command line or in a process list; with none it is plain curl, which works while the
+# dataset is public. The arguments are curl's own.
+sanity_curl() {
+  local token lead=()
+  token=$(sanity_read_token)
+  # --disable only works as curl's first word, so it stays first
+  if [ "${1:-}" = --disable ]; then
+    lead=(--disable)
+    shift
+  fi
+  if [ -n "$token" ]; then
+    printf 'header = "Authorization: Bearer %s"\n' "$token" | curl ${lead[@]+"${lead[@]}"} --config - "$@"
+  else
+    curl ${lead[@]+"${lead[@]}"} "$@"
+  fi
+}
+
 # One JSON line in /var/log/teletraan/<service>.jsonl, the same line jsonlog.mjs writes: ts, service, source, event,
 # detail. TELETRAAN_LOG_DIR moves the folder for tests. A log that cannot be written never stops the script.
 # Usage: log_json service source event detail

@@ -3,6 +3,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong } from './fields.js';
+import { datetimeOptions } from './presentationTimes.js';
 
 const headingBlock = defineType({
   name: 'headingBlock',
@@ -163,6 +164,7 @@ const countdownBlock = defineType({
       name: 'target',
       title: 'Counts down to',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'The date and time the countdown ends.',
       validation: Rule => Rule.required().error('Pick the date and time.'),
     }),

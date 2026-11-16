@@ -18,7 +18,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-watchdog-'));
 const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'awk', 'tr', 'mv', 'rm'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -133,7 +133,7 @@ function setup(options = {}) {
     },
     run() {
       const env = { PATH: bin, TZ: 'UTC', STUB_LOG: log, STUB_DIR: stub, WATCHDOG_BOOT_FILE: path.join(root, 'boot-id'), TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl') };
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/watchdog.sh')], { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/watchdog.sh')], { env: env, encoding: 'utf8', input: '' });
       const calls = readModule(log, 'utf8').split('\n').filter(Boolean);
       return {
         status: result.status,
@@ -329,7 +329,7 @@ test('a state file that cannot be written means no restart, so the limits can ne
 });
 
 test('the script has valid sh syntax, is executable, and reads no key from local.env', () => {
-  assert.equal(spawnSync('/bin/sh', ['-n', watchdogFile], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', watchdogFile], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(watchdogFile).mode & 0o100, 'watchdog.sh should be executable');
   const text = readModule(watchdogFile, 'utf8');
   ['SANITY_WRITE_TOKEN', 'MONDAY_API_TOKEN', 'TBA_AUTH_KEY', 'CALENDAR_'].forEach(name => assert.ok(!text.includes(name), 'watchdog.sh should not name ' + name));
@@ -353,7 +353,7 @@ test('the watchdog units run the script every 2 minutes, the installer checks th
 
   const installer = path.join(repo, 'computer/scripts/install-watchdog.sh');
   const text = readModule(installer, 'utf8');
-  assert.equal(spawnSync('/bin/sh', ['-n', installer], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', installer], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(installer).mode & 0o100);
   assert.ok(text.includes('[ ! -s "$units/$unit" ]'), 'a missing or empty unit stops it');
   assert.ok(text.includes('exit 1'));

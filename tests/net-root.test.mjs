@@ -28,6 +28,8 @@ case "$*" in
   "-t -f IN-USE,SIGNAL,SECURITY,SSID device wifi list")
     printf '*:80:WPA2:Old Net\\n :60:WPA2:Guest\\\\:Open\\n :30:--:Cafe\\n :55:WPA2 802.1X:Staff\\n :40:WPA2:Old Net\\n :70:WPA2:\\n' ;;
   "-t -f UUID,NAME connection show") printf '11111111-1111-4111-8111-111111111111:Old Net\\n22222222-2222-4222-8222-222222222222:Teletraan Wi-Fi aaaaaaaa\\n' ;;
+  "-g ipv4.dns connection show uuid 11111111-1111-4111-8111-111111111111") printf '%s\n' "$FAKE_DNS" ;;
+  "-g ipv4.ignore-auto-dns connection show uuid 11111111-1111-4111-8111-111111111111") printf '%s\n' "$FAKE_IGNORE" ;;
   "connection load "*) cp "\${3}" "$FAKE_SAVED"; stat -c %a "\${3}" 2>/dev/null > "$FAKE_SAVED.mode" || stat -f %Lp "\${3}" > "$FAKE_SAVED.mode" ;;
   "--wait 45 connection up uuid 11111111-1111-4111-8111-111111111111") [ -z "$FAKE_PREVIOUS_FAILS" ] || exit 4 ;;
   "--wait 45 connection up uuid "*) [ -z "$FAKE_NEW_FAILS" ] || exit 4 ;;
@@ -68,7 +70,7 @@ function setup(extra = {}) {
   return {
     root, env,
     run(args, input = '') {
-      return spawnSync('bash', [script, ...args], { input: input, encoding: 'utf8', env: env });
+      return spawnSync('/bin/bash', [script, ...args], { input: input, encoding: 'utf8', env: env });
     },
     calls() { return fs.existsSync(env.FAKE_LOG) ? fs.readFileSync(env.FAKE_LOG, 'utf8') : ''; },
     result() {
@@ -86,13 +88,64 @@ if (process.getuid && process.getuid() === 0) {
   process.exit(0);
 }
 
-test('it takes five words and refuses everything else', () => {
+test('it takes six words and refuses everything else', () => {
   const s = setup();
   ['', 'bogus', 'scan now', 'forget', 'connect'].forEach(word => {
     const result = s.run(word === '' ? [] : word.split(' '));
     assert.notEqual(result.status, 0, word);
   });
-  ['scan', 'switch', 'restart', 'dns-public', 'dns-default'].forEach(word => assert.ok(fs.readFileSync(script, 'utf8').includes(word)));
+  ['scan', 'switch', 'restart', 'dns-public', 'dns-default', 'dns-apply'].forEach(word => assert.ok(fs.readFileSync(script, 'utf8').includes(word)));
+});
+
+function conf(s, text) {
+  const file = path.join(s.root, 'network.conf');
+  fs.writeFileSync(file, text);
+  s.env.NET_CONF = file;
+  return file;
+}
+
+test('the name servers are desired state: dns-apply puts the configured ones on the active connection and changes nothing when they are there', () => {
+  const s = setup({ FAKE_DNS: '192.168.1.1', FAKE_IGNORE: 'no' });
+  assert.equal(s.run(['dns-apply']).status, 0);
+  assert.ok(s.calls().includes('nmcli connection modify uuid 11111111-1111-4111-8111-111111111111 ipv4.dns 8.8.8.8 8.8.4.4 ipv4.ignore-auto-dns yes'), s.calls());
+  assert.ok(s.calls().includes('nmcli --wait 30 connection up uuid 11111111-1111-4111-8111-111111111111'));
+
+  const already = setup({ FAKE_DNS: '8.8.8.8,8.8.4.4', FAKE_IGNORE: 'yes' });
+  const said = already.run(['dns-apply']);
+  assert.equal(said.status, 0);
+  assert.match(said.stdout, /already 8\.8\.8\.8 8\.8\.4\.4/);
+  assert.ok(!already.calls().includes('connection modify'), 'a second run changes nothing and drops no connection');
+});
+
+test('the servers and the switch come from teletraan-network.conf, a wrong value is ignored, and DNS_ENFORCE=no leaves the network alone', () => {
+  const s = setup({ FAKE_DNS: '', FAKE_IGNORE: 'no' });
+  conf(s, "DNS_PRIMARY=9.9.9.9\nDNS_SECONDARY='149.112.112.112'\nDNS_ENFORCE=yes\n");
+  assert.equal(s.run(['dns-apply']).status, 0);
+  assert.ok(s.calls().includes('ipv4.dns 9.9.9.9 149.112.112.112 ipv4.ignore-auto-dns yes'), s.calls());
+
+  const wrong = setup({ FAKE_DNS: '', FAKE_IGNORE: 'no' });
+  conf(wrong, "DNS_PRIMARY=not-an-address\nDNS_SECONDARY=$(touch /tmp/never)\n");
+  assert.equal(wrong.run(['dns-apply']).status, 0);
+  assert.ok(wrong.calls().includes('ipv4.dns 8.8.8.8 8.8.4.4'), 'the defaults stand in for a value that is not an address');
+
+  const off = setup({ FAKE_DNS: '', FAKE_IGNORE: 'no' });
+  conf(off, 'DNS_ENFORCE=no\n');
+  const said = off.run(['dns-apply']);
+  assert.equal(said.status, 0);
+  assert.ok(!off.calls().includes('connection modify'));
+  assert.match(said.stdout, /DNS_ENFORCE is no/);
+});
+
+test('a Wi-Fi switch gives the new connection the configured name servers, and none when DNS_ENFORCE is no', () => {
+  const s = setup();
+  assert.equal(s.run(['switch'], 'New Net\n' + secret + '\nproject.api.example\n').status, 0);
+  const saved = fs.readFileSync(path.join(s.root, 'saved'), 'utf8');
+  assert.match(saved, /\[ipv4\]\nmethod=auto\ndns=8\.8\.8\.8;8\.8\.4\.4;\nignore-auto-dns=true\n/);
+
+  const off = setup();
+  conf(off, 'DNS_ENFORCE=no\n');
+  assert.equal(off.run(['switch'], 'New Net\n' + secret + '\nproject.api.example\n').status, 0);
+  assert.ok(!fs.readFileSync(path.join(off.root, 'saved'), 'utf8').includes('dns='));
 });
 
 test('scan lists each network once with its strongest signal, marks the one in use, and sorts strongest first', () => {
@@ -209,7 +262,7 @@ test('restart restarts the network manager in use, and dns changes the active co
   assert.equal(restart.status, 0, restart.stderr);
   assert.ok(s.calls().includes('systemctl restart NetworkManager.service'));
   assert.equal(s.run(['dns-public']).status, 0);
-  assert.ok(s.calls().includes("nmcli connection modify uuid 11111111-1111-4111-8111-111111111111 ipv4.dns 1.1.1.1 8.8.8.8 ipv4.ignore-auto-dns yes"), s.calls());
+  assert.ok(s.calls().includes("nmcli connection modify uuid 11111111-1111-4111-8111-111111111111 ipv4.dns 8.8.8.8 8.8.4.4 ipv4.ignore-auto-dns yes"), s.calls());
   assert.equal(s.run(['dns-default']).status, 0);
   assert.ok(s.calls().includes('ipv4.dns  ipv4.ignore-auto-dns no'), s.calls());
 });

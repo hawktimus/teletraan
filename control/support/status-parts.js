@@ -1,7 +1,7 @@
 // The pieces of GET status that need no network or disk, so they can be tried alone. The routes
 // (routes/status.js) gather the facts and hand them here.
 
-import { dotStates } from '../../dashboard/core/dots.js';
+import { dotStates, factsFromSyncStatus } from '../../dashboard/core/dots.js';
 
 // One question to Sanity for everything the Status tab needs from the dataset
 export const statusQuery = '{ "mini": *[_id == "status-mini"][0], ' +
@@ -46,6 +46,9 @@ export function lineStarting(hostText, label) {
 //   disk          { freeBytes, totalBytes }, or null
 //   tailscale     the address, or ''
 //   errors        the last lines of the control log that tell of a failure
+//   syncStatus    the sync service's file as core/sync-status.js parseSyncStatus cleans it, or null. When it is there
+//                 the four dots come from it, the same way as on the TV; "sanity" above is then only the separate fact
+//                 that this page can reach Sanity just now.
 export function buildStatus(facts, now = new Date()) {
   const f = facts || {};
   const data = f.data || {};
@@ -55,9 +58,11 @@ export function buildStatus(facts, now = new Date()) {
   const releases = Array.isArray(f.releases) ? f.releases : [];
   const calendarErrors = number(data.calendarErrors) || 0;
 
-  const dots = dotStates({
+  const everyMinutes = data.settings ? data.settings.mondayEveryMinutes : undefined;
+  const fromService = factsFromSyncStatus(f.syncStatus);
+  const dots = dotStates(fromService ? Object.assign({ everyMinutes: everyMinutes }, fromService) : {
     monday: { lastSyncAt: monday.lastSyncAt, lastError: monday.lastError },
-    everyMinutes: data.settings ? data.settings.mondayEveryMinutes : undefined,
+    everyMinutes: everyMinutes,
     calendarAt: mini.lastCalendarSyncAt,
     calendarErrors: calendarErrors,
     sanityAt: sanity.ok ? now : null,

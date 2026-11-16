@@ -27,7 +27,7 @@ function writeTool(folder, name, text) {
 }
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -86,7 +86,7 @@ function computerPlace(name, options = {}) {
     root: root,
     commit: options.commit,
     run() {
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/status-write.sh'), 'version'], {
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/status-write.sh'), 'version'], {
         env: { PATH: bin, STUB_LOG: log, STUB_DIR: stub }, encoding: 'utf8', input: '',
       });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };

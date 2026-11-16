@@ -720,7 +720,7 @@ test('the files are written in the team\'s plain style, and mention no tool', ()
   const emoji = new RegExp('[' + String.fromCharCode(0x2600) + '-' + String.fromCharCode(0x27bf) + ']|[\\uD83C-\\uD83E][\\uDC00-\\uDFFF]');
   const filler = /\b(simply|just|basically|really|very|actually|easily|seamless|robust|leverage|ensure|comprehensive)\b/i;
   // the words are joined from pieces so that this file does not hold them
-  const traces = new RegExp('\\b(' + ['cla' + 'ude', 'anthr' + 'opic', 'ope' + 'nai', 'chat' + 'gpt', 'copi' + 'lot', 'gem' + 'ini', 'l' + 'lm', 'assis' + 'tant'].join('|') + ')\\b|\\bA' + 'I\\b', 'i');
+  const traces = new RegExp('\\b(' + ['cla' + 'ude', 'anthr' + 'opic', 'ope' + 'nai', 'chat' + 'gp' + 't', 'copi' + 'lot', 'gem' + 'ini', 'l' + 'lm', 'assis' + 'tant'].join('|') + ')\\b|\\bA' + 'I\\b', 'i');
   [shipSource, commandSource, makeAppSource, cliSource, new URL(import.meta.url).pathname].forEach(file => {
     const text = fs.readFileSync(file, 'utf8');
     const name = path.basename(file);

@@ -10,6 +10,7 @@ import { actionButton, helperRun } from '../action-run.js';
 import { parseInfo } from './computer.js';
 import { clockWords } from '../words.js';
 import { choiceElement, switchElement } from '../choice.js';
+import { subscribe } from '../poll.js';
 
 // "network: 72|yes|1|School Guest" lines from the scan, strongest first
 export function parseNetworks(text) {
@@ -169,14 +170,32 @@ function mountWifi(box) {
   return () => { gone = true; clearTimeout(timer); };
 }
 
+// The name servers in one line and a state: ok (as configured), warn (the network's own are in use for the time being), or
+// unknown (no file yet, or DNS_ENFORCE is no)
+export function dnsWords(dns) {
+  if (!dns || !dns.present) return { state: 'unknown', words: 'Name servers: not known yet.' };
+  if (dns.enforce === 'no') return { state: 'unknown', words: 'Name servers: the network\'s own are used on purpose (DNS_ENFORCE is no).' };
+  if (dns.mode === 'network') return { state: 'warn', words: 'Name servers: temporarily on the network\'s own. ' + (dns.reason || 'The configured ones stopped answering.') + ' The computer goes back to ' + (dns.configured || 'the configured ones') + ' by itself when they answer again.' };
+  return { state: 'ok', words: 'Name servers: as configured' + (dns.configured ? ' (' + dns.configured + ')' : '') + '.' };
+}
+
 // Restart the network service and the name servers. The restart asks first; the name servers do not, and each undoes the other.
 function mountRepairs(box) {
   const root = el('div', 'computer-repairs');
   root.innerHTML = '<section class="card" aria-labelledby="repair-title"><h3 id="repair-title">Network repairs</h3>' +
     '<p class="muted">Use these when the check says the computer cannot reach the internet. The computer also tries them by itself when the network stays down.</p>' +
+    '<p class="dns-line" data-dns role="status"></p>' +
     '<div class="action-list" data-actions></div></section>';
   box.append(root);
   const list = root.querySelector('[data-actions]');
+  const line = root.querySelector('[data-dns]');
+  const paint = overview => {
+    const said = dnsWords(overview && overview.dns);
+    line.dataset.state = said.state;
+    line.textContent = said.words;
+  };
+  paint(null);
+  const stop = subscribe(store => paint(store.overview));
   [
     actionButton({
       id: 'restart-network', label: 'Restart the network', doing: 'Restarting the network', variant: 'secondary', icon: 'power',
@@ -188,13 +207,14 @@ function mountRepairs(box) {
         return found;
       },
     }),
-    actionButton({ id: 'dns-public', label: 'Use public name servers', doing: 'Changing the name servers', variant: 'secondary', icon: 'wifi', hint: 'Looks up addresses with 1.1.1.1 and 8.8.8.8 instead of the ones the school network hands out.', run: helperRun('dns-public') }),
+    actionButton({ id: 'dns-public', label: 'Use public name servers', doing: 'Changing the name servers', variant: 'secondary', icon: 'wifi', hint: 'Looks up addresses with the name servers this computer is set to use (8.8.8.8 and 8.8.4.4 unless the settings say otherwise) instead of the ones the school network hands out.', run: helperRun('dns-public') }),
     actionButton({ id: 'dns-default', label: "Use the network's name servers", doing: 'Changing the name servers', variant: 'secondary', icon: 'wifi', hint: 'Goes back to the name servers the network hands out.', run: helperRun('dns-default') }),
   ].forEach(item => list.append(item.root));
+  return stop;
 }
 
 export function mountWifiSection(box) {
-  const stop = mountWifi(box);
-  mountRepairs(box);
-  return stop;
+  const stopWifi = mountWifi(box);
+  const stopRepairs = mountRepairs(box);
+  return () => { stopWifi(); stopRepairs(); };
 }

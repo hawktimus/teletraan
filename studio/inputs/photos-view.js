@@ -26,10 +26,10 @@ import {
   uploadSummary,
   words,
 } from './photos-parts.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
-const apiVersion = '2025-02-19';
 
 const border = '1px solid var(--card-border-color, rgba(128, 128, 128, 0.4))';
 const muted = 'var(--card-muted-fg-color, inherit)';

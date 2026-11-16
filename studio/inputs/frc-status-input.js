@@ -14,11 +14,11 @@ import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { ageText, clockText } from './time-text.js';
 import { isRecord } from './plain-values.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // The id the Teletraan computer writes to. computer/scripts/frc-sync.sh has the same one.
 export const frcStatusId = 'frc-status';

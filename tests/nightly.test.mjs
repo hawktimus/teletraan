@@ -17,7 +17,7 @@ let passed = 0;
 let counter = 0;
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -66,7 +66,7 @@ function run(when, booked) {
   if (booked === null) fs.writeFileSync(path.join(stub, 'curl.exit'), '7');
   else fs.writeFileSync(path.join(stub, 'answer.txt'), '{"ms":3,"query":"x","result":' + booked + '}');
 
-  const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/nightly.sh')], {
+  const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/nightly.sh')], {
     env: { PATH: bin, TZ: 'UTC', NIGHTLY_NOW: when, STUB_LOG: log, STUB_DIR: stub, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_LEDGER: path.join(root, 'reboot-ledger.json'), TELETRAAN_UPTIME_SECONDS: String(40 * 3600), NETWATCH_STATE: path.join(root, 'no-netwatch.json') },
     encoding: 'utf8',
   });

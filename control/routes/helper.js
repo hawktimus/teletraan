@@ -5,8 +5,9 @@
 
 import { Refusal, mount, paramOf, readJson, send } from '../support/http.js';
 import { argumentAllowed } from '../lib/helper-client.js';
+import { redactText } from '../lib/redact.js';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default', 'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default', 'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen', 'units-check'];
 const syncTargets = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 
 // These stop or restart something people are watching, or turn the computer's automatic repairs back on, so the
@@ -62,6 +63,8 @@ export function register(router, ctx) {
     // A diagnostic report is the whole point of being able to read one without ssh, so it is not cut to 2000
     const limits = { 'monday-debug': 8000, 'network-info': 6000, 'wifi-scan': 4000, 'diag-read': 400000, 'diag-list': 8000, 'health-read': 20000, 'supervisor-read': 20000 };
     const limit = limits[word] || (word.startsWith('cleanup-') ? 20000 : 2000);
-    send(res, 200, { ok: true, word: word, output: String(output === undefined ? '' : output).slice(0, limit) });
+    // Every word's output goes through the same rules as the log download, so a key or a link that a script printed by
+    // mistake never reaches the page. The text is cleaned before it is cut, so a secret is not cut in half and left whole.
+    send(res, 200, { ok: true, word: word, output: redactText(String(output === undefined ? '' : output)).slice(0, limit) });
   });
 }

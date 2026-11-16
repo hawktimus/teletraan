@@ -12,11 +12,11 @@ import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { readStatus } from './status-input.js';
 import { ageText, clockText } from './time-text.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the other status blocks
-const apiVersion = '2025-02-19';
 
 // The lines for a status document. A computer that has not written them yet says so.
 export function supervisorLines(doc, now) {

@@ -5,7 +5,7 @@
 // Putting a page in its area, and taking it out again, is areas.js.
 
 import { panels } from '../registry.js';
-import { competitionRowMayPlay } from './competition.js';
+import { competitionCardHasContent, competitionRowMayPlay } from './competition.js';
 import * as frame from '../frame.js';
 
 const modules = {};
@@ -67,6 +67,9 @@ export function canShow(id, content, page = 1) {
   const module = modules[id];
   if (!module) return false;
   if (competitionIds.has(id) && !competitionRowMayPlay(content)) return false;
+  // A card draws a sentence of its own when it has nothing to show ("There is no rank yet"); that is a card with no
+  // content, and the rotation passes it over (competitionCardHasContent in core/competition.js)
+  if (competitionIds.has(id) && !module.hasContent) return competitionCardHasContent(module, content);
   if (!module.hasContent) return true;
 
   try {

@@ -1,7 +1,7 @@
 // GET releases, POST releases (a zip and a note, answered as one JSON line per install step), and
 // POST releases/<n>/activate for a rollback or a roll forward.
 
-import { sendJson, readBody } from '../lib/router.js';
+import { sendJson, readBody, readJson } from '../lib/router.js';
 import { parseMultipart } from '../lib/multipart.js';
 import { installRelease } from '../lib/install.js';
 import { limits } from '../lib/zip.js';
@@ -38,10 +38,17 @@ export function register(router, ctx) {
   });
 
   router.post('/releases/:n/activate', async (req, res) => {
+    // A switch restarts the screen, so the call must say it was confirmed. A stray request or a replayed one changes nothing.
+    const body = await readJson(req).catch(() => ({}));
+    if (body.confirmed !== true) {
+      sendJson(res, 400, { error: 'Confirm to switch. Nothing was changed.' });
+      return;
+    }
     const n = Number(req.params.n);
     const release = ctx.releases.activate(n);
     ctx.log('activated release ' + n);
-    if (ctx.restartSelf) ctx.restartSelf();
+    // The helper is asked first and the service restarts after the answer has been sent: the restart used to come first, so
+    // the helper calls could be cut off and the page showed an error for a switch that had worked.
     let message = '';
     try {
       await ctx.helper('restart-services');
@@ -50,5 +57,6 @@ export function register(router, ctx) {
       message = 'The wall switched, but the helper did not restart the screen.';
     }
     sendJson(res, 200, { ok: true, release: release, restarted: message === '', message: message });
+    if (ctx.restartSelf) ctx.restartSelf();
   });
 }

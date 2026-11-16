@@ -19,7 +19,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-security-'));
 
 test('six wrong tries stay counted after a restart, and the block lasts through it', () => {
   let clock = 1_800_000_000_000;
-  const options = { secretFile: path.join(work, 'secret'), stateFile: path.join(work, 'lockout.json'), now: () => clock };
+  const options = { getOverride: () => '482916', secretFile: path.join(work, 'secret'), stateFile: path.join(work, 'lockout.json'), now: () => clock };
   const first = createAuth(options);
   for (let i = 0; i < triesAllowed - 2; i++) first.attempt('9.9.9.9', '000000');
   const restarted = createAuth(options);
@@ -27,7 +27,7 @@ test('six wrong tries stay counted after a restart, and the block lasts through 
   assert.ok(restarted.attempt('9.9.9.9', '000000').blockedSeconds > 0);
   const again = createAuth(options);
   assert.ok(again.blockedFor('9.9.9.9') > 0, 'the block is still there after another restart');
-  assert.equal(again.attempt('9.9.9.9', '3229').ok, false, 'even the right PIN waits');
+  assert.equal(again.attempt('9.9.9.9', '482916').ok, false, 'even the right PIN waits');
   assert.equal(fs.statSync(options.stateFile).mode & 0o777, 0o600);
   clock += 61 * 60 * 1000;
   assert.equal(createAuth(options).blockedFor('9.9.9.9'), 0, 'free after the hour');
@@ -36,8 +36,8 @@ test('six wrong tries stay counted after a restart, and the block lasts through 
 test('a damaged lockout file is a clean start, not an error', () => {
   const stateFile = path.join(work, 'broken.json');
   fs.writeFileSync(stateFile, '{not json');
-  const auth = createAuth({ secretFile: path.join(work, 'secret'), stateFile: stateFile });
-  assert.equal(auth.attempt('8.8.8.8', '3229').ok, true);
+  const auth = createAuth({ getOverride: () => '482916', secretFile: path.join(work, 'secret'), stateFile: stateFile });
+  assert.equal(auth.attempt('8.8.8.8', '482916').ok, true);
 });
 
 test('only a call from the page itself passes: another site, the word null and a wrong address are refused', () => {

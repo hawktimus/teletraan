@@ -61,7 +61,7 @@ esac
 shown=$(printf '%s' "$line" | tr -c 'A-Za-z0-9 -' '?' | cut -c 1-40)
 
 case $word in
-  restart-kiosk|restart-services|reboot|status|display-info|network-info|wifi-scan|wifi-status|restart-network|dns-public|dns-default|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle|diag-create|diag-list|health-read|supervisor-read|clear-degraded|refresh-screen)
+  restart-kiosk|restart-services|reboot|status|display-info|network-info|wifi-scan|wifi-status|restart-network|dns-public|dns-default|monday-check|mirror-start|mirror-watch|mirror-status|log-bundle|diag-create|diag-list|health-read|supervisor-read|clear-degraded|refresh-screen|units-check)
     [ -z "$argument" ] || refuse "$shown"
     ;;
   diag-read)
@@ -177,7 +177,10 @@ case $word in
     code=0
     # Monday reads only when the last read is older than its setting; this file asks for a read now (monday-sync.sh)
     if [ "$argument" = monday ]; then
-      : > /tmp/teletraan-monday-force && chmod 666 /tmp/teletraan-monday-force || true
+      # The file is in the data folder, not in the shared /tmp, so nobody else on the computer can plant or remove it
+      force_data=${TELETRAAN_DATA_DIR:-$(setting TELETRAAN_DATA)}
+      force_data=${force_data:-/var/lib/teletraan/data}
+      mkdir -p "$force_data/monday" 2> /dev/null && : > "$force_data/monday/force" || true
     fi
     as_root "$systemctl_bin" start "teletraan-$argument.service" || code=$?
     finish "$code"
@@ -249,6 +252,34 @@ case $word in
       finish 1
     fi
     head -c 400000 "$found"
+    finish 0
+    ;;
+  units-check)
+    # Whether the systemd units installed on this computer are the ones of the release that is on the wall. An update from
+    # the control page puts new files in a release folder and nothing more: units, sudoers and timers are installed by
+    # computer/install.sh and the Mac tool, which need a password. This only compares and says so; it changes nothing and
+    # uses no sudo. The first line is the one the update shows.
+    unit_dir=${TELETRAAN_SYSTEMD:-/etc/systemd/system}
+    login_user=${TELETRAAN_ACCOUNT:-$(id -un)}
+    differing=''
+    count=0
+    for wanted in "$root"/current/computer/systemd/teletraan-*; do
+      [ -f "$wanted" ] || continue
+      unit=$(basename "$wanted")
+      # Not installed by computer/install.sh: the pull timer, and the socket and its service (they carry the group)
+      case $unit in teletraan-pull.*|teletraan-control.socket|teletraan-control@.service) continue ;; esac
+      # A unit this computer does not have yet counts too: the installer adds it
+      if [ -f "$unit_dir/$unit" ] && sed "s/ACCOUNT/$login_user/g" "$wanted" | cmp -s - "$unit_dir/$unit"; then
+        continue
+      fi
+      count=$((count + 1))
+      [ "$count" -gt 6 ] || differing="$differing $unit"
+    done
+    if [ "$count" -eq 0 ]; then
+      echo "units: the services of this computer match this version"
+    else
+      echo "units: $count service file(s) differ from this version:$differing. Run Install everything from the Mac tool (docs/updating-the-computer.md); the sudoers file is checked there too."
+    fi
     finish 0
     ;;
   health-read)

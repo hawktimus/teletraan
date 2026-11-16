@@ -15,6 +15,7 @@
     "deploy": "sanity deploy"
   },
   "dependencies": {
+    "@sanity/icons": "^5.2.3",
     "react": "^19.2.2",
     "react-dom": "^19.2.2",
     "sanity": "^6.17.0",

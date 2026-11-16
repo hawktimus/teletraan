@@ -23,7 +23,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-slides-'));
 const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'find', 'mktemp', 'mv', 'rm', 'mkdir', 'date', 'dirname', 'basename', 'cat', 'cp', 'wc', 'tr', 'ls'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -136,12 +136,12 @@ function setup(name, options) {
     log: log,
     run(args, extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/slides-sync.sh')].concat(args || []), { env: env, encoding: 'utf8', input: '', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/slides-sync.sh')].concat(args || []), { env: env, encoding: 'utf8', input: '', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     install(extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/install-slides.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/install-slides.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     // What Sanity answers: the list of talks
@@ -629,7 +629,7 @@ test('with no data folder the script stops with a plain line and downloads nothi
 
 test('the scripts have valid sh syntax, are executable, and never print or read the calendar addresses', () => {
   [syncFile, installFile].forEach(file => {
-    const syntax = spawnSync('/bin/sh', ['-n', file], { encoding: 'utf8' });
+    const syntax = spawnSync('/bin/bash', ['-n', file], { encoding: 'utf8' });
     assert.equal(syntax.status, 0, syntax.stderr);
     if (fs.existsSync('/bin/dash')) {
       const dash = spawnSync('/bin/dash', ['-n', file], { encoding: 'utf8' });

@@ -33,6 +33,8 @@ function switchField(name, title, description) {
 }
 
 // Seconds between plays: 0 for never, or from shortest to largest
+// The Look page shows these fields and the form hides them, and a hidden field is not required: nobody can fill it in
+// there, so a document saved before it existed could not be published.
 function everyField(name, title, description, start, shortest, largest) {
   return defineField({
     name: name,
@@ -42,7 +44,6 @@ function everyField(name, title, description, start, shortest, largest) {
     description: description,
     initialValue: start,
     validation: Rule => [
-      Rule.required().error('Enter the number of seconds, or 0 for never.'),
       Rule.integer().min(0).max(largest).error('Use 0 for never, or a whole number from ' + shortest + ' to ' + largest + '.'),
       Rule.custom(neverOrAtLeast(shortest)),
     ],
@@ -63,10 +64,7 @@ function durationField(name, title, description, start, shortest, longest) {
     group: 'look',
     description: description,
     initialValue: start,
-    validation: Rule => [
-      Rule.required().error('Enter the number of seconds.'),
-      Rule.min(shortest).max(longest).error('Use a number from ' + shortest + ' to ' + longest + '.'),
-    ],
+    validation: Rule => Rule.min(shortest).max(longest).error('Use a number from ' + shortest + ' to ' + longest + '.'),
   });
 }
 

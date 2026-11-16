@@ -199,7 +199,7 @@ exit 0
 }
 
 function runScript(setup, args) {
-  return spawnSync('/bin/sh', [setup.script].concat(args), {
+  return spawnSync('/bin/bash', [setup.script].concat(args), {
     encoding: 'utf8',
     env: Object.assign({}, process.env, { PATH: setup.stub + ':' + process.env.PATH, STUB_DIR: setup.stub }),
   });
@@ -214,7 +214,7 @@ function inTemp(run) {
   }
 }
 
-const hasJq = spawnSync('/bin/sh', ['-c', 'command -v jq']).status === 0;
+const hasJq = spawnSync('/bin/bash', ['-c', 'command -v jq']).status === 0;
 
 test('frc-sync.sh --event writes the answers of one event to a file and never shows the key', () => inTemp(work => {
   assert.ok(hasJq, 'this computer has no jq');

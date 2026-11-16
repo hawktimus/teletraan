@@ -9,9 +9,9 @@
 
 import { defineType, defineField } from 'sanity';
 import { showField, tooLong, aToZ, subtitleFor } from './fields.js';
+import { apiVersion } from '../project.js';
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // Two places with the same name, capitals ignored, would look the same in the
 // list a task is picked from. The Studio's own copy of the place is left out

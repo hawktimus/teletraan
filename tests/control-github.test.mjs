@@ -115,6 +115,7 @@ test('both routes need the PIN', async () => {
   try {
     assert.equal((await fetch(s.base + '/control/api/github/latest')).status, 401);
     assert.equal((await fetch(s.base + '/control/api/github/update', { method: 'POST' })).status, 401);
+    assert.equal((await fetch(s.base + '/control/api/github/update', { method: 'POST', headers: s.headers })).status, 400, 'an update must say it was confirmed');
   } finally {
     s.server.close();
   }
@@ -159,16 +160,16 @@ test('update downloads the sha, strips the top folder, installs as release 2 fro
   const github = fakeGithub({ sha: other, hold: hold });
   const s = await serve(github);
   try {
-    const first = fetch(s.base + '/control/api/github/update', { method: 'POST', headers: s.headers });
+    const first = fetch(s.base + '/control/api/github/update', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json' }, s.headers), body: JSON.stringify({ confirmed: true }) });
     await new Promise(resolve => setTimeout(resolve, 150));
-    const second = await fetch(s.base + '/control/api/github/update', { method: 'POST', headers: s.headers });
+    const second = await fetch(s.base + '/control/api/github/update', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json' }, s.headers), body: JSON.stringify({ confirmed: true }) });
     assert.equal(second.status, 409);
     assert.match((await second.json()).error, /Another update is running/);
     release();
     const response = await first;
     assert.equal(response.status, 200);
     const events = (await response.text()).trim().split('\n').map(line => JSON.parse(line));
-    assert.deepEqual(events.filter(e => e.state === 'start').map(e => e.step), ['download', 'unpack', 'files', 'schemas', 'studio', 'release', 'switch', 'restart', 'wait']);
+    assert.deepEqual(events.filter(e => e.state === 'start').map(e => e.step), ['download', 'unpack', 'files', 'schemas', 'syntax', 'tests', 'studio', 'release', 'switch', 'restart', 'wait', 'units']);
     assert.equal(events[events.length - 1].step, 'finish');
     assert.equal(events[events.length - 1].state, 'done');
     // the zip asked for is the one of the sha the API gave, not the branch
@@ -190,7 +191,7 @@ test('update downloads the sha, strips the top folder, installs as release 2 fro
 test('a failed download ends the stream with the sentence and installs nothing', async () => {
   const s = await serve(fakeGithub({ length: 200 * 1024 * 1024 }));
   try {
-    const response = await fetch(s.base + '/control/api/github/update', { method: 'POST', headers: s.headers });
+    const response = await fetch(s.base + '/control/api/github/update', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json' }, s.headers), body: JSON.stringify({ confirmed: true }) });
     const events = (await response.text()).trim().split('\n').map(line => JSON.parse(line));
     assert.equal(events[events.length - 1].state, 'fail');
     assert.match(events[events.length - 1].message, /larger than 100 MB/);

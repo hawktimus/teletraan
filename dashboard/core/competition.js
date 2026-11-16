@@ -312,17 +312,33 @@ export function mixIn(playlist, steps, priority) {
 }
 
 // True when a row of the rotation that names a competition card may play. Outside the competition window it may not in Auto and
-// in Before and after, so the row is skipped as a row with nothing to show is. Always and Off leave the row as it was, and a
-// Preview competition plays whatever the date.
+// in Before and after, so the row is skipped as a row with nothing to show is. Off never plays one, Always leaves the row as it
+// was, and a Preview competition plays whatever the date.
 export function competitionRowMayPlay(content, now = new Date()) {
   if (previewIsOn(now)) return true;
 
   const settings = content && content.settings ? content.settings : defaultSettings;
   const mode = modeOf(settings);
-  if (mode === 'always' || mode === 'off') return true;
+  // Off means nothing about a competition draws, so a row that names a card is skipped too. It used to play and say
+  // "There is no rank yet" to a room that had switched the cards off.
+  if (mode === 'off') return false;
+  if (mode === 'always') return true;
 
   const entry = teamEntry(frcOf(content, now));
   return entry !== null && inCompetitionWindow(entry.events, todayOf(content, now));
+}
+
+// Whether a competition card has anything to say: the card is asked for its page as markup, and a card that has only its
+// "nothing yet" sentence (core/competition-draw.js, emptyMarkup) has no content. A card that cannot say is left in, as
+// the rotation has always done, so a fault in one card never takes a good one out.
+export function competitionCardHasContent(module, content, now = new Date()) {
+  if (typeof module.markupFor !== 'function') return true;
+
+  try {
+    return !/class="empty"/.test(String(module.markupFor(content, now)));
+  } catch (error) {
+    return true;
+  }
 }
 
 let complained = false; // a problem is written in the console once, not at every page

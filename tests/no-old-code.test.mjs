@@ -123,7 +123,7 @@ test('the corner stamp shows the build: a hash cut to seven characters, or a tim
 const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'mv', 'rm', 'chmod', 'awk', 'sleep', 'hostname'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -171,7 +171,7 @@ echo "status-write $* build=$(cat "$(dirname "$0")/../../dashboard/build.js" 2> 
 
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
-  const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/kiosk.sh')], {
+  const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/kiosk.sh')], {
     env: { PATH: bin, HOME: home, STUB_LOG: log, DISPLAY_POLL_INTERVAL: '0', DISPLAY_POLL_LIMIT: '0' },
     encoding: 'utf8',
     input: '',
@@ -220,8 +220,8 @@ test('kiosk.sh clears the browser cache folders and leaves cookies and Local Sto
 });
 
 test('kiosk.sh and the Mac tool pass the syntax check', () => {
-  assert.equal(spawnSync('/bin/sh', ['-n', path.join(repo, 'computer/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
-  assert.equal(spawnSync('bash', ['-n', path.join(repo, 'tools/teletraan/teletraan-tool')], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', path.join(repo, 'computer/scripts/kiosk.sh')], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', path.join(repo, 'tools/teletraan/teletraan-tool')], { encoding: 'utf8' }).status, 0);
   // The release the installer makes writes build.js from RELEASE.json; the Mac tool hands it the commit
   assert.ok(/install\.sh[^\n]*--commit/.test(textOf(path.join(repo, 'tools/teletraan/teletraan-tool'))), 'the Mac tool gives the installer the commit');
 });

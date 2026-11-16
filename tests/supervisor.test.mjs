@@ -319,7 +319,7 @@ check('clearing turns the automatic fixes back on', () => {
 
 check('the gate script passes the question through and keeps the refused exit code', () => {
   fs.writeFileSync(ledgerFile, JSON.stringify({ reboots: [{ at: start, reason: 'nightly' }] }));
-  const result = spawnSync('bash', [path.join(repo, 'computer/scripts/gate.sh'), 'allow', 'recovery', 'frames'], {
+  const result = spawnSync('/bin/bash', [path.join(repo, 'computer/scripts/gate.sh'), 'allow', 'recovery', 'frames'], {
     encoding: 'utf8',
     env: Object.assign({}, process.env, {
       TELETRAAN_LEDGER: ledgerFile,
@@ -334,7 +334,7 @@ check('the gate script passes the question through and keeps the refused exit co
 });
 
 check('the gate refuses without a reason, so nothing can reboot by accident', () => {
-  const result = spawnSync('bash', [path.join(repo, 'computer/scripts/gate.sh'), 'allow'], { encoding: 'utf8' });
+  const result = spawnSync('/bin/bash', [path.join(repo, 'computer/scripts/gate.sh'), 'allow'], { encoding: 'utf8' });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /say why/);
 });

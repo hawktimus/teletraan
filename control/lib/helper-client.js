@@ -5,7 +5,7 @@
 
 import net from 'node:net';
 
-export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default', 'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen'];
+export const words = ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default', 'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen', 'units-check'];
 
 // An argument is lower case letters, digits and dashes, which covers every word above except one: the name of a
 // diagnostic report, which carries the time it was written (report-20261106T140701Z-restart-kiosk). The helper and

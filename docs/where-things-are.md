@@ -552,7 +552,7 @@ editors can sign in from anywhere.
       seasons.test.mjs        checks for choosing, loading and drawing a seasonal pack (core/season.js), for its
                               header mark (core/marks.js), its over layer and the Look switch that turns that off,
                               for its corner art (core/corner-art.js), for a pack that is missing, broken or slow,
-                              and that check-seasons.mjs fails for each kind of mistake
+                              and that tests/check-seasons.test.mjs fails for each kind of mistake
       night.test.mjs          checks for night mode: when it is night in a time zone, where the bouncing
                               logo starts and how often it hits a corner, and the night stylesheet
       presentation.test.mjs   checks for presentation mode (core/presentation.js): when a talk is due, how it
@@ -1306,13 +1306,13 @@ A test of a shell script is a Node file that runs the script with fake `curl`, `
 Each one ends with a total such as `24 of 24 passed` and says FAIL beside
 anything that went wrong. If anything fails, the command ends with an error.
 Run all of them after you change code under `dashboard/core/` or a file under
-`studio/schemas/`. `tests/schemas.test.mjs` runs `check-themes.mjs` and `check-seasons.mjs`
+`studio/schemas/`. `tests/schemas.test.mjs` runs `tests/check-themes.test.mjs` and `tests/check-seasons.test.mjs`
 itself, so after you change a file in `dashboard/themes/` or `dashboard/seasons/` it is
 enough to run `tests/schemas.test.mjs`.
 `templates.test.mjs` fails when the CSV templates are out of date, so after a
 schema change run `node scripts/make-templates.mjs` in the `studio` folder.
 
-`check-themes.mjs` needs 7 to 1 contrast for every text colour on the
+`tests/check-themes.test.mjs` needs 7 to 1 contrast for every text colour on the
 background it is drawn on, for every theme with and without every overlay.
 Three pairs in the Hawktimus theme are under 7 to 1 today (yellow on the tab
 colour, and the blocked task colour on the plate and on the dark red plate).

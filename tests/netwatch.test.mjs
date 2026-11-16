@@ -19,7 +19,7 @@ const scriptFile = path.join(repo, 'computer/scripts/netwatch.sh');
 const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'awk', 'tr', 'mv', 'rm', 'cut', 'wc', 'mkdir', 'chmod', 'ls', 'sleep', 'jq', 'printf', 'cp', 'readlink', 'basename', 'sort', 'node'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -498,6 +498,114 @@ test('there is one HTTPS check, no key is read, and the old watchdog and its tim
   const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-netwatch.timer'), 'utf8');
   assert.match(timer, /OnUnitActiveSec=2min/);
   assert.match(fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-netwatch.service'), 'utf8'), /ExecStart=\/opt\/teletraan\/computer\/scripts\/netwatch\.sh/);
+});
+
+// ----- the name servers -----
+
+// A fake of /usr/local/sbin/teletraan-net: it writes down its word and then does what the files of the stub folder say,
+// so a test can decide that the lookups work after dns-default and not after dns-public
+function nameServerWorld(options = {}) {
+  const place = setup();
+  const tool = path.join(place.stub, 'teletraan-net');
+  fs.writeFileSync(tool, `#!/bin/sh
+echo "net $*" >> "$STUB_LOG"
+[ -f "$STUB_DIR/net-$1.getent" ] && cp "$STUB_DIR/net-$1.getent" "$STUB_DIR/getent.exit"
+[ -f "$STUB_DIR/net-$1.code" ] && cp "$STUB_DIR/net-$1.code" "$STUB_DIR/curl.code" && cp "$STUB_DIR/net-$1.exit" "$STUB_DIR/curl.exit"
+exit 0
+`, { mode: 0o755 });
+  const probe = path.join(place.stub, 'probe');
+  fs.writeFileSync(probe, '#!/bin/sh\necho "probe $1" >> "$STUB_LOG"\n[ -f "$STUB_DIR/probe.ok" ]\n', { mode: 0o755 });
+  const conf = path.join(place.root, 'teletraan-network.conf');
+  fs.writeFileSync(conf, options.conf || 'DNS_PRIMARY=8.8.8.8\nDNS_SECONDARY=8.8.4.4\nDNS_ENFORCE=yes\n');
+  const dnsFile = path.join(place.root, 'dns.json');
+  place.env = { TELETRAAN_NET: tool, NETWATCH_DNS_STATE: dnsFile, NETWATCH_DNS_PROBE: probe, TELETRAAN_NETWORK_CONF: conf };
+  place.dns = () => JSON.parse(fs.readFileSync(dnsFile, 'utf8'));
+  place.go = at => place.run(at, place.env);
+  return place;
+}
+
+test('a working network writes dns.json: the configured name servers are in use, and nothing is switched', () => {
+  const place = nameServerWorld();
+  const first = place.go(0);
+  assert.equal(first.status, 0, first.errors);
+  assert.deepEqual(first.sudo, []);
+  const dns = place.dns();
+  assert.equal(dns.mode, 'configured');
+  assert.equal(dns.configured, '8.8.8.8 8.8.4.4');
+  assert.equal(dns.enforce, 'yes');
+});
+
+test('the gateway answers and the lookup fails: from the second failed run the other name servers are tried once, kept when they work, and the ladder is not started', () => {
+  const place = nameServerWorld();
+  place.set('getent.exit', '2');
+  place.down();
+  place.set('net-dns-default.getent', '0');
+  place.set('net-dns-default.code', '200');
+  place.set('net-dns-default.exit', '0');
+  assert.deepEqual(place.go(0).sudo, [], 'one failed run does nothing');
+  const second = place.go(2 * minute);
+  assert.deepEqual(second.sudo.map(call => call.replace(/^.*\/teletraan-net /, 'net ')), ['net dns-default'], second.text);
+  assert.ok(!second.sudo.some(call => call.includes('NetworkManager')), 'no restart: the name servers were the problem');
+  assert.equal(place.dns().mode, 'network');
+  assert.match(place.dns().reason, /public name servers did not answer|configured name servers did not answer|did not answer/);
+  assert.ok(place.logLines().some(line => line.event === 'dns_switched'));
+  assert.ok(second.notified.some(text => /name servers switched/.test(text)));
+  const ok = place.go(4 * minute);
+  assert.deepEqual(ok.sudo, [], 'the next run finds the network working');
+  assert.equal(place.netwatch().failures, 0);
+});
+
+test('the configured name servers come back by themselves, no sooner than ten minutes after the switch and only when they answer', () => {
+  const place = nameServerWorld();
+  place.set('getent.exit', '2');
+  place.down();
+  place.set('net-dns-default.getent', '0');
+  place.set('net-dns-default.code', '200');
+  place.set('net-dns-default.exit', '0');
+  place.go(0);
+  place.go(2 * minute);
+  assert.equal(place.dns().mode, 'network');
+  place.set('probe.ok', '');
+  assert.deepEqual(place.go(6 * minute).sudo, [], 'too soon, even though they answer');
+  place.go(7 * minute);
+  assert.equal(place.dns().mode, 'network');
+  fs.rmSync(path.join(place.stub, 'probe.ok'));
+  assert.deepEqual(place.go(14 * minute).sudo, [], 'they do not answer yet, so nothing changes');
+  place.set('probe.ok', '');
+  const back = place.go(16 * minute);
+  assert.deepEqual(back.sudo.map(call => call.replace(/^.*\/teletraan-net /, 'net ')), ['net dns-public']);
+  assert.equal(place.dns().mode, 'configured');
+  assert.ok(place.logLines().some(line => line.event === 'dns_restored'));
+  assert.deepEqual(place.go(18 * minute).sudo, [], 'and it stays put');
+});
+
+test('when neither set of name servers works the first is put back, it is tried only once for the outage, and the ladder goes on', () => {
+  const place = nameServerWorld();
+  place.set('getent.exit', '2');
+  place.down();
+  place.set('net-dns-default.getent', '2');
+  place.go(0);
+  const second = place.go(2 * minute);
+  assert.deepEqual(second.sudo.map(call => call.replace(/^.*\/teletraan-net /, 'net ')), ['net dns-default', 'net dns-public'], 'tried, then put back');
+  assert.equal(place.dns().mode, 'configured');
+  const third = place.go(4 * minute);
+  assert.deepEqual(third.sudo, ['systemctl restart NetworkManager.service', 'nmcli device reapply wlp2s0'], 'the ladder starts, and the name servers are not tried a second time');
+});
+
+test('a failed lookup with the gateway down is not a name server problem, and DNS_ENFORCE=no leaves the name servers alone', () => {
+  const noGateway = nameServerWorld();
+  noGateway.set('getent.exit', '2');
+  noGateway.set('ping.exit', '1');
+  noGateway.down();
+  noGateway.go(0);
+  assert.deepEqual(noGateway.go(2 * minute).sudo, []);
+
+  const off = nameServerWorld({ conf: 'DNS_ENFORCE=no\n' });
+  off.set('getent.exit', '2');
+  off.down();
+  off.go(0);
+  assert.deepEqual(off.go(2 * minute).sudo, []);
+  assert.equal(off.dns().enforce, 'no');
 });
 
 let failures = 0;

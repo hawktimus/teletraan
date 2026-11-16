@@ -352,7 +352,7 @@ test('a row that names a competition card is skipped outside the competition win
     assert.equal(competition.competitionRowMayPlay(content, noon('2027-03-21')), false, '8 days after the end');
   });
   assert.equal(competition.competitionRowMayPlay(contentWith(raw => { raw.settings.competitionMode = 'always'; }), noon('2026-10-09')), true, 'Always is as it was');
-  assert.equal(competition.competitionRowMayPlay(contentWith(raw => { raw.settings.competitionMode = 'off'; }), noon('2026-10-09')), true, 'Off is as it was');
+  assert.equal(competition.competitionRowMayPlay(contentWith(raw => { raw.settings.competitionMode = 'off'; }), noon('2026-10-09')), false, 'Off plays no competition card, so a row that names one is skipped');
   assert.equal(competition.competitionRowMayPlay({}, noon('2027-03-10')), false, 'no data, no competition');
   assert.equal(competition.inCompetitionWindow([], '2027-03-10'), false);
   assert.equal(competition.inCompetitionWindow([{ startDate: '', endDate: '' }], '2027-03-10'), false, 'an event with no date opens no window');

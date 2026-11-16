@@ -6,7 +6,8 @@
 import { useEffect, useState } from 'react';
 
 // The same version as the screen's own questions to Sanity
-export const apiVersion = '2025-02-19';
+export { apiVersion } from '../project.js';
+import { apiVersion } from '../project.js';
 
 export const words = {
   reading: 'Reading the settings.',

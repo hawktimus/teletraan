@@ -3,6 +3,7 @@
 
 import { defineType, defineField } from 'sanity';
 import { neverOrAtLeast, noteField, tooLong } from './fields.js';
+import { datetimeOptions, oddHour } from './presentationTimes.js';
 import { statusBlockField } from './settingsStatus.js';
 import { rotationField } from './settingsRotation.js';
 import { announcementsField, announceRequestField } from './settingsAnnouncements.js';
@@ -214,7 +215,7 @@ const motionField = defineField({
   description: 'Full plays every movement. Light plays one simple change at each panel and view change and keeps the idle sweeps still. Calm only fades.',
   options: { list: motions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'full',
-  validation: Rule => Rule.required().error('Pick full, light or calm.'),
+  validation: Rule => Rule.valid(motions.map(motion => motion.value)).error('Pick full, light or calm.'),
 });
 
 const motionOnKioskField = defineField({
@@ -226,7 +227,6 @@ const motionOnKioskField = defineField({
   description: 'Not used any more. Every computer plays the Motion setting, and a screen that cannot keep up in Full moves to Light by itself.',
   options: { list: kioskMotions, layout: 'radio', direction: 'horizontal' },
   initialValue: 'light',
-  validation: Rule => Rule.required().error('Pick light or full.'),
 });
 
 const speedField = defineField({
@@ -237,10 +237,7 @@ const speedField = defineField({
   description: 'How fast things move and how long each panel stays. Slow makes everything take longer, Fast makes it quicker. Normal is the standard speed.',
   options: { list: speeds, layout: 'radio', direction: 'horizontal' },
   initialValue: 'normal',
-  validation: Rule => [
-    Rule.required().error('Pick a speed.'),
-    Rule.valid(speeds.map(speed => speed.value)).error('Pick very slow, slow, normal or fast.'),
-  ],
+  validation: Rule => Rule.valid(speeds.map(speed => speed.value)).error('Pick very slow, slow, normal or fast.'),
 });
 
 const frameMetalField = defineField({
@@ -251,10 +248,7 @@ const frameMetalField = defineField({
   description: 'The metal of the banner, countdown and logo edges. Gold is warm antique brass, Silver is weathered steel. Page frames follow Frame finish, in the same section.',
   options: { list: metals, layout: 'radio', direction: 'horizontal' },
   initialValue: 'gold',
-  validation: Rule => [
-    Rule.required().error('Pick gold or silver.'),
-    Rule.valid(metals.map(metal => metal.value)).error('Pick gold or silver.'),
-  ],
+  validation: Rule => Rule.valid(metals.map(metal => metal.value)).error('Pick gold or silver.'),
 });
 
 const glintField = defineField({
@@ -360,7 +354,9 @@ const alertField = defineField({
       name: 'until',
       title: 'Take down at',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'Optional. The alert takes itself down at this time. Leave empty to keep it up until you turn it off.',
+      validation: Rule => Rule.custom(oddHour).warning(),
     }),
   ],
 });

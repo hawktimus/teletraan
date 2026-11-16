@@ -2,6 +2,7 @@
 
 import { defineField } from 'sanity';
 import { tooLong } from './fields.js';
+import { datetimeOptions, oddHour } from './presentationTimes.js';
 
 // The same labels as defaultSettings.countdown in dashboard/config.js. The
 // kickoff time is 12:00 noon in Holly Springs (17:00 UTC in January). A title
@@ -28,8 +29,10 @@ export const countdownField = defineField({
       name: 'kickoff',
       title: 'Kickoff date and time',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When Kickoff starts. Once it has passed, the countdown moves on to Rollout.',
       initialValue: '2027-01-09T17:00:00.000Z',
+      validation: Rule => Rule.custom(oddHour).warning(),
     }),
     defineField({
       name: 'rolloutLabel',
@@ -43,7 +46,9 @@ export const countdownField = defineField({
       name: 'rollout',
       title: 'Rollout date and time',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When Rollout is. Leave empty until the date is known.',
+      validation: Rule => Rule.custom(oddHour).warning(),
     }),
   ],
 });

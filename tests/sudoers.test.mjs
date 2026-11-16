@@ -220,7 +220,7 @@ check('the Wi-Fi driver rules name one module with and without -r, for the modul
 });
 
 check('visudo accepts the generated file and refuses a broken one', () => {
-  const visudo = spawnSync('/bin/sh', ['-c', 'command -v visudo'], { encoding: 'utf8' }).stdout.trim();
+  const visudo = spawnSync('/bin/bash', ['-c', 'command -v visudo'], { encoding: 'utf8' }).stdout.trim();
   if (!visudo) {
     console.log('      visudo is not installed here, so only the strict reader above checked the file.');
     return;

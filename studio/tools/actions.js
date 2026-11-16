@@ -30,12 +30,25 @@
 // A Studio action is a plain function that Studio calls with the document.
 // It gives back a label and what to do when it is clicked.
 
-import { useDocumentOperation } from 'sanity';
+import { useDocumentOperation, useValidationStatus } from 'sanity';
 import { useState } from 'react';
 import { hiddenTransitions } from '../inputs/hidden-transitions.js';
 import { previews } from '../inputs/previews.js';
 import { previewMinutes, themePreviews, viewPreviews } from '../inputs/look-previews.js';
 import { announceRequest, presentationTestRequest, hiddenRequest, previewRequest, previewThemeRequest, showViewRequest, backToScheduleRequest, sendWithOperations } from './screen-requests.js';
+
+// Every button here sets a field of the settings page and then publishes it, which also publishes anything else on the page
+// that was not published yet. A page with an error in it (a rule the Studio refuses, such as a hidden field with a value
+// out of range) could not be published, and the button used to do nothing at all and say nothing. Now it is switched off and
+// its hint says why: the page cannot be changed just now, or how many errors have to be fixed first.
+function usePlayGate(props, patch) {
+  const { validation } = useValidationStatus(props.id, props.type);
+  const errors = (Array.isArray(validation) ? validation : []).filter(marker => marker && marker.level === 'error').length;
+
+  if (patch.disabled) return { disabled: true, why: 'This button is off because the page cannot be changed just now (' + String(patch.disabled).toLowerCase().replace(/_/g, ' ') + ').' };
+  if (errors > 0) return { disabled: true, why: 'This button is off because the settings page has ' + errors + (errors === 1 ? ' error' : ' errors') + ' that stop it from being published, and every button here publishes it. Fix ' + (errors === 1 ? 'it' : 'them') + ' first: they are marked in red on the page.' };
+  return { disabled: false, why: '' };
+}
 
 // The buttons of the hidden transitions, one for each transition in hidden-transitions.js, so
 // adding a transition there adds its button. kind is { id, name, hoursField, chanceField }.
@@ -46,11 +59,12 @@ function makePlayHiddenAction(kind) {
 
   function usePlayHiddenAction(props) {
     const { patch, publish } = useDocumentOperation(props.id, props.type);
+    const gate = usePlayGate(props, patch);
 
     return {
       label: label,
-      title: label + ' on the screen. It plays once, at the next page change or within 20 seconds, and only if Allow hidden transitions is on.',
-      disabled: Boolean(patch.disabled),
+      title: gate.disabled ? gate.why : label + ' on the screen. It plays once, at the next page change or within 20 seconds, and only if Allow hidden transitions is on.',
+      disabled: gate.disabled,
       onHandle: () => {
         sendWithOperations(patch, publish, hiddenRequest(kind.id));
         props.onComplete();
@@ -70,11 +84,12 @@ export const playHiddenActions = hiddenTransitions.map(makePlayHiddenAction);
 // What it plays is the announcements list of this same page, so nothing is chosen here.
 export function usePlayAnnouncementsAction(props) {
   const { patch, publish } = useDocumentOperation(props.id, props.type);
+    const gate = usePlayGate(props, patch);
 
   return {
     label: 'Play announcements',
-    title: 'Play every announcement that is switched on, one after another, on the screen now. Times and days are ignored. Nothing plays if none is switched on.',
-    disabled: Boolean(patch.disabled),
+    title: gate.disabled ? gate.why : 'Play every announcement that is switched on, one after another, on the screen now. Times and days are ignored. Nothing plays if none is switched on.',
+    disabled: gate.disabled,
     onHandle: () => {
       sendWithOperations(patch, publish, announceRequest());
       props.onComplete();
@@ -90,11 +105,12 @@ usePlayAnnouncementsAction.action = 'playAnnouncements';
 // nothing is chosen here.
 export function useRunPresentationTestAction(props) {
   const { patch, publish } = useDocumentOperation(props.id, props.type);
+    const gate = usePlayGate(props, patch);
 
   return {
     label: 'Run presentation test',
-    title: 'Run the sample talk on the screen now, with six sample slides. Press the clicker to begin. It needs no internet and only runs if Run presentations is on.',
-    disabled: Boolean(patch.disabled),
+    title: gate.disabled ? gate.why : 'Run the sample talk on the screen now, with six sample slides. Press the clicker to begin. It needs no internet and only runs if Run presentations is on.',
+    disabled: gate.disabled,
     onHandle: () => {
       sendWithOperations(patch, publish, presentationTestRequest());
       props.onComplete();
@@ -122,12 +138,13 @@ function makePreviewAction(kind) {
 
   function usePreviewAction(props) {
     const { patch, publish } = useDocumentOperation(props.id, props.type);
+    const gate = usePlayGate(props, patch);
     const note = useNote(props.onComplete);
 
     return {
       label: label,
-      title: 'Show ' + kind.shows + ' on the screen for 2 minutes, then go back to the saved settings. No setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over.',
-      disabled: Boolean(patch.disabled),
+      title: gate.disabled ? gate.why : 'Show ' + kind.shows + ' on the screen for 2 minutes, then go back to the saved settings. No setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over.',
+      disabled: gate.disabled,
       dialog: note.dialog,
       onHandle: () => {
         sendWithOperations(patch, publish, previewRequest(kind.id));
@@ -150,12 +167,13 @@ function makeLookAction(kind, noun, id, name, fields) {
 
   function useLookAction(props) {
     const { patch, publish } = useDocumentOperation(props.id, props.type);
+    const gate = usePlayGate(props, patch);
     const note = useNote(props.onComplete);
 
     return {
       label: label,
-      title: 'Show the ' + name + ' ' + noun + ' on the screen for ' + previewMinutes + ' minutes, then go back to the schedule. No saved setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over. Back to the schedule ends it at once.' + (noun === 'view' ? ' A view with no data cannot show: Condensed has only Monday cards, so it stays on the schedule while no Monday task is on the TV, and the Now showing tab of the control page says so.' : ''),
-      disabled: Boolean(patch.disabled),
+      title: gate.disabled ? gate.why : 'Show the ' + name + ' ' + noun + ' on the screen for ' + previewMinutes + ' minutes, then go back to the schedule. No saved setting is changed. It starts within about 20 seconds, and waits for an alert, a talk or night mode to be over. Back to the schedule ends it at once.' + (noun === 'view' ? ' A view with no data cannot show: Condensed has only Monday cards, so it stays on the schedule while no Monday task is on the TV, and the Now showing tab of the control page says so.' : ''),
+      disabled: gate.disabled,
       dialog: note.dialog,
       onHandle: () => {
         sendWithOperations(patch, publish, fields());
@@ -173,12 +191,13 @@ export const previewViewActions = viewPreviews.map(view => makeLookAction(view, 
 
 export function useBackToScheduleAction(props) {
   const { patch, publish } = useDocumentOperation(props.id, props.type);
+    const gate = usePlayGate(props, patch);
   const note = useNote(props.onComplete);
 
   return {
     label: 'Back to the schedule',
-    title: 'End every theme and view preview, and every hold from the control page, now. The screen goes back to its schedule within about 20 seconds.',
-    disabled: Boolean(patch.disabled),
+    title: gate.disabled ? gate.why : 'End every theme and view preview, and every hold from the control page, now. The screen goes back to its schedule within about 20 seconds.',
+    disabled: gate.disabled,
     dialog: note.dialog,
     onHandle: () => {
       sendWithOperations(patch, publish, backToScheduleRequest());

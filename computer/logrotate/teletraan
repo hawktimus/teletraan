@@ -13,3 +13,17 @@
   notifempty
   copytruncate
 }
+
+# The helper log and the control log of the control page. The helper log holds one line for each word the page asked the
+# computer to run; it was never rotated before and only ever grew.
+/opt/teletraan/logs/*.log {
+  su ACCOUNT ACCOUNT
+  weekly
+  rotate 8
+  maxsize 5M
+  compress
+  delaycompress
+  missingok
+  notifempty
+  copytruncate
+}

@@ -24,7 +24,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-install-calendars-
 const ordinaryTools = ['sed', 'grep', 'mktemp', 'rm', 'dirname', 'cat'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -60,7 +60,7 @@ function setup(name) {
     root: root,
     install(extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/install-calendars.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/install-calendars.sh')], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
   };
@@ -143,7 +143,7 @@ test('it fills in the account the way install-timers.sh does, and the units it c
 });
 
 test('the script has valid sh syntax and is executable', () => {
-  const syntax = spawnSync('/bin/sh', ['-n', installFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', installFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
   assert.ok(fs.readFileSync(installFile, 'utf8').startsWith('#!/bin/bash\n'));
   assert.ok((fs.statSync(installFile).mode & 0o111) !== 0, 'the script should be executable');

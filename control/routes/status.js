@@ -8,6 +8,7 @@ import { mount, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
 import { buildStatus, errorLines, lastLines, lineStarting, statusQuery } from '../support/status-parts.js';
 import { redactLine } from '../lib/redact.js';
+import { parseSyncStatus } from '../../dashboard/core/sync-status.js';
 
 // The releases that are kept, newest first, and the one that runs. The release code (lane CA)
 // may offer them as ctx.listReleases(); otherwise the folders under releasesDir are read.
@@ -91,8 +92,17 @@ export async function gather(ctx) {
     sanity = { ok: false, error: String(error && error.message).slice(0, 150) };
   }
 
+  // The file the sync service writes: the same one the TV draws its dots from
+  let syncStatus = null;
+  try {
+    syncStatus = parseSyncStatus(JSON.parse(fs.readFileSync(path.join(ctx.dataDir, 'sync-status.json'), 'utf8')));
+  } catch (error) {
+    // no file yet: the dots fall back to the Sanity documents
+  }
+
   const found = await releaseFacts(ctx);
   return buildStatus({
+    syncStatus: syncStatus,
     releases: found.releases,
     current: found.current,
     host: host,

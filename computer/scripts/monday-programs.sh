@@ -112,7 +112,7 @@ def wanted_task($row):
     completedOn: $row.completedOn,
     estHours: $row.estHours,
     showOnBoard: $row.showOnBoard,
-    note: $row.note,
+    note: null,
     show: true,
     mondayBoardId: $row.board,
     mondayBoardName: board_name($row.board)

@@ -17,6 +17,8 @@
 # import it into a NEW dataset first, never straight over production.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
+# The files hold the names of students and are for this account only
+umask 077
 
 # How many backups are kept
 keep=14
@@ -54,6 +56,7 @@ command -v curl > /dev/null 2>&1 || fail "curl is not installed. Run: sudo apt i
 command -v gzip > /dev/null 2>&1 || fail "gzip is not installed. Run: sudo apt install gzip"
 
 mkdir -p "$backups" 2> /dev/null || fail "could not make the folder $backups. install-backup.sh makes it."
+chmod 700 "$backups" 2> /dev/null || true
 [ -w "$backups" ] || fail "the folder $backups cannot be written by this account. install-backup.sh sets that up."
 
 final="$backups/$dataset-$(date +%F).ndjson.gz"

@@ -19,7 +19,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-connection-'));
 const ordinaryTools = ['awk', 'sed', 'tr', 'sort', 'uniq', 'grep', 'head', 'tail', 'date', 'dirname', 'cat'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -95,7 +95,7 @@ function setup(name, options) {
     log: log,
     run(extra) {
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_CORS: 'ok', STUB_DOCKER: 'running' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/check-connection.sh')], { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/check-connection.sh')], { env: env, encoding: 'utf8', input: '' });
       const lines = result.stdout.split('\n').filter(line => line !== '');
       return { lines: lines, text: result.stdout, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
@@ -214,7 +214,7 @@ test('with no config.js to read, the Sanity checks fail with a plain line and no
 });
 
 test('the script has valid sh syntax, is executable, and does not stop at the first failure', () => {
-  const syntax = spawnSync('/bin/sh', ['-n', scriptFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', scriptFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
 
   const text = fs.readFileSync(scriptFile, 'utf8');

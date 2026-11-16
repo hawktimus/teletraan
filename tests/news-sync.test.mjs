@@ -23,7 +23,7 @@ const feedAddress = 'https://community.firstinspires.org/rss.xml';
 const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'mktemp', 'mv', 'rm', 'mkdir', 'dirname', 'basename', 'cat', 'cp', 'tr', 'stat', 'cut', 'sort'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -150,19 +150,19 @@ function setup(name, options) {
     run(args, extra) {
       fs.writeFileSync(log, '');
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000', STUB_UTC: '2026-10-19T12:00:00Z', STUB_EPOCH: String(Date.parse('2026-10-19T12:00:00Z') / 1000) }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/news-sync.sh')].concat(args || []), { env, encoding: 'utf8', input: '', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/news-sync.sh')].concat(args || []), { env, encoding: 'utf8', input: '', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     status(args, extra) {
       fs.writeFileSync(log, '');
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UTC: '2026-10-19T12:00:00Z', STUB_EPOCH: String(Date.parse('2026-10-19T12:00:00Z') / 1000) }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/status-write.sh')].concat(args), { env, encoding: 'utf8', input: '', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/status-write.sh')].concat(args), { env, encoding: 'utf8', input: '', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     install(extra) {
       fs.writeFileSync(log, '');
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/install-news.sh')], { env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/install-news.sh')], { env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     mutations() {

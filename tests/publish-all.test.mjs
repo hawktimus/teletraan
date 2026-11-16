@@ -476,7 +476,7 @@ test('the logic file imports nothing, so node can run it, and the tool file is p
 
   const toolSource = fs.readFileSync(path.join(studioFolder, 'tools', 'publish-all-tool.js'), 'utf8');
   const imported = (toolSource.match(/^import[\s\S]*?from '([^']+)';$/gm) || []).map(line => line.match(/from '([^']+)'/)[1]);
-  assert.deepEqual(imported.sort(), ['../structure.js', './publish-all.js', 'react', 'sanity', 'sanity/router']);
+  assert.deepEqual(imported.sort(), ['../project.js', '../structure.js', './publish-all.js', 'react', 'sanity', 'sanity/router']);
   const code = toolSource.replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
   assert.equal(/<\/?[A-Za-z][A-Za-z0-9.]*(\s[^<>]*)?\/?>/.test(code), false, 'publish-all-tool.js should have no JSX');
 });

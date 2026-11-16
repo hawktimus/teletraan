@@ -87,7 +87,7 @@ manifest_count() {
 # cached one, because the answer should be the latest.
 query='*[_id == "dashboardSettings"][0] { photoSource, photoDriveFolder }'
 status=0
-curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 1000000 --proto '=https' \
+sanity_curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 1000000 --proto '=https' \
   --data-urlencode "query=$query" --data-urlencode 'perspective=published' \
   --output "$work/settings.json" "https://$project.api.sanity.io/v$version/data/query/$dataset" 2> /dev/null || status=$?
 

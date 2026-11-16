@@ -14,13 +14,13 @@ import { fileURLToPath } from 'node:url';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-backup-'));
 const scriptFile = path.join(repo, 'computer/scripts/backup-dataset.sh');
-const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'mkdir', 'rm', 'mv', 'ls', 'sort', 'gzip', 'basename', 'wc', 'tr'];
+const ordinaryTools = ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'mkdir', 'rm', 'mv', 'ls', 'sort', 'gzip', 'basename', 'wc', 'tr', 'chmod'];
 const token = 'skTESTtoken0123456789abcdef';
 const config = fs.readFileSync(path.join(repo, 'dashboard/config.js'), 'utf8');
 const dataset = config.match(/dataset: '([^']*)'/)[1];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -77,7 +77,7 @@ function setup(options = {}) {
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
   // jq is optional for the script; with it, the first line must be a document
-  const jq = spawnSync('/bin/sh', ['-c', 'command -v jq'], { encoding: 'utf8' }).stdout.trim();
+  const jq = spawnSync('/bin/bash', ['-c', 'command -v jq'], { encoding: 'utf8' }).stdout.trim();
   if (jq && !options.noJq) fs.symlinkSync(jq, path.join(bin, 'jq'));
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
@@ -96,7 +96,7 @@ function setup(options = {}) {
       return fs.readdirSync(backups).sort();
     },
     run() {
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/backup-dataset.sh')], {
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/backup-dataset.sh')], {
         env: { PATH: bin, STUB_LOG: log, STUB_DIR: stub },
         encoding: 'utf8',
         input: '',
@@ -134,6 +134,8 @@ test('it downloads the documents to <dataset>-<date>.ndjson.gz, with the token o
   assert.ok(!result.text.includes(token) && !result.errors.includes(token), 'the token is never printed');
   assert.ok(all.split('\n').filter(line => line.includes(token)).every(line => line.startsWith('stdin ')));
   assert.deepEqual(result.calls.filter(line => line.startsWith('status-write')), ['status-write backup']);
+  assert.equal(fs.statSync(place.backups).mode & 0o777, 0o700, 'the folder is for this account only');
+  assert.equal(fs.statSync(file).mode & 0o777, 0o600, 'and so is the file');
 });
 
 test('the dataset in dashboard/config.js is production, as the file names say', () => {
@@ -185,7 +187,7 @@ test('a failed download keeps every old backup, leaves no half file, names the c
 
 test('an empty body or a first line that is not a document is not a backup and pushes nothing out', () => {
   ['empty', 'junk'].forEach(kind => {
-    if (kind === 'junk' && !spawnSync('/bin/sh', ['-c', 'command -v jq']).stdout.length) return;
+    if (kind === 'junk' && !spawnSync('/bin/bash', ['-c', 'command -v jq']).stdout.length) return;
     const place = setup();
     place.nights(oldDays.slice(0, 14));
     place.flag(kind);
@@ -230,7 +232,7 @@ test('a failure to tell Studio does not fail the backup', () => {
 });
 
 test('the script is valid sh, is executable, and writes at 03:15 through the timer with the units and installer in step', () => {
-  assert.equal(spawnSync('/bin/sh', ['-n', scriptFile], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', scriptFile], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(scriptFile).mode & 0o100);
   const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-backup.service'), 'utf8');
   const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-backup.timer'), 'utf8');
@@ -241,7 +243,7 @@ test('the script is valid sh, is executable, and writes at 03:15 through the tim
 
   const installer = path.join(repo, 'computer/scripts/install-backup.sh');
   const text = fs.readFileSync(installer, 'utf8');
-  assert.equal(spawnSync('/bin/sh', ['-n', installer], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', installer], { encoding: 'utf8' }).status, 0);
   assert.ok(fs.statSync(installer).mode & 0o100);
   assert.ok(text.includes('[ ! -s "$units/$unit" ]') && text.includes('[ ! -s "$tmp" ]'), 'a missing or empty unit stops it');
   assert.ok(text.includes('/var/backups/teletraan'));

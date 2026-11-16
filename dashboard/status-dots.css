@@ -24,3 +24,5 @@
 #status-dots .status-dot[data-state="green"] { background: var(--dot-green); }
 #status-dots .status-dot[data-state="amber"] { background: var(--dot-amber); }
 #status-dots .status-dot[data-state="red"] { background: var(--dot-red); }
+/* not known yet: the service has just started and has not read this source (core/dots.js) */
+#status-dots .status-dot[data-state="grey"] { background: var(--dot-off); }

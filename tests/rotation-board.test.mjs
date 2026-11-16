@@ -17,6 +17,7 @@ process.on('exit', () => fs.rmSync(work, { recursive: true, force: true }));
 
 fs.cpSync(path.join(root, 'studio', 'tools'), path.join(work, 'tools'), { recursive: true });
 fs.mkdirSync(path.join(work, 'inputs'));
+fs.copyFileSync(path.join(root, 'studio', 'project.js'), path.join(work, 'project.js'));
 ['screen-panels.js', 'rotation-board-parts.js', 'rotation-board-view.js', 'rotation-auto-parts.js', 'field-editor.js', 'field-editor-parts.js', 'page-styles.js'].forEach(file => fs.copyFileSync(path.join(root, 'studio', 'inputs', file), path.join(work, 'inputs', file)));
 fs.writeFileSync(path.join(work, 'package.json'), '{ "type": "module" }\n');
 const stub = (name, files) => {

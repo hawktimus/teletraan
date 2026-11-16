@@ -17,7 +17,9 @@ export const syncSources = [
   { target: 'photos-drive', miniKey: 'photos', stateKey: '' },
 ];
 
-const colorToState = { green: 'ok', amber: 'warn', red: 'bad' };
+// The screen reports about every ten seconds; until this service has been up for this long, no report means not known yet
+const screenReportGraceSeconds = 30;
+const colorToState = { green: 'ok', amber: 'warn', red: 'bad', grey: 'unknown' };
 
 function later(a, b) {
   return Boolean(a) && (!b || Date.parse(a) > Date.parse(b));
@@ -93,6 +95,7 @@ export function buildDots(overview, now = new Date()) {
   const health = (overview && overview.health) || {};
   if (!overview) dots.screen = { state: 'unknown', reason: '' };
   else if (health.frames === false) dots.screen = { state: 'bad', reason: "The screen isn't updating. Restart the dashboard screen." };
+  else if (!wall.reporting && overview.serviceUptimeSeconds < screenReportGraceSeconds) dots.screen = { state: 'unknown', reason: 'Not known yet: this page has only just started and the screen has not reported.' };
   else if (!wall.reporting) dots.screen = { state: 'warn', reason: 'The screen has not reported since this service started.' };
   else if (wall.quiet) dots.screen = { state: 'bad', reason: 'The screen has not reported for ' + wall.ageSeconds + ' seconds.' };
   else if (status.kiosk && status.kiosk !== 'active' && !/running|active/.test(status.kiosk)) dots.screen = { state: 'warn', reason: 'The screen service says: ' + status.kiosk };

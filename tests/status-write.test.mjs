@@ -22,7 +22,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-status-'));
 const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'date', 'dirname', 'cat', 'awk'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -95,7 +95,7 @@ function setup(name, options) {
     stub: stub,
     run(args) {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub };
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts/status-write.sh')].concat(args), { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/status-write.sh')].concat(args), { env: env, encoding: 'utf8', input: '' });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: readModule(log, 'utf8') };
     },
     answer(body) {
@@ -481,7 +481,7 @@ test('the usage line lists --print, and --print takes no second word', () => {
 });
 
 test('the script has valid sh syntax, is executable, and local.env is never printed', () => {
-  const syntax = spawnSync('/bin/sh', ['-n', scriptFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', scriptFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
 
   const text = fs.readFileSync(scriptFile, 'utf8');
@@ -535,7 +535,7 @@ test('kiosk.sh starts it at the beginning, in the background with its output thr
   assert.ok(text.indexOf(call) < text.indexOf('curl --fail --silent --output /dev/null --retry'), 'before the wait for the dashboard');
   assert.ok(text.indexOf(call) < text.indexOf('exec chromium'), 'before the browser starts');
   assert.ok(text.indexOf(call) > text.indexOf('data=${data:-/var/lib/teletraan/data}'), 'after the settings are read');
-  const syntax = spawnSync('/bin/sh', ['-n', kioskFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', kioskFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
 });
 

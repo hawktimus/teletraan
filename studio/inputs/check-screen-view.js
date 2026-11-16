@@ -11,10 +11,10 @@ import { IntentLink } from 'sanity/router';
 import { styles } from './page-styles.js';
 import { checkAnswer, cleanupLine, contentQuestion, reportOf, summaryLine } from '../tools/content-check.js';
 import { countWords, keyOf, levelWords, stateWords, words } from './check-screen-parts.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
-const apiVersion = '2025-02-19';
 
 const critical = 'var(--card-badge-critical-fg-color, #b91c1c)';
 const caution = 'var(--card-badge-caution-fg-color, #92400e)';

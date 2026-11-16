@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: sudo teletraan-net scan | switch | restart | dns-public | dns-default
+# Usage: sudo teletraan-net scan | switch | restart | dns-public | dns-default | dns-apply
 # Installed by computer/install.sh as /usr/local/sbin/teletraan-net, owned by root. The control helper
 # (computer/scripts/control-helper.sh) runs it through sudo, and computer/sudoers/teletraan-control allows that one path with
 # no argument list, so this script is the check: it takes the five words above and nothing else.
@@ -10,7 +10,14 @@
 #               computer changes network, so the answer cannot wait for the result.
 #   run-switch  (started by switch) save the network, join it, test it, and go back to the old network when the test fails
 #   restart     restart the network manager and renew the address
-#   dns-public  use public name servers on the active connection, dns-default goes back to the ones the network hands out
+#   dns-public  use the configured name servers (DNS_PRIMARY and DNS_SECONDARY of teletraan-network.conf) on the active
+#               connection, dns-default goes back to the ones the network hands out
+#   dns-apply   put the configured name servers on the active connection when DNS_ENFORCE is yes and they are not there
+#               already; it changes nothing when they are. teletraan-dns.service runs it at boot and the installer runs it.
+#
+# The name servers are desired state, not a button: computer/config/network.conf is copied by the installer to
+# /usr/local/etc/teletraan-network.conf (root-owned, never overwritten once it is there), and a Wi-Fi switch gives the new
+# connection the same servers, so moving to another network does not drop them.
 #
 # The password is read from standard input, kept in a file only root can read until run-switch has read it, and written only
 # to the NetworkManager connection file (mode 600, root). It is never on a command line, in a log or in the result file.
@@ -30,6 +37,7 @@ if [ "$(id -u)" -eq 0 ]; then
   run_dir=/run/teletraan-net
   connection_dir=/etc/NetworkManager/system-connections
   settle=${NET_SETTLE:-3}
+  conf_file=/usr/local/etc/teletraan-network.conf
 else
   nmcli_bin=${NET_NMCLI:-/usr/bin/nmcli}
   systemctl_bin=${NET_SYSTEMCTL:-/usr/bin/systemctl}
@@ -40,7 +48,24 @@ else
   run_dir=${NET_RUN_DIR:-/run/teletraan-net}
   connection_dir=${NET_CONNECTION_DIR:-/etc/NetworkManager/system-connections}
   settle=${NET_SETTLE:-0}
+  conf_file=${NET_CONF:-/usr/local/etc/teletraan-network.conf}
 fi
+
+# The desired name servers. The file is read for three names only and is never run as a script. A value that is not
+# what its name needs is ignored, so a typing mistake cannot leave the computer with no name server.
+conf_value() {
+  [ -f "$conf_file" ] || return 0
+  sed -n "s/^$1=//p" "$conf_file" | tail -n 1 | sed "s/^['\"]//; s/['\"]\$//"
+}
+ipv4_or_nothing() {
+  printf '%s' "$1" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$' && printf '%s' "$1" || true
+}
+dns_primary=$(ipv4_or_nothing "$(conf_value DNS_PRIMARY)")
+dns_secondary=$(ipv4_or_nothing "$(conf_value DNS_SECONDARY)")
+dns_primary=${dns_primary:-8.8.8.8}
+dns_secondary=${dns_secondary:-8.8.4.4}
+dns_servers="$dns_primary $dns_secondary"
+case $(conf_value DNS_ENFORCE) in no) dns_enforce=no ;; *) dns_enforce=yes ;; esac
 
 result_file=$state_dir/wifi-last
 request_file=$run_dir/request
@@ -198,7 +223,13 @@ run_switch() {
       if [ -n "$password" ]; then
         printf '[wifi-security]\nkey-mgmt=wpa-psk\npsk=%s\n\n' "$(keyfile_value "$password")"
       fi
-      printf '[ipv4]\nmethod=auto\n\n[ipv6]\nmethod=auto\n'
+      printf '[ipv4]\nmethod=auto\n'
+      # The configured name servers go on the new connection too: a profile made here used the network's own, and a
+      # network whose resolver is slow or blocks things would have taken the working ones away
+      if [ "$dns_enforce" = yes ]; then
+        printf 'dns=%s;%s;\nignore-auto-dns=true\n' "$dns_primary" "$dns_secondary"
+      fi
+      printf '\n[ipv6]\nmethod=auto\n'
     } > "$file"
   )
   password=''
@@ -260,12 +291,33 @@ dns() {
   uuid=$("$nmcli_bin" -t -f UUID,TYPE connection show --active 2> /dev/null | awk -F: '$2 == "802-11-wireless" || $2 == "802-3-ethernet" { print $1; exit }')
   printf '%s' "$uuid" | grep -Eq '^[0-9a-f-]{36}$' || fail 'There is no active connection to change.' 3
   if [ "$1" = public ]; then
-    "$nmcli_bin" connection modify uuid "$uuid" ipv4.dns '1.1.1.1 8.8.8.8' ipv4.ignore-auto-dns yes
+    "$nmcli_bin" connection modify uuid "$uuid" ipv4.dns "$dns_servers" ipv4.ignore-auto-dns yes
   else
     "$nmcli_bin" connection modify uuid "$uuid" ipv4.dns '' ipv4.ignore-auto-dns no
   fi
   "$nmcli_bin" --wait 30 connection up uuid "$uuid" > /dev/null
-  say "The name servers are $([ "$1" = public ] && echo 'public' || echo 'the ones the network hands out')."
+  say "The name servers are $([ "$1" = public ] && echo "the configured ones ($dns_servers)" || echo 'the ones the network hands out')."
+}
+
+# Desired state: the configured name servers on the active connection, and nothing done when they are already there
+dns_apply() {
+  need_nmcli
+  if [ "$dns_enforce" != yes ]; then
+    say 'DNS_ENFORCE is no, so the name servers were left as they are.'
+    return 0
+  fi
+  local uuid have ignore
+  uuid=$("$nmcli_bin" -t -f UUID,TYPE connection show --active 2> /dev/null | awk -F: '$2 == "802-11-wireless" || $2 == "802-3-ethernet" { print $1; exit }')
+  printf '%s' "$uuid" | grep -Eq '^[0-9a-f-]{36}$' || { say 'There is no active connection yet, so nothing was changed.'; return 0; }
+  have=$("$nmcli_bin" -g ipv4.dns connection show uuid "$uuid" 2> /dev/null | tr -d '[:space:]' | tr ',;' '  ' | xargs 2> /dev/null || true)
+  ignore=$("$nmcli_bin" -g ipv4.ignore-auto-dns connection show uuid "$uuid" 2> /dev/null | tr -d '[:space:]' || true)
+  if [ "$have" = "$dns_servers" ] && [ "$ignore" = yes ]; then
+    say "The name servers are already $dns_servers."
+    return 0
+  fi
+  "$nmcli_bin" connection modify uuid "$uuid" ipv4.dns "$dns_servers" ipv4.ignore-auto-dns yes
+  "$nmcli_bin" --wait 30 connection up uuid "$uuid" > /dev/null
+  say "The name servers are now $dns_servers."
 }
 
 case ${1:-} in
@@ -275,5 +327,6 @@ case ${1:-} in
   restart) [ "$#" -eq 1 ] || fail 'restart takes no argument.' 2; restart ;;
   dns-public) [ "$#" -eq 1 ] || fail 'dns-public takes no argument.' 2; dns public ;;
   dns-default) [ "$#" -eq 1 ] || fail 'dns-default takes no argument.' 2; dns default ;;
-  *) fail 'Give one word: scan, switch, restart, dns-public or dns-default.' 2 ;;
+  dns-apply) [ "$#" -eq 1 ] || fail 'dns-apply takes no argument.' 2; dns_apply ;;
+  *) fail 'Give one word: scan, switch, restart, dns-public, dns-default or dns-apply.' 2 ;;
 esac

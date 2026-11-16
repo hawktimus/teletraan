@@ -26,11 +26,11 @@ import { pickerTeams } from './screen-parts.js';
 import { viewType, viewKeys, viewTitles, viewIdOf, keyOfViewId } from './view-ids.js';
 import { seedView, needsViewSeed, withKeys } from '../tools/view-seed.js';
 import { defaultViews } from '../tools/view-defaults.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 const muted = 'var(--card-muted-fg-color, inherit)';
 

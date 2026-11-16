@@ -34,11 +34,11 @@ import {
   rulesList,
   failureText,
 } from './calendars-list-parts.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // The id of Dashboard Settings, the same as settingsId in structure.js
 const settingsId = 'dashboardSettings';

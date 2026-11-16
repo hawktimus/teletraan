@@ -2,6 +2,11 @@
 
 import { escapeHtml } from '../../core/text.js';
 
+// A panel that has not been designed has nothing to show: the rotation passes it over until it is (core/placeholder.js)
+export function hasContent() {
+  return false;
+}
+
 export function mount(host) {
   host.innerHTML = `
     <section class="page mini-idea-1">

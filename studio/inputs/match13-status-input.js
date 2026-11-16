@@ -9,10 +9,10 @@ import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { ageText } from './time-text.js';
 import { isRecord } from './plain-values.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
-const apiVersion = '2025-02-19';
 
 // The id the Teletraan computer writes to. computer/scripts/status-write.sh has the same one.
 export const statusId = 'status-mini';

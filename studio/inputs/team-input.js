@@ -13,11 +13,11 @@
 import { createElement, useEffect, useState } from 'react';
 import { set, unset, useClient } from 'sanity';
 import { choiceButtons } from './field-editor.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 const teamsQuery = '*[_type == "team"] | order(order asc, name asc) { _id, name, active }';
 

@@ -99,7 +99,7 @@ test('status-write.sh sends the Match13 time, state and count, and Studio and th
   assert.ok(read('studio/inputs/status-input.js').includes("{ field: 'match13At', label: 'Last Match13 read' }"));
   assert.ok(read('control/support/status-parts.js').includes('match13: text(mini.match13At)'));
   assert.ok(read('control/static/tabs/render-health.js').includes("row('Match13'"));
-  assert.equal(spawnSync('bash', ['-n', path.join(repo, 'computer/scripts/status-write.sh')]).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', path.join(repo, 'computer/scripts/status-write.sh')]).status, 0);
 });
 
 let failures = 0;

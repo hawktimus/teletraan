@@ -3488,7 +3488,7 @@ test('the Photo panel uses the visible photos, the order setting, the credit at 
   const style = readModule(path.join(dashboardFolder, 'panels/photo/panel.css'), 'utf8');
 
   assert.ok(panel.includes('queue.takeTurn(photosToShow(content), settings.photoOrder, plan.photos)'));
-  assert.ok(panel.includes('return photosToShow(content).length > 0;'));
+  assert.ok(panel.includes('const photos = photosToShow(content);') && panel.includes('photos.length > 0 && photosAreReady(photos)'));
   assert.ok(panel.includes('preloadImages([turn.next.address])'), 'the next photo is not loaded');
   assert.ok(panel.includes('Photo: ${escapeHtml(credit)}'), 'the credit does not say Photo: and the name');
   assert.ok(panel.includes('object-position'), 'the hotspot is not used');

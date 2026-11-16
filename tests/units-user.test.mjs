@@ -25,6 +25,7 @@ function check(name, test) {
 // and a coach reads the line before it is merged.
 const rootAllowed = {
   'teletraan-console.service': 'writes the shutdown drawing to the first text console (tty1) and switches to it with chvt, which need root',
+  'teletraan-dns.service': 'puts the name servers on the connection with /usr/local/sbin/teletraan-net, a root-owned copy that only the installer changes; changing a NetworkManager connection needs root',
 };
 
 const services = fs.readdirSync(units).filter(name => name.endsWith('.service') || name.endsWith('.socket'));
@@ -101,7 +102,7 @@ check('install-watchdog.sh and install-nightly.sh replace an old root unit with 
 });
 
 check('systemd-analyze verify accepts the units with the account filled in', () => {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v systemd-analyze'], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v systemd-analyze'], { encoding: 'utf8' }).stdout.trim();
   if (!found) {
     console.log('      systemd-analyze is not installed here, so the units were checked as text only.');
     return;

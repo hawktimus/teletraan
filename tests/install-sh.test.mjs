@@ -27,8 +27,13 @@ function put(file, text, mode) {
 // A staging tree: the files of this repository the installer reads
 function staging(base, options = {}) {
   const tree = path.join(base, 'staging');
-  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/systemd/teletraan-watchdog.service', 'computer/systemd/teletraan-watchdog.timer', 'computer/systemd/teletraan-nightly.service', 'computer/systemd/teletraan-nightly.timer', 'computer/systemd/teletraan-console.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh', 'computer/scripts/net-root.sh']) {
+  for (const name of ['computer/install.sh', 'computer/local.example.env', 'computer/systemd/teletraan-control.socket', 'computer/systemd/teletraan-control@.service', 'computer/systemd/teletraan-kiosk.service', 'computer/systemd/teletraan-pull.timer', 'computer/systemd/teletraan-watchdog.service', 'computer/systemd/teletraan-watchdog.timer', 'computer/systemd/teletraan-nightly.service', 'computer/systemd/teletraan-nightly.timer', 'computer/systemd/teletraan-console.service', 'computer/sudoers/teletraan-control', 'computer/git/post-receive', 'computer/git/install-tree-as-root.sh', 'computer/scripts/net-root.sh', 'computer/config/network.conf', 'computer/systemd/teletraan-dns.service']) {
     put(path.join(tree, name), fs.readFileSync(path.join(repo, name)));
+  }
+  // The example holds the PIN line as a comment; a computer that was set up by hand has turned it on
+  if (!options.noPin) {
+    const example = path.join(tree, 'computer/local.example.env');
+    fs.writeFileSync(example, fs.readFileSync(example, 'utf8').replace("# CONTROL_PIN='[the one PIN]'", "CONTROL_PIN='123456'"));
   }
   put(path.join(tree, 'dashboard/index.html'), '<html></html>');
   put(path.join(tree, 'computer/scripts/kiosk.sh'), '#!/bin/sh\n');
@@ -55,7 +60,7 @@ function setup(options = {}) {
   return {
     base: base, root: root, tree: tree, places: places,
     run(args = ['--yes'], input = '') {
-      const result = spawnSync('bash', [path.join(tree, 'computer/install.sh'), ...args], {
+      const result = spawnSync('/bin/bash', [path.join(tree, 'computer/install.sh'), ...args], {
         input: input, encoding: 'utf8',
         env: { PATH: bin + ':/usr/bin:/bin:/usr/local/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMD: places.systemd, TELETRAAN_SUDOERS: places.sudoers, TELETRAAN_GIT: places.git, TELETRAAN_SBIN: places.sbin, TELETRAAN_CONF: places.conf, TELETRAAN_ACCOUNT: account, HOME: base, ...(options.dataFromFile ? {} : { TELETRAAN_DATA_DIR: path.join(base, 'data') }) },
       });
@@ -68,7 +73,7 @@ function setup(options = {}) {
 function oldTree(root, folder) {
   put(path.join(root, 'dashboard/index.html'), '<html>old</html>');
   put(path.join(root, folder + '/scripts/kiosk.sh'), '#!/bin/sh\n');
-  put(path.join(root, folder + '/local.env'), "SANITY_WRITE_TOKEN='abc'\n", 0o600);
+  put(path.join(root, folder + '/local.env'), "SANITY_WRITE_TOKEN='abc'\nCONTROL_PIN='123456'\n", 0o600);
   put(path.join(root, 'README.md'), 'old');
 }
 
@@ -95,13 +100,42 @@ test('a missing image is pulled as root and the line says it is a download; a fa
   assert.ok(failed.text.includes('Check that this computer is online') && failed.errors.includes('node:22-alpine is missing'), failed.text + failed.errors);
 });
 
+test('with no CONTROL_PIN in local.env the installer stops before it starts anything, and never prints a PIN', () => {
+  const s = setup({ noPin: true });
+  const result = s.run();
+  assert.equal(result.status, 1);
+  assert.ok(result.errors.includes('no CONTROL_PIN'), result.errors);
+  assert.ok(!result.calls.includes('docker compose') && !result.calls.includes('enable --now teletraan-control.socket'), result.calls);
+
+  const typed = setup({ noPin: true });
+  put(path.join(typed.root, 'local.env'), "CONTROL_PIN='abc'\n", 0o600);
+  assert.equal(typed.run().status, 1, 'a value that is not 4 to 12 digits is not a PIN');
+  put(path.join(typed.root, 'local.env'), "CONTROL_PIN='7391846'\n", 0o600);
+  const good = typed.run();
+  assert.equal(good.status, 0, good.errors);
+  assert.ok(!(good.text + good.errors).includes('7391846'), 'the value is not printed');
+});
+
+test('the name servers file is made once, root-owned, from the repository copy, and a copy that is there is kept; the DNS unit is turned on', () => {
+  const s = setup();
+  const result = s.run();
+  assert.equal(result.status, 0, result.errors);
+  const made = path.join(s.places.conf, 'teletraan-network.conf');
+  assert.equal(fs.readFileSync(made, 'utf8'), fs.readFileSync(path.join(repo, 'computer/config/network.conf'), 'utf8'));
+  assert.ok(result.calls.includes('systemctl enable teletraan-dns.service'), result.calls);
+  assert.ok(fs.existsSync(path.join(s.places.systemd, 'teletraan-dns.service')));
+  fs.writeFileSync(made, 'DNS_PRIMARY=9.9.9.9\n');
+  assert.equal(s.run().status, 0);
+  assert.equal(fs.readFileSync(made, 'utf8'), 'DNS_PRIMARY=9.9.9.9\n', 'a change made on the computer is not overwritten');
+});
+
 test('inside the root the installer stops and says what to do', () => {
 
   const inside = setup();
   const moved = path.join(inside.root, 'staging');
   fs.mkdirSync(path.dirname(moved), { recursive: true });
   fs.cpSync(inside.tree, moved, { recursive: true });
-  const bad = spawnSync('bash', [path.join(moved, 'computer/install.sh'), '--yes'], { encoding: 'utf8', env: { PATH: path.join(inside.base, 'bin') + ':/usr/bin:/bin', TELETRAAN_ROOT: inside.root, TELETRAAN_ACCOUNT: account } });
+  const bad = spawnSync('/bin/bash', [path.join(moved, 'computer/install.sh'), '--yes'], { encoding: 'utf8', env: { PATH: path.join(inside.base, 'bin') + ':/usr/bin:/bin', TELETRAAN_ROOT: inside.root, TELETRAAN_ACCOUNT: account } });
   assert.ok(bad.stderr.includes('cannot be inside'), bad.stderr);
 });
 
@@ -263,7 +297,7 @@ test('the data folder from local.env is made and given to the login user, also w
   const data = path.join(s.base, 'data-folder');
   fs.mkdirSync(data, { recursive: true });
   fs.chmodSync(data, 0o700);
-  put(path.join(s.root, 'local.env'), "TELETRAAN_DATA='" + data + "'\n", 0o600);
+  put(path.join(s.root, 'local.env'), "TELETRAAN_DATA='" + data + "'\nCONTROL_PIN='123456'\n", 0o600);
   const r = s.run();
   assert.equal(r.status, 0, r.errors);
   assert.ok(fs.statSync(data).isDirectory() && (fs.statSync(data).mode & 0o777) === 0o755);

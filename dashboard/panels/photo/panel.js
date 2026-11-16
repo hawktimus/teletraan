@@ -8,16 +8,22 @@
 import { escapeHtml, hasText } from '../../core/text.js';
 import { preloadImages } from '../../core/images.js';
 import { speeds } from '../../config.js';
-import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, rowPlan, turnPlan } from '../../core/photos.js';
+import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, photosAreReady, rowPlan, turnPlan, watchLoad } from '../../core/photos.js';
 
 const missingMarkup = '<div class="missing">NO PHOTO</div>';
 
 // The queue remembers the last photo shown, from one turn of the panel to the next
 const queue = makePhotoQueue();
 
+// With the local list of pictures (images/index.json) present, only a photo that is in it counts: one that is not would be
+// fetched from the internet, and the filter may block it, which left "NO PHOTO" on the frame for a whole turn.
 export function hasContent(content) {
-  return photosToShow(content).length > 0;
+  const photos = photosToShow(content);
+  return photos.length > 0 && photosAreReady(photos);
 }
+
+// A picture that has neither loaded nor failed after this long is taken out like one that failed
+const loadSeconds = 5;
 
 // A photo that is cut to the panel keeps what the hotspot says. A photo with no
 // hotspot (the sample photos) is centred. A photo shown whole is not cut, so it has
@@ -91,6 +97,8 @@ export function mount(host, content, page, step) {
 
   host.querySelectorAll('.shot img').forEach(image => {
     image.addEventListener('error', () => skipShot(image.closest('.shot')));
+    // A host that never answers sends no error, and the frame would wait for ever for a picture that is not coming
+    watchLoad(image, loadSeconds, () => skipShot(image.closest('.shot')));
   });
 
   // Starts downloading the photo that opens the next turn, so it is ready at the next page change

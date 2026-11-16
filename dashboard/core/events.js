@@ -140,6 +140,19 @@ function byStart(first, second) {
   return first.start - second.start || first.end - second.end || String(first.title).localeCompare(String(second.title));
 }
 
+// One event that is in two Band calendars (a meeting on the team calendar and on a subteam's) has the same UID and start in
+// both, and is shown once, from the calendar that came first. An event with no UID cannot be told from another, so it stays.
+function withoutRepeats(list) {
+  const seen = new Set();
+  return list.filter(event => {
+    if (typeof event.uid !== 'string' || event.uid === '') return true;
+    const key = event.uid + '|' + asDate(event.start).getTime();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // The events as one list sorted by start.
 //   bandEvents   what core/calendar.js read, a list of events
 //   timeZone     content.theme.timeZone
@@ -154,12 +167,12 @@ export function mergeEvents(bandEvents, timeZone, now, filterList) {
   const moment = now || new Date();
   const today = dateIn(zone, moment);
 
-  return (Array.isArray(bandEvents) ? bandEvents : [])
+  const shown = (Array.isArray(bandEvents) ? bandEvents : [])
     .filter(event => isRecord(event) && !isNaN(asDate(event.start)))
     .map(event => withDays(event, zone))
     .filter(event => hidingRule(event, filterList, zone, moment) === null)
-    .filter(event => event.lastDay >= today)
-    .sort(byStart);
+    .filter(event => event.lastDay >= today);
+  return withoutRepeats(shown).sort(byStart);
 }
 
 // Showing an event

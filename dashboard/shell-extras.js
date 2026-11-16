@@ -106,7 +106,8 @@ async function readEvents(module) {
     shellState.calendarsKey = JSON.stringify(calendars);
 
     const folder = (reading ? sampleFolder : liveFolder) + 'calendars/';
-    const result = await module.loadEvents({ folder: folder, calendars: calendars, now: now, daysAhead: 60 });
+    const lookZone = shellState.content.theme && shellState.content.theme.timeZone;
+    const result = await module.loadEvents({ folder: folder, calendars: calendars, now: now, daysAhead: 60, timeZone: lookZone });
     if (reading !== shellState.showingSample) return;
 
     // A calendar that could not be read keeps what it had last time, so one

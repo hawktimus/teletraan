@@ -47,6 +47,20 @@ export function cleanSyncStatus(raw) {
   return { generatedAt: text(raw.generatedAt, 40) || null, sources: sources, network: network };
 }
 
+// What netwatch.sh wrote about the name servers (dns.json): the servers that are configured, whether they are the ones in
+// use or the network's own are in use for the time being, and why. Nothing else of the file is passed on.
+export function cleanDns(raw) {
+  if (!raw || typeof raw !== 'object') return { present: false };
+  return {
+    present: true,
+    enforce: raw.enforce === 'no' ? 'no' : 'yes',
+    configured: text(raw.configured, 40),
+    mode: raw.mode === 'network' ? 'network' : 'configured',
+    since: text(raw.since, 40) || null,
+    reason: text(raw.reason, 160),
+  };
+}
+
 export function cleanNetwatch(raw) {
   if (!raw) return null;
   return {
@@ -125,10 +139,13 @@ export function register(router, ctx) {
       status: await statusNow(now),
       syncStatus: cleanSyncStatus(readJsonFile(path.join(ctx.dataDir, 'sync-status.json'))),
       netwatch: cleanNetwatch(readJsonFile(netwatchFile())),
+      dns: cleanDns(readJsonFile(stateFile('dns.json'))),
       health: cleanHealth(readJsonFile(stateFile('health.json')), readJsonFile(stateFile('supervisor.json'))),
       buildVersion: typeof ctx.buildVersion === 'string' ? ctx.buildVersion : '',
       remoteLast: cleanRemoteLast(readJsonFile(path.join(ctx.dataDir, 'remote-last.json'))),
       wall: wallFacts(ctx, now),
+      // So that the Screen dot can say not known, not late, in the first seconds after this service starts
+      serviceUptimeSeconds: Math.round(process.uptime()),
     });
   });
 

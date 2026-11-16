@@ -69,7 +69,7 @@ function run(answer, options) {
   fs.mkdirSync(bin, { recursive: true });
   fs.mkdirSync(stub);
   ordinaryTools.forEach(tool => {
-    const file = spawnSync('/bin/sh', ['-c', 'command -v ' + tool], { encoding: 'utf8' }).stdout.trim();
+    const file = spawnSync('/bin/bash', ['-c', 'command -v ' + tool], { encoding: 'utf8' }).stdout.trim();
     assert.ok(file.startsWith('/'), 'this computer has no ' + tool);
     fs.symlinkSync(file, path.join(bin, tool));
   });
@@ -82,7 +82,7 @@ function run(answer, options) {
   const started = Date.now();
   // lib.sh gives kiosk.sh its setting function; here KIOSK_RESOLUTION comes from the test
   const script = 'setting() { [ "$1" = KIOSK_RESOLUTION ] && printf "%s" "$FAKE_RESOLUTION"; return 0; }; . "$DISPLAY_FILE"; set_display; echo "after:$1"; echo "window:$(display_window)"';
-  const result = spawnSync('/bin/sh', ['-c', script, 'sh', 'the-address'], {
+  const result = spawnSync('/bin/bash', ['-c', script, 'sh', 'the-address'], {
     env: {
       PATH: bin,
       STUB_LOG: log,
@@ -160,7 +160,7 @@ test('the script never adds a mode and does not replace the address kiosk.sh was
   assert.ok(!/--newmode|--addmode/.test(text));
   assert.ok(!/^\s*set --/m.test(text));
   assert.ok(/DISPLAY_POLL_INTERVAL:-2/.test(text) && /DISPLAY_POLL_LIMIT:-20/.test(text), 'the defaults are 2 and 20');
-  const syntax = spawnSync('/bin/sh', ['-n', displayFile], { encoding: 'utf8' });
+  const syntax = spawnSync('/bin/bash', ['-n', displayFile], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
 });
 

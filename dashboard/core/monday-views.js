@@ -72,8 +72,23 @@ function pageOptions(page) {
 // The tasks the Monday panels may draw: from the board, switched on in the Studio (show, Show on TV and the expiry), shown on
 // the board (Show on TV? is not Hide) and with one of the nine departments
 export function boardTasks(content, now = new Date()) {
+  const left = unmatchedTasks(content, now).length;
+  if (left !== lastUnmatched) {
+    lastUnmatched = left;
+    if (left > 0) console.warn(left + ' task(s) on the board have a department that is not one of the nine, so no Monday panel shows them.');
+  }
   return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task =>
     isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && departmentTitle(task.department) !== '');
+}
+
+let lastUnmatched = -1; // the count last written to the console, so a list that does not change is not written again
+
+// The tasks that are on the board and switched on but that no Monday panel can draw, because their department is not one of the
+// nine. They are not dropped without a word: the page says how many (the console, here), and the sync service lists them
+// where the coaches read them (data/live/data-problems.json, docs/audit.md Part B).
+export function unmatchedTasks(content, now = new Date()) {
+  return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task =>
+    isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && departmentTitle(task.department) === '');
 }
 
 // The tasks of a page. A page for Prime or Nova has the tasks of that team and the General ones (no team). A page for both

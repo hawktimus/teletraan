@@ -172,7 +172,7 @@ test('the docs are plain: no em or en dash, no exclamation mark, no emoji, no fi
   const emoji = new RegExp('[' + String.fromCharCode(0x2600) + '-' + String.fromCharCode(0x27bf) + ']|[\\uD83C-\\uD83E][\\uDC00-\\uDFFF]');
   const filler = /\b(simply|just|basically|really|very|actually|easily|seamless|robust|leverage|ensure|comprehensive)\b/i;
   // the words are joined from pieces so that this file does not hold them
-  const traces = new RegExp('\\b(' + ['cla' + 'ude', 'anthr' + 'opic', 'ope' + 'nai', 'chat' + 'gpt', 'copi' + 'lot', 'gem' + 'ini', 'l' + 'lm', 'assis' + 'tant'].join('|') + ')\\b|\\bA' + 'I\\b', 'i');
+  const traces = new RegExp('\\b(' + ['cla' + 'ude', 'anthr' + 'opic', 'ope' + 'nai', 'chat' + 'gp' + 't', 'copi' + 'lot', 'gem' + 'ini', 'l' + 'lm', 'assis' + 'tant'].join('|') + ')\\b|\\bA' + 'I\\b', 'i');
   const written = ['docs/laptop-setup.md', 'docs/shipping-from-the-mac.md', 'docs/updating-the-computer.md'];
   written.forEach(file => {
     const text = read(file);

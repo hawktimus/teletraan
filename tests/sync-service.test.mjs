@@ -14,7 +14,7 @@ const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-sync-'));
 process.env.TELETRAAN_LOG_DIR = path.join(work, 'log');
 
-const { createSync, wantedImages, writeFileAtomic, timing } = await import(path.join(repo, 'computer/scripts/sync-service.mjs'));
+const { createSync, wantedImages, writeFileAtomic, timing, readSanityToken, withStuckNotes } = await import(path.join(repo, 'computer/scripts/sync-service.mjs'));
 
 let passed = 0;
 let counter = 0;
@@ -207,7 +207,7 @@ await check('sync-status.json has the shape the status poller reads, every sourc
   await w.sync.syncWeather();
   fs.writeFileSync(path.join(w.folder, 'calendar-sync.txt'), 'team|2026-10-30T14:58:00Z|\nshop|2026-10-30T14:50:00Z|the server took too long to answer\n');
   const status = w.sync.writeStatus();
-  assert.deepEqual(Object.keys(status), ['generatedAt', 'sources', 'network']);
+  assert.deepEqual(Object.keys(status), ['generatedAt', 'startedAt', 'sources', 'network']);
   assert.deepEqual(Object.keys(status.sources), ['sanity', 'weather', 'images', 'monday', 'competition', 'calendars']);
   Object.values(status.sources).forEach(source => assert.deepEqual(Object.keys(source), ['lastSuccessAt', 'lastFailureAt', 'lastFailureReason']));
   assert.equal(status.sources.monday.lastSuccessAt, '2026-10-30T12:00:00Z', 'read from the monday-status document in the content');
@@ -259,6 +259,70 @@ await check('a restart keeps the last failures but not the last good reads, so a
   w.sync.writeStatus();
   const again = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/forecast', now: () => w.time, fetch: w.fetch, noProbe: true });
   assert.equal(again.state.sanity.lastSuccessAt, null);
+});
+
+await check('the Stuck notes kept on this computer are put on the tasks of the local copy, and a missing file adds nothing', async () => {
+  const notes = path.join(work, 'notes.json');
+  fs.writeFileSync(notes, JSON.stringify({ 'task-monday-1': 'Waiting for the part', 'task-monday-9': 'A task that is gone', 'task-monday-3': '' }));
+  const result = { tasks: [{ _id: 'task-monday-1', title: 'A' }, { _id: 'task-monday-3', title: 'C' }, { title: 'No id' }], people: [1] };
+  const merged = withStuckNotes(result, notes);
+  assert.equal(merged.tasks[0].note, 'Waiting for the part');
+  assert.equal(merged.tasks[1].note, undefined, 'an empty note is no note');
+  assert.deepEqual(merged.people, [1]);
+  assert.equal(result.tasks[0].note, undefined, 'the answer from Sanity is not changed');
+  assert.deepEqual(withStuckNotes(result, path.join(work, 'none.json')), result);
+  fs.writeFileSync(notes, 'not json');
+  assert.deepEqual(withStuckNotes(result, notes), result, 'a damaged file means no notes');
+  assert.equal(withStuckNotes(null, notes), null);
+});
+
+await check('Monday is read from the file monday-sync.sh leaves, before the Sanity document, and a failure with no good read yet is still a failure', async () => {
+  const w = world({ result: Object.assign({}, content, { monday: { lastSyncAt: '2026-10-30T10:00:00Z' } }) });
+  await w.sync.checkSanity();
+  w.sync.writeStatus();
+  assert.equal(w.read('sync-status.json').sources.monday.lastSuccessAt, '2026-10-30T10:00:00Z', 'with no local file the document is used');
+  fs.mkdirSync(path.join(w.folder, 'monday'), { recursive: true });
+  fs.writeFileSync(path.join(w.folder, 'monday', 'status.json'), JSON.stringify({ lastSyncAt: '2026-10-30T14:58:00Z', lastError: '' }));
+  w.sync.writeStatus();
+  assert.equal(w.read('sync-status.json').sources.monday.lastSuccessAt, '2026-10-30T14:58:00Z', 'the local file wins');
+  fs.writeFileSync(path.join(w.folder, 'monday', 'status.json'), JSON.stringify({ lastSyncAt: '', lastError: 'Monday said no' }));
+  w.sync.writeStatus();
+  assert.equal(w.read('sync-status.json').sources.monday.lastFailureReason, 'Monday said no');
+  assert.ok(w.read('sync-status.json').startedAt, 'the status says when the service started');
+});
+
+await check('the read token is the read key, else the write key, else none, and a placeholder is none', async () => {
+  const file = path.join(work, 'token.env');
+  const read = text => { fs.writeFileSync(file, text); return readSanityToken(file); };
+  assert.equal(read("SANITY_WRITE_TOKEN='write-one'\nSANITY_READ_TOKEN='read-one'\n"), 'read-one');
+  assert.equal(read("SANITY_WRITE_TOKEN='write-one'\n"), 'write-one');
+  assert.equal(read("SANITY_WRITE_TOKEN='write-one'\nSANITY_READ_TOKEN='[paste the Sanity read token here]'\n"), 'write-one');
+  assert.equal(read("SANITY_WRITE_TOKEN='[paste the Sanity write token here]'\n"), '');
+  assert.equal(read('CONTROL_PIN=123456\n'), '');
+  assert.equal(readSanityToken(path.join(work, 'no-such-file.env')), '', 'no file, no token, and no error');
+});
+
+await check('Sanity reads carry the token, and the weather service never sees it; with no token nothing is sent', async () => {
+  const w = world({ result: Object.assign({}, content) });
+  const seen = [];
+  const wrap = (url, init) => { seen.push({ url: String(url), auth: init && init.headers && init.headers.Authorization }); return w.fetch(url); };
+  const withToken = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/forecast', now: () => w.time, fetch: wrap, noProbe: true, token: 'test-read-token' });
+  await withToken.checkSanity();
+  await withToken.syncWeather();
+  await withToken.syncImages();
+  const sanityCalls = seen.filter(call => call.url.startsWith('http://sanity.test/'));
+  assert.ok(sanityCalls.length >= 2 && sanityCalls.every(call => call.auth === 'Bearer test-read-token'));
+  const imageCalls = seen.filter(call => call.url.startsWith('https://cdn.sanity.io/'));
+  assert.ok(imageCalls.length > 0 && imageCalls.every(call => call.auth === 'Bearer test-read-token'), 'private pictures need it too');
+  assert.ok(seen.filter(call => call.url.startsWith('http://weather.test/')).every(call => call.auth === undefined), 'not the weather service');
+  const none = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/forecast', now: () => w.time, fetch: wrap, noProbe: true, token: '' });
+  seen.length = 0;
+  w.time += 400 * 1000;
+  await none.checkSanity();
+  const publicCalls = seen.filter(call => call.url.startsWith('http://sanity.test/'));
+  assert.ok(publicCalls.length > 0 && publicCalls.every(call => call.auth === undefined), 'a public dataset is read with no header at all');
+  const files = fs.readdirSync(w.folder).map(name => path.join(w.folder, name)).filter(file => fs.statSync(file).isFile());
+  assert.ok(files.every(file => !fs.readFileSync(file, 'utf8').includes('test-read-token')), 'the token is in no file the service writes');
 });
 
 await check('a file is written by way of a temporary name, so no half file is ever read', async () => {

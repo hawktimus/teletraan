@@ -154,13 +154,15 @@ export async function createService(config, overrides = {}) {
   }
 
   router.get('/session', (req, res) => {
-    sendJson(res, 200, { signedIn: auth.isAuthed(req) });
+    sendJson(res, 200, { signedIn: auth.isAuthed(req), pinSet: auth.pinIsSet() });
   });
 
   router.post('/login', async (req, res) => {
     const body = await readJson(req);
     const result = auth.attempt(clientAddress(req), body.pin);
-    if (result.ok) {
+    if (result.pinNotSet) {
+      sendJson(res, 503, { error: 'Set a PIN in the settings file.', pinNotSet: true });
+    } else if (result.ok) {
       sendJson(res, 200, { ok: true }, { 'Set-Cookie': auth.cookieHeader(result.cookie, isSecure(req)) });
     } else if (result.blockedSeconds) {
       log('sign-in blocked for ' + clientAddress(req));

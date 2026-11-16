@@ -78,12 +78,12 @@ test('the stylesheet writes the caption at 44px or more, uses tokens for its col
   assert.ok(!/animation|transition|@keyframes|filter|blur|box-shadow/.test(css));
 });
 
-test('the placeholder draws MINI PANEL IDEA 1 and a dashed inner frame, and has content always', () => {
+test('the placeholder draws MINI PANEL IDEA 1 and a dashed inner frame, and has no content until it is designed', () => {
   const host = { innerHTML: '' };
   mini.mount(host);
   assert.equal(wordsOf(host.innerHTML), 'MINI PANEL IDEA 1');
   assert.ok(host.innerHTML.includes('placeholder-frame'));
-  assert.equal(typeof mini.hasContent, 'undefined');
+  assert.equal(mini.hasContent(), false, 'the rotation passes over a panel that is not designed');
   const css = read('panels/miniIdea1/panel.css');
   assert.ok(css.includes('dashed'));
   Array.from(css.matchAll(/font:\s*[\d.]+\s+(\d+)px/g)).forEach(match => assert.ok(Number(match[1]) >= 44));

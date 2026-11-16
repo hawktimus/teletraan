@@ -1,5 +1,6 @@
-// The PIN, the cookie and the lockout. The page accepts the two PINs in fixedPins and nothing else. If
-// CONTROL_PIN is in local.env (typed by hand over SSH, 4 to 12 digits), the page accepts only that one.
+// The PIN, the cookie and the lockout. The page accepts the one PIN in CONTROL_PIN in local.env (typed by hand over
+// SSH, 4 to 12 digits) and nothing else. With no usable CONTROL_PIN it accepts nothing and says so, because a PIN
+// written in the repository would be known to everyone who can read it.
 // A good PIN gives a signed cookie (HMAC-SHA-256) that lasts 30 days. Six wrong tries from one address in
 // ten minutes block that address for an hour. The tries are kept in a file (options.stateFile), so a restart of the
 // service or of the computer does not give an attacker six fresh tries. The secret is made on the first start and
@@ -15,8 +16,6 @@ export const triesAllowed = 6;
 export const triesWindow = 10 * 60 * 1000;
 export const blockTime = 60 * 60 * 1000;
 
-// 3229 and 3426 are the two team numbers
-export const fixedPins = ['3229', '3426'];
 const pinPattern = /^[0-9]{4,12}$/;
 
 export function validPin(pin) {
@@ -89,11 +88,14 @@ export function createAuth(options) {
     return secret;
   }
 
-  // The PINs that open the page now. A usable CONTROL_PIN replaces the two fixed ones; one that is not 4 to 12
-  // digits is ignored, so a typing mistake cannot lock everybody out.
+  // The PIN that opens the page now: the CONTROL_PIN in local.env, if it is 4 to 12 digits. Nothing else opens it.
   function acceptedPins() {
     const typed = String(getOverride() || '');
-    return validPin(typed) ? [typed] : fixedPins;
+    return validPin(typed) ? [typed] : [];
+  }
+
+  function pinIsSet() {
+    return acceptedPins().length > 0;
   }
 
   // The cookie holds the end time and a signature over the end time and the PIN, so a changed CONTROL_PIN ends every old cookie
@@ -144,6 +146,7 @@ export function createAuth(options) {
 
   // Tries a PIN. Returns { ok, cookie } or { ok: false, blockedSeconds, triesLeft }
   function attempt(address, pin) {
+    if (!pinIsSet()) return { ok: false, pinNotSet: true };
     const wait = blockedFor(address);
     if (wait > 0) return { ok: false, blockedSeconds: wait };
 
@@ -174,7 +177,7 @@ export function createAuth(options) {
     return cookieName + '=' + value + '; Path=/control; HttpOnly; SameSite=Strict; Max-Age=' + cookieDays * 86400 + (secure ? '; Secure' : '');
   }
 
-  return { isAuthed: isAuthed, attempt: attempt, blockedFor: blockedFor, cookieHeader: cookieHeader, cookieOf: cookieOf };
+  return { isAuthed: isAuthed, pinIsSet: pinIsSet, attempt: attempt, blockedFor: blockedFor, cookieHeader: cookieHeader, cookieOf: cookieOf };
 }
 
 // The address a request came from. nginx sets X-Real-IP to the address it saw and nothing else sets it.

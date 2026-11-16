@@ -258,7 +258,7 @@ query='*[_type == "presentation" && !(_id in path("drafts.**"))] {
 }'
 
 status=0
-curl --disable --silent --get --max-time 30 --max-filesize 10000000 --proto '=https' \
+sanity_curl --disable --silent --get --max-time 30 --max-filesize 10000000 --proto '=https' \
   --data-urlencode "query=$query" --data-urlencode 'perspective=published' \
   --output "$work/answer.json" "https://$project.api.sanity.io/v$version/data/query/$dataset" 2> /dev/null || status=$?
 

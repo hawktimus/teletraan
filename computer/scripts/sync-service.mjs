@@ -122,15 +122,55 @@ export function wantedImages(result) {
   return Array.from(found);
 }
 
+// ----- the Sanity read token -----
+
+// The dataset is public today, so a read with no token works. It will not once the dataset is made private
+// (docs/OPERATIONS.md), and then every read needs a token. SANITY_READ_TOKEN (Viewer role) is the one to use; the write
+// token is the fallback so that a computer that has only that one keeps reading. The value is read from local.env by
+// this one name, held only for the request and never written to a log, a status file or a message. A line that still
+// holds the [paste ...] placeholder counts as no token.
+export function readSanityToken(envFile) {
+  let text = '';
+  try {
+    text = fs.readFileSync(envFile, 'utf8');
+  } catch (error) {
+    return '';
+  }
+  const found = {};
+  text.split('\n').forEach(line => {
+    const match = /^(?:export\s+)?(SANITY_READ_TOKEN|SANITY_WRITE_TOKEN)=(.*)$/.exec(line.trim());
+    if (match) found[match[1]] = match[2].trim().replace(/^['"]/, '').replace(/['"]$/, '');
+  });
+  const usable = value => Boolean(value) && !value.startsWith('[');
+  if (usable(found.SANITY_READ_TOKEN)) return found.SANITY_READ_TOKEN;
+  return usable(found.SANITY_WRITE_TOKEN) ? found.SANITY_WRITE_TOKEN : '';
+}
+
+// The reasons Monday tasks are stuck are typed by students and can say anything, so they stay off Sanity, which is
+// public. monday-sync.sh writes them to monday/notes.json in the data folder, and they are put on the tasks here, in
+// the local copy the screen reads and nowhere else. A missing or damaged file means no notes.
+export function withStuckNotes(result, notesFile) {
+  if (!result || !Array.isArray(result.tasks)) return result;
+  const notes = readJson(notesFile, {});
+  if (!notes || typeof notes !== 'object') return result;
+  const tasks = result.tasks.map(task => {
+    const note = task && typeof task._id === 'string' ? notes[task._id] : undefined;
+    return typeof note === 'string' && note !== '' ? Object.assign({}, task, { note: note }) : task;
+  });
+  return Object.assign({}, result, { tasks: tasks });
+}
+
 // ----- the service -----
 
-// options (all optional): dataDir, sanityBase, weatherUrl, now(), fetch
+// options (all optional): dataDir, sanityBase, weatherUrl, now(), fetch, envFile, token
 export function createSync(options = {}) {
   const dataDir = options.dataDir || process.env.TELETRAAN_DATA || '/var/lib/teletraan/data';
   const sanityBase = options.sanityBase || process.env.SYNC_SANITY_BASE || 'https://' + sanity.projectId + '.api.sanity.io';
   const weatherUrl = options.weatherUrl || process.env.SYNC_WEATHER_URL || forecastUrl(location);
   const now = options.now || (() => Date.now());
   const doFetch = options.fetch || fetch;
+  const envFile = options.envFile || process.env.TELETRAAN_ENV_FILE || path.join(process.env.TELETRAAN_ROOT || '/opt/teletraan', 'local.env');
+  const sanityToken = () => (typeof options.token === 'string' ? options.token : readSanityToken(envFile));
   const imageFolder = path.join(dataDir, 'images');
   const statusFile = path.join(dataDir, 'sync-status.json');
   const netwatchFile = options.netwatchFile || process.env.SYNC_NETWATCH_FILE || '/var/lib/teletraan/netwatch.json';
@@ -168,6 +208,9 @@ export function createSync(options = {}) {
   };
 
   const stamp = () => new Date(now()).toISOString();
+  // When this service started. The dots on the wall and on the control page say "not known yet", not "late", for the
+  // first minutes, until the first reads land.
+  const startedAt = stamp();
 
   function succeeded(name) {
     const was = memory.failing[name];
@@ -201,11 +244,19 @@ export function createSync(options = {}) {
     }
   }
 
+  // The token goes to Sanity's own hosts and to no other address: not the weather service, not any other site
+  function sendsToken(url) {
+    return url.startsWith(sanityBase + '/') || url.startsWith('https://' + sanityImageHost + '/');
+  }
+
   async function fetchBody(url, seconds, asJson) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), seconds * 1000);
     try {
-      const response = await doFetch(url, { signal: controller.signal, headers: { 'User-Agent': 'teletraan-sync' } });
+      const headers = { 'User-Agent': 'teletraan-sync' };
+      const token = sendsToken(url) ? sanityToken() : '';
+      if (token) headers.Authorization = 'Bearer ' + token;
+      const response = await doFetch(url, { signal: controller.signal, headers: headers });
       if (!response.ok) throw failure('http ' + response.status);
       const type = String(response.headers.get('content-type') || '');
       if (asJson) {
@@ -243,7 +294,7 @@ export function createSync(options = {}) {
         memory.result = full.result;
         memory.signature = signature;
         memory.lastFullRead = now();
-        writeFileAtomic(path.join(dataDir, 'content.json'), JSON.stringify({ syncedAt: stamp(), result: full.result }));
+        writeFileAtomic(path.join(dataDir, 'content.json'), JSON.stringify({ syncedAt: stamp(), result: withStuckNotes(full.result, path.join(dataDir, 'monday', 'notes.json')) }));
         wrote = true;
         logEvent(service, 'sanity', 'content_written', 'the content was read and written');
       } else if (now() - (memory.lastNote.sanity || 0) > timing.noteEveryWhenWell * 1000) {
@@ -356,9 +407,12 @@ export function createSync(options = {}) {
   // write: two documents inside the content answer, and the notes file of the calendar download.
   function readOthers() {
     const result = memory.result || {};
-    const monday = result.monday;
-    if (monday && monday.lastSyncAt) {
-      state.monday.lastSuccessAt = monday.lastSyncAt;
+    // monday-sync.sh leaves its own answer in the data folder, so the dot does not wait for the round trip through Sanity
+    // and back (a write, a change check, a full read). The Sanity document is the fallback for a computer without it.
+    const local = readJson(path.join(dataDir, 'monday', 'status.json'), null);
+    const monday = local && typeof local === 'object' ? local : result.monday;
+    if (monday) {
+      if (monday.lastSyncAt) state.monday.lastSuccessAt = monday.lastSyncAt;
       if (monday.lastError && state.monday.lastFailureReason !== oneLine(monday.lastError)) {
         state.monday.lastFailureAt = stamp();
         state.monday.lastFailureReason = oneLine(monday.lastError);
@@ -408,7 +462,7 @@ export function createSync(options = {}) {
 
   function writeStatus() {
     readOthers();
-    const status = { generatedAt: stamp(), sources: {}, network: networkState() };
+    const status = { generatedAt: stamp(), startedAt: startedAt, sources: {}, network: networkState() };
     sourceNames.forEach(name => {
       status.sources[name] = Object.assign({}, state[name]);
     });

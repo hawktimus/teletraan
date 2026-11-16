@@ -15,11 +15,11 @@ import {
   contentOf, controlLink, countLine, departmentTables, departments, generalCount, hiddenCount, hiddenOnMonday, lastReadLine, listChoices,
   mondayStatusId, projectRows, question, rotationPath, teamChoices, tvPreview, words,
 } from './monday-page-parts.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 const border = '1px solid var(--card-border-color, rgba(128, 128, 128, 0.4))';
 const muted = 'var(--card-muted-fg-color, inherit)';

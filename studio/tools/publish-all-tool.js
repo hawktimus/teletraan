@@ -23,11 +23,11 @@ import {
   labelOf,
   messageOf,
 } from './publish-all.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the schemas' own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // The pages that exist once keep their fixed ids when they are published
 export const singletonIds = {};

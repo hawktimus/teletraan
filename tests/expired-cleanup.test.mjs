@@ -308,7 +308,7 @@ respond(404, 'unknown');
 `;
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -680,7 +680,7 @@ function statusWriteRun(fileText, extraEnv = {}) {
   fs.writeFileSync(path.join(root, 'computer/local.env'), "TELETRAAN_DATA='" + data + "'\nSANITY_WRITE_TOKEN='" + token + "'\n");
   if (fileText !== null) fs.writeFileSync(path.join(data, 'cleanup/status.json'), fileText);
   ['sed', 'head', 'tail', 'grep', 'date', 'dirname', 'cat', 'cut', 'tr', 'wc', 'awk', 'git'].forEach(tool => {
-    const found = spawnSync('/bin/sh', ['-c', 'command -v ' + tool], { encoding: 'utf8' }).stdout.trim();
+    const found = spawnSync('/bin/bash', ['-c', 'command -v ' + tool], { encoding: 'utf8' }).stdout.trim();
     if (found) fs.symlinkSync(found, path.join(bin, tool));
   });
   fs.writeFileSync(path.join(bin, 'curl'), '#!/bin/sh\nwhile [ $# -gt 0 ]; do if [ "$1" = --data ]; then printf "%s" "$2" > "$STUB_DIR/body.json"; fi; shift; done\ncat > /dev/null\n', { mode: 0o755 });

@@ -18,7 +18,7 @@ const ordinary = ['sed', 'head', 'tail', 'grep', 'awk', 'cat', 'mkdir', 'chmod',
 let counter = 0;
 
 function find(name) {
-  return spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  return spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
 }
 function tool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });

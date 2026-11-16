@@ -82,7 +82,7 @@ echo
 printf 'Press Enter to go ahead, or Ctrl+C to stop. '
 read -r answer
 
-install -d -o "$account" -m 750 "$backups"
+install -d -o "$account" -m 700 "$backups"
 
 tmp=$(mktemp)
 for unit in teletraan-backup.service teletraan-backup.timer; do

@@ -113,7 +113,7 @@ export async function loadSchemas() {
   // The Monday page imports the rules of the TV from ../dashboard
   fs.symlinkSync(path.join(studioFolder, '..', 'dashboard'), path.join(root, 'dashboard'));
   try {
-    ['schemas', 'structure.js', 'inputs', 'tools'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
+    ['schemas', 'structure.js', 'inputs', 'tools', 'project.js'].forEach(name => fs.cpSync(path.join(studioFolder, name), path.join(folder, name), { recursive: true }));
     fs.writeFileSync(path.join(folder, 'package.json'), JSON.stringify({ type: 'module' }));
     // the names that schemas/ and the inputs import: the radio of the team field, the other inputs and the Start here page are never drawn here
     const stubs = { sanity: ['defineType', 'defineField', 'defineArrayMember', 'set', 'unset', 'useClient', 'useFormValue', 'useDocumentOperation'], react: ['createElement', 'createContext', 'useContext', 'useEffect', 'useRef', 'useState'] };

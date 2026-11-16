@@ -53,7 +53,7 @@ talks_near() {
   late=$(iso_at $((now + look_ahead)))
   early=$(iso_at $((now - look_back)))
   query="count(*[_type == \"presentation\" && status == \"scheduled\" && dateTime(start) < dateTime(\"$late\") && dateTime(start) > dateTime(\"$early\")])"
-  answer=$(curl --silent --max-time 20 --connect-timeout 10 --get \
+  answer=$(sanity_curl --silent --max-time 20 --connect-timeout 10 --get \
     "https://$project.api.sanity.io/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || return 0
   printf '%s' "$answer" | sed -n 's/.*"result":\([0-9][0-9]*\).*/\1/p' | head -n 1

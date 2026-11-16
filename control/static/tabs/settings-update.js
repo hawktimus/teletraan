@@ -13,11 +13,15 @@ const stepNames = {
   unpack: 'Unpack the files',
   files: 'Check the files',
   schemas: 'Check the schemas',
+  syntax: 'Check that every dashboard file reads',
+  tests: 'Run the quick tests',
   studio: 'Build the Studio',
   release: 'Write the release files',
   switch: 'Switch the wall',
   restart: 'Restart the screen',
   wait: 'Wait for the screen to report',
+  rollback: 'Go back to the version before',
+  units: 'Check the services of this computer',
 };
 
 function element(tag, text, className) {
@@ -241,7 +245,7 @@ export function mountUpdate(page, onEvent) {
     if (!yes) return;
     backNote.textContent = 'Switching...';
     try {
-      const answer = await api('releases/' + picked.version + '/activate', { method: 'POST' });
+      const answer = await api('releases/' + picked.version + '/activate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmed: true }) });
       backNote.textContent = answer.message || 'The wall is on ' + versionLabel(picked.version, picked.commit) + '.';
     } catch (error) {
       backNote.textContent = error.message;

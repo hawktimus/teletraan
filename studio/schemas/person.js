@@ -29,7 +29,7 @@ export default defineType({
       title: 'Name',
       type: 'string',
       description: 'Type the name as it should appear on the screen. Up to 17 characters fit.',
-      validation: Rule => [Rule.required().error('Add a name.'), tooLong(Rule, limits.personName), Rule.custom(noContact).warning(), Rule.custom(firstNameOnlyWarning).warning()],
+      validation: Rule => [Rule.required().error('Add a name.'), tooLong(Rule, limits.personName), Rule.custom(noContact).warning(), Rule.custom(firstNameOnlyWarning).error()],
     }),
     defineField({
       name: 'title',

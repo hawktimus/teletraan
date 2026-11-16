@@ -13,6 +13,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { useClient } from 'sanity';
 import { ageText, clockText } from './time-text.js';
+import { apiVersion } from '../project.js';
 
 // Also exported here, where tests/schemas.test.mjs reads it
 export { ageText };
@@ -20,7 +21,6 @@ export { ageText };
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // The id the Teletraan computer writes to. computer/scripts/status-write.sh has the same one.
 export const statusId = 'status-mini';

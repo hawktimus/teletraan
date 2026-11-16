@@ -25,11 +25,11 @@ import { mapFor, labelsFor, letterGroups } from '../tools/screen-map.js';
 import { words, readSources, pickerTeams, teamCodes } from './screen-parts.js';
 import { seedScreen, needsSeed, withKeys } from '../tools/screen-seed.js';
 import { styleOfScreenId } from './screen-ids.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // Plain styles. The colours are the Studio's own variables, so the form follows the Studio's light
 // and dark themes, and each has a fallback.

@@ -102,6 +102,8 @@ const smallest = 44;
 
 // The sizes under 44px that the house rules name (the house rules, Text), by stylesheet. Each says what the text is.
 const allowedSmall = {
+  // The city and the day of an event on the Season timeline, muted: the one size on that card under 44px
+  'panels/competition-timeline/panel.css': { 36: 'the city and the day of an event' },
   'panels/countdown/panel.css': { 20: 'war clock label of Minimal', 24: 'war clock label of Minimal', 36: 'title and date line of a clock' },
   'panels/bar-banner/panel.css': { 20: 'war clock label of Minimal', 24: 'war clock label of Minimal', 36: 'title and date line of a clock' },
   'panels/bar-column/panel.css': { 36: 'title and date line of a clock' },
@@ -112,6 +114,9 @@ const allowedSmall = {
   'panels/leadership/panel.css': { 36: 'third line of a people row' },
   'panels/team-leads/panel.css': { 36: 'third line of a people row' },
   'panels/roster/panel.css': { 36: 'third line of a people row' },
+  // The two stylesheets that more than one panel shares. Their small text is named here too, so it is not left unsaid.
+  'base.css': { 20: 'the build stamp, only with ?debug=1', 36: 'third line of a people row' },
+  'monday.css': { 30: 'Monday card chip', 36: 'Monday card chip text and the label of a figure' },
 };
 
 // Sizes under 44px that are in the panels today and are not on the list of the house rules. They are listed so that
@@ -122,7 +127,6 @@ const knownTooSmall = {
   'panels/competition-preview/panel.css': { 28: 'to be fixed', 30: 'to be fixed' },
   'panels/competition-qualify/panel.css': { 30: 'to be fixed' },
   'panels/competition-recap/panel.css': { 28: 'to be fixed' },
-  'panels/competition-timeline/panel.css': { 36: 'to be fixed' },
   'panels/frc-news/panel.css': { 30: 'to be fixed' },
 };
 
@@ -132,7 +136,7 @@ check({
   instead: 'Use var(--size-label) (44px), var(--size-body) or var(--size-body-large). If the text really is one of the sizes the house rules name, add its size to allowedSmall in tests/house-rules.test.mjs with the reason.',
 }, () => {
   const problems = [];
-  const sheets = panelFiles.filter(file => file.endsWith('.css'));
+  const sheets = panelFiles.filter(file => file.endsWith('.css')).concat(['base.css', 'monday.css'].map(name => path.join(dashboard, name)));
   const scripts = panelFiles.filter(file => file.endsWith('.js'));
   const allowed = (file, size) => {
     const key = path.relative(dashboard, file).split(path.sep).join('/');

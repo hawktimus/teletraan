@@ -16,10 +16,10 @@ import { useClient } from 'sanity';
 import { choiceButtons, controlStyle } from './field-editor.js';
 import { themeChoices, themeWeekdays, tidyThemeByWeekday } from './theme-ids.js';
 import { backgroundChoices, backgroundIds } from './background-ids.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
-const apiVersion = '2025-02-19';
 
 const settingsId = 'dashboardSettings';
 const draftId = 'drafts.dashboardSettings';

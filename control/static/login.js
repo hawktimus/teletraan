@@ -37,9 +37,16 @@ function block(seconds) {
   }, 1000);
 }
 
+// With no CONTROL_PIN in local.env nothing can sign in, so the form is replaced by the one thing to do
+function needPin() {
+  form.hidden = true;
+  say('Set a PIN in the settings file. Over SSH, add the line CONTROL_PIN=, then 4 to 12 digits, to local.env, then reload this page (docs/control-page.md, First time).', true);
+}
+
 async function start() {
   const session = await (await fetch(apiPath('session'))).json();
   if (session.signedIn) location.reload();
+  else if (session.pinSet === false) needPin();
 }
 
 form.addEventListener('submit', async event => {
@@ -62,6 +69,10 @@ form.addEventListener('submit', async event => {
   }
   if (response.ok) {
     location.reload();
+    return;
+  }
+  if (answer.pinNotSet) {
+    needPin();
     return;
   }
   if (response.status === 429 && answer.blockedSeconds) {

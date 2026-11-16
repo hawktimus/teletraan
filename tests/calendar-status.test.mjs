@@ -22,7 +22,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-calendar-status-')
 const ordinaryTools = ['sed', 'tail', 'head', 'tr', 'grep', 'mktemp', 'rm', 'mv', 'cp', 'cat', 'chmod', 'find', 'mkdir', 'dirname', 'date', 'awk', 'wc'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -115,7 +115,7 @@ function setup(name, options) {
     stub: stub,
     run(script, args) {
       const env = { PATH: bin, STUB_LOG: log, STUB_DIR: stub, TZ: 'America/New_York' };
-      const result = spawnSync('/bin/sh', [path.join(root, 'computer/scripts', script)].concat(args || []), { env: env, encoding: 'utf8', input: '' });
+      const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts', script)].concat(args || []), { env: env, encoding: 'utf8', input: '' });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     read(file) {
@@ -702,7 +702,7 @@ test('the installers say when Node is missing, and the note does not stop them',
     assert.ok(text.includes('if ! command -v node > /dev/null 2>&1; then'), file);
     assert.ok(text.includes('docs/calendars-page.md'), file);
     assert.ok(text.indexOf('command -v node') < text.indexOf("printf 'Press Enter"), file + ' says it before it waits for Enter');
-    const syntax = spawnSync('/bin/sh', ['-n', path.join(repo, 'computer/scripts', file)], { encoding: 'utf8' });
+    const syntax = spawnSync('/bin/bash', ['-n', path.join(repo, 'computer/scripts', file)], { encoding: 'utf8' });
     assert.equal(syntax.status, 0, syntax.stderr);
   });
 });
@@ -746,7 +746,7 @@ test('the dashboard never reads the calendar status document: its id and its typ
 test('the scripts have valid sh syntax, are executable, never print local.env and never trace', () => {
   ['fetch-calendars.sh', 'calendar-status.sh', 'status-write.sh'].forEach(file => {
     const full = path.join(repo, 'computer/scripts', file);
-    const syntax = spawnSync('/bin/sh', ['-n', full], { encoding: 'utf8' });
+    const syntax = spawnSync('/bin/bash', ['-n', full], { encoding: 'utf8' });
     assert.equal(syntax.status, 0, file + ': ' + syntax.stderr);
 
     const text = fs.readFileSync(full, 'utf8');

@@ -180,4 +180,9 @@
 .wifi-hidden, .wifi-secret { display: grid; gap: 6px; }
 .wifi-hidden input, .wifi-secret input[type="password"], .wifi-secret input[type="text"] { min-height: 48px; }
 .wifi-result, .wifi-now { margin: 8px 0 0; }
+/* The name servers line of Network repairs: green as configured, amber on the network's own for the time being. A word is
+   always there, so colour is never the only sign. */
+.dns-line { margin: 8px 0; padding: 8px 12px; border-left: 6px solid var(--muted); background: var(--surface-2); }
+.dns-line[data-state="ok"] { border-left-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.dns-line[data-state="warn"] { border-left-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
 .wifi-warning { border-left: 4px solid var(--warn); padding-left: 10px; }

@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const copied = ['schemas', 'inputs', 'tools'];
+const copied = ['schemas', 'inputs', 'tools', 'project.js'];
 
 // The real packages are never used. Each name a file imports from a package becomes an export of its stand-in.
 const identities = ['defineType', 'defineField', 'defineArrayMember', 'defineConfig'];

@@ -70,7 +70,7 @@ export function githubCard(stepNames, reload, onEvent) {
   }
 
   async function run() {
-    const response = await fetch(apiPath('github/update'), { method: 'POST' });
+    const response = await fetch(apiPath('github/update'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmed: true }) });
     if (response.status === 401) location.reload();
     if (!response.ok) {
       const answer = await response.json().catch(() => ({}));

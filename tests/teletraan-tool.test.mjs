@@ -729,7 +729,7 @@ function merge(name, envText, incomingText, options = {}) {
   const incoming = path.join(root, 'incoming.env');
   if (envText !== null) fs.writeFileSync(envFile, envText, { mode: options.mode || 0o644 });
   fs.writeFileSync(incoming, incomingText);
-  const result = spawnSync('/bin/sh', [mergeFile, envFile, incoming], { encoding: 'utf8', env: { PATH: systemPath } });
+  const result = spawnSync('/bin/bash', [mergeFile, envFile, incoming], { encoding: 'utf8', env: { PATH: systemPath } });
   return { text: result.stdout, errors: result.stderr, status: result.status, envFile: envFile, env: () => fs.readFileSync(envFile, 'utf8') };
 }
 
@@ -814,11 +814,11 @@ test('merge-env.sh refuses a line that is not a key or a calendar, changes nothi
 });
 
 test('merge-env.sh needs two arguments and a file of new lines', () => {
-  const none = spawnSync('/bin/sh', [mergeFile], { encoding: 'utf8', env: { PATH: systemPath } });
+  const none = spawnSync('/bin/bash', [mergeFile], { encoding: 'utf8', env: { PATH: systemPath } });
   assert.equal(none.status, 2);
   assert.ok(none.stderr.includes('Usage:'));
 
-  const missing = spawnSync('/bin/sh', [mergeFile, path.join(work, 'x.env'), path.join(work, 'does-not-exist')], { encoding: 'utf8', env: { PATH: systemPath } });
+  const missing = spawnSync('/bin/bash', [mergeFile, path.join(work, 'x.env'), path.join(work, 'does-not-exist')], { encoding: 'utf8', env: { PATH: systemPath } });
   assert.equal(missing.status, 1);
   assert.ok(missing.stderr.includes('did not arrive'));
 });

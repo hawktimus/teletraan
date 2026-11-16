@@ -111,6 +111,13 @@ test('when the internet is down only the network is listed, from the watchdog, t
   assert.equal(buildBanner(null, now).state, 'unknown');
 });
 
+test('no screen report yet is not known for the first 30 seconds after this service starts, and late after that', () => {
+  const quiet = { reporting: false, ageSeconds: null, quiet: true };
+  const screen = found => buildDots(found, now).find(dot => dot.id === 'screen');
+  assert.equal(screen(overview({ wall: quiet, serviceUptimeSeconds: 8 })).state, 'unknown');
+  assert.equal(screen(overview({ wall: quiet, serviceUptimeSeconds: 45 })).state, 'warn');
+});
+
 test('a screen that stopped reporting is a problem with Restart the dashboard as its fix', () => {
   const problems = buildProblems(overview({ wall: { reporting: true, ageSeconds: 300, quiet: true } }), now);
   assert.equal(problems[0].id, 'screen');
@@ -165,6 +172,7 @@ test('GET overview reads the files of the other services, passes on only the fie
 async function service() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-lock-'));
   fs.mkdirSync(path.join(root, 'data'));
+  fs.writeFileSync(path.join(root, 'local.env'), "CONTROL_PIN='482916'\n");
   const config = Object.assign(readConfig({ CONTROL_ROOT: root, CONTROL_DATA: path.join(root, 'data') }), { port: 0 });
   const { server } = await createService(config);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -187,7 +195,7 @@ test('repeated wrong PINs block the address: a clear 401 with the tries left, th
     const blocked = await last.json();
     assert.match(blocked.error, /^Too many wrong tries\. Try again in \d+ minutes\.$/);
     assert.ok(blocked.blockedSeconds > 0);
-    const right = await post(s.base, '3229');
+    const right = await post(s.base, '482916');
     assert.equal(right.status, 429, 'the right PIN does not get through during the block');
     assert.equal(right.headers.get('set-cookie'), null);
   } finally { s.server.close(); }
@@ -196,11 +204,11 @@ test('repeated wrong PINs block the address: a clear 401 with the tries left, th
 test('the cookie keeps its behaviour and gains Secure only over HTTPS, and a call from the page under another host name is accepted', async () => {
   const s = await service();
   try {
-    const plain = await post(s.base, '3229');
+    const plain = await post(s.base, '482916');
     assert.equal(plain.status, 200);
     const cookie = plain.headers.get('set-cookie');
     assert.match(cookie, /Path=\/control; HttpOnly; SameSite=Strict; Max-Age=2592000$/);
-    const secure = await post(s.base, '3229', { 'X-Forwarded-Proto': 'https' });
+    const secure = await post(s.base, '482916', { 'X-Forwarded-Proto': 'https' });
     assert.match(secure.headers.get('set-cookie'), /; Secure$/);
   } finally { s.server.close(); }
   assert.equal(isSecure({ headers: { 'x-forwarded-proto': 'https' } }), true);

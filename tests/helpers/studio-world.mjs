@@ -37,6 +37,7 @@ const stubs = {
       "export const unset = () => ({ type: 'unset' });",
       "export const useFormValue = path => (globalThis.studioForm || {})[path.join('.')];",
       'export const validateDocument = async () => [];',
+      "export const useValidationStatus = () => ({ validation: globalThis.studioValidation || [], isValidating: false });",
       'export const useDocumentOperation = () => ({',
       '  patch: { execute: patches => (globalThis.studioCalls = globalThis.studioCalls || []).push({ patch: patches }) },',
       '  publish: { execute: () => (globalThis.studioCalls = globalThis.studioCalls || []).push({ publish: true }) },',

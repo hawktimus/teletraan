@@ -15,6 +15,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { noteField, tooLong } from './fields.js';
+import { datetimeOptions } from './presentationTimes.js';
 import { themes, overlays, cornerArts, subthemePresets } from '../inputs/themes.js';
 
 const themeChoices = themes.map(theme => ({ title: theme.name, value: theme.id }));
@@ -111,6 +112,7 @@ const useNowField = defineField({
       name: 'until',
       title: 'Until',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'Optional. Use a theme now stops at this time. Leave empty to keep it until you change it.',
       validation: Rule => Rule.min('2020-01-01T00:00:00Z').max('2099-12-31T23:59:00Z').error('Pick a time between the years 2020 and 2099.'),
     }),

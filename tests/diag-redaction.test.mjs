@@ -189,7 +189,7 @@ fs.writeFileSync(path.join(dataDir, 'live', 'sync-status.json'), JSON.stringify(
 }));
 
 function runDiag(args = []) {
-  return spawnSync('bash', [path.join(repo, 'computer/scripts/diag.sh')].concat(args), {
+  return spawnSync('/bin/bash', [path.join(repo, 'computer/scripts/diag.sh')].concat(args), {
     encoding: 'utf8',
     env: Object.assign({}, process.env, {
       PATH: bin + ':' + process.env.PATH,
@@ -228,7 +228,7 @@ check('the report never opens the keys file at all', () => {
 check('a report is only kept if it could be cleaned: no node, no report', () => {
   // Without node nothing can be cleaned, and an uncleaned report must never be left on disk
   const before = fs.readdirSync(path.join(stateDir, 'reports')).length;
-  const result = spawnSync('bash', [path.join(repo, 'computer/scripts/diag.sh')], {
+  const result = spawnSync('/bin/bash', [path.join(repo, 'computer/scripts/diag.sh')], {
     encoding: 'utf8',
     env: Object.assign({}, process.env, {
       PATH: bin + ':' + process.env.PATH,

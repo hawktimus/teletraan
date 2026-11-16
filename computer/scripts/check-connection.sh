@@ -59,15 +59,32 @@ http_code() {
   echo "${code:-000}"
 }
 
+# The Sanity read token: SANITY_READ_TOKEN, or SANITY_WRITE_TOKEN when that is not set. Empty when neither holds a real
+# value (a line that still starts with [ is the placeholder). It is never printed.
+sanity_token() {
+  token=$(setting SANITY_READ_TOKEN)
+  case $token in '' | \[*) token=$(setting SANITY_WRITE_TOKEN) ;; esac
+  case $token in \[*) token= ;; esac
+  printf '%s' "$token"
+}
+
 # The answer to a GROQ query, as the text Sanity sends. The query is given to
-# curl separately so that it does the encoding. This asks without a login:
-# nothing here sends a token. $1 is the host and $2 is the query.
+# curl separately so that it does the encoding. With a token in local.env the
+# request carries it, handed to curl on its standard input so that it is never
+# on a command line; with none it asks without a login, which works while the
+# dataset is public. $1 is the host and $2 is the query.
 sanity_query() {
   host=$1
   query=$2
   have curl || return 0
-  curl -sS -m 15 -G "$host/v$version/data/query/$dataset" \
-    --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null
+  token=$(sanity_token)
+  if [ -n "$token" ]; then
+    printf 'header = "Authorization: Bearer %s"\n' "$token" | curl -sS -m 15 -G --config - "$host/v$version/data/query/$dataset" \
+      --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null
+  else
+    curl -sS -m 15 -G "$host/v$version/data/query/$dataset" \
+      --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null
+  fi
 }
 
 if [ -z "$project" ] || [ -z "$dataset" ] || [ -z "$version" ]; then

@@ -237,8 +237,7 @@ The lists use the generic collection routes of the control service, which draw t
 - `GET /control/api/docs/<type>/<id>`, `POST .../save` (`{ set, unset, baseRev, force }`) and `POST .../publish` (`{ confirm, rev, force }`) work as the singleton routes do, with the same revision conflict and the same refusal of an unknown field or a value over a limit.
 - `POST .../delete` takes `{ confirm, rev, draftOnly }`. A published document is removed, with its draft, only when `confirm` is true. `draftOnly` drops the waiting changes and keeps the published copy. A draft that was never published needs no confirm.
 
-Only the types the plan names as `collection` (studio/tools/schema-plan.js: tipOrNews, rosterPerson, person and subteam) are allowed. `POST /control/api/docs/<type>/check` takes `{ set }` and answers the advice of the schema (a full name, an email address, a space or a number in a name) without writing anything; a save answers with the same advice as `warnings`, and a warning never stops a save. The read routes are `GET /control/api/content/calendar`, `POST /control/api/content/calendar/switch`, `POST /control/api/content/calendar/publish`, `GET /control/api/content/news` and `GET /control/api/content/people` (the Roster block no longer uses it). Every route needs the PIN, a write needs SANITY_WRITE_TOKEN on the computer, and no answer holds the key.
-Only the types the plan names as `collection` (studio/tools/schema-plan.js: tipOrNews, rosterPerson, announcement and photo) are allowed. The read routes are `GET /control/api/content/calendar`, `POST /control/api/content/calendar/switch`, `POST /control/api/content/calendar/publish`, `GET /control/api/content/news`, `GET /control/api/content/people`, `GET /control/api/content/photo-source`, `POST /control/api/content/announcement/post` and `POST /control/api/photo-upload`. Every route needs the PIN, a write needs SANITY_WRITE_TOKEN on the computer, and no answer holds the key.
+Only the types the plan names as `collection` (studio/tools/schema-plan.js: tipOrNews, rosterPerson, person, subteam, announcement and photo) are allowed. `POST /control/api/docs/<type>/check` takes `{ set }` and answers the advice of the schema (an email address, a space or a number in a name, a last name for a subteam lead) without writing anything; a save answers with the same advice as `warnings`, and a warning never stops a save. A full name for a person (Leadership) is an error in the schema, so a save of one is refused with the sentence and the name of the field, and the Studio will not publish it either. The read routes are `GET /control/api/content/calendar`, `POST /control/api/content/calendar/switch`, `POST /control/api/content/calendar/publish`, `GET /control/api/content/news`, `GET /control/api/content/people` (the Roster block no longer uses it), `GET /control/api/content/photo-source`, `POST /control/api/content/announcement/post` and `POST /control/api/photo-upload`. Every route needs the PIN, a write needs SANITY_WRITE_TOKEN on the computer, and no answer holds the key.
 
 ## All settings
 
@@ -316,7 +315,7 @@ Do these once, in this order. The team mentor says yes to the Docker downloads i
 
    The tool then installs the services and timers and restarts the screen (docs/updating-the-computer.md).
 2. Allow the computer's address in Sanity, so the Studio on the computer can read the dataset. Open sanity.io/manage, choose the project, then API, then CORS origins, then Add CORS origin. Add `http://teletraan.local:3229` with Allow credentials ticked, and do the same for `http://<private tunnel name>:3229`. If you open the Studio on port 3426, add `http://teletraan.local:3426` and `http://<private tunnel name>:3426` too, because Sanity checks the address exactly as the browser shows it. The Status tab says "CORS origin missing" until this is done, and then names the 3426 address as well. On a shared Wi-Fi, leave Allow credentials off for the teletraan.local addresses and use the private tunnel name: a page on plain HTTP can be changed on the way, and with credentials allowed it could act as the signed-in editor (docs/security-review.md).
-3. Open the address above and type the PIN: 3229 or 3426. Nothing has to be set up for it.
+3. Open the address above and type the PIN. It is the `CONTROL_PIN` line in `/opt/teletraan/local.env`, which you add by hand over SSH before the first install (the installer stops and says so if the line is missing). With no PIN set, the sign-in screen says "Set a PIN in the settings file" and accepts nothing.
 
 Release 1 is the old tree. It stays in the list as a record. It cannot be switched back to, because its folders are from before round 6.
 
@@ -335,7 +334,7 @@ Release 1 is the old tree. It stays in the list as a record. It cannot be switch
 The top of Settings, Updates is the card From GitHub. It needs no login and no key, because the repository (github.com/Hawktimus/teletraan) is public.
 
 1. The card shows `On GitHub: <short hash> <message>` and `On the wall: v14 · a1b2c3d`.
-2. Press Update from GitHub and confirm. The computer downloads the zip of that exact commit (about 100 MB at most, 2 minutes at most), takes off the one top folder GitHub puts in it and installs it with the same steps as the folder upload: download, unpack, check the files, check the schemas, build the Studio, write the release files, switch, restart the screen, wait for the screen. A failure before the switch leaves the wall as it was.
+2. Press Update from GitHub and confirm. The computer downloads the zip of that exact commit (about 100 MB at most, 2 minutes at most), takes off the one top folder GitHub puts in it and installs it with the same steps as the folder upload: download, unpack, check the files, check the schemas, check that every dashboard file reads, run the quick tests, build the Studio, write the release files, switch, restart the screen, wait for the screen, check the services. A failure before the switch leaves the wall as it was. The call must say `confirmed: true`; the button does, after you confirm, and a call without it is refused with 400 and changes nothing.
 3. The release note reads `From GitHub <short hash> <message>` and `RELEASE.json` says `from: github`.
 4. The button reads Already on the wall and is off when the newest commit is the one on the wall. Check again asks GitHub once more.
 
@@ -356,13 +355,18 @@ The folder upload sits below the GitHub card, headed From a folder on this compu
    - `Your folder: v? · commit unknown` when the folder has no `.git`.
 3. Next to it is `On the wall: v14 · a1b2c3d`. The button, Push → wall, is off when the folder is exactly what is on the wall.
 4. Type a note if you want one. Press the button. The browser zips the folder in memory without `.git`, `node_modules`, `local.env`, `_inputs`, `_outputs` and the generated files, up to 100 MB, and uploads it.
-5. The page then shows one line for each step of the install: unpack, check the files, check the schemas, build the Studio, write the release files, switch, restart the screen, wait for the screen. A failure before the switch removes the half-built folder and leaves the wall as it was. The number is used up either way.
+5. The page then shows one line for each step of the install: unpack, check the files, check the schemas, check that every dashboard file reads, run the quick tests, build the Studio, write the release files, switch, restart the screen, wait for the screen, check the services. A failure before the switch removes the half-built folder and leaves the wall as it was. The number is used up either way.
+
+   - **Every dashboard file reads.** `node --check` is run on each JavaScript file of `dashboard/` (three at a time). One file with a syntax error would leave the wall on a blank page, so nothing is switched and the page names the files.
+   - **The quick tests.** `node tests/run.mjs --quick` is run in the new tree before the switch, and a failure stops the update. The control service runs in a small container, and the shell tests need `bash` and `jq`: when it has neither, the step says "Skipped: bash or jq is missing in this service" and the update goes on, so the gate is never skipped in silence. Run `node tests/run.mjs` on the Mac before you push.
+   - **A switch that does not come up is undone.** If the screen does not restart, or does not report the new version within 90 seconds, `current` goes back to the release it was on, the screen is restarted on it, and the page says "Update rolled back" with the reason, never Done. The release that failed is kept in the list. With no earlier release it says so.
+   - **Check the services.** After the screen reports, the helper word `units-check` compares the systemd unit files on the computer with the ones of the new release and says so when they differ. It changes nothing: units, sudoers and timers need root, and the installer is where they change (`computer/install.sh`, from the Mac tool, Install everything). A control page that could install units as root would give anyone who can upload a release a way to root, and `tests/units-user.test.mjs` holds the units to a short list of root users for that reason. So the update says "Run Install everything from the Mac tool" when the services are behind, and does not do it itself.
 
 The browser zip uses one vendored file, `control/static/vendor/fflate.js`, with its licence in `control/static/vendor/LICENSE-fflate.txt`. If the file is ever missing, the page says the zip library is missing, and the Mac tool still works.
 
 ### Roll back
 
-The Roll back box lists the kept releases with version, date and note. Pick one, press Switch to this version and confirm. `current` flips and the screen restarts. Nothing is built again, because each release holds its own Studio build. Rolling forward works the same way.
+The Roll back box lists the kept releases with version, date and note. Pick one, press Switch to this version and confirm (the call carries `confirmed: true` and is refused without it). `current` flips and the screen restarts; the helper is asked first and the service restarts after the answer has been sent. Nothing is built again, because each release holds its own Studio build. Rolling forward works the same way.
 
 ## The git path (optional)
 
@@ -434,9 +438,11 @@ The screen sees a request from the control page or the Studio (Run presentation 
 
 ## The PIN
 
-The page accepts exactly two PINs, 3229 and 3426. They are a constant list in `control/lib/auth.js`. The page asks once and keeps a signed cookie for 30 days. Six wrong tries from one address in ten minutes block that address for an hour. The Keys section of Settings shows "PIN: fixed" and has no field for it.
+The page accepts one PIN and no other: the `CONTROL_PIN` line of `/opt/teletraan/local.env`. There is no built-in PIN, because the repository is public and a PIN written in it would be known to anyone who reads it (the team numbers were one once and are not any more). The page asks once and keeps a signed cookie for 30 days. Six wrong tries from one address in ten minutes block that address for an hour. The Keys section of Settings shows "PIN: set in the settings file" and has no field for it.
 
-To make the page take one other PIN, add the line `CONTROL_PIN='4417'` to `/opt/teletraan/local.env` by hand over SSH (4 to 12 digits, nothing else is checked). The page then accepts only that PIN, the two fixed ones stop working, and every cookie made before is over. Take the line out to go back to the two fixed PINs. A value that is not 4 to 12 digits is ignored. The Mac tool and the Keys section of Settings never write this line and leave it alone.
+To set it, add the line `CONTROL_PIN='4417'` (4 to 12 digits, nothing else is checked, and pick your own) to `/opt/teletraan/local.env` by hand over SSH. Changing the value ends every cookie made before. A value that is not 4 to 12 digits counts as no PIN. With no PIN, the sign-in screen says "Set a PIN in the settings file", every call is refused, and `computer/install.sh` stops before it starts the control service. The Mac tool and the Keys section of Settings never write this line and leave it alone.
+
+Before the first update to a build with this rule, check that the line is there: `grep -c '^CONTROL_PIN=' /opt/teletraan/local.env` prints 1. The Update button does not run the installer, so a computer with no line would have a control page nobody can open until it is added.
 
 ## Where the code is
 

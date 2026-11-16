@@ -64,3 +64,24 @@ export function dayWords(dateText) {
   const clock = clockIn(dateText + 'T12:00:00Z', 'UTC');
   return clock ? clock.weekday + ' ' + clock.date : '';
 }
+
+// Every date and time field a person types shows the clock of this time zone and cannot be switched to another. Without it
+// Sanity shows the clock of the browser, with no label, which is how 23:00 UTC was saved for "noon".
+export const datetimeOptions = { displayTimeZone: fallbackTimeZone, allowTimeZoneSwitch: false };
+
+// The hour a moment falls on in a time zone, 0 to 23, or null for text that is not a time
+export function hourIn(isoText, timeZone) {
+  const moment = new Date(isoText);
+  if (typeof isoText !== 'string' || isNaN(moment)) return null;
+
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: timeZone, hour: 'numeric', hourCycle: 'h23' }).format(moment));
+  return isFinite(hour) ? hour : null;
+}
+
+// A warning, not a refusal, for a time between 22:00 and 06:00 in the Studio's time zone: a screen that runs a countdown,
+// an alert or a talk at 3 in the morning is nearly always a time typed in the wrong zone.
+export function oddHour(value) {
+  const hour = hourIn(value, fallbackTimeZone);
+  if (hour === null || (hour >= 6 && hour < 22)) return true;
+  return 'This is ' + clockIn(value, fallbackTimeZone).time + ' in Eastern time. Check the time: the Studio shows Eastern time, and the screen runs on it too.';
+}

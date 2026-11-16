@@ -19,6 +19,12 @@ if [ ! -d "$data" ]; then
   exit 1
 fi
 
+# A tree that is not a git checkout (a release folder put there by the control page) has nothing to pull. Without this a
+# timer that is still on would fail every five minutes, and git would go looking for a repository in a folder above.
+if [ ! -e "$repo/.git" ]; then
+  exit 0
+fi
+
 # version.txt must be readable by the web server inside the container
 umask 022
 

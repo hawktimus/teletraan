@@ -73,7 +73,7 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | Roll back, Switch to this version | Activates an older release | `GET releases`, `POST releases/:n/activate` | C M | Update, Publish (asks first) | [x] |
 | On the wall: v14 line in the header | The release that runs | `GET releases` | all | Header, and Update, Publish (current and previous release) | [x] |
 | Push with git (optional): remote, push and clone lines | The git path | `GET update-info` | M | Computer, Copy project (guided steps) | [x] |
-| Keys: set or clear a key, calendar names and links, PIN shown as fixed | Writes `local.env` through the helper | `GET env`, `POST env` | C M | Update, Keys | [x] |
+| Keys: set or clear a key, calendar names and links, PIN shown as set in the settings file | Writes `local.env` through the helper | `GET env`, `POST env` | C M | Update, Keys | [x] |
 | Monitor Monday: Check the token, Monday debug with a board number | Asks Monday | `POST helper/monday-check`, `POST helper/monday-debug` | C M | Update, Monday check | [x] |
 | Sync all and the chips for which syncs it runs | Runs the syncs in order, one failing does not stop the others | `POST sync-all`, `POST helper/sync-now` | C S M | Now (Sync everything), Update, Sync (Sync everything and a switch on each source) | [x] |
 | Per source Sync now: calendars, Monday, competition, FRC news, Match13, Drive photos | One sync | `POST helper/sync-now` with a target | C S M | Update, Sync, a card for each source | [x] |
@@ -102,7 +102,7 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | Theme button | New: System, Light or Dark, remembered | browser storage | all | Header | [x] |
 | Loading line, noscript text, "could not load" line | First paint and failure | none | all | Same | [x] |
 | Sign-in form, PIN field, wrong PIN message | Asks for the PIN | `GET session`, `POST login` | all | Sign-in screen: the tries left, a countdown when blocked | [x] |
-| Cookie (30 days, HttpOnly, SameSite Strict, Path /control), two fixed PINs or `CONTROL_PIN` | Session | `lib/auth.js` | all | Unchanged; `Secure` added over HTTPS | [x] |
+| Cookie (30 days, HttpOnly, SameSite Strict, Path /control), the `CONTROL_PIN` of local.env only | Session | `lib/auth.js` | all | Unchanged; `Secure` added over HTTPS | [x] |
 | Lockout: six wrong tries in ten minutes block an address for an hour, kept across restarts | Slows a guess | `lib/auth.js` | M | Unchanged; the sign-in screen says how long | [x] |
 | A 401 sends the page back to the sign-in form | Session ended | all calls | all | Same | [x] |
 | Dashboard report (`POST now`, local only) | The TV reports what it shows every 10 s | `POST now` | M | Unchanged | [x] |

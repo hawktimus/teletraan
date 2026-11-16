@@ -125,10 +125,7 @@ export function photosFields() {
       hidden: true,
       description: 'Not used any more. A Photos row of a Screen has its own number of photos and seconds for each. This stays so that a saved value is kept.',
       initialValue: 16,
-      validation: Rule => [
-        Rule.required().error('Enter the number of seconds.'),
-        Rule.integer().min(6).max(120).error('Use a whole number from 6 to 120.'),
-      ],
+      validation: Rule => Rule.integer().min(6).max(120).error('Use a whole number from 6 to 120.'),
     }),
 
     defineField({
@@ -139,10 +136,7 @@ export function photosFields() {
       hidden: true,
       description: 'Not used any more. The old size, from 60 to 200, used only while neither Leadership nor Roster portrait size has a value.',
       initialValue: 100,
-      validation: Rule => [
-        Rule.required().error('Enter a percent from 60 to 200.'),
-        Rule.integer().min(60).max(200).error('Use a whole number from 60 to 200.'),
-      ],
+      validation: Rule => Rule.integer().min(60).max(200).error('Use a whole number from 60 to 200.'),
     }),
 
     // Hidden, and the value saved in it stays. A photo fills the whole body of the panel, so there is

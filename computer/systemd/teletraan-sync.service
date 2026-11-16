@@ -5,7 +5,8 @@ After=network.target
 [Service]
 # ACCOUNT is replaced by install-sync.sh and install.sh with the account that owns the repository. The data folder is the
 # one in TELETRAAN_DATA of local.env, which install-sync.sh writes on the Environment line when it is not the usual one. The
-# service writes only that folder and the log folder /var/log/teletraan. It reads no key: the Sanity dataset is public.
+# service writes only that folder and the log folder /var/log/teletraan. It reads one key from local.env by name, SANITY_READ_TOKEN
+# (or SANITY_WRITE_TOKEN when that is not set), and only when the dataset has been made private.
 User=ACCOUNT
 Environment=TELETRAAN_DATA=/var/lib/teletraan/data
 UMask=0022

@@ -1,0 +1,14 @@
+[Unit]
+Description=Put the configured name servers on the active connection of the Teletraan computer
+After=NetworkManager.service NetworkManager-wait-online.service
+Wants=NetworkManager-wait-online.service
+
+[Service]
+# Runs as root, at boot, so the name servers are the ones in /usr/local/etc/teletraan-network.conf before the screen
+# starts asking for content. teletraan-net dns-apply changes nothing when they are already on the connection, and says so
+# in one line when there is no connection yet or DNS_ENFORCE is no. A failure here never stops the boot.
+Type=oneshot
+ExecStart=-/usr/local/sbin/teletraan-net dns-apply
+
+[Install]
+WantedBy=multi-user.target

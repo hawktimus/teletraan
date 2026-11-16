@@ -10,7 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
 import { makeWorld } from './helpers/control-world.mjs';
 import * as helperRoute from '../control/routes/helper.js';
-import { parseNetworks, signalWords, lockWords, switchWords } from '../control/static/areas/wifi.js';
+import { cleanDns } from '../control/routes/overview.js';
+import { parseNetworks, signalWords, lockWords, switchWords, dnsWords } from '../control/static/areas/wifi.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 
@@ -76,6 +77,20 @@ test('the page code never stores the password and keeps it out of Details', () =
   assert.ok(!/remember\(|localStorage|sessionStorage/.test(text), 'the card keeps nothing in the browser');
   assert.ok(!/raw: [^\n]*(phrase|password\.value)/.test(text), 'the password is not in the raw text');
   assert.ok(/password\.value = ''/.test(text), 'the field is emptied before the request');
+});
+
+test('the name servers line: green as configured, amber on the network\'s own for the time being, grey when not known or not enforced', () => {
+  assert.deepEqual(dnsWords(cleanDns(null)), { state: 'unknown', words: 'Name servers: not known yet.' });
+  const good = dnsWords(cleanDns({ enforce: 'yes', configured: '8.8.8.8 8.8.4.4', mode: 'configured', since: '2026-11-16T10:00:00Z', reason: '' }));
+  assert.equal(good.state, 'ok');
+  assert.equal(good.words, 'Name servers: as configured (8.8.8.8 8.8.4.4).');
+  const temporary = dnsWords(cleanDns({ enforce: 'yes', configured: '8.8.8.8 8.8.4.4', mode: 'network', reason: 'the configured name servers did not answer, so the network ones are in use for now' }));
+  assert.equal(temporary.state, 'warn');
+  assert.ok(temporary.words.includes("temporarily on the network's own") && temporary.words.includes('goes back to 8.8.8.8 8.8.4.4 by itself'));
+  assert.equal(dnsWords(cleanDns({ enforce: 'no', mode: 'configured' })).state, 'unknown');
+  const junk = cleanDns({ enforce: 'maybe', configured: 'x'.repeat(500), mode: 'rm -rf', secret: 'k', reason: 'y'.repeat(500) });
+  assert.deepEqual(Object.keys(junk), ['present', 'enforce', 'configured', 'mode', 'since', 'reason']);
+  assert.ok(junk.configured.length <= 40 && junk.reason.length <= 160 && junk.mode === 'configured' && junk.enforce === 'yes');
 });
 
 finish();

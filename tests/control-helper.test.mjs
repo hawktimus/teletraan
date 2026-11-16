@@ -36,7 +36,7 @@ function setup() {
     bin: bin,
     ask(input, extra = {}) {
       const env = Object.assign({ PATH: bin + ':/usr/bin:/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_DOCKER: path.join(bin, 'docker') }, extra);
-      const result = spawnSync('sh', [script], { input: input, encoding: 'utf8', env: env });
+      const result = spawnSync('/bin/bash', [script], { input: input, encoding: 'utf8', env: env });
       const lines = result.stdout.trimEnd().split('\n');
       return { status: lines[lines.length - 1], output: lines.slice(0, -1).join('\n'), calls: fs.existsSync(log) ? fs.readFileSync(log, 'utf8') : '' };
     },
@@ -46,9 +46,36 @@ function setup() {
 
 test('the words the client sends are the words the helper has', () => {
   assert.deepEqual(words, ['restart-kiosk', 'restart-services', 'reboot', 'status', 'sync-now', 'write-env', 'monday-check', 'monday-debug', 'mirror-start', 'mirror-watch', 'mirror-status', 'display-info', 'network-info', 'log-bundle', 'cleanup-preview', 'cleanup-delete', 'wifi-scan', 'wifi-status', 'wifi-connect', 'restart-network', 'dns-public', 'dns-default',
-    'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen']);
+    'diag-create', 'diag-list', 'diag-read', 'health-read', 'supervisor-read', 'clear-degraded', 'refresh-screen', 'units-check']);
   const text = fs.readFileSync(script, 'utf8');
   words.forEach(word => assert.ok(text.includes(word), word));
+});
+
+test('units-check says whether the installed services match the release, names the ones that differ, and changes nothing', () => {
+  const h = setup();
+  const release = path.join(h.root, 'current/computer/systemd');
+  const installed = path.join(h.root, 'systemd');
+  fs.mkdirSync(release, { recursive: true });
+  fs.mkdirSync(installed);
+  fs.writeFileSync(path.join(release, 'teletraan-sync.service'), 'User=ACCOUNT\nExecStart=/opt/teletraan/run.sh\n');
+  fs.writeFileSync(path.join(release, 'teletraan-pull.timer'), 'not installed on purpose\n');
+  fs.writeFileSync(path.join(release, 'teletraan-control.socket'), 'SocketGroup=ACCOUNT\n');
+  fs.writeFileSync(path.join(installed, 'teletraan-sync.service'), 'User=pat\nExecStart=/opt/teletraan/run.sh\n');
+  const env = { TELETRAAN_SYSTEMD: installed, TELETRAAN_ACCOUNT: 'pat' };
+
+  const same = h.ask('units-check\n', env);
+  assert.equal(same.status, 'ok');
+  assert.match(same.output, /^units: the services of this computer match this version$/);
+
+  fs.writeFileSync(path.join(release, 'teletraan-health.timer'), '[Timer]\n');
+  fs.writeFileSync(path.join(release, 'teletraan-sync.service'), 'User=ACCOUNT\nExecStart=/opt/teletraan/new.sh\n');
+  const differs = h.ask('units-check\n', env);
+  assert.equal(differs.status, 'ok');
+  assert.match(differs.output, /^units: 2 service file\(s\) differ from this version: teletraan-health\.timer teletraan-sync\.service\./);
+  assert.ok(differs.output.includes('Install everything'));
+  assert.equal(h.ask('units-check extra\n', env).status, 'refused', 'it takes no argument');
+  assert.ok(!h.ask('units-check\n', env).calls.includes('sudo'), 'no sudo');
+  assert.equal(fs.readFileSync(path.join(installed, 'teletraan-sync.service'), 'utf8'), 'User=pat\nExecStart=/opt/teletraan/run.sh\n', 'nothing was written');
 });
 
 test('the Wi-Fi words go to the network tool by its words, the password goes in as input only and is never logged or answered', () => {

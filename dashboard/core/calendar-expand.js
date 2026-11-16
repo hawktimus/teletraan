@@ -53,11 +53,15 @@ function zonedInstant(clock, formatter) {
   return early;
 }
 
+// A time written with no zone and no Z ("floating") means the clock of the place the calendar is for. That is the time zone
+// of the Look page, not the zone the Teletraan computer happens to be set to. loadEvents sets it from the page's time zone.
+let floatingZone = null;
+
 // The moment a date and time means. fallbackZone is used when the stamp has
 // no zone of its own. A zone name Intl does not know is read as the Teletraan computer's
 // own time zone.
 function toDate(stamp, fallbackZone) {
-  const zone = stamp.zone || fallbackZone || null;
+  const zone = stamp.zone || fallbackZone || floatingZone || null;
   const parts = [stamp.year, stamp.month - 1, stamp.day, stamp.hour, stamp.minute, stamp.second];
   if (stamp.dateOnly || !zone) return new Date(...parts);
 
@@ -310,6 +314,7 @@ async function readCalendar(folder, calendar, from, to) {
 // calendar never stops the others. Events that have ended are left out.
 export async function loadEvents(options = {}) {
   const { folder = '', calendars, daysAhead = defaultDaysAhead } = options;
+  floatingZone = typeof options.timeZone === 'string' && options.timeZone !== '' ? options.timeZone : null;
   const current = asDate(options.now || new Date());
 
   // Starting a day back means an event that is on right now is still found

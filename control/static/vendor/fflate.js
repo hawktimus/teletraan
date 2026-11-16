@@ -1,3 +1,6 @@
+// Vendored copy of fflate (MIT, Copyright (c) 2023 Arjun Barrett; licence in LICENSE-fflate.txt), added on 2026-10-16 in commit 4ebad91.
+// Version: not recorded when it was added, and the file does not carry one. Replace this line with the version when the file is
+// next replaced (docs/audit.md, item 20).
 // DEFLATE is a complex format; to read this code, you should probably check the RFC first:
 // https://tools.ietf.org/html/rfc1951
 // You may also wish to take a look at the guide I made about this program:

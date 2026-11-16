@@ -5,7 +5,7 @@
 
 import { defineType, defineField } from 'sanity';
 import { teamField, tooLong, titleOf } from './fields.js';
-import { clockIn, fallbackTimeZone } from './presentationTimes.js';
+import { clockIn, datetimeOptions, fallbackTimeZone } from './presentationTimes.js';
 import { limits } from './limits.js';
 import { noContact } from '../tools/content-rules.js';
 
@@ -54,6 +54,7 @@ export default defineType({
       name: 'start',
       title: 'Starts at',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When the bar goes up on the TV.',
       validation: Rule => Rule.required().error('Pick when it starts.'),
     }),
@@ -61,6 +62,7 @@ export default defineType({
       name: 'end',
       title: 'Ends at',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When the bar comes down. It must be after the start.',
       validation: Rule => [
         Rule.required().error('Pick when it ends.'),

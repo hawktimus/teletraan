@@ -14,6 +14,7 @@ export async function rotationWorld() {
 
   fs.cpSync(path.join(root, 'studio', 'tools'), path.join(work, 'tools'), { recursive: true });
   fs.mkdirSync(path.join(work, 'inputs'));
+  fs.copyFileSync(path.join(root, 'studio', 'project.js'), path.join(work, 'project.js'));
   fs.readdirSync(path.join(root, 'studio', 'inputs')).filter(file => /^(screen-panels|rotation-.*|field-editor|field-editor-parts|page-styles)\.js$/.test(file))
     .forEach(file => fs.copyFileSync(path.join(root, 'studio', 'inputs', file), path.join(work, 'inputs', file)));
   fs.writeFileSync(path.join(work, 'package.json'), '{ "type": "module" }\n');

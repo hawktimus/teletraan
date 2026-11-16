@@ -120,12 +120,16 @@ async function checkShell() {
   const files = shellFiles();
   const problems = [];
   for (const file of files) {
-    for (const shell of ['sh', 'bash']) {
-      const result = await runShell(shell, ['-n', file]);
-      if (result.code !== 0) problems.push(shell + ' -n ' + path.relative(root, file) + '\n' + result.output.trim());
-    }
+    // A file is read by the shell its first line names. A script that says #!/bin/sh must read as plain sh (dash on Debian,
+    // which is what the Teletraan computer has); every other script, and a file with no first line such as lib.sh that
+    // bash scripts read, is bash. Checking a bash script with sh -n failed on Debian for arrays and pipefail, and passed on a
+    // Mac where sh is bash, which is how the suite came to be run on a Mac only.
+    const first = fs.readFileSync(file, 'utf8').split('\n')[0];
+    const shell = /^#!\s*(\/usr)?\/bin\/(env\s+)?sh\b/.test(first) ? 'sh' : 'bash';
+    const result = await runShell(shell, ['-n', file]);
+    if (result.code !== 0) problems.push(shell + ' -n ' + path.relative(root, file) + '\n' + result.output.trim());
   }
-  return { name: 'shell syntax (sh -n and bash -n)', count: files.length, problems: problems, seconds: (Date.now() - started) / 1000 };
+  return { name: 'shell syntax (bash -n for bash scripts, sh -n for sh scripts)', count: files.length, problems: problems, seconds: (Date.now() - started) / 1000 };
 }
 
 // True when Playwright can be loaded here, in tools/node_modules or in a folder that NODE_PATH names. The Teletraan computer and a

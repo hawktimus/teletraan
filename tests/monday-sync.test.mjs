@@ -23,10 +23,10 @@ const unitFiles = ['teletraan-monday.service', 'teletraan-monday.timer'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-monday-'));
 
 // The tools the scripts need that are not the ones being faked
-const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'mktemp', 'mv', 'rm', 'mkdir', 'dirname', 'basename', 'cat', 'cp', 'cmp', 'tr', 'stat', 'sleep', 'wc', 'find'];
+const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'mktemp', 'mv', 'rm', 'mkdir', 'dirname', 'basename', 'cat', 'cp', 'cmp', 'tr', 'stat', 'sleep', 'wc', 'find', 'chmod'];
 
 function findTool(name) {
-  const found = spawnSync('/bin/sh', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
+  const found = spawnSync('/bin/bash', ['-c', 'command -v ' + name], { encoding: 'utf8' }).stdout.trim();
   assert.ok(found, 'this computer has no ' + name);
   return found;
 }
@@ -199,13 +199,13 @@ function setup(name, options) {
     run(args, extra, shell) {
       fs.writeFileSync(log, '');
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, this.clock, extra || {});
-      const result = spawnSync(shell || '/bin/sh', [scriptCopy].concat(args || []), { env: env, encoding: 'utf8', input: '', cwd: root });
+      const result = spawnSync(shell || '/bin/bash', [scriptCopy].concat(args || []), { env: env, encoding: 'utf8', input: '', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     install(extra) {
       fs.writeFileSync(log, '');
       const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, TMPDIR: temp, STUB_UID: '1000' }, extra || {});
-      const result = spawnSync('/bin/sh', [installCopy], { env: env, encoding: 'utf8', input: '\n', cwd: root });
+      const result = spawnSync('/bin/bash', [installCopy], { env: env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
     // What Sanity answers to the one question the script asks
@@ -460,7 +460,9 @@ test('a read asks Sanity, the two boards and the names of the people, writes the
   assert.deepEqual(requestsOf(result.calls), sequence);
   assert.ok(result.text.includes('monday: 9 task(s) read'), result.text);
   assert.ok(result.text.includes('monday: 8 task(s), 8 new, 0 changed, 0 deleted'), result.text);
-  assert.deepEqual(fs.readdirSync(place.folder).sort(), ['.lock']);
+  assert.deepEqual(fs.readdirSync(place.folder).sort(), ['.lock', 'notes.json', 'status.json'], 'only the lock, the local notes and the status for the dots stay');
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(place.folder, 'status.json'), 'utf8')), { lastSyncAt: JSON.parse(fs.readFileSync(path.join(place.folder, 'status.json'), 'utf8')).lastSyncAt, lastError: '' });
+  assert.match(JSON.parse(fs.readFileSync(path.join(place.folder, 'status.json'), 'utf8')).lastSyncAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/, 'a good read leaves the time of the read for the dots');
 });
 
 test('the boards are read by their numbers only, with the multi-level question, and no board list is asked for', () => {
@@ -581,17 +583,19 @@ test('status, team, priority, contact, dates, hours and Show on TV come from the
   assert.equal(docs['task-monday-1009'].set.showOnBoard, true, 'no Show on TV is Show');
 });
 
-test('the Notes column is kept for a Stuck task only, as plain text of 90 characters at most', () => {
+test('the Notes of a Stuck task stay on this computer: not in any Sanity write, 90 characters at most, in monday/notes.json', () => {
   const place = setup('notes', { tools: true });
   world(place);
   place.run();
   const docs = documentsOf(place);
-  const note = docs['task-monday-1004'].set.note;
+  assert.equal(docs['task-monday-1004'].set.note, undefined, 'the dataset is public, so no note is written to a task');
+  assert.ok(!JSON.stringify(place.writes()).includes('Waiting for the motor controller'), 'the text of the note is in no write at all');
+  assert.ok(!JSON.stringify(place.writes()).includes('Not a stuck task'), 'nor the note of another task');
+  const notes = JSON.parse(fs.readFileSync(path.join(place.data, 'monday', 'notes.json'), 'utf8'));
+  const note = notes['task-monday-1004'];
   assert.equal(note, 'Waiting for the motor controller to ship from the vendor, expected after the next meeting date'.slice(0, 90).replace(/ $/, ''));
   assert.ok(note.length <= 90 && !/[\n]/.test(note));
-  assert.equal(docs['task-monday-1005'].set.note, undefined, 'a task that is not stuck has no note');
-  assert.equal(docs['task-monday-1001'].set.note, undefined);
-  assert.ok(!JSON.stringify(place.writes()).includes('Not a stuck task'), 'the note of another task is never sent to Sanity');
+  assert.deepEqual(Object.keys(notes), ['task-monday-1004'], 'a task that is not stuck has no note');
   assert.ok(place.variables()[0].columns.includes('text_mm82s03v'), 'the Notes column of Robotics Tasks is asked for');
   assert.ok(!place.variables()[1].columns.includes('text_mm82s03v'), 'Completed Tasks is not asked for it');
 });
@@ -714,14 +718,14 @@ test('monday-status: last read, the error in plain words or none, the reads, the
 test('how often: a run before the setting ends without a word; the Sync Monday now file reads at once', () => {
   // The file of the control page is moved into the folder of this test, so another test that writes the real one changes nothing here
   const force = path.join(work, 'every-force');
-  const place = setup('every', { tools: true, edits: [['/tmp/teletraan-monday-force', force]] });
+  const place = setup('every', { tools: true, edits: [['"$monday/force"', JSON.stringify(force)]] });
   const known = { lastSyncAt: '2027-01-12T14:50:00Z', callsToday: 3, callsDate: todayText };
   world(place, { every: 30, known: known });
   const early = place.run();
   assert.equal(early.status, 0);
   assert.equal(early.text, '');
   assert.deepEqual(requestsOf(early.calls), ['sanity-query']);
-  assert.ok(textOf(syncFile).includes('/tmp/teletraan-monday-force -mmin -2'), 'the force file of the control page');
+  assert.ok(textOf(syncFile).includes('"$monday/force" -mmin -2'), 'the force file of the control page');
 
   fs.writeFileSync(force, '');
   world(place, { every: 30, known: known });
@@ -758,6 +762,9 @@ test('every failure says what to do in one sentence', () => {
   offline.answer('items-' + taskBoardId, undefined, { exit: 6 });
   offline.run();
   assert.match(statusOf(offline).set.lastError, /^Monday did not answer \(could not find the server, so the network may be down\); check that the Teletraan computer is online, and the next run tries again\./);
+  const dots = JSON.parse(fs.readFileSync(path.join(offline.data, 'monday', 'status.json'), 'utf8'));
+  assert.match(dots.lastError, /^Monday did not answer/, 'a failed read leaves its words for the dot, which is red because of them');
+  assert.equal(dots.lastSyncAt, '', 'and no time of a good read when there has not been one');
 
   const unseen = setup('unseen', { tools: true });
   world(unseen);
@@ -923,7 +930,7 @@ test('the script also works under bash, with the same writes', () => {
 
 test('the scripts have valid sh syntax, are executable, and secrets only go to curl on standard input', () => {
   [syncFile, installFile].forEach(file => {
-    assert.equal(spawnSync('/bin/sh', ['-n', file], { encoding: 'utf8' }).status, 0);
+    assert.equal(spawnSync('/bin/bash', ['-n', file], { encoding: 'utf8' }).status, 0);
     assert.ok((fs.statSync(file).mode & 0o111) !== 0);
     const text = fs.readFileSync(file, 'utf8');
     assert.ok(/^set -euo pipefail$/m.test(text));

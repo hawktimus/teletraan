@@ -1,7 +1,7 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { showField, expiresField, teamField, tooLong, subtitleFor } from './fields.js';
 import { limits } from './limits.js';
-import { noContact } from '../tools/content-rules.js';
+import { noContact, firstNameOnlyWarning } from '../tools/content-rules.js';
 import { dayWords } from './presentationTimes.js';
 
 const rowFields = [
@@ -23,8 +23,8 @@ const rowFields = [
     name: 'lead',
     title: 'Who leads it',
     type: 'string',
-    description: 'Optional. The name of the person in charge. Up to 10 characters fit.',
-    validation: Rule => tooLong(Rule, limits.planRowLead),
+    description: 'Optional. The first name of the person in charge. Up to 10 characters fit.',
+    validation: Rule => [tooLong(Rule, limits.planRowLead), Rule.custom(firstNameOnlyWarning).error()],
   }),
 ];
 

@@ -71,7 +71,7 @@ test('the read interval, the budget, the force file and the debug are the ones o
   assert.ok(how.includes('mondayEveryMinutes') && /5 to 120/.test(how) && /every 5 minutes/.test(how) && how.includes('starting at 30'));
   assert.ok(script.includes('daily_limit=900') && how.includes('900'));
   assert.ok(how.includes('Daily read limit reached. Reads start again at midnight.') && script.includes('Daily read limit reached. Reads start again at midnight.'));
-  assert.ok(how.includes('Sync Monday now') && script.includes('/tmp/teletraan-monday-force'));
+  assert.ok(how.includes('Sync Monday now') && script.includes('"$monday/force"'));
   assert.ok(section('If nothing shows up').includes('Monday debug') && doc.includes('--debug') && doc.includes('--check'));
   assert.ok(doc.includes('install-monday.sh') && /again/.test(section('Setting it up')));
 });

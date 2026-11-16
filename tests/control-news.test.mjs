@@ -36,7 +36,7 @@ function helper() {
   return line => {
     fs.writeFileSync(log, '');
     const env = { PATH: bin + ':/usr/bin:/bin', TELETRAAN_ROOT: root, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_DOCKER: path.join(bin, 'docker') };
-    const result = spawnSync('sh', [path.join(repo, 'computer/scripts/control-helper.sh')], { input: line + '\n', encoding: 'utf8', env });
+    const result = spawnSync('/bin/bash', [path.join(repo, 'computer/scripts/control-helper.sh')], { input: line + '\n', encoding: 'utf8', env });
     const lines = result.stdout.trimEnd().split('\n');
     return { status: lines[lines.length - 1], calls: fs.readFileSync(log, 'utf8') };
   };

@@ -44,10 +44,7 @@ export function transitionsFields() {
       description: 'How the large and small panels change page: the slats turn over, or the frame breaks into plates and rebuilds like a robot. Alternate takes turns.',
       options: { list: styles, layout: 'radio', direction: 'horizontal' },
       initialValue: 'alternate',
-      validation: Rule => [
-        Rule.required().error('Pick alternate, slat or mechanical.'),
-        Rule.valid(styles.map(style => style.value)).error('Pick alternate, slat or mechanical.'),
-      ],
+      validation: Rule => Rule.valid(styles.map(style => style.value)).error('Pick alternate, slat or mechanical.'),
     }),
 
     defineField({
@@ -57,10 +54,7 @@ export function transitionsFields() {
       group: 'look',
       description: 'Seconds the frame takes to break apart in the mechanical change, and the same again to rebuild, from 0.3 to 2, at Normal speed.',
       initialValue: 0.6,
-      validation: Rule => [
-        Rule.required().error('Enter the number of seconds.'),
-        Rule.min(0.3).max(2).error('Use a number from 0.3 to 2.'),
-      ],
+      validation: Rule => Rule.min(0.3).max(2).error('Use a number from 0.3 to 2.'),
     }),
 
     defineField({
@@ -71,10 +65,7 @@ export function transitionsFields() {
       description: 'The metal of the page frames, picked at every page change. Frame metal is for the banner, countdown and logo, which never change.',
       options: { list: finishes, layout: 'radio', direction: 'horizontal' },
       initialValue: 'mostly-gold',
-      validation: Rule => [
-        Rule.required().error('Pick mostly gold, alternate, gold only or silver only.'),
-        Rule.valid(finishes.map(finish => finish.value)).error('Pick mostly gold, alternate, gold only or silver only.'),
-      ],
+      validation: Rule => Rule.valid(finishes.map(finish => finish.value)).error('Pick mostly gold, alternate, gold only or silver only.'),
     }),
 
     defineField({
@@ -84,10 +75,7 @@ export function transitionsFields() {
       group: 'look',
       description: 'With Mostly gold, how many page changes in 100 bring a silver frame, picked at random, from 0 to 100. Other finishes ignore it.',
       initialValue: 10,
-      validation: Rule => [
-        Rule.required().error('Enter a percent from 0 to 100.'),
-        Rule.integer().min(0).max(100).error('Use a whole number from 0 to 100.'),
-      ],
+      validation: Rule => Rule.integer().min(0).max(100).error('Use a whole number from 0 to 100.'),
     }),
   ];
 }

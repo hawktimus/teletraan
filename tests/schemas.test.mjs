@@ -624,6 +624,8 @@ const standIns = {
       // the panel order input (panel-order-input.js) reads two lists of the document, which a check puts in globalThis.studioForm
       "export const useFormValue = path => (globalThis.studioForm || {})[path.join('.')];",
       'export const validateDocument = async () => [];',
+      // the Play buttons read the errors of the page: a check can put markers in globalThis.studioValidation
+      "export const useValidationStatus = () => ({ validation: globalThis.studioValidation || [], isValidating: false });",
       'export const useDocumentOperation = () => ({',
       '  patch: { execute: patches => globalThis.studioCalls.push({ patch: patches }) },',
       '  publish: { execute: () => globalThis.studioCalls.push({ publish: true }) },',
@@ -1190,7 +1192,7 @@ function checkSpeed() {
 
   const constraints = field ? constraintsOf(field) : [];
   const allowed = constraintNamed(constraints, 'valid');
-  need(problems, constraintNamed(constraints, 'required'), 'speed should be required');
+  need(problems, !constraintNamed(constraints, 'required'), 'speed is hidden on the form (the Look page edits it), so it should not be required');
   need(problems, allowed && allowed.args[0].join() === known.join(), 'speed should only allow: ' + known.join(', '));
 
   const pace = known.map(name => world.dashboard.speeds[name]).join();
@@ -1262,7 +1264,7 @@ function checkTransitionsTab() {
     const allowed = constraintNamed(rules, 'valid');
     need(problems, field && field.options && field.options.layout === 'radio', entry[0] + ' should be a radio list');
     need(problems, choicesOf('dashboardSettings.' + entry[0]).map(item => item.value).join() === entry[1].join(), entry[0] + ' should offer the names in config.js: ' + entry[1].join(', '));
-    need(problems, constraintNamed(rules, 'required'), entry[0] + ' should be required');
+    need(problems, !constraintNamed(rules, 'required'), entry[0] + ' is hidden on the form (the Look page edits it), so it should not be required');
     need(problems, allowed && allowed.args[0].join() === entry[1].join(), entry[0] + ' should only allow: ' + entry[1].join(', '));
     need(problems, config.defaultSettings[entry[0]] === entry[2], 'the default ' + entry[0] + ' in config.js should be ' + entry[2]);
   });
@@ -1307,7 +1309,7 @@ function checkLookAndTiming() {
   need(problems, settings.frameMetal === 'gold', 'the default frame metal in config.js should be gold');
   need(problems, offered.join() === config.metals.join(), 'frameMetal should offer the same names as metals in config.js: ' + config.metals.join(', '));
   need(problems, metal && metal.options && metal.options.layout === 'radio', 'frameMetal should be a radio list');
-  need(problems, constraintNamed(metalRules, 'required'), 'frameMetal should be required');
+  need(problems, !constraintNamed(metalRules, 'required'), 'frameMetal is hidden on the form (the Look page edits it), so it should not be required');
   need(problems, allowed && allowed.args[0].join() === config.metals.join(), 'frameMetal should only allow: ' + config.metals.join(', '));
 
   logoSwitches.concat(['glint']).forEach(name => {
@@ -1826,6 +1828,12 @@ function checkPlayAnnouncements() {
   need(problems, written && Object.keys(written).join() === 'requestedAt', 'Play announcements should write only requestedAt');
   need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= before && Date.parse(written.requestedAt) <= after, 'Play announcements should write the time now, as new Date().toISOString() writes it');
   need(problems, press({ announceRequest: { requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, 'Play announcements should be on when a request is already published, so it can be played again');
+  // A page with an error cannot be published, so the button is off and says why, and it writes nothing
+  globalThis.studioValidation = [{ level: 'error', message: 'Pick a speed.' }, { level: 'warning', message: 'Long.' }];
+  const blocked = press(null);
+  globalThis.studioValidation = [];
+  need(problems, blocked.state.disabled === true && blocked.calls.length === 0, 'Play announcements should be off, and write nothing, while the page has an error');
+  need(problems, /1 error/.test(blocked.state.title || '') && /Fix it first/.test(blocked.state.title || ''), 'the hint of a Play button that is off should say how many errors there are and to fix them first');
   return problems;
 }
 
@@ -2011,7 +2019,7 @@ function checkPreviewButtons() {
 // The Start here page (start-here.js, with its words and numbers in start-here-parts.js): six
 // blocks in this order, a picture of the screen with the areas A to E, the status of the Teletraan computer and three links.
 const startBlocks = ['what', 'picture', 'steps', 'status', 'links', 'coaches'];
-const startLinks = ['The control page', 'The Studio on the web', 'The guides'];
+const startLinks = ['The control page', 'The guides'];
 const startAreas = ['A Banner', 'B Main panel', 'C Countdown', 'D Side panel', 'E Ticker'];
 
 // Every element of a tree that the createElement stand-in made, in the order they are drawn,
@@ -2148,7 +2156,7 @@ function checkStartHere() {
   const real = parts.links.filter(parts.isReal);
   need(problems, linkNodes.length === real.length && linkNodes.every((node, index) => node.props.href === real[index].address && node.props.target === '_blank' && /noopener/.test(node.props.rel || '')), 'each link with a real address should open it in a new tab, with rel noopener');
   need(problems, parts.links[0].address === world.controlAddress.controlAddress && parts.isReal(parts.links[0]), 'the first link should be the control page, at controlAddress in control-address.js');
-  need(problems, !parts.isReal(parts.links[1]) ? /^\[.*\]$/.test(parts.studioAddress) : /^https:\/\//.test(parts.studioAddress), 'the address of the Studio on the web should be a marked placeholder in brackets or an https address');
+  need(problems, parts.links.every(parts.isReal), 'every link on Start here should have a real address: a placeholder in brackets was dead text on the page');
   need(problems, world.startHereSource.indexOf(world.controlAddress.controlAddress) === -1 && world.startHerePartsSource.indexOf(world.controlAddress.controlAddress) === -1, 'the control page address should be written once, in control-address.js');
   need(problems, nodesWhere(page, node => node.type === 'button').length === 0, 'the Start here page should have no buttons that act on the screen. They are on the control page');
 
@@ -3579,6 +3587,20 @@ function checkPlaces() {
     need(problems, typeof run('Sam K') === 'string' && typeof run('Sam2') === 'string', 'a contact with a space or a number in it should be refused');
   }
 
+  // A last name on a public screen is an error, not a warning, for a person and for the lead of an agenda row
+  [['person.name', 'a person'], ['plan.rows.lead', 'the lead of an agenda row']].forEach(pair => {
+    const field = fieldAt(pair[0]);
+    const all = field ? constraintsOf(field) : [];
+    const at = all.findIndex(constraint => constraint.name === 'custom' && typeof constraint.args[0]('Sam Smith') === 'string');
+    if (at < 0) {
+      problems.push(pair[0] + ' should refuse a full name such as Sam Smith for ' + pair[1]);
+      return;
+    }
+    const check = all[at].args[0];
+    need(problems, check('Sam') === true && check('Sam S.') === true, pair[0] + ' should accept a first name, with or without a last initial');
+    need(problems, all[at + 1] && all[at + 1].name === 'error', pair[0] + ' should not only warn about a full name: it is an error');
+  });
+
   // the sample content shows a contact and a place, and keeps to the limits
   const tasks = world.sample.tasks;
   need(problems, tasks.some(task => task.contact && task.location), 'the sample content needs a task with a contact and a location');
@@ -3621,6 +3643,18 @@ function checkPlaces() {
 
 // The name check asks Sanity for the other places, so it waits for an answer.
 // A stand-in client gives the answer here and writes down what it was asked.
+// A field that is hidden cannot be filled in, so it must not be required: a document saved before it existed could not be
+// published, with no reason on the page (docs/audit.md, item 17).
+async function checkHiddenNotRequired() {
+  const problems = [];
+  const walk = (item, trail) => {
+    if (item.hidden === true && constraintNamed(constraintsOf(item), 'required')) problems.push(trail.join('.') + ' is hidden and required');
+    fieldsIn(item).forEach(field => walk(field, trail.concat(field.name)));
+  };
+  world.types.forEach(type => fieldsIn(type).forEach(field => walk(field, [type.name, field.name])));
+  return problems;
+}
+
 async function checkPlaceNames() {
   const problems = [];
   const custom = constraintNamed(constraintsOf(fieldAt('place.name')), 'custom');
@@ -6825,6 +6859,7 @@ async function main() {
   check('an Events Calendar entry needs a title and a start date, and the seed file can be imported', checkExtraEvents);
   check('a calendar filter has a name, an action, title words, days, a calendar and dates, and needs at least one of them', checkCalendarFilters);
   check('a place has a name and a switch, a task has an optional contact and place, and the places seed file can be imported', checkPlaces);
+  results.push({ name: 'a hidden field is never required, so an old document can always be published', problems: await checkHiddenNotRequired().catch(error => ['the check stopped: ' + error.message]) });
   results.push({ name: 'two places cannot have the same name, capitals ignored', problems: await checkPlaceNames().catch(error => ['the check stopped: ' + error.message]) });
   check('the Presentations tab agrees with dashboard/config.js', checkPresentationsTab);
   check('the team fields agree with dashboard/config.js', checkTeamsTab);

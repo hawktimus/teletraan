@@ -107,6 +107,17 @@ test('a pull brings the new files and writes version.txt, and leaves no temporar
   assert.deepEqual(fs.readdirSync(place.data), ['version.txt']);
 });
 
+test('a tree with no .git is not a checkout: the pull ends quietly and changes nothing', () => {
+  const place = setup();
+  place.publish('two\n');
+  fs.rmSync(path.join(place.root, '.git'), { recursive: true });
+  const result = place.run();
+  assert.equal(result.status, 0, result.err);
+  assert.equal(result.out + result.err, '');
+  assert.equal(place.file(), 'one\n');
+  assert.equal(place.version(), null);
+});
+
 test('a pull with nothing new says nothing and keeps version.txt', () => {
   const place = setup();
   place.run();

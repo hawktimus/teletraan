@@ -1,5 +1,6 @@
 // The panels that are placed in the rotation now and designed later (config.js, placeholderPanels): a title and a dashed
-// inner frame, nothing else. They have content always, so a row for one is never skipped.
+// inner frame, nothing else. They have no content until they are designed (each panel's hasContent says false), so the
+// rotation passes them over instead of showing a dashed box.
 
 import { escapeHtml } from './text.js';
 

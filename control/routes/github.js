@@ -1,7 +1,7 @@
 // GET github/latest (the newest commit on GitHub and whether the wall already has it) and POST github/update
 // (download that commit and install it, answered as one JSON line per step like POST releases).
 
-import { sendJson } from '../lib/router.js';
+import { sendJson, readJson } from '../lib/router.js';
 import { installRelease } from '../lib/install.js';
 import { startSteps } from '../lib/stream.js';
 import { latest, download } from '../lib/github.js';
@@ -29,6 +29,12 @@ export function register(router, ctx) {
   });
 
   router.post('/github/update', async (req, res) => {
+    // An update restarts the screen, so the call must say it was confirmed
+    const body = await readJson(req).catch(() => ({}));
+    if (body.confirmed !== true) {
+      sendJson(res, 400, { error: 'Confirm to update. Nothing was changed.' });
+      return;
+    }
     if (ctx.state.installing || ctx.state.downloading) {
       sendJson(res, 409, { error: 'Another update is running. Wait for it to finish.' });
       return;

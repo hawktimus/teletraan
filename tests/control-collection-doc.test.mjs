@@ -313,10 +313,10 @@ await check('writes to Leadership and Team leads need the key, and no answer hol
   assert.ok(!JSON.stringify(made.json).includes('skFAKEtoken') && !JSON.stringify(world.logged).includes('skFAKEtoken'));
 });
 
-await check('first-name advice: a full name, an email address, a space or a number is a warning that never stops a save', async () => {
+await check('first-name advice: an email address, a space or a number is a warning that never stops a save, and a full name for a person is refused', async () => {
   const world = await worldWith();
   const warned = async (type, set) => (await call(world, 'POST', '/docs/' + type + '/check', { set })).json.warnings;
-  assert.match((await warned('person', { name: 'Sam Smith' }))[0].message, /full name/);
+  assert.deepEqual(await warned('person', { name: 'Sam Smith' }), [], 'a full name is an error for a person now, so it is not advice');
   assert.match((await warned('person', { name: 'sam@example.org' }))[0].message, /email address/);
   assert.deepEqual(await warned('person', { name: 'Sam K.' }), [], 'a last initial is fine');
   assert.match((await warned('subteam', { lead: 'Dee Jones' }))[0].message, /full name/);
@@ -329,8 +329,11 @@ await check('first-name advice: a full name, an email address, a space or a numb
 
   const rev = (await call(world, 'GET', '/docs/person/other-1')).json.rev;
   const saved = await call(world, 'POST', '/docs/person/other-1/save', { baseRev: rev, set: { name: 'Sam Smith' } });
-  assert.equal(saved.status, 200, 'a warning does not stop the save');
-  assert.match(saved.json.warnings[0].message, /full name/);
+  assert.equal(saved.status, 400, 'a full name for a person is an error, so the save is refused with the sentence and the field');
+  assert.match(saved.json.error, /full name/);
+  assert.equal(saved.json.field, 'name');
+  const kept = await call(world, 'POST', '/docs/person/other-1/save', { baseRev: rev, set: { name: 'Sam S.' } });
+  assert.equal(kept.status, 200, 'a last initial saves');
 });
 
 console.log('\n' + passed + ' of ' + passed + ' passed');

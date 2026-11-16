@@ -35,6 +35,7 @@ At the foot of the screen, level with the ticker at its right end, a small pill 
 - Red: every source in use has had no good read for more than 30 minutes.
 - A slow source gets more room: it is late after twice its own gap and down after three times, if that is more than 10 and 30 minutes (the calendars are read every 15 minutes, Monday by its own setting).
 - A source that has never run and never failed (the competition feed in the off season) is not in use and is left out.
+- The four dots on the TV and on the control page start from the same file, `sync-status.json`. Monday and Band do not wait for a round trip through Sanity: `monday-sync.sh` leaves `monday/status.json` and `fetch-calendars.sh` leaves `calendar-sync.txt` in the data folder, and the sync service reads them. A source that has not been read since the service started is grey, "not known yet", for the first five minutes, then amber. A failure counts only when it came after the last good read.
 
 The limits are in `dashboard/core/constants.js`. The pill fades with opacity only. There is no pill on `?sample=1`, and none on a laptop with no sync service.
 
@@ -50,6 +51,17 @@ The laptop has no sync service. To fill `dashboard/data/live/` once, run `make s
     sudo /opt/teletraan/computer/scripts/install-network.sh
 
 It needs `curl`, `jq` and Node 18 or newer, and does not install them.
+
+### Name servers
+
+The name servers are desired state. `computer/config/network.conf` holds three names, `DNS_PRIMARY` (8.8.8.8), `DNS_SECONDARY` (8.8.4.4) and `DNS_ENFORCE` (yes). The installer copies it to `/usr/local/etc/teletraan-network.conf`, owned by root, only when that file is not there, so a change made on the computer is kept. `teletraan-net` (`computer/scripts/net-root.sh`) reads it for those three names only and never runs it. It uses it in four places:
+
+- `teletraan-dns.service` runs `teletraan-net dns-apply` at boot, and the installer runs it too. It puts the servers on the active connection when they are not there, and does nothing when they are.
+- A Wi-Fi switch from the Control page writes the same servers into the new connection, so moving to another network does not drop them.
+- The Use public name servers button uses them. Use the network's name servers goes back to the ones the network hands out.
+- `netwatch.sh` falls back by itself. When the gateway answers and the name lookup fails, from the second failed check and once for each outage, it tries the other set (the network's own, or the configured ones), keeps the one that works and says so in the log (`dns_switched`) and in a push message. When the configured servers answer again, and the switch is at least ten minutes old, it puts them back (`dns_restored`). Only after that does the ladder go on to restart and bounce, which cannot fix a name server. With `DNS_ENFORCE=no` it leaves the name servers alone.
+
+`make dns-status` prints what is configured, what is in use and one line of state: as configured, temporarily on the network's own, not as configured, or not enforced. Control, Computer, Network repairs shows the same line, green when the servers are as configured and amber while the network's own are in use. `/var/lib/teletraan/dns.json` is what the page reads.
 
 ### Wi-Fi only computers
 
@@ -215,6 +227,35 @@ them comes out.
 Not turned on. `make watchdog-test` says whether this computer even has the device and what turning it on would mean;
 it changes nothing. A watchdog that does not work resets the computer for no reason and nothing says why, so it is a
 decision to make deliberately, not a default.
+
+## Making the dataset private
+
+The dataset is public today: anyone who knows the project id can read every document in it, including first names,
+roles, photos and mentor names. The Teletraan computer works with that and also after it is made private, provided it
+has a read token first. Do the steps in this order. Doing step 3 before step 1 blanks the wall.
+
+1. Make a read token. At sanity.io/manage, open the project, then API, then Tokens, then Add API token. Name it
+   "Teletraan read" and give it the Viewer role. Copy the token once; Sanity does not show it again.
+2. Put it on the Teletraan computer. Over SSH, add the line `SANITY_READ_TOKEN='...'` to `/opt/teletraan/local.env` by
+   hand (the token between the quotes). Then `sudo systemctl restart teletraan-sync`. Without that line the computer
+   falls back to `SANITY_WRITE_TOKEN`, which also reads, but the Viewer token is the one to keep for reading.
+   `computer/scripts/lib.sh` hands the token to curl on its standard input, never on a command line, and
+   `sync-service.mjs` sends it only to the Sanity hosts. Nothing writes it to a log or to the data folder.
+3. Check it before changing anything: `computer/scripts/check-connection.sh` prints OK for the Sanity lines, and
+   Control, Now shows the Sanity dot green after the next read. Wait for one full read (up to five minutes).
+4. Make the dataset private. At sanity.io/manage, open the project, then Datasets, choose `production`, and change its
+   visibility to private (the page says what each choice means). Reads without a token now answer 401.
+5. Turn on private assets in the same dataset settings. Without it the images stay reachable by anyone who has the
+   address, even in a private dataset. The sync service sends the token with every picture it downloads, so the wall
+   keeps its images; the dashboard itself reads only the local copies and needs nothing.
+6. Check again: `check-connection.sh`, a view change on the wall, and the Studio (editors sign in to it anyway). The
+   scripts that read settings from Sanity (scheduled reboot, nightly, the slides and Drive photo syncs, `make
+   remote-status`) use the same token through `sanity_curl` in `lib.sh`.
+
+To go back, set the dataset to public again in the same place. The token can stay in `local.env`; a public dataset
+ignores it. The "can the Studio reach this page" probe of the Control page (`control/lib/cors.js`) still asks with no
+token, and it has not been tried against a private dataset. If the Status tab says "CORS origin missing" after the
+switch, look at the origin list at sanity.io/manage before believing it.
 
 ## Remote actions from Sanity
 

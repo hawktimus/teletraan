@@ -13,7 +13,7 @@ log_file="${TELETRAAN_LOG_DIR:-/var/log/teletraan}/remote.jsonl"
 
 query='*[_id == "remoteControl"][0]{action, requestedBy, requestedAt, lastHandledAt, lastResult}'
 echo "Last remote request (Sanity):"
-if answer=$(curl -fsS --max-time 15 --get --data-urlencode "query=$query" "https://$project.api.sanity.io/v$version/data/query/$dataset" 2> /dev/null); then
+if answer=$(sanity_curl -fsS --max-time 15 --get --data-urlencode "query=$query" "https://$project.api.sanity.io/v$version/data/query/$dataset" 2> /dev/null); then
   printf '%s' "$answer" | jq -r '.result // {} | "  action:       \(.action // "none")\n  requested by: \(.requestedBy // "-")\n  requested at: \(.requestedAt // "-")\n  handled at:   \(.lastHandledAt // "-")\n  result:       \(.lastResult // "-")"'
 else
   echo "  Sanity could not be reached."

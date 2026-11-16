@@ -86,6 +86,7 @@ import { photosChild } from './inputs/photos-parts.js';
 import { viewType, viewKeys, viewTitles, viewIdOf } from './inputs/view-ids.js';
 import { remoteControlType, remoteControlId } from './schemas/remoteControl.js';
 import { remoteStatusId } from './schemas/remoteStatus.js';
+import { apiVersion } from './project.js';
 
 // Pages that exist once. Each is a single document with a fixed id.
 export const settingsType = 'dashboardSettings';
@@ -115,7 +116,6 @@ const viewIcons = { general: EarthGlobeIcon, prime: DiamondIcon, nova: SparkleIc
 const viewPages = viewKeys.filter(key => key !== 'family').map(key => ({ kind: 'page', title: viewTitles[key], icon: viewIcons[key], type: viewType, id: viewIdOf(key) }));
 
 // The same version as the screen's own questions to Sanity
-const apiVersion = '2025-02-19';
 
 // How a list is sorted when it opens
 const byOrder = { field: 'order', direction: 'asc' };

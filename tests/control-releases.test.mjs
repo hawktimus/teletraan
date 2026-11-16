@@ -8,10 +8,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
 import { makeZip, sampleTree } from './helpers/zip-maker.mjs';
 import { createReleases, buildJsText, buildName, shortCommit } from '../control/lib/releases.js';
-import { installRelease, steps } from '../control/lib/install.js';
+import { installRelease, steps, checkModules } from '../control/lib/install.js';
 
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-releases-'));
 let counter = 0;
@@ -31,10 +32,19 @@ function place(options = {}) {
     log: () => {},
     run: async (command, args) => {
       calls.push(command + ' ' + args.join(' '));
-      return options.schemaFails && args[0].endsWith('schemas.test.mjs') ? { code: 1, output: 'schema Foo is wrong' } : { code: 0, output: '' };
+      if (options.schemaFails && args[0].endsWith('schemas.test.mjs')) return { code: 1, output: 'schema Foo is wrong' };
+      if (options.syntaxFails && args[0] === '--check' && args[1].endsWith('index.html.js')) return { code: 1, output: 'SyntaxError: Unexpected token' };
+      if (options.testsFail && args[0].endsWith('run.mjs')) return { code: 1, output: 'FAIL something.test.mjs' };
+      if (options.noTools && command === 'sh') return { code: 1, output: '' };
+      return { code: 0, output: '' };
     },
-    helper: async word => { calls.push('helper ' + word); return ''; },
-    waitForBuild: async build => { calls.push('wait ' + build); return true; },
+    helper: async word => {
+      calls.push('helper ' + word);
+      if (options.restartFails && word === 'restart-kiosk' && !calls.includes('rolled')) { calls.push('rolled'); throw new Error('no answer'); }
+      return word === 'units-check' ? 'units: current' : '';
+    },
+    waitForBuild: async build => { calls.push('wait ' + build); return !options.waitFails; },
+    restartSelf: () => { calls.push('restartSelf'); },
   };
   return { root: root, releasesDir: releasesDir, ctx: ctx, calls: calls, events: events, emit: event => events.push(event) };
 }
@@ -138,7 +148,8 @@ test('an install from a zip runs the steps in order, writes RELEASE.json and bui
   assert.ok(fs.existsSync(path.join(p.releasesDir, '2', 'dashboard', 'data', 'live')), 'the mount point of the data folder is in the release');
   assert.ok(!fs.existsSync(path.join(p.releasesDir, '2.tmp')));
   assert.ok(p.calls.some(c => c.startsWith('node ') && c.endsWith('schemas.test.mjs')), p.calls.join(' | '));
-  assert.deepEqual(p.calls.filter(c => c.startsWith('helper') || c.startsWith('wait')), ['helper restart-services', 'helper restart-kiosk', 'wait 2-a1b2c3d']);
+  assert.deepEqual(p.calls.filter(c => c.startsWith('helper') || c.startsWith('wait')), ['helper restart-services', 'helper restart-kiosk', 'wait 2-a1b2c3d', 'helper units-check']);
+  assert.ok(p.events.some(e => e.step === 'units' && e.state === 'done' && e.message === 'units: current'), 'the services are checked after the screen reports');
   assert.ok(p.events.some(e => e.step === 'wait' && e.message === 'On the wall: v2'));
 });
 
@@ -156,6 +167,91 @@ test('a failing schema check removes the half-built folder, leaves current alone
   assert.ok(p.events.some(e => e.step === 'finish' && e.state === 'fail'));
   assert.ok(!p.calls.some(c => c.startsWith('helper')), 'the screen is not restarted');
   assert.equal(p.ctx.state.installing, false, 'another install can start');
+});
+
+// The gate before the switch and the way back after it
+
+function gated(extra = {}) {
+  return sampleTree(Object.assign({ 'tests/schemas.test.mjs': '// check\n', 'tests/run.mjs': '// runner\n', 'dashboard/index.html.js': 'export const x = 1;\n' }, extra));
+}
+
+test('a dashboard file that does not read stops the update before the switch, and says which file', async () => {
+  const p = place({ syntaxFails: true });
+  fakeRelease(p, 1);
+  p.ctx.releases.flip(1);
+  await assert.rejects(installRelease(p.ctx, { zip: makeZip(gated()), emit: p.emit, studio: false }), /syntax error/);
+  assert.equal(p.ctx.releases.currentNumber(), 1);
+  assert.ok(p.events.some(e => e.step === 'syntax' && e.state === 'fail' && e.message.includes('dashboard/index.html.js')));
+  assert.ok(!p.calls.some(c => c.startsWith('helper')), 'the screen is not restarted');
+});
+
+test('the quick tests of the new tree must pass before the switch, and are skipped with a reason when the service has no bash or jq', async () => {
+  const failing = place({ testsFail: true });
+  fakeRelease(failing, 1);
+  failing.ctx.releases.flip(1);
+  await assert.rejects(installRelease(failing.ctx, { zip: makeZip(gated()), emit: failing.emit, studio: false }), /quick tests failed/);
+  assert.equal(failing.ctx.releases.currentNumber(), 1);
+  assert.ok(failing.events.some(e => e.step === 'tests' && e.state === 'fail' && e.message.includes('FAIL something.test.mjs')));
+
+  const bare = place({ noTools: true, testsFail: true });
+  fakeRelease(bare, 1);
+  bare.ctx.releases.flip(1);
+  await installRelease(bare.ctx, { zip: makeZip(gated()), emit: bare.emit, studio: false, restart: false });
+  assert.equal(bare.ctx.releases.currentNumber(), 2, 'the update went on');
+  assert.ok(bare.events.some(e => e.step === 'tests' && e.state === 'done' && /^Skipped: bash or jq/.test(e.message)), 'and said why the tests did not run');
+  assert.ok(!bare.calls.some(c => c.endsWith('run.mjs --quick')), 'nothing was run');
+});
+
+test('a screen that never reports the new version is rolled back: current goes back, the screen restarts on it, and the page says so', async () => {
+  const p = place({ waitFails: true });
+  fakeRelease(p, 1);
+  p.ctx.releases.flip(1);
+  await assert.rejects(installRelease(p.ctx, { zip: makeZip(gated()), emit: p.emit, studio: false }), /Update rolled back/);
+  assert.equal(p.ctx.releases.currentNumber(), 1, 'the wall is on the version it was on');
+  assert.ok(p.ctx.releases.numbers().includes(2), 'the release that failed is kept to be looked at');
+  const restarts = p.calls.filter(c => c === 'helper restart-kiosk');
+  assert.equal(restarts.length, 2, 'once for the new version, once for the way back');
+  assert.ok(p.events.some(e => e.step === 'rollback' && e.state === 'done'));
+  const last = p.events[p.events.length - 1];
+  assert.equal(last.step, 'finish');
+  assert.equal(last.state, 'fail');
+  assert.match(last.message, /^Update rolled back\./);
+  assert.ok(!p.events.some(e => e.step === 'finish' && e.state === 'done'), 'it never says Done');
+  assert.ok(p.calls.includes('restartSelf'), 'the service starts again on the old code');
+  assert.equal(p.ctx.state.installing, false);
+});
+
+test('a screen restart that fails is rolled back too, and the units step does not run', async () => {
+  const p = place({ restartFails: true });
+  fakeRelease(p, 1);
+  p.ctx.releases.flip(1);
+  await assert.rejects(installRelease(p.ctx, { zip: makeZip(gated()), emit: p.emit, studio: false }), /Update rolled back.*did not restart the screen/s);
+  assert.equal(p.ctx.releases.currentNumber(), 1);
+  assert.ok(!p.events.some(e => e.step === 'units'));
+});
+
+test('the first install has nothing to go back to, and says so instead of Done', async () => {
+  const p = place({ waitFails: true });
+  await assert.rejects(installRelease(p.ctx, { zip: makeZip(gated()), emit: p.emit, studio: false }));
+  const last = p.events[p.events.length - 1];
+  assert.equal(last.state, 'fail');
+  assert.match(last.message, /no earlier version/);
+});
+
+test('checkModules reads every dashboard file of this repository, and names one that does not parse', async () => {
+  const real = { run: (await import('../control/lib/run.js')).run };
+  const repoRoot = fileURLToPath(new URL('../', import.meta.url));
+  const found = await checkModules(real, repoRoot);
+  assert.ok(found.count > 100, 'the dashboard has well over 100 modules');
+  assert.deepEqual(found.bad, []);
+  const broken = path.join(work, 'broken-tree');
+  fs.mkdirSync(path.join(broken, 'dashboard'), { recursive: true });
+  fs.writeFileSync(path.join(broken, 'dashboard', 'ok.js'), 'export const a = 1;\n');
+  fs.writeFileSync(path.join(broken, 'dashboard', 'bad.js'), 'export const = ;\n');
+  const bad = await checkModules(real, broken);
+  assert.equal(bad.count, 2);
+  assert.equal(bad.bad.length, 1);
+  assert.ok(bad.bad[0].startsWith('dashboard/bad.js'));
 });
 
 test('a tree that still has deploy/, a tree without a dashboard and a bad zip are refused before anything changes', async () => {

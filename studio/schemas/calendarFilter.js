@@ -7,6 +7,7 @@
 
 import { defineType, defineField, defineArrayMember } from 'sanity';
 import { tooLong, aToZ, titleOf, subtitleFor } from './fields.js';
+import { datetimeOptions } from './presentationTimes.js';
 
 const actions = [
   { title: 'Hide', value: 'hide' },
@@ -173,6 +174,7 @@ export default defineType({
       name: 'expires',
       title: 'Hide after',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'Optional. After this date and time the rule stops. Leave empty to keep it going. A one event rule sets it a day after the event.',
     }),
     defineField({
@@ -203,6 +205,7 @@ export default defineType({
       name: 'eventStart',
       title: 'Event start',
       type: 'datetime',
+      options: datetimeOptions,
       hidden: ({ document }) => !isOneEvent(document),
       description: 'Optional. The exact start of the one event. The Calendars page fills it in.',
     }),

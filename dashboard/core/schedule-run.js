@@ -2,6 +2,7 @@
 
 import * as frame from '../frame.js';
 import { defaultSettings } from '../config.js';
+import { pagesToHold } from './paging.js';
 import { buildPage, canShow, moduleOf, regionOf, topicOf } from './panels.js';
 import { ownSeconds } from './photos.js';
 import { changePage, clearRegion } from './areas.js';
@@ -295,7 +296,9 @@ function runRotation(region, getPlaylist, getContent) {
 
           // a card with more rows than fit moves its list up and is held again, for the same time. A
           // page that was ended early (changeCount moved) does not go on.
-          for (let shown = 1; shown < next.pages && changeCount(region) === since; shown++) {
+          // A visit is at most maxPagedPages pages and maxPanelSeconds long, however many pages the card has
+          const lastPage = pagesToHold(next.pages, held);
+          for (let shown = 1; shown < lastPage && changeCount(region) === since; shown++) {
             next.page.scrolled = shown;
             frame.scrollCard(next.page.element, shown);
             notePageNumber(region, shown + 1);

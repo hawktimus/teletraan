@@ -411,7 +411,7 @@ test('the script only needs curl and jq, installs nothing and has the usage line
   assert.ok(script.includes('set -euo pipefail'));
   assert.ok(script.includes('# Usage: match13-sync.sh [--now | --check]'));
   assert.ok(!/\bapt(-get)?\s+install\b(?!.*echo)/.test(script.split('\n').filter(line => !line.trim().startsWith('echo') && !line.trim().startsWith('#')).join('\n')));
-  assert.equal(spawnSync('bash', ['-n', path.join(repo, 'computer/scripts/match13-sync.sh')]).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', path.join(repo, 'computer/scripts/match13-sync.sh')]).status, 0);
   assert.ok(!script.includes('—') && !script.includes('–'));
 });
 
@@ -419,7 +419,7 @@ test('the install script copies the three units with ACCOUNT filled in, needs su
   const text = fs.readFileSync(path.join(repo, 'computer/scripts/install-match13.sh'), 'utf8');
   ['teletraan-match13.service', 'teletraan-match13-timer.service', 'teletraan-match13.timer', 'sudo apt install curl jq', 'enable --now teletraan-match13.timer'].forEach(word => assert.ok(text.includes(word), word));
   assert.ok(!/^\s*apt(-get)? install/m.test(text));
-  assert.equal(spawnSync('bash', ['-n', path.join(repo, 'computer/scripts/install-match13.sh')]).status, 0);
+  assert.equal(spawnSync('/bin/bash', ['-n', path.join(repo, 'computer/scripts/install-match13.sh')]).status, 0);
   const service = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-match13.service'), 'utf8');
   const wake = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-match13-timer.service'), 'utf8');
   const timer = fs.readFileSync(path.join(repo, 'computer/systemd/teletraan-match13.timer'), 'utf8');

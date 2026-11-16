@@ -5,7 +5,7 @@
 
 import { defineType, defineField } from 'sanity';
 import { teamField, tooLong, titleOf, firstNameOnly } from './fields.js';
-import { clockIn, fallbackTimeZone } from './presentationTimes.js';
+import { clockIn, datetimeOptions, fallbackTimeZone, oddHour } from './presentationTimes.js';
 
 // The name is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
@@ -66,8 +66,9 @@ export default defineType({
       name: 'start',
       title: 'Starts at',
       type: 'datetime',
+      options: datetimeOptions,
       description: 'When the talk starts. The title card comes up on the TV at this time.',
-      validation: Rule => Rule.required().error('Pick when the talk starts.'),
+      validation: Rule => [Rule.required().error('Pick when the talk starts.'), Rule.custom(oddHour).warning()],
     }),
     defineField({
       name: 'minutes',

@@ -42,7 +42,7 @@ test('the local.env reader and the config.js reader are in lib.sh and nowhere el
 
 test('every script and the library have valid syntax', () => {
   scripts.concat(library).forEach(name => {
-    const result = spawnSync('bash', ['-n', path.join(folder, name)], { encoding: 'utf8' });
+    const result = spawnSync('/bin/bash', ['-n', path.join(folder, name)], { encoding: 'utf8' });
     assert.equal(result.status, 0, name + ': ' + result.stderr);
   });
 });

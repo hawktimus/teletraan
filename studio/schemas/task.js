@@ -1,6 +1,7 @@
 import { defineType, defineField } from 'sanity';
 import { showField, expiresField, orderField, teamField, noteField, tooLong, byOrder, aToZ, titleOf, subtitleFor, firstNameOnly } from './fields.js';
 import { ShowOnTvInput } from '../inputs/show-on-tv-input.js';
+import { datetimeOptions } from './presentationTimes.js';
 
 // The contact is a first name, so a space or a digit means a last name or
 // something else is in there. A hyphen is fine, as in Mary-Anne.
@@ -84,6 +85,7 @@ const fields = [
     name: 'finishedOn',
     title: 'Finished on',
     type: 'datetime',
+    options: datetimeOptions,
     description: 'When the task was finished. After the number of days set in Dashboard Settings it leaves the screen.',
     hidden: ({ document }) => !document || document.status !== 'done',
   }),
@@ -167,7 +169,7 @@ const fields = [
     name: 'note',
     title: 'Note of a stuck task',
     type: 'string',
-    description: 'The Notes column of the board, up to 90 characters, kept for a Stuck task only. The screen shows it under the task.' + reading,
+    description: 'Not written any more (was up to 90 characters): a Stuck note stays on the Teletraan computer, as this dataset is public.' + reading,
     validation: Rule => tooLong(Rule, 90),
   }),
   teamField(),

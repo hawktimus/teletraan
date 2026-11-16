@@ -4,6 +4,7 @@ import { defineField } from 'sanity';
 import { TeamInput } from '../inputs/team-input.js';
 import { NoteField } from '../inputs/note-field.js';
 import { isPast } from '../tools/content-rules.js';
+import { datetimeOptions, oddHour } from './presentationTimes.js';
 
 export function showField() {
   return defineField({
@@ -20,8 +21,9 @@ export function expiresField() {
     name: 'expires',
     title: 'Hide after',
     type: 'datetime',
+    options: datetimeOptions,
     description: 'Optional. After this date and time the item hides itself. Leave empty to keep it showing.',
-    validation: Rule => Rule.custom(value => (isPast(value) ? 'This date has passed, so the screen does not show the item. Pick a later date, or delete the item.' : true)).warning(),
+    validation: Rule => [Rule.custom(value => (isPast(value) ? 'This date has passed, so the screen does not show the item. Pick a later date, or delete the item.' : true)).warning(), Rule.custom(oddHour).warning()],
   });
 }
 

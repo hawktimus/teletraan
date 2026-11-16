@@ -19,10 +19,10 @@ import { panelChoices, boardCss, nowLine, stripOfPage, styles, tableOf, toolsOf,
 import { autoCss, autoSection } from './rotation-auto-parts.js';
 import { blockId } from '../tools/rotation-find.js';
 import { competitionModeFrom, frcQuestion } from '../tools/rotation-auto.js';
+import { apiVersion } from '../project.js';
 
 const h = createElement;
 
-const apiVersion = '2025-02-19';
 const settingsId = 'dashboardSettings';
 const draftId = 'drafts.dashboardSettings';
 

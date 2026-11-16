@@ -1,7 +1,7 @@
 # Targets for the health checks, the supervisor, the display and the diagnostic reports. The root Makefile includes
 # computer/make/*.mk. docs/OPERATIONS.md explains each one.
 
-.PHONY: version health supervisor-status supervisor-test display-status display-test watchdog-test diag diag-last
+.PHONY: version health supervisor-status supervisor-test display-status display-test watchdog-test diag diag-last dns-status
 
 version: ## The build version this copy is, and the release the computer runs
 	@printf 'version: %s\n' "$$(cat VERSION 2> /dev/null || echo unknown)"
@@ -33,3 +33,6 @@ diag: ## Write a diagnostic report and print where it is
 
 diag-last: ## Print the newest diagnostic report
 	@$(SCRIPTS)/diag.sh --list | head -n 1 | cut -f3 | xargs -r cat
+
+dns-status: ## The name servers that are configured and the ones in use, and whether they agree
+	@$(SCRIPTS)/dns-status.sh

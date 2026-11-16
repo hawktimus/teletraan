@@ -77,14 +77,13 @@ export function labelsOf(area) {
 }
 
 // The links under the status. The control page and the docs are not part of the Studio, so the page only points to them.
-// studioAddress is the address of the Studio hosted by Sanity. It is marked as a placeholder until the owner
-// types it: a link whose address still holds a bracket is shown as plain words, not as a link.
-export const studioAddress = '[address of the hosted Studio]';
+// There is no line for the Studio hosted by Sanity: its address is not written anywhere in the repository, and a line with
+// a placeholder for an address was dead text on the page. To add it, put a line with its real https address here and in
+// startLinks of tests/schemas.test.mjs.
 export const docsAddress = 'https://github.com/Hawktimus/teletraan/tree/main/docs';
 
 export const links = [
   { id: 'control', label: 'The control page', says: 'Updates the screen, shows what is on the wall and restarts things. It works on the WiFi of the shop.', address: controlAddress },
-  { id: 'studio', label: 'The Studio on the web', says: 'The same Studio, for when the one on the Teletraan computer is not reachable.', address: studioAddress },
   { id: 'docs', label: 'The guides', says: 'Short pages on how each part works.', address: docsAddress },
 ];
 

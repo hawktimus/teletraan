@@ -32,6 +32,18 @@ export function useLocalImages(index) {
   localImages = kept;
 }
 
+// Whether the sync service has listed any local pictures at all. A computer with none (a laptop, the first minute of a
+// start) cannot tell a picture that is missing from one that is simply not downloaded here.
+export function hasLocalImages() {
+  return Object.keys(localImages).length > 0;
+}
+
+// An address that goes out to the internet. On the Teletraan computer a picture that is not in the local list is one the
+// sync service has not downloaded (or could not), and the school filter may block the host that has it.
+export function isRemoteAddress(address) {
+  return typeof address === 'string' && /^https?:\/\//.test(address);
+}
+
 function localOr(address) {
   return localImages[address] ? liveFolder + localImages[address] : address;
 }

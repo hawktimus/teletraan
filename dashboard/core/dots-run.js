@@ -4,7 +4,7 @@
 
 import { dotNames, dotStates } from './dots.js';
 import { lastContentRead } from './content.js';
-import { networkReading, sanityReadTime, watchSyncStatus } from './sync-status.js';
+import { dotFacts, sanityReadTime, networkReading, watchSyncStatus } from './sync-status.js';
 
 const redrawSeconds = 5;
 
@@ -32,16 +32,20 @@ export function startDots(getContent, isSample) {
     const content = getContent() || {};
     const read = lastContentRead();
     const mini = content.mini || {};
-    const states = dotStates({
+    // The sync service's own file is the one source of the four dots, the same file the control page reads
+    // (core/dots.js, factsFromSyncStatus). Without it (a laptop, or the first seconds of a page) the dots fall back to
+    // what the Sanity documents say, as they always did.
+    const fromService = dotFacts();
+    const facts = fromService || {
       monday: content.monday,
-      everyMinutes: content.settings ? content.settings.mondayEveryMinutes : undefined,
       calendarAt: mini.lastCalendarSyncAt,
       calendarErrors: mini.calendarErrors,
-      // The dot says how fresh the sync service's read of Sanity is. Without the status file (a laptop) it is the local read.
+      // Without the status file (a laptop) the Sanity dot is the local read.
       sanityAt: sanityReadTime() || read.at,
       sanityFailed: false,
       network: networkReading(),
-    }, new Date());
+    };
+    const states = dotStates(Object.assign({ everyMinutes: content.settings ? content.settings.mondayEveryMinutes : undefined }, facts), new Date());
 
     dotNames.forEach(name => {
       if (!states[name]) {

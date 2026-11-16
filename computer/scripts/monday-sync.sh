@@ -128,7 +128,7 @@ due=$(jq -r --arg now "$now_iso" --argjson every "$every" --argjson slack "$slac
   | if $age == null or $age < 0 or $age >= ($every * 60 - $slack) then "yes" else "no" end' "$work/sanity.json")
 # The Sync Monday now button leaves this file (control-helper.sh); a run within two minutes of it reads at once,
 # because a button that waited for the setting looked as if it did nothing
-if [ "$due" = no ] && [ -z "$(find /tmp/teletraan-monday-force -mmin -2 2> /dev/null)" ]; then
+if [ "$due" = no ] && [ -z "$(find "$monday/force" -mmin -2 2> /dev/null)" ]; then
   exit 0
 fi
 
@@ -202,6 +202,14 @@ echo "monday: $(wc -l < "$work/project-rows.ndjson" | tr -d ' ') project(s) read
 
 failed=0
 
+# The reasons Stuck tasks are stuck stay on this computer. They are typed by students, and the dataset is public, so
+# they are not written to Sanity (monday-programs.sh unsets any that an older sync wrote). The sync service puts them
+# on the tasks of its local copy of the content. The file is replaced whole, so a task that is no longer stuck loses its note.
+if [ "$tasks_read" = yes ]; then
+  jq -c '[select(.note != null and .showOnBoard) | {key: ("task-monday-" + .id), value: .note}] | from_entries' "$work/rows.ndjson" | jq -s -c 'add // {}' > "$work/notes.json" \
+    && chmod 644 "$work/notes.json" && mv "$work/notes.json" "$monday/notes.json" || true
+fi
+
 if [ "$tasks_read" = yes ] || [ "$done_read" = yes ]; then
   jq -n --slurpfile sanity "$work/sanity.json" --slurpfile rows "$work/rows.ndjson" --slurpfile readings "$work/readings.ndjson" \
     --arg complete "$complete" "$helpers"'$sanity[0].result as $found | '"$plan" > "$work/plan.json"
@@ -239,6 +247,20 @@ if write_to_sanity "$work/write.json"; then
 else
   failed=1
 fi
+
+# What this run found, for the dots: the sync service reads this file, so the Monday dot on the wall and on the control
+# page follows the read itself and not the round trip through Sanity. lastSyncAt is the time of the last run that read
+# both boards without a failure; the error is the first line of what went wrong in this run.
+local_error=''
+IFS= read -r local_error < "$work/errors.txt" 2> /dev/null || true
+local_error=${local_error:0:200}
+if [ "$complete" = yes ] && [ "$failed" -eq 0 ] && [ -z "$local_error" ]; then
+  jq -n -c --arg at "$now_iso" '{lastSyncAt: $at, lastError: ""}' > "$work/status.json"
+else
+  previous=$(jq -r '.lastSyncAt // ""' "$monday/status.json" 2> /dev/null || true)
+  jq -n -c --arg at "$previous" --arg error "${local_error:-the last read did not finish}" '{lastSyncAt: $at, lastError: $error}' > "$work/status.json"
+fi
+chmod 644 "$work/status.json" && mv "$work/status.json" "$monday/status.json" || true
 
 # The time of this run goes to status-mini, when both boards were read and the status could be written.
 # status-write.sh never stops this script.

@@ -82,7 +82,7 @@ test('another failure keeps the old message only, and other branches are ignored
 
 // The wrapper's refusals come before its config and docker, so they run here with a docker that must stay unused
 function runWrapper(args, f) {
-  const result = spawnSync('bash', [wrapper, ...args], { encoding: 'utf8', env: { PATH: f.bin + ':/usr/bin:/bin', HOME: f.base } });
+  const result = spawnSync('/bin/bash', [wrapper, ...args], { encoding: 'utf8', env: { PATH: f.bin + ':/usr/bin:/bin', HOME: f.base } });
   return { status: result.status, text: result.stdout + result.stderr };
 }
 
@@ -146,7 +146,7 @@ test('the wrapper runs docker as root with the ids, root and image of the config
   fs.writeFileSync(copy, fs.readFileSync(wrapper, 'utf8').replace('conf=/usr/local/etc/teletraan-install.conf', 'conf=' + conf));
   const real = fs.mkdtempSync('/var/tmp/teletraan-push.');
   try {
-    const result = spawnSync('bash', [copy, real, 'abcd1234'], { encoding: 'utf8', env: { PATH: f.bin + ':/usr/bin:/bin', HOME: f.base } });
+    const result = spawnSync('/bin/bash', [copy, real, 'abcd1234'], { encoding: 'utf8', env: { PATH: f.bin + ':/usr/bin:/bin', HOME: f.base } });
     assert.equal(result.status, 0, result.stderr);
     const lines = f.calls().trim().split('\n');
     assert.equal(lines.length, 2, f.calls());

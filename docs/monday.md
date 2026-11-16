@@ -55,7 +55,7 @@ A task is in one of two lists:
 | Show on TV? | `color_mm83p12x` | Hide keeps the task off the TV |
 | Notes | `text_mm82s03v` | A text column. Read for a Stuck task only: the first 90 characters, as plain text, shown under the task |
 
-Only first names reach Sanity, because the dataset is public. No email and no last name are read. The one note that is stored is the Notes text of a Stuck task, so write nothing private in the Notes of a task that may be stuck: anyone can read the dataset. The notes of every other task, and of the Projects board, are never stored.
+Only first names reach Sanity, because the dataset is public. No email and no last name are read. The Notes text of a Stuck task is kept on the Teletraan computer only (`monday/notes.json` in the data folder), never in Sanity: the sync service puts it on the tasks of its local copy of the content, which only the screen reads, and an older sync's note is taken off the task document the next time the sync runs. The notes of every other task, and of the Projects board, are never kept. The Sync Monday now button leaves a file, `monday/force` in the data folder (it was in the shared /tmp before), and a run within two minutes of it reads at once.
 
 ## The projects board
 
@@ -93,7 +93,7 @@ columns at the right and the status chip last:
   Contact column. A task with no value in a column that is drawn has an empty place.
 - A task past the end of its Timeline that is not done has a LATE chip in place of its date. It is never hidden.
 - A Stuck task with a note shows the note under its name, on one line with an ellipsis. No other task shows a note.
-  The sync reads the Notes column of Robotics Tasks (`text_mm82s03v`) for a Stuck task only, 90 characters at most, and writes it in the field note of the task.
+  The sync reads the Notes column of Robotics Tasks (`text_mm82s03v`) for a Stuck task only, 90 characters at most, and keeps it in `monday/notes.json` on the Teletraan computer. The sync service adds it to the task as `note` in `content.json`; it is not written to Sanity.
 - The Open list is Stuck first, then In Progress and In Review by the soonest Timeline end, then To Do by priority.
   The Done list is the newest Date Completed first.
 - The title is the department and the list, such as BUILD TASKS or BUILD DONE. When the row names one team, the team
