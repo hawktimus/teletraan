@@ -145,4 +145,91 @@ test('the Pi writes the competition feed only while Teletraan is up, with the ke
   assert.ok(read('computer/pi/systemd/teletraan-pi.target').includes('teletraan-pi-frc.timer'));
 });
 
+test('the Lo-Fi list is the Main Menu entry and the radio, and menu.sh can put it in place', () => {
+  if (!have('python3') || !have('bash')) return;
+  const { folder, run, names } = lists();
+  assert.equal(run.status, 0, run.stderr);
+  assert.deepEqual(names('es_systems.lofi.cfg'), ['mainmenu', 'lofi']);
+  const menu = (...args) => spawnSync('bash', [path.join(root, 'computer/pi/menu.sh'), ...args], { encoding: 'utf8', env: { ...process.env, ES_HOME: folder } });
+  assert.equal(menu('lofi').status, 0);
+  assert.equal(fs.readFileSync(path.join(folder, 'es_systems.cfg'), 'utf8'), fs.readFileSync(path.join(folder, 'es_systems.lofi.cfg'), 'utf8'));
+  const script = read('computer/pi/menu.sh');
+  const quitBranch = script.slice(script.indexOf('if [ "$list" = quit ]'), script.indexOf('case $list in'));
+  assert.ok(quitBranch.includes('stop_program') && !quitBranch.includes('es-restart'), 'quit ends EmulationStation and does not ask for it to start again');
+});
+
+test('the home screen has a tile for each thing it can start, and every layer agrees on the names', () => {
+  const html = read('computer/pi/launcher/index.html');
+  const tiles = [...html.matchAll(/data-go="([a-z]+)"/g)].map(match => match[1]);
+  assert.deepEqual(tiles, ['dashboard', 'meeting', 'stream', 'lofi', 'arcade']);
+  const watch = read('computer/pi/exit-watch.py');
+  const go = watch.match(/GO = \(([^)]*)\)/)[1].match(/'([a-z]+)'/g).map(name => name.replace(/'/g, ''));
+  tiles.forEach(name => assert.ok(go.includes(name), 'exit-watch.py knows ' + name));
+  go.forEach(name => assert.ok(/(dashboard \| control \| meeting \| stream|arcade \| lofi)/.test(read('computer/pi/home.sh')) && read('computer/pi/home.sh').includes(name), 'home.sh starts ' + name));
+  assert.ok(watch.includes("path.startswith('/go/') and path[4:] in GO"), 'anything else is not found');
+  assert.ok(read('computer/pi/launcher/launcher.js').includes("'/pi/go/' + tile.getAttribute('data-go')"));
+  assert.ok(read('computer/pi/nginx.conf').includes('alias /opt/teletraan/current/computer/pi/launcher/;'));
+});
+
+test('the home screen writes colors only as variables of the theme', () => {
+  const css = read('computer/pi/launcher/launcher.css');
+  assert.ok(!/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|(?<![-\w])(black|white|red|blue|green|yellow|purple)(?![-\w])\s*[;,)]/.test(css.replace(/\/\*[\s\S]*?\*\//g, '')), 'no color written out');
+  assert.ok(/var\(--yellow\)/.test(css) && /var\(--ground\)/.test(css));
+});
+
+test('the Kickoff stream address is the one in local.env when it is a web address, and the channel of FIRST when not', () => {
+  const launch = read('computer/pi/launch.sh');
+  assert.ok(launch.includes("sed -n 's/^KICKOFF_URL=//p' /opt/teletraan/local.env"), 'only that one line is read');
+  assert.ok(launch.includes('https://*) printf'), 'only a web address is taken');
+  assert.ok(launch.includes('https://www.youtube.com/firstroboticscompetition/live'));
+  assert.ok(launch.includes("extra='--autoplay-policy=no-user-gesture-required'"));
+  assert.ok(read('computer/pi/exit-watch.py').includes("ESC_LEAVES = ('control', 'stream')"), 'Esc leaves the stream, which is not our page');
+});
+
+test('home.sh shows the tiles, starts the choice, comes back with the last choice marked, and gives up to EmulationStation after two misses', () => {
+  if (!have('bash')) return;
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'pi-home-'));
+  const bin = path.join(folder, 'bin');
+  const runDir = path.join(folder, 'run');
+  fs.mkdirSync(bin);
+  fs.mkdirSync(runDir);
+  const log = path.join(folder, 'log');
+  const queue = path.join(folder, 'queue');
+  fs.writeFileSync(queue, 'meeting\narcade\nstream\n\n\n');
+  fs.writeFileSync(path.join(bin, 'launch.sh'), `#!/bin/bash
+echo "launch $*" >> "${log}"
+if [ "$1" = home ]; then
+  next=$(head -n 1 "${queue}"); tail -n +2 "${queue}" > "${queue}.t"; mv "${queue}.t" "${queue}"
+  [ -n "$next" ] && echo "$next" > "${runDir}/teletraan-choice"
+  [ -e "${runDir}/teletraan-home" ] && echo "marker there" >> "${log}"
+fi
+exit 0
+`, { mode: 0o755 });
+  fs.writeFileSync(path.join(bin, 'menu.sh'), `#!/bin/bash\necho "menu $*" >> "${log}"\n`, { mode: 0o755 });
+  fs.writeFileSync(path.join(bin, 'es'), `#!/bin/bash\necho "es" >> "${log}"\n`, { mode: 0o755 });
+  const run = spawnSync('bash', [path.join(root, 'computer/pi/home.sh')], { encoding: 'utf8', timeout: 30000, env: { ...process.env, TELETRAAN_PI: bin, TELETRAAN_RUN: runDir, TELETRAAN_ES: path.join(bin, 'es') } });
+  assert.equal(run.status, 0, run.stderr);
+  const lines = fs.readFileSync(log, 'utf8').trim().split('\n').filter(line => line !== 'marker there');
+  assert.deepEqual(lines, [
+    'launch home dashboard', 'launch meeting',
+    'launch home meeting', 'menu arcade', 'es',
+    'launch home arcade', 'launch stream',
+    'launch home stream',
+    'launch home stream'
+  ]);
+  assert.ok(fs.readFileSync(log, 'utf8').includes('marker there'), 'the marker that MainMenu.sh looks for is there while it runs');
+  assert.equal(fs.existsSync(path.join(runDir, 'teletraan-home')), false, 'and gone when it ends');
+});
+
+test('Main Menu quits EmulationStation when the home screen is up, and shows the menu list when it is not', () => {
+  const entry = read('computer/pi/MainMenu.sh');
+  assert.ok(entry.includes('teletraan-home') && entry.includes('menu.sh quit') && entry.includes('menu.sh menu restart'));
+});
+
+test('the installer puts the home screen before the menu list in autostart.sh and keeps the file from before', () => {
+  const install = read('computer/pi/install-pi.sh');
+  assert.ok(install.includes('computer/pi/home.sh') && install.includes('[ -f "$auto.before-teletraan" ] || cp -p "$auto" "$auto.before-teletraan"'));
+  assert.ok(install.indexOf('home_line=') > install.indexOf('line="[ -x $root/computer/pi/menu.sh ]'), 'it goes in once the menu line is there');
+});
+
 await finish();

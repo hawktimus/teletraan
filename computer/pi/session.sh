@@ -1,11 +1,13 @@
 #!/bin/bash
 # Runs as root inside the X server that launch.sh starts. $1 is the address to show and $2 the page it is:
-# dashboard or control, which the exit watcher needs to know what Esc means.
+# dashboard, control, launcher or stream, which the exit watcher needs to know what Esc means. $3 is more flags for the
+# browser, or nothing.
 # The browser and the exit watcher run as the login user. When the browser ends, this ends, and so does the X server.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 address=${1:-http://127.0.0.1:8080/dashboard/}
 page=${2:-dashboard}
+extra=${3:-}
 account=${TELETRAAN_ACCOUNT:-pi}
 display=${DISPLAY:-:0}
 run_dir=/run/user/$(id -u "$account")
@@ -42,7 +44,7 @@ sudo -u "$account" -H env DISPLAY="$display" chromium \
   --hide-crash-restore-bubble \
   --disable-features=Translate \
   --password-store=basic \
-  ${TELETRAAN_BROWSER_FLAGS:-} \
+  ${TELETRAAN_BROWSER_FLAGS:-} $extra \
   "$address" > /dev/null 2>&1
 
 kill "$watcher" > /dev/null 2>&1

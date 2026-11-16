@@ -4,7 +4,8 @@
 It leaves on any of these:
   - Select + Start together on a controller
   - Ctrl + Alt + Backspace on a keyboard
-  - Esc on a keyboard while the control page is up
+  - Esc on a keyboard while the control page or the Kickoff stream is up (the stream is somebody else's page, which
+    cannot ask)
   - the dashboard asking for it, which it does for Esc when no talk and no list has the screen
     (dashboard/core/console-keys.js)
 
@@ -12,8 +13,12 @@ The dashboard talks to this through the web server: /pi/leave and /pi/page/<name
 which is open to this computer only. /pi/page/control is how the dashboard says that it is handing over to the
 control page.
 
+The home screen (computer/pi/launcher) asks /pi/go/<name> for the tile that was chosen: the name, one of GO below, is
+written to the choice file (teletraan-choice, beside the browser profile) and the browser is closed. home.sh reads the
+choice and starts what it names. Any other name is not found, and nothing is written.
+
 The browser is found by its profile folder (the first argument), so nothing else on the Pi is touched. The second
-argument is the page the browser starts on: dashboard or control. session.sh starts this and stops it.
+argument is the page the browser starts on: dashboard, control, launcher or stream. session.sh starts this and stops it.
 """
 import os
 import selectors
@@ -31,7 +36,11 @@ KEYS_CTRL = {ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL}
 KEYS_ALT = {ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT}
 RESCAN_SECONDS = 3
 LISTEN = ('127.0.0.1', 8079)
-PAGES = ('dashboard', 'control')
+PAGES = ('dashboard', 'control', 'launcher', 'stream')
+# Pages where Esc on the keyboard means leave, because the page cannot say it itself
+ESC_LEAVES = ('control', 'stream')
+# What the home screen may choose
+GO = ('dashboard', 'control', 'meeting', 'stream', 'arcade', 'lofi')
 
 state = {'page': 'dashboard', 'profile': ''}
 
@@ -39,6 +48,19 @@ state = {'page': 'dashboard', 'profile': ''}
 def wanted(device):
     keys = set(device.capabilities().get(ecodes.EV_KEY, []))
     return PAD <= keys or ecodes.KEY_BACKSPACE in keys
+
+
+def choice_file():
+    override = os.environ.get('TELETRAAN_CHOICE')
+    return override or os.path.join(os.path.dirname(state['profile'].rstrip('/')), 'teletraan-choice')
+
+
+def choose(name):
+    path = choice_file()
+    temporary = path + '.new'
+    with open(temporary, 'w') as handle:
+        handle.write(name + '\n')
+    os.replace(temporary, path)
 
 
 def leave():
@@ -58,6 +80,12 @@ class Asks(BaseHTTPRequestHandler):
     def answer(self):
         path = self.path.split('?')[0].rstrip('/')
         if path == '/leave':
+            self.send_response(204)
+            self.end_headers()
+            leave()
+            os._exit(0)
+        if path.startswith('/go/') and path[4:] in GO:
+            choose(path[4:])
             self.send_response(204)
             self.end_headers()
             leave()
@@ -123,7 +151,7 @@ def main():
                         held[device.path].discard(event.code)
                     else:
                         held[device.path].add(event.code)
-                    escape = event.code == ecodes.KEY_ESC and event.value == 1 and state['page'] == 'control'
+                    escape = event.code == ecodes.KEY_ESC and event.value == 1 and state['page'] in ESC_LEAVES
                     if escape or asked(held[device.path]):
                         leave()
                         return

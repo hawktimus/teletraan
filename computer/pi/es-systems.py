@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Writes the two lists of systems that EmulationStation shows on the Pi, from the full list of the system.
+"""Writes the three lists of systems that EmulationStation shows on the Pi, from the full list of the system.
 
     es-systems.py [--etc /etc/emulationstation/es_systems.cfg] [--roms ~/RetroPie/roms] [--out ~/.emulationstation]
 
 menu    the first screen: Teletraan, Meeting, Arcade, Lo-Fi
 arcade  what the Arcade entry opens: a Main Menu entry, then every game system of the full list
+lofi    what the Lo-Fi tile of the home screen opens: a Main Menu entry, then Lo-Fi Radio
 
 EmulationStation reads ~/.emulationstation/es_systems.cfg when it is there and /etc/emulationstation/es_systems.cfg when
 it is not. menu.sh copies one of the two lists over that file and starts EmulationStation again. Nothing here changes the
@@ -63,6 +64,8 @@ def main():
     games = [system for system in full if system.findtext('name') not in ('teletraan', 'lofi')]
     write(os.path.join(args.out, 'es_systems.menu.cfg'), menu)
     write(os.path.join(args.out, 'es_systems.arcade.cfg'), [main_menu] + games)
+    if lofi is not None:
+        write(os.path.join(args.out, 'es_systems.lofi.cfg'), [main_menu, lofi])
     print('menu: %d systems, arcade: %d systems' % (len(menu), len(games) + 1))
 
 

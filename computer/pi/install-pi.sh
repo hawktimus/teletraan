@@ -124,7 +124,7 @@ PYTHON
     say "Added the Teletraan system to $systems (the file from before is $systems.before-teletraan)"
   fi
 
-  # The two short lists: the menu (Teletraan, Meeting, Arcade, Lo-Fi) and the Arcade (Main Menu and every game system).
+  # The short lists: the menu (Teletraan, Meeting, Arcade, Lo-Fi), the Arcade (Main Menu and every game system) and Lo-Fi (Main Menu and the radio).
   # Neither is switched on here: menu.sh does that, and EmulationStation shows it when it starts again.
   if [ -f "$systems" ]; then
     mkdir -p "$home/.emulationstation"
@@ -141,6 +141,17 @@ PYTHON
 $line" "$auto"
     chown --reference="$auto.before-teletraan" "$auto"
     say "The console starts at the menu now (the file from before is $auto.before-teletraan)"
+  fi
+
+  # The home screen goes before the line of the menu list. If it cannot show itself it ends, and the lines after it start
+  # EmulationStation with the menu list, which is the way the console started before the home screen.
+  home_line="[ -x $root/computer/pi/home.sh ] && $root/computer/pi/home.sh"
+  if [ -f "$auto" ] && grep -qF "computer/pi/menu.sh" "$auto" && ! grep -qF "computer/pi/home.sh" "$auto"; then
+    [ -f "$auto.before-teletraan" ] || cp -p "$auto" "$auto.before-teletraan"
+    sed -i "/computer\/pi\/menu.sh/i\\
+$home_line" "$auto"
+    chown --reference="$auto.before-teletraan" "$auto"
+    say "The console starts at the home screen now (the file from before is $auto.before-teletraan)"
   fi
 fi
 

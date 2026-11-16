@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hawktimus Prime</title>
+  <!-- The home screen of the console on the Raspberry Pi (computer/pi/README.md, "The home screen"). One button for each
+       thing the TV can show. The choice goes to the exit watcher (exit-watch.py, /pi/go/<name>), which closes this page, and
+       home.sh starts what was chosen. -->
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="/dashboard/fonts/fonts.css">
+  <link rel="stylesheet" href="/dashboard/themes/hawktimus.css">
+  <link rel="stylesheet" href="launcher.css">
+</head>
+<body>
+  <header>
+    <img class="mark" src="/dashboard/assets/teletraan-wordmark.svg" alt="Teletraan">
+    <p class="team">Hawktimus Prime &middot; Hawktimus Nova</p>
+  </header>
+  <main id="tiles">
+    <button class="tile" type="button" data-go="dashboard">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="10" width="52" height="34" rx="3"/><path d="M14 36V28M24 36V20M34 36V25M44 36V16M22 54h20M32 44v10"/></svg>
+      <span class="name">Dashboard</span>
+      <span class="what">The team screen</span>
+    </button>
+    <button class="tile" type="button" data-go="meeting">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="8" width="48" height="32" rx="3"/><path d="M16 32l10-10 8 6 12-12M32 40v14M20 56l12-8 12 8"/></svg>
+      <span class="name">Meeting</span>
+      <span class="what">Pick a presentation</span>
+    </button>
+    <button class="tile" type="button" data-go="stream">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="24"/><path d="M26 21l17 11-17 11z"/></svg>
+      <span class="name">Game Drop</span>
+      <span class="what">The live Kickoff stream</span>
+    </button>
+    <button class="tile" type="button" data-go="lofi">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 40V32a22 22 0 0 1 44 0v8"/><rect x="8" y="38" width="10" height="16" rx="3"/><rect x="46" y="38" width="10" height="16" rx="3"/></svg>
+      <span class="name">Lo-Fi</span>
+      <span class="what">Radio with a looping scene</span>
+    </button>
+    <button class="tile" type="button" data-go="arcade">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="14" r="7"/><path d="M32 21v18M12 56V46a4 4 0 0 1 4-4h32a4 4 0 0 1 4 4v10z"/><circle cx="24" cy="50" r="2"/><circle cx="40" cy="50" r="2"/></svg>
+      <span class="name">Arcade</span>
+      <span class="what">Every game system</span>
+    </button>
+  </main>
+  <footer>
+    <p id="hint">Left and Right choose &middot; Enter or X opens</p>
+    <p id="status" role="status"></p>
+  </footer>
+  <script src="launcher.js"></script>
+</body>
+</html>

@@ -3,7 +3,29 @@
 The Pi under the office TV is a game console first. Teletraan is one more thing it can show, started from
 EmulationStation and gone again when you leave it. Nothing here runs at boot, and nothing here writes to Sanity.
 
+## The home screen
+
+The console starts at a page of its own, not at EmulationStation: five tiles, Dashboard, Meeting, Game Drop, Lo-Fi and
+Arcade. Left and Right (or the d-pad) choose, Enter or X (A on a controller) opens.
+
+- Dashboard, Meeting: as below. Esc leaves and the home screen is back, with that tile marked.
+- Game Drop: the live stream of the FIRST Kickoff in the browser, full screen. The address is `KICKOFF_URL` in
+  `/opt/teletraan/local.env` when that line is there and starts with https://, and the live page of the FIRST Robotics
+  Competition channel (`youtube.com/firstroboticscompetition/live`) when not. Esc leaves. Kickoff 2027 is Saturday,
+  January 9, 2027 at 12:00 PM ET. Before and after a stream the page shows what that channel shows.
+- Lo-Fi: EmulationStation with Main Menu and Lo-Fi Radio only.
+- Arcade: EmulationStation with Main Menu and every game system. The Main Menu entry, or Quit in its Start menu, brings the
+  home screen back.
+
+`home.sh` runs it (a line in `/opt/retropie/configs/all/autostart.sh`, before the line of the menu list): it shows
+`launcher/` in the browser, the tile that is chosen goes to `exit-watch.py` as `/pi/go/<name>`, which closes the page, and
+`home.sh` starts what was chosen. If the page ends with nothing chosen twice in a row (Ctrl + Alt + Backspace twice, or the
+browser did not start), `home.sh` ends and the console goes on to EmulationStation with the menu list below, the way it
+started before the home screen. To go back to that for good, remove the `home.sh` line from `autostart.sh`.
+
 ## The menu
+
+This is what EmulationStation shows when the home screen is not in use (or has stepped aside).
 
 The console starts at a short menu: Teletraan, Meeting, Arcade, Lo-Fi.
 
@@ -145,6 +167,7 @@ update, reboot or save keys, because the helper they use is not installed here.
 | The browser profile and cache | `/run/user/1000/teletraan-chromium` (in memory, removed on leaving) |
 | The full list of systems | `/etc/emulationstation/es_systems.cfg` (the file from before is beside it, `.before-teletraan`) |
 | The menu and the Arcade lists | `~/.emulationstation/es_systems.menu.cfg`, `es_systems.arcade.cfg`; the one in use is `es_systems.cfg` there |
+| The home screen | `computer/pi/launcher/` (the page), `home.sh` (the loop), `exit-watch.py` (`/pi/go/<name>`) |
 | The start of the console | `/opt/retropie/configs/all/autostart.sh` (the file from before is beside it, `.before-teletraan`) |
 | The entries and their look | `~/RetroPie/roms/teletraan/`, `meeting/`, `arcademenu/`, `mainmenu/` (entries, `theme.xml`, `logo.svg`). The Hawktimus theme set is not changed. |
 | Lo-Fi | `/opt/retropie/configs/lofi/` and `~/RetroPie/lofi/` (not in this repository, except `lofi-scene.sh`) |
@@ -167,6 +190,10 @@ Do not copy the whole folder: it holds things that are not part of Teletraan.
 ## When something is wrong
 
 - The TV stays on EmulationStation: run `/opt/teletraan/computer/pi/launch.sh` from a keyboard on the Pi and read what it says.
+- The home screen does not show, or the console starts at EmulationStation: `/opt/teletraan/computer/pi/home.sh` from a
+  keyboard on the Pi shows what stops it. Two misses in a row hand the screen to EmulationStation on purpose.
+- Game Drop shows no video or no sound: the stream is a normal YouTube page, so it needs the Pi's sound output to be the
+  TV and a stream that is live. `KICKOFF_URL` in `local.env` can point at a particular stream.
 - The menu is wrong, or a system is missing: `/opt/teletraan/computer/pi/menu.sh full restart` brings the whole list back, and
   `sudo computer/pi/install-pi.sh` makes the two short lists again from it.
 - Esc in Meeting does nothing: the page has not loaded. Hold Select and press Start, or press Ctrl + Alt + Backspace.
