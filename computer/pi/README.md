@@ -5,12 +5,34 @@ EmulationStation and gone again when you leave it. Nothing here runs at boot, an
 
 ## Start
 
-EmulationStation, Ports, Teletraan. The dashboard fills the TV after a few seconds.
+EmulationStation has a system called Teletraan, next to Ports. It has two entries:
+
+- Dashboard: the dashboard fills the TV after a few seconds.
+- Control: the control page of this copy. The PIN is 3229 or 3426, or `CONTROL_PIN` if `local.env` has one.
+
+## Keys in the dashboard
+
+These work on the Pi only. The screen at school does not have them.
+
+| Key | Controller name in RetroPie | What it does |
+| --- | --- | --- |
+| X | A | The large panel changes to its next step now |
+| Z | B | The large panel goes back one step |
+| Esc | | Leaves, back to EmulationStation |
+| Right Shift | Select | Opens the control page |
+
+X and Z wait while a swap is playing or an alert, a talk or the night screen has the TV. While a talk or the list
+of presentations is up, Esc belongs to them (it ends the talk or closes the list) and does not leave.
+
+The letters are the keyboard keys that EmulationStation has for A, B and Select on this Pi. A controller is not
+read for them yet: none is set up in EmulationStation.
 
 ## Stop
 
-- Controller: hold Select and press Start.
-- Keyboard: Ctrl + Alt + Backspace.
+- In the dashboard: Esc.
+- On the control page: Esc.
+- Anywhere, keyboard: Ctrl + Alt + Backspace.
+- Anywhere, controller: hold Select and press Start.
 
 EmulationStation comes back as it was.
 
@@ -25,6 +47,7 @@ EmulationStation comes back as it was.
 | `teletraan-pi-calendars` | Downloads the team calendars, every 15 minutes | the calendar addresses |
 | `teletraan-pi-photos` | Copies the Drive photo folder, every 15 minutes | `GOOGLE_API_KEY` |
 | `teletraan-pi-slides` | Downloads the slides of the next talks, every 2 minutes | no |
+| `teletraan-pi-control` | The control page, on this computer only | no |
 | `teletraan-pi-decks` | Watches the Google Drive folder of presentations, every 20 seconds (docs/presentations-drive.md) | `GOOGLE_API_KEY` |
 
 Monday cards and the competition data are written into Sanity by the Teletraan computer at school, and the Pi reads them
@@ -48,8 +71,14 @@ Leave `SANITY_WRITE_TOKEN`, `MONDAY_API_TOKEN` and `TBA_AUTH_KEY` out. They are 
 Without the file the dashboard still runs: content, weather, Monday cards and competition data show, and the calendar
 events, the Drive photos and the list of presentations do not.
 
-The list of presentations opens with F5 or P on a keyboard, or the play button of a clicker. The control page is not
-part of the Pi copy, so a deck is picked on the TV.
+The list of presentations opens with F5 or P on a keyboard, or the play button of a clicker.
+
+## The control page here
+
+It is the same control page as at school, open to this computer only. What works without more keys: Now, the
+Presentations section of Show, and everything that only reads. What does not: anything that saves to Sanity, because
+this copy has no `SANITY_WRITE_TOKEN` and should not get one while the school computer runs, and the buttons that
+update, reboot or save keys, because the helper they use is not installed here.
 
 ## Where things are
 
@@ -59,14 +88,15 @@ part of the Pi copy, so a deck is picked on the TV.
 | The last good content | `/var/lib/teletraan/data` (on the SD card, so it is there after a restart) |
 | Logs | `/run/teletraan-logs` (in memory, gone after a restart) |
 | The browser profile and cache | `/run/user/1000/teletraan-chromium` (in memory, removed on leaving) |
-| The Ports entry | `~/RetroPie/roms/ports/Teletraan.sh` |
+| The EmulationStation system | `/etc/emulationstation/es_systems.cfg` (the file from before is beside it, `.before-teletraan`) |
+| Its entries and its look | `~/RetroPie/roms/teletraan/` (`Dashboard.sh`, `Control.sh`, `theme.xml`, `logo.svg`). The Hawktimus theme set is not changed. |
 | These files | `computer/pi/` |
 
 ## Update
 
 On the Mac, in the repository:
 
-    git ls-files -c -o --exclude-standard -- dashboard computer control VERSION CHANGELOG.md README.md \
+    git ls-files -c -o --exclude-standard -- dashboard computer control studio VERSION CHANGELOG.md README.md \
       | grep -v 'local\.env$' \
       | rsync -a --delete --files-from=- ./ pi@retropie5:/home/pi/teletraan-stage/
 
@@ -92,7 +122,8 @@ Do not copy the whole folder: it holds things that are not part of Teletraan.
     sudo systemctl stop teletraan-pi.target
     sudo rm /etc/systemd/system/teletraan-pi* /etc/tmpfiles.d/teletraan-pi.conf
     sudo systemctl daemon-reload
-    rm ~/RetroPie/roms/ports/Teletraan.sh
+    rm -r ~/RetroPie/roms/teletraan
+    sudo cp /etc/emulationstation/es_systems.cfg.before-teletraan /etc/emulationstation/es_systems.cfg
     sudo rm -r /opt/teletraan /var/lib/teletraan /var/lib/teletraan-state
 
 The packages it added: chromium, nginx-light, nodejs, python3-evdev, poppler-utils. The nginx service of the system is

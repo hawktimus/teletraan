@@ -1,0 +1,21 @@
+# The control page of this copy, for this computer only. It has no helper beside it, so its buttons that update,
+# reboot or save keys answer that they cannot. Without SANITY_WRITE_TOKEN in local.env it changes nothing in Sanity.
+[Unit]
+Description=The control service of Teletraan I on the Raspberry Pi
+PartOf=teletraan-pi.target
+
+[Service]
+Type=simple
+User=ACCOUNT
+WorkingDirectory=/opt/teletraan/control
+Environment=CONTROL_ROOT=/opt/teletraan
+Environment=CONTROL_DATA=/var/lib/teletraan/data
+Environment=CONTROL_HOST=127.0.0.1
+Environment=CONTROL_PORT=3230
+Environment=CONTROL_STATE=/var/lib/teletraan-state
+Environment=CONTROL_NETWATCH=/var/lib/teletraan-state/netwatch.json
+Environment=CONTROL_LOG_FILE=/run/teletraan-logs/control.log
+NoNewPrivileges=yes
+ExecStart=/usr/bin/env node server.js
+Restart=on-failure
+RestartSec=5

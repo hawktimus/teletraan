@@ -19,8 +19,9 @@ folder, pick it from a list, and the clicker runs it like a booked talk.
   to be converted first. Animations and videos do not play: each slide is one still picture.
 - **Dashboard Settings has one new field**, Google Drive folder of presentations, in the Presentations section. Run
   presentations must be on. The key is the one the Drive photos use.
-- **The Raspberry Pi 5 can run the dashboard** as an entry under Ports in RetroPie, without Docker and without the jobs
-  that write to Sanity (computer/pi/README.md).
+- **The Raspberry Pi 5 can run the dashboard** as its own system in RetroPie, with Dashboard and Control in it, without
+  Docker and without the jobs that write to Sanity. On the Pi only, X is next, Z is back, Esc leaves and Right Shift
+  opens the control page (computer/pi/README.md).
 
 docs/presentations-drive.md has the set-up, the keys and what each message means.
 

@@ -20,7 +20,7 @@
 // (setLookHooks below, core/views-run.js).
 
 export {
-  pauseRotation, resumeRotation, holdClock, startListsOver, skipRow, setLookHooks, showPagesNow, restartRotation,
+  pauseRotation, resumeRotation, holdClock, startListsOver, skipRow, backStep, setLookHooks, showPagesNow, restartRotation,
   moveOn, secondsUntilChange,
 } from './schedule-hold.js';
 export { startRotation, startRotationForLayouts, startTicker, startTogether } from './schedule-run.js';

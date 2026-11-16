@@ -203,6 +203,10 @@ editors can sign in from anywhere.
                               shows and what each key does in it, and decks-run.js puts the list on the
                               screen and hands the picked deck to presentation-run.js
                               (docs/presentations-drive.md),
+                              console-keys.js and console-keys-run.js are the keys of the copy on the
+                              Raspberry Pi (next, back, leave, control page), off unless the address says
+                              ?keys=console, and step-back.js finds the step the large panel goes back to
+                              (computer/pi/README.md),
                               presentation-test.js decides when the Run presentation test button starts
                               the sample talk, and presentation-test-run.js starts it
                               (docs/hidden-transitions.md),

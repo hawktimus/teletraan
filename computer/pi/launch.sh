@@ -1,11 +1,24 @@
 #!/bin/bash
-# Teletraan on the TV of the Raspberry Pi, started from EmulationStation (Ports, Teletraan).
-# It starts the web server and the sync service, shows the dashboard full screen, and when the browser is closed it
-# stops them again and EmulationStation is back. Leave with Select + Start on a controller, or Ctrl + Alt + Backspace.
-# computer/pi/README.md has the rest.
+# Teletraan on the TV of the Raspberry Pi, started from EmulationStation (Teletraan, then Dashboard or Control).
+# $1 says what to show: dashboard, which is also what it shows with nothing, or control.
+# It starts the web server, the sync service and the control service, shows the page full screen, and when the
+# browser is closed it stops them again and EmulationStation is back.
+# In the dashboard: X is next, Z is back, Esc leaves, Right Shift opens the control page. computer/pi/README.md has the rest.
 set -u
 here=/opt/teletraan/computer/pi
-address=http://127.0.0.1:8080/dashboard/
+base=http://127.0.0.1:8080
+
+case ${1:-dashboard} in
+  control)
+    page=control
+    address=$base/control/
+    ;;
+  *)
+    page=dashboard
+    # ?keys=console turns on the keys of this copy (dashboard/core/console-keys.js)
+    address="$base/dashboard/?keys=console"
+    ;;
+esac
 
 sudo systemctl start teletraan-pi.target
 
@@ -16,6 +29,7 @@ for _ in $(seq 1 60); do
 done
 
 # The same way the other full screen programs of this Pi take the screen: an X server on the console.
-sudo xinit "$here/session.sh" "$address" -- :0 vt1 -nolisten tcp -quiet -nocursor > /dev/null 2>&1
+# The dashboard hides the mouse pointer itself, and the control page needs it.
+sudo xinit "$here/session.sh" "$address" "$page" -- :0 vt1 -nolisten tcp -quiet > /dev/null 2>&1
 
 sudo systemctl stop teletraan-pi.target

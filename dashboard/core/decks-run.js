@@ -123,8 +123,10 @@ function onKey(event) {
   if (!picker.open) {
     if (!opensPicker(event.key) || takeoverRunning() || talkOnScreen()) return;
 
-    // F5 would load the page again
+    // F5 would load the page again. A key the list uses goes no further: the talk screen listens to the same
+    // keys, and whichever of the two was started last must not take the key that picks a deck as its own first key.
     event.preventDefault();
+    event.stopImmediatePropagation();
     if (!event.repeat) open(new Date());
     return;
   }
@@ -133,6 +135,7 @@ function onKey(event) {
   if (action === null) return;
 
   event.preventDefault();
+  event.stopImmediatePropagation();
   // A key that is held down may run down the list, but it must not start a deck or close the list
   if (event.repeat && (action === 'play' || action === 'close')) return;
 

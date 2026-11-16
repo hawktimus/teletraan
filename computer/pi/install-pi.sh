@@ -23,6 +23,7 @@ group=$(id -gn "$account")
 home=$(getent passwd "$account" | cut -d: -f6)
 case $tree in "$root" | "$root"/*) stop "the copy to install cannot be inside $root." ;; esac
 [ -f "$tree/dashboard/index.html" ] || stop "$tree has no dashboard/index.html."
+[ -d "$tree/studio/tools" ] || stop "$tree has no studio folder, which the control service reads."
 for tool in chromium nginx node curl jq pdftoppm xinit rsync; do
   command -v "$tool" > /dev/null 2>&1 || PATH=$PATH:/usr/sbin command -v "$tool" > /dev/null 2>&1 || stop "$tool is not installed."
 done
@@ -66,11 +67,49 @@ for unit in "$here"/systemd/teletraan-pi*; do
 done
 systemctl daemon-reload
 
-# The entry in EmulationStation, under Ports. It shows after EmulationStation is started again.
-ports=$home/RetroPie/roms/ports
-if [ -d "$ports" ]; then
-  install -o "$account" -g "$group" -m 755 "$here/Teletraan.sh" "$ports/Teletraan.sh"
-  say "Ports entry: $ports/Teletraan.sh"
+# The Teletraan system in EmulationStation, beside Ports, with Dashboard and Control in it. Its look is a
+# theme.xml in its own folder, which EmulationStation reads before the theme set, so the theme set is not touched.
+# It shows after EmulationStation is started again.
+roms=$home/RetroPie/roms
+systems=/etc/emulationstation/es_systems.cfg
+if [ -d "$roms" ]; then
+  mkdir -p "$roms/teletraan"
+  install -m 755 "$here/Dashboard.sh" "$here/Control.sh" "$roms/teletraan/"
+  install -m 644 "$here/es-theme.xml" "$roms/teletraan/theme.xml"
+  install -m 644 "$release/dashboard/assets/teletraan-wordmark.svg" "$roms/teletraan/logo.svg"
+  chown -R "$account:$group" "$roms/teletraan"
+  # The entry of the first version, under Ports
+  rm -f "$roms/ports/Teletraan.sh"
+  say "EmulationStation entries: $roms/teletraan (Dashboard, Control)"
+
+  if [ -f "$systems" ] && ! grep -q '<name>teletraan</name>' "$systems"; then
+    cp -p "$systems" "$systems.before-teletraan"
+    python3 - "$systems" "$roms/teletraan" << 'PYTHON'
+import re
+import sys
+
+path, folder = sys.argv[1], sys.argv[2]
+text = open(path).read()
+block = """  <system>
+    <name>teletraan</name>
+    <fullname>Teletraan</fullname>
+    <path>%s</path>
+    <extension>.sh .SH</extension>
+    <command>bash %%ROM%%</command>
+    <platform>pc</platform>
+    <theme>teletraan</theme>
+  </system>
+""" % folder
+# Right after Ports, or at the end of the list when there is no Ports
+ports = re.search(r"<name>ports</name>.*?</system>[ \t]*\n", text, re.S)
+if ports:
+    text = text[:ports.end()] + block + text[ports.end():]
+else:
+    text = text.replace("</systemList>", block + "</systemList>", 1)
+open(path, "w").write(text)
+PYTHON
+    say "Added the Teletraan system to $systems (the file from before is $systems.before-teletraan)"
+  fi
 fi
 
 say "Installed version $version${commit:+ ($commit)} in $root."
