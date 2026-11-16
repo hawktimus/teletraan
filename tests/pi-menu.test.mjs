@@ -104,7 +104,8 @@ test('menu.sh puts one of the lists in place, takes the user list away for full,
 
 test('the entries ask menu.sh to restart EmulationStation the way its own menu does, and nothing else is stopped', () => {
   const menu = read('computer/pi/menu.sh');
-  assert.ok(menu.includes('touch /tmp/es-restart') && menu.includes('pkill -x emulationstatio'));
+  assert.ok(menu.includes('touch /tmp/es-restart') && menu.includes('pgrep -x emulationstatio') && menu.includes('/proc/$pid/exe'), 'only the program, not the wrapper that has the same name');
+  assert.ok(!/pkill/.test(menu), 'pkill by name would stop the wrapper too, and the TV would stay on the terminal');
   assert.ok(!/pkill -f|killall|systemctl/.test(menu), 'no pattern that could match something else');
   assert.ok(read('computer/pi/Arcade.sh').includes('menu.sh arcade restart'));
   assert.ok(read('computer/pi/MainMenu.sh').includes('menu.sh menu restart'));

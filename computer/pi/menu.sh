@@ -29,7 +29,12 @@ esac
 
 if [ "${2:-}" = restart ]; then
   # The same thing that Restart EmulationStation in its own menu does: the wrapper (emulationstation.sh) starts
-  # it again when /tmp/es-restart is there. The name is cut to 15 letters in the process list.
+  # it again when /tmp/es-restart is there. Only the program itself is stopped. The wrapper has the same name in the
+  # process list (cut to 15 letters, "emulationstatio"), so the program is told apart by the file it runs from.
+  # If the wrapper were stopped too, nothing would start EmulationStation again and the TV would stay on the terminal.
   touch /tmp/es-restart
-  pkill -x emulationstatio || true
+  program=/opt/retropie/supplementary/emulationstation/emulationstation
+  for pid in $(pgrep -x emulationstatio || true); do
+    if [ "$(readlink "/proc/$pid/exe" 2> /dev/null)" = "$program" ]; then kill "$pid"; fi
+  done
 fi
