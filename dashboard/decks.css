@@ -10,6 +10,8 @@
   overflow: hidden;
   background: rgba(0, 0, 0, 0.72);
 }
+/* The meeting page of the Raspberry Pi: the list is the page, so nothing shows through behind it */
+#decks[data-meeting="yes"] { background: var(--pure-black); }
 .decks-picker {
   position: absolute;
   left: 210px;

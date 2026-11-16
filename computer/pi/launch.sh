@@ -1,6 +1,7 @@
 #!/bin/bash
-# Teletraan on the TV of the Raspberry Pi, started from EmulationStation (Teletraan, then Dashboard or Control).
-# $1 says what to show: dashboard, which is also what it shows with nothing, or control.
+# Teletraan on the TV of the Raspberry Pi, started from EmulationStation (Teletraan, then Dashboard or Control; Meeting).
+# $1 says what to show: dashboard, which is also what it shows with nothing, control, or meeting, which is the list of
+# presentations from the Google Drive folder (docs/presentations-drive.md), and Esc leaves it.
 # It starts the web server, the sync service and the control service, shows the page full screen, and when the
 # browser is closed it stops them again and EmulationStation is back.
 # In the dashboard: X is next, Z is back, Esc leaves, Right Shift opens the control page. computer/pi/README.md has the rest.
@@ -12,6 +13,11 @@ case ${1:-dashboard} in
   control)
     page=control
     address=$base/control/
+    ;;
+  meeting)
+    # The page is the dashboard, with the list of presentations open and nothing else showing (dashboard/core/decks-run.js)
+    page=dashboard
+    address="$base/dashboard/?keys=console&meeting=1"
     ;;
   *)
     page=dashboard

@@ -3,12 +3,62 @@
 The Pi under the office TV is a game console first. Teletraan is one more thing it can show, started from
 EmulationStation and gone again when you leave it. Nothing here runs at boot, and nothing here writes to Sanity.
 
+## The menu
+
+The console starts at a short menu: Teletraan, Meeting, Arcade, Lo-Fi.
+
+- Teletraan has two entries, Dashboard and Control.
+- Meeting opens the list of presentations from the Google Drive folder.
+- Arcade is every game system (NES, N64, PSP, the real Arcade and the rest). Its entry, "Enter the Arcade", shows them.
+  The first system in there is Main Menu, and its entry, "Back to the Main Menu", brings the short menu back.
+- Lo-Fi is the radio (see Lo-Fi below).
+
+EmulationStation has no menu inside a menu, so the two lists are two files: `~/.emulationstation/es_systems.menu.cfg`
+and `es_systems.arcade.cfg`. `menu.sh` copies one of them to `~/.emulationstation/es_systems.cfg`, which EmulationStation
+reads in place of the full list of the system, and starts EmulationStation again. That takes a few seconds each way.
+Every start of the console puts the menu back (a line in `/opt/retropie/configs/all/autostart.sh`).
+
+    /opt/teletraan/computer/pi/menu.sh menu restart     # the short menu
+    /opt/teletraan/computer/pi/menu.sh arcade restart   # the game systems
+    /opt/teletraan/computer/pi/menu.sh full restart     # the way it was: the whole list of the system, no menu
+
+The full list, `/etc/emulationstation/es_systems.cfg`, is never changed by the menu, so `menu.sh full restart` (or removing
+`~/.emulationstation/es_systems.cfg` by hand and starting EmulationStation again) always brings the console back as it was.
+
 ## Start
 
-EmulationStation has a system called Teletraan, next to Ports. It has two entries:
+Teletraan has two entries:
 
 - Dashboard: the dashboard fills the TV after a few seconds.
 - Control: the control page of this copy. The PIN is 3229 or 3426, or `CONTROL_PIN` if `local.env` has one.
+
+## Meeting
+
+Meeting, then Presentations: the list of presentations from the Google Drive folder fills the TV on black. Next and Back
+choose, Enter or B starts the deck, and the deck plays like a booked talk (the clicker keys of docs/presentations.md).
+Esc ends the deck and shows the list again, and Esc in the list goes back to EmulationStation, which is on the menu.
+The list needs what the other part of the presentations needs (docs/presentations-drive.md): Run presentations on in
+Dashboard Settings, the folder link in the same place, and `GOOGLE_API_KEY` in `/opt/teletraan/local.env`. Without them
+the list says which one is missing.
+
+## Lo-Fi
+
+Lo-Fi Radio is not part of Teletraan: it lives in `/opt/retropie/configs/lofi` (`stations.tsv` is the list of channels,
+`radio.py` the player) and in `~/RetroPie/lofi`. A channel is a stream address and a looping clip, played together.
+
+CityPop is channel 8: the Japan City Pop stream of BOX Radio, which sends the track names. Its scene is a plain colour
+gradient that ffmpeg made, until there is a real loop for it. The other channels still have their first scenes.
+
+To put a loop behind a channel, download a clip from a site that says what you may do with it (Pexels, Pixabay with "AI
+generated" switched off, the Internet Archive, Wikimedia Commons), then, on the Pi:
+
+    /opt/teletraan/computer/pi/lofi-scene.sh 08-citypop ~/Downloads/clip.mp4 <the page it came from> "<its licence>" "<the artist>"
+
+It cuts the clip to 1920x1080 without sound, replaces the scene (the old one is kept once in `scenes/before/`), makes the
+picture EmulationStation shows, and adds a line to `scenes/LICENCES.tsv`. It will not run without a source and a licence.
+Not from YouTube: its terms do not allow it, and the artwork belongs to whoever made it. After a change to
+`stations.tsv`, rebuild the list with `python3 /opt/retropie/configs/lofi/gen_gamelist.py` while EmulationStation is
+stopped (EmulationStation writes the list back when it is running).
 
 ## Keys in the dashboard
 
@@ -88,8 +138,11 @@ update, reboot or save keys, because the helper they use is not installed here.
 | The last good content | `/var/lib/teletraan/data` (on the SD card, so it is there after a restart) |
 | Logs | `/run/teletraan-logs` (in memory, gone after a restart) |
 | The browser profile and cache | `/run/user/1000/teletraan-chromium` (in memory, removed on leaving) |
-| The EmulationStation system | `/etc/emulationstation/es_systems.cfg` (the file from before is beside it, `.before-teletraan`) |
-| Its entries and its look | `~/RetroPie/roms/teletraan/` (`Dashboard.sh`, `Control.sh`, `theme.xml`, `logo.svg`). The Hawktimus theme set is not changed. |
+| The full list of systems | `/etc/emulationstation/es_systems.cfg` (the file from before is beside it, `.before-teletraan`) |
+| The menu and the Arcade lists | `~/.emulationstation/es_systems.menu.cfg`, `es_systems.arcade.cfg`; the one in use is `es_systems.cfg` there |
+| The start of the console | `/opt/retropie/configs/all/autostart.sh` (the file from before is beside it, `.before-teletraan`) |
+| The entries and their look | `~/RetroPie/roms/teletraan/`, `meeting/`, `arcademenu/`, `mainmenu/` (entries, `theme.xml`, `logo.svg`). The Hawktimus theme set is not changed. |
+| Lo-Fi | `/opt/retropie/configs/lofi/` and `~/RetroPie/lofi/` (not in this repository, except `lofi-scene.sh`) |
 | These files | `computer/pi/` |
 
 ## Update
@@ -109,6 +162,9 @@ Do not copy the whole folder: it holds things that are not part of Teletraan.
 ## When something is wrong
 
 - The TV stays on EmulationStation: run `/opt/teletraan/computer/pi/launch.sh` from a keyboard on the Pi and read what it says.
+- The menu is wrong, or a system is missing: `/opt/teletraan/computer/pi/menu.sh full restart` brings the whole list back, and
+  `sudo computer/pi/install-pi.sh` makes the two short lists again from it.
+- Esc in Meeting does nothing: the page has not loaded. Hold Select and press Start, or press Ctrl + Alt + Backspace.
 - A black screen that does not leave: from the Mac, `ssh pi@retropie5`, then `sudo systemctl stop teletraan-pi.target` and
   `sudo systemctl restart getty@tty1`. That restarts EmulationStation.
 - Old content: `systemctl status teletraan-pi-sync` and `tail /run/teletraan-logs/sync.jsonl`.
@@ -122,7 +178,9 @@ Do not copy the whole folder: it holds things that are not part of Teletraan.
     sudo systemctl stop teletraan-pi.target
     sudo rm /etc/systemd/system/teletraan-pi* /etc/tmpfiles.d/teletraan-pi.conf
     sudo systemctl daemon-reload
-    rm -r ~/RetroPie/roms/teletraan
+    rm -r ~/RetroPie/roms/teletraan ~/RetroPie/roms/meeting ~/RetroPie/roms/arcademenu ~/RetroPie/roms/mainmenu
+    rm ~/.emulationstation/es_systems.cfg ~/.emulationstation/es_systems.menu.cfg ~/.emulationstation/es_systems.arcade.cfg
+    sudo cp /opt/retropie/configs/all/autostart.sh.before-teletraan /opt/retropie/configs/all/autostart.sh
     sudo cp /etc/emulationstation/es_systems.cfg.before-teletraan /etc/emulationstation/es_systems.cfg
     sudo rm -r /opt/teletraan /var/lib/teletraan /var/lib/teletraan-state
 

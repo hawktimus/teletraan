@@ -1,6 +1,7 @@
-<!-- The look of the Teletraan system in EmulationStation. install-pi.sh copies it to the folder of the system
-     (RetroPie/roms/teletraan/theme.xml), where EmulationStation looks before it looks in the theme set, so the
-     Hawktimus theme itself is not changed. It is the Ports page of that theme with the Teletraan wordmark. -->
+<!-- The look of the Teletraan, Meeting and Main Menu systems in EmulationStation. install-pi.sh copies it to the
+     folder of each system (RetroPie/roms/teletraan/theme.xml and so on) with @TITLE@ replaced by the name of the
+     system, where EmulationStation looks before it looks in the theme set, so the Hawktimus theme itself is not
+     changed. It is the Ports page of that theme with the wordmark of the system (logo.svg in the same folder). -->
 <theme>
 	<formatVersion>4</formatVersion>
 	<include>/opt/retropie/configs/all/emulationstation/themes/hawktimus/hawktimus.xml</include>
@@ -20,7 +21,7 @@
 			<zIndex>30</zIndex>
 		</image>
 		<text name="sys_title" extra="true">
-			<text>TELETRAAN</text>
+			<text>@TITLE@</text>
 		</text>
 		<text name="sys_sub" extra="true">
 			<text></text>

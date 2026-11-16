@@ -67,21 +67,34 @@ for unit in "$here"/systemd/teletraan-pi*; do
 done
 systemctl daemon-reload
 
-# The Teletraan system in EmulationStation, beside Ports, with Dashboard and Control in it. Its look is a
-# theme.xml in its own folder, which EmulationStation reads before the theme set, so the theme set is not touched.
-# It shows after EmulationStation is started again.
+# The systems of EmulationStation: Teletraan (Dashboard, Control), Meeting (Presentations), the Arcade entry and the
+# Main Menu entry. Each has a folder of entries and a theme.xml of its own, which EmulationStation reads before the
+# theme set, so the Hawktimus theme set is not touched. They show after EmulationStation is started again.
 roms=$home/RetroPie/roms
 systems=/etc/emulationstation/es_systems.cfg
 if [ -d "$roms" ]; then
-  mkdir -p "$roms/teletraan"
+  # folder title logo
+  system_folder() {
+    mkdir -p "$roms/$1"
+    sed "s/@TITLE@/$2/" "$here/es-theme.xml" > "$roms/$1/theme.xml"
+    install -m 644 "$3" "$roms/$1/logo.svg"
+    chmod 644 "$roms/$1/theme.xml"
+  }
+  system_folder teletraan TELETRAAN "$release/dashboard/assets/teletraan-wordmark.svg"
+  system_folder meeting MEETING "$here/meeting-logo.svg"
+  system_folder mainmenu "MAIN MENU" "$here/mainmenu-logo.svg"
+  mkdir -p "$roms/arcademenu"
+
   install -m 755 "$here/Dashboard.sh" "$here/Control.sh" "$roms/teletraan/"
-  install -m 644 "$here/es-theme.xml" "$roms/teletraan/theme.xml"
-  install -m 644 "$release/dashboard/assets/teletraan-wordmark.svg" "$roms/teletraan/logo.svg"
-  chown -R "$account:$group" "$roms/teletraan"
+  install -m 755 "$here/Presentations.sh" "$roms/meeting/Presentations.sh"
+  install -m 755 "$here/Arcade.sh" "$roms/arcademenu/Enter the Arcade.sh"
+  install -m 755 "$here/MainMenu.sh" "$roms/mainmenu/Back to the Main Menu.sh"
+  chown -R "$account:$group" "$roms/teletraan" "$roms/meeting" "$roms/mainmenu" "$roms/arcademenu"
   # The entry of the first version, under Ports
   rm -f "$roms/ports/Teletraan.sh"
-  say "EmulationStation entries: $roms/teletraan (Dashboard, Control)"
+  say "EmulationStation entries: $roms/teletraan, meeting, arcademenu, mainmenu"
 
+  # The full list of the system has Teletraan in it, after Ports. It is the way back and what the two short lists are made from.
   if [ -f "$systems" ] && ! grep -q '<name>teletraan</name>' "$systems"; then
     cp -p "$systems" "$systems.before-teletraan"
     python3 - "$systems" "$roms/teletraan" << 'PYTHON'
@@ -109,6 +122,25 @@ else:
 open(path, "w").write(text)
 PYTHON
     say "Added the Teletraan system to $systems (the file from before is $systems.before-teletraan)"
+  fi
+
+  # The two short lists: the menu (Teletraan, Meeting, Arcade, Lo-Fi) and the Arcade (Main Menu and every game system).
+  # Neither is switched on here: menu.sh does that, and EmulationStation shows it when it starts again.
+  if [ -f "$systems" ]; then
+    mkdir -p "$home/.emulationstation"
+    sudo -u "$account" python3 "$here/es-systems.py" --etc "$systems" --roms "$roms" --out "$home/.emulationstation"
+    say "The menu is ready. To show it: $root/computer/pi/menu.sh menu restart (computer/pi/README.md, \"The menu\")"
+  fi
+
+  # Every start of the console begins at the menu. The line is put before the one that starts EmulationStation.
+  auto=/opt/retropie/configs/all/autostart.sh
+  line="[ -x $root/computer/pi/menu.sh ] && $root/computer/pi/menu.sh menu"
+  if [ -f "$auto" ] && grep -q '^emulationstation' "$auto" && ! grep -qF "computer/pi/menu.sh" "$auto"; then
+    cp -p "$auto" "$auto.before-teletraan"
+    sed -i "/^emulationstation/i\\
+$line" "$auto"
+    chown --reference="$auto.before-teletraan" "$auto"
+    say "The console starts at the menu now (the file from before is $auto.before-teletraan)"
   fi
 fi
 
