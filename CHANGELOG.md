@@ -13,6 +13,9 @@ folder, pick it from a list, and the clicker runs it like a booked talk.
   again by itself, and a file taken out leaves the list.
 - **Pick it on the TV.** The play button of the clicker, or F5 or P on a keyboard, opens the list over the dashboard.
   Next and Back move, Enter or the black screen key starts the marked deck, Esc closes.
+- **A mouse works in the list.** The row under the mouse is marked, because the pointer is hidden on the wall, and a left
+  click starts it. A picked deck opens on its first slide with no title card, and one Esc ends it and returns to the
+  dashboard.
 - **Or on the control page.** Show has a Presentations section with a Play on the TV button for each deck. The pick
   goes to the screen of that computer only and does not pass through Sanity.
 - **PowerPoint files work as they are.** Google turns a .pptx into the same pictures as a Slides deck, so nothing has

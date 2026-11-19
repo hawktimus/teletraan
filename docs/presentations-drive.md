@@ -25,9 +25,9 @@ The Teletraan computer takes up the new link within 5 minutes. The watcher is in
 ## Play one from the TV
 
 1. Press the play button of the clicker, or F5 or P on a keyboard. The list comes up over the dashboard. It does not open while a talk or an alert has the screen.
-2. Move with the Next and Back keys of the clicker (Page Down and Page Up, or the arrows).
-3. Start the marked deck with Enter, Space, or the black screen key of the clicker (B or the full stop). On a touch screen, tap the deck. The play button of some clickers sends F5 one time and Esc the next, which is why the black screen key starts a deck as well.
-4. The title card comes up with the name of the deck. From there everything is as in a booked talk (docs/presentations.md, "On the day"): the first forward key starts it, Esc twice ends it, and the Thank you card closes it.
+2. Move with the Next and Back keys of the clicker (Page Down and Page Up, or the arrows). With a mouse, move it: the row under it is marked. The pointer itself stays hidden on the wall, so the marked row is the sign of where the mouse is.
+3. Start the marked deck with Enter, Space, or the black screen key of the clicker (B or the full stop). With a mouse, left click the row. On a touch screen, tap the deck. The play button of some clickers sends F5 one time and Esc the next, which is why the black screen key starts a deck as well.
+4. The deck fills the screen on its first slide, with no title card. The keys are the ones of a booked talk (docs/presentations.md, "On the day"): any forward key, or a left click, goes on, Left arrow, Page Up or a right click goes back, and after the last slide the Thank you card closes it. One Esc ends the deck at once and gives the screen back to the dashboard, where a booked talk needs Esc twice. If the play button of a clicker sends Esc, it ends the deck, so use the Next key of the clicker to move.
 
 Esc closes the list. It also closes by itself a minute after the last key.
 

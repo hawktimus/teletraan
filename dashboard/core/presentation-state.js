@@ -125,6 +125,16 @@ export function nextState(state, input) {
   return idleState();
 }
 
+// True for a deck picked from the Google Drive folder (deckTalk in core/decks.js). It has no slot and
+// no speaker to wait for, so it starts on its first slide at once, and one Esc ends it.
+export function isDeckTalk(talk) {
+  return typeof talk.deck === 'string' && talk.deck !== '';
+}
+
+function firstSlide(state, time) {
+  return { name: 'presenting', talk: state.talk, count: state.count, slide: 0, black: false, keyAt: time, escapedAt: null, clickedAt: null };
+}
+
 function startTitle(state, input) {
   if (input.announcing) return state;
 
@@ -144,6 +154,7 @@ function keepTitle(state, input) {
   if (input.slides === undefined) return state;
 
   const count = slidePages(input.slides).length;
+  if (count > 0 && state.notReadyAt === null && isDeckTalk(state.talk)) return firstSlide(Object.assign({}, state, { count: count }), time);
   if (count > 0) return state.notReadyAt === null && count !== state.count ? Object.assign({}, state, { count: count }) : state;
 
   const notReadyAt = state.notReadyAt === null ? time : state.notReadyAt;
@@ -173,7 +184,7 @@ export function escapeTwice(previous, time) {
 //   home, end the first slide and the last
 //   black     black screen on or off. A forward, back, home or end key also ends it, so the
 //             key always changes what is on the screen.
-//   escape    twice within two seconds ends the talk. One does nothing.
+//   escape    twice within two seconds ends the talk. One does nothing. A picked deck ends on one.
 export function pressKey(state, key, now) {
   const action = keyAction(key);
   return action === null ? state : pressAction(state, action, now.getTime());
@@ -189,15 +200,17 @@ function pressAction(state, action, time) {
 function pressOnTitle(state, action, time) {
   if (action === 'forward') {
     if (state.count === 0 || state.notReadyAt !== null) return state;
-    return { name: 'presenting', talk: state.talk, count: state.count, slide: 0, black: false, keyAt: time, escapedAt: null, clickedAt: null };
+    return firstSlide(state, time);
   }
   if (action !== 'escape') return state;
 
+  if (isDeckTalk(state.talk)) return skippedState(state.talk, 'ended');
   return escapeTwice(state.escapedAt, time) ? skippedState(state.talk, 'ended') : Object.assign({}, state, { escapedAt: time });
 }
 
 function pressOnSlide(state, action, time) {
   if (action === 'escape') {
+    if (isDeckTalk(state.talk)) return skippedState(state.talk, 'ended');
     return escapeTwice(state.escapedAt, time) ? thanksState(state.talk, time) : Object.assign({}, state, { escapedAt: time, keyAt: time });
   }
 

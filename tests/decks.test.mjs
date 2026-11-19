@@ -14,10 +14,10 @@ import * as decksRoute from '../control/routes/decks.js';
 import * as nowRoute from '../control/routes/now.js';
 import { pickSeconds } from '../control/support/decks.js';
 import {
-  canPlay, checkedText, closedPicker, deckMinutes, deckNote, deckTalk, findDeck, keepMark, listNote, markedIndex, openPicker, opensPicker,
+  canPlay, checkedText, closedPicker, deckMinutes, deckNote, deckTalk, findDeck, keepMark, listNote, markDeck, markedIndex, openPicker, opensPicker,
   pickerAction, pickerSeconds, pickerTimedOut, pressPickerKey, rowsShown, shouldPlayDeck, shownRows, tidyDeckList, tidyDeckRequest,
 } from '../dashboard/core/decks.js';
-import { canRun, dueTalk, nextState, idleState, pressKey, slideAddress, slidesFolder, slidesVersion, talkEnd } from '../dashboard/core/presentation.js';
+import { canRun, dueTalk, isDeckTalk, nextState, idleState, pressKey, slideAddress, slidesFolder, slidesVersion, talkEnd } from '../dashboard/core/presentation.js';
 import { graceMinutes } from '../dashboard/core/constants.js';
 
 const read = name => fs.readFileSync(repo + name, 'utf8');
@@ -180,15 +180,44 @@ test('a picked deck is a talk that starts now, runs like a booked one and reads 
   assert.equal(slideAddress('data/live/decks/x/', '001.jpg', slidesVersion(made)), 'data/live/decks/x/001.jpg?v=2027-03-03T19%3A00%3A00Z');
   assert.equal(slideAddress('data/live/decks/x/', '001.jpg'), 'data/live/decks/x/001.jpg');
 
-  // Title card, then the first forward key starts it on the first slide, and the card keeps which deck it is
+  // The title card comes up for as long as the pictures take to be counted, and then the deck is on its first slide
+  // without a key. The card keeps which deck it is.
   const input = { now: now, talks: [talk], settings: settings, skipped: new Set(), announcing: false, slides: { ok: true, pages: ['001.jpg', '002.jpg'] } };
   let state = nextState(idleState(), input);
   assert.equal(state.name, 'title');
   assert.equal(state.talk.deck, idA);
   state = nextState(state, input);
-  assert.equal(state.count, 2);
+  assert.deepEqual([state.name, state.count, state.slide, state.talk.deck], ['presenting', 2, 0, idA]);
+  assert.equal(isDeckTalk(talk), true);
+  assert.equal(isDeckTalk({ id: 'presentation-a1' }), false);
+
+  // Any forward key moves on, Left Arrow and Page Up go back, and one Esc ends the deck and gives the screen back
   state = pressKey(state, 'PageDown', now);
-  assert.deepEqual([state.name, state.slide], ['presenting', 0]);
+  assert.equal(state.slide, 1);
+  state = pressKey(state, 'ArrowLeft', now);
+  assert.equal(state.slide, 0);
+  state = pressKey(state, 'Escape', now);
+  assert.deepEqual([state.name, state.reason], ['skipped', 'ended']);
+  assert.equal(nextState(state, input).name, 'idle');
+
+  // A booked talk keeps its Esc twice
+  const booked = { id: 'presentation-a1', name: 'Anna', topic: 'Drive', start: now, minutes: 15, status: 'scheduled' };
+  let slot = nextState(idleState(), Object.assign({}, input, { talks: [booked] }));
+  slot = pressKey(nextState(slot, Object.assign({}, input, { talks: [booked] })), 'PageDown', now);
+  assert.equal(slot.name, 'presenting');
+  assert.equal(pressKey(slot, 'Escape', now).name, 'presenting', 'one Esc does nothing in a booked talk');
+});
+
+test('the mouse marks the row under it, a deck that is not in the list is ignored, and nothing changes when the mark is already there', () => {
+  const list = tidyDeckList(manifest());
+  const picker = openPicker(list, now);
+  const later = new Date(now.getTime() + 5000);
+
+  const moved = markDeck(picker, list, idB, later);
+  assert.deepEqual([moved.id, moved.keyAt], [idB, later.getTime()], 'the time is kept, so the list does not close under a mouse in use');
+  assert.equal(markDeck(moved, list, idB, later), moved);
+  assert.equal(markDeck(picker, list, 'nothing', later), picker);
+  assert.equal(markDeck(closedPicker(), list, idB, later).open, false);
 });
 
 test('a pick from the control page is played once, and only while it is under a minute old', () => {

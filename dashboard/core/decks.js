@@ -153,6 +153,14 @@ export function keepMark(picker, list) {
   return id === picker.id ? picker : Object.assign({}, picker, { id: id });
 }
 
+// The picker with the mark moved to the deck under the mouse. The mouse pointer is hidden on the
+// wall, so the marked row is the only sign of where it is. A picker that changes nothing gives back
+// the one it was given.
+export function markDeck(picker, list, id, now) {
+  if (!picker.open || id === picker.id || findDeck(list, id) === null) return picker;
+  return Object.assign({}, picker, { id: id, keyAt: now.getTime() });
+}
+
 // What a key does while the list is open: 'next', 'previous', 'first', 'last', 'play', 'close',
 // or null for a key the list leaves alone. The keys of the clicker keep their meaning from a
 // talk where they can: forward is down the list and back is up. The play button of some

@@ -16,7 +16,7 @@ import { takeoverRunning } from './takeover.js';
 import { escapeHtml } from './text.js';
 import {
   canPlay, checkedText, closedPicker, deckNote, deckTalk, findDeck, handledKey, keepMark, listNote, listSeconds, markedIndex,
-  openPicker, opensPicker, pickerAction, pickerTimedOut, pressPickerKey, shouldPlayDeck, shownRows, tidyDeckList, tidyDeckRequest,
+  markDeck, openPicker, opensPicker, pickerAction, pickerTimedOut, pressPickerKey, shouldPlayDeck, shownRows, tidyDeckList, tidyDeckRequest,
 } from './decks.js';
 
 const layer = document.getElementById('decks');
@@ -29,6 +29,7 @@ let picker = closedPicker();
 let list = tidyDeckList(null);
 let readAt = 0; // when the list was last asked for, in milliseconds
 let reads = 0; // how many times the list was asked for, so an answer that arrives late is dropped
+let pointerAt = ''; // where the mouse was last seen, so a row that moves under a still mouse is not a move
 let drawn = ''; // what is on the screen, so the list is drawn again only when it changes
 
 // Even asking for localStorage can throw, for example when the browser has storage switched off
@@ -49,6 +50,7 @@ export function startDecks(contentGetter) {
 
   window.addEventListener('keydown', onKey, true);
   layer.addEventListener('mousedown', onMouse);
+  layer.addEventListener('mousemove', onHover);
   window.addEventListener(answerEvent, event => takeRequest(event.detail ? event.detail.deck : null));
   frame.onSecond(look);
 }
@@ -160,6 +162,23 @@ function onMouse(event) {
   else if (!row) close();
 }
 
+// The mark follows the mouse, because the pointer itself is hidden. The browser also reports a move
+// when the rows are drawn again under a mouse that lies still, so only a new place counts.
+function onHover(event) {
+  if (!picker.open) return;
+
+  const place = event.clientX + ',' + event.clientY;
+  if (place === pointerAt) return;
+  pointerAt = place;
+
+  const row = event.target.closest('[data-deck]');
+  if (row === null) return;
+  const marked = markDeck(picker, list, row.dataset.deck, new Date());
+  if (marked === picker) return;
+  picker = marked;
+  draw(new Date());
+}
+
 // A pick made on the control page. It is played once, and only while it is new. A pick that
 // arrives while a talk has the screen, or while Run presentations is off, is dropped: the
 // control page refuses those before it sends them, so this is only for one that slips through.
@@ -199,7 +218,7 @@ function draw(now) {
     '<div class="decks-rows">' + rows.decks.map((deck, place) => rowMarkup(deck, rows.first + place === marked)).join('') + '</div>' +
     '<div class="decks-more"><span>' + escapeHtml(more) + '</span><span>' + escapeHtml(checkedText(list, now)) + '</span></div>' +
     notes.map(note => '<div class="decks-warning">' + escapeHtml(note) + '</div>').join('') +
-    '<div class="decks-foot">Next or Back: choose. Enter or B: start. Esc: close.</div>' +
+    '<div class="decks-foot">Next or Back, or the mouse: choose. Enter, B or a click: start. Esc: close.</div>' +
     '</section>';
 
   if (markup === drawn) return;
