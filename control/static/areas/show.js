@@ -1,6 +1,7 @@
 // The Show area: what is on the TV. The first section, On the TV, says what the TV plays now (view, theme, panel, whether
 // the rotation is paused and who decides), shows a live picture of it, and holds everything that changes how the TV plays:
-// the rotation rows, the themes by weekday, Pause, Next, Show on the wall, the previews and the quick hide buttons. The other
+// the rotation rows, the themes by weekday, Pause, Next, Show on the wall, the previews and the quick hide buttons. The second
+// section, Presentations, lists the decks of the Google Drive folder and plays one on the TV (tabs/decks.js). The other
 // sections are what the TV says: Photos, Announcements, Roster, Ticker and news, and Calendar. Each starts from the same answers
 // the old Status, Display and Content tabs used, so nothing about saving, publishing or the revision check changed.
 
@@ -11,6 +12,7 @@ import { mountDisplay } from '../tabs/display.js';
 import { previewCardHtml } from '../tabs/render.js';
 import { wirePreview } from '../tabs/preview.js';
 import { blocks, mountBlock } from '../tabs/content-blocks.js';
+import { mountDecks } from '../tabs/decks.js';
 
 // The held line, the card of what the TV shows, the live picture and then the Display page
 async function mountPlaying(body) {
@@ -31,6 +33,7 @@ async function mountPlaying(body) {
 
 export const sections = [
   { id: 'playing', title: 'On the TV', mount: mountPlaying },
+  { id: 'presentations', title: 'Presentations', lead: 'The decks of the Google Drive folder. Pick one and its title card comes up on the TV.', mount: mountDecks },
 ].concat(blocks.map(block => ({ id: block.id, title: block.title, lead: block.says, mount: body => mountBlock(body, block.id) })));
 
 export function mountShow(box, section) {

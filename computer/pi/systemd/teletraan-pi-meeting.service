@@ -1,0 +1,22 @@
+# Keeps the presentations of the Google Drive folder made ahead on the Pi, so that Meeting opens a deck from the disk
+# (computer/pi/meeting-sync.sh). It is up all the time, not only while Teletraan is on the TV, and it only reads. It looks
+# every 15 seconds, and works at the lowest priority so a game is not slowed by it.
+[Unit]
+Description=Keep the presentations of the Raspberry Pi up to date for Meeting
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ACCOUNT
+Environment=TELETRAAN_LOG_DIR=/run/teletraan-logs
+Environment=TELETRAAN_MEETING=/var/lib/teletraan/meeting
+Nice=19
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+ExecStart=/opt/teletraan/computer/pi/meeting-sync.sh --watch
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

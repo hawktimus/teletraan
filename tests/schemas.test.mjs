@@ -388,6 +388,7 @@ const contract = {
 // The notes and the status block store nothing, and the status document is written by the Teletraan computer.
 const studioOnlyFields = {
   'dashboardSettings.photoDriveFolder': 'the link of the Google Drive photo folder. Only computer/scripts/photos-drive-sync.sh reads it',
+  'dashboardSettings.presentationDriveFolder': 'the link of the Google Drive folder of presentations. Only computer/scripts/decks-sync.sh reads it',
   'dashboardSettings.miniStatus': 'the status block at the top of the Screen tab. It stores nothing',
   'dashboardSettings.lookNote': 'the note on the Look tab. It stores nothing',
   'view.rotationNote': 'the note on the Main panel tab of a view, which points to the Rotation list. It stores nothing',
@@ -1745,10 +1746,11 @@ function checkPresentationsTab() {
   need(problems, settings.groups.filter(group => group.title === 'Presentations').length === 0, 'Dashboard Settings has five tabs now, so Presentations is a section of the Advanced tab, not a tab');
   need(problems, (settings.fieldsets || []).filter(set => set.name === 'presentations' && set.title === 'Presentations' && set.description).length === 1, 'the Advanced tab should have a Presentations section (a fieldset called presentations) with a one line description');
 
-  // Nothing else is in the section, so deleting settingsPresentations.js removes the whole section. The last field is
-  // the hidden one that Run presentation test fills in (checkRunPresentationTest).
+  // Nothing else is in the section, so deleting settingsPresentations.js removes the whole section. The folder of
+  // presentations comes right after the switch (docs/presentations-drive.md). The last field is the hidden one that
+  // Run presentation test fills in (checkRunPresentationTest).
   const inTab = fieldsIn(settings).filter(field => field.fieldset === 'presentations').map(field => field.name);
-  const wanted = presentationNames.concat('presentationTestRequest');
+  const wanted = [presentationNames[0], 'presentationDriveFolder'].concat(presentationNames.slice(1), 'presentationTestRequest');
   need(problems, inTab.join() === wanted.join(), 'the Presentations section should hold, in this order: ' + wanted.join(', ') + ', not ' + inTab.join(', '));
   need(problems, fieldsIn(settings).filter(field => field.fieldset === 'presentations').every(field => field.group === 'advanced'), 'the Presentations section should be in the Advanced tab');
 
@@ -4412,7 +4414,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, supervisorNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationDriveFolder', 'presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, supervisorNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {

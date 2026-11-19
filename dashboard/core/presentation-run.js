@@ -9,7 +9,7 @@ import * as frame from '../frame.js';
 import { buildPage } from './panels.js';
 import { takeoverRunning } from './takeover.js';
 import { restartRotation } from './schedule.js';
-import { blocksContextMenu, chipSeconds, chipShown, holdsScreen, idleState, keyAction, mouseButton, nextState, pictureOf, preloadAhead, preloadIndexes, pressKey, pressMouse, progressOf, readSkipped, rememberEnded, restartsRotation, slideAddress, slideNumberText, slidePages, slidesFolder } from './presentation.js';
+import { blocksContextMenu, chipSeconds, chipShown, holdsScreen, idleState, keyAction, mouseButton, nextState, pictureOf, preloadAhead, preloadIndexes, pressKey, pressMouse, progressOf, readSkipped, rememberEnded, restartsRotation, slideAddress, slideNumberText, slidePages, slidesFolder, slidesVersion } from './presentation.js';
 
 const root = document.documentElement;
 const layer = document.getElementById('talk');
@@ -18,7 +18,8 @@ const manifestWaitMs = 10000; // a manifest that takes longer than this counts a
 let getContent = null;
 let storage = null;
 let skipped = new Set(); // the talks that were skipped or are over
-let testTalk = null; // the sample talk that Run presentation test started: not in the content, and its slides are in the sample folder whatever the content source is
+let extraTalk = null; // a talk that is not in the content: the sample talk of Run presentation test, or a deck picked from the Google Drive folder
+let extraIsSample = false; // true for the sample talk, whose slides are in the sample folder whatever the content source is
 let state = idleState();
 let manifest; // the manifest.json of the talk on the title card: undefined until it has been read, null when there is none
 let titles = 0; // how many title cards have come up, so an answer for an old one that arrives late is dropped
@@ -55,8 +56,22 @@ export function startPresentations(contentGetter) {
 // Starts the sample talk now (core/presentation-test.js). It goes through the same states as a
 // booked talk, so it waits for an announcement and ends the same ways.
 export function startTestTalk(talk) {
-  testTalk = talk;
+  extraTalk = talk;
+  extraIsSample = true;
   look(new Date());
+}
+
+// Starts a deck picked from the Google Drive folder now (deckTalk in core/decks.js). It goes
+// through the same states as a booked talk, with its pictures in the folder decks-sync.sh made.
+export function startDeckTalk(talk) {
+  extraTalk = talk;
+  extraIsSample = false;
+  look(new Date());
+}
+
+// True while a talk has the screen, from its title card to its thanks card
+export function talkOnScreen() {
+  return holdsScreen(state);
 }
 
 // Once a second, and when a manifest arrives
@@ -66,7 +81,7 @@ function look(now) {
 
   step(nextState(state, {
     now: now,
-    talks: testTalk ? content.presentations.concat([testTalk]) : content.presentations,
+    talks: extraTalk ? content.presentations.concat([extraTalk]) : content.presentations,
     settings: content.settings,
     skipped: skipped,
     announcing: takeoverRunning(),
@@ -146,7 +161,7 @@ function show(before, after) {
 // so that a deck that was fetched a minute ago is the one that shows
 function takeScreen(first) {
   const content = getContent();
-  const sample = Boolean(content.status && content.status.source === 'sample') || (testTalk !== null && first.talk.id === testTalk.id);
+  const sample = Boolean(content.status && content.status.source === 'sample') || (extraIsSample && extraTalk !== null && first.talk.id === extraTalk.id);
   folder = slidesFolder(sample, first.talk);
   manifest = undefined;
   images.clear();
@@ -271,7 +286,7 @@ function imageFor(place) {
     const image = new Image();
     image.className = 'slide';
     image.alt = '';
-    image.src = slideAddress(folder, slidePages(manifest)[place]);
+    image.src = slideAddress(folder, slidePages(manifest)[place], slidesVersion(manifest));
     images.set(place, image);
   }
   return images.get(place);

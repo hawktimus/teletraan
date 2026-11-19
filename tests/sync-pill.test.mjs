@@ -62,8 +62,21 @@ await check('a source more than 10 minutes without a good read makes the pill am
   const state = stateOf(statusFile({ sanity: 11 }));
   assert.equal(state.state, 'late');
   assert.equal(state.since.getTime(), now.getTime() - 11 * 60000);
-  assert.equal(pillText(state), 'Offline since ' + formatTimeOfDay(state.since));
+  assert.equal(pillText(state, now), 'Offline since ' + formatTimeOfDay(state.since));
   assert.equal(stateOf(statusFile({ sanity: 10 })).state, 'ok', 'exactly 10 minutes is not more than 10');
+});
+
+await check('the competition feed is written every 45 minutes or so when nothing changes, so an hour old is not late and two hours is', () => {
+  assert.equal(syncSourceMinutes.competition, 35);
+  assert.equal(stateOf(statusFile({ competition: 60 })).state, 'ok');
+  assert.equal(stateOf(statusFile({ competition: 71 })).state, 'late');
+});
+
+await check('a time from an earlier day carries its date, one from today does not', () => {
+  const today = new Date(2026, 9, 30, 15, 12);
+  assert.equal(pillText({ state: 'late', since: new Date(2026, 9, 30, 8, 5) }, today), 'Offline since 8:05 AM');
+  assert.equal(pillText({ state: 'late', since: new Date(2026, 9, 31, 19, 40) }, new Date(2026, 10, 16, 0, 5)), 'Offline since Oct 31, 7:40 PM');
+  assert.equal(pillText({ state: 'late', since: new Date(2026, 9, 29, 23, 59) }, today), 'Offline since Oct 29, 11:59 PM');
 });
 
 await check('the time is the oldest late source, so it names when the trouble began', () => {
@@ -73,8 +86,8 @@ await check('the time is the oldest late source, so it names when the trouble be
 });
 
 await check('it is red only when every source in use is more than 30 minutes without a good read', () => {
-  assert.equal(stateOf(statusFile({ sanity: 31, weather: 50, images: 31, monday: 200, competition: 31, calendars: 50 })).state, 'down');
-  assert.equal(stateOf(statusFile({ sanity: 31, weather: 50, images: 31, monday: 200, competition: 31, calendars: 20 })).state, 'late');
+  assert.equal(stateOf(statusFile({ sanity: 31, weather: 50, images: 31, monday: 200, competition: 110, calendars: 50 })).state, 'down');
+  assert.equal(stateOf(statusFile({ sanity: 31, weather: 50, images: 31, monday: 200, competition: 110, calendars: 20 })).state, 'late');
   assert.equal(stateOf(statusFile({ sanity: 45, weather: 50 })).state, 'late', 'images is fresh');
 });
 
@@ -134,7 +147,7 @@ await check('the network member is read when it is there and null when it is not
 });
 
 await check('the words are Offline and a time, and nothing else: no host, no reason, no error', () => {
-  const text = pillText({ state: 'down', since: new Date(2026, 9, 30, 15, 12) });
+  const text = pillText({ state: 'down', since: new Date(2026, 9, 30, 15, 12) }, new Date(2026, 9, 30, 16, 0));
   assert.equal(text, 'Offline since 3:12 PM');
   assert.equal(pillText({ state: 'late', since: null }), 'Offline');
   assert.ok(!/error|failed|network|sanity|http|\./i.test(text));

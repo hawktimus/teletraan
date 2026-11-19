@@ -72,14 +72,25 @@ function readParts(doc, getContent, getTeam, now = new Date()) {
   };
 }
 
-// The report is sent and forgotten. A control service that is not there, or a page that is not
-// on the Teletraan computer, is not a problem of the screen.
+// The name of the event the page hears when the control service answers a report. The answer
+// may carry something for the screen, such as a deck picked on the control page (core/decks-run.js).
+export const answerEvent = 'teletraan-report-answer';
+
+function tellAnswer(answer) {
+  if (answer && typeof answer === 'object') window.dispatchEvent(new CustomEvent(answerEvent, { detail: answer }));
+}
+
+// The report is sent, and the answer is passed on to whoever listens. A control service that is
+// not there, or a page that is not on the Teletraan computer, is not a problem of the screen.
 export function startNowReport(getContent, getTeam, hostname = window.location.hostname) {
   if (!isLocalHost(hostname)) return;
 
   function send() {
     const body = JSON.stringify(makeReport(readParts(document, getContent, getTeam)));
-    fetch(reportAddress, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, cache: 'no-store' }).catch(() => {});
+    fetch(reportAddress, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, cache: 'no-store' })
+      .then(response => (response.ok ? response.json() : null))
+      .then(tellAnswer)
+      .catch(() => {});
   }
 
   send();

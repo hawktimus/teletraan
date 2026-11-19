@@ -1,8 +1,11 @@
 // The presentation fields of Dashboard Settings, in the Presentations tab:
-// whether the screen takes over for booked talks. One field for editors, and
-// three hidden ones:
+// whether the screen takes over for talks, and the Google Drive folder of
+// presentations. Two fields for editors, and three hidden ones:
 //
 //   presentationsEnabled     the switch, on to start with
+//   presentationDriveFolder  the Google Drive folder whose presentations can be picked on the TV and
+//                            on the control page. Only computer/scripts/decks-sync.sh reads it
+//                            (docs/presentations-drive.md)
 //   noShowMinutes            hidden. The title card always waits 5 minutes (dashboard/core/constants.js)
 //   graceMinutes             hidden. A talk may always run 5 minutes past its slot (dashboard/core/constants.js)
 //   presentationTestRequest  filled in by the Run presentation test button (actions.js), never by editors
@@ -21,6 +24,7 @@
 // the published settings.
 
 import { defineField } from 'sanity';
+import { checkDriveFolder } from './driveFolder.js';
 
 export function presentationsFields() {
   return [
@@ -31,6 +35,15 @@ export function presentationsFields() {
       group: 'presentations',
       description: 'Turn this off and the screen never takes over for a talk. The talks stay in Studio.',
       initialValue: true,
+    }),
+
+    defineField({
+      name: 'presentationDriveFolder',
+      title: 'Google Drive folder of presentations',
+      type: 'string',
+      group: 'presentations',
+      description: 'The link of a Google Drive folder shared with Anyone with the link as Viewer. Its Google Slides and PowerPoint files can be picked on the TV.',
+      validation: Rule => Rule.custom(checkDriveFolder),
     }),
 
     defineField({

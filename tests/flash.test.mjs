@@ -77,10 +77,15 @@ test('the page reloads in four places only, each writes its reason first, and no
 });
 
 test('no service worker, no cache API and no navigation in the dashboard code', () => {
+  // One file may navigate: the console keys of the Raspberry Pi copy open the control page when its Select key is
+  // pressed. shell.js loads that file only when the address says ?keys=console (tests/console-keys.test.mjs), so
+  // the screen on the wall never runs it.
+  const mayNavigate = ['dashboard/core/console-keys-run.js'];
   listFiles(path.join(repo, 'dashboard')).forEach(file => {
     const text = fs.readFileSync(file, 'utf8');
-    assert.ok(!/serviceWorker|caches\.open/.test(text), path.relative(repo, file));
-    assert.ok(!/location\.(href|assign|replace)\s*[=(]/.test(text), path.relative(repo, file) + ' navigates');
+    const name = path.relative(repo, file);
+    assert.ok(!/serviceWorker|caches\.open/.test(text), name);
+    assert.equal(/location\.(href|assign|replace)\s*[=(]/.test(text), mayNavigate.includes(name), name + (mayNavigate.includes(name) ? ' should be the one file that navigates' : ' navigates'));
   });
 });
 

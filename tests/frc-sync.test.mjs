@@ -683,6 +683,22 @@ test('two teams are read one after the other, a number with spaces is trimmed, a
   assert.deepEqual(place.document().teams.map(team => [team.team, team.number, team.epa]), [['prime', 3229, 55.12], ['nova', 3426, 40]]);
 });
 
+test('a rating Statbotics sends as the number itself is read, the same as one sent as mean and sd', () => {
+  const place = setup('rating-number', { tools: true });
+  world(place, { teams: [{ code: 'prime', number: '3229' }, { code: 'nova', number: '3426' }] });
+  place.tba('/team/frc3426/events/2027', [
+    { key: eventKey, name: '[Sample Regional]', city: '[City]', start_date: '2027-03-12', end_date: '2027-03-14', event_type: 1 },
+  ]);
+  place.tba('/team/frc3426/event/' + eventKey + '/matches', [matchOf(1, true)]);
+  place.tba('/team/frc3426/awards/2027', []);
+  place.statbotics('/team_year/3229/2027', { team: '3229', year: 2027, epa: { total_points: 57.92, stats: { start: 50 } } });
+  place.statbotics('/team_year/3426/2027', { team: '3426', epa: { total_points: 40 } });
+  const result = place.run();
+
+  assert.equal(result.status, 0, result.errors);
+  assert.deepEqual(place.document().teams.map(team => [team.team, team.epa]), [['prime', 57.92], ['nova', 40]]);
+});
+
 test('an event that has a short name keeps it in the status, and one that has none has no field for it', () => {
   const place = setup('short-name', { tools: true });
   world(place);
@@ -1537,7 +1553,7 @@ test('every address and every place in an answer is in the block at the top, and
     assert.ok(block.includes("'" + address + "'"), address);
   });
 
-  ['.start_date', '.end_date', '.short_name', '.comp_level', '.team_keys', '.sort_orders', '.point_total', '.picks', '.nickname', '.total_points.mean', '.red_win_prob', '.winning_alliance', '.matches_played', '.event_key'].forEach(path => {
+  ['.start_date', '.end_date', '.short_name', '.comp_level', '.team_keys', '.sort_orders', '.point_total', '.picks', '.nickname', '.total_points', '.red_win_prob', '.winning_alliance', '.matches_played', '.event_key'].forEach(path => {
     assert.ok(block.includes(path), 'the block has ' + path);
     assert.ok(!rest.includes(path), 'the rest of the script does not have ' + path);
   });

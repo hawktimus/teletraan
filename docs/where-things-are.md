@@ -199,6 +199,14 @@ editors can sign in from anywhere.
                               which talks were skipped, and presentation-run.js puts that on the screen
                               and reads the keys and the mouse (the cards and the slides are drawn by
                               panels/talk, docs/presentations.md),
+                              decks.js decides what the list of presentations from the Google Drive folder
+                              shows and what each key does in it, and decks-run.js puts the list on the
+                              screen and hands the picked deck to presentation-run.js
+                              (docs/presentations-drive.md),
+                              console-keys.js and console-keys-run.js are the keys of the copy on the
+                              Raspberry Pi (next, back, leave, control page), off unless the address says
+                              ?keys=console, and step-back.js finds the step the large panel goes back to
+                              (computer/pi/README.md),
                               presentation-test.js decides when the Run presentation test button starts
                               the sample talk, and presentation-test-run.js starts it
                               (docs/hidden-transitions.md),
@@ -465,7 +473,9 @@ editors can sign in from anywhere.
                               (docs/rebuilding-the-computer.md, step 13).
                               scripts/match13-sync.sh reads the Match13 forecasts and install-match13.sh turns on its
                               timer (docs/match13.md). scripts/photos-drive-sync.sh copies the pictures of a Google Drive folder and
-                              install-photos-drive.sh turns on its timer (docs/photos-drive.md). scripts/mirror.py makes the picture of
+                              install-photos-drive.sh turns on its timer (docs/photos-drive.md). scripts/decks-sync.sh lists the
+                              presentations of a Google Drive folder and makes their pictures, and install-decks.sh starts its
+                              service (docs/presentations-drive.md). scripts/mirror.py makes the picture of
                               the TV that the control page shows, and runs only while someone looks (teletraan-mirror.service)
     tools/
       serve.py                the server above
@@ -583,6 +593,8 @@ editors can sign in from anywhere.
       templates.test.mjs      checks that the CSV templates match the schemas, and the CSV importer
       check-connection.test.mjs  checks for computer/scripts/check-connection.sh, with fake tools
       slides-sync.test.mjs  checks for computer/scripts/slides-sync.sh and install-slides.sh, with fake tools
+      decks-sync.test.mjs   checks for computer/scripts/decks-sync.sh and install-decks.sh, with fake tools
+      decks.test.mjs        checks for the list of presentations on the TV and the control routes behind Play on the TV
       install-calendars.test.mjs  checks for computer/scripts/install-calendars.sh: that it stops before it changes
                               anything, and that it installs the calendar units only
       check-calendars.test.mjs  checks for computer/scripts/check-calendars.sh, with a fake curl

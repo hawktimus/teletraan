@@ -1,0 +1,11 @@
+[Unit]
+Description=Web server for Teletraan I on the Raspberry Pi
+PartOf=teletraan-pi.target
+
+[Service]
+User=ACCOUNT
+RuntimeDirectory=teletraan-web
+ExecStart=/usr/sbin/nginx -e stderr -c /opt/teletraan/computer/pi/nginx.conf -g "daemon off;"
+Restart=always
+RestartSec=3
+NoNewPrivileges=yes

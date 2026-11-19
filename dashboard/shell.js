@@ -44,6 +44,7 @@ import { motionOf } from './core/motion.js';
 import { useScreenFit } from './core/screen-fit.js';
 import { savedStyle, savedTheme, startContent, withDefaults } from './core/content.js';
 import { askForSample } from './core/source.js';
+import { consoleKeysOn } from './core/console-keys.js';
 import { makeSilverGradients } from './core/plate.js';
 import { defineHawk } from './core/logo.js';
 import { holdLooksFor, showThemeNow, startThemes } from './core/theme-apply.js';
@@ -173,6 +174,12 @@ async function run() {
       // A booked talk takes the whole screen when its time comes. After the takeovers, so that an announcement
       // that comes due on the same second plays first, and the title card waits for it
       startOptional('./core/presentation-run.js', module => module.startPresentations(getContent));
+
+      // The list of presentations from the Google Drive folder. After the talk screen, which plays the deck that is picked
+      startOptional('./core/decks-run.js', module => module.startDecks(getContent));
+
+      // The keys of the copy on the Raspberry Pi, only when its launcher asks for them (core/console-keys.js)
+      if (consoleKeysOn(window.location.search)) startOptional('./core/console-keys-run.js', module => module.startConsoleKeys());
 
       // The Run presentation test button in the Studio. After the talk screen, which it starts the sample talk on
       startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent));

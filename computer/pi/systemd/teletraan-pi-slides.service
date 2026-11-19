@@ -1,0 +1,16 @@
+# Only reads. The units of the Teletraan computer also write a status to Sanity after each run (status-write.sh);
+# this copy does not, so two computers never write the same documents.
+[Unit]
+Description=Download the slides of the next talks for Teletraan I on the Raspberry Pi
+After=network-online.target
+Wants=network-online.target
+PartOf=teletraan-pi.target
+
+[Service]
+Type=oneshot
+User=ACCOUNT
+Environment=TELETRAAN_DATA=/var/lib/teletraan/data
+Environment=TELETRAAN_LOG_DIR=/run/teletraan-logs
+NoNewPrivileges=yes
+ExecStart=/opt/teletraan/computer/scripts/slides-sync.sh
+TimeoutStartSec=15min

@@ -1,0 +1,4 @@
+# Everything the Raspberry Pi copy runs while the dashboard is on the TV. computer/pi/launch.sh starts it and stops it.
+[Unit]
+Description=Teletraan I on the Raspberry Pi
+Wants=teletraan-pi-web.service teletraan-pi-sync.service teletraan-pi-control.service teletraan-pi-calendars.timer teletraan-pi-photos.timer teletraan-pi-slides.timer teletraan-pi-frc.timer

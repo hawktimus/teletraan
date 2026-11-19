@@ -68,7 +68,8 @@ def district_ranking_team: .team_key;
 def district_rank: .rank;
 def district_points_total: .point_total;
 def team_number: .team_number;
-def statbotics_epa: .epa.total_points.mean;
+# Statbotics sent {mean, sd} here until November 2026, and now sends the number itself. Both are read.
+def statbotics_epa: .epa.total_points | if type == "object" then .mean else . end;
 def statbotics_epa_start: .epa.stats.start;
 def statbotics_wins: .record.total.wins;
 def statbotics_losses: .record.total.losses;

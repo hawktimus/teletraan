@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Meeting</title>
+  <!-- Presentations on the Raspberry Pi (computer/pi/README.md, "Meeting"). It is not the list of the dashboard: it has its own
+       list, its own pictures (meeting-sync.sh) and its own keys, and the Teletraan computer at school does not use it. -->
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="/dashboard/fonts/fonts.css">
+  <link rel="stylesheet" href="/dashboard/themes/hawktimus.css">
+  <link rel="stylesheet" href="/dashboard/tokens.css">
+  <link rel="stylesheet" href="meeting.css">
+</head>
+<body>
+  <section id="list" class="view">
+    <header>
+      <h1>Meeting</h1>
+      <p id="count"></p>
+    </header>
+    <ol id="decks"></ol>
+    <p id="note" role="status"></p>
+    <footer><p>Up and Down choose &middot; Enter opens &middot; Esc goes back</p></footer>
+  </section>
+  <section id="show" class="view" hidden>
+    <div id="frames"></div>
+    <p id="counter" role="status"></p>
+  </section>
+  <script src="meeting.js"></script>
+</body>
+</html>

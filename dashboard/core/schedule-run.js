@@ -7,7 +7,8 @@ import { buildPage, canShow, moduleOf, regionOf, topicOf } from './panels.js';
 import { ownSeconds } from './photos.js';
 import { changePage, clearRegion } from './areas.js';
 import { hasRegion, layoutNow } from './layout.js';
-import { changeCount, clockHeld, holdLeft, listResets, lookHooks, notePageNumber, onScreen, restarts, moveOn, rotationPaused, rowSkips, shortestHold, shortestStay } from './schedule-hold.js';
+import { changeCount, clockHeld, holdLeft, listResets, lookHooks, notePageNumber, onScreen, restarts, moveOn, rotationPaused, rowSkips, shortestHold, shortestStay, stepBacks } from './schedule-hold.js';
+import { placeBefore } from './step-back.js';
 
 // Waits, but the clock stands still while paused. A time of zero or less (a
 // mistake in the settings) still waits a second, so a loop can never spin
@@ -123,6 +124,7 @@ function runRotation(region, getPlaylist, getContent) {
   let position = -1;
   let seenRestarts = restarts;
   let seenSkips = rowSkips;
+  let seenBacks = stepBacks;
   let somePanelFailed = false; // set by pickPage when a panel could not be drawn
   let pageShown = false; // true once a page is on screen in this region
 
@@ -218,6 +220,22 @@ function runRotation(region, getPlaylist, getContent) {
     while (position + 1 < playlist.length && playlist[position + 1].row === current.row) position += 1;
   }
 
+  // A step back has been asked for (backStep in schedule-hold.js): the position goes to where the step before the one
+  // on screen is the next one chosen
+  function followStepBacks() {
+    if (seenBacks === stepBacks) return;
+
+    seenBacks = stepBacks;
+    if (region !== 'grid1' || position < 0) return;
+
+    const standing = position;
+    position = placeBefore(standing, getPlaylist().length, place => {
+      position = place;
+      const found = findNext();
+      return found ? found.index : -1;
+    });
+  }
+
   // The same page drawn again from the newest content, for page-refresh.js
   function rebuildFor(step) {
     const make = () => buildPage(step.panel, getContent(), step.page, step);
@@ -271,6 +289,7 @@ function runRotation(region, getPlaylist, getContent) {
         followRestarts();
         followListResets();
         followRowSkips();
+        followStepBacks();
         const since = changeCount(region);
         const next = pickPage();
 

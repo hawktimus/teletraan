@@ -1,0 +1,86 @@
+/* The list of presentations from the Google Drive folder (#decks in index.html, core/decks-run.js).
+   It is empty and hidden until a key opens it. The dashboard keeps running behind it and shows
+   dimly through the edge. The colours and the fonts are the ones the talk cards use. */
+#decks {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.72);
+}
+.decks-picker {
+  position: absolute;
+  left: 210px;
+  top: 60px;
+  width: 1500px;
+  height: 960px;
+  box-sizing: border-box;
+  padding: 36px 60px 28px;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  border-top: 6px solid var(--yellow);
+  color: var(--white);
+}
+.decks-title {
+  flex: none;
+  color: var(--yellow);
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.decks-rows { flex: none; }
+.decks-row {
+  box-sizing: border-box;
+  height: 78px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  border-left: 10px solid transparent;
+  font: 600 var(--size-body)/78px var(--font-display);
+}
+.decks-row[data-marked="yes"] {
+  border-left-color: var(--yellow);
+  background: rgba(255, 255, 255, 0.14);
+}
+.decks-name,
+.decks-note {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.decks-name { flex: 1 1 0; min-width: 0; }
+.decks-note {
+  flex: 0 0 auto;
+  max-width: 60%;
+  color: var(--lilac);
+  font: 500 var(--size-label)/78px var(--font-text);
+}
+.decks-row[data-state="failed"] .decks-name,
+.decks-row[data-state="preparing"] .decks-name { opacity: 0.6; }
+.decks-more {
+  flex: none;
+  height: 44px;
+  padding: 0 24px 0 34px;
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  color: var(--lilac);
+  font: 500 var(--size-label)/44px var(--font-text);
+}
+.decks-warning {
+  flex: none;
+  padding: 6px 34px;
+  white-space: normal;
+  color: var(--yellow);
+  font: 500 var(--size-label)/40px var(--font-text);
+}
+.decks-foot {
+  margin-top: auto;
+  padding-left: 34px;
+  color: var(--white);
+  font: 500 var(--size-label)/44px var(--font-text);
+  opacity: 0.8;
+}

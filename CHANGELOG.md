@@ -3,6 +3,47 @@
 Teletraan I is named by a build version (the `VERSION` file), not by numbered rounds. The newest build is first. Each
 line says what changed for the people who use the screen, not how it was built.
 
+## 1.2.0 — presentations from a Google Drive folder
+
+A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
+folder, pick it from a list, and the clicker runs it like a booked talk.
+
+- **One folder, read all the time.** The Teletraan computer looks at the folder every 20 seconds. A file dropped in it
+  is in the list within that time and can be played as soon as its pictures are made. A deck that is edited is made
+  again by itself, and a file taken out leaves the list.
+- **Pick it on the TV.** The play button of the clicker, or F5 or P on a keyboard, opens the list over the dashboard.
+  Next and Back move, Enter or the black screen key starts the marked deck, Esc closes.
+- **A mouse works in the list.** The row under the mouse is marked, because the pointer is hidden on the wall, and a left
+  click starts it. A picked deck opens on its first slide with no title card, and one Esc ends it and returns to the
+  dashboard.
+- **Or on the control page.** Show has a Presentations section with a Play on the TV button for each deck. The pick
+  goes to the screen of that computer only and does not pass through Sanity.
+- **PowerPoint files work as they are.** Google turns a .pptx into the same pictures as a Slides deck, so nothing has
+  to be converted first. Animations and videos do not play: each slide is one still picture.
+- **Dashboard Settings has one new field**, Google Drive folder of presentations, in the Presentations section. Run
+  presentations must be on. The key is the one the Drive photos use.
+- **The Raspberry Pi 5 can run the dashboard** as its own system in RetroPie, with Dashboard and Control in it, without
+  Docker and without the jobs that write to Sanity. On the Pi only, X is next, Z is back, Esc leaves and Right Shift
+  opens the control page (computer/pi/README.md).
+- **The Offline pill says which day.** "Offline since 7:40 PM" now reads "Offline since Oct 31, 7:40 PM" when that time
+  is from an earlier day, so an old failure does not look like one from tonight. The competition feed is written to
+  Sanity about once an hour when nothing changes, and the pill no longer calls that late after 20 minutes: it waits 70.
+- **The Raspberry Pi 5 starts at a Hawktimus home screen** with five tiles: Dashboard, Meeting, Game Drop (the live FIRST
+  Kickoff stream), Lo-Fi and Arcade. Esc in any of them comes back to it. Arcade and Lo-Fi open EmulationStation with
+  their own list, and its Main Menu entry returns to the home screen. If the home screen cannot start, the console
+  falls back to the EmulationStation menu described next.
+- **The Raspberry Pi 5 starts at a menu**: Teletraan, Meeting, Arcade, Lo-Fi. Meeting opens the list of presentations on
+  black, and Esc in the list goes back to the menu. Arcade holds every game system, with Main Menu first to come back.
+  The full list of the console is not changed (`menu.sh full restart` brings it back).
+- **Meeting on the Raspberry Pi is its own thing.** It lists the Google Drive folder with the deck added last at the top
+  (Google Slides, .pptx and .ppt only). Choose one and any key goes to the next slide, Left goes back, Esc leaves for the
+  Dashboard. The pictures are made ahead on the Pi all the time, so a deck opens at once. The Teletraan computer at school
+  plays presentations as before.
+- **Lo-Fi Radio has a CityPop channel** (the Japan City Pop stream). A channel can take a looping clip from a site with a
+  clear licence, played under the stream (`computer/pi/lofi-scene.sh`, which records the source and the licence).
+
+docs/presentations-drive.md has the set-up, the keys and what each message means.
+
 ## 1.1.0 — the screen keeps itself up
 
 The screen had been going half drawn two days in a row: black at the top, a solid block over the lower half, pieces of

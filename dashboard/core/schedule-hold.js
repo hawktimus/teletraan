@@ -77,6 +77,16 @@ export function skipRow() {
   moveOn(['grid1']);
 }
 
+// Counts the calls to backStep(). The loop of the large panel that sees a new number goes back one step.
+export let stepBacks = 0;
+
+// The large panel leaves the step on screen and plays the one before it, within a quarter of a second. Only the
+// console keys ask for it (core/console-keys-run.js).
+export function backStep() {
+  stepBacks += 1;
+  moveOn(['grid1']);
+}
+
 // Counts, for each region, how many times it has been asked to move on at once
 // (moveOn). Like pagesRefreshed, but for one region only.
 const moves = { grid1: 0, grid2: 0, ticker: 0 };
