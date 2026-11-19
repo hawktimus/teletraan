@@ -42,7 +42,7 @@ export function presentationsFields() {
       title: 'Google Drive folder of presentations',
       type: 'string',
       group: 'presentations',
-      description: 'The link of a Google Drive folder shared with Anyone with the link as Viewer. Its Google Slides and PowerPoint files can be picked on the TV.',
+      description: 'The link of the Google Drive folder. A public one is Anyone with the link, Viewer. A private one uses the decks script (docs/presentations-drive.md).',
       validation: Rule => Rule.custom(checkDriveFolder),
     }),
 

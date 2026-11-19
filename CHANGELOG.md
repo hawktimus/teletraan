@@ -18,6 +18,9 @@ folder, pick it from a list, and the clicker runs it like a booked talk.
   dashboard.
 - **Or on the control page.** Show has a Presentations section with a Play on the TV button for each deck. The pick
   goes to the screen of that computer only and does not pass through Sanity.
+- **A folder that is not public works too.** When the folder cannot be shared with Anyone with the link, a small Google
+  Apps Script that runs as someone who can open the folder hands the decks to the Teletraan computer. It sees only that
+  folder and needs a secret word. Only Google Slides decks come this way. The steps are in docs/presentations-drive.md.
 - **PowerPoint files work as they are.** Google turns a .pptx into the same pictures as a Slides deck, so nothing has
   to be converted first. Animations and videos do not play: each slide is one still picture.
 - **Dashboard Settings has one new field**, Google Drive folder of presentations, in the Presentations section. Run

@@ -31,7 +31,7 @@ export const openKeys = ['F5', 'p'];
 // Google's ids, which are also the names of the folders of pictures
 const idPattern = /^[A-Za-z0-9_-]{10,100}$/;
 const deckStates = ['ready', 'preparing', 'failed'];
-const listStates = ['ok', 'no-folder', 'no-key', 'bad-key', 'api-off', 'not-shared', 'offline'];
+const listStates = ['ok', 'no-folder', 'no-key', 'bad-key', 'api-off', 'not-shared', 'bad-script', 'bad-secret', 'wrong-folder', 'offline'];
 
 function tidyDeck(raw) {
   if (!isRecord(raw) || typeof raw.id !== 'string' || !idPattern.test(raw.id)) return null;
@@ -95,6 +95,9 @@ export function listNote(list) {
     'bad-key': 'Google did not accept the key of the Teletraan computer (GOOGLE_API_KEY).',
     'api-off': 'The Google Drive API is not turned on for the key of the Teletraan computer.',
     'not-shared': 'Google would not list the folder. Share it with Anyone with the link as Viewer.',
+    'bad-script': 'The decks script of the Teletraan computer cannot be reached. Its address (DECKS_SCRIPT_URL) is wrong, or the script is not open to Anyone.',
+    'bad-secret': 'The decks script did not accept the secret of the Teletraan computer (DECKS_SCRIPT_SECRET).',
+    'wrong-folder': 'The decks script is set up for another Drive folder than the one in Dashboard Settings.',
     offline: 'Google Drive cannot be reached right now. The decks from before can still be played.',
   };
   return Object.prototype.hasOwnProperty.call(notes, list.state) ? notes[list.state] : '';
