@@ -117,8 +117,7 @@ fi
 
 # ----- the display -----
 
-display_name=$(setting KIOSK_DISPLAY)
-display_name=${display_name:-:1}
+display_name=$(kiosk_display)
 if command -v xrandr > /dev/null 2>&1; then
   # display.sh knows which size is wanted and how to read xrandr, and it is what kiosk.sh uses to set the mode
   . "$computer/scripts/display.sh"

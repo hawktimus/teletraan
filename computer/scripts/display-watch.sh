@@ -51,8 +51,7 @@ note() {
 
 mkdir -p "$state_dir" 2> /dev/null || true
 
-display_name=$(setting KIOSK_DISPLAY)
-display_name=${display_name:-:1}
+display_name=$(kiosk_display)
 export DISPLAY=${DISPLAY:-$display_name}
 
 if ! command -v xrandr > /dev/null 2>&1; then
@@ -88,11 +87,12 @@ write_state() {
 }
 
 kept() {
-  sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" "$state_file" 2> /dev/null | head -n 1
+  # No state file yet (the first look) is not an error: sed would exit 2 and set -e would end the script
+  sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" "$state_file" 2> /dev/null | head -n 1 || true
 }
 kept_number() {
   local value
-  value=$(sed -n "s/.*\"$1\":\([0-9]*\).*/\1/p" "$state_file" 2> /dev/null | head -n 1)
+  value=$(sed -n "s/.*\"$1\":\([0-9]*\).*/\1/p" "$state_file" 2> /dev/null | head -n 1 || true)
   case $value in ''|*[!0-9]*) echo 0 ;; *) echo "$value" ;; esac
 }
 

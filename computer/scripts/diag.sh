@@ -112,8 +112,7 @@ show_file() {
   show_file "$state_dir/reboot-ledger.json" 8000
 
   section "the display now (xrandr, and the state display-watch.sh keeps)"
-  display_name=$(setting KIOSK_DISPLAY)
-  display_name=${display_name:-:1}
+  display_name=$(kiosk_display)
   run "DISPLAY='$display_name' xrandr --verbose" 8 160
   show_file "$state_dir/display.json" 2000
   printf '\nthe last display events:\n'

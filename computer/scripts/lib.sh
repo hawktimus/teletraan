@@ -45,6 +45,19 @@ sanity_curl() {
   fi
 }
 
+# The X screen the kiosk draws on: KIOSK_DISPLAY in local.env, else the screen that is running now, else :1. A
+# computer whose kiosk was started on :0 has no KIOSK_DISPLAY line, and looking at :1 there finds no screen at all.
+kiosk_display() {
+  local name socket
+  name=$(setting KIOSK_DISPLAY)
+  if [ -z "$name" ]; then
+    for socket in "${TELETRAAN_X_DIR:-/tmp/.X11-unix}"/X*; do
+      [ -S "$socket" ] && { name=":${socket##*/X}"; break; }
+    done
+  fi
+  echo "${name:-:1}"
+}
+
 # One JSON line in /var/log/teletraan/<service>.jsonl, the same line jsonlog.mjs writes: ts, service, source, event,
 # detail. TELETRAAN_LOG_DIR moves the folder for tests. A log that cannot be written never stops the script.
 # Usage: log_json service source event detail

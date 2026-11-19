@@ -157,8 +157,7 @@ case $word in
     # What the connected screen is: the output, its mode and rate, every mode it lists and the line display.sh logged when
     # the screen started. xrandr only reads, and it needs the screen of the kiosk (KIOSK_DISPLAY in local.env, :1 to start
     # with). The word answers ok even when xrandr cannot be reached, with a line that says so.
-    display_name=$(setting KIOSK_DISPLAY)
-    display_name=${display_name:-:1}
+    display_name=$(kiosk_display)
     echo "resolutionSetting: $(setting KIOSK_RESOLUTION | tr -c 'A-Za-z0-9x' '?' | cut -c 1-20)"
     if command -v xrandr > /dev/null 2>&1 && xrandr_text=$(DISPLAY="$display_name" xrandr --query 2> /dev/null) && [ -n "$xrandr_text" ]; then
       printf '%s\n' "$xrandr_text" | awk '
