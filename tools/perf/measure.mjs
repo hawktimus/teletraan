@@ -1,4 +1,4 @@
-// Measures the dashboard in a real browser with the CPU slowed down, to stand in for the 2011 Mini
+// Measures the dashboard in a real browser with the CPU slowed down, to stand in for the 2014 Mini
 // (docs/performance.md). Playwright is a development dependency and is never on the Mini, so this runs on a laptop:
 //
 //   NODE_PATH=/path/to/node_modules node tools/perf/measure.mjs rotation --slow 4 --rows 30

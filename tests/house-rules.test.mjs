@@ -181,7 +181,7 @@ const mayUse3d = [
 
 check({
   name: 'the dashboard uses no shadow, blend mode, 3D or video',
-  why: 'The 2011 Mac Mini cannot paint them. Animation uses only transform, opacity and line drawing (the house rules, Dashboard code).',
+  why: 'The 2014 Mac Mini cannot paint them. Animation uses only transform, opacity and line drawing (the house rules, Dashboard code).',
   instead: 'Draw a shadow as a dark copy of the shape moved a few pixels (as the frame does), use a plain color, and keep movement flat. Blur, glow and filters are checked by tests/graphics.test.mjs.',
 }, () => {
   const shadows = /(^|[;{\s])(text-shadow|box-shadow|mix-blend-mode|background-blend-mode)\s*:\s*([^;}]*)/g;

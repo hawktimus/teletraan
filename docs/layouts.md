@@ -1716,7 +1716,7 @@ from either of them to the standard layout starts it with a panel at once.
 - **The kit**: Neon Prime has a set of moving neon, the kit (below). It stops
   while an alert, an announcement, the night screen or a hidden transition has
   the screen, and in calm and none motion nothing of it moves.
-- **The Teletraan computer** is a 2011 Mac mini. The layout itself adds no moving element and
+- **The Teletraan computer** is a 2014 Mac mini. The layout itself adds no moving element and
   no full screen animated layer: it takes the small frame (its frame, screws and
   glint) away and keeps the pane and the ticker as they were. The kit adds nine
   small parts that move all the time and two short bursts (see "Moving

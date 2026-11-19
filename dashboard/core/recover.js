@@ -78,7 +78,7 @@ function clearTransitionMarks() {
 // frame that may not come.
 //
 // The nudge is opacity, not a transform: the house rules allow transform and opacity only, and a 3D transform such as
-// translateZ would ask the graphics chip of a 2011 machine for a layer it cannot paint. A step of a thousandth is
+// translateZ would ask the graphics chip of a 2014 machine for a layer it cannot paint. A step of a thousandth is
 // invisible across a room and is still a change the browser has to draw.
 function repaint() {
   const stage = document.getElementById('stage');

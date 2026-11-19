@@ -154,7 +154,7 @@ not drawn at all, because a piece that stopped would sit on a word. The Speed se
 
 ### What it costs
 
-The screen is shown by a 2011 Mac Mini with a weak graphics chip. So:
+The screen is shown by a 2014 Mac Mini with a weak graphics chip. So:
 
 - A pack may have at most **24 pieces that move**, and **60 pieces** in all, counting all three layers.
   The over layer has at most **14** of them. The check fails above that.
@@ -313,7 +313,7 @@ within a few seconds, while the screen runs: the layer appears or disappears wit
 
 ### Caution: the Teletraan computer's speed
 
-The screen is shown by a 2011 Mac Mini with a weak graphics chip. **The Teletraan computer's speed has not been tested with
+The screen is shown by a 2014 Mac Mini with a weak graphics chip. **The Teletraan computer's speed has not been tested with
 the over layer.** A piece over the panels is composited over a screen that is already busy, with frames that
 draw lines and glints. The limits above (at most 14 over pieces, about 24 moving pieces in a pack, transform and
 opacity only, a contained layer) are a careful guess. Before a pack goes on the real screen for days, put

@@ -380,7 +380,7 @@ These are things a careful reader should know before reusing the design.
 
 Checked on `1b44659`. The code is right in every case below.
 
-- **Hardware age.** `README.md` says a Mac mini 2014 with Debian 13. `docs/layouts.md`, `docs/seasonal-packs.md` and `docs/transitions.md` say 2011. The code does not say.
+- **Hardware age.** `README.md` says a Mac mini 2014 with Debian 13. The docs said 2011 until the owner confirmed it is a 2014 model, and now say 2014.
 - **Competition cards.** `docs/rotation-board.md` ("Automatic panels") lists seven cards. The registry has twelve `competition-*` panels and `docs/frc-feed.md` says twelve.
 - **Views.** `docs/views.md` says that until the reform transitions are drawn the screen plays the swap. They are drawn (`core/transition-kinds.js`, `core/reform-*.js`). Its table of what each view starts with also differs from `defaultRotationRows()` in `config-rotation.js`, which is the source of truth and is pinned by a test.
 - **Adding a panel.** `docs/adding-a-panel.md` tells the reader to run `node tests/schemas.test.mjs` in the `studio` folder. The test is `tests/schemas.test.mjs` at the repository root. The panel titles shown on the Rotation board also live in `studio/tools/rotation-titles.js`, which that doc does not mention.

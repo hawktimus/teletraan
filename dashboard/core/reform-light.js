@@ -1,6 +1,6 @@
 // The Light panel and view transitions (docs/transitions.md, "Light"). One simple change for each theme with a handful of parts:
 // two plates close over the region from its two sides, the page changes under them, and they open again. Nothing is copied, no
-// square is drawn and no layer is larger than its region, so the 2011 computer can play it.
+// square is drawn and no layer is larger than its region, so the 2014 computer can play it.
 //
 //   1. The plates close over each region (the panel, or the banner, the side column, the main panel and the ticker).
 //   2. While they are closed the page changes under them, as the heavy transitions change it.

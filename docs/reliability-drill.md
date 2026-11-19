@@ -1,6 +1,6 @@
 # Reliability drill
 
-What the wall does when something it depends on goes wrong. The screen runs for months on a 2011 Mac Mini, so every row below was tried on purpose. Each case was run in a real browser (Playwright) with the outside answers made by the test, and the scripts of the Mini were read for the same question: what happens when this fails, hangs or runs twice?
+What the wall does when something it depends on goes wrong. The screen runs for months on a 2014 Mac Mini, so every row below was tried on purpose. Each case was run in a real browser (Playwright) with the outside answers made by the test, and the scripts of the Mini were read for the same question: what happens when this fails, hangs or runs twice?
 
 The browser cases are in `tests/reliability.test.mjs` (37 cases, skipped when Playwright is not installed). The reader of Sanity is also tested without a browser in `tests/outage.test.mjs`, the pull in `tests/pull.test.mjs` and the watchdog in `tests/watchdog.test.mjs`. Nothing here ran on the real Mini.
 
@@ -57,7 +57,7 @@ The browser cases are in `tests/reliability.test.mjs` (37 cases, skipped when Pl
 
 ## A white flash on the TV
 
-The owner sees the wall flash white for a split second, now and then, with no animation to blame. Each cause was checked in the code. The page itself was also played in a real browser (Playwright, sample content, a screencast of every painted frame at the size of the window, frames counted when over half of their pixels are near white): 150 seconds of steady running, 90 seconds each with the desktop reveal and the red eyes forced, and six page loads, with no white frame and no page load during the run. That says the dashboard does not paint white by itself in that browser. It does not say what the 2011 graphics chip does, which could not be tried here.
+The owner sees the wall flash white for a split second, now and then, with no animation to blame. Each cause was checked in the code. The page itself was also played in a real browser (Playwright, sample content, a screencast of every painted frame at the size of the window, frames counted when over half of their pixels are near white): 150 seconds of steady running, 90 seconds each with the desktop reveal and the red eyes forced, and six page loads, with no white frame and no page load during the run. That says the dashboard does not paint white by itself in that browser. It does not say what the 2014 graphics chip does, which could not be tried here.
 
 | Candidate | Verdict |
 |-----------|---------|
@@ -70,7 +70,7 @@ The owner sees the wall flash white for a split second, now and then, with no an
 | Live preview of the control page (`mirror.py`) | Likely cause while someone has the preview open. It took a PNG with `Page.captureScreenshot` (with a clip and a scale) at the start and every 30 seconds, and fell back to a screenshot 4 times a second. A screenshot makes the browser draw the page again. Fixed: with a screencast that works there is no screenshot at all, the fallback is 1 a second, and the probe runs only in the fallback. It runs only while the preview tab is open: the control page renews a watch file every 30 seconds and the script stops 120 seconds after the last renewal (30 minutes at most). Nothing starts it without a person. |
 | Page paint: no background before the stylesheets | The 35 stylesheets block the first paint, so no white was seen in the tests. But `index.html` swapped the `href` of every stylesheet to the build number after the page began, and a changed `href` takes the old style off until the new file loads. Fixed: a copy is added and the old sheet goes when the copy has loaded. A dark `color-scheme` and an inline `html, body` background in the head cover any moment with no style. |
 | Hidden transitions, subthemes, announcements, night mode, stale chip, fonts | Played in the browser run above with no white frame. Fonts use `font-display: block`, so text is held back, not drawn in a white fallback. |
-| Chromium and the graphics chip (`kiosk.sh`) | Not provable here, and the most likely cause of a short random white flash left. `--ignore-gpu-blocklist --enable-gpu-rasterization` force the 2011 chip to draw although the browser lists it as unreliable. When the graphics process dies the browser starts it again, and the window is white until it has redrawn. |
+| Chromium and the graphics chip (`kiosk.sh`) | Not provable here, and the most likely cause of a short random white flash left. `--ignore-gpu-blocklist --enable-gpu-rasterization` force the 2014 chip to draw although the browser lists it as unreliable. When the graphics process dies the browser starts it again, and the window is white until it has redrawn. |
 
 ### Page loads recorded
 

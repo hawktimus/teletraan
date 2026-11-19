@@ -192,7 +192,7 @@ rm -f "$data"/device.json.tmp.* 2> /dev/null || true
 ) > /dev/null 2>&1 &
 
 # The graphics flags. The first two are the default, and force the graphics chip to draw even though the browser
-# lists the 2011 chip as unreliable. If the TV flashes white now and then and the journal has a line "GPU process
+# lists the 2014 chip as unreliable. If the TV flashes white now and then and the journal has a line "GPU process
 # exited unexpectedly" (journalctl -u teletraan-kiosk), put KIOSK_GRAPHICS=plain in local.env (the browser then
 # chooses by itself), and KIOSK_GRAPHICS=software if the flashes go on (the processor draws everything).
 case $(setting KIOSK_GRAPHICS) in

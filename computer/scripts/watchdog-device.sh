@@ -6,7 +6,7 @@
 # the machine resets itself. It is the last line against a kernel that has locked up, which no script can do anything
 # about because no script is running either.
 #
-# It is off here on purpose. Turning it on means a computer that resets itself with no record of why, and on a 2011
+# It is off here on purpose. Turning it on means a computer that resets itself with no record of why, and on a 2014
 # machine the device may be missing or may not work. Nothing turns it on automatically: Jason reads this, and if the
 # device is there and he wants it, he adds the two lines it prints and reboots once to see that the machine comes back.
 set -euo pipefail

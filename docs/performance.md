@@ -1,6 +1,6 @@
 # Performance
 
-The wall is a 2011 Mac Mini that runs the page for days. This page says what was measured, where the time goes, what was changed and what the budget is. The numbers were taken on a modern laptop with the CPU slowed down, not on the Teletraan computer, so they show where the cost is and do not promise a frame rate (see "What is not known").
+The wall is a 2014 Mac Mini that runs the page for days. This page says what was measured, where the time goes, what was changed and what the budget is. The numbers were taken on a modern laptop with the CPU slowed down, not on the Teletraan computer, so they show where the cost is and do not promise a frame rate (see "What is not known").
 
 ## How to measure
 

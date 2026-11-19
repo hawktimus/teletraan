@@ -16,7 +16,7 @@ const oldTreeMessage = 'This copy is older than round 6; update it.';
 const waitSeconds = 90;
 // The quick suite of the new tree is run before the switch (it is the gate of an update), at most this long
 const quickTestsMinutes = 12;
-// How many node --check processes run at the same time. The computer is a 2011 Mac Mini.
+// How many node --check processes run at the same time. The computer is a 2014 Mac Mini.
 const syntaxAtOnce = 3;
 
 // Every JavaScript file of the dashboard that the screen loads, as paths relative to the tree. The data folder and the
