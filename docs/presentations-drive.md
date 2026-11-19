@@ -13,6 +13,32 @@ The names of the files show on the TV, so name a file the way you want it read.
 
 The Teletraan computer takes up the new link within 5 minutes. The watcher is installed by the update from the Mac tool, or once by hand: `sudo /opt/teletraan/computer/scripts/install-decks.sh`. It needs the packages poppler-utils, curl and jq, which are there if the slides of booked talks work.
 
+## A folder that is not public
+
+The steps above need a folder shared with Anyone with the link. When the folder belongs to someone else, or may not be made public, a small Google Apps Script can read it instead. The script runs as one person who can already open the folder, and it hands the Teletraan computer the decks of that one folder and nothing else in Drive. The Teletraan computer asks it by a long web address and a secret word. Only Google Slides decks come this way. A PowerPoint file has to be opened in Google Slides and saved as a Google Slides deck first.
+
+1. Open script.google.com signed in as the Google account that can open the folder. Choose New project and name it Teletraan decks feed.
+2. Open computer/apps-script/decks-feed.gs from this repository, copy all of it, and paste it over everything in Code.gs. Save.
+3. Click Project Settings (the gear), then Script Properties, then Add script property. Add two. SECRET is a word of 16 to 100 letters, digits, - and _, which you make up. FOLDER_ID is the part of the folder's link after /folders/ and before any ?. Save.
+4. Go back to the editor, choose the function check in the bar at the top and click Run. Google asks to review permissions. Choose the account, then Advanced, then Go to Teletraan decks feed (unsafe), then Allow. This is your own script, which is why Google says unsafe. Then open Execution log: it says Decks seen in the folder and a number. If the number is 0 the account cannot open the folder, or FOLDER_ID is wrong.
+5. Click Deploy, then New deployment. For the type choose Web app. Set Execute as to Me and Who has access to Anyone. Click Deploy and copy the Web app address, which ends in /exec.
+6. On the Teletraan computer add two lines to computer/local.env, with your own values, and nothing else needs a restart:
+
+```
+DECKS_SCRIPT_URL='the Web app address'
+DECKS_SCRIPT_SECRET='the same word as SECRET'
+```
+
+7. Paste the folder link in Dashboard Settings, Presentations, as before. The FOLDER_ID in the script has to be that same folder.
+
+The list on the TV says what is wrong when it is not working: the address is wrong or the script is not open to Anyone, the secret does not match, or the script is set up for another folder. The same table below applies.
+
+- Anyone who has the web address still needs the secret, and the script only ever lists and sends the Slides decks of FOLDER_ID. Keep the secret out of chat, notes and the repository.
+- The script runs as you. If you are taken out of the folder, the decks stop updating, and the decks already made stay on the TV.
+- After a change to the script code, choose Deploy, Manage deployments, the pencil, Version: New version, Deploy. The address does not change.
+- To move to another Google account, do steps 1 to 5 again in that account and put its new address and secret in local.env.
+- A deck needs to fit in one answer from the script, so a very large deck (about 30 MB as a PDF or more) can fail. The list then shows the deck as could not be read.
+
 ## What goes in the folder
 
 - Google Slides decks, and PowerPoint files ending in .pptx. Other files are left out of the list. A folder inside the folder is not read.

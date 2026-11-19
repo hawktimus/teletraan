@@ -73,11 +73,14 @@ test('only a deck whose pictures are made can be played, and each row and each s
   assert.equal(findDeck(list, 'nothing'), null);
 
   assert.equal(listNote(list), '');
-  ['missing', 'no-folder', 'no-key', 'bad-key', 'api-off', 'not-shared', 'offline'].forEach(state => {
+  ['missing', 'no-folder', 'no-key', 'bad-key', 'api-off', 'not-shared', 'bad-secret', 'bad-script', 'wrong-folder', 'offline'].forEach(state => {
     const note = listNote(tidyDeckList(manifest({ state: state })));
     assert.ok(note.length > 20 && note.endsWith('.'), state + ': ' + note);
   });
   assert.match(listNote(tidyDeckList(manifest({ state: 'no-folder' }))), /Dashboard Settings, Presentations/);
+  assert.match(listNote(tidyDeckList(manifest({ state: 'bad-script' }))), /DECKS_SCRIPT_URL/);
+  assert.match(listNote(tidyDeckList(manifest({ state: 'bad-secret' }))), /DECKS_SCRIPT_SECRET/);
+  assert.match(listNote(tidyDeckList(manifest({ state: 'wrong-folder' }))), /another Drive folder/);
 
   assert.equal(checkedText(list, now), 'Folder checked just now');
   assert.equal(checkedText(list, new Date(now.getTime() + 10 * 60000)), 'Folder checked 10 minutes ago');

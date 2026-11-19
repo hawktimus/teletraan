@@ -1,11 +1,18 @@
 #!/bin/bash
 # Usage: decks-sync.sh [--watch]
-# Lists the presentations of one public Google Drive folder and saves each one as numbered
+# Lists the presentations of one Google Drive folder and saves each one as numbered
 # pictures in <data folder>/decks/<Drive id>/, with decks/manifest.json that lists them. The
 # dashboard shows the list on the TV and on the control page, and plays the one that is picked
 # (docs/presentations-drive.md). Google Slides and PowerPoint files (.pptx) are read. The folder
-# is the Google Drive folder of the Presentations tab of Dashboard Settings in Sanity. The key is
-# GOOGLE_API_KEY in local.env, the one the Drive photos use. Needs poppler-utils, curl and jq.
+# is the Google Drive folder of the Presentations tab of Dashboard Settings in Sanity. There are two
+# ways to read it:
+#   a public folder   (Anyone with the link, Viewer) is read with GOOGLE_API_KEY in local.env, the
+#                     one the Drive photos use
+#   a private folder  is read through a Google Apps Script that runs as one person who can open the
+#                     folder, when DECKS_SCRIPT_URL and DECKS_SCRIPT_SECRET are in local.env
+#                     (computer/apps-script/decks-feed.gs, docs/presentations-drive.md). Only Google
+#                     Slides decks come this way.
+# Needs poppler-utils, coreutils (base64), curl and jq.
 #
 #   decks-sync.sh            one look at the folder, and every deck that is new or changed is made
 #   decks-sync.sh --watch    looks every 20 seconds until it is stopped, which is what the service
@@ -26,6 +33,11 @@ max_pages=120      # a deck with more pages is cut short
 slides_type='application/vnd.google-apps.presentation'
 powerpoint_type='application/vnd.openxmlformats-officedocument.presentationml.presentation'
 
+# The address of a deployed Apps Script, for a personal Google account and for a Workspace one
+script_pattern='^https://script\.google\.com/(a/macros/[A-Za-z0-9.-]+|macros)/s/[A-Za-z0-9_-]+/exec$'
+script_url=""
+script_secret=""
+
 # A folder link or a bare folder id, as photos-drive-sync.sh reads it
 folder_pattern='^(?:https://drive\.google\.com/drive/(?:u/[0-9]+/)?folders/)?(?<id>[A-Za-z0-9_-]{10,100})(?:[/?#].*)?$'
 
@@ -38,7 +50,7 @@ case ${1:-} in
     ;;
 esac
 
-for tool in curl jq pdftoppm; do
+for tool in curl jq pdftoppm base64; do
   if ! command -v "$tool" > /dev/null 2>&1; then
     echo "The $tool command is missing. Install the packages with:" >&2
     echo "  sudo apt install poppler-utils curl jq" >&2
@@ -96,6 +108,16 @@ ask_google() {
   http_code=$(printf 'url = "%s&key=%s"\n' "$1" "$key" |
     curl --disable --silent --max-time 30 --connect-timeout 10 --max-filesize 2000000 \
       --location --max-redirs 3 --proto '=https' --proto-redir '=https' \
+      --config - --output "$2" --write-out '%{http_code}' 2> /dev/null) || http_code=000
+}
+
+# Asks the Apps Script for $1 (the part of the address after the question mark, with no secret) and
+# saves the answer in $2. The secret goes to curl as a setting on standard input, so it never shows
+# in the process list. $http_code is the status of the answer, or 000 when there was none.
+ask_script() {
+  http_code=$(printf 'url = "%s?%s&secret=%s"\n' "$script_url" "$1" "$script_secret" |
+    curl --disable --silent --max-time 60 --connect-timeout 10 --max-filesize 2000000 \
+      --location --max-redirs 5 --proto '=https' --proto-redir '=https' \
       --config - --output "$2" --write-out '%{http_code}' 2> /dev/null) || http_code=000
 }
 
@@ -163,12 +185,70 @@ compose() {
   mv "$2/manifest.json" "$decks/manifest.json"
 }
 
+# Turns the answer of Google or of the script ($1, a list of files in the Drive API's shape) into
+# decks/.list.json: one object for each deck, newest first. The name on the screen is the file name
+# without .pptx, cut to 60 characters. The id becomes a folder name and part of an address, so only
+# the characters Google uses in an id pass.
+write_list() {
+  jq --arg slides "$slides_type" --arg powerpoint "$powerpoint_type" --argjson max "$max_decks" '
+    [ .files[]
+      | select((.id | type) == "string" and (.id | test("^[A-Za-z0-9_-]{10,100}$")))
+      | select(.mimeType == $slides or .mimeType == $powerpoint)
+      | select(.modifiedTime | type == "string")
+      | { id: .id,
+          name: ((.name // "") | tostring | sub("\\.pptx$"; ""; "i") | gsub("[[:cntrl:]]"; " ") | gsub("^\\s+|\\s+$"; "") | .[0:60]),
+          kind: (if .mimeType == $slides then "slides" else "powerpoint" end),
+          modified: .modifiedTime }
+      | select(.name != "")
+    ] | sort_by(.modified) | reverse | .[0:$max]' "$1" > "$work/list.json"
+  mv "$work/list.json" "$decks/.list.json"
+}
+
+# Asks the Apps Script for the list. States: bad-script when the address is not an Apps Script's or
+# the answer is not from the script, bad-secret, wrong-folder, offline when it could not be reached.
+script_list() {
+  if ! printf '%s' "$script_url" | grep -Eq "$script_pattern"; then
+    state=bad-script
+    return 0
+  fi
+  if ! printf '%s' "$script_secret" | grep -Eq '^[A-Za-z0-9_-]{16,100}$'; then
+    state=bad-secret
+    return 0
+  fi
+
+  ask_script "action=list&folder=$folder" "$work/answer.json"
+  case $http_code in
+    200) ;;
+    4??) state=bad-script; return 0 ;;
+    *) return 0 ;;
+  esac
+  # Google answers a page to sign in to when the script is not open to Anyone
+  if ! jq -e 'type == "object"' "$work/answer.json" > /dev/null 2>&1; then
+    state=bad-script
+    return 0
+  fi
+  case $(jq -r '.error | strings' "$work/answer.json" 2> /dev/null || true) in
+    '') ;;
+    denied) state=bad-secret; return 0 ;;
+    wrong-folder) state=wrong-folder; return 0 ;;
+    *) return 0 ;;
+  esac
+  if ! jq -e '.files | arrays' "$work/answer.json" > /dev/null 2>&1; then
+    return 0
+  fi
+
+  write_list "$work/answer.json"
+  state=ok
+}
+
 # One look at the folder. It leaves the state in $state: ok, no-folder, no-key, bad-key, api-off,
-# not-shared, or offline when Sanity or Google could not be reached. Only ok and no-folder change
-# the list. Any other state leaves the decks from before, so they can still be played.
+# not-shared, bad-script, bad-secret, wrong-folder, or offline when Sanity or Google could not be
+# reached. Only ok and no-folder change the list. Any other state leaves the decks from before, so they can still be played.
 list_pass() {
   state=offline
   folder=""
+  script_url=$(setting DECKS_SCRIPT_URL)
+  script_secret=$(setting DECKS_SCRIPT_SECRET)
   if ! read_folder; then
     return 0
   fi
@@ -177,6 +257,11 @@ list_pass() {
     state=no-folder
     echo '[]' > "$work/list.json"
     mv "$work/list.json" "$decks/.list.json"
+    return 0
+  fi
+
+  if [ -n "$script_url" ]; then
+    script_list
     return 0
   fi
 
@@ -203,21 +288,7 @@ list_pass() {
     return 0
   fi
 
-  # One object for each deck, newest first. The name on the screen is the file name without
-  # .pptx, cut to 60 characters. The id becomes a folder name and part of an address, so only
-  # the characters Google uses in an id pass.
-  jq --arg slides "$slides_type" --arg powerpoint "$powerpoint_type" --argjson max "$max_decks" '
-    [ .files[]
-      | select((.id | type) == "string" and (.id | test("^[A-Za-z0-9_-]{10,100}$")))
-      | select(.mimeType == $slides or .mimeType == $powerpoint)
-      | select(.modifiedTime | type == "string")
-      | { id: .id,
-          name: ((.name // "") | tostring | sub("\\.pptx$"; ""; "i") | gsub("[[:cntrl:]]"; " ") | gsub("^\\s+|\\s+$"; "") | .[0:60]),
-          kind: (if .mimeType == $slides then "slides" else "powerpoint" end),
-          modified: .modifiedTime }
-      | select(.name != "")
-    ] | sort_by(.modified) | reverse | .[0:$max]' "$work/answer.json" > "$work/list.json"
-  mv "$work/list.json" "$decks/.list.json"
+  write_list "$work/answer.json"
   state=ok
 }
 
@@ -241,18 +312,42 @@ make_deck() {
   pages=0
 
   status=0
-  curl --disable --silent --max-time 120 --max-filesize 80000000 \
-    --location --max-redirs 5 --proto '=https' --proto-redir '=https' \
-    --output "$pdf" "https://docs.google.com/presentation/d/$1/export/pdf" 2> /dev/null || status=$?
+  if [ -n "$script_url" ]; then
+    # The script sends the PDF as base64 text, or a short JSON error
+    if [ -z "$folder" ]; then
+      failure="no folder is named"
+      return 1
+    fi
+    printf 'url = "%s?action=pdf&id=%s&folder=%s&secret=%s"\n' "$script_url" "$1" "$folder" "$script_secret" |
+      curl --disable --silent --max-time 180 --connect-timeout 10 --max-filesize 110000000 \
+        --location --max-redirs 5 --proto '=https' --proto-redir '=https' \
+        --config - --output "$2/download.b64" 2> /dev/null || status=$?
+    if [ "$status" -ne 0 ]; then
+      failure=$(explain "$status")
+      return 1
+    fi
+    if [ "$(head -c 1 "$2/download.b64" 2> /dev/null)" = '{' ]; then
+      rm -f "$2/download.b64"
+      failure="the script could not read the deck"
+      return 1
+    fi
+    base64 -d "$2/download.b64" > "$pdf" 2> /dev/null || true
+    rm -f "$2/download.b64"
+  else
+    curl --disable --silent --max-time 120 --max-filesize 80000000 \
+      --location --max-redirs 5 --proto '=https' --proto-redir '=https' \
+      --output "$pdf" "https://docs.google.com/presentation/d/$1/export/pdf" 2> /dev/null || status=$?
 
-  if [ "$status" -ne 0 ]; then
-    failure=$(explain "$status")
-    return 1
+    if [ "$status" -ne 0 ]; then
+      failure=$(explain "$status")
+      return 1
+    fi
   fi
 
   # A file that is not shared answers with a web page to sign in
   if [ "$(head -c 4 "$pdf" 2> /dev/null)" != '%PDF' ]; then
     failure="not shared"
+    [ -z "$script_url" ] || failure="the script sent something else than a deck"
     return 1
   fi
 
@@ -373,6 +468,9 @@ summary() {
     bad-key) echo "decks: Google did not accept the key. Check GOOGLE_API_KEY in local.env." ;;
     api-off) echo "decks: the Google Drive API is not turned on for the project of the key. See docs/photos-drive.md, step 2." ;;
     not-shared) echo "decks: Google would not list the folder. Share it with Anyone with the link as Viewer." ;;
+    bad-script) echo "decks: DECKS_SCRIPT_URL in local.env is not the address of the Apps Script, or the script is not open to Anyone. See docs/presentations-drive.md." ;;
+    bad-secret) echo "decks: the script did not accept the secret. DECKS_SCRIPT_SECRET in local.env has to be the SECRET property of the script." ;;
+    wrong-folder) echo "decks: the script is set up for another Drive folder. FOLDER_ID in the script has to be the folder named in Dashboard Settings." ;;
     *) echo "decks: Sanity or Google could not be reached. The decks from before stay." ;;
   esac
 }

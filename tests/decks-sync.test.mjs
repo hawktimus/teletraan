@@ -16,9 +16,11 @@ const repo = fileURLToPath(new URL('../', import.meta.url));
 const scripts = ['decks-sync.sh', 'install-decks.sh', 'lib.sh'];
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-decks-'));
 
-const ordinaryTools = ['sed', 'tail', 'head', 'grep', 'find', 'mktemp', 'mv', 'rm', 'mkdir', 'date', 'dirname', 'basename', 'cat', 'cp', 'ls', 'stat', 'install'];
+const ordinaryTools = ['base64', 'sed', 'tail', 'head', 'grep', 'find', 'mktemp', 'mv', 'rm', 'mkdir', 'date', 'dirname', 'basename', 'cat', 'cp', 'ls', 'stat', 'install'];
 const key = 'FAKEKEY_abcdefghijklmnopqrstuvwxyz0123';
 const folderId = '1AbCdEfGhIjKlMnOpQrStUvWxYz';
+const secret = 'FAKESECRET_abcdefghijklmnopqrstuvwxyz';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbxFAKEdeployment123/exec';
 const folderLink = 'https://drive.google.com/drive/folders/' + folderId + '?usp=sharing';
 const slidesType = 'application/vnd.google-apps.presentation';
 const powerpointType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -49,8 +51,8 @@ address=$argument
 if [ "$config" = - ]; then
   from_config=$(sed -n 's/^url = "\\(.*\\)"$/\\1/p')
   if [ -n "$from_config" ]; then
-    echo "config-url $from_config" | sed "s/$STUB_KEY/<key>/g" >> "$STUB_LOG"
-    address=$(printf '%s' "$from_config" | sed 's/&key=.*$//')
+    echo "config-url $from_config" | sed "s/$STUB_KEY/<key>/g; s/$STUB_SECRET/<secret>/g" >> "$STUB_LOG"
+    address=$(printf '%s' "$from_config" | sed 's/&key=.*$//; s/&secret=.*$//')
   fi
 fi
 case $address in
@@ -67,6 +69,20 @@ case $address in
     id=\${address#https://docs.google.com/presentation/d/}
     id=\${id%%/*}
     if [ -f "$STUB_DIR/$id.pdf" ]; then cp "$STUB_DIR/$id.pdf" "$output"; else echo '<html>Sign in</html>' > "$output"; fi
+    ;;
+  https://script.google.com/*)
+    [ -f "$STUB_DIR/script.exit" ] && exit "$(cat "$STUB_DIR/script.exit")"
+    case $address in
+      *action=list*)
+        cp "$STUB_DIR/script-list.json" "$output"
+        printf 200
+        ;;
+      *action=pdf*)
+        id=\${address#*&id=}
+        id=\${id%%&*}
+        if [ -f "$STUB_DIR/$id.b64" ]; then cp "$STUB_DIR/$id.b64" "$output"; else echo '{"error":"not-found"}' > "$output"; fi
+        ;;
+    esac
     ;;
   *) exit 6 ;;
 esac
@@ -114,7 +130,11 @@ function setup(name, options = {}) {
   fs.copyFileSync(path.join(repo, 'dashboard/config.js'), path.join(root, 'dashboard/config.js'));
 
   const env = ["TELETRAAN_DATA='" + data + "'"];
-  if (!options.noKey) env.push("GOOGLE_API_KEY='" + key + "'");
+  if (!options.noKey && !options.script) env.push("GOOGLE_API_KEY='" + key + "'");
+  if (options.script) {
+    env.push("DECKS_SCRIPT_URL='" + (options.scriptUrl || scriptUrl) + "'");
+    if (!options.noSecret) env.push("DECKS_SCRIPT_SECRET='" + secret + "'");
+  }
   fs.writeFileSync(path.join(root, 'computer/local.env'), env.join('\n') + '\n');
 
   ordinaryTools.forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
@@ -133,7 +153,7 @@ function setup(name, options = {}) {
   return {
     root, decks, log, stub,
     run(script, args = [], extra = {}) {
-      const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, STUB_KEY: key, TMPDIR: temp, STUB_UID: '1000' }, extra);
+      const env = Object.assign({ PATH: bin, STUB_LOG: log, STUB_DIR: stub, STUB_KEY: key, STUB_SECRET: secret, TMPDIR: temp, STUB_UID: '1000' }, extra);
       const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts', script)].concat(args), { env, encoding: 'utf8', input: '\n', cwd: root });
       return { text: result.stdout, errors: result.stderr, status: result.status, calls: fs.readFileSync(log, 'utf8') };
     },
@@ -154,6 +174,15 @@ function setup(name, options = {}) {
     pdf(id, pages) {
       fs.writeFileSync(path.join(stub, id + '.pdf'), '%PDF pages=' + pages + '\n');
     },
+    // What the Apps Script answers to a list: the same shape the Drive API uses. A string is sent as it is.
+    scriptList(files) {
+      fs.writeFileSync(path.join(stub, 'script-list.json'), typeof files === 'string' ? files : JSON.stringify({ files }));
+      fs.rmSync(path.join(stub, 'script.exit'), { force: true });
+    },
+    // The PDF of a deck as the Apps Script sends it: in base64
+    scriptPdf(id, pages) {
+      fs.writeFileSync(path.join(stub, id + '.b64'), Buffer.from('%PDF pages=' + pages + '\n').toString('base64'));
+    },
     manifest() {
       return JSON.parse(fs.readFileSync(path.join(decks, 'manifest.json'), 'utf8'));
     },
@@ -164,7 +193,7 @@ function setup(name, options = {}) {
       return fs.readdirSync(decks, { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('.')).map(entry => entry.name).sort();
     },
     exports() {
-      return (fs.readFileSync(log, 'utf8').match(/presentation\/d\/[A-Za-z0-9_-]+\/export\/pdf/g) || []).length;
+      return (fs.readFileSync(log, 'utf8').match(/presentation\/d\/[A-Za-z0-9_-]+\/export\/pdf|^config-url .*action=pdf/gm) || []).length;
     },
   };
 }
@@ -364,6 +393,103 @@ test('a run that starts while another is looking stops at once, and a wrong argu
   const wrong = place.run('decks-sync.sh', ['--often']);
   assert.equal(wrong.status, 1);
   assert.ok(wrong.errors.includes('Usage:'), wrong.errors);
+});
+
+function scriptReady(name, options = {}) {
+  const place = setup(name, Object.assign({ script: true }, options));
+  place.folder(folderLink);
+  place.scriptList([drive(deckA, 'Drive train basics'), drive(deckB, 'Safety week', { modifiedTime: '2027-03-02T10:00:00.000Z' })]);
+  place.scriptPdf(deckA, 3);
+  place.scriptPdf(deckB, 12);
+  return place;
+}
+
+test('with a script address and secret the decks come through the Apps Script, with no Google key and no call to Drive', () => {
+  const place = scriptReady('script-listing');
+  const result = place.sync();
+  assert.equal(result.status, 0, result.errors + result.text);
+  assert.equal(place.manifest().state, 'ok');
+  assert.deepEqual(place.manifest().decks.map(deck => [deck.id, deck.state, deck.pages]), [[deckB, 'ready', 12], [deckA, 'ready', 3]]);
+  assert.deepEqual(place.deck(deckA).pages, ['001.jpg', '002.jpg', '003.jpg']);
+  assert.ok(!result.calls.includes('googleapis') && !result.calls.includes('docs.google.com'), result.calls);
+
+  const asked = result.calls.split('\n').filter(line => line.startsWith('config-url '));
+  assert.ok(asked[0].includes(scriptUrl + '?action=list&folder=' + folderId + '&secret=<secret>'), asked[0]);
+  assert.ok(asked.some(line => line.includes('?action=pdf&id=' + deckA + '&folder=' + folderId + '&secret=<secret>')), asked.join('\n'));
+  assert.ok(!result.calls.includes(secret) && !result.text.includes(secret) && !result.errors.includes(secret), 'the secret is never in the log or the output');
+
+  place.sync();
+  assert.equal(place.exports(), 2, 'a second run downloads nothing');
+});
+
+test('a deck the script cannot send is failed with a reason, and the other decks still work', () => {
+  const place = scriptReady('script-deck-fails');
+  fs.rmSync(path.join(place.stub, deckB + '.b64'));
+  const result = place.sync();
+  assert.equal(result.status, 1);
+  assert.deepEqual(place.manifest().decks.map(deck => deck.state), ['failed', 'ready']);
+  assert.equal(place.manifest().decks[0].error, 'the script could not read the deck');
+});
+
+test('the script says no, or is not the script, and the decks from before stay', () => {
+  const place = scriptReady('script-states');
+  place.sync();
+
+  place.scriptList('{"error":"denied"}');
+  place.sync();
+  assert.equal(place.manifest().state, 'bad-secret');
+  assert.equal(place.manifest().decks.length, 2);
+
+  place.scriptList('{"error":"wrong-folder"}');
+  place.sync();
+  assert.equal(place.manifest().state, 'wrong-folder');
+
+  // A page to sign in to is what Google answers when the script is not open to Anyone
+  place.scriptList('<html>Sign in</html>');
+  place.sync();
+  assert.equal(place.manifest().state, 'bad-script');
+
+  fs.writeFileSync(path.join(place.stub, 'script.exit'), '6');
+  place.sync();
+  assert.equal(place.manifest().state, 'offline');
+  assert.deepEqual(place.folders(), [deckA, deckB].sort());
+
+  place.scriptList([drive(deckA, 'Drive train basics')]);
+  place.sync();
+  assert.equal(place.manifest().state, 'ok');
+});
+
+test('a script address that is not a Google Apps Script address, or no secret, asks nobody', () => {
+  const wrong = setup('script-wrong-address', { script: true, scriptUrl: 'https://example.com/macros/s/AKfycbx/exec' });
+  wrong.folder(folderLink);
+  const first = wrong.sync();
+  assert.equal(wrong.manifest().state, 'bad-script');
+  assert.ok(first.text.includes('DECKS_SCRIPT_URL'), first.text);
+  assert.ok(!first.calls.includes('example.com'));
+
+  const keyless = setup('script-no-secret', { script: true, noSecret: true });
+  keyless.folder(folderLink);
+  const second = keyless.sync();
+  assert.equal(keyless.manifest().state, 'bad-secret');
+  assert.ok(second.text.includes('DECKS_SCRIPT_SECRET'), second.text);
+  assert.ok(!second.calls.includes('script.google.com'));
+});
+
+test('with no folder named the script is not asked, and a Google key alone still works the old way', () => {
+  const place = setup('script-no-folder', { script: true });
+  place.folder('');
+  const result = place.sync();
+  assert.equal(place.manifest().state, 'no-folder');
+  assert.ok(!result.calls.includes('script.google.com'));
+
+  const old = ready('old-way-still-works');
+  assert.equal(old.sync().status, 0);
+  assert.equal(old.manifest().state, 'ok');
+});
+
+test('the unit tests and the local.env example name the script settings', () => {
+  const example = fs.readFileSync(path.join(repo, 'computer/local.example.env'), 'utf8');
+  assert.ok(example.includes('DECKS_SCRIPT_URL=') && example.includes('DECKS_SCRIPT_SECRET='));
 });
 
 test('the installer still needs sudo and the repository at /opt/teletraan before it changes anything', () => {
