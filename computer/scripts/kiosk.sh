@@ -103,6 +103,9 @@ write_device_info() {
 
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ 2> /dev/null || true)
 
+  # Which Teletraan this is: I or II (TELETRAAN_DEVICE in local.env). The banner shows it (core/device.js).
+  device=$(setting TELETRAAN_DEVICE 2> /dev/null || true)
+
   # When the network went away and the last repair step the network watchdog took (netwatch.sh). Empty while the
   # network works. The page says "trying to fix this by itself" only when both are there (dashboard/core/device.js).
   network_down=''
@@ -113,8 +116,8 @@ write_device_info() {
   fi
 
   temporary="$data/device.json.tmp.$$"
-  if printf '{"hostname":"%s","wifi":"%s","tailscale":"%s","time":"%s","networkDownSince":"%s","networkLastStep":"%s"}\n' \
-    "$(json_text "$name")" "$(json_text "$wifi")" "$(json_text "$tailscale_address")" "$(json_text "$now")" \
+  if printf '{"hostname":"%s","device":"%s","wifi":"%s","tailscale":"%s","time":"%s","networkDownSince":"%s","networkLastStep":"%s"}\n' \
+    "$(json_text "$name")" "$(json_text "$device")" "$(json_text "$wifi")" "$(json_text "$tailscale_address")" "$(json_text "$now")" \
     "$(json_text "$network_down")" "$(json_text "$network_step")" \
     2> /dev/null > "$temporary"; then
     chmod 644 "$temporary" 2> /dev/null || true

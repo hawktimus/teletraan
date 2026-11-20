@@ -10,7 +10,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { parseSyncStatus, pillState, limitsOf } from '../dashboard/core/sync-status.js';
-import { pillText } from '../dashboard/core/sync-pill.js';
+import { pillText, startSyncPill } from '../dashboard/core/sync-pill.js';
 import { syncDownMinutes, syncStaleMinutes, syncSourceMinutes } from '../dashboard/core/constants.js';
 import { formatTimeOfDay } from '../dashboard/core/time.js';
 
@@ -238,4 +238,18 @@ await check('a good request goes through untouched', async () => {
   assert.equal(world.logged.length, 0);
 });
 
+await check('the wall never draws the pill: a late source says nothing on the screen', () => {
+  const host = { textContent: 'Updates late since 3:12 PM', dataset: { state: 'late' }, attrs: {}, setAttribute(name, value) { this.attrs[name] = value; } };
+  globalThis.document = { getElementById: id => (id === 'sync-pill' ? host : null) };
+  try {
+    startSyncPill(() => ({}), false);
+  } finally {
+    delete globalThis.document;
+  }
+  assert.equal(host.textContent, '');
+  assert.equal(host.dataset.state, 'ok');
+  assert.equal(host.attrs['aria-hidden'], 'true');
+});
+
 console.log(passed + ' of ' + passed + ' checks passed.');
+

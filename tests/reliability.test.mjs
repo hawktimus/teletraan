@@ -257,10 +257,10 @@ await Promise.all([1, 2, 3].map(async () => {
   if (!early || early.state !== 'ok') problems.push('the pill came up after 5 minutes: ' + JSON.stringify(early));
   await jump(12 * 60);
   const middle = await pill();
-  if (!middle || middle.state !== 'late' || !/^Offline since \d{1,2}:\d\d [AP]M$/.test(middle.text)) problems.push('no amber pill with a time after 17 minutes down: ' + JSON.stringify(middle));
+  if (!middle || middle.state !== 'ok' || middle.text !== '') problems.push('the wall shows a pill after 17 minutes down, and it must show none: ' + JSON.stringify(middle));
   await jump(14 * 60);
   const late = await pill();
-  if (!late || late.state !== 'down') problems.push('the pill was not red after 31 minutes down: ' + JSON.stringify(late));
+  if (!late || late.state !== 'ok' || late.text !== '') problems.push('the wall shows a pill after 31 minutes down, and it must show none: ' + JSON.stringify(late));
   if (late && /sanity|network|cors|denied|error/i.test(late.text)) problems.push('the pill shows error words: ' + late.text);
 
   world.up = true;
@@ -275,7 +275,7 @@ await Promise.all([1, 2, 3].map(async () => {
   page.thrown.slice(0, 2).forEach(message => problems.push('the page threw: ' + message.slice(0, 120)));
   finished += 1;
   if (problems.length === 0) {
-    console.log('ok    after 30 minutes without the network the pill goes amber and then red with no error words, and the wall recovers by itself with no reload');
+    console.log('ok    after 30 minutes without the network the wall shows no pill or error words, and recovers by itself with no reload');
   } else {
     failures += 1;
     console.log('FAIL  after 30 minutes without the network');

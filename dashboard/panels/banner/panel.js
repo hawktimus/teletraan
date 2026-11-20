@@ -3,6 +3,7 @@
 
 import * as frame from '../../frame.js';
 import { formatClock, formatDate } from '../../core/time.js';
+import { deviceFile, deviceNumeral, wordmarkFile } from '../../core/device.js';
 import { weatherIcon } from '../../core/weather-icons.js';
 import { logoMarkup, logoTeamOf, showLogoTeam, showTeamLogo } from '../../core/logo.js';
 import { fitName, fitNameWhenFontsLoad, nameMarkup } from '../../core/name.js';
@@ -13,6 +14,22 @@ import { shapesNow } from '../../core/style.js';
 import { teamNumbersOf, teamShown, trimNow } from '../../core/teams.js';
 import { packExtras } from '../../core/theme.js';
 import { viewLabelsNow, viewNow } from '../../core/view-apply.js';
+
+let numeral = ''; // I or II, read from device.json once and kept
+function showNumeral(element) {
+  const mark = element.querySelector('.wordmark');
+  if (!mark || numeral === '') return;
+  mark.src = wordmarkFile(numeral);
+  mark.alt = 'Teletraan ' + numeral;
+}
+function readNumeral(element) {
+  if (numeral !== '') return showNumeral(element);
+  if (typeof fetch !== 'function') return undefined;
+  return fetch(deviceFile, { cache: 'no-store' }).then(answer => (answer.ok ? answer.json() : null)).then(raw => {
+    numeral = deviceNumeral(raw);
+    showNumeral(element);
+  }).catch(() => {}); // a laptop has no such file: the wordmark stays as it is
+}
 
 const WIDE_PLATE_WIDTH = 940; // .team-plate on the Robotics view (family-line.css)
 
@@ -64,6 +81,7 @@ export function mount(host, content) {
 
   const element = host.firstElementChild;
   update(element, content);
+  readNumeral(element);
 
   // The text only changes once a minute, so the page is touched only when the
   // minute is a different one. The minute is counted from the clock itself, so

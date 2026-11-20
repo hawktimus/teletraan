@@ -18,7 +18,19 @@ export function pillText(state, now = new Date()) {
   return words + ' since ' + (localDay(state.since) === localDay(now) ? clock : formatShortDate(state.since) + ', ' + clock);
 }
 
+// The pill is no longer drawn. The wall shows no error message of any kind: a late or a down source is on the Control page
+// (Overview, control/static/overview.js) and in the dots. The words above stay for the Control page and the tests.
 export function startSyncPill(getContent, isSample) {
+  const host = document.getElementById('sync-pill');
+  if (host) {
+    host.textContent = '';
+    host.dataset.state = 'ok';
+    host.setAttribute('aria-hidden', 'true');
+  }
+}
+
+// What the pill was: kept so a later decision can bring it back. Nothing calls it.
+function drawnSyncPill(getContent, isSample) {
   const host = document.getElementById('sync-pill');
   if (!host || isSample) return;
 

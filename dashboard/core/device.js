@@ -119,3 +119,14 @@ async function readDevice() {
 
   if (mine === requests) onLines(lines);
 }
+
+// Which Teletraan this is: I (the classroom) or II (the spare Mini at home). The kiosk script copies TELETRAAN_DEVICE
+// from local.env into device.json (computer/scripts/kiosk.sh). Anything but II is I.
+export function deviceNumeral(raw) {
+  return raw && typeof raw === 'object' && typeof raw.device === 'string' && raw.device.trim().toUpperCase() === 'II' ? 'II' : 'I';
+}
+
+// The wordmark picture of the banner for a numeral
+export function wordmarkFile(numeral) {
+  return numeral === 'II' ? 'assets/teletraan-ii-wordmark.svg' : 'assets/teletraan-wordmark.svg';
+}

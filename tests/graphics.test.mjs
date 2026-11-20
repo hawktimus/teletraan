@@ -85,6 +85,7 @@ await test('no picture of more than 50 KB is written into an svg or into the cod
 // are logos, and each says why it is shapes. The banner puts the wordmark in an img with alt text.
 const drawnLettering = {
   'assets/teletraan-wordmark.svg': 'the Teletraan I wordmark: its letters are the shapes of the logo, not a font',
+  'assets/teletraan-ii-wordmark.svg': 'the Teletraan II wordmark: the same letters with a second I',
 };
 
 test('an svg file with many shapes is on the list of drawn lettering, or it is not lettering', () => {

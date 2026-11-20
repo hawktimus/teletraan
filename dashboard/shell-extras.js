@@ -317,7 +317,7 @@ export function waitForFonts() {
 // fitToScreen (core/screen-fit.js) scales the 1920x1080 canvas to the window. shell.js imports it from here.
 export { fitToScreen } from './core/screen-fit.js';
 
-// A wall display must never sit blank without saying why
+// A wall display must never sit blank: it shows the name, never an error. The reason is in the console and the log
 export function showFatal(error) {
   console.error('Teletraan I could not start. The error below says which file and line. The page tries again in 30 seconds.', error);
 
@@ -325,7 +325,7 @@ export function showFatal(error) {
   message.style.cssText = 'position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 100;' +
     'display: flex; flex-direction: column; justify-content: center; align-items: center;' +
     'background: var(--ground); color: var(--yellow); font: 700 96px/120px sans-serif; text-align: center;';
-  message.textContent = 'Teletraan I could not start. Trying again in 30 seconds.';
+  message.textContent = 'Teletraan'; // no error words on the wall; the console has them
   screen.appendChild(message);
 
   setTimeout(() => {
