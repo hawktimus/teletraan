@@ -510,7 +510,6 @@ test('the status document and the fields in the script are the ones the Studio h
 test('the calendar and slides services run it after their job, and a failure of it is ignored', () => {
   const jobs = {
     'teletraan-calendars.service': ['fetch-calendars.sh', ['calendar', 'content']],
-    'teletraan-slides.service': ['slides-sync.sh', ['slides']],
   };
 
   Object.keys(jobs).forEach(unit => {
@@ -541,7 +540,7 @@ test('kiosk.sh starts it at the beginning, in the background with its output thr
 
 test('docs/rebuilding-the-computer.md says how to make the token, where it goes, and which scripts need it', () => {
   const doc = readModule(path.join(repo, 'docs/rebuilding-the-computer.md'), 'utf8');
-  ['SANITY_WRITE_TOKEN', 'sanity.io/manage', 'Editor', 'status-write.sh', 'install-calendars.sh', 'install-slides.sh', 'No status yet'].forEach(word => {
+  ['SANITY_WRITE_TOKEN', 'sanity.io/manage', 'Editor', 'status-write.sh', 'install-calendars.sh', 'No status yet'].forEach(word => {
     assert.ok(doc.includes(word), 'docs/rebuilding-the-computer.md should mention ' + word);
   });
 });

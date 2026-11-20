@@ -20,7 +20,7 @@
 #
 # The list and the pictures are made by two passes with a lock each. The list pass asks Google
 # for the files and writes the manifest. The picture pass downloads each deck that is new or has
-# changed as a PDF and cuts it into pictures, the way slides-sync.sh does for a booked talk.
+# changed as a PDF and cuts it into pictures.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 

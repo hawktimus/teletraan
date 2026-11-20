@@ -68,7 +68,7 @@ function allows(commands, line) {
 const parsed = read(generated('hawk'));
 const commands = commandsOf(parsed);
 
-const timers = ['calendars', 'monday', 'slides', 'watchdog', 'nightly', 'reboot', 'netwatch', 'heartbeat'];
+const timers = ['calendars', 'monday', 'watchdog', 'nightly', 'reboot', 'netwatch', 'heartbeat'];
 const syncs = ['calendars', 'monday', 'frc', 'news', 'photos-drive', 'match13'];
 const networkServices = ['NetworkManager.service', 'systemd-networkd.service', 'systemd-resolved.service', 'networking.service'];
 const journalLine = '/usr/bin/journalctl -u NetworkManager.service -u wpa_supplicant.service -u systemd-networkd.service --no-pager -n 60 -o short-iso';

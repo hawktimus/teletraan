@@ -27,7 +27,7 @@ const inScripts = [
   { name: 'news', purpose: 'the FIRST community blog headlines', file: 'news-sync.sh', pattern: /^feed_url=https:\/\/([^/\s]+)/m },
   { name: 'match13', purpose: 'Match13, the forecasts of the coming matches', file: 'match13-sync.sh', pattern: /^host='https:\/\/([^/']+)/m },
   { name: 'photos', purpose: 'the Google Drive photo folder (the list of pictures)', file: 'photos-drive-sync.sh', pattern: /list_url="https:\/\/([^/]+)/ },
-  { name: 'slides', purpose: 'Google Slides, the decks of booked talks', file: 'slides-sync.sh', pattern: /"https:\/\/([^/$]+)\/presentation\/d\// },
+  { name: 'slides', purpose: 'Google Slides, the decks picked to play', file: 'decks-sync.sh', pattern: /"https:\/\/([^/$]+)\/presentation\/d\// },
 ];
 
 // The list of { name, purpose, host, url, expectedType }. url is what the diagnostic asks for: a real question where there

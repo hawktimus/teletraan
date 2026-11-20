@@ -141,14 +141,13 @@ The scripts are in `computer/scripts/`, and the units that start them are in `co
 
 - `pull.sh`: every 5 minutes on a computer that pulls by itself, gets new commits and writes `version.txt`, so an open screen reloads. A pull is a deploy. A computer that gets its files from a Mac (docs/shipping-from-the-mac.md) leaves this timer off
 - `fetch-calendars.sh`: every 15 minutes, downloads the BAND calendars named in `local.env`. After each run `calendar-status.sh` and `status-write.sh calendar-status` write the document for the Calendars page
-- `slides-sync.sh`: every 2 minutes, turns the Google Slides deck of each coming talk into pictures
 - `frc-sync.sh`: wakes every 5 minutes, and reads the public competition data about once an hour, or about every 5 minutes while a team has an event on
 - `monday-sync.sh`: woken every 5 minutes, reads the two Monday boards named in Dashboard Settings as often as How often says and keeps their items in Sanity as tasks and milestones
 - `status-write.sh`: writes the time of a job into the status block at the top of Dashboard Settings. `status-write.sh --print` reads the block back and shows each time with its age
 - `kiosk.sh`: starts the browser full screen when the Teletraan computer boots, writes `build.js` and writes `device.json` every minute
 - `watchdog.sh`: every 2 minutes, restarts the screen when the page has stopped writing its heartbeat. `nightly.sh` restarts the screen at 04:00 and reboots the computer on Sundays, unless a talk is near. `backup-dataset.sh` exports the dataset at 03:15 and keeps 14
 - `control-helper.sh`: the host side of the control page, which accepts a fixed list of words
-- `install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-decks.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-monday.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-remote.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
+- `install-timers.sh`, `install-calendars.sh`, `install-photos-drive.sh`, `install-decks.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`, `install-monday.sh`, `install-watchdog.sh`, `install-backup.sh`, `install-remote.sh` and `install-console.sh`: copy the unit files into place and turn on the timers, or the boot and shutdown screens. Run each once by hand, and again when its unit files change
 - `check-connection.sh`: one OK or FAIL line each for the computer's connection to Sanity, BAND, Docker and the kiosk
 - `check-calendars.sh`: lists the next 30 days of events and says which ones the Calendar filters hide. It needs Node, so it runs on a computer that has it
 

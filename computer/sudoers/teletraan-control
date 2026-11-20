@@ -13,7 +13,6 @@ Cmnd_Alias TELETRAAN_SCREEN = \
 Cmnd_Alias TELETRAAN_TIMERS = \
   /usr/bin/systemctl restart teletraan-calendars.timer, \
   /usr/bin/systemctl restart teletraan-monday.timer, \
-  /usr/bin/systemctl restart teletraan-slides.timer, \
   /usr/bin/systemctl restart teletraan-watchdog.timer, \
   /usr/bin/systemctl restart teletraan-nightly.timer, \
   /usr/bin/systemctl restart teletraan-reboot.timer, \

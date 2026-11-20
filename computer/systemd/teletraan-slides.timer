@@ -1,9 +1,0 @@
-[Unit]
-Description=Download the slides for the next talks every 2 minutes
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=2min
-
-[Install]
-WantedBy=timers.target

@@ -29,9 +29,6 @@ installing anything on the computer, and whenever a step needs a login or a key.
   calendars where the dashboard reads them. After each run, failed or not, the
   service also makes the document that the Calendars page in Studio shows
   (`docs/calendars-page.md`).
-- A timer runs `slides-sync.sh` every 2 minutes. It downloads the slides of
-  the talks that are coming up and saves them as pictures where the dashboard
-  reads them.
 - A timer wakes `frc-sync.sh` every 5 minutes. The script reads the public FRC
   data of each team and writes it into Sanity, about once an hour, or about every
   5 minutes while a team has an event on (`docs/frc-feed.md`).
@@ -94,14 +91,12 @@ to attach the data folder to.
 | `scripts/check-connection.sh` | Checks DNS, Sanity, CORS, BAND, the web container, the kiosk and the clock, one OK or FAIL line each. Run it over SSH, see "Checking the connection" in `docs/rebuilding-the-computer.md` |
 | `scripts/check-calendars.sh` | Lists each event of the next 30 days of every calendar in `local.env`, SHOWN or HIDDEN with the name of the Calendar filter that hides it, and the counts. A KIND line gives the kind of the calendar, or no chip when it has none. A SHOWN line also gives the page of the Events panel and the kind of the calendar. It only reads and prints no address. It needs Node, which the computer does not have unless it was installed for the Calendars page, so run it on a computer that has Node and a copy of `local.env` |
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
-| `scripts/slides-sync.sh` | Downloads the slides of the coming talks from Google Slides, turns them into pictures, and saves them with a `manifest.json`. `slides-sync.sh --test <link>` tries one deck and deletes what it made. Needs `poppler-utils`, `curl` and `jq` |
 | `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in `scripts/frc-contract.sh`. The script is in parts that it reads from the same folder: `frc-contract.sh`, `frc-requests.sh`, `frc-modes.sh`, `frc-read.sh` and `frc-programs.sh`. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
 | `scripts/monday-sync.sh` | Reads Robotics Tasks and Completed Tasks by their numbers, at most 10 requests a run and 900 a day, writes one task document for each parent item, deletes the tasks whose item is gone, and writes the document `monday-status` with the last read, the last problem and the open and done tasks of each department. Every board number, column id, label number, question and place in an answer is in `scripts/monday-contract.sh`. The script is in parts that it reads from the same folder: `monday-contract.sh`, `monday-requests.sh`, `monday-check.sh` and `monday-programs.sh`. `monday-sync.sh --check` tries the token, and `monday-sync.sh --debug <board number>` prints how Monday answers for the first two items of a board. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
 | `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. `status-write.sh --print` needs no key: it reads the document back and shows each time with its age. The calendar and slides services and `kiosk.sh` run it, see "Showing what the computer did in Studio" in `docs/rebuilding-the-computer.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
-| `scripts/install-slides.sh` | Copies the two slides unit files into place and turns on the slides timer. Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/photos-drive-sync.sh` | Copies the pictures of the Google Drive folder named on the Photos page in Studio into the data folder, with a manifest. Needs `GOOGLE_API_KEY` (docs/photos-drive.md) |
 | `scripts/install-photos-drive.sh` | Copies the two Drive photo unit files into place and turns on the timer (every 15 minutes). Does not install the packages, it prints the `apt install` line when one is missing |
 | `scripts/decks-sync.sh` | Lists the presentations of one Google Drive folder and makes the pictures of each deck, for the list on the TV and on the control page. `--watch` looks every 20 seconds (docs/presentations-drive.md) |
@@ -180,7 +175,6 @@ Run these on the Teletraan computer. A command that starts with `sudo` needs adm
     systemctl list-timers 'teletraan-*'                    when do the timers run next?
     sudo journalctl -u teletraan-pull.service -n 30        what did the last pulls do?
     sudo journalctl -u teletraan-calendars.service -n 30   what did the last downloads do?
-    sudo journalctl -u teletraan-slides.service -n 30      what did the last slide downloads do?
     sudo journalctl -u teletraan-frc.service -n 30         what did the last FRC runs do?
     sudo journalctl -u teletraan-monday.service -n 30      what did the last Monday runs do?
     sudo journalctl -u teletraan-watchdog.service -n 30    why did the screen restart?
@@ -206,8 +200,6 @@ happens.
   `sudo systemctl restart teletraan-kiosk.service` if the kiosk file changed
 - a calendar file in `systemd/` changed on a computer without the pull timer: run
   `sudo /opt/teletraan/computer/scripts/install-calendars.sh`
-- a slides file in `systemd/` changed: run
-  `sudo /opt/teletraan/computer/scripts/install-slides.sh`
 - a Drive photos file in `systemd/` changed: run
   `sudo /opt/teletraan/computer/scripts/install-photos-drive.sh`
 - `systemd/teletraan-decks.service` changed: run
@@ -231,7 +223,7 @@ happens.
   is a copy of it. `console/shutdown.txt` changed: nothing to do, the unit
   reads the file when the Teletraan computer stops. `teletraan-console.service` changed: run
   the same script
-- `pull.sh`, `fetch-calendars.sh`, `slides-sync.sh`, `frc-sync.sh` or `monday-sync.sh` changed: nothing to do,
+- `pull.sh`, `fetch-calendars.sh`, `frc-sync.sh` or `monday-sync.sh` changed: nothing to do,
   the next run uses the new script
 - `kiosk.sh` changed: restart the kiosk service, because the browser only
   reads the script when it starts
@@ -247,7 +239,7 @@ the step that uses each one, is the table at the top of
 ## Names this folder assumes
 
 The unit files use the repository location `/opt/teletraan`.
-`install-timers.sh`, `install-calendars.sh`, `install-slides.sh`, `install-photos-drive.sh`, `install-decks.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`,
+`install-timers.sh`, `install-calendars.sh`, `install-photos-drive.sh`, `install-decks.sh`, `install-frc.sh`, `install-news.sh`, `install-match13.sh`,
 `install-monday.sh`, `install-watchdog.sh`, `install-nightly.sh`, `install-backup.sh` and `install-console.sh` stop with an explanation if the repository is somewhere
 else. The account is not named
 in the unit files: they say `ACCOUNT`, and the install script fills in the

@@ -140,7 +140,6 @@ EmulationStation comes back as it was.
 | `teletraan-pi-sync` | Reads the content and the weather and keeps the last good copy | no |
 | `teletraan-pi-calendars` | Downloads the team calendars, every 15 minutes | the calendar addresses |
 | `teletraan-pi-photos` | Copies the Drive photo folder, every 15 minutes | `GOOGLE_API_KEY` |
-| `teletraan-pi-slides` | Downloads the slides of the next talks, every 2 minutes | no |
 | `teletraan-pi-control` | The control page, on this computer only | no |
 | `teletraan-pi-frc` | Reads The Blue Alliance and Statbotics and writes the competition feed (`frc-status`) into Sanity, about hourly, every 5 minutes during an event | `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` |
 

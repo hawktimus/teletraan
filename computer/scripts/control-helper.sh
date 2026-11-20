@@ -98,7 +98,7 @@ case $word in
   restart-services)
     # The web server is a container here, and a restart makes it read the release that current points at. It goes
     # last, because the page reaches this helper through it and loses its connection when it restarts.
-    for timer in calendars monday slides watchdog nightly reboot netwatch heartbeat; do
+    for timer in calendars monday watchdog nightly reboot netwatch heartbeat; do
       sudo -n "$systemctl_bin" restart "teletraan-$timer.timer" > /dev/null 2>&1 || true
     done
     # The sync service is not a timer. It reads Sanity and the weather for the dashboard (docs/OPERATIONS.md).

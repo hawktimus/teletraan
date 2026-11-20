@@ -1,7 +1,0 @@
-[Unit]
-Description=Download the slides of the next talks for Teletraan I on the Raspberry Pi, every 2min
-PartOf=teletraan-pi.target
-
-[Timer]
-OnActiveSec=20s
-OnUnitActiveSec=2min
