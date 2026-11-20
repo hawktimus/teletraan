@@ -60,7 +60,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|reboot|cleanup|network|sync|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|problems|reboot|cleanup|network|sync|restart N" >&2
   exit 2
 }
 
@@ -92,6 +92,7 @@ case $1 in
   photos-drive) field=photosDriveAt ;;
   supervisor) field=supervisorWords ;;
   match13) field=match13At ;;
+  problems) field=dataProblems ;;
   --print) field=print ;;
   *) usage ;;
 esac
@@ -474,6 +475,19 @@ elif [ "$field" = newsAt ]; then
   fi
   body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"newsAt":"%s","newsCount":%s}}}]}' \
     "$document" "$document" "$at" "$count")
+elif [ "$field" = dataProblems ]; then
+  # How many rows the last read of the content repaired or left as they are (data/live/data-problems.json, written by
+  # the sync service). Only the number is sent, never a row: the list stays on the computer and the control page.
+  data=$(setting TELETRAAN_DATA)
+  file="${data:-/var/lib/teletraan/data}/data-problems.json"
+  [ -f "$file" ] || exit 0
+  count=$(head -c 400 "$file" | sed -n 's/.*"count":\([0-9]*\),"sources".*/\1/p')
+  if ! printf '%s' "$count" | grep -Eq '^[0-9]{1,6}$'; then
+    echo "status: data-problems.json is not the file the sync service writes, so nothing was written." >&2
+    exit 1
+  fi
+  body=$(printf '{"mutations":[{"createIfNotExists":{"_id":"%s","_type":"status"}},{"patch":{"id":"%s","set":{"dataProblems":%s}}}]}' \
+    "$document" "$document" "$count")
 elif [ "$field" = lastContentSeenAt ]; then
   value=$(newest_update)
   if ! printf '%s' "$value" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$'; then

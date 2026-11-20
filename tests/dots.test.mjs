@@ -22,9 +22,9 @@ check('Monday is green inside twice mondayEveryMinutes, amber past it', () => {
   assert.equal(dot(10, 30), 'green');
   assert.equal(dot(60, 30), 'green');
   assert.equal(dot(61, 30), 'amber');
-  assert.equal(dot(11, 5), 'amber');
-  assert.equal(dot(9, 5), 'green');
-  assert.equal(mondayEvery({}), 30);
+  assert.equal(dot(61, 5), 'amber', 'a 5 minute setting is late only after an hour: Monday is read every 30 minutes at night');
+  assert.equal(dot(59, 5), 'green');
+  assert.equal(mondayEvery({}), 5);
   assert.equal(mondayEvery({ mondayEveryMinutes: 500 }), 120);
 });
 

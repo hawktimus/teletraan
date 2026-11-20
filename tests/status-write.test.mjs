@@ -597,6 +597,22 @@ test('network sends the five fields of network/status.json, removes the empty on
   assert.equal(t.run(['network', 'x']).status, 2);
 });
 
+test('problems sends the count of rows to look at and no row, and nothing when the file is not there or is not the one the sync service writes', () => {
+  const place = setup('problems', { localEnv: "TELETRAAN_DATA='" + path.join(work, 'problems-data') + "'\n" + goodEnv });
+  const data = path.join(work, 'problems-data');
+  fs.mkdirSync(data, { recursive: true });
+  assert.equal(place.run(['problems']).status, 0);
+  assert.equal(place.hasBody(), false, 'no file, nothing sent');
+  fs.writeFileSync(path.join(data, 'data-problems.json'), JSON.stringify({ generatedAt: '2026-11-17T12:00:00Z', count: 4, sources: { sanity: { count: 4, items: [{ where: 'task: Secret name', what: 'x', action: 'y' }] } } }));
+  const sent = place.run(['problems']);
+  assert.equal(sent.status, 0, sent.errors);
+  const set = place.body().mutations[1].patch.set;
+  assert.deepEqual(set, { dataProblems: 4 });
+  assert.ok(!JSON.stringify(place.body()).includes('Secret name'), 'a row never leaves the computer');
+  fs.writeFileSync(path.join(data, 'data-problems.json'), 'not the file');
+  assert.equal(place.run(['problems']).status, 1);
+});
+
 let failures = 0;
 try {
   for (const entry of tests) {

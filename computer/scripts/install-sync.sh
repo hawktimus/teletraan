@@ -29,7 +29,7 @@ for unit in $list; do
     exit 1
   fi
 done
-for file in "$computer/scripts/sync-service.mjs" "$computer/scripts/net-probe.mjs" "$computer/scripts/jsonlog.mjs" "$computer/scripts/heartbeat.sh" "$computer/scripts/notify.sh" "$computer/logrotate/teletraan"; do
+for file in "$computer/scripts/sync-service.mjs" "$computer/scripts/net-probe.mjs" "$computer/scripts/jsonlog.mjs" "$computer/scripts/heartbeat.sh" "$computer/scripts/notify.sh" "$computer/logrotate/teletraan" "$computer/tmpfiles/teletraan.conf"; do
   if [ ! -s "$file" ]; then
     echo "$file is missing. Pull the newest files first." >&2
     exit 1
@@ -121,6 +121,12 @@ fi
 # The dashboard shows a file only if the web server can read it
 mkdir -p "$data"
 chown "$account:$group" "$data"
+
+# The folders are made again at every boot, so a state folder that was cleaned or a disk that was replaced does not leave the
+# web container without the folder it mounts
+mkdir -p "$root/etc/tmpfiles.d"
+sed -e "s/ACCOUNT/$account/g" -e "s#DATA#$data#g" "$computer/tmpfiles/teletraan.conf" > "$root/etc/tmpfiles.d/teletraan.conf"
+chmod 644 "$root/etc/tmpfiles.d/teletraan.conf"
 
 systemctl daemon-reload
 systemctl enable --now teletraan-sync.service teletraan-heartbeat.timer

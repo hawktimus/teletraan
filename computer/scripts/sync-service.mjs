@@ -27,6 +27,8 @@ import { forecastUrl, parseForecast } from '../../dashboard/core/weather.js';
 import { logoUrl, photoUrl, screenPhotoUrl, tidyPhoto } from '../../dashboard/core/images.js';
 import { logEvent } from './jsonlog.mjs';
 import { probeAndLog } from './net-probe.mjs';
+import { checkContent, problemsFile } from './ingest-validate.mjs';
+import { execFile } from 'node:child_process';
 
 const service = 'sync';
 export const sourceNames = ['sanity', 'weather', 'images', 'monday', 'competition', 'calendars'];
@@ -173,6 +175,7 @@ export function createSync(options = {}) {
   const sanityToken = () => (typeof options.token === 'string' ? options.token : readSanityToken(envFile));
   const imageFolder = path.join(dataDir, 'images');
   const statusFile = path.join(dataDir, 'sync-status.json');
+  const healthFile = options.healthFile || process.env.SYNC_HEALTH_FILE || '/var/lib/teletraan/health.json';
   const netwatchFile = options.netwatchFile || process.env.SYNC_NETWATCH_FILE || '/var/lib/teletraan/netwatch.json';
 
   const state = {};
@@ -208,6 +211,10 @@ export function createSync(options = {}) {
   };
 
   const stamp = () => new Date(now()).toISOString();
+  // status-write.sh problems sends the count of the rows to look at. A failure never stops the read.
+  const tellStudio = options.tellStudio || (options.noProbe ? () => {} : () => {
+    execFile(path.join(path.dirname(fileURLToPath(import.meta.url)), 'status-write.sh'), ['problems'], { timeout: 60000 }, () => {});
+  });
   // When this service started. The dots on the wall and on the control page say "not known yet", not "late", for the
   // first minutes, until the first reads land.
   const startedAt = stamp();
@@ -291,10 +298,20 @@ export function createSync(options = {}) {
       if (force || due || signature !== memory.signature || !memory.result) {
         const full = await fetchBody(queryUrl(contentQuery), timing.requestLimit, true);
         if (!full || typeof full.result !== 'object' || full.result === null) throw failure('sanity sent no content');
-        memory.result = full.result;
+        // What was sent is checked first. An answer that is empty or the wrong shape never replaces the last good content, so
+        // the wall keeps what it has; a value that can be repaired is repaired and every repair is listed (ingest-validate.mjs)
+        const checked = checkContent(full.result, memory.result);
+        if (!checked.ok) throw failure(checked.reason);
+        memory.result = checked.result;
         memory.signature = signature;
         memory.lastFullRead = now();
-        writeFileAtomic(path.join(dataDir, 'content.json'), JSON.stringify({ syncedAt: stamp(), result: withStuckNotes(full.result, path.join(dataDir, 'monday', 'notes.json')) }));
+        writeFileAtomic(path.join(dataDir, 'content.json'), JSON.stringify({ syncedAt: stamp(), result: withStuckNotes(checked.result, path.join(dataDir, 'monday', 'notes.json')) }));
+        writeFileAtomic(path.join(dataDir, 'data-problems.json'), JSON.stringify(problemsFile(checked.problems, stamp())));
+        // The Studio status document gets the number, when it changes
+        if (checked.problems.length !== memory.problemCount) {
+          memory.problemCount = checked.problems.length;
+          tellStudio();
+        }
         wrote = true;
         logEvent(service, 'sanity', 'content_written', 'the content was read and written');
       } else if (now() - (memory.lastNote.sanity || 0) > timing.noteEveryWhenWell * 1000) {
@@ -460,9 +477,20 @@ export function createSync(options = {}) {
     return { ok: ok, since: ok ? null : memory.networkSince };
   }
 
+  // health.json is what the health timer writes every minute (computer/scripts/health.sh): one answer to "is the screen
+  // painting, is the display at its mode, is each service up". The names of the checks that fail go into sync-status.json, so the
+  // TV, the control page and the Studio read one file for what is wrong. Nothing here is a verdict of its own.
+  function healthSummary() {
+    const health = readJson(healthFile, null);
+    const checks = health && typeof health === 'object' && health.checks && typeof health.checks === 'object' ? health.checks : null;
+    if (!checks) return null;
+    const failing = Object.keys(checks).filter(name => checks[name] && checks[name].ok === false).slice(0, 12).map(name => oneLine(name));
+    return { ok: failing.length === 0, failing: failing, at: typeof health.generatedAt === 'string' ? health.generatedAt : null };
+  }
+
   function writeStatus() {
     readOthers();
-    const status = { generatedAt: stamp(), startedAt: startedAt, sources: {}, network: networkState() };
+    const status = { generatedAt: stamp(), startedAt: startedAt, sources: {}, network: networkState(), health: healthSummary() };
     sourceNames.forEach(name => {
       status.sources[name] = Object.assign({}, state[name]);
     });

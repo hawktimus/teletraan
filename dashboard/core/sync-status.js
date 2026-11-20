@@ -8,7 +8,7 @@
 // Nothing here ever shows an error. A file that cannot be read keeps the last answer, whose age then grows by itself.
 
 import { liveFolder } from '../config.js';
-import { factsFromSyncStatus } from './dots.js';
+import { factsFromSyncStatus, mondayQuietMinutes } from './dots.js';
 import { syncCheckSeconds, syncDownMinutes, syncSourceMinutes, syncStaleMinutes } from './constants.js';
 
 export const syncStatusFile = liveFolder + 'sync-status.json';
@@ -35,7 +35,7 @@ export function parseSyncStatus(raw) {
 // How old a source may be before it counts as late (amber) and as down (red), in minutes. A slow source (the calendars
 // every 15 minutes, Monday every 30 or more) is late after twice its own gap, so it is not late just for being slow.
 export function limitsOf(name, mondayMinutes) {
-  const every = name === 'monday' ? (mondayMinutes || syncSourceMinutes.monday) : syncSourceMinutes[name];
+  const every = name === 'monday' ? Math.max(mondayMinutes || syncSourceMinutes.monday, mondayQuietMinutes) : syncSourceMinutes[name];
   return { late: Math.max(syncStaleMinutes, 2 * every), down: Math.max(syncDownMinutes, 3 * every) };
 }
 

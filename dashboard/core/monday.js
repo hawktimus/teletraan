@@ -101,7 +101,7 @@ export function dayNumber(date) {
 // How old the board read is
 
 // How many minutes the Teletraan computer reads the boards apart. Dashboard Settings, Monday tab, 5 to 120, 30 when it is not set.
-const defaultEveryMinutes = 30;
+const defaultEveryMinutes = 5;
 
 export function everyMinutesOf(content) {
   const value = content && content.settings ? content.settings.mondayEveryMinutes : undefined;

@@ -22,6 +22,9 @@ import { isRecord } from './text.js';
 
 export const dotNames = ['monday', 'band', 'sanity', 'network'];
 
+// Between 11 pm and 6 am Monday is read every 30 minutes whatever the setting (computer/scripts/monday-contract.sh), so a dot
+// or the pill counts it late only after twice that.
+export const mondayQuietMinutes = 30;
 const bandMinutes = 15;
 const sanityMinutes = 5;
 const sanitySlackSeconds = 30;
@@ -59,10 +62,10 @@ export function dotState(input, now = new Date()) {
   return { color: 'green', reason: 'The last read was ' + Math.max(0, age) + ' minutes ago.' };
 }
 
-// The time the Monday reads are apart, from Dashboard Settings (5 to 120, 30 when not set)
+// The time the Monday reads are apart, from Dashboard Settings (5 to 120, 5 when not set)
 export function mondayEvery(settings) {
   const value = isRecord(settings) ? settings.mondayEveryMinutes : undefined;
-  return typeof value === 'number' && isFinite(value) ? Math.min(120, Math.max(5, Math.round(value))) : 30;
+  return typeof value === 'number' && isFinite(value) ? Math.min(120, Math.max(5, Math.round(value))) : 5;
 }
 
 // The dots from what the Teletraan computer and Sanity say. Each field of facts is optional.
@@ -82,7 +85,7 @@ export function dotStates(facts, now = new Date()) {
   const calendarErrors = typeof f.calendarErrors === 'number' ? f.calendarErrors : 0;
 
   return {
-    monday: dotState({ at: monday.lastSyncAt, error: monday.lastError, limit: every * 2, startedAt: f.startedAt }, now),
+    monday: dotState({ at: monday.lastSyncAt, error: monday.lastError, limit: Math.max(every, mondayQuietMinutes) * 2, startedAt: f.startedAt }, now),
     band: dotState({ at: f.calendarAt, error: calendarErrors > 0 ? calendarErrors + ' calendar(s) could not be downloaded' : '', limit: bandMinutes * 2, startedAt: f.startedAt }, now),
     sanity: dotState({ at: f.sanityAt, error: f.sanityFailed === true ? 'the content could not be read' : '', limit: sanityMinutes, slack: sanitySlackSeconds, startedAt: f.startedAt }, now),
     ...networkDot(f.network, now),

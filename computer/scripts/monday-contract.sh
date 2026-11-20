@@ -155,7 +155,13 @@ rows_per_write=100
 default_zone=America/New_York
 
 # The read interval, 5 to 120 minutes, and the starting value
-every_default=30
+every_default=5
+# Between these hours of the time zone of the screen the setting applies. Outside them (the wall is black from 23:30 to 11:30 and
+# nobody edits boards at night) a read is made every 30 minutes. A 5 minute setting then costs about 870 requests a day, inside the
+# daily limit below, and not the 1,150 that would use the limit up in the evening.
+active_from=6
+active_until=23
+quiet_every=30
 
 # What the Teletraan computer needs from Sanity: the time zone, the read interval, the teams and Team leads,
 # the tasks it wrote earlier and what it knows of its own last read. The dataset is public, so no token is

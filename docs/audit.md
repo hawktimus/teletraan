@@ -122,3 +122,13 @@ Part A of the build that followed this audit fixed the items below. Where the co
 | 18 | Text size | Partly. The 36 px and 40 px cases are named in `tests/house-rules.test.mjs`, and the test now also reads `base.css` and `monday.css`. The 24 px labels of the bar layout war clock were not raised: at 44 px each cell needs 200 px instead of 160 and the clock 886 px instead of 766, which no longer fits beside the team name and changes the numbers that `docs/layouts.md` and the layout tests hold. It needs a decision (see the notes of the commit). |
 | 19 | Linux | The test helpers now start bash scripts with `/bin/bash`, and the syntax check reads each file with the shell its first line names. The full suite was run on this Mac. It has not been run on Linux yet. |
 | 20 | Tests and hygiene | Done. A DST test for repeating events, tests for `multipart.js`, the new words in the sweep list, the docs fixed and dated. The version of `fflate` is not written anywhere in the repository, so the header line says that instead of guessing. |
+
+## Part B: single status source and ingest validation
+
+| Item | State |
+|---|---|
+| One status source | `sync-status.json` is the one file the TV dots and the control page read, and it now carries the failing health checks (`health`). The Studio status document still gets its words from `status-write.sh`; reading all three from `health.json` alone was not done. |
+| Monday every 5 minutes | Done, with a 30 minute gap between 11 pm and 6 am so the daily budget of 900 holds (docs/OPERATIONS.md). The quiet-hours rule was tested only through the settings and the dots, not by a fake clock in `monday-sync.sh`. |
+| Ingest validation | Done: `ingest-validate.mjs`, `data-problems.json`, Control under each source, the count in the Studio status document. |
+| Required keys, status every 60 s | Done. The status file was already written every 60 seconds. |
+| tmpfiles.d | Done (`computer/tmpfiles/teletraan.conf`). |

@@ -11,6 +11,7 @@ import path from 'node:path';
 import { test, finish } from './helpers/runner.mjs';
 import { makeWorld } from './helpers/control-world.mjs';
 import * as overviewRoute from '../control/routes/overview.js';
+import { problemsHtml } from '../control/static/areas/update-sync.js';
 import * as statusRoute from '../control/routes/status.js';
 import { createService, readConfig } from '../control/server.js';
 import { isSecure, sameOrigin, triesAllowed } from '../control/lib/auth.js';
@@ -109,6 +110,19 @@ test('when the internet is down only the network is listed, from the watchdog, t
   const bare = overview({ netwatch: null, syncStatus: null });
   assert.equal(buildDots(bare, now).find(dot => dot.id === 'network').state, 'ok', 'the helper says the network is ok');
   assert.equal(buildBanner(null, now).state, 'unknown');
+});
+
+test('the data problems of the last read are cut down for the page, and a row to look at is said in words under its source', () => {
+  assert.deepEqual(overviewRoute.cleanProblems(null), { present: false, count: 0, sources: {} });
+  const clean = overviewRoute.cleanProblems({ count: 3, generatedAt: '2026-11-17T12:00:00Z', secret: 'x', sources: { monday: { count: 2, items: Array.from({ length: 30 }, (i, n) => ({ where: 'task ' + n, what: 'w'.repeat(500), action: 'a', extra: 1 })) } } });
+  assert.equal(clean.count, 3);
+  assert.equal(clean.sources.monday.count, 2);
+  assert.equal(clean.sources.monday.items.length, 20);
+  assert.ok(clean.sources.monday.items[0].what.length <= 160 && !('extra' in clean.sources.monday.items[0]) && !('secret' in clean));
+  const html = problemsHtml({ count: 3, items: [{ where: 'task: <b>x</b>', what: 'department "Design/CNC" is not one of the nine', action: 'no Monday panel shows it' }] });
+  assert.ok(html.includes('3 rows need a look') && html.includes('2 more.') && html.includes('&lt;b&gt;') && html.includes('The TV is not told'));
+  assert.equal(problemsHtml(null), '');
+  assert.equal(problemsHtml({ count: 0, items: [] }), '');
 });
 
 test('no screen report yet is not known for the first 30 seconds after this service starts, and late after that', () => {

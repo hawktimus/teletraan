@@ -207,7 +207,7 @@ await check('sync-status.json has the shape the status poller reads, every sourc
   await w.sync.syncWeather();
   fs.writeFileSync(path.join(w.folder, 'calendar-sync.txt'), 'team|2026-10-30T14:58:00Z|\nshop|2026-10-30T14:50:00Z|the server took too long to answer\n');
   const status = w.sync.writeStatus();
-  assert.deepEqual(Object.keys(status), ['generatedAt', 'startedAt', 'sources', 'network']);
+  assert.deepEqual(Object.keys(status), ['generatedAt', 'startedAt', 'sources', 'network', 'health']);
   assert.deepEqual(Object.keys(status.sources), ['sanity', 'weather', 'images', 'monday', 'competition', 'calendars']);
   Object.values(status.sources).forEach(source => assert.deepEqual(Object.keys(source), ['lastSuccessAt', 'lastFailureAt', 'lastFailureReason']));
   assert.equal(status.sources.monday.lastSuccessAt, '2026-10-30T12:00:00Z', 'read from the monday-status document in the content');
@@ -289,6 +289,17 @@ await check('Monday is read from the file monday-sync.sh leaves, before the Sani
   w.sync.writeStatus();
   assert.equal(w.read('sync-status.json').sources.monday.lastFailureReason, 'Monday said no');
   assert.ok(w.read('sync-status.json').startedAt, 'the status says when the service started');
+});
+
+await check('sync-status.json carries the names of the health checks that fail, from health.json, and null when there is none', async () => {
+  const w = world();
+  const file = path.join(w.folder, 'health.json');
+  const withHealth = createSync({ dataDir: w.folder, sanityBase: 'http://sanity.test', weatherUrl: 'http://weather.test/', now: () => w.time, fetch: w.fetch, noProbe: true, healthFile: file });
+  assert.equal(withHealth.writeStatus().health, null, 'no health file yet');
+  fs.writeFileSync(file, JSON.stringify({ generatedAt: '2026-10-30T14:59:00Z', checks: { frames: { ok: true }, display: { ok: false, detail: 'x' }, network: { ok: true } } }));
+  assert.deepEqual(withHealth.writeStatus().health, { ok: false, failing: ['display'], at: '2026-10-30T14:59:00Z' });
+  fs.writeFileSync(file, '{not json');
+  assert.equal(withHealth.writeStatus().health, null);
 });
 
 await check('the read token is the read key, else the write key, else none, and a placeholder is none', async () => {

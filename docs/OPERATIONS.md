@@ -52,6 +52,20 @@ The laptop has no sync service. To fill `dashboard/data/live/` once, run `make s
 
 It needs `curl`, `jq` and Node 18 or newer, and does not install them.
 
+### What the sync service checks before it writes
+
+Before an answer from Sanity becomes `content.json` (`computer/scripts/ingest-validate.mjs`):
+
+- An answer that is not an object, has a list that is not a list, has no settings document after one that had it, or is empty after one with rows is refused. The wall keeps its last good content, the Sanity dot says why, and the next read tries again. A first read with an empty dataset is accepted, so a new computer is not stuck.
+- A date and time with no zone (a talk, an announcement, a finished task) is read in the time zone of the Look page and written as an ISO time with a zone. A value that is not a date is left as it is. A Monday task whose department is not one of the nine is listed.
+- Nothing is dropped without a line. `data-problems.json` in the data folder lists every repair and every row left as it is, by source, with the whole count and up to 200 rows. Control, Update shows them under each source and under Content from Sanity; the Studio status document gets the number only (Rows to look at, written by `status-write.sh problems`). The TV never shows them.
+- `sync-status.json` also carries `health`: the names of the health checks that fail, from `health.json`. It is rewritten every 60 seconds.
+- `/etc/tmpfiles.d/teletraan.conf` (from `computer/tmpfiles/teletraan.conf`, installed by `install-sync.sh`) makes the log, state and data folders at every boot, so the web container always has the folder it mounts.
+
+### Monday reads and what they cost
+
+Monday is read every 5 minutes by default (Dashboard Settings, Monday, How often, 5 to 120). A read is 4 requests: the two task boards, the projects board and the names. From 6 am to 11 pm of the time zone of the screen that is 204 reads, about 820 requests a day; from 11 pm to 6 am the gap is 30 minutes, 14 reads, 56 requests. The total is about 870 a day, and the computer stops itself at 900 (`daily_limit` in `monday-contract.sh`) and starts again at midnight. A Sync Monday now press adds 4. The dot and the pill count Monday late after twice the larger of the setting and 30 minutes.
+
 ### Name servers
 
 The name servers are desired state. `computer/config/network.conf` holds three names, `DNS_PRIMARY` (8.8.8.8), `DNS_SECONDARY` (8.8.4.4) and `DNS_ENFORCE` (yes). The installer copies it to `/usr/local/etc/teletraan-network.conf`, owned by root, only when that file is not there, so a change made on the computer is kept. `teletraan-net` (`computer/scripts/net-root.sh`) reads it for those three names only and never runs it. It uses it in four places:

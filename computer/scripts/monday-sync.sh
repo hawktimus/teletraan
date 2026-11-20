@@ -122,6 +122,12 @@ now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 # How often the Teletraan computer reads, from 5 to 120 minutes, and how old the last read is. The timer wakes
 # this script every 5 minutes, and a run that comes before the setting says so ends without a word.
 every=$(jq -r --argjson start "$every_default" '.result.every | if type == "number" and . >= 5 and . <= 120 then floor else $start end' "$work/sanity.json")
+# Outside the active hours the gap is an hour at least
+hour=$(TZ="$zone" date +%H)
+hour=$((10#$hour))
+if [ "$hour" -lt "$active_from" ] || [ "$hour" -ge "$active_until" ]; then
+  [ "$every" -ge "$quiet_every" ] || every=$quiet_every
+fi
 due=$(jq -r --arg now "$now_iso" --argjson every "$every" --argjson slack "$slack_seconds" '
   def seconds: sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601;
   (try ((($now | seconds) - (.result.known.lastSyncAt | seconds))) catch null) as $age

@@ -72,6 +72,7 @@ export default defineType({
     textField('netwatchLastAction', 'Last network action', 'What netwatch did last: none, restart_network, bounce_interface or reboot. The Teletraan computer writes this.'),
     timeField('netwatchLastActionAt', 'Last network action at', 'When netwatch last took an action. The Teletraan computer writes this.'),
     timeField('newsAt', 'Last news read', 'When the Teletraan computer last read the FIRST news headlines. The computer writes this.'),
+    defineField({ name: 'dataProblems', title: 'Rows to look at', type: 'number', description: 'How many rows the last read of the content repaired or left as they are. The list is on the control page. The Teletraan computer writes this.' }),
     defineField({ name: 'newsCount', title: 'News headlines', type: 'number', description: 'How many headlines the last read of the FIRST news kept. The Teletraan computer writes this.' }),
   ],
   preview: {

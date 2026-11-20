@@ -26,7 +26,7 @@ export const syncDownMinutes = 30;
 // How often each source is read, in minutes. Monday is read by its own setting (Dashboard Settings, Monday tab).
 // The competition feed is written to Sanity when it changes and at least every 45 minutes (computer/scripts/frc-contract.sh),
 // and a quiet run is 50 minutes apart, so its time can be an hour old while nothing is wrong: 35 makes it late after 70.
-export const syncSourceMinutes = { sanity: 5, weather: 15, images: 5, monday: 30, competition: 35, calendars: 15 };
+export const syncSourceMinutes = { sanity: 5, weather: 15, images: 5, monday: 5, competition: 35, calendars: 15 };
 
 // The competition window (core/competition.js, docs/frc-feed.md). In Auto and in Before and after, nothing about a competition
 // draws until this many days before the next event of the team starts, and nothing after this many days from the end of the

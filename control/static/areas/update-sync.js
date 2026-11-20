@@ -16,6 +16,14 @@ import { switchHtml } from '../choice.js';
 import { make } from './actions.js';
 import { stickyBar } from './sticky.js';
 
+// The rows the sync service repaired or left as they are in its last read, for one source: a count and the first rows, in plain words
+export function problemsHtml(group) {
+  if (!group || !group.count) return '';
+  const rows = (group.items || []).map(item => '<li><strong>' + esc(item.where) + '</strong>: ' + esc(item.what) + ' (' + esc(item.action) + ')</li>').join('');
+  const more = group.count > (group.items || []).length ? '<p class="muted">' + (group.count - group.items.length) + ' more.</p>' : '';
+  return '<details class="disclosure data-found"><summary>' + group.count + (group.count === 1 ? ' row needs a look' : ' rows need a look') + '</summary><ul>' + rows + '</ul>' + more + '<p class="muted">The TV is not told about these. Fix the row at its source, in Monday, Band or the Studio.</p></details>';
+}
+
 const chipWords = { ok: 'OK', failed: 'Failed', never: 'Not run yet', syncing: 'Syncing', skipped: 'Skipped' };
 const chipIcons = { ok: 'ok', failed: 'bad', never: 'unknown', syncing: 'working', skipped: 'warn' };
 const lineStates = { ok: 'ok', bad: 'failed', skipped: 'skipped' };
@@ -30,7 +38,8 @@ export function mountSync(box) {
   root.innerHTML = '<section class="card sync-all" aria-labelledby="sync-all-title"><h3 id="sync-all-title">Sync everything</h3>' +
     '<p class="muted">Reads every source now, one after another: calendars, Monday, competition, news, Match13 and Drive photos. One that fails does not stop the others. A source switched off below is skipped.</p>' +
     '<div data-all></div><div class="sync-results" data-results aria-live="polite"></div></section>' +
-    '<div class="source-grid" data-sources></div>';
+    '<div class="source-grid" data-sources></div>' +
+    '<section class="card" aria-labelledby="content-found-title"><h3 id="content-found-title">Content from Sanity</h3><p class="muted">What the computer repaired or left as it is when it read the content: a time with no zone, a date that is not a date.</p><div data-content-found></div></section>';
   box.append(root);
 
   const all = make('syncEverything');
@@ -44,7 +53,7 @@ export function mountSync(box) {
     const card = el('article', 'source card');
     card.dataset.source = item.target;
     card.innerHTML = '<div class="source-head"><h3>' + esc(item.name) + '</h3><span class="chip" data-chip></span></div>' +
-      '<p class="source-when" data-when></p><div class="source-problem" data-problem hidden></div><div class="source-foot"><div data-sync></div>' +
+      '<p class="source-when" data-when></p><div class="source-problem" data-problem hidden></div><div data-found></div><div class="source-foot"><div data-sync></div>' +
       switchHtml({ checked: isIncluded(item.target), label: 'Include in Sync everything', attrs: 'data-include="' + esc(item.target) + '"' }) + '</div>';
     const own = actionButton({
       id: 'sync-' + item.target, label: 'Sync now', doing: 'Syncing ' + item.name, variant: 'secondary', icon: 'sync',
@@ -73,6 +82,8 @@ export function mountSync(box) {
     chipBox.innerHTML = stateIcon(chipIcons[chip], 16) + '<span>' + esc(chipWords[chip]) + '</span>';
     const facts = overview ? sourceFacts(overview, item.target) : { lastGoodAt: '', failure: null };
     card.querySelector('[data-when]').textContent = facts.lastGoodAt ? 'Last worked: ' + whenWords(facts.lastGoodAt, now) : overview ? 'No good read yet.' : 'Waiting for the computer.';
+    const found = overview && overview.dataProblems && overview.dataProblems.sources ? overview.dataProblems.sources[item.target] : null;
+    card.querySelector('[data-found]').innerHTML = problemsHtml(found);
     const problem = card.querySelector('[data-problem]');
     if (facts.failure && overview) {
       const said = plainProblem({ source: item.target, reason: facts.failure.reason, lastGoodAt: facts.lastGoodAt, networkDown: networkDown(overview) }, now);
@@ -88,6 +99,8 @@ export function mountSync(box) {
 
   function paint() {
     const now = new Date();
+    const sanityGroup = overview && overview.dataProblems && overview.dataProblems.sources ? overview.dataProblems.sources.sanity : null;
+    root.querySelector('[data-content-found]').innerHTML = problemsHtml(sanityGroup) || '<p class="muted">Nothing to look at.</p>';
     sources.forEach(item => paintCard(item, now));
   }
 

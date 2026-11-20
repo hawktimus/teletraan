@@ -5820,10 +5820,10 @@ function checkMondayTab() {
 
   // How often: 5 to 120 whole minutes, starting at 30, in the words given
   const every = at('mondayEveryMinutes');
-  need(problems, every && every.type === 'number' && every.title === 'How often' && every.initialValue === 30 && every.group === 'monday', 'mondayEveryMinutes should be a number titled How often that starts at 30, in the Monday tab');
-  need(problems, every && every.description === 'How often the Teletraan computer reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.', 'mondayEveryMinutes should say how often the computer reads, and what the free plan allows');
+  need(problems, every && every.type === 'number' && every.title === 'How often' && every.initialValue === 5 && every.group === 'monday', 'mondayEveryMinutes should be a number titled How often that starts at 5, in the Monday tab');
+  need(problems, every && /870 a day/.test(every.description || ''), 'mondayEveryMinutes should say how often the computer reads, and what it costs a day');
   ['min', 'max'].forEach(name => need(problems, constraintNamed(rulesOf(every), name) && constraintNamed(rulesOf(every), name).args[0] === (name === 'min' ? 5 : 120), 'mondayEveryMinutes needs ' + name + ' ' + (name === 'min' ? 5 : 120)));
-  need(problems, config.defaultSettings.mondayEveryMinutes === 30, 'config.js should start at 30 minutes');
+  need(problems, config.defaultSettings.mondayEveryMinutes === 5, 'config.js should start at 5 minutes');
 
   // The fields of the older sync are hidden, keep their stored names and no input of their own
   ['mondayTokenTest', 'mondayTaskBoard', 'mondayMilestoneBoard', 'mondayShowOwners', 'mondayBoards'].forEach(name => {

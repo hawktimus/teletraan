@@ -267,8 +267,8 @@ export function mondayFields() {
       title: 'How often',
       type: 'number',
       group: 'monday',
-      description: 'How often the Teletraan computer reads the boards. The free plan allows about 1,000 reads a day; 30 minutes uses about 150.',
-      initialValue: 30,
+      description: 'How often the Teletraan computer reads the boards. 4 requests a read: every 5 minutes is about 870 a day (30 apart from 11 pm to 6 am), inside the 900 allowed.',
+      initialValue: 5,
       validation: Rule => [Rule.integer().error('Use a whole number of minutes.'), Rule.min(5).error('Use 5 minutes or more.'), Rule.max(120).error('Use 120 minutes or less.')],
     }),
 

@@ -293,7 +293,7 @@ export const defaultSettings = {
   //   mondayTaskBoard, mondayMilestoneBoard, mondayBoards and mondayShowOwners
   //                         not read any more: the settings of the older sync, hidden in the Studio and kept so that nothing
   //                         typed is lost
-  mondayEveryMinutes: 30,
+  mondayEveryMinutes: 5,
   mondayTaskBoard: {
     boardId: '18435126893',
     departmentColumn: 'color_mm82nvea',

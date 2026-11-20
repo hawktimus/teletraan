@@ -61,6 +61,20 @@ export function cleanDns(raw) {
   };
 }
 
+// data-problems.json from the sync service (computer/scripts/ingest-validate.mjs): what was repaired or left as it is in the
+// last read, by source. The page lists the first rows of each source; the count is the whole number.
+export function cleanProblems(raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.count !== 'number') return { present: false, count: 0, sources: {} };
+  const sources = {};
+  const found = raw.sources && typeof raw.sources === 'object' ? raw.sources : {};
+  Object.keys(found).slice(0, 10).forEach(name => {
+    const group = found[name] || {};
+    const items = (Array.isArray(group.items) ? group.items : []).slice(0, 20).map(item => ({ where: text(item && item.where, 120), what: text(item && item.what, 160), action: text(item && item.action, 120) }));
+    sources[text(name, 20)] = { count: count(group.count), items: items };
+  });
+  return { present: true, count: count(raw.count), generatedAt: text(raw.generatedAt, 40) || null, sources: sources };
+}
+
 export function cleanNetwatch(raw) {
   if (!raw) return null;
   return {
@@ -140,6 +154,7 @@ export function register(router, ctx) {
       syncStatus: cleanSyncStatus(readJsonFile(path.join(ctx.dataDir, 'sync-status.json'))),
       netwatch: cleanNetwatch(readJsonFile(netwatchFile())),
       dns: cleanDns(readJsonFile(stateFile('dns.json'))),
+      dataProblems: cleanProblems(readJsonFile(path.join(ctx.dataDir, 'data-problems.json'))),
       health: cleanHealth(readJsonFile(stateFile('health.json')), readJsonFile(stateFile('supervisor.json'))),
       buildVersion: typeof ctx.buildVersion === 'string' ? ctx.buildVersion : '',
       remoteLast: cleanRemoteLast(readJsonFile(path.join(ctx.dataDir, 'remote-last.json'))),

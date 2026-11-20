@@ -441,6 +441,9 @@ await check('install-sync.sh makes the log folder and the rotation rule, copies 
   assert.match(rule, /su hawk hawk/);
   assert.ok(!rule.includes('ACCOUNT'));
   assert.ok(fs.statSync(path.join(root, 'var/log/teletraan')).isDirectory());
+  const tmpfiles = fs.readFileSync(path.join(root, 'etc/tmpfiles.d/teletraan.conf'), 'utf8');
+  assert.ok(tmpfiles.includes('d ' + path.join(root, 'data') + ' 0755 hawk hawk -') && tmpfiles.includes('d ' + path.join(root, 'data') + '/live 0755 hawk hawk -'), 'the data folder is made at every boot');
+  assert.ok(!/ACCOUNT|\bDATA\b/.test(tmpfiles.split('\n').filter(line => !line.startsWith('#')).join('\n')), 'nothing is left to fill in');
   const calls = fs.readFileSync(log, 'utf8');
   assert.ok(calls.includes('chown hawk:hawkgroup') && calls.includes('var/log/teletraan'));
   assert.ok(calls.includes('systemctl enable --now teletraan-sync.service teletraan-heartbeat.timer'));
