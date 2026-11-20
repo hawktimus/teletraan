@@ -195,6 +195,19 @@ test('which fit the panel uses: the photo\'s own fit, otherwise the setting, and
   });
 });
 
+test('smartFit: a photo shown whole is cut when little is lost, and kept whole when a lot would be', () => {
+  // body 1136 x 456 (ratio 2.49). A photo of the same shape loses nothing; a wide one loses a little
+  assert.equal(photos.smartFit(2000, 800, 1136, 456), 'fill');
+  assert.equal(photos.smartFit(1920, 1080, 1136, 456), 'whole', 'a 16:9 photo would lose 29 percent of its height');
+  assert.equal(photos.smartFit(3000, 1000, 1136, 456), 'fill', 'about 17 percent lost');
+  // a portrait photo would lose most of itself, so it stays whole
+  assert.equal(photos.smartFit(1000, 1500, 1136, 456), 'whole');
+  // the cut is the same either way round, and a size that is not a size changes nothing
+  assert.equal(photos.smartFit(1136, 456, 1136, 456), 'fill');
+  assert.equal(photos.smartFit(0, 0, 1136, 456), 'whole');
+  assert.equal(photos.smartFit(1000, 800, 0, 0), 'whole');
+});
+
 test('the caption and the credit are on one plate, and there is no plate when both are empty', () => {
   const photo = changes => Object.assign({ address: 'data/sample/photo-1.svg' }, changes);
 

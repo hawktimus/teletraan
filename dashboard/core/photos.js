@@ -40,6 +40,18 @@ export function fitOf(photo, settingFit) {
   return photoFits.includes(settingFit) ? settingFit : defaultSettings.photoFit;
 }
 
+// A photo shown whole leaves bars at its sides (or above and below) when its shape is not the body's. When
+// cutting it to the body would lose no more than this share of the picture, it is cut instead, so the body is
+// used; a bigger loss keeps it whole. Only a photo shown whole is looked at: fill stays fill.
+export const smartCutLimit = 0.25;
+
+export function smartFit(width, height, boxWidth, boxHeight) {
+  if (!(width > 0 && height > 0 && boxWidth > 0 && boxHeight > 0)) return 'whole';
+  const ratio = (width / height) / (boxWidth / boxHeight);
+  const kept = Math.min(ratio, 1 / ratio);
+  return 1 - kept <= smartCutLimit ? 'fill' : 'whole';
+}
+
 // The credit is a first name. Studio refuses a space, but a credit that got in
 // another way is cut at its first word, so a last name never reaches the screen.
 export function creditText(photo) {

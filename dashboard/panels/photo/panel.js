@@ -8,7 +8,7 @@
 import { escapeHtml, hasText } from '../../core/text.js';
 import { preloadImages } from '../../core/images.js';
 import { speeds } from '../../config.js';
-import { creditText, fitOf, makePhotoQueue, photoStay, photosToShow, photosAreReady, rowPlan, turnPlan, watchLoad } from '../../core/photos.js';
+import { creditText, fitOf, makePhotoQueue, photoStay, smartFit, photosToShow, photosAreReady, rowPlan, turnPlan, watchLoad } from '../../core/photos.js';
 
 const missingMarkup = '<div class="missing">NO PHOTO</div>';
 
@@ -54,6 +54,21 @@ function shotMarkup(photo, shot, settingFit) {
       </figure>`;
 }
 
+// A photo shown whole whose shape is near the body's is cut to the body instead, so no bars are left at its
+// sides. The size is only known once it has loaded. A photo that is cut keeps its hotspot like any other.
+function cutIfLittleIsLost(image, photos) {
+  const shot = image.closest && image.closest('.shot');
+  if (!shot || shot.dataset.fit !== 'whole') return;
+  const box = shot.getBoundingClientRect ? shot.getBoundingClientRect() : null;
+  if (!box || smartFit(image.naturalWidth, image.naturalHeight, box.width, box.height) !== 'fill') return;
+
+  shot.dataset.fit = 'fill';
+  const photo = photos.find(item => item.address === image.getAttribute('src'));
+  const style = photo ? pictureStyle(photo, 'fill') : '';
+  const match = /object-position:\s*([^"]+)/.exec(style);
+  if (match) image.style.objectPosition = match[1];
+}
+
 // A photo that cannot be loaded is taken out, and the ones after it move up a place.
 // If none is left the panel says so.
 function skipShot(shot) {
@@ -96,6 +111,7 @@ export function mount(host, content, page, step) {
     </section>`;
 
   host.querySelectorAll('.shot img').forEach(image => {
+    image.addEventListener('load', () => cutIfLittleIsLost(image, turn.photos));
     image.addEventListener('error', () => skipShot(image.closest('.shot')));
     // A host that never answers sends no error, and the frame would wait for ever for a picture that is not coming
     watchLoad(image, loadSeconds, () => skipShot(image.closest('.shot')));

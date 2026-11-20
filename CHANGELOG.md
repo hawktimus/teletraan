@@ -3,6 +3,10 @@
 Teletraan I is named by a build version (the `VERSION` file), not by numbered rounds. The newest build is first. Each
 line says what changed for the people who use the screen, not how it was built.
 
+## Unreleased
+
+- **Photos shown whole fill the frame better.** A photo whose shape is close to the frame's is now cut to fit, so the purple side bars disappear. A photo that would lose more than a quarter of itself stays whole.
+
 ## 1.3.0 — the audit fixes, the Monday dropdowns and the refresh before the meeting
 
 - **The Control page has no built-in PIN.** `CONTROL_PIN` in `local.env` is the only one, and the installer stops without it.
