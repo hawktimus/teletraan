@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh the Teletraan computer before the meeting, without disturbing the picture unless something is wrong
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# ACCOUNT is replaced by install-refresh.sh with the account that owns the repository. The script uses sudo for the few
+# commands computer/sudoers/teletraan-control allows (start a sync, restart the sync service or the screen, reboot) and holds no key.
+# Do not add NoNewPrivileges here: sudo would stop working.
+User=ACCOUNT
+ExecStart=/opt/teletraan/computer/scripts/pre-meeting-refresh.sh
+# The run waits a minute after a repair and the syncs take a few seconds each
+TimeoutStartSec=15min

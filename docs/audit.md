@@ -132,3 +132,13 @@ Part A of the build that followed this audit fixed the items below. Where the co
 | Ingest validation | Done: `ingest-validate.mjs`, `data-problems.json`, Control under each source, the count in the Studio status document. |
 | Required keys, status every 60 s | Done. The status file was already written every 60 seconds. |
 | tmpfiles.d | Done (`computer/tmpfiles/teletraan.conf`). |
+
+## Parts C to G: what is built and what is not
+
+| Part | State |
+|---|---|
+| C, smart rotation | Not built. It is a new scheduler with a panel contract for every panel, and it needs the context modes, a Studio page and screenshots in every theme; it was not started. |
+| D, new boards | Not built, apart from one input they need: Key Dates items of the Monday board are marked `deadline` and kept out of the task lists, for the Deadlines board. |
+| E, Studio and Control | Partly. The Update button is on Now. Data problems are under each source on Update. The refresh is on Computer. The Dashboard Settings tab split, the `requests` singleton, the screenshot document and the context-mode lines were not built. |
+| F, release gate | Partly: the Update runs `node --check` on every dashboard file and the quick tests before the switch, rolls back when the screen does not come up, and shows the reason (Part A). The headless smoke test against the local snapshot and `make release-check` were not built. |
+| G, self-healing | The pre-meeting refresh is built (docs/OPERATIONS.md). The invisible page reload with saved state was not built. |

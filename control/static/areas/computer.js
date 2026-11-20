@@ -39,6 +39,12 @@ export function networkFacts(info) {
   return rows;
 }
 
+// The last pre-meeting refresh in one line (computer/scripts/pre-meeting-refresh.sh writes what it decided)
+export function refreshWords(refresh) {
+  if (!refresh || !refresh.present) return 'None yet. It runs at the time set in Dashboard Settings, Advanced, Pre-meeting refresh.';
+  return refresh.time + ' refresh: ' + refresh.decision + (refresh.at ? ' (' + clockWords(refresh.at) + ')' : '') + '.';
+}
+
 function factsList(rows) {
   return '<dl class="facts">' + rows.map(row => '<div><dt>' + esc(row[0]) + '</dt><dd>' + esc(row[1]) + '</dd></div>').join('') + '</dl>';
 }
@@ -55,6 +61,7 @@ function mountRestart(box) {
   const paintLast = () => {
     const latest = latestResult();
     root.querySelector('[data-last]').innerHTML = '<div><dt>Last remote action</dt><dd>' + esc(remoteWords(overview && overview.remoteLast) || 'None yet. Actions from the Studio show here.') + '</dd></div>' +
+      '<div><dt>Pre-meeting refresh</dt><dd>' + esc(refreshWords(overview && overview.refresh)) + '</dd></div>' +
       '<div><dt>Last action on this page</dt><dd>' + esc(latest ? latest.label + ': ' + latest.words + ' (' + clockWords(latest.at) + ')' : 'None yet.') + '</dd></div>';
   };
   paintLast();

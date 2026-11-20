@@ -66,6 +66,17 @@ Before an answer from Sanity becomes `content.json` (`computer/scripts/ingest-va
 
 Monday is read every 5 minutes by default (Dashboard Settings, Monday, How often, 5 to 120). A read is 3 requests: the two task boards and the projects board. Who is on a task is a dropdown of first names (POC, Students, Mentors), so the names of people are not asked for any more. From 6 am to 11 pm of the time zone of the screen that is 204 reads, 612 requests a day; from 11 pm to 6 am the gap is 30 minutes, 14 reads, 42 requests. The total is about 650 a day, and the computer stops itself at 900 (`daily_limit` in `monday-contract.sh`) and starts again at midnight. A Sync Monday now press adds 3. The dot and the pill count Monday late after twice the larger of the setting and 30 minutes.
 
+### The pre-meeting refresh
+
+At 13:30 on weekdays (Dashboard Settings, Advanced, Pre-meeting refresh: on or off, the time, the days) the computer refreshes itself before the afternoon meeting. `teletraan-refresh.timer` wakes `pre-meeting-refresh.sh` every 5 minutes; `refresh-plan.mjs` decides, in the time zone of the Look page, with a fake clock in `tests/refresh-plan.test.mjs`. Install it with Install everything from the Mac tool (`install-refresh.sh`).
+
+1. It reads every source again (calendars, Monday, competition, news, Drive photos, Match13) and runs the health check.
+2. All green: it reloads the page, and nothing on the screen changes. The page is reloaded with `page-command.py reload`; a reload that saves and restores the panel the screen was on (so it looks like nothing happened) was not built, so the screen may start the rotation again from the first row.
+3. Something amber: it restarts what is wrong, the sync service for a source or a service, the screen for a frozen or heavy page, waits a minute and checks again.
+4. Still not healthy, or up more than 7 days: it reboots, through the gate as a scheduled reboot (`gate.sh allow nightly`), so it is outside the recovery budget and still cannot reboot twice within ten minutes.
+
+It does not start while a talk is booked within 30 minutes or a Band event of kind Meetings is on (counted from 15 minutes before to 10 minutes after), waits, and gives up 90 minutes past the time, saying why. What it decided is in `refresh/last.json` in the data folder and the journal (`refresh.jsonl`), and Control, Computer, shows it as "13:30 refresh: reloaded page only, all green".
+
 ### Name servers
 
 The name servers are desired state. `computer/config/network.conf` holds three names, `DNS_PRIMARY` (8.8.8.8), `DNS_SECONDARY` (8.8.4.4) and `DNS_ENFORCE` (yes). The installer copies it to `/usr/local/etc/teletraan-network.conf`, owned by root, only when that file is not there, so a change made on the computer is kept. `teletraan-net` (`computer/scripts/net-root.sh`) reads it for those three names only and never runs it. It uses it in four places:

@@ -402,6 +402,9 @@ const studioOnlyFields = {
   'dashboardSettings.rebootDays': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.rebootSkipBusy': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
   'dashboardSettings.rebootWaitMinutes': 'the Teletraan computer reads it (computer/scripts/scheduled-reboot.sh), and the dashboard never does',
+  'dashboardSettings.refreshEnabled': 'the Teletraan computer reads it (computer/scripts/pre-meeting-refresh.sh), and the dashboard never does',
+  'dashboardSettings.refreshTime': 'the Teletraan computer reads it (computer/scripts/pre-meeting-refresh.sh), and the dashboard never does',
+  'dashboardSettings.refreshDays': 'the Teletraan computer reads it (computer/scripts/pre-meeting-refresh.sh), and the dashboard never does',
   'dashboardSettings.cleanupEnabled': 'the Teletraan computer reads it (computer/scripts/expired-cleanup.sh), and the dashboard never does',
   'dashboardSettings.cleanupDeleteAfterDays': 'the Teletraan computer reads it (computer/scripts/expired-cleanup.sh), and the dashboard never does',
   'dashboardSettings.cleanupMode': 'the Teletraan computer reads it (computer/scripts/expired-cleanup.sh), and the dashboard never does',
@@ -1238,6 +1241,7 @@ function checkLogoTab(problems) {
 const transitionNames = ['pageChangeStyle', 'breakSeconds', 'frameFinish', 'silverChance'];
 const photoNames = ['photoOrder', 'photoSource', 'photoDriveFolder', 'photoSeconds', 'portraitScale', 'photoScale', 'photoFit', 'leadershipPortrait', 'rosterPortrait', 'portraitShape', 'portraitFrame'];
 const rebootNames = ['rebootStatus', 'rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes'];
+const refreshNames = ['refreshEnabled', 'refreshTime', 'refreshDays'];
 const supervisorNames = ['supervisorStatus', 'supervisorMode'];
 const screenFitNames = ['screenFit', 'screenScale', 'screenOffsetX', 'screenOffsetY'];
 const cleanupNames = ['cleanupEnabled', 'cleanupDeleteAfterDays', 'cleanupMode'];
@@ -4415,7 +4419,7 @@ const settingsTabs = {
   monday: ['mondayConnection', 'mondayTokenTest', 'mondayEveryMinutes', 'mondayShowOwners', 'mondayBoards'],
   calendars: ['calendars', 'groupEventsByKind'],
   advanced: ['lookNote', 'cycleNote', 'generalViewName', 'viewOrder', 'themeByWeekday', 'background', 'screenSchedule'].concat(rotationNames, ['style'], teamNames, logoNames, transitionNames, ['transitionSeconds'],
-    presentationNames, ['presentationDriveFolder', 'presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, supervisorNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
+    presentationNames, ['presentationDriveFolder', 'presentationTestRequest'], ['frcConnection', 'competitionMode'], competitionNames, ['newsEnabled', 'newsCategories', 'newsInTicker', 'newsHiddenLinks'], nightNames, screenFitNames, rebootNames, refreshNames, supervisorNames, cleanupNames, hiddenNames, ['rotationRows', 'contentSource', 'showConnectionStatus', 'mondayTaskBoard', 'mondayMilestoneBoard']),
 };
 
 function checkSettingsTabs() {

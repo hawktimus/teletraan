@@ -12,6 +12,7 @@ import { test, finish } from './helpers/runner.mjs';
 import { makeWorld } from './helpers/control-world.mjs';
 import * as overviewRoute from '../control/routes/overview.js';
 import { problemsHtml } from '../control/static/areas/update-sync.js';
+import { refreshWords } from '../control/static/areas/computer.js';
 import * as statusRoute from '../control/routes/status.js';
 import { createService, readConfig } from '../control/server.js';
 import { isSecure, sameOrigin, triesAllowed } from '../control/lib/auth.js';
@@ -123,6 +124,15 @@ test('the data problems of the last read are cut down for the page, and a row to
   assert.ok(html.includes('3 rows need a look') && html.includes('2 more.') && html.includes('&lt;b&gt;') && html.includes('The TV is not told'));
   assert.equal(problemsHtml(null), '');
   assert.equal(problemsHtml({ count: 0, items: [] }), '');
+});
+
+test('the last pre-meeting refresh is cut down for the page and said in one line, and None yet when there is none', () => {
+  assert.deepEqual(overviewRoute.cleanRefresh(null), { present: false });
+  assert.deepEqual(overviewRoute.cleanRefresh({ decision: 5 }), { present: false });
+  const clean = overviewRoute.cleanRefresh({ time: '13:30', decision: 'reloaded page only, all green', at: '2026-11-17T18:31:00Z', slot: '2026-11-17', extra: 'x' });
+  assert.deepEqual(Object.keys(clean), ['present', 'time', 'decision', 'at', 'slot']);
+  assert.match(refreshWords(clean), /^13:30 refresh: reloaded page only, all green \(/);
+  assert.match(refreshWords({ present: false }), /^None yet\./);
 });
 
 test('no screen report yet is not known for the first 30 seconds after this service starts, and late after that', () => {

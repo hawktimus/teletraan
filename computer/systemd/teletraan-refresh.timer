@@ -1,0 +1,12 @@
+[Unit]
+Description=Wake the pre-meeting refresh every 5 minutes
+
+[Timer]
+# The script itself decides whether it is time: it reads the Pre-meeting refresh settings of Dashboard Settings (on, the time,
+# the days) from the last good copy of the content and ends quietly when nothing is due. Changing those needs no change here.
+# Not Persistent: a refresh that was missed because the computer was off is not made up later.
+OnBootSec=20min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

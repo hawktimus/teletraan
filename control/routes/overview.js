@@ -75,6 +75,12 @@ export function cleanProblems(raw) {
   return { present: true, count: count(raw.count), generatedAt: text(raw.generatedAt, 40) || null, sources: sources };
 }
 
+// refresh/last.json from computer/scripts/pre-meeting-refresh.sh: what the last pre-meeting refresh decided, in one line
+export function cleanRefresh(raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.decision !== 'string') return { present: false };
+  return { present: true, time: text(raw.time, 8), decision: text(raw.decision, 200), at: text(raw.at, 40) || null, slot: text(raw.slot, 12) };
+}
+
 export function cleanNetwatch(raw) {
   if (!raw) return null;
   return {
@@ -154,6 +160,7 @@ export function register(router, ctx) {
       syncStatus: cleanSyncStatus(readJsonFile(path.join(ctx.dataDir, 'sync-status.json'))),
       netwatch: cleanNetwatch(readJsonFile(netwatchFile())),
       dns: cleanDns(readJsonFile(stateFile('dns.json'))),
+      refresh: cleanRefresh(readJsonFile(path.join(ctx.dataDir, 'refresh', 'last.json'))),
       dataProblems: cleanProblems(readJsonFile(path.join(ctx.dataDir, 'data-problems.json'))),
       health: cleanHealth(readJsonFile(stateFile('health.json')), readJsonFile(stateFile('supervisor.json'))),
       buildVersion: typeof ctx.buildVersion === 'string' ? ctx.buildVersion : '',
