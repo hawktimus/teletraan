@@ -25,7 +25,7 @@ import { logEvent } from './jsonlog.mjs';
 import { decide, firstNameOf, statusOf, statusDue, lastRecordOf, linesOf, showActions, rebootDelaySeconds } from './remote-plan.mjs';
 
 const service = 'remote';
-const pollSeconds = 60;
+const pollSeconds = 120;
 const documentId = 'remoteControl';
 const settingsId = 'dashboardSettings';
 
