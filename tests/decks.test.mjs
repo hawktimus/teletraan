@@ -17,7 +17,7 @@ import {
   canPlay, checkedText, closedPicker, deckMinutes, deckNote, deckTalk, findDeck, keepMark, listNote, markDeck, markedIndex, openPicker, opensPicker,
   pickerAction, pickerSeconds, pickerTimedOut, pressPickerKey, rowsShown, shouldPlayDeck, shownRows, tidyDeckList, tidyDeckRequest,
 } from '../dashboard/core/decks.js';
-import { canRun, dueTalk, isDeckTalk, nextState, idleState, pressKey, slideAddress, slidesFolder, slidesVersion, talkEnd } from '../dashboard/core/presentation.js';
+import { canRun, chipShown, dueTalk, isDeckTalk, nextState, idleState, pressKey, pressMouse, slideAddress, slidesFolder, slidesVersion, talkEnd } from '../dashboard/core/presentation.js';
 import { graceMinutes } from '../dashboard/core/constants.js';
 
 const read = name => fs.readFileSync(repo + name, 'utf8');
@@ -334,6 +334,24 @@ test('the page, the screen and the documents are wired to the same names', () =>
   const doc = read('docs/presentations-drive.md');
   ['decks-sync.sh', 'install-decks.sh', 'GOOGLE_API_KEY', 'Anyone with the link', 'F5', '20 seconds', 'Run presentations'].forEach(word => assert.ok(doc.includes(word), 'docs/presentations-drive.md should mention ' + word));
   assert.ok(read('docs/presentations.md').includes('docs/presentations-drive.md'));
+});
+
+test('a picked deck gives the screen back after its last slide, and shows no slide number', () => {
+  const talk = deckTalk(tidyDeckList(manifest()).decks[0], now);
+  const input = { now: now, talks: [talk], settings: { presentationsEnabled: true }, skipped: new Set(), announcing: false, slides: { ok: true, pages: ['001.jpg', '002.jpg'] } };
+  let state = nextState(nextState(idleState(), input), input);
+  assert.equal(state.name, 'presenting');
+
+  state = pressKey(state, 'PageDown', now);
+  assert.equal(state.slide, 1);
+  assert.equal(chipShown(state, now), false, 'a picked deck shows no slide number');
+
+  const lastByKey = pressKey(state, 'PageDown', now);
+  assert.equal(lastByKey.name, 'skipped', 'forward on the last slide ends the deck, with no thanks card');
+  assert.equal(nextState(lastByKey, Object.assign({}, input, { skipped: new Set(['deck-' + idA]) })).name, 'idle', 'and the dashboard has the screen again');
+  const lastByMouse = pressMouse(state, 'left', now);
+  assert.equal(lastByMouse.name, 'skipped', 'a click on the last slide ends it too');
+  assert.equal(pressKey(state, 'Escape', now).name, 'skipped');
 });
 
 await finish();

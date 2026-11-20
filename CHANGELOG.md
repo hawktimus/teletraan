@@ -8,6 +8,8 @@ line says what changed for the people who use the screen, not how it was built.
 A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
 folder, pick it from a list, and the clicker runs it like a booked talk.
 
+- **A picked deck ends by itself.** Going forward on the last slide (key or click) gives the screen back to the dashboard,
+  and a picked deck shows no slide number in the corner.
 - **Fewer calls to Sanity.** The computer looks for a publish and writes its status once a minute, and asks for remote
   actions every two minutes, instead of every 10 and 30 seconds. A publish shows within a minute.
 - **Update from GitHub no longer rolls back a working update.** The check that waits for the screen to report the new

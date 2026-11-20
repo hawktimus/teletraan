@@ -218,7 +218,7 @@ function pressOnSlide(state, action, time) {
   const shown = Object.assign({}, state, { keyAt: time });
 
   if (action === 'black') return Object.assign(shown, { black: !state.black });
-  if (action === 'forward') return state.slide >= last ? thanksState(state.talk, time) : Object.assign(shown, { slide: state.slide + 1, black: false });
+  if (action === 'forward') return state.slide >= last ? (isDeckTalk(state.talk) ? skippedState(state.talk, 'ended') : thanksState(state.talk, time)) : Object.assign(shown, { slide: state.slide + 1, black: false });
   if (action === 'back') return Object.assign(shown, { slide: Math.max(0, state.slide - 1), black: false });
   if (action === 'home') return Object.assign(shown, { slide: 0, black: false });
   return Object.assign(shown, { slide: last, black: false });
@@ -266,6 +266,8 @@ export function blocksContextMenu(state) {
 
 // True for chipSeconds after a key press while a talk is on its slides
 export function chipShown(state, now) {
+  // A picked deck shows no slide number
+  if (state.talk && isDeckTalk(state.talk)) return false;
   return state.name === 'presenting' && state.keyAt !== null && now.getTime() - state.keyAt < chipSeconds * 1000;
 }
 
