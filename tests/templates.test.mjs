@@ -98,17 +98,18 @@ test('row 1 names the columns, row 2 gives the type and the limits, row 3 is the
   });
   const task = rowsOf(templates.task);
   // contact, location and team were added later, then priority and showOnTv, so those are the last five columns
-  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'note', 'order', 'show', 'expires', 'contact', 'location', 'team', 'priority', 'showOnTv']);
+  assert.deepEqual(task[0], ['example', 'title', 'subteam', 'status', 'finishedOn', 'deadline', 'note', 'order', 'show', 'expires', 'contact', 'location', 'team', 'priority', 'showOnTv']);
   assert.equal(task[1][1], 'text; required; max 40; id 1');
   assert.equal(task[1][2], 'name of subteam');
   assert.equal(task[1][3], 'one of blocked/in-progress/in-review/up-next/done; required');
-  assert.equal(task[1][5], 'text; max 90');
-  assert.equal(task[1][6], 'whole number');
-  assert.equal(task[1][9], 'text; max 12');
-  assert.equal(task[1][10], 'name of place');
-  assert.equal(task[1][11], 'name of team');
-  assert.equal(task[1][12], 'one of high/medium/low');
-  assert.equal(task[1][13], 'yes/no; default yes');
+  assert.equal(task[1][5], 'yes/no; default no');
+  assert.equal(task[1][6], 'text; max 90');
+  assert.equal(task[1][7], 'whole number');
+  assert.equal(task[1][10], 'text; max 12');
+  assert.equal(task[1][11], 'name of place');
+  assert.equal(task[1][12], 'name of team');
+  assert.equal(task[1][13], 'one of high/medium/low');
+  assert.equal(task[1][14], 'yes/no; default yes');
   // the source and the board item number are set by the board sync, so a sheet has no column for them
   assert.ok(!task[0].includes('source') && !task[0].includes('mondayId') && !task[0].includes('boardNote'));
 
@@ -188,7 +189,7 @@ test('a few rows become documents with fixed ids, and a second run gives the sam
   assert.equal(first.docs[1].show, false);
   assert.deepEqual(first.docs[2], {
     _id: 'task-wire-the-robot', _type: 'task', title: 'Wire the robot',
-    subteam: { _type: 'reference', _ref: 'subteam-alpha' }, status: 'in-progress', order: 2, show: true, showOnTv: true,
+    subteam: { _type: 'reference', _ref: 'subteam-alpha' }, status: 'in-progress', deadline: false, order: 2, show: true, showOnTv: true,
   });
   assert.equal(first.docs[3].finishedOn, new Date('2027-02-03T16:30').toISOString());
 });
