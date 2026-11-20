@@ -16,14 +16,17 @@ done_board='18435131682'
 # panel only (monday-projects), in the Robotics view. The board number is here and nowhere else.
 projects_board='18437852059'
 
+# Who is on a task is three dropdown columns of first names, and no Monday account is needed: POC (the one person responsible,
+# the contact on the TV), Students and Mentors (the helpers). Assigned in the code below is the Students column.
 # The columns read, by id. Completed Tasks has no Department, Date Completed or Show on TV? column, so
 # fewer of them are asked for there.
 columns='{
   "department": "color_mm82nvea",
   "status": "color_mkv6tatz",
   "team": "color_mm82jgxg",
-  "assigned": "multiple_person_mm82cqbx",
-  "poc": "multiple_person_mm8331h1",
+  "assigned": "students",
+  "poc": "poc",
+  "mentors": "mentors",
   "priority": "color_mm82wfy",
   "timeline": "timerange_mkyp8kx7",
   "hours": "numeric_mm82pw1a",
@@ -33,7 +36,7 @@ columns='{
 }'
 # Notes is a text column. It is kept for a Stuck task only (the reason it is stuck), cut to note_limit characters. The dataset
 # is public, so the note of every other task is read here and dropped by monday-programs.sh without being stored.
-task_board_columns='["department", "status", "team", "assigned", "poc", "priority", "timeline", "hours", "completed", "show", "notes"]'
+task_board_columns='["department", "status", "team", "assigned", "poc", "mentors", "priority", "timeline", "hours", "completed", "show", "notes"]'
 done_board_columns='["status", "team", "assigned", "priority", "timeline", "hours"]'
 
 # The columns of the Projects board, by id. Status, Mentor, Helpers and Show on TV? are read as text (the words of the label),
@@ -157,8 +160,8 @@ default_zone=America/New_York
 # The read interval, 5 to 120 minutes, and the starting value
 every_default=5
 # Between these hours of the time zone of the screen the setting applies. Outside them (the wall is black from 23:30 to 11:30 and
-# nobody edits boards at night) a read is made every 30 minutes. A 5 minute setting then costs about 870 requests a day, inside the
-# daily limit below, and not the 1,150 that would use the limit up in the evening.
+# nobody edits boards at night) a read is made every 30 minutes. A 5 minute setting then costs about 650 requests a day (3 for each read: the
+# two task boards and the projects board), inside the daily limit below, and not the 860 an all-day schedule would use.
 active_from=6
 active_until=23
 quiet_every=30

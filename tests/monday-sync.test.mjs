@@ -318,13 +318,17 @@ function item(id, name, values, group, parent) {
   return { id: id, name: name, parent_item: parent ? { id: parent } : null, group: group ? { id: 'group_' + group.toLowerCase(), title: group } : null, column_values: values };
 }
 
+const peopleNames = { 71: 'Pat', 72: 'Jo', 73: 'sam@example.com' };
 const col = {
   department: index => battery('color_mm82nvea', index),
   state: index => battery('color_mkv6tatz', index),
   team: index => battery('color_mm82jgxg', index),
   priority: index => battery('color_mm82wfy', index),
   show: index => battery('color_mm83p12x', index),
-  assigned: (ids, text) => value('multiple_person_mm82cqbx', 'people', text || '', { persons_and_teams: ids.map(id => ({ id: id, kind: 'person' })) }),
+  // Students and POC are dropdowns of first names: the text is the labels. The ids stand for the names the old people column had.
+  assigned: (ids, text) => value('students', 'dropdown', text !== undefined ? text : ids.map(id => peopleNames[id] || 'Someone').join(', ')),
+  poc: (ids, text) => value('poc', 'dropdown', text !== undefined ? text : ids.map(id => peopleNames[id] || 'Someone').join(', ')),
+  mentors: text => value('mentors', 'dropdown', text),
   timeline: (from, to) => value('timerange_mkyp8kx7', 'timeline', from + ' - ' + to, { from: from, to: to }),
   hours: text => value('numeric_mm82pw1a', 'numbers', text),
   completed: day => value('date_mm82kn5v', 'date', day, { date: day }),
@@ -421,7 +425,7 @@ function world(place, options) {
   place.pages(projectsBoardId, given.projectItems || projectItems(), 200, 'Projects (Mentors)', { hierarchy_type: 'classic' });
 }
 
-const sequence = ['sanity-query', 'monday items-' + taskBoardId, 'monday items-' + doneBoardId, 'monday items-' + projectsBoardId, 'monday users', 'sanity-write', 'sanity-write', 'status-write monday'];
+const sequence = ['sanity-query', 'monday items-' + taskBoardId, 'monday items-' + doneBoardId, 'monday items-' + projectsBoardId, 'sanity-write', 'sanity-write', 'status-write monday'];
 
 // The documents the run made, patched or deleted, by id
 function documentsOf(place) {
@@ -471,12 +475,12 @@ test('the boards are read by their numbers only, with the multi-level question, 
   place.run();
   const variables = place.variables();
   assert.deepEqual(variables[0].board, [taskBoardId]);
-  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x', 'text_mm82s03v']);
+  assert.deepEqual(variables[0].columns, ['color_mm82nvea', 'color_mkv6tatz', 'color_mm82jgxg', 'students', 'poc', 'mentors', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a', 'date_mm82kn5v', 'color_mm83p12x', 'text_mm82s03v']);
   assert.deepEqual(variables[1].board, [doneBoardId]);
-  assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a'], 'Completed Tasks has fewer columns');
+  assert.deepEqual(variables[1].columns, ['color_mkv6tatz', 'color_mm82jgxg', 'students', 'color_mm82wfy', 'timerange_mkyp8kx7', 'numeric_mm82pw1a'], 'Completed Tasks has fewer columns');
   assert.deepEqual(variables[2].board, [projectsBoardId]);
   assert.deepEqual(variables[2].columns, ['color_mm8ma465', 'dropdown_mm8mcqq', 'dropdown_mm8mtej2', 'numeric_mm8mmzv6', 'timerange_mm8mp8wc', 'date_mm8mkgrg', 'color_mm8mtjwd'], 'Budget and Notes are never asked for');
-  assert.deepEqual(variables[3].ids.sort(), ['71', '73'], 'the first person of each item, once');
+  assert.equal(variables.length, 3, 'who is on a task is a dropdown of first names now, so the names of people are not asked for');
   assert.deepEqual(place.battery(), ['items-' + taskBoardId, 'items-' + doneBoardId, 'items-' + projectsBoardId], 'every board asks with the same question');
 
   const text = textOf(syncFile);
@@ -494,7 +498,7 @@ const realItem = (id, name, group, keys, timeline, completed) => ({
   id: id, name: name, parent_item: null, group: group,
   column_values: [
     realBattery('color_mm82nvea', keys[0]), realBattery('color_mkv6tatz', keys[1]), realBattery('color_mm82jgxg', keys[2]),
-    { id: 'multiple_person_mm82cqbx', type: 'people', text: '', persons_and_teams: [] },
+    { id: 'students', type: 'dropdown', text: '' },
     realBattery('color_mm82wfy', keys[3]),
     { id: 'timerange_mkyp8kx7', type: 'timeline', text: '', from: timeline ? timeline[0] : null, to: timeline ? timeline[1] : null },
     { id: 'numeric_mm82pw1a', type: 'numbers', text: '' },
@@ -622,7 +626,7 @@ test('a contact falls back to the text of Assigned when the names question gives
 
 test('a task whose item has gone is deleted with its draft, and one that is up to date is left alone', () => {
   const place = setup('gone', { tools: true });
-  const same = { _id: 'task-monday-2002', title: 'Old dashboard', department: 'strategy', list: 'done', status: 'done', team: null, subteam: null, contact: null, priority: null, startDate: null, dueDate: null, completedOn: null, estHours: null, showOnBoard: true, show: true, mondayBoardId: doneBoardId, mondayBoardName: 'Completed Tasks', old: false };
+  const same = { _id: 'task-monday-2002', title: 'Old dashboard', department: 'strategy', list: 'done', status: 'done', team: null, subteam: null, contact: null, priority: null, startDate: null, dueDate: null, completedOn: null, estHours: null, deadline: false, showOnBoard: true, show: true, mondayBoardId: doneBoardId, mondayBoardName: 'Completed Tasks', old: false };
   world(place, { tasks: [same, { _id: 'task-monday-9999', title: 'Gone', old: false }, { _id: 'task-other', title: 'Not ours', old: false }] });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
@@ -702,7 +706,7 @@ test('monday-status: last read, the error in plain words or none, the reads, the
   place.run();
   const patch = statusOf(place);
   assert.equal(patch.set.lastSyncAt, nowText);
-  assert.equal(patch.set.callsToday, 10, 'six before and four now');
+  assert.equal(patch.set.callsToday, 9, 'six before and three now: the two task boards and the projects board');
   assert.equal(patch.set.callsDate, todayText);
   assert.equal(patch.set.taskCount, 9);
   assert.equal(patch.set.hiddenCount, 1, 'the hidden task is counted and not written');
@@ -866,9 +870,35 @@ test('projects: a board with no item clears the list, and the readings name the 
   assert.ok(statusOf(place).set.readings.some(reading => reading.boardId === projectsBoardId && reading.itemsRead === 0));
 });
 
+test('contact from the dropdowns: POC, else the first student, else the first mentor, with a last initial kept, and a Key Dates item is a date, not a task', () => {
+  const place = setup('dropdowns', { tools: true });
+  world(place, {
+    items: [
+      item('8001', 'POC wins', [col.state(0), col.poc([], 'Owen B.'), col.assigned([], 'Sam, Lee'), col.mentors('Dan')], 'Build'),
+      item('8002', 'First student', [col.state(0), col.assigned([], 'Patrick K., Sam')], 'Build'),
+      item('8003', 'Mentor only', [col.state(0), col.mentors('Cari-Ann, Dan')], 'Build'),
+      item('8004', 'Nobody', [col.state(0)], 'Build'),
+      item('8005', 'Email is no name', [col.state(0), col.poc([], 'a@b.example')], 'Build'),
+      item('8006', 'Kickoff, 12:00 PM ET', [col.department(9), col.state(5)], 'Key Dates & FIRST Deadlines'),
+      item('8007', 'A task', [col.state(0)], 'Build'),
+    ],
+    doneItems: [],
+  });
+  place.run();
+  const found = documentsOf(place);
+  assert.equal(found['task-monday-8001'].set.contact, 'Owen B.', 'the last initial tells two Owens apart');
+  assert.equal(found['task-monday-8002'].set.contact, 'Patrick K.');
+  assert.equal(found['task-monday-8003'].set.contact, 'Cari-Ann');
+  assert.equal(found['task-monday-8004'].set.contact, undefined, 'nobody is Unassigned on the screen');
+  assert.equal(found['task-monday-8005'].set.contact, undefined, 'an email is never a name');
+  assert.equal(found['task-monday-8006'].set.deadline, true);
+  assert.equal(found['task-monday-8007'].set.deadline, false);
+  assert.equal(found['task-monday-8006'].set.department, 'operations', 'the Department column still says which one, for the Deadlines board');
+});
+
 test('contact: the first POC person, else the first Assigned person', () => {
   const place = setup('poc', { tools: true });
-  const poc = ids => value('multiple_person_mm8331h1', 'people', '', { persons_and_teams: ids.map(id => ({ id: id, kind: 'person' })) });
+  const poc = ids => col.poc(ids);
   world(place, {
     items: [
       item('7001', 'Both', [col.state(0), col.assigned([71]), poc([72])], 'Build'),
@@ -902,7 +932,7 @@ test('--debug prints the kind of board and the shape of two items, with no names
   assert.equal(result.status, 0, result.errors);
   assert.ok(result.text.includes('Board: Robotics Tasks') && result.text.includes('Hierarchy: multi_level'), result.text);
   assert.ok(result.text.includes('"battery_value"'), result.text);
-  assert.ok(result.text.includes('{"count":2}'), 'a people column says how many');
+  assert.ok(!/\bPat\b|\bJo\b|Robin|Ash/.test(result.text), 'no name of a person is printed, from a dropdown or from anywhere');
   assert.equal(place.writes().length, 0);
   assert.equal(place.run(['--debug', 'x']).status, 1);
 });

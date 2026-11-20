@@ -72,7 +72,7 @@ run_debug() {
 
   echo "API version: $monday_version"
   jq -r "$paths$helpers"'
-    def text_is_safe: . as $type | ["status", "color", "numbers", "numeric", "date", "timeline", "timerange", "board_relation", "dropdown", "battery", "checkbox"] | index($type) != null;
+    def text_is_safe: . as $type | ["status", "color", "numbers", "numeric", "date", "timeline", "timerange", "board_relation", "battery", "checkbox"] | index($type) != null;
     def shape:
       (del(.id, .type, .text)
         | if has("persons_and_teams") then .persons_and_teams |= (if type == "array" then {count: length} else . end) else . end) as $rest

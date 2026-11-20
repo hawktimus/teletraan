@@ -70,7 +70,8 @@ function pageOptions(page) {
 }
 
 // The tasks the Monday panels may draw: from the board, switched on in the Studio (show, Show on TV and the expiry), shown on
-// the board (Show on TV? is not Hide) and with one of the nine departments
+// the board (Show on TV? is not Hide), not an item of the Key Dates group (those are dates, for the Deadlines board) and
+// with one of the nine departments
 export function boardTasks(content, now = new Date()) {
   const left = unmatchedTasks(content, now).length;
   if (left !== lastUnmatched) {
@@ -78,7 +79,7 @@ export function boardTasks(content, now = new Date()) {
     if (left > 0) console.warn(left + ' task(s) on the board have a department that is not one of the nine, so no Monday panel shows them.');
   }
   return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task =>
-    isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && departmentTitle(task.department) !== '');
+    isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && task.deadline !== true && departmentTitle(task.department) !== '');
 }
 
 let lastUnmatched = -1; // the count last written to the console, so a list that does not change is not written again
@@ -88,7 +89,7 @@ let lastUnmatched = -1; // the count last written to the console, so a list that
 // where the coaches read them (data/live/data-problems.json, docs/audit.md Part B).
 export function unmatchedTasks(content, now = new Date()) {
   return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task =>
-    isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && departmentTitle(task.department) === '');
+    isRecord(task) && isVisible(task, now) && isFromBoard(task) && task.showOnBoard !== false && task.deadline !== true && departmentTitle(task.department) === '');
 }
 
 // The tasks of a page. A page for Prime or Nova has the tasks of that team and the General ones (no team). A page for both

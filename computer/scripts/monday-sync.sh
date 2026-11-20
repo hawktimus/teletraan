@@ -123,7 +123,10 @@ now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 # this script every 5 minutes, and a run that comes before the setting says so ends without a word.
 every=$(jq -r --argjson start "$every_default" '.result.every | if type == "number" and . >= 5 and . <= 120 then floor else $start end' "$work/sanity.json")
 # Outside the active hours the gap is an hour at least
-hour=$(TZ="$zone" date +%H)
+hour=$(TZ="$zone" date +%H 2> /dev/null || true)
+case $hour in
+  ''|*[!0-9]*) hour=12 ;;
+esac
 hour=$((10#$hour))
 if [ "$hour" -lt "$active_from" ] || [ "$hour" -ge "$active_until" ]; then
   [ "$every" -ge "$quiet_every" ] || every=$quiet_every

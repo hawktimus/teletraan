@@ -109,7 +109,7 @@ export function checkContent(result, previous) {
 
   // A task of the board with a department that is not one of the nine is on no Monday panel
   (Array.isArray(result.tasks) ? result.tasks : []).forEach(task => {
-    if (!task || task.source !== 'monday' || task.show === false || task.showOnBoard === false) return;
+    if (!task || task.source !== 'monday' || task.show === false || task.showOnBoard === false || task.deadline === true) return;
     if (!departments.includes(String(task.department || '').toLowerCase())) {
       problems.push({ source: 'monday', where: 'task: ' + nameOf(task), what: 'department "' + String(task.department || '').slice(0, 24) + '" is not one of the nine', action: 'no Monday panel shows it' });
     }

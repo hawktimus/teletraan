@@ -22,6 +22,7 @@ $items[]
 | (value_of($columns.hours).text | if type == "string" then (gsub(","; "") | try tonumber catch null) else null end) as $hours
 | (value_of($columns.assigned)) as $assigned
 | (value_of($columns.poc)) as $poc
+| (value_of($columns.mentors)) as $mentors
 | ((($poc.people // [])[0]) // (($assigned.people // [])[0])) as $first
 | ((value_of($columns.show).index // "") | tostring) as $show
 | {
@@ -31,7 +32,8 @@ $items[]
     list: (if $status == "done" or ((.group | if type == "string" then plain | ascii_downcase else "" end) == "done") or $done == "yes" then "done" else "open" end),
     status: $status,
     team: (meaning("team"; $columns.team) // ""),
-    contact: ((if $first == null then null else $names[$first] end) // ($poc.text | first_name($contact_limit)) // ($assigned.text | first_name($contact_limit))),
+    contact: ((if $first == null then null else $names[$first] end) // ($poc.text | contact_name($contact_limit)) // ($assigned.text | contact_name($contact_limit)) // ($mentors.text | contact_name($contact_limit))),
+    deadline: ((.group | if type == "string" then plain | ascii_downcase else "" end) | startswith("key dates")),
     priority: meaning("priority"; $columns.priority),
     startDate: (($timeline.from | day_of) // $text_days[0]),
     dueDate: (($timeline.to | day_of) // $text_days[-1:][0]),
@@ -112,6 +114,7 @@ def wanted_task($row):
     completedOn: $row.completedOn,
     estHours: $row.estHours,
     showOnBoard: $row.showOnBoard,
+    deadline: ($row.deadline == true),
     note: null,
     show: true,
     mondayBoardId: $row.board,
@@ -119,7 +122,7 @@ def wanted_task($row):
   };
 
 def stored_task:
-  {title, department, list, status, team, subteam, contact, priority, startDate, dueDate, completedOn, estHours, showOnBoard, note,
+  {title, department, list, status, team, subteam, contact, priority, startDate, dueDate, completedOn, estHours, showOnBoard, deadline, note,
    show: (if .show == false then false else true end), mondayBoardId, mondayBoardName};
 
 def older_fields: {owners: null, milestoneIds: null, hiddenReason: null};

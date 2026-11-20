@@ -38,7 +38,7 @@ test('the page has the sections it should, in plain words, and is short', () => 
 
 test('the boards, the columns and the label numbers are the ones of the contract', () => {
   ['18435126893', '18435131682', '18437852059'].forEach(id => assert.ok(section('The boards').includes(id) && script.includes(id), id));
-  ['color_mkv6tatz', 'color_mm82nvea', 'color_mm82jgxg', 'multiple_person_mm82cqbx', 'multiple_person_mm8331h1', 'color_mm82wfy', 'timerange_mkyp8kx7', 'date_mm82kn5v', 'numeric_mm82pw1a', 'color_mm83p12x'].forEach(id => {
+  ['color_mkv6tatz', 'color_mm82nvea', 'color_mm82jgxg', '`students`'.slice(1, -1), 'poc', 'mentors', 'color_mm82wfy', 'timerange_mkyp8kx7', 'date_mm82kn5v', 'numeric_mm82pw1a', 'color_mm83p12x'].forEach(id => {
     assert.ok(doc.includes('`' + id + '`') && script.includes(id), id);
   });
   ['color_mm8ma465', 'dropdown_mm8mcqq', 'dropdown_mm8mtej2', 'numeric_mm8mmzv6', 'date_mm8mkgrg', 'color_mm8mtjwd'].forEach(id => {
@@ -54,7 +54,7 @@ test('the rules of a task are the ones of the sync: the group, the Done list, Hi
   const rules = section('How a task gets onto the TV');
   assert.ok(/parent item/.test(rules) && /Hide/.test(rules) && /group/.test(rules) && /Department column/.test(rules));
   assert.ok(/Done, when its Status is Done, when it sits in the Done group, or when it is on Completed Tasks/.test(flat));
-  assert.ok(/first name of the first person, else Unassigned/.test(flat) && /No Priority/.test(doc) && /No Date/.test(doc));
+  assert.ok(/the first student, else the first mentor, else Unassigned/.test(flat) && /No Priority/.test(doc) && /No Date/.test(doc));
 });
 
 test('the panels, the rows and the retired ids are the ones of the registry and the rotation', () => {

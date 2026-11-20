@@ -64,7 +64,7 @@ Before an answer from Sanity becomes `content.json` (`computer/scripts/ingest-va
 
 ### Monday reads and what they cost
 
-Monday is read every 5 minutes by default (Dashboard Settings, Monday, How often, 5 to 120). A read is 4 requests: the two task boards, the projects board and the names. From 6 am to 11 pm of the time zone of the screen that is 204 reads, about 820 requests a day; from 11 pm to 6 am the gap is 30 minutes, 14 reads, 56 requests. The total is about 870 a day, and the computer stops itself at 900 (`daily_limit` in `monday-contract.sh`) and starts again at midnight. A Sync Monday now press adds 4. The dot and the pill count Monday late after twice the larger of the setting and 30 minutes.
+Monday is read every 5 minutes by default (Dashboard Settings, Monday, How often, 5 to 120). A read is 3 requests: the two task boards and the projects board. Who is on a task is a dropdown of first names (POC, Students, Mentors), so the names of people are not asked for any more. From 6 am to 11 pm of the time zone of the screen that is 204 reads, 612 requests a day; from 11 pm to 6 am the gap is 30 minutes, 14 reads, 42 requests. The total is about 650 a day, and the computer stops itself at 900 (`daily_limit` in `monday-contract.sh`) and starts again at midnight. A Sync Monday now press adds 3. The dot and the pill count Monday late after twice the larger of the setting and 30 minutes.
 
 ### Name servers
 

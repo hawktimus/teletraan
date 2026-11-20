@@ -118,6 +118,7 @@ function normalizeBoardFields(task) {
   });
   if (task.estHours !== undefined && !(typeof task.estHours === 'number' && isFinite(task.estHours) && task.estHours >= 0)) delete task.estHours;
   if (task.showOnBoard !== undefined && typeof task.showOnBoard !== 'boolean') delete task.showOnBoard;
+  if (task.deadline !== undefined && typeof task.deadline !== 'boolean') delete task.deadline;
   ['subteamId', 'hiddenReason'].forEach(name => {
     if (task[name] !== undefined && !(typeof task[name] === 'string' && task[name].trim() !== '')) delete task[name];
   });

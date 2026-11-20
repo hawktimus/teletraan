@@ -55,6 +55,7 @@ const contract = {
     source: 'string',
     priority: 'string',
     dueDate: 'date',
+    deadline: 'boolean',
     showOnTv: 'boolean',
     team: teamRef,
     order: 'number',
@@ -5821,7 +5822,7 @@ function checkMondayTab() {
   // How often: 5 to 120 whole minutes, starting at 30, in the words given
   const every = at('mondayEveryMinutes');
   need(problems, every && every.type === 'number' && every.title === 'How often' && every.initialValue === 5 && every.group === 'monday', 'mondayEveryMinutes should be a number titled How often that starts at 5, in the Monday tab');
-  need(problems, every && /870 a day/.test(every.description || ''), 'mondayEveryMinutes should say how often the computer reads, and what it costs a day');
+  need(problems, every && /650 a day/.test(every.description || ''), 'mondayEveryMinutes should say how often the computer reads, and what it costs a day');
   ['min', 'max'].forEach(name => need(problems, constraintNamed(rulesOf(every), name) && constraintNamed(rulesOf(every), name).args[0] === (name === 'min' ? 5 : 120), 'mondayEveryMinutes needs ' + name + ' ' + (name === 'min' ? 5 : 120)));
   need(problems, config.defaultSettings.mondayEveryMinutes === 5, 'config.js should start at 5 minutes');
 

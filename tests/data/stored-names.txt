@@ -178,6 +178,8 @@ dashboardSettings.hiddenRequest.kind
 dashboardSettings.hiddenRequest.kind = desktop
 dashboardSettings.hiddenRequest.kind = redEyes
 dashboardSettings.hiddenRequest.requestedAt
+dashboardSettings.hideSubtheme
+dashboardSettings.hideSubtheme.until
 dashboardSettings.holdPanel
 dashboardSettings.holdPanel.panel
 dashboardSettings.holdPanel.until
@@ -318,8 +320,6 @@ dashboardSettings.pageSeconds
 dashboardSettings.partsRequestUrl
 dashboardSettings.pauseRotation
 dashboardSettings.pauseRotation.until
-dashboardSettings.hideSubtheme
-dashboardSettings.hideSubtheme.until
 dashboardSettings.photoDriveFolder
 dashboardSettings.photoFit
 dashboardSettings.photoFit = fill
@@ -533,6 +533,10 @@ dashboardSettings.style
 dashboardSettings.style = cybertron
 dashboardSettings.style = minimal
 dashboardSettings.style = original
+dashboardSettings.supervisorMode
+dashboardSettings.supervisorMode = fix
+dashboardSettings.supervisorMode = watch
+dashboardSettings.supervisorStatus
 dashboardSettings.team
 dashboardSettings.team.name
 dashboardSettings.team.number
@@ -825,6 +829,7 @@ mondayStatus.projects.<object>.status = done
 mondayStatus.projects.<object>.status = in-progress
 mondayStatus.projects.<object>.status = in-review
 mondayStatus.projects.<object>.status = up-next
+mondayStatus.projects.<object>.timelineEnd
 mondayStatus.projects.<object>.title
 mondayStatus.readings
 mondayStatus.readings.<object>
@@ -909,8 +914,11 @@ progressBlock.label
 progressBlock.percent
 remoteControl
 remoteControl.action
+remoteControl.action = clear_degraded
+remoteControl.action = collect_diagnostics
 remoteControl.action = pause_rotation
 remoteControl.action = reboot_computer
+remoteControl.action = refresh_screen
 remoteControl.action = restart_dashboard
 remoteControl.action = restart_services
 remoteControl.action = resume_rotation
@@ -1055,6 +1063,7 @@ status.buildVersion
 status.cleanupDeleted
 status.cleanupError
 status.cleanupWouldDelete
+status.dataProblems
 status.kioskRestarts
 status.kioskStartedAt
 status.lastBackupAt
@@ -1153,6 +1162,7 @@ task
 task.boardNote
 task.completedOn
 task.contact
+task.deadline
 task.department
 task.department = build
 task.department = business
@@ -1175,10 +1185,10 @@ task.list = open
 task.location
 task.manualNote
 task.milestoneIds
-task.note
 task.mondayBoardId
 task.mondayBoardName
 task.mondayId
+task.note
 task.order
 task.owners
 task.priority

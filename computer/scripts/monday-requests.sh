@@ -51,6 +51,18 @@ def first_name($limit):
     | if ($word | contains("@")) then null
       else ($word | gsub("[^\\p{L}\u0027.-]"; "") | sub("^[-.\u0027]+"; "") | sub("[-.\u0027]+$"; "") | .[0:$limit] | if . == "" then null else . end) end
   end;
+# The name a dropdown of first names shows: the first name, and a last initial after it when there is one ("Owen B."), so two
+# students with the same first name can be told apart. The first of several labels, cut to the limit.
+def contact_name($limit):
+  if type != "string" then null
+  else
+    (plain | split(",")[0] // "" | plain | split(" ")) as $words
+    | ($words[0] // "") as $word
+    | if ($word | contains("@")) then null
+      else (($word | gsub("[^\\p{L}\u0027.-]"; "") | sub("^[-.\u0027]+"; "") | sub("[-.\u0027]+$"; "")) as $first
+        | (if ($words[1] // "") | test("^\\p{Lu}\\.?$") then " " + ($words[1] | sub("\\.$"; "") + ".") else "" end) as $initial
+        | ($first + $initial) | .[0:$limit] | if . == "" or . == " " then null else . end) end
+  end;
 def real_day: . as $day | (try (($day + "T00:00:00Z") | fromdateiso8601 | todate | .[0:10]) catch "") == $day;
 def day_of: if type == "string" then ([scan("(?<![0-9])(?:19|20)[0-9]{2}-[0-9]{2}-[0-9]{2}(?![0-9])") | select(real_day)] | first) else null end;
 def first_of_each($key): reduce .[] as $item ([]; if any(.[]; .[$key] == $item[$key]) then . else . + [$item] end);

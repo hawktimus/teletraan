@@ -46,8 +46,10 @@ A task is in one of two lists:
 | Status | `color_mkv6tatz` | Status: To Do 5, In Progress 0, Done 1, Stuck 2, In Review 3 |
 | Department | `color_mm82nvea` | Department, when the group is not one |
 | Team | `color_mm82jgxg` | Prime 1, Nova 0, General 5. General shows for both teams |
-| POC | `multiple_person_mm8331h1` | Contact: the first name of the first person |
-| Assigned | `multiple_person_mm82cqbx` | Contact when POC is empty: the first name of the first person, else Unassigned |
+| POC | `poc` | A dropdown of first names (a last initial where two share one, "Owen B."). The contact on the TV: the one person responsible. No Monday account is needed |
+| Students | `students` | A dropdown of first names. The contact when POC is empty: the first student, else the first mentor, else Unassigned |
+| Group Key Dates & FIRST Deadlines | the group | Items in this group are dates, not tasks. No task list shows them (the task document has `deadline` on); the Deadlines board does |
+| Mentors | `mentors` | A dropdown of first names of mentors and coaches. The contact when POC and Students are empty |
 | Priority | `color_mm82wfy` | High 2, Medium 0, Low 1. Empty is No Priority |
 | Timeline | `timerange_mkyp8kx7` | Estimated Completion Date: the last day. Empty is No Date |
 | Date Completed | `date_mm82kn5v` | The order of the Done list |

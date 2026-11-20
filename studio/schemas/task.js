@@ -159,6 +159,13 @@ const fields = [
     initialValue: true,
   }),
   defineField({
+    name: 'deadline',
+    title: 'A date, not a task',
+    type: 'boolean',
+    description: 'On when the item is in the Key Dates group of the board. No task list shows it; the Deadlines board does.' + reading,
+    initialValue: false,
+  }),
+  defineField({
     name: 'hiddenReason',
     title: 'Why it is hidden',
     type: 'string',

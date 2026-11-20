@@ -76,7 +76,7 @@ function tidySnapshots(list) {
 // with a Team lead for their department (subteamId). A task the older sync marked with no department is never counted.
 export function visibleTasks(content, now = new Date()) {
   return (Array.isArray(content && content.tasks) ? content.tasks : []).filter(task => {
-    if (!isVisible(task, now) || !isFromBoard(task) || task.showOnBoard === false) return false;
+    if (!isVisible(task, now) || !isFromBoard(task) || task.showOnBoard === false || task.deadline === true) return false;
     if (task.hiddenReason === 'unassigned' || task.isSubitem === true || hasText(task.parentId)) return false;
 
     return hasText(task.subteamId);

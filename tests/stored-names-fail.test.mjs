@@ -51,7 +51,7 @@ test('a renamed field fails and names the old name and the new one', () => {
   const result = run(root);
   assert.equal(result.code, 1);
   assert.match(result.text, /FAIL {2}a name stored in Sanity was removed or renamed/);
-  assert.match(result.text, /"task\.dueDate" is gone \(renamed to one of: task\.dueOn/);
+  assert.match(result.text, /"task\.dueDate" is gone \(renamed to one of: task\.(deadline, task\.)?dueOn/);
   assert.match(result.text, /Do instead: put the old name back/);
 });
 
