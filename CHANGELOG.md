@@ -3,6 +3,27 @@
 Teletraan I is named by a build version (the `VERSION` file), not by numbered rounds. The newest build is first. Each
 line says what changed for the people who use the screen, not how it was built.
 
+## 1.3.0 — the audit fixes, the Monday dropdowns and the refresh before the meeting
+
+- **The Control page has no built-in PIN.** `CONTROL_PIN` in `local.env` is the only one, and the installer stops without it.
+- **Updates are checked and can be undone.** Every dashboard file is read and the quick tests run before the switch; a screen
+  that does not come up on the new version goes back to the old one and the page says so. Switching and updating need a confirm.
+  There is an Update button on Now.
+- **The pill says Updates late, not Offline,** and waits 35 minutes (red after 60) before it shows.
+- **What Sanity sends is checked.** An empty or broken answer never replaces the content on the wall. A time with no zone is
+  read as Eastern time. The rows that need a look are listed on the Control page, under each source, and counted in the Studio.
+- **Monday is read every 5 minutes** in school hours and every 30 at night, 3 requests a read, about 650 a day.
+- **Who is on a Monday task is read from POC, Students and Mentors,** which are dropdowns of first names now. The contact
+  shows the last initial where two students share a first name. Items of the Key Dates group are dates, not tasks.
+- **The dots on the TV and on the Control page agree,** and a source that has not been read since a restart is grey, not amber.
+- **The name servers are a setting** (8.8.8.8 and 8.8.4.4), kept on every Wi-Fi network, with a fallback and a way back.
+- **A refresh at 13:30 on weekdays** reads every source and checks the computer, reloads the page when all is well, restarts
+  what is wrong, and reboots only when it must. It waits for a talk or a meeting.
+- **The Studio shows Eastern time** on every date field, warns about odd hours, and says why a Play button is off.
+- **The wall computer is a 2014 model,** in the docs and comments.
+
+docs/audit.md has the report and what was done about each finding, and what was not built.
+
 ## 1.2.0 — presentations from a Google Drive folder
 
 A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
