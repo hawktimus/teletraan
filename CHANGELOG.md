@@ -8,6 +8,8 @@ line says what changed for the people who use the screen, not how it was built.
 A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
 folder, pick it from a list, and the clicker runs it like a booked talk.
 
+- **Fewer calls to Sanity.** The computer looks for a publish and writes its status once a minute, and asks for remote
+  actions once a minute, instead of every 10 and 30 seconds. A publish shows within a minute.
 - **Update from GitHub no longer rolls back a working update.** The check that waits for the screen to report the new
   version looked in the wrong place, so every update was undone after 90 seconds although the screen had come up.
 - **One folder, read all the time.** The Teletraan computer looks at the folder every 20 seconds. A file dropped in it

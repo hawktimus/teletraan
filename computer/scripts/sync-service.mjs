@@ -31,15 +31,15 @@ import { probeAndLog } from './net-probe.mjs';
 const service = 'sync';
 export const sourceNames = ['sanity', 'weather', 'images', 'monday', 'competition', 'calendars'];
 
-// Seconds. The check is cheap (a count and the newest edit), so a publish shows within seconds, and the whole read still
+// Seconds. The check is cheap (a count and the newest edit), so a publish shows within a minute, and the whole read still
 // happens at least every five minutes in case a change was missed.
 export const timing = {
-  checkEvery: 10,
+  checkEvery: 60,
   fullReadEvery: 300,
   weatherEvery: 900,
   weatherRetryEvery: 60,
   imagesRetryEvery: 60,
-  statusEvery: 10,
+  statusEvery: 60,
   probeEveryWhenWell: 900,
   probeEveryWhenFailing: 60,
   noteEveryWhenWell: 300,
