@@ -39,6 +39,6 @@ export {
 } from './presentation-input.js';
 export {
   canRun, dueTalk, slidePages, slidesFolder, slideAddress, slidesVersion, idleState, holdsScreen, pictureOf, cardLines, nextState,
-  isDeckTalk, escapeTwice, pressKey, secondOfDoubleClick, pressMouse, restartsRotation, blocksContextMenu, chipShown,
+  isDeckTalk, slideFades, escapeTwice, pressKey, secondOfDoubleClick, pressMouse, restartsRotation, blocksContextMenu, chipShown,
   slideNumberText, progressOf, preloadIndexes, skippedStorageKey, readSkipped, rememberEnded,
 } from './presentation-state.js';

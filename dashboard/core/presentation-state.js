@@ -131,6 +131,12 @@ export function isDeckTalk(talk) {
   return typeof talk.deck === 'string' && talk.deck !== '';
 }
 
+// True when the picture changes from one slide to another inside a picked deck: that change
+// fades. The first slide comes in with the card, and a booked talk's slides change at once.
+export function slideFades(talk, from, to) {
+  return isDeckTalk(talk) && from !== null && from !== to;
+}
+
 function firstSlide(state, time) {
   return { name: 'presenting', talk: state.talk, count: state.count, slide: 0, black: false, keyAt: time, escapedAt: null, clickedAt: null };
 }

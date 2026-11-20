@@ -29,6 +29,7 @@ docs/audit.md has the report and what was done about each finding, and what was 
 A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
 folder, pick it from a list, and the clicker runs it like a booked talk.
 
+- **Slides of a picked deck fade into each other** (about 0.4 s, opacity only). The first slide, booked talks and screens set to no motion change at once. To change the speed, edit `--time-fade-in` in `dashboard/tokens.css`.
 - **A picked deck ends by itself.** Going forward on the last slide (key or click) gives the screen back to the dashboard,
   and a picked deck shows no slide number in the corner.
 - **Fewer calls to Sanity.** The computer looks for a publish and writes its status once a minute, and asks for remote

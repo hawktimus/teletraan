@@ -17,7 +17,7 @@ import {
   canPlay, checkedText, closedPicker, deckMinutes, deckNote, deckTalk, findDeck, keepMark, listNote, markDeck, markedIndex, openPicker, opensPicker,
   pickerAction, pickerSeconds, pickerTimedOut, pressPickerKey, rowsShown, shouldPlayDeck, shownRows, tidyDeckList, tidyDeckRequest,
 } from '../dashboard/core/decks.js';
-import { canRun, chipShown, dueTalk, isDeckTalk, nextState, idleState, pressKey, pressMouse, slideAddress, slidesFolder, slidesVersion, talkEnd } from '../dashboard/core/presentation.js';
+import { canRun, chipShown, dueTalk, isDeckTalk, slideFades, nextState, idleState, pressKey, pressMouse, slideAddress, slidesFolder, slidesVersion, talkEnd } from '../dashboard/core/presentation.js';
 import { graceMinutes } from '../dashboard/core/constants.js';
 
 const read = name => fs.readFileSync(repo + name, 'utf8');
@@ -352,6 +352,20 @@ test('a picked deck gives the screen back after its last slide, and shows no sli
   const lastByMouse = pressMouse(state, 'left', now);
   assert.equal(lastByMouse.name, 'skipped', 'a click on the last slide ends it too');
   assert.equal(pressKey(state, 'Escape', now).name, 'skipped');
+});
+
+
+test('a picked deck fades from one slide to the next, and nothing else does', () => {
+  const deck = deckTalk(findDeck(manifest(), idA), now);
+  assert.equal(slideFades(deck, 0, 1), true, 'slide to slide in a deck fades');
+  assert.equal(slideFades(deck, 3, 2), true, 'going back fades too');
+  assert.equal(slideFades(deck, null, 0), false, 'the first slide comes in with the card, no fade');
+  assert.equal(slideFades(deck, 2, 2), false, 'the same slide is not redrawn');
+  assert.equal(slideFades({ id: 'booked-talk' }, 0, 1), false, 'a booked talk keeps its slides changing at once');
+  const css = read('dashboard/frame.css');
+  assert.ok(css.includes('.talk .slide[data-fade="in"] { animation: fade-in var(--time-fade-in) linear backwards; }'));
+  assert.ok(css.includes('[data-motion="none"] .talk .slide { animation: none; }'));
+  assert.ok(read('dashboard/core/presentation-run.js').includes('slideFades('));
 });
 
 await finish();

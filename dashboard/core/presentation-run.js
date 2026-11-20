@@ -9,7 +9,7 @@ import * as frame from '../frame.js';
 import { buildPage } from './panels.js';
 import { takeoverRunning } from './takeover.js';
 import { restartRotation } from './schedule.js';
-import { blocksContextMenu, chipSeconds, chipShown, holdsScreen, idleState, keyAction, mouseButton, nextState, pictureOf, preloadAhead, preloadIndexes, pressKey, pressMouse, progressOf, readSkipped, rememberEnded, restartsRotation, slideAddress, slideNumberText, slidePages, slidesFolder, slidesVersion } from './presentation.js';
+import { blocksContextMenu, chipSeconds, chipShown, holdsScreen, idleState, keyAction, mouseButton, nextState, pictureOf, preloadAhead, preloadIndexes, pressKey, pressMouse, progressOf, readSkipped, rememberEnded, restartsRotation, slideAddress, slideNumberText, slidePages, slideFades, slidesFolder, slidesVersion } from './presentation.js';
 
 const root = document.documentElement;
 const layer = document.getElementById('talk');
@@ -266,12 +266,26 @@ function giveUp(error) {
 }
 
 // The slide, the progress line and the slide number. The slide changes at once.
+let fadeTimer = 0;
+const fadeMs = 450; // a little more than --time-fade-in (400 ms), so the old picture stays under the whole fade
 function drawSlide(after) {
   view.dataset.black = after.black ? 'on' : 'off';
   if (shown !== after.slide) {
     const host = view.querySelector('.slide-host');
-    host.textContent = '';
-    host.appendChild(imageFor(after.slide));
+    const picture = imageFor(after.slide);
+    const old = Array.from(host.children);
+    if (slideFades(after.talk, shown, after.slide) && old.length > 0) {
+      // the new picture goes on top and fades in; the old ones go when it is done
+      picture.dataset.fade = 'in';
+      host.appendChild(picture);
+      clearTimeout(fadeTimer);
+      fadeTimer = setTimeout(() => { old.forEach(node => { if (node !== picture) node.remove(); }); delete picture.dataset.fade; }, fadeMs);
+    } else {
+      clearTimeout(fadeTimer);
+      host.textContent = '';
+      if (picture.dataset) delete picture.dataset.fade;
+      host.appendChild(picture);
+    }
     shown = after.slide;
   }
 

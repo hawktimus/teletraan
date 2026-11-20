@@ -99,8 +99,8 @@ html[data-talk="on"] #stage { visibility: hidden; }
   font: 500 var(--size-body)/72px var(--font-text);
 }
 
-/* The slides: one picture at a time on black, shown whole. A picture is put in and
-   taken out with no fade and no move, so nothing here has a transition or an animation. */
+/* The slides: one picture at a time on black, shown whole. A picture is put in with
+   no move, so nothing here has a transition or an animation. The fade of a picked deck is in frame.css. */
 .talk.slides { background: var(--pure-black); }
 .talk .slide-host,
 .talk .slide {
