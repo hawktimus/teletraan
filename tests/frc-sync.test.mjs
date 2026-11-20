@@ -1020,6 +1020,17 @@ test('the other teams of the next match are asked for their rating once each, an
   assert.deepEqual(refused.document().teams[0].nextMatch.red.map(person => person.epa), [null, null, null]);
 });
 
+test('Statbotics being down is a note for the Control page and not an error, and the Blue Alliance data still comes', () => {
+  const down = setup('statbotics-down', { tools: true });
+  world(down);
+  down.statbotics('/team_year/3229/2027', {}, { code: 500 });
+  down.run();
+  const document = down.document();
+  assert.ok(!document.lastError, 'a Statbotics outage must not be the last error');
+  assert.ok(document.notes.some(note => note.startsWith('Statbotics answered with code 500')), JSON.stringify(document.notes));
+  assert.ok(document.teams.length > 0, 'the Blue Alliance part is still written');
+});
+
 test('a team key in the next match that is not plain is never asked for', () => {
   const place = setup('rivals-odd', { tools: true });
   world(place);

@@ -288,6 +288,7 @@ export function extrasOf(world) {
   const tba = frc ? {
     lastSyncAt: frc.lastSyncAt,
     lastError: frc.lastError,
+    notes: frc.notes,
     teams: frc.teams.map(team => ({
       team: team.team,
       number: team.number,

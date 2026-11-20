@@ -48,6 +48,16 @@ problem() {
   printf '%s\n' "$1" >> "$work/errors.txt"
 }
 
+# Trouble with one service. The ratings and win chances are extras, so when Statbotics is down the cards still draw and the
+# words only go to the notes, which the Control page shows and the screen never draws. A Blue Alliance problem is an error.
+service_problem() {
+  if [ "$service" = statbotics ]; then
+    note "$1"
+  else
+    problem "$1"
+  fi
+}
+
 fill() {
   printf '%s' "$1" | sed -e "s/{team}/$team_key/g" -e "s/{number}/$team_number/g" -e "s/{year}/$year/g" \
     -e "s/{event}/$event_key/g" -e "s/{match}/$match_key/g" -e "s/{district}/$district_key/g"
@@ -139,7 +149,7 @@ get() {
 
   if [ "$curl_status" -ne 0 ]; then
     outcome=failed
-    problem "$(service_name "$service") did not answer, $(explain "$curl_status")."
+    service_problem "$(service_name "$service") did not answer, $(explain "$curl_status")."
     failures=$((failures + 1))
     if [ "$failures" -ge 3 ]; then
       stopped=network
@@ -157,7 +167,7 @@ get() {
     200)
       if ! jq empty "$work/answer.json" > /dev/null 2>&1; then
         outcome=failed
-        problem "$(service_name "$service") sent an answer that is not data ($name)."
+        service_problem "$(service_name "$service") sent an answer that is not data ($name)."
         return 0
       fi
       if [ -f "$file" ] && cmp -s "$work/answer.json" "$file"; then
@@ -176,7 +186,7 @@ get() {
       else
         forget_etag "$name"
         outcome=failed
-        problem "$(service_name "$service") said nothing had changed, but the earlier answer is gone ($name)."
+        service_problem "$(service_name "$service") said nothing had changed, but the earlier answer is gone ($name)."
       fi
       ;;
     404)
@@ -197,12 +207,16 @@ get() {
       ;;
     429)
       outcome=failed
-      stopped=limit
-      problem "$(service_name "$service") says there were too many requests, so this run stopped. It goes on at the next run."
+      if [ "$service" = statbotics ]; then
+        statbotics_off=yes
+      else
+        stopped=limit
+      fi
+      service_problem "$(service_name "$service") says there were too many requests, so this run stopped. It goes on at the next run."
       ;;
     *)
       outcome=failed
-      problem "$(service_name "$service") answered with code $answer_code ($name)."
+      service_problem "$(service_name "$service") answered with code $answer_code ($name)."
       ;;
   esac
 }

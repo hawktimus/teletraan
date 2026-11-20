@@ -12,7 +12,8 @@ export function extrasHtml(extras, now = new Date()) {
   if (extras.tba) {
     const teams = extras.tba.teams.map(team => '<li>' + esc(team.team + (team.number ? ' ' + team.number : '')) + ': ' +
       esc(team.rank === null ? 'no rank yet' : 'rank ' + team.rank + (team.of ? ' of ' + team.of : '')) + (team.nextMatch ? ', next match ' + esc(team.nextMatch) : '') + '</li>').join('');
-    html += '<h3>TBA (the frc-status document)</h3><p class="word">Read ' + esc(agoText(extras.tba.lastSyncAt, now)) + '.' + (extras.tba.lastError ? ' Last problem: ' + esc(extras.tba.lastError) : '') + '</p>' + (teams ? '<ul class="items">' + teams + '</ul>' : '');
+    html += '<h3>TBA (the frc-status document)</h3><p class="word">Read ' + esc(agoText(extras.tba.lastSyncAt, now)) + '.' + (extras.tba.lastError ? ' Last problem: ' + esc(extras.tba.lastError) : '') + '</p>' + (teams ? '<ul class="items">' + teams + '</ul>' : '') +
+      (extras.tba.notes && extras.tba.notes.length ? '<p class="word">Notes: ' + extras.tba.notes.map(esc).join(' ') + '</p>' : '');
   }
   if (extras.match13) {
     html += '<h3>Match13</h3><p class="word">Read ' + esc(agoText(extras.match13.generatedAt, now)) + (extras.match13.stale ? '. This is old.' : '.') + ' This stays on the Teletraan computer and is not saved to Sanity.</p>';
