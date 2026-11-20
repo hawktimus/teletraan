@@ -13,6 +13,12 @@ target=/etc/systemd/system
 # The unit files name the repository location directly
 expected_repo=/opt/teletraan
 
+# A computer that updates from GitHub keeps each version in /opt/teletraan/releases/<n>, and /opt/teletraan/computer
+# is a link to the one in use. Running this from a version is running it from the repository.
+case $repo in
+  "$expected_repo"/releases/*) repo=$expected_repo ;;
+esac
+
 # These checks only read, so they come first and nothing is changed until they
 # pass. An empty unit file would be installed as an empty unit, so it counts as
 # missing.
