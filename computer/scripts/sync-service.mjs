@@ -167,7 +167,7 @@ export function withStuckNotes(result, notesFile) {
 // options (all optional): dataDir, sanityBase, weatherUrl, now(), fetch, envFile, token
 export function createSync(options = {}) {
   const dataDir = options.dataDir || process.env.TELETRAAN_DATA || '/var/lib/teletraan/data';
-  const sanityBase = options.sanityBase || process.env.SYNC_SANITY_BASE || 'https://' + sanity.projectId + '.api.sanity.io';
+  const sanityBase = options.sanityBase || process.env.SYNC_SANITY_BASE || 'https://' + sanity.projectId + '.apicdn.sanity.io';
   const weatherUrl = options.weatherUrl || process.env.SYNC_WEATHER_URL || forecastUrl(location);
   const now = options.now || (() => Date.now());
   const doFetch = options.fetch || fetch;

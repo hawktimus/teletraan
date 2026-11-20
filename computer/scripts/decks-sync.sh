@@ -144,7 +144,7 @@ read_folder() {
   status=0
   curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 1000000 --proto '=https' \
     --data-urlencode 'query=*[_id == "dashboardSettings"][0] { presentationDriveFolder }' --data-urlencode 'perspective=published' \
-    --output "$work/settings.json" "https://$project.api.sanity.io/v$version/data/query/$dataset" 2> /dev/null || status=$?
+    --output "$work/settings.json" "https://$project.${SANITY_READ_HOST:-apicdn}.sanity.io/v$version/data/query/$dataset" 2> /dev/null || status=$?
 
   if [ "$status" -ne 0 ] || ! jq -e 'has("result")' "$work/settings.json" > /dev/null 2>&1; then
     [ -f "$kept" ] || return 1

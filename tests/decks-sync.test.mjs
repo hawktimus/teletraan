@@ -56,7 +56,7 @@ if [ "$config" = - ]; then
   fi
 fi
 case $address in
-  https://*.api.sanity.io/*)
+  https://*.api.sanity.io/*|https://*.apicdn.sanity.io/*)
     [ -f "$STUB_DIR/sanity.exit" ] && exit "$(cat "$STUB_DIR/sanity.exit")"
     cp "$STUB_DIR/sanity.json" "$output"
     ;;
@@ -375,12 +375,12 @@ test('Sanity is asked for the folder once and the answer is kept for five minute
   const place = ready('kept');
   place.sync();
   place.sync();
-  assert.equal((fs.readFileSync(place.log, 'utf8').match(/api\.sanity\.io/g) || []).length, 1);
+  assert.equal((fs.readFileSync(place.log, 'utf8').match(/sanity\.io/g) || []).length, 1);
 
   const old = new Date(Date.now() - 6 * 60 * 1000);
   fs.utimesSync(path.join(place.decks, '.folder'), old, old);
   place.sync();
-  assert.equal((fs.readFileSync(place.log, 'utf8').match(/api\.sanity\.io/g) || []).length, 2);
+  assert.equal((fs.readFileSync(place.log, 'utf8').match(/sanity\.io/g) || []).length, 2);
 });
 
 test('a run that starts while another is looking stops at once, and a wrong argument prints the usage', () => {

@@ -63,7 +63,7 @@ case " $* " in
     ;;
 esac
 case $address in
-  https://*.api.sanity.io/*/data/query/*)
+  https://*.api.sanity.io/*/data/query/*|https://*.apicdn.sanity.io/*/data/query/*)
     [ -f "$STUB_DIR/sanity.exit" ] && exit "$(cat "$STUB_DIR/sanity.exit")"
     if [ -n "$output" ]; then cp "$STUB_DIR/sanity.json" "$output"; else cat "$STUB_DIR/sanity.json"; fi
     exit 0

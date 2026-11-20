@@ -87,6 +87,7 @@ if ! printf '%s' "$project" | grep -Eq '^[a-z0-9]+$' ||
   exit 1
 fi
 host="https://$project.api.sanity.io"
+read_host="https://$project.${SANITY_READ_HOST:-apicdn}.sanity.io"
 
 umask 022
 mkdir -p "$news"
@@ -133,7 +134,7 @@ query='*[_id == "dashboardSettings"][0] { newsEnabled, newsCategories, newsHidde
 status=0
 curl --disable --silent --get --max-time 30 --connect-timeout 10 --max-filesize 1000000 --proto '=https' \
   --data-urlencode "query=$query" --data-urlencode 'perspective=published' \
-  --output "$work/settings.json" "$host/v$version/data/query/$dataset" 2> /dev/null || status=$?
+  --output "$work/settings.json" "$read_host/v$version/data/query/$dataset" 2> /dev/null || status=$?
 
 if [ "$status" -ne 0 ] || ! jq -e 'has("result")' "$work/settings.json" > /dev/null 2>&1; then
   echo "Could not get the settings from Sanity. Nothing was changed. Check that the Teletraan computer is online; the next run tries again." >&2

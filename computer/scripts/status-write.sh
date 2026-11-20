@@ -178,6 +178,7 @@ if ! printf '%s' "$project" | grep -Eq '^[a-z0-9]+$' ||
 fi
 
 host="https://$project.api.sanity.io"
+read_host="https://$project.${SANITY_READ_HOST:-apicdn}.sanity.io"
 
 # The newest change to a published document, which is what "content update
 # seen" means. The documents the Teletraan computer writes itself are left out, or every
@@ -186,7 +187,7 @@ host="https://$project.api.sanity.io"
 newest_update() {
   query='*[!(_type in ["status", "calendarStatus", "mondayStatus", "frcStatus", "frcNews"]) && !(_id match "task-monday-*") && !(_id match "milestone-monday-*")] | order(_updatedAt desc)[0]._updatedAt'
   status=0
-  answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
+  answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$read_host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
   [ "$status" -eq 0 ] || return 0
   printf '%s' "$answer" | sed -n 's/.*"result":"\([^"]*\)".*/\1/p' | head -n 1
@@ -230,7 +231,7 @@ time_line() {
 if [ "$field" = print ]; then
   query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, newsAt, match13At, kioskStartedAt}"
   status=0
-  answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$host/v$version/data/query/$dataset" \
+  answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$read_host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
   if [ "$status" -ne 0 ]; then
     echo "status: could not read $document, $(explain "$status")." >&2

@@ -29,6 +29,7 @@ docs/audit.md has the report and what was done about each finding, and what was 
 A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
 folder, pick it from a list, and the clicker runs it like a booked talk.
 
+- **The Teletraan computer reads Sanity through its CDN host.** Reads (content, decks folder, Monday, news, status) go to `<project>.apicdn.sanity.io`, which has its own quota, so a full API plan limit (HTTP 402) no longer makes the screen say Updates late. Writes still use `api.sanity.io`. Set `SANITY_READ_HOST=api` in local.env (or `SYNC_SANITY_BASE` for the sync service) to go back. The school firewall must allow `apicdn.sanity.io` (docs/network.md).
 - **Slides of a picked deck fade into each other** (about 0.4 s, opacity only). The first slide, booked talks and screens set to no motion change at once. To change the speed, edit `--time-fade-in` in `dashboard/tokens.css`.
 - **A picked deck ends by itself.** Going forward on the last slide (key or click) gives the screen back to the dashboard,
   and a picked deck shows no slide number in the corner.

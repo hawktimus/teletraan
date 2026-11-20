@@ -38,6 +38,7 @@ export function sourceHosts(extras = [], scriptsFolder = here) {
   const sanityHost = project + '.api.sanity.io';
 
   list.push({ name: 'sanity', purpose: "the editors' content, read only (the dataset is public)", host: sanityHost, url: addressOf(sanity, '{ "count": count(*) }'), expectedType: 'json' });
+  list.push({ name: 'sanity-cdn', purpose: "the editors' content, read only, through Sanity's CDN (its own quota, so a full plan limit on the API does not stop the screen)", host: project + '.apicdn.sanity.io', url: addressOf({ projectId: project, dataset: sanity.dataset, apiVersion: sanity.apiVersion }, '{ "count": count(*) }', 'https://' + project + '.apicdn.sanity.io'), expectedType: 'json' });
   list.push({ name: 'images', purpose: "the pictures of the editors' content", host: sanityImageHost, url: 'https://' + sanityImageHost + '/', expectedType: '' });
   const weather = new URL(forecastUrl(location));
   list.push({ name: 'weather', purpose: 'the weather (no key needed)', host: weather.hostname, url: weather.href, expectedType: 'json' });

@@ -118,7 +118,7 @@ check('the question to Sanity is about booked talks only, in the hour ahead and 
   assert.match(asked, /status == "scheduled"/);
   assert.match(asked, /dateTime\(start\) < dateTime\("\d{4}-\d\d-\d\dT[\d:]+Z"\)/);
   assert.match(asked, /dateTime\(start\) > dateTime\("\d{4}-\d\d-\d\dT[\d:]+Z"\)/);
-  assert.match(asked, /abc123\.api\.sanity\.io\/v2024-01-01\/data\/query\/production/);
+  assert.match(asked, /abc123\.apicdn\.sanity\.io\/v2024-01-01\/data\/query\/production/);
 });
 
 check('when Sanity cannot be asked the restart goes ahead', () => {

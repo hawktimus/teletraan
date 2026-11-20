@@ -224,7 +224,7 @@ test('content asks the dataset for the newest change to a published document, le
 
   const lines = result.calls.trim().split('\n');
   assert.equal(lines.length, 2, 'a question and then the write');
-  assert.ok(lines[0].includes('https://' + project + '.api.sanity.io/v' + version + '/data/query/' + dataset), lines[0]);
+  assert.ok(lines[0].includes('https://' + project + '.apicdn.sanity.io/v' + version + '/data/query/' + dataset), lines[0]);
   assert.ok(lines[0].includes('perspective=published'), 'only published documents: ' + lines[0]);
   assert.ok(lines[0].includes('order(_updatedAt desc)[0]._updatedAt'), lines[0]);
   ['"status"', '"calendarStatus"', '"mondayStatus"', '"frcStatus"', 'task-monday-'].forEach(word => {
@@ -388,7 +388,7 @@ test('--print asks for the status document with no token, writes nothing, and gi
 
   const lines = result.calls.trim().split('\n');
   assert.equal(lines.length, 1, 'one question and nothing else');
-  assert.ok(lines[0].includes('https://' + project + '.api.sanity.io/v' + version + '/data/query/' + dataset), lines[0]);
+  assert.ok(lines[0].includes('https://' + project + '.apicdn.sanity.io/v' + version + '/data/query/' + dataset), lines[0]);
   assert.ok(lines[0].includes('perspective=published'), lines[0]);
   assert.ok(lines[0].includes('status-mini'), lines[0]);
   assert.ok(!lines[0].includes('--config') && !lines[0].includes('Authorization'), 'the dataset is public, so no token is sent: ' + lines[0]);
