@@ -8,6 +8,8 @@ line says what changed for the people who use the screen, not how it was built.
 A deck no longer has to be booked to be shown. Put a Google Slides deck or a PowerPoint file in one shared Google Drive
 folder, pick it from a list, and the clicker runs it like a booked talk.
 
+- **Update from GitHub no longer rolls back a working update.** The check that waits for the screen to report the new
+  version looked in the wrong place, so every update was undone after 90 seconds although the screen had come up.
 - **One folder, read all the time.** The Teletraan computer looks at the folder every 20 seconds. A file dropped in it
   is in the list within that time and can be played as soon as its pictures are made. A deck that is edited is made
   again by itself, and a file taken out leaves the list.

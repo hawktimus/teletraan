@@ -331,7 +331,7 @@ make_deck() {
       failure="the script could not read the deck"
       return 1
     fi
-    base64 -d "$2/download.b64" > "$pdf" 2> /dev/null || true
+    base64 -d < "$2/download.b64" > "$pdf" 2> /dev/null || true
     rm -f "$2/download.b64"
   else
     curl --disable --silent --max-time 120 --max-filesize 80000000 \

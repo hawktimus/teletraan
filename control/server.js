@@ -128,12 +128,14 @@ export async function createService(config, overrides = {}) {
     ctx.state.cors = await ctx.cors.check(process.env.CONTROL_ORIGIN || 'http://teletraan.local:3229');
   };
 
-  // The build the install waits for: the dashboard posts it every 10 seconds (routes/now.js keeps ctx.state.now)
+  // The build the install waits for: the dashboard posts it every 10 seconds and routes/now.js keeps the last report
+  // in ctx.state.wallSeen. A report older than a minute is not taken: the screen has to be reporting now.
   ctx.waitForBuild = overrides.waitForBuild || (async (build, milliseconds) => {
     const end = Date.now() + milliseconds;
     while (Date.now() < end) {
-      const now = ctx.state.now;
-      if (now && now.build === build) return true;
+      const seen = ctx.state.wallSeen;
+      const fresh = seen && seen.received && Date.now() - seen.received.getTime() < 60 * 1000;
+      if (fresh && seen.report && seen.report.build === build) return true;
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
     return false;
