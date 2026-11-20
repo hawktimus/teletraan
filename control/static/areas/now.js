@@ -13,6 +13,8 @@ import { specs, make } from './actions.js';
 import { runSyncOne, setIncluded, sources } from '../sync-run.js';
 import { stickyBar } from './sticky.js';
 import { lead } from '../guide.js';
+import { githubCard } from '../github-card.js';
+import { stepNames } from '../tabs/settings-update.js';
 
 const stateWords = { ok: 'OK', warn: 'Late', bad: 'Problem', unknown: 'Not known' };
 
@@ -69,6 +71,12 @@ export function mountNow(box) {
   const restart = make('restartDashboard');
   [sync, refresh, restart].forEach(action => q('data-primary').append(action.root));
   const unstick = stickyBar(root, sync, 'Sync everything', 'sync');
+
+  // The Update button is here as well as in Update: what is on GitHub, what is on the wall, one button that asks first. It runs
+  // the same steps, including the checks before the switch and the way back when the screen does not come up.
+  const updateBox = el('div', 'now-update');
+  root.append(updateBox);
+  updateBox.append(githubCard(stepNames, () => {}));
 
   let open = '';
   let lastProblems = '';

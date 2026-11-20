@@ -8,7 +8,7 @@ import { treeHashOfFiles } from '../tree-hash.js';
 import { githubCard } from '../github-card.js';
 import { describeFolder, folderFiles, folderName, readCommit, shortCommit, versionLabel, zipCandidates, zipLimit, restartWords, waitUntilBack } from '../update-lib.js';
 
-const stepNames = {
+export const stepNames = {
   download: 'Download from GitHub',
   unpack: 'Unpack the files',
   files: 'Check the files',

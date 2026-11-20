@@ -1,5 +1,6 @@
 // The status pill at the foot of the screen (#sync-pill, dashboard/sync-pill.css): hidden while everything is fresh,
-// amber "Offline since 3:12 PM" when a source is late, red when every source is down. The rules are in
+// amber "Updates late since 3:12 PM" when a source is late, red "No updates since 3:12 PM" when every source is down. The word
+// Offline is not used: the screen works from its saved copy and is not an error. The rules are in
 // core/sync-status.js and the limits in core/constants.js. The pill says no error and no host, only the word and a time.
 // The sample content has no sync service, so there is no pill on ?sample=1.
 
@@ -8,12 +9,13 @@ import { mondayEvery } from './dots.js';
 import { pillState, watchSyncStatus } from './sync-status.js';
 
 // The words of the pill for a state, or '' when it is not drawn. A time from an earlier day carries its date
-// ("Offline since Oct 31, 7:40 PM"), so an old failure does not read as one from tonight.
+// ("Updates late since Oct 31, 7:40 PM"), so an old failure does not read as one from tonight.
 export function pillText(state, now = new Date()) {
   if (state.state === 'ok') return '';
-  if (!state.since) return 'Offline';
+  const words = state.state === 'down' ? 'No updates' : 'Updates late';
+  if (!state.since) return words;
   const clock = formatTimeOfDay(state.since);
-  return 'Offline since ' + (localDay(state.since) === localDay(now) ? clock : formatShortDate(state.since) + ', ' + clock);
+  return words + ' since ' + (localDay(state.since) === localDay(now) ? clock : formatShortDate(state.since) + ', ' + clock);
 }
 
 export function startSyncPill(getContent, isSample) {

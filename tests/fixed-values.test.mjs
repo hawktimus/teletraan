@@ -66,8 +66,8 @@ const oddStored = [
 
 test('constants.js holds the four values with the numbers the Studio fields start as, the limits of the status pill, the competition window, and nothing else', () => {
   assert.deepEqual(Object.keys(constants).sort(), names.concat(syncNames).sort());
-  assert.equal(constants.syncStaleMinutes, 10);
-  assert.equal(constants.syncDownMinutes, 30);
+  assert.equal(constants.syncStaleMinutes, 35);
+  assert.equal(constants.syncDownMinutes, 60);
   assert.equal(constants.nightStart, '23:30');
   assert.equal(constants.nightEnd, '11:30');
   assert.equal(constants.noShowMinutes, 5);

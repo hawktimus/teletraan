@@ -41,7 +41,7 @@ What it knows is in `/var/lib/teletraan/netwatch.json`: `failures`, `lastCheckAt
 
 ## On the TV
 
-Nothing on the screen says an error. When a source of the sync service has not had a good read for more than 10 minutes, the status pill at the foot of the screen says Offline since the time of its last good read, in amber, and in red when every source has gone more than 30 minutes (docs/OPERATIONS.md, "Services"). Whoever turns on Show connection status gets a small text with the last read and the item counts, with no error word in it. The page cannot see the computer's files, so `kiosk.sh` copies `networkDownSince` and `networkLastStep` into `device.json` every minute; the line The Teletraan computer is trying to fix this by itself is part of that text.
+Nothing on the screen says an error. When a source of the sync service has not had a good read for more than 35 minutes, the status pill at the foot of the screen says Updates late since the time of its last good read, in amber, and No updates in red when every source has gone more than 60 minutes (docs/OPERATIONS.md, "Services"). Whoever turns on Show connection status gets a small text with the last read and the item counts, with no error word in it. The page cannot see the computer's files, so `kiosk.sh` copies `networkDownSince` and `networkLastStep` into `device.json` every minute; the line The Teletraan computer is trying to fix this by itself is part of that text.
 
 ## The control page
 
