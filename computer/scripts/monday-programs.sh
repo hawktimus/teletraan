@@ -27,7 +27,7 @@ $items[]
 | ((value_of($columns.show).index // "") | tostring) as $show
 | {
     id: (.id | if test("\\A[0-9]{1,20}\\z") then . else null end),
-    title: (.name | whole_text($title_limit)),
+    title: ((value_of($columns.shortname).text | whole_text($short_limit)) as $short | if $short != "" then $short else (.name | whole_text($title_limit)) end),
     department: $department,
     list: (if $status == "done" or ((.group | if type == "string" then plain | ascii_downcase else "" end) == "done") or $done == "yes" then "done" else "open" end),
     status: $status,

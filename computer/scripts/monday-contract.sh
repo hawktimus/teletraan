@@ -32,11 +32,12 @@ columns='{
   "hours": "numeric_mm82pw1a",
   "completed": "date_mm82kn5v",
   "show": "color_mm83p12x",
-  "notes": "text_mm82s03v"
+  "notes": "text_mm82s03v",
+  "shortname": "text_mm997yx4"
 }'
 # Notes is a text column. It is kept for a Stuck task only (the reason it is stuck), cut to note_limit characters. The dataset
 # is public, so the note of every other task is read here and dropped by monday-programs.sh without being stored.
-task_board_columns='["department", "status", "team", "assigned", "poc", "mentors", "priority", "timeline", "hours", "completed", "show", "notes"]'
+task_board_columns='["department", "status", "team", "assigned", "poc", "mentors", "priority", "timeline", "hours", "completed", "show", "notes", "shortname"]'
 done_board_columns='["status", "team", "assigned", "priority", "timeline", "hours"]'
 
 # The columns of the Projects board, by id. Status, Mentor, Helpers and Show on TV? are read as text (the words of the label),
@@ -131,6 +132,9 @@ def error_messages: [(.errors[]?.message?), .error_message?] | map(strings);
 
 # The longest project name (studio/schemas/task.js) and the longest first name
 title_limit=40
+# Short name is a text column of Robotics Tasks (not of Completed Tasks). When it has text, the screen shows it in place of the
+# name. Monday cannot limit a text column, so the cut is made here, at the number of characters that fit a row at 56px.
+short_limit=24
 contact_limit=12
 note_limit=90
 

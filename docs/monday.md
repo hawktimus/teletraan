@@ -56,6 +56,7 @@ A task is in one of two lists:
 | Estimated Hours | `numeric_mm82pw1a` | The Overall progress chart |
 | Show on TV? | `color_mm83p12x` | Hide keeps the task off the TV |
 | Notes | `text_mm82s03v` | A text column. Read for a Stuck task only: the first 90 characters, as plain text, shown under the task |
+| Short name | `text_mm997yx4` | A text column on Robotics Tasks only. When it has text, the screen shows it instead of the task name, cut to 24 characters (`short_limit` in `monday-contract.sh`; Monday cannot limit a text column). Empty means the full name is shown |
 
 Only first names reach Sanity, because the dataset is public. No email and no last name are read. The Notes text of a Stuck task is kept on the Teletraan computer only (`monday/notes.json` in the data folder), never in Sanity: the sync service puts it on the tasks of its local copy of the content, which only the screen reads, and an older sync's note is taken off the task document the next time the sync runs. The notes of every other task, and of the Projects board, are never kept. The Sync Monday now button leaves a file, `monday/force` in the data folder (it was in the shared /tmp before), and a run within two minutes of it reads at once.
 
