@@ -1,4 +1,4 @@
-// The full screen pictures of a booked talk: the title card, the card for slides that
+// The full screen pictures of a talk: the title card, the card for slides that
 // are not ready, the thanks card, and the view that holds the slides.
 // core/presentation-run.js says which one to draw and puts the slide pictures in the view.
 

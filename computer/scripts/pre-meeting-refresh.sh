@@ -6,7 +6,7 @@
 #   something amber    restarts what is wrong (the sync service, the screen) and checks again
 #   still not healthy, or up more than 7 days   reboots, through the gate (computer/scripts/gate.sh, reason nightly, which is a
 #                      scheduled reboot and not part of the recovery budget)
-# It waits while a talk is booked within 30 minutes or a Band event of kind Meetings is on, and gives up 90 minutes after the
+# It waits while a Band event of kind Meetings is on, and gives up 90 minutes after the
 # time. The rules are in refresh-plan.mjs. What it decided, and why, is in <data folder>/refresh/last.json for the control page,
 # and one line of the journal. It holds no key.
 #
@@ -48,10 +48,10 @@ state_file="$folder/state.json"
 last_file="$folder/last.json"
 [ -s "$state_file" ] || echo '{}' > "$state_file"
 
-# What the plan needs: the settings and the zone from the last good content, the talks and the meetings
+# What the plan needs: the settings and the zone from the last good content and the meetings
 node "$computer/scripts/refresh-context.mjs" "$data" "$now_ms" > "$work/context.json" 2> /dev/null || echo '{}' > "$work/context.json"
 jq -n --argjson now "$now_ms" --slurpfile context "$work/context.json" --slurpfile state "$state_file" \
-  '{now: $now, settings: ($context[0].settings // {}), zone: ($context[0].zone // ""), talks: ($context[0].talks // []), events: ($context[0].events // []), state: $state[0]}' > "$work/input.json"
+  '{now: $now, settings: ($context[0].settings // {}), zone: ($context[0].zone // ""), events: ($context[0].events // []), state: $state[0]}' > "$work/input.json"
 node "$computer/scripts/refresh-plan.mjs" "$work/input.json" > "$work/start.json"
 
 slot=$(jq -r '.slot' "$work/start.json")
@@ -78,8 +78,8 @@ if [ "$(jq -r '.start' "$work/start.json")" != true ]; then
       record "$reason"
     fi
   elif printf '%s' "$reason" | grep -q 'time has passed' && [ "$(jq -r '.lastWait // ""' "$state_file")" != "" ] && [ "$(jq -r '.skipped // ""' "$state_file")" != "$slot" ]; then
-    # It waited for a talk or a meeting for 90 minutes and never got its turn
-    waited=$(jq -r '.lastWait // "a talk or a meeting"' "$state_file" | sed 's/^Waiting: //')
+    # It waited for a meeting for 90 minutes and never got its turn
+    waited=$(jq -r '.lastWait // "a meeting"' "$state_file" | sed 's/^Waiting: //')
     jq -c --arg slot "$slot" '.skipped = $slot | .lastSlot = $slot | .lastWait = ""' "$state_file" > "$work/state.json" && mv -f "$work/state.json" "$state_file"
     record "skipped: $waited"
   fi

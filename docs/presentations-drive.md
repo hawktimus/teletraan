@@ -1,6 +1,6 @@
 # Presentations from a Google Drive folder
 
-For the coaches and the students who run a meeting. Put a Google Slides deck or a PowerPoint file in one Google Drive folder, and it can be played on the TV: pick it from a list on the TV or on the control page, and the clicker does the rest. Nothing is booked and nothing is typed in Studio for a deck. A booked talk still works as before (docs/presentations.md), and the two use the same title card, slides and keys.
+For the coaches and the students who run a meeting. Put a Google Slides deck or a PowerPoint file in one Google Drive folder, and it can be played on the TV: pick it from a list on the TV or on the control page, and the clicker does the rest. Nothing is booked and nothing is typed in Studio for a deck. This is the only way a talk is played now. The keys, the mouse and the settings are in docs/presentations.md.
 
 The names of the files show on the TV, so name a file the way you want it read.
 
@@ -9,9 +9,9 @@ The names of the files show on the TV, so name a file the way you want it read.
 1. The Google key. The folder is read with the same key as the Drive photos, `GOOGLE_API_KEY` in `local.env` on the Teletraan computer. If the Drive photos work, there is nothing to do. If not, follow steps 1 to 6 of docs/photos-drive.md.
 2. Make the folder. In Google Drive make a folder for the presentations. Right click it, then Share. Under General access choose Anyone with the link, with the role Viewer. Click Copy link. Anyone who has the link can open what is in the folder, so keep private files out of it.
 3. Tell Studio. Open Dashboard Settings, the Presentations section, paste the link under Google Drive folder of presentations and click Publish.
-4. Check that Run presentations is on, in the same section. Off, the TV starts no deck and no booked talk.
+4. Check that Run presentations is on, in the same section. Off, the TV starts no deck.
 
-The Teletraan computer takes up the new link within 5 minutes. The watcher is installed by the update from the Mac tool, or once by hand: `sudo /opt/teletraan/computer/scripts/install-decks.sh`. It needs the packages poppler-utils, curl and jq, which are there if the slides of booked talks work.
+The Teletraan computer takes up the new link within 5 minutes. The watcher is installed by the update from the Mac tool, or once by hand: `sudo /opt/teletraan/computer/scripts/install-decks.sh`. It needs the packages poppler-utils, curl and jq.
 
 ## A folder that is not public
 
@@ -53,7 +53,7 @@ The list on the TV says what is wrong when it is not working: the address is wro
 1. Press the play button of the clicker, or F5 or P on a keyboard. The list comes up over the dashboard. It does not open while a talk or an alert has the screen.
 2. Move with the Next and Back keys of the clicker (Page Down and Page Up, or the arrows). With a mouse, move it: the row under it is marked. The pointer itself stays hidden on the wall, so the marked row is the sign of where the mouse is.
 3. Start the marked deck with Enter, Space, or the black screen key of the clicker (B or the full stop). With a mouse, left click the row. On a touch screen, tap the deck. The play button of some clickers sends F5 one time and Esc the next, which is why the black screen key starts a deck as well.
-4. The deck fills the screen on its first slide, with no title card. The keys are the ones of a booked talk (docs/presentations.md, "On the day"): any forward key, or a left click, goes on, Left arrow, Page Up or a right click goes back, and after the last slide the deck ends and the dashboard comes back at once, with no Thank you card. No slide number is drawn. One Esc ends the deck at once and gives the screen back to the dashboard, where a booked talk needs Esc twice. If the play button of a clicker sends Esc, it ends the deck, so use the Next key of the clicker to move.
+4. The deck fills the screen on its first slide, with no title card. The keys are in docs/presentations.md, "On the day": any forward key, or a left click, goes on, Left arrow, Page Up or a right click goes back, and after the last slide the deck ends and the dashboard comes back at once, with no Thank you card. No slide number is drawn. One Esc ends the deck at once and gives the screen back to the dashboard. If the play button of a clicker sends Esc, it ends the deck, so use the Next key of the clicker to move.
 
 Esc closes the list. It also closes by itself a minute after the last key.
 
@@ -80,9 +80,9 @@ To see what the watcher last did: `journalctl -u teletraan-decks -n 30`. To look
 
 ## How it works
 
-`computer/scripts/decks-sync.sh --watch` runs as the service `teletraan-decks`. Every 20 seconds it asks Google for the list of the folder and writes `decks/manifest.json` in the data folder. Beside that it downloads each deck that is new or changed as a PDF and cuts it into pictures in `decks/<id of the file>/`, the way `slides-sync.sh` does for a booked talk. The folder link is read from Dashboard Settings in Sanity every 5 minutes. When Sanity or Google cannot be reached, the list and the pictures from before stay.
+`computer/scripts/decks-sync.sh --watch` runs as the service `teletraan-decks`. Every 20 seconds it asks Google for the list of the folder and writes `decks/manifest.json` in the data folder. Beside that it downloads each deck that is new or changed as a PDF and cuts it into pictures in `decks/<id of the file>/`, the way `slides-sync.sh` did for a booked talk. The folder link is read from Dashboard Settings in Sanity every 5 minutes. When Sanity or Google cannot be reached, the list and the pictures from before stay.
 
-The screen reads the list only while the list is open, every 5 seconds. A picked deck becomes a talk that starts now (`deckTalk` in `dashboard/core/decks.js`) and is played by the same code as a booked talk. It has no slot, so only the speaker ends it, or 4 hours. The address of each picture ends with the time the pictures were made, so a deck that was edited is never shown from what the browser kept of the old one.
+The screen reads the list only while the list is open, every 5 seconds. A picked deck becomes a talk that starts now (`deckTalk` in `dashboard/core/decks.js`) and is played by the talk code of the screen (`core/presentation-run.js`). It has no slot, so only the speaker ends it, or 4 hours. The address of each picture ends with the time the pictures were made, so a deck that was edited is never shown from what the browser kept of the old one.
 
 | What | Where |
 | --- | --- |

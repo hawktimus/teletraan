@@ -10,7 +10,7 @@ Every change has three steps: open a line in the sidebar, make the change, click
 |------|------------|
 | Start here | What the screen is, a picture of its five areas, the status of the Teletraan computer and the links |
 | Rotation | The board the wall plays, top to bottom, like a Monday board. Each row is a view, a panel, a small panel, the time shown and a Show on screen switch. Settings for the small panel or the photos appear for the row that needs them (written by the Rotation board lane) |
-| Today | Everything that puts a message on the TV today: the alert, the announcements on the bar under the banner, and the full screen messages at set times. Links to Agenda items, Presentations and Meeting days |
+| Today | Everything that puts a message on the TV today: the alert, the announcements on the bar under the banner, and the full screen messages at set times. Links to Agenda items |
 | Ticker | The tips, news and reminders that run along the bottom of the screen |
 | Events | Calendars, which shows what each BAND calendar brings in and lets you show or hide each coming event, and Calendar filters, which are rules that hide events or keep them |
 | People | Leadership, Roster, Team leads and Sponsors. Roster is the list of everyone on the team by first name, with a role and a team (docs/roster.md) |

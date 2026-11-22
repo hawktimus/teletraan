@@ -1,6 +1,6 @@
 // The Today page, in the sidebar. It is a page of its own, not a document. It holds everything that puts a message on
 // the TV today: the alert, the announcements on the bar under the banner, and the full screen messages that play at
-// set times. Under them are links to the agenda, the booked talks and the meeting days.
+// set times. Under them is a link to the agenda.
 //
 // It writes only what it shows, and only to drafts: the alert and the full screen messages to the draft of
 // Dashboard Settings, and an announcement to the draft of that announcement. Publish all in the top bar puts a

@@ -53,7 +53,7 @@ const open = { collapsible: true, collapsed: false };
 const sectionFieldsets = [
   { name: 'timing', title: 'Timing', description: 'How long a page stays up, how long a finished task stays, the safety days and the parts request address.', options: open },
   { name: 'banner', title: 'Banner', description: 'The big title across the banner while the Robotics rows play.', options: open },
-  { name: 'presentations', title: 'Presentations', description: 'Booked talks take the whole screen at their start time. Turn them off to keep the screen as it is.', options: open },
+  { name: 'presentations', title: 'Presentations', description: 'A deck picked from the Google Drive folder takes the whole screen. Turn it off to keep the screen as it is.', options: open },
   { name: 'night', title: 'Night mode', description: 'The screen at night, from 23:30 to 11:30: a bouncing logo or a dark screen.', options: open },
   { name: 'refresh', title: 'Pre-meeting refresh', description: 'Once a day before the meeting the computer reads everything and checks itself. The picture changes only if something is wrong.', options: open },
   { name: 'reboot', title: 'Scheduled reboot', description: 'Reboot the Teletraan computer at a time of day. The control page, Settings, shows the same values.', options: open },

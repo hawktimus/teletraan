@@ -139,7 +139,6 @@ const mutateAddress = 'https://' + project + '.api.sanity.io/v' + version + '/da
 const fieldOf = {
   content: 'lastContentSeenAt',
   calendar: 'lastCalendarSyncAt',
-  slides: 'lastSlidesFetchAt',
   monday: 'lastMondaySyncAt',
   frc: 'lastFrcSyncAt',
   kiosk: 'kioskStartedAt',
@@ -161,7 +160,7 @@ test('with no token the script exits quietly and curl is never called', () => {
   };
 
   Object.keys(cases).forEach(name => {
-    ['content', 'calendar', 'slides', 'kiosk'].forEach(job => {
+    ['content', 'calendar', 'kiosk'].forEach(job => {
       const place = setup('none-' + job + '-' + name.replace(/\W+/g, '-'), { localEnv: cases[name] });
       const result = place.run([job]);
       const label = name + ', ' + job;
@@ -174,7 +173,7 @@ test('with no token the script exits quietly and curl is never called', () => {
 });
 
 test('a job writes the time now into its own field of status-mini: the document is made if it is missing, then the field is set', () => {
-  ['calendar', 'slides', 'monday', 'frc', 'kiosk'].forEach(job => {
+  ['calendar', 'monday', 'frc', 'kiosk'].forEach(job => {
     const place = setup('write-' + job, { localEnv: goodEnv });
     const before = Date.now() - 2000;
     const result = place.run([job]);
@@ -272,10 +271,10 @@ test('a write that fails is reported in plain words with the exit code explained
   Object.keys(words).forEach(code => {
     const place = setup('failed-' + code, { localEnv: goodEnv });
     place.failMutate(code);
-    const result = place.run(['slides']);
+    const result = place.run(['monday']);
 
     assert.equal(result.status, 1, code);
-    assert.ok(result.errors.includes('could not write lastSlidesFetchAt'), result.errors);
+    assert.ok(result.errors.includes('could not write lastMondaySyncAt'), result.errors);
     assert.ok(result.errors.includes(words[code]), code + ': ' + result.errors);
     assert.equal(result.text, '', code);
     assertNoToken(result, 'when curl exits ' + code);
@@ -321,12 +320,12 @@ test('quotes around the token in local.env are not part of it, and the last toke
 });
 
 test('an unknown job, no job, or more than one gives the usage and exit code 2, and curl is never called', () => {
-  [[], ['tv'], ['Calendar'], ['calendar', 'slides'], ['']].forEach((args, index) => {
+  [[], ['tv'], ['Calendar'], ['calendar', 'monday'], ['']].forEach((args, index) => {
     const place = setup('usage-' + index, { localEnv: goodEnv });
     const result = place.run(args);
 
     assert.equal(result.status, 2, JSON.stringify(args));
-    assert.ok(result.errors.includes('Usage: status-write.sh content|calendar|slides|monday|frc|kiosk'), result.errors);
+    assert.ok(result.errors.includes('Usage: status-write.sh content|calendar|monday|frc|kiosk'), result.errors);
     assert.equal(result.calls, '', JSON.stringify(args));
   });
 });
@@ -372,7 +371,6 @@ test('--print asks for the status document with no token, writes nothing, and gi
   const times = {
     lastContentSeenAt: timeAgo(10 * 1000),
     lastCalendarSyncAt: timeAgo(5 * minute),
-    lastSlidesFetchAt: timeAgo(minute),
     lastMondaySyncAt: timeAgo(2 * hour),
     lastFrcSyncAt: timeAgo(3 * day),
     kioskStartedAt: null,
@@ -397,7 +395,6 @@ test('--print asks for the status document with no token, writes nothing, and gi
   assert.deepEqual(printed, [
     'Last content update seen  just now (' + clockOf(times.lastContentSeenAt) + ')',
     'Last calendar sync        5 minutes ago (' + clockOf(times.lastCalendarSyncAt) + ')',
-    'Last slides fetch         1 minute ago (' + clockOf(times.lastSlidesFetchAt) + ')',
     'Last Monday sync          2 hours ago (' + clockOf(times.lastMondaySyncAt) + ')',
     'Last FRC data sync        3 days ago (' + clockOf(times.lastFrcSyncAt) + ')',
     'Last news read            Not yet',
@@ -476,7 +473,7 @@ test('the usage line lists --print, and --print takes no second word', () => {
   const place = setup('print-usage', { localEnv: goodEnv });
   const result = place.run(['--print', 'content']);
   assert.equal(result.status, 2);
-  assert.ok(result.errors.includes('content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print'), result.errors);
+  assert.ok(result.errors.includes('content|calendar|monday|frc|kiosk|version|calendar-status|--print'), result.errors);
   assert.equal(result.calls, '');
 });
 
@@ -499,7 +496,8 @@ test('the status document and the fields in the script are the ones the Studio h
   // newsAt by the job news (tests/news-sync.test.mjs), nextRebootAt and lastRebootAt by the job reboot (tests/scheduled-reboot.test.mjs),
   // lastCleanupAt by the job cleanup (tests/expired-cleanup.test.mjs)
   // and the netwatch and sync times by the job sync (tests/net-tools.test.mjs)
-  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt', 'networkLastOkAt', 'networkDownSince', 'networkLastProblemAt', 'netwatchLastActionAt', 'syncSanityAt', 'syncWeatherAt', 'syncImagesAt', 'syncMondayAt', 'syncCompetitionAt', 'syncCalendarsAt']).sort());
+  // lastSlidesFetchAt stays in the schema because stored names are never removed, and no job writes it now
+  assert.deepEqual(studioFields.slice().sort(), Object.values(fieldOf).concat(['photosDriveAt', 'newsAt', 'match13At', 'nextRebootAt', 'lastRebootAt', 'lastCleanupAt', 'networkLastOkAt', 'networkDownSince', 'networkLastProblemAt', 'netwatchLastActionAt', 'syncSanityAt', 'syncWeatherAt', 'syncImagesAt', 'syncMondayAt', 'syncCompetitionAt', 'syncCalendarsAt', 'lastSlidesFetchAt']).sort());
 
   const input = readModule(path.join(repo, 'studio/inputs/status-input.js'), 'utf8');
   assert.ok(input.includes("export const statusId = 'status-mini';"));
@@ -507,7 +505,7 @@ test('the status document and the fields in the script are the ones the Studio h
   assert.ok(schema.includes("name: 'status'"));
 });
 
-test('the calendar and slides services run it after their job, and a failure of it is ignored', () => {
+test('the calendar service runs it after their job, and a failure of it is ignored', () => {
   const jobs = {
     'teletraan-calendars.service': ['fetch-calendars.sh', ['calendar', 'content']],
   };

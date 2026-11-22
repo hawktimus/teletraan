@@ -111,7 +111,7 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-const installNames = ['calendars', 'slides', 'photos-drive', 'decks', 'monday', 'frc', 'news', 'match13', 'console', 'watchdog', 'network', 'backup', 'nightly', 'reboot', 'refresh', 'cleanup', 'remote', 'sync'];
+const installNames = ['calendars', 'photos-drive', 'decks', 'monday', 'frc', 'news', 'match13', 'console', 'watchdog', 'network', 'backup', 'nightly', 'reboot', 'refresh', 'cleanup', 'remote', 'sync'];
 
 // Makes the Mac's home, the fake tools and the folder that stands for the Teletraan computer,
 // and returns how to run the tool in them.
@@ -684,7 +684,7 @@ test('status runs status-write.sh --print and check-calendars.sh on the Teletraa
 
 test('status points to menu 1 when the Teletraan computer has an older status-write.sh, and says when the computer cannot be reached', () => {
   const old = makePlace('status-old');
-  old.stubFile('status-output.txt', 'Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|calendar-status\n');
+  old.stubFile('status-output.txt', 'Usage: status-write.sh content|calendar|monday|frc|kiosk|calendar-status\n');
   old.stubFile('status.exit', '2');
   old.stubFile('check-output.txt', 'Node is not installed.\n');
   const oldResult = old.run(['2', 'q']);

@@ -54,7 +54,7 @@ async function test(name, run) {
 // The svg files
 
 await test('the dashboard has svg files, and every one has a viewBox', () => {
-  assert.ok(svgFiles.length >= 10, 'the search found the svg files');
+  assert.ok(svgFiles.length >= 5, 'the search found the svg files'); // six sample slides went with the booked talks
   svgFiles.forEach(file => assert.ok(/<svg[^>]*\sviewBox="[^"]+"/.test(read(file)), relative(file) + ' has no viewBox'));
 });
 

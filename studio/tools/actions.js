@@ -9,10 +9,6 @@
 // the time now into announceRequest and publishes, and the screen plays every
 // announcement that is switched on, once, one after another (docs/hidden-transitions.md).
 //
-// Dashboard Settings has "Run presentation test" after those. It writes the time now into
-// presentationTestRequest and publishes, and the screen runs the sample talk with its six
-// sample slides (docs/hidden-transitions.md).
-//
 // Dashboard Settings ends with the previews: Preview theme (Original, Cybertron, Retro, Foundry), Preview view
 // (Robotics, Prime, Nova, Condensed), Preview next season pack and Back to the schedule. A theme or view
 // preview writes previewTheme or showView with an end time 10 minutes ahead, the same fields in the same shape
@@ -24,7 +20,7 @@
 //
 // sanity.config.js adds them to that page and no other.
 //
-// The Start here page has Play announcement and Run presentation test buttons too. What
+// The Start here page has a Play announcement button too. What
 // these buttons write is in screen-requests.js, which the page uses as well.
 //
 // A Studio action is a plain function that Studio calls with the document.
@@ -35,7 +31,7 @@ import { useState } from 'react';
 import { hiddenTransitions } from '../inputs/hidden-transitions.js';
 import { previews } from '../inputs/previews.js';
 import { previewMinutes, themePreviews, viewPreviews } from '../inputs/look-previews.js';
-import { announceRequest, presentationTestRequest, hiddenRequest, previewRequest, previewThemeRequest, showViewRequest, backToScheduleRequest, sendWithOperations } from './screen-requests.js';
+import { announceRequest, hiddenRequest, previewRequest, previewThemeRequest, showViewRequest, backToScheduleRequest, sendWithOperations } from './screen-requests.js';
 
 // Every button here sets a field of the settings page and then publishes it, which also publishes anything else on the page
 // that was not published yet. A page with an error in it (a rule the Studio refuses, such as a hidden field with a value
@@ -98,27 +94,6 @@ export function usePlayAnnouncementsAction(props) {
 }
 // Studio and tests/schemas.test.mjs tell actions apart by this name
 usePlayAnnouncementsAction.action = 'playAnnouncements';
-
-// The Run presentation test button. Like Play announcements it is always allowed, so a
-// second click runs the test again. The screen runs a request that is a minute old at most
-// and that it has not run before. What it runs is the talk in the sample content, so
-// nothing is chosen here.
-export function useRunPresentationTestAction(props) {
-  const { patch, publish } = useDocumentOperation(props.id, props.type);
-    const gate = usePlayGate(props, patch);
-
-  return {
-    label: 'Run presentation test',
-    title: gate.disabled ? gate.why : 'Run the sample talk on the screen now, with six sample slides. Press the clicker to begin. It needs no internet and only runs if Run presentations is on.',
-    disabled: gate.disabled,
-    onHandle: () => {
-      sendWithOperations(patch, publish, presentationTestRequest());
-      props.onComplete();
-    },
-  };
-}
-// Studio and tests/schemas.test.mjs tell actions apart by this name
-useRunPresentationTestAction.action = 'runPresentationTest';
 
 // What each button tells the editor once it has sent its request: a plain dialog, so no extra package is needed.
 // The dialog is part of the action; closing it ends the action.

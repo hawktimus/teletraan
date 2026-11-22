@@ -29,7 +29,7 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | Where to change things links | Three links to Display, Content, Settings | none | S | Replaced by the five areas | [x] |
 | Health block: release, earlier releases, screen, display, page loads, restarts, uptime, disk, memory, temperature, network, Sanity, Studio CORS, tunnel address, last errors | Read only health of the computer | `GET status`, `GET now` | C M | Details, Health | [x] |
 | Status dots (Monday, Band, Sanity) with reasons | The three dots of the TV with the reason | `GET status` | C | Now, five dots (Network and Screen added); the old three with reasons in Details, Health | [x] |
-| Last reads (content, calendars, slides, Monday, competition, news, Match13, Drive photos, screen started, backup) | When each source was last read | `GET status` | C | Details, Health; the sources with their last good time on Update, Sync | [x] |
+| Last reads (content, calendars, Monday, competition, news, Match13, Drive photos, screen started, backup) | When each source was last read | `GET status` | C | Details, Health; the sources with their last good time on Update, Sync | [x] |
 | What do I do here? note, Got it, Help in the header | A note for each area, kept per browser | browser storage | S | Same, one note for each of the five areas | [x] |
 | Auto-refresh 10 s (now) and 30 s (health) | Redraws only when the words changed | polling | all | Now: `GET overview` every 10 s while visible, paused when hidden, with backoff; Details, Health every 30 s | [x] |
 
@@ -41,7 +41,7 @@ The API changes of this round are all additions: `GET overview`, `GET remote-las
 | On the wall now card: status line, Pause, Resume, Next, Back to schedule, Reset | Moves the rotation | `POST request`, `POST push`, `POST push/reset` | C S | Show, On the TV | [x] |
 | Show on the wall (view, panel, panel menus, hold length) | Holds a view or a panel for 1 to 60 minutes | `POST push` | C S | Show, On the TV | [x] |
 | Theme card, Switch to this theme | Holds a theme for 1 to 60 minutes | `POST push` | C S | Show, On the TV | [x] |
-| Announce and effects: announcement, Play announcement, Post announcement, messages, Run presentation test, hidden transitions | Short pushes | `POST push`, `POST request` | C | Show, On the TV (More tools) | [x] |
+| Announce and effects: announcement, Play announcement, Post announcement, messages, hidden transitions | Short pushes | `POST push`, `POST request` | C | Show, On the TV (More tools) | [x] |
 | Preview a theme or a view, the large picture, the small picture of a row, Preview the selected row instead, Show the picture | Pictures of what a row would draw; changes nothing | the dashboard in a frame | C S | Show, On the TV | [x] |
 | Rotation rows: view, panel, seconds, Show on screen, team, department, list, chart, photo count, seconds per photo | The loop the TV plays | `GET display`, `POST display/save` | C | Show, On the TV | [x] |
 | Row buttons: Up, Down, Delete, Copy, Add row at the end, Fill from the standard order (press twice), Edit the rotation | Edits the list on the page | none until saved | C | Show, On the TV | [x] |

@@ -52,7 +52,7 @@ Condensed view and the old events calendar type. The wall does not use them, and
 may be deleted, because some old values are read when a new list is empty.
 
 Some values have one right answer and are not settings: night mode from 11:30 pm
-to 11:30 am, how long a talk waits for its speaker (5 minutes) and how far a talk
+to 11:30 am, how long a title card waits for its speaker (5 minutes) and how far a talk
 may overrun (5 minutes). They are in `dashboard/core/constants.js`. Content
 source is not on the page either: the screen always shows what is published, and
 `?sample=1` on the address of the screen shows the sample content.
@@ -308,17 +308,17 @@ or of Monday card is a different move, the swap (docs/layouts.md, "The swap").
 
 A speaker with no clicker can use the mouse (docs/presentations.md, "On the day").
 
-- A left click, or a tap, does what Page Down does: it starts the talk on the title
-  card, moves to the next slide, and on the last slide shows the Thank you card.
+- A left click, or a tap, does what Page Down does: it moves to the next slide, and
+  after the last slide the deck ends.
 - A right click does what Page Up does.
 - The middle button and the second click of a double click do nothing.
-- While a talk is on the screen the right click does not open the browser menu, and
+- While a deck is on the screen the right click does not open the browser menu, and
   the pointer stays hidden.
 - If the card says Slides are not ready, any click on it ends the talk at once, and
   the TV starts its pages again from the first one.
 
 The one setting is Run presentations, in the Presentations tab. Off, the TV never
-takes over for a talk.
+plays a deck.
 
 ## The boot screen
 
@@ -489,6 +489,6 @@ section of Today. The alert is the first. docs/announcements.md has all three.
 - docs/switch-the-look.md: the Weekday schedule, the Look page and the seasonal packs
 - docs/hidden-transitions.md: the hidden effects, the frames that fall and come
   back, and the Preview buttons
-- docs/presentations.md: booking talks, the clicker and the mouse
+- docs/presentations.md: playing a deck from the Google Drive folder, the clicker and the mouse
 - docs/add-the-nova-team.md: the Nova team and its trim
 - computer/README.md: the scripts and timers on the computer

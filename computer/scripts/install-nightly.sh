@@ -2,9 +2,8 @@
 # Usage: sudo install-nightly.sh
 # Installs the nightly restarts: copies the two systemd unit files and turns on the
 # timer, which starts nightly.sh at 04:00 every day and at 04:10 on Sundays. The script
-# restarts the screen at 04:00 and reboots the Teletraan computer on Sunday, and skips either when a
-# presentation is booked within the hour. It runs as the login user, not root, and the
-# unit file says ACCOUNT where the name goes. It checks that curl is installed. It does not install anything.
+# restarts the screen at 04:00 and reboots the Teletraan computer on Sunday. It runs as the login user, not root, and the
+# unit file says ACCOUNT where the name goes. It does not install anything.
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
@@ -27,15 +26,6 @@ done
 
 if [ ! -x "$computer/scripts/nightly.sh" ]; then
   echo "$computer/scripts/nightly.sh is missing or cannot be run." >&2
-  exit 1
-fi
-
-missing=""
-command -v curl > /dev/null 2>&1 || missing="$missing curl"
-if [ -n "$missing" ]; then
-  echo "These packages are not installed:$missing" >&2
-  echo "Ask the team mentor, install them, and run this again:" >&2
-  echo "  sudo apt install curl" >&2
   exit 1
 fi
 

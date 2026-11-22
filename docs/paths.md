@@ -222,7 +222,6 @@ Files that did not move: `dashboard/` outside `panels/`, `studio/schemas/`, `stu
 |----------|----------|
 | `tools/test-backup-script.mjs` | `tests/backup-dataset.test.mjs` |
 | `tools/test-blank-team.mjs` | `tests/blank-team.test.mjs` |
-| `tools/test-booking.mjs` | `tests/booking.test.mjs` |
 | `tools/test-build-version.mjs` | `tests/build-version.test.mjs` |
 | `tools/test-calendar-node.mjs` | `tests/calendar-node.test.mjs` |
 | `tools/test-calendar-status.mjs` | `tests/calendar-status.test.mjs` |
@@ -238,7 +237,6 @@ Files that did not move: `dashboard/` outside `panels/`, `studio/schemas/`, `stu
 | `tools/test-content.mjs` | `tests/content.test.mjs` |
 | `tools/test-countdown-title.mjs` | `tests/countdown-title.test.mjs` |
 | `tools/test-cybertron.mjs` | `tests/cybertron.test.mjs` |
-| `tools/testdata/booking/booking.json` | `tests/data/booking/booking.json` |
 | `tools/testdata/daylight-saving.ics` | `tests/data/daylight-saving.ics` |
 | `tools/testdata/frc-event-answer.json` | `tests/data/frc-event-answer.json` |
 | `tools/testdata/monthly.ics` | `tests/data/monthly.ics` |

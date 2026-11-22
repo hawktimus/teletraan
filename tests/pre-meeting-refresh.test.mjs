@@ -1,5 +1,5 @@
 // computer/scripts/pre-meeting-refresh.sh with fakes: sudo, systemctl, health.sh, page-command.py and gate.sh write down what they were
-// asked, and the files of a data folder say the time, the talks and the meetings. docs/audit.md, Part G.
+// asked, and the files of a data folder say the time and the meetings. docs/audit.md, Part G.
 //
 //   node tests/pre-meeting-refresh.test.mjs
 
@@ -47,7 +47,7 @@ function build(options = {}) {
   put(path.join(bin, 'sudo'), '#!/bin/bash\necho "sudo $*" >> "' + p.log + '"\n[[ "$*" == *restart* ]] && : > "' + p.root + '/repaired"\nexit 0\n', 0o755);
   put(path.join(bin, 'flock'), '#!/bin/sh\nexit 0\n', 0o755);
   // the files of the data folder: the content, the calendars
-  const content = { result: { settings: Object.assign({ calendars: [{ id: 'team', kind: 'meetings' }] }, options.settings || {}), theme: { timeZone: 'America/New_York' }, presentations: options.talks || [] } };
+  const content = { result: { settings: Object.assign({ calendars: [{ id: 'team', kind: 'meetings' }] }, options.settings || {}), theme: { timeZone: 'America/New_York' } } };
   put(path.join(p.data, 'live/content.json'), JSON.stringify(content));
   if (options.meeting) put(path.join(p.data, 'calendars/team.ics'), 'BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:1\r\nSUMMARY:Meeting\r\nDTSTART:' + options.meeting[0] + '\r\nDTEND:' + options.meeting[1] + '\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n');
   if (options.failing) fs.writeFileSync(path.join(p.root, 'health-failing.txt'), options.failing.join('\n') + '\n');
@@ -125,7 +125,7 @@ test('green but up more than 7 days: it reboots through the gate', () => {
   assert.match(p.last().decision, /^rebooting: Everything is green, but the computer has been up 9 days/);
 });
 
-test('a meeting on, or a talk within 30 minutes, holds it back, once in the log, and it starts when they are over', () => {
+test('a meeting on holds it back, once in the log, and it gives up after ninety minutes', () => {
   const p = build({ meeting: ['20261117T183000Z', '20261117T200000Z'] });
   const first = p.run(at('18:30'));
   assert.deepEqual(first.calls, [], 'nothing was touched');
@@ -136,11 +136,6 @@ test('a meeting on, or a talk within 30 minutes, holds it back, once in the log,
   const after = p.run(at('20:15'));
   assert.equal(after.calls.length, 0, 'ninety minutes after the time it gives up');
   assert.match(p.last().decision, /^skipped: a meeting is on\./);
-
-  const talk = build({ talks: [{ start: '2026-11-17T18:50:00Z', minutes: 10, status: 'scheduled' }] });
-  assert.deepEqual(talk.run(at('18:30')).calls, []);
-  assert.match(talk.last().decision, /a talk is booked/);
-  assert.ok(talk.run(at('19:10')).calls.some(line => line.startsWith('page-command reload')), 'when the talk is over it runs');
 });
 
 test('off in the settings, or on another time, and a day picker', () => {

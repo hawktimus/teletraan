@@ -20,7 +20,6 @@ const typeAreas = {
   tipOrNews: 'Ticker',
   announcement: 'Today',
   plan: 'Today',
-  presentation: 'Today',
   person: 'Leadership',
   subteam: 'Team leads',
   sponsor: 'Sponsors',
@@ -35,7 +34,7 @@ const imageField = '{ ..., asset->{ _id, metadata { dimensions } } }';
 
 // The question that finds everything the checks read. Ask it with the raw perspective, so drafts come back as well.
 export const contentQuestion = `{
-  "documents": *[_type in ["tipOrNews", "announcement", "plan", "presentation", "person", "subteam", "sponsor", "photo", "team", "calendarFilter", "dashboardSettings", "customPanel"]] {
+  "documents": *[_type in ["tipOrNews", "announcement", "plan", "person", "subteam", "sponsor", "photo", "team", "calendarFilter", "dashboardSettings", "customPanel"]] {
     ...,
     "teamCode": team->code,
     image ${imageField},
@@ -176,22 +175,6 @@ function checkPlans(add, docs, now) {
     else if (isOn(doc) && doc.date < today) add(doc, 'warning', 'date-past', 'date', 'The agenda item is for ' + doc.date + ', which has passed, so the screen never shows it.', 'Move the date, or delete the item.');
   });
   checkRepeats(add, docs, doc => (doc.heading || '') + '|' + (doc.date || ''), 'agenda item');
-}
-
-function checkTalks(add, docs, now) {
-  docs.forEach(doc => {
-    checkText(add, doc, 'topic', 'title of the talk', 40, true);
-    if (isBlank(doc.name)) add(doc, 'problem', 'text-empty', 'name', 'The talk has no speaker name.', 'Type the first name of the speaker.');
-    else if (doc.name.trim().length > limits.leadMember) add(doc, 'warning', 'text-too-long', 'name', 'The speaker name has ' + plural(doc.name.trim().length, 'character') + '. Only ' + limits.leadMember + ' fit.', 'Use the first name.');
-    checkFirstName(add, doc, 'name', 'speaker name', doc.name);
-    const start = Date.parse(doc.start);
-    if (isNaN(start)) {
-      if (doc.status === 'scheduled' || !doc.status) add(doc, 'problem', 'no-start', 'start', 'The talk has no start time, so it never plays.', 'Pick the start time.');
-    } else if ((doc.status === 'scheduled' || !doc.status) && start + (Number(doc.minutes) || 10) * 60000 < now.getTime() - 24 * 3600000) {
-      add(doc, 'warning', 'talk-past', 'status', 'The talk was more than a day ago and is still marked Scheduled.', 'Change the status to Done, or delete the talk.');
-    }
-    if ((doc.status === 'scheduled' || !doc.status) && isBlank(doc.deckLink)) add(doc, 'warning', 'no-slides', 'deckLink', 'The talk has no slides link, so the screen shows the title card and the thank you card only.', 'Paste the Google Slides link.');
-  });
 }
 
 function checkLeadership(add, docs, now) {
@@ -376,7 +359,6 @@ export function checkContent(documents, now = new Date(), tasks = [], projects =
   checkTicker(add, ofType('tipOrNews'), now);
   checkAnnouncements(add, ofType('announcement'), now);
   checkPlans(add, ofType('plan'), now);
-  checkTalks(add, ofType('presentation'), now);
   checkLeadership(add, ofType('person'), now);
   checkLeads(add, ofType('subteam'), now);
   checkSponsors(add, ofType('sponsor'), now);

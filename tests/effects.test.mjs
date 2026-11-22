@@ -11,8 +11,7 @@
 // registry of the transitions, and the parts of frame.css that move them. And it tests
 // Play announcements (dashboard/core/announce.js): the guard, the age limit, which
 // announcements play, what it waits for, and the Demo step that plays them too. And it
-// tests Run presentation test (dashboard/core/presentation-test.js): the same guard, what it
-// waits for, and the sample talk it starts. And it tests the Preview buttons
+// tests the Preview buttons
 // (dashboard/core/preview.js): the same guard, what each one holds on the screen for 2 minutes,
 // and that the saved settings come back. And it
 // tests the screen of a booked talk (dashboard/core/presentation-run.js): the title card, the
@@ -42,7 +41,7 @@ const workFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-effects-'));
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'core'), { recursive: true });
 fs.mkdirSync(path.join(workFolder, 'dashboard', 'themes', 'overlays'), { recursive: true });
 fs.writeFileSync(path.join(workFolder, 'package.json'), '{ "type": "module" }\n');
-['config.js', 'frame.js', 'core/busy.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/presentation-test.js', 'core/plate.js',
+['config.js', 'frame.js', 'core/busy.js', 'core/transitions.js', 'core/tick.js', 'core/demo.js', 'core/demo-screens.js', 'core/hidden.js', 'core/hidden-transitions.js', 'core/hidden-pictures.js', 'core/images.js', 'core/announce.js', 'core/plate.js',
   'core/preview.js', 'core/style.js', 'core/teams.js', 'core/theme.js', 'core/pack-extras.js', 'core/corner-art.js', 'themes/registry.js', 'themes/overlays/registry.js'].forEach(file => {
   copyModule(path.join(dashboardFolder, file), path.join(workFolder, 'dashboard', file));
 });
@@ -55,7 +54,6 @@ const hiddenRegistry = await import(pathToFileURL(path.join(workFolder, 'dashboa
 const hiddenPictures = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/hidden-pictures.js')).href);
 const imagesModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/images.js')).href);
 const announce = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/announce.js')).href);
-const presentationTest = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/presentation-test.js')).href);
 const plateModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/plate.js')).href);
 const preview = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/preview.js')).href);
 const styleModule = await import(pathToFileURL(path.join(workFolder, 'dashboard/core/style.js')).href);
@@ -3671,258 +3669,6 @@ test('the announcement functions import only the config and the demo functions a
   assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", announcing) > shell.lastIndexOf('startNight', announcing) - 2000, 'only when the whole screen runs');
 });
 
-// Run presentation test (dashboard/core/presentation-test.js): the Studio's button that starts the
-// sample talk, now, once
-
-const { tidyTestRequest, makePresentationTestRunner, readHandledTest, rememberHandledTest, talkStartingAt } = presentationTest;
-
-// The talk in data/sample/content.json, as the screen reads it
-const sampleTalk = {
-  id: 'presentation-sample', name: '[First name]', subteam: '[Subteam A]', topic: '[Title of the talk]',
-  start: new Date('2027-03-04T00:00:00.000Z'), minutes: 15, status: 'scheduled',
-};
-
-// A fake screen for the runner, with a clock the test moves. sample is what reading the sample
-// content gives: the talk, null when it has none, or 'fails' when the file cannot be read.
-function presentationTestWorld(options) {
-  const settings = options || {};
-  const world = {
-    nowMs: demoNow.getTime(),
-    content: { settings: { presentationsEnabled: true, presentationTestRequest: { requestedAt: '' } } },
-    started: [],
-    takeover: false,
-    demo: false,
-    night: false,
-    hidden: false,
-    sample: settings.sample === undefined ? sampleTalk : settings.sample,
-    store: settings.store || {},
-  };
-
-  world.runner = makePresentationTestRunner({
-    getContent: () => world.content,
-    storage: settings.storage === undefined ? makeStorage(world.store) : settings.storage,
-    takeoverRunning: () => world.takeover,
-    demoRunning: () => world.demo,
-    nightIsUp: () => world.night,
-    hiddenPlaying: () => world.hidden,
-    async loadSampleTalk() {
-      if (world.sample === 'fails') throw new Error('the sample content cannot be read');
-      return world.sample;
-    },
-    startTalk: talk => world.started.push(talk),
-  });
-
-  world.look = () => world.runner.look(new Date(world.nowMs));
-  world.requestedSecondsAgo = seconds => { world.content.settings.presentationTestRequest = { requestedAt: new Date(world.nowMs - seconds * 1000).toISOString() }; };
-  return world;
-}
-
-// Looks once and waits for the talk to be handed to the screen
-async function lookAndStart(world) {
-  world.look();
-  await world.runner.whenStarted();
-}
-
-test('a request starts the sample talk once, with its start set to now and the rest as the sample has it', async () => {
-  const world = presentationTestWorld();
-  world.requestedSecondsAgo(2);
-
-  await lookAndStart(world);
-  assert.equal(world.started.length, 1);
-  assert.equal(world.started[0].start.getTime(), world.nowMs, 'it starts now');
-  assert.deepEqual(Object.assign({}, world.started[0], { start: null }), Object.assign({}, sampleTalk, { start: null }));
-  assert.equal(sampleTalk.start.toISOString(), '2027-03-04T00:00:00.000Z', 'the sample talk itself is not changed');
-
-  world.nowMs += 1000;
-  await lookAndStart(world);
-  world.nowMs += 20 * 1000;
-  await lookAndStart(world);
-  assert.equal(world.started.length, 1, 'the same request starts it once');
-  assert.deepEqual(world.store, { 'teletraan-presentation-test-handled': world.content.settings.presentationTestRequest.requestedAt });
-});
-
-test('the sample talk is scheduled whatever the sample file says, and it keeps its id, which is the name of its folder of slides', () => {
-  const now = new Date(demoNow.getTime());
-  ['cancelled', 'done', 'skipped', undefined].forEach(status => {
-    const talk = talkStartingAt(Object.assign({}, sampleTalk, { status: status }), now);
-    assert.equal(talk.status, 'scheduled', String(status));
-    assert.equal(talk.id, 'presentation-sample');
-    assert.equal(talk.start.getTime(), now.getTime());
-    assert.notEqual(talk.start, now, 'a copy of the time, not the clock of the screen');
-  });
-});
-
-test('a request that is more than a minute old, in the future by more than a few seconds, or not a time starts nothing', async () => {
-  for (const seconds of [61, 90, 3600, -30]) {
-    const world = presentationTestWorld();
-    world.requestedSecondsAgo(seconds);
-    await lookAndStart(world);
-    assert.equal(world.started.length, 0, String(seconds));
-  }
-
-  // the clock of the computer that clicked may be a few seconds ahead
-  const ahead = presentationTestWorld();
-  ahead.requestedSecondsAgo(-3);
-  await lookAndStart(ahead);
-  assert.equal(ahead.started.length, 1);
-});
-
-test('a request that was handled before is not started again when the page loads again, and the demo, the hidden transitions and the announcements keep their own', async () => {
-  const request = secondsAgo(5);
-  const again = presentationTestWorld({ store: { 'teletraan-presentation-test-handled': request } });
-  again.content.settings.presentationTestRequest = { requestedAt: request };
-  await lookAndStart(again);
-  assert.equal(again.started.length, 0);
-
-  assert.equal(presentationTest.handledKey, 'teletraan-presentation-test-handled');
-  assert.notEqual(presentationTest.handledKey, announce.handledKey);
-  assert.notEqual(presentationTest.handledKey, hidden.handledKey);
-  assert.notEqual(presentationTest.handledKey, demo.handledKey);
-
-  const other = presentationTestWorld({ store: { 'teletraan-demo-handled': request, 'teletraan-hidden-handled': request, 'teletraan-announce-handled': request } });
-  other.content.settings.presentationTestRequest = { requestedAt: request };
-  await lookAndStart(other);
-  assert.equal(other.started.length, 1);
-
-  const store = {};
-  const storage = makeStorage(store);
-  assert.equal(readHandledTest(storage), '');
-  assert.equal(rememberHandledTest(storage, request), true);
-  assert.deepEqual(store, { 'teletraan-presentation-test-handled': request });
-  assert.equal(readHandledTest(storage), request);
-  assert.equal(readHandledTest(brokenStorage), '');
-  assert.equal(readHandledTest(null), '');
-  assert.equal(rememberHandledTest(brokenStorage, request), false);
-  assert.equal(rememberHandledTest(null, request), false);
-});
-
-test('storage that cannot be used still stops the same request from starting twice while the page is open', async () => {
-  for (const storage of [brokenStorage, null]) {
-    const world = presentationTestWorld({ storage: storage });
-    world.requestedSecondsAgo(2);
-    await lookAndStart(world);
-    world.nowMs += 1000;
-    await lookAndStart(world);
-    assert.equal(world.started.length, 1);
-  }
-});
-
-test('while an alert, an announcement, a talk, a demo, the night screen or a hidden transition has the screen a request waits, and starts when it is over if it is still a minute old at most', async () => {
-  for (const name of ['takeover', 'demo', 'night', 'hidden']) {
-    const world = presentationTestWorld();
-    world[name] = true;
-    world.requestedSecondsAgo(1);
-
-    await lookAndStart(world);
-    assert.equal(world.started.length, 0, 'not while ' + name + ' has the screen');
-
-    world.nowMs += 30 * 1000;
-    world[name] = false;
-    await lookAndStart(world);
-    assert.equal(world.started.length, 1, 'half a minute later, after ' + name);
-
-    const late = presentationTestWorld();
-    late[name] = true;
-    late.requestedSecondsAgo(1);
-    await lookAndStart(late);
-    late.nowMs += 90 * 1000;
-    late[name] = false;
-    await lookAndStart(late);
-    assert.equal(late.started.length, 0, 'a minute and a half later it is too old, after ' + name);
-  }
-});
-
-test('with Run presentations off nothing starts and the request is kept, so turning it on within the minute runs the test', async () => {
-  const world = presentationTestWorld();
-  world.content.settings.presentationsEnabled = false;
-  world.requestedSecondsAgo(1);
-
-  await lookAndStart(world);
-  assert.equal(world.started.length, 0);
-  assert.deepEqual(world.store, {}, 'it is not used up');
-
-  world.nowMs += 20 * 1000;
-  world.content.settings.presentationsEnabled = true;
-  await lookAndStart(world);
-  assert.equal(world.started.length, 1);
-
-  const late = presentationTestWorld();
-  late.content.settings.presentationsEnabled = false;
-  late.requestedSecondsAgo(1);
-  await lookAndStart(late);
-  late.nowMs += 90 * 1000;
-  late.content.settings.presentationsEnabled = true;
-  await lookAndStart(late);
-  assert.equal(late.started.length, 0, 'after a minute it is too old');
-});
-
-test('a sample that has no talk or cannot be read starts nothing, says so in the console, and the request counts as used', () => withQuietErrors(async heard => {
-  for (const sample of [null, 'fails']) {
-    const world = presentationTestWorld({ sample: sample });
-    world.requestedSecondsAgo(1);
-
-    await lookAndStart(world);
-    assert.equal(world.started.length, 0, String(sample));
-    assert.equal(heard.length, 1, String(sample));
-    assert.match(String(heard[0][0]), /Run presentation test failed/);
-
-    world.nowMs += 1000;
-    await lookAndStart(world);
-    assert.equal(heard.length, 1, 'it is not tried again');
-    heard.length = 0;
-  }
-}));
-
-test('content with no settings, no request or a request that is not a time starts nothing', async () => {
-  const world = presentationTestWorld();
-  [null, undefined, {}, { settings: null }, { settings: {} }, { settings: { presentationTestRequest: null } }, { settings: { presentationTestRequest: {} } }].forEach(content => {
-    world.content = content;
-    world.look();
-  });
-  [{ requestedAt: '' }, { requestedAt: 'tomorrow' }, { requestedAt: 12345 }, 'now', []].forEach(request => {
-    world.content = { settings: { presentationTestRequest: request } };
-    world.look();
-  });
-  await world.runner.whenStarted();
-  assert.equal(world.started.length, 0);
-});
-
-test('tidyTestRequest always gives a time, empty when it is not usable', () => {
-  const when = secondsAgo(3);
-  assert.deepEqual(tidyTestRequest({ requestedAt: when }), { requestedAt: when });
-  assert.deepEqual(tidyTestRequest({ requestedAt: 'whenever' }), { requestedAt: '' });
-  assert.deepEqual(tidyTestRequest({ requestedAt: 12345 }), { requestedAt: '' });
-  [undefined, null, when, 4, [], {}].forEach(value => assert.deepEqual(tidyTestRequest(value), { requestedAt: '' }, JSON.stringify(value)));
-  assert.deepEqual(Object.keys(tidyTestRequest({ requestedAt: when, kind: 'desktop', extra: 1 })), ['requestedAt']);
-  assert.deepEqual(config.defaultSettings.presentationTestRequest, { requestedAt: '' });
-});
-
-test('the presentation test functions import only the demo functions and use no page, and the screen code that runs them is started after the talk screen', () => {
-  const read = file => readModule(path.join(dashboardFolder, file), 'utf8');
-  const code = text => text.split('\n').filter(line => !line.trim().startsWith('//')).join('\n');
-
-  assert.deepEqual(read('core/presentation-test.js').split('\n').filter(line => /^import /.test(line)), [
-    "import { readHandled, rememberHandled, shouldRunDemo } from './demo.js';",
-    "import { isRecord } from './text.js';",
-  ]);
-  assert.ok(!/\bdocument\b|\bwindow\b|\bimport\(/.test(code(read('core/presentation-test.js'))), 'no page in presentation-test.js');
-
-  // the real screen: it asks what can have the screen, reads the sample file from the sample folder and hands the talk to the talk screen
-  const run = read('core/presentation-test-run.js');
-  ['demoRunning', 'nightIsUp', 'hiddenPlaying'].forEach(name => assert.ok(run.includes("'" + name + "'"), name));
-  assert.ok(run.includes('takeoverRunning: takeoverRunning,') && run.includes('startTalk: startTestTalk,'));
-  assert.ok(run.includes("fetch(sampleFolder + 'content.json'"), 'the sample file, and nothing from Sanity or Google');
-  assert.ok(!/sanity\.io|google\.com|config\.js'.*\bsanity\b/.test(code(run)), 'no other address');
-
-  const shell = read('shell.js');
-  const testing = shell.indexOf("startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent))");
-  assert.ok(testing > shell.indexOf("startOptional('./core/presentation-run.js'"), 'after the talk screen');
-  assert.ok(testing > shell.indexOf("startOptional('./core/hidden-run.js'"), 'after the hidden transitions');
-  assert.ok(testing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
-  assert.ok(testing > shell.indexOf('startTakeovers(getContent);'), 'after the takeovers');
-  assert.ok(shell.lastIndexOf("if (!params.get('show') && !stress) {", testing) > shell.lastIndexOf('startNight', testing) - 2000, 'only when the whole screen runs');
-});
-
 // Preview a look (dashboard/core/preview.js): the Studio's buttons that hold a team, a style or a
 // seasonal pack on the screen for 2 minutes, without writing the settings
 
@@ -4064,7 +3810,7 @@ function checkPreviewButton(kind) {
   again.look();
   assert.equal(holds(again), false);
   letGoOfPreview();
-  const other = previewWorld({ store: { 'teletraan-demo-handled': secondsAgo(5), 'teletraan-hidden-handled': secondsAgo(5), 'teletraan-announce-handled': secondsAgo(5), 'teletraan-presentation-test-handled': secondsAgo(5) } });
+  const other = previewWorld({ store: { 'teletraan-demo-handled': secondsAgo(5), 'teletraan-hidden-handled': secondsAgo(5), 'teletraan-announce-handled': secondsAgo(5) } });
   other.content.settings.previewRequest = { kind: kind, requestedAt: secondsAgo(5) };
   other.look();
   assert.equal(holds(other), true);
@@ -4292,7 +4038,7 @@ test('the five kinds are the five buttons, each holds one thing that exists, and
 
   assert.equal(preview.handledKey, 'teletraan-preview-handled');
   assert.equal(preview.activeKey, 'teletraan-preview-active');
-  [announce.handledKey, presentationTest.handledKey, hidden.handledKey, demo.handledKey, preview.activeKey].forEach(key => assert.notEqual(preview.handledKey, key));
+  [announce.handledKey, hidden.handledKey, demo.handledKey, preview.activeKey].forEach(key => assert.notEqual(preview.handledKey, key));
 
   const store = {};
   const storage = makeStorage(store);
@@ -4443,7 +4189,6 @@ test('the preview functions import only the config, the registry of overlays, th
 
   const shell = read('shell.js');
   const previewing = shell.indexOf("startOptional('./core/preview-run.js', module => module.startPreviewRunner(getContent))");
-  assert.ok(previewing > shell.indexOf("startOptional('./core/presentation-test-run.js'"), 'after the presentation test');
   assert.ok(previewing > shell.indexOf("startOptional('./core/announce-run.js'"), 'after the announcements');
   assert.ok(previewing > shell.indexOf("startOptional('./core/hidden-run.js'"), 'after the hidden transitions');
   assert.ok(previewing > shell.indexOf("startOptional('./core/demo-runner.js'"), 'after the demo runner');
@@ -4927,10 +4672,10 @@ test('only frame.js, schedule.js and takeover.js ask whether the screen is pause
   // the others ask this one, so a hold is a cover to all of them
   const takeover = code(read('core/takeover.js'));
   assert.ok(/export function takeoverRunning\(\) \{\s*return running !== null \|\| frame\.isPaused\(\);\s*\}/.test(takeover));
-  ['core/hidden-run.js', 'core/night-screen.js', 'core/announce-run.js', 'core/demo-runner.js', 'core/announce.js', 'core/demo.js', 'core/hidden.js', 'core/presentation-test.js', 'core/presentation-test-run.js', 'shell.js'].forEach(file => {
+  ['core/hidden-run.js', 'core/night-screen.js', 'core/announce-run.js', 'core/demo-runner.js', 'core/announce.js', 'core/demo.js', 'core/hidden.js', 'shell.js'].forEach(file => {
     assert.ok(!/isPaused|frame\.pause|frame\.resume/.test(code(read(file))), file + ' asks takeoverRunning and not the pause');
   });
-  ['core/hidden-run.js', 'core/night-screen.js', 'core/announce-run.js', 'core/demo-runner.js', 'core/presentation-test-run.js', 'shell.js'].forEach(file => {
+  ['core/hidden-run.js', 'core/night-screen.js', 'core/announce-run.js', 'core/demo-runner.js', 'shell.js'].forEach(file => {
     assert.ok(read(file).includes('takeoverRunning'), file + ' asks takeoverRunning');
   });
 
@@ -5235,11 +4980,14 @@ async function inTalkPage(options, run) {
     const module = await import(pathToFileURL(path.join(talkTree, 'dashboard/core/presentation-run.js')).href + '?run=' + talkRuns);
     const start = options.start || Date.now() + 1000; // keys are read with the real clock, so the talk starts a second from now
     const content = {
-      presentations: options.talks || [{ id: 'presentation-abc', name: 'Alex', subteam: 'Programming', topic: 'Swerve drive', start: new Date(start), minutes: 15, status: 'scheduled' }],
       settings: Object.assign({ presentationsEnabled: true }, options.settings),
       status: options.status || { source: 'sanity' },
     };
     module.startPresentations(() => content);
+    // The screen has no booked talks any more: a talk runs only when startDeckTalk hands it one. The talk of a test is handed
+    // over before its start, so the first look finds it not due yet.
+    const talks = options.talks || [{ id: 'presentation-abc', name: 'Alex', subteam: 'Programming', topic: 'Swerve drive', start: new Date(start), minutes: 15, status: 'scheduled' }];
+    if (talks.length > 0) module.startDeckTalk(talks[0]);
 
     world.module = module;
     world.layer = layer;
@@ -5323,25 +5071,21 @@ test('the sample content looks for its slides in the sample folder', async () =>
   });
 });
 
-test('the sample talk of Run presentation test starts at once, reads the sample folder whatever the content source is, and is not brought back once it is over', async () => {
-  const sampleTalkNow = () => ({ id: 'presentation-sample', name: '[First name]', subteam: '[Subteam A]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
-  const sampleAddress = 'data/sample/slides/presentation-sample/';
+test('a picked deck starts at once, reads its folder of decks, and is not brought back once it is over', async () => {
+  const deckTalkNow = () => ({ id: 'deck-abc', deck: 'abc', name: 'Deck', topic: '2 slides', start: new Date(), minutes: 15, status: 'scheduled' });
+  const sampleAddress = 'data/live/decks/abc/';
 
   await inTalkPage({ talks: [], manifest: manifestOf(['001.svg', '002.svg']) }, async world => {
     world.tick(0);
     assert.deepEqual(world.log, [], 'nothing is booked');
 
-    world.module.startTestTalk(sampleTalkNow());
+    world.module.startDeckTalk(deckTalkNow());
     assert.deepEqual(world.log, ['pause', 'build title', 'enter title']);
     assert.deepEqual(world.fetched.map(item => item.address), [sampleAddress + 'manifest.json']);
 
     await world.settleAll();
-    world.press(' ');
-    assert.deepEqual(world.slideAddressNow(), [sampleAddress + '001.svg' + madeAt]);
-    world.press(' ');
-    world.press(' ');
-    assert.equal(world.cards('thanks'), 1, 'after the last slide');
-
+    world.press('Escape');
+    world.press('Escape');
     world.tick(8000);
     await world.settleAll();
     assert.equal(world.holds.size, 0);
@@ -5350,10 +5094,10 @@ test('the sample talk of Run presentation test starts at once, reads the sample 
   });
 });
 
-test('the sample talk waits for an announcement like any talk, and a talk that is already over does not start', async () => {
+test('a picked deck waits for an announcement like any talk, and a talk that is already over does not start', async () => {
   await inTalkPage({ talks: [], manifest: manifestOf(['001.jpg']) }, async world => {
     world.announcing = true;
-    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+    world.module.startDeckTalk({ id: 'deck-abc', deck: 'abc', name: 'Deck', topic: '2 slides', start: new Date(), minutes: 15, status: 'scheduled' });
     assert.deepEqual(world.log, [], 'the title card waits while the announcement plays');
 
     world.announcing = false;
@@ -5362,28 +5106,28 @@ test('the sample talk waits for an announcement like any talk, and a talk that i
   });
 
   await inTalkPage({ talks: [], manifest: manifestOf(['001.jpg']) }, async world => {
-    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(Date.now() - 3 * 3600 * 1000), minutes: 15, status: 'scheduled' });
+    world.module.startDeckTalk({ id: 'deck-abc', deck: 'abc', name: 'Deck', topic: '2 slides', start: new Date(Date.now() - 3 * 3600 * 1000), minutes: 15, status: 'scheduled' });
     assert.deepEqual(world.log, [], 'a talk that is already over does not start');
   });
 });
 
-test('a booked talk reads the live folder, also after the sample talk has been ended on its title card', async () => {
-  await inTalkPage({ manifest: manifestOf(['001.jpg']) }, async world => {
-    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+test('a second picked deck reads its own folder, after the first has been ended on its title card', async () => {
+  await inTalkPage({ talks: [], manifest: manifestOf(['001.jpg']) }, async world => {
+    world.module.startDeckTalk({ id: 'deck-abc', deck: 'abc', name: 'Deck', topic: '2 slides', start: new Date(), minutes: 15, status: 'scheduled' });
     await world.settleAll();
     world.press('Escape');
     world.press('Escape');
+    world.tick(8000);
     await world.settleAll();
 
-    world.tick(1000);
-    world.tick(2000);
-    assert.deepEqual(world.fetched.map(item => item.address), ['data/sample/slides/presentation-sample/manifest.json', talkAddress + 'manifest.json']);
+    world.module.startDeckTalk({ id: 'deck-xyz', deck: 'xyz', name: 'Other', topic: '1 slide', start: new Date(), minutes: 15, status: 'scheduled' });
+    assert.deepEqual(world.fetched.map(item => item.address), ['data/live/decks/abc/manifest.json', 'data/live/decks/xyz/manifest.json']);
   });
 });
 
-test('with Run presentations off the sample talk does not start', async () => {
+test('with Run presentations off a picked deck does not start', async () => {
   await inTalkPage({ talks: [], settings: { presentationsEnabled: false } }, async world => {
-    world.module.startTestTalk({ id: 'presentation-sample', name: '[First name]', topic: '[Title of the talk]', start: new Date(), minutes: 15, status: 'scheduled' });
+    world.module.startDeckTalk({ id: 'deck-abc', deck: 'abc', name: 'Deck', topic: '2 slides', start: new Date(), minutes: 15, status: 'scheduled' });
     world.tick(1000);
     assert.deepEqual(world.log, []);
     assert.equal(world.holds.size, 0);

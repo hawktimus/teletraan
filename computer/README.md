@@ -13,7 +13,7 @@ installing anything on the computer, and whenever a step needs a login or a key.
   page and the Studio to the WiFi and to Tailscale, and port 3426 goes straight to the Studio (`docs/control-page.md`).
 - A timer can run `pull.sh` every 5 minutes. A pull is a deploy: the files in the
   repository are the files on the screen. A computer that gets its files from a Mac
-  (below) leaves this timer off and installs only the calendar and slides
+  (below) leaves this timer off and installs only the calendar and decks
   services (`docs/rebuilding-the-computer.md`, step 11).
 - The control page (`docs/control-page.md`) updates the computer too: its Update from GitHub button downloads the newest commit of the public repository and installs it as the next release, with no login. The ways below stay for the first install and for when the page cannot be reached.
 - `tools/teletraan/teletraan-tool` runs on a Mac. It copies the files to the computer
@@ -58,12 +58,12 @@ installing anything on the computer, and whenever a step needs a login or a key.
   prints the second. The container shows only the `dashboard` folder, so the
   drawings are not served.
 
-The calendars, the slides, `version.txt` and `device.json` live in
+The calendars, the decks, `version.txt` and `device.json` live in
 `/var/lib/teletraan/data` on the Teletraan computer, not in the repository. The container
 shows that folder as `dashboard/data/live/`, so nothing the computer downloads
-ever shows up in git. The slides of a talk are in `slides/<talk id>/` there,
-and the dashboard reads them at `data/live/slides/<talk id>/`. The scripts
-write the calendars, the slides, `version.txt` and `device.json` (the computer's
+ever shows up in git. The pictures of a deck are in `decks/<deck id>/` there,
+and the dashboard reads them at `data/live/decks/<deck id>/`. The scripts
+write the calendars, the decks, `version.txt` and `device.json` (the computer's
 name and addresses, written every minute by `kiosk.sh`, see "Finding the computer
 on the network" in `docs/rebuilding-the-computer.md`). The photos are not on the
 computer: they are uploaded in Studio and come with the rest of the content.
@@ -93,7 +93,7 @@ to attach the data folder to.
 | `scripts/check-calendars.mjs` | The part of `check-calendars.sh` that runs the dashboard's own calendar code |
 | `scripts/frc-sync.sh` | Reads the public FRC data of each team from The Blue Alliance and Statbotics and writes the document `frc-status` in Sanity. Every address and every place in an answer is in `scripts/frc-contract.sh`. The script is in parts that it reads from the same folder: `frc-contract.sh`, `frc-requests.sh`, `frc-modes.sh`, `frc-read.sh` and `frc-programs.sh`. `frc-sync.sh --check` tries the key, `--now` does a run whatever the time. Needs `curl` and `jq`, `TBA_AUTH_KEY` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/frc-feed.md` |
 | `scripts/monday-sync.sh` | Reads Robotics Tasks and Completed Tasks by their numbers, at most 10 requests a run and 900 a day, writes one task document for each parent item, deletes the tasks whose item is gone, and writes the document `monday-status` with the last read, the last problem and the open and done tasks of each department. Every board number, column id, label number, question and place in an answer is in `scripts/monday-contract.sh`. The script is in parts that it reads from the same folder: `monday-contract.sh`, `monday-requests.sh`, `monday-check.sh` and `monday-programs.sh`. `monday-sync.sh --check` tries the token, and `monday-sync.sh --debug <board number>` prints how Monday answers for the first two items of a board. Needs `curl` and `jq`, `MONDAY_API_TOKEN` and `SANITY_WRITE_TOKEN` in `local.env`, and does nothing without them. See `docs/monday.md` |
-| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. `status-write.sh --print` needs no key: it reads the document back and shows each time with its age. The calendar and slides services and `kiosk.sh` run it, see "Showing what the computer did in Studio" in `docs/rebuilding-the-computer.md` |
+| `scripts/status-write.sh` | Writes the time of a job into the document `status-mini` in Sanity, which Studio shows at the top of the Screen tab of Dashboard Settings. `status-write.sh calendar-status` sends the Calendars page document the same way. Needs `SANITY_WRITE_TOKEN` in `local.env` and does nothing without it. `status-write.sh --print` needs no key: it reads the document back and shows each time with its age. The calendar service and `kiosk.sh` run it, see "Showing what the computer did in Studio" in `docs/rebuilding-the-computer.md` |
 | `scripts/kiosk.sh` | Opens the browser full screen with the right settings, or any page given after its name. Also writes `device.json` every minute while the browser runs, and starts `status-write.sh kiosk` in the background |
 | `scripts/install-timers.sh` | Copies the unit files into place and turns on the calendar timer and the pull timer |
 | `scripts/install-calendars.sh` | Copies the two calendar unit files into place and turns on the calendar timer. Installs nothing else, so it leaves the pull timer off |
@@ -109,7 +109,7 @@ to attach the data folder to.
 | `scripts/mirror.py` | The picture of the screen for the Live preview (see above). Needs python3 only. Run by `systemd/teletraan-mirror.service`; `MIRROR_PORT`, `MIRROR_DATA`, `MIRROR_IDLE` and `MIRROR_MAX` change its port, folder and limits |
 | `scripts/watchdog.sh` | Restarts the kiosk service when the screen has frozen (see above). Runs as the login user and restarts the screen through one sudo rule. Needs `curl`, `pgrep` and `awk`. Keeps its count in `watchdog-state` in the data folder |
 | `scripts/install-watchdog.sh` | Copies the two watchdog unit files into place and turns on the watchdog timer. Does not install the packages, it prints the `apt install` line when one is missing |
-| `scripts/nightly.sh` | Restarts the kiosk service at 04:00 and reboots the computer at 04:10 on Sundays. Runs as the login user from `teletraan-nightly.timer`, with one sudo rule for the restart and one for the reboot. Skips either when a presentation is booked within the next hour or is running |
+| `scripts/nightly.sh` | Restarts the kiosk service at 04:00 and reboots the computer at 04:10 on Sundays. Runs as the login user from `teletraan-nightly.timer`, with one sudo rule for the restart and one for the reboot. |
 | `scripts/netwatch.sh` | Pings the gateway, looks up a name and sends an HTTPS HEAD to one host every 2 minutes (`teletraan-netwatch.timer`, as the login user), and after 3 failed checks in a row restarts the network service and renews DHCP, after 6 bounces the interface (and reloads a Wi-Fi driver), after 15 reboots, at most once in 2 hours. Keeps `/var/lib/teletraan/netwatch.json` and logs every check (docs/network.md) |
 | `scripts/install-network.sh` | Copies the two netwatch unit files (and removes the older network ones), writes the sudo rules for the network devices and the Wi-Fi driver, makes `netwatch.json`, and turns off Wi-Fi power saving, energy-efficient Ethernet, USB autosuspend and sleep. `--undo` takes the settings away. Installs no package |
 | `scripts/sync-service.mjs` | The sync service (`teletraan-sync.service`, runs all the time). Reads the content of Sanity, the weather and the pictures on its own timers and writes `content.json`, `weather.json`, `images/` and `sync-status.json` in the data folder, which the dashboard shows as `data/live/`. A failed read keeps the last good file. Needs Node 18 or newer (docs/OPERATIONS.md) |

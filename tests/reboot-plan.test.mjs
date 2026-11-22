@@ -176,39 +176,36 @@ check('the first run after a setting is seen, before its slot, keeps it and rebo
 
 // ----- the skip rule -----
 
-const talk = { start: new Date(slot + 5 * minute).toISOString(), minutes: 15 };
+const alertOn = { alert: { on: true } };
 
-check('busy text names what is playing: an alert, an announcement or a talk', () => {
+check('busy text names what is playing: an alert or an announcement', () => {
   const now = slot;
   assert.equal(busyReason({ alert: { on: true } }, now), 'an alert');
   assert.equal(busyReason({ alert: { on: true, until: new Date(now - minute).toISOString() } }, now), '');
   assert.equal(busyReason({ alert: { on: false } }, now), '');
   assert.equal(busyReason({ announcements: [{ start: new Date(now - hour).toISOString(), end: new Date(now + hour).toISOString() }] }, now), 'an announcement');
   assert.equal(busyReason({ announcements: [{ start: new Date(now + hour).toISOString(), end: new Date(now + 2 * hour).toISOString() }] }, now), '');
-  assert.equal(busyReason({ talks: [talk] }, now), 'a talk');
-  assert.equal(busyReason({ talks: [talk] }, now - 30 * minute), '');
-  assert.equal(busyReason({ talks: [talk] }, now + 40 * minute), '');
+  assert.equal(busyReason({ talks: [{ start: new Date(now).toISOString(), minutes: 15 }] }, now), '', 'booked talks are not read any more');
   assert.equal(busyReason(null, now), '');
 });
 
-check('while a talk is playing the run waits, and counts the minutes', () => {
-  const result = run({ busyData: { talks: [talk] } }, known, slot + 2 * minute);
+check('while an alert is on the run waits, and counts the minutes', () => {
+  const result = run({ busyData: alertOn }, known, slot + 2 * minute);
   assert.equal(result.action, 'wait');
-  assert.match(result.line, /waiting for a talk/);
+  assert.match(result.line, /waiting for an alert/);
   assert.equal(result.state.lastSlot, 0);
 });
 
 check('after the wait the computer reboots anyway, and the reason says so', () => {
-  const longTalk = { start: new Date(slot - 10 * minute).toISOString(), minutes: 90 };
-  const first = run({ busyData: { talks: [longTalk] } }, known, slot + 2 * minute);
-  const result = run({ busyData: { talks: [longTalk] } }, first.state, slot + 31 * minute);
+  const first = run({ busyData: alertOn }, known, slot + 2 * minute);
+  const result = run({ busyData: alertOn }, first.state, slot + 31 * minute);
   assert.equal(result.action, 'reboot');
-  assert.equal(result.why, 'Tue 03:30, after waiting 30 minutes for a talk');
+  assert.equal(result.why, 'Tue 03:30, after waiting 30 minutes for an alert');
 });
 
 check('a run that waited reboots as soon as the screen is free', () => {
-  const waiting = run({ busyData: { talks: [talk] } }, known, slot + 2 * minute);
-  const result = run({ busyData: { talks: [] } }, waiting.state, slot + 12 * minute);
+  const waiting = run({ busyData: alertOn }, known, slot + 2 * minute);
+  const result = run({ busyData: {} }, waiting.state, slot + 12 * minute);
   assert.equal(result.action, 'reboot');
   assert.equal(result.why, 'Tue 03:30, as scheduled');
 });

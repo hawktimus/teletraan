@@ -532,8 +532,8 @@ const notInSidebar = {
   mondayStatus: 'the Teletraan computer writes it, and Dashboard Settings shows it in the block at the top of the Monday tab',
   frcNews: 'the Teletraan computer writes it, and the FRC news section of the Competition page lists its headlines',
   plan: 'the Today page links to the list of agenda items and opens it in the next pane',
-  presentation: 'the Today page links to the talks, Upcoming and Past, and opens them in the next pane',
-  presentationDay: 'the Today page links to the meeting days and opens them in the next pane',
+  presentation: 'not used any more: the sidebar and the New menu have no line for booked talks, and the type stays so that stored documents keep opening',
+  presentationDay: 'not used any more: the sidebar and the New menu have no line for meeting days, and the type stays so that stored documents keep opening',
   theme: 'the Look page links to it, as the dated rules, the default theme and the time zone',
   subtheme: 'the Look page links to the list of subthemes and opens it in the next pane',
   announcement: 'the Today page lists the announcements and edits them in place, and each card opens the full form in the next pane',
@@ -1705,7 +1705,7 @@ function checkHiddenTab() {
   need(problems, offered.map(item => item.title).join() === ids.map(id => registry[id].name).join(), 'hiddenRequest.kind should show the names in the dashboard registry');
 
   // The Play buttons come first: one for each transition, plain functions, and only on this page.
-  // Play announcements and Run presentation test come after them (checkPlayAnnouncements, checkRunPresentationTest).
+  // Play announcements comes after them (checkPlayAnnouncements).
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(0, Object.keys(registry).length);
   if (buttons.length !== ids.length || !buttons.every(button => typeof button === 'function')) {
     return problems.concat('the settings page should add one Play button for each hidden transition, written as plain functions');
@@ -1753,7 +1753,7 @@ function checkPresentationsTab() {
 
   // Nothing else is in the section, so deleting settingsPresentations.js removes the whole section. The folder of
   // presentations comes right after the switch (docs/presentations-drive.md). The last field is the hidden one that
-  // Run presentation test fills in (checkRunPresentationTest).
+  // the old Run presentation test button filled in (checkPresentationTestRetired).
   const inTab = fieldsIn(settings).filter(field => field.fieldset === 'presentations').map(field => field.name);
   const wanted = [presentationNames[0], 'presentationDriveFolder'].concat(presentationNames.slice(1), 'presentationTestRequest');
   need(problems, inTab.join() === wanted.join(), 'the Presentations section should hold, in this order: ' + wanted.join(', ') + ', not ' + inTab.join(', '));
@@ -1805,12 +1805,12 @@ function checkPlayAnnouncements() {
   need(problems, registry['all-announcements'] && registry['all-announcements'].name === 'All announcements', 'the dashboard demo screens should have all-announcements, named All announcements');
   need(problems, copy && copy.name === 'All announcements', 'studio/inputs/demo-screens.js should have all-announcements, named All announcements');
 
-  // The button comes after the Play buttons of the hidden transitions, and nowhere else. Run presentation test and the Preview buttons are the ones after it.
+  // The button comes after the Play buttons of the hidden transitions, and nowhere else. The Preview buttons are the ones after it.
   const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
   const button = buttons[played];
-  if (buttons.length !== 2 + played + previewButtonCount() || typeof button !== 'function') {
-    return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then Run presentation test and the Preview buttons');
+  if (buttons.length !== 1 + played + previewButtonCount() || typeof button !== 'function') {
+    return problems.concat('the settings page should have the Play announcements button, a plain function, after the Play buttons of the hidden transitions, and then the Preview buttons');
   }
   need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'playAnnouncements'), 'only the settings page should get the Play announcements button');
 
@@ -1844,58 +1844,25 @@ function checkPlayAnnouncements() {
   return problems;
 }
 
-// Run presentation test: the hidden presentationTestRequest field in the Presentations tab
-// (schemas/settingsPresentations.js), its starting value in config.js and the button that
-// fills it in (actions.js). The Preview buttons come after it (checkPreviewButtons).
-function checkRunPresentationTest() {
+// Run presentation test is gone: no button, no starting value, no request in the sample. The hidden
+// presentationTestRequest field stays in the schema (schemas/settingsPresentations.js) because stored
+// values are never removed, and it says so in its description.
+function checkPresentationTestRetired() {
   const problems = [];
-  const config = world.dashboard;
   const request = fieldAt('dashboardSettings.presentationTestRequest');
   const time = fieldAt('dashboardSettings.presentationTestRequest.requestedAt');
 
-  // The field: an object with one read only time, hidden from editors, with no starting value of its own
-  need(problems, request && request.type === 'object', 'presentationTestRequest should be an object');
-  need(problems, request && request.group === 'advanced' && request.fieldset === 'presentations', 'presentationTestRequest should be in the Presentations section of the Advanced tab');
+  need(problems, request && request.type === 'object', 'presentationTestRequest should still be an object, so a stored value is kept');
+  need(problems, request && request.group === 'advanced' && request.fieldset === 'presentations', 'presentationTestRequest should stay in the Presentations section of the Advanced tab');
   need(problems, request && request.hidden === true, 'presentationTestRequest should be hidden from editors (hidden: true)');
-  need(problems, request && request.initialValue === undefined, 'presentationTestRequest should have no starting value in the Studio');
-  need(problems, request && /Run presentation test/.test(request.description || ''), 'the presentationTestRequest description should name the button Run presentation test');
+  need(problems, request && /Not used any more/.test(request.description || ''), 'the presentationTestRequest description should say Not used any more');
   need(problems, time && time.type === 'datetime' && time.readOnly === true, 'presentationTestRequest.requestedAt should be a read only datetime');
-  need(problems, time && !constraintNamed(constraintsOf(time), 'required'), 'presentationTestRequest.requestedAt should be optional');
 
-  // The starting value is a request with no time, and the sample content never carries a request
-  need(problems, sameData(config.defaultSettings.presentationTestRequest, { requestedAt: '' }), 'the default presentationTestRequest in config.js should be a time that is empty');
+  need(problems, !('presentationTestRequest' in world.dashboard.defaultSettings), 'config.js should not have a default presentationTestRequest any more');
   need(problems, !('presentationTestRequest' in world.sample.settings), 'the sample settings should not carry a presentationTestRequest');
 
-  // The button comes after Play announcements and before the Preview buttons, and is on no other page
-  const played = Object.keys(world.hiddenRegistry.hiddenTransitions).length;
-  const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' });
-  const button = buttons[1 + played];
-  if (buttons.length !== 2 + played + previewButtonCount() || typeof button !== 'function') {
-    return problems.concat('the settings page should have the Run presentation test button, a plain function, after Play announcements and before the Preview buttons');
-  }
-  need(problems, world.config.document.actions([], { schemaType: 'demo' }).every(item => item.action !== 'runPresentationTest'), 'only the settings page should get the Run presentation test button');
-
-  function press(published, draft) {
-    globalThis.studioCalls = [];
-    const props = { id: 'dashboardSettings', type: 'dashboardSettings', published: published, draft: draft || null, onComplete: () => {} };
-    const state = button(props);
-    if (!state.disabled) state.onHandle();
-    return { state: state, calls: globalThis.studioCalls };
-  }
-
-  // It writes the time now, only that, and publishes
-  const before = Date.now();
-  const pressed = press(null);
-  const after = Date.now();
-  const set = pressed.calls[0] && pressed.calls[0].patch && pressed.calls[0].patch[0] && pressed.calls[0].patch[0].set;
-  const written = set && set.presentationTestRequest;
-
-  need(problems, pressed.state.label === 'Run presentation test', 'the button should be labelled Run presentation test');
-  need(problems, button.action === 'runPresentationTest', 'the button should be called runPresentationTest');
-  need(problems, pressed.calls.length === 2 && pressed.calls[0].patch.length === 1 && Object.keys(set).join() === 'presentationTestRequest' && pressed.calls[1].publish === true, 'Run presentation test should set presentationTestRequest and then publish');
-  need(problems, written && Object.keys(written).join() === 'requestedAt', 'Run presentation test should write only requestedAt');
-  need(problems, written && typeof written.requestedAt === 'string' && new Date(written.requestedAt).toISOString() === written.requestedAt && Date.parse(written.requestedAt) >= before && Date.parse(written.requestedAt) <= after, 'Run presentation test should write the time now, as new Date().toISOString() writes it');
-  need(problems, press({ presentationTestRequest: { requestedAt: '2026-06-01T12:00:00.000Z' } }).state.disabled === false, 'Run presentation test should be on when a request is already published, so it can be run again');
+  const actionNames = world.config.document.actions([], { schemaType: 'dashboardSettings' }).map(item => item.action);
+  need(problems, !actionNames.includes('runPresentationTest'), 'the settings page should not have a Run presentation test button any more');
   return problems;
 }
 
@@ -1951,7 +1918,7 @@ function checkPreviewButtons() {
 
   // The buttons come last: a preview for each theme, one for each view, the pack preview and Back to the schedule, as plain
   // functions, and are on no other page. The old team and style previews have no button but keep their kinds above.
-  const before = 2 + Object.keys(world.hiddenRegistry.hiddenTransitions).length;
+  const before = 1 + Object.keys(world.hiddenRegistry.hiddenTransitions).length;
   const buttons = world.config.document.actions([], { schemaType: 'dashboardSettings' }).slice(before);
   const looks = world.studioLookPreviews;
   const wanted = looks.themePreviews.length + looks.viewPreviews.length + 2;
@@ -2173,7 +2140,7 @@ function checkStartHere() {
   parts.links.forEach(item => checkPlainSentences(problems, 'the line under ' + item.label, item.says));
 
   // The buttons do not repeat the work of the buttons beside Publish: the fields are only in screen-requests.js
-  const writesRequest = source => /\b(announceRequest|presentationTestRequest|nextLookRequest|competitionPreviewRequest|hiddenRequest|previewRequest)\s*:/.test(source);
+  const writesRequest = source => /\b(announceRequest|nextLookRequest|competitionPreviewRequest|hiddenRequest|previewRequest)\s*:/.test(source);
   need(problems, !writesRequest(world.actionsSource), 'actions.js should not write a request field itself. It uses the functions in screen-requests.js');
   need(problems, !writesRequest(world.startHereSource) && !writesRequest(world.startHerePartsSource) && !/requestedAt/.test(world.startHereSource + world.startHerePartsSource), 'the Start here page should not write a request field itself. It uses the functions in screen-requests.js');
   need(problems, !/useDocumentOperation/.test(world.startHereSource), 'the Start here page should send through the Studio client and not through the document operations of an action');
@@ -2247,7 +2214,6 @@ async function checkScreenRequests() {
 
   const cases = [
     { action: 'playAnnouncements', fields: () => requests.announceRequest(), shape: { announceRequest: { requestedAt: 'TIME' } } },
-    { action: 'runPresentationTest', fields: () => requests.presentationTestRequest(), shape: { presentationTestRequest: { requestedAt: 'TIME' } } },
     // these two have no button beside Publish, only the one on the Start here page
     { action: '', where: 'nextLookNow', fields: () => requests.nextLookRequest(), shape: { nextLookRequest: { requestedAt: 'TIME' } } },
     { action: '', where: 'previewCompetition', fields: () => requests.competitionPreviewRequest(), shape: { competitionPreviewRequest: { requestedAt: 'TIME' } } },
@@ -2425,9 +2391,8 @@ function checkDashboardNames() {
   add(unknownKeys(world.dashboard.defaultDemo, fieldsIn(typeByName('demo')), 'defaultDemo in config.js'));
   add(unknownKeys(sample.demo || {}, fieldsIn(typeByName('demo')), 'sample demo'));
 
-  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', calendarFilters: 'calendarFilter', presentationDays: 'presentationDay', presentations: 'presentation' };
+  const lists = { tasks: 'task', sponsors: 'sponsor', tipsAndNews: 'tipOrNews', subteams: 'subteam', people: 'person', calendarFilters: 'calendarFilter' };
   Object.keys(lists).forEach(key => {
-    // a talk has its Sanity id under the plain name id, the way the query sends it
     // a task also has the id of its Team lead (subteamId, which the query takes from the reference) and, in the sample, a Notes
     // text of the board, which the screen never reads and which proves that no name or address reaches it
     sample[key].forEach(item => add(unknownKeys(key === 'tasks' ? without(without(without(item, 'id'), 'subteamId'), 'notes') : without(item, 'id'), fieldsIn(typeByName(lists[key])), 'sample ' + key)));
@@ -2775,7 +2740,7 @@ function checkOldTitles() {
   return problems;
 }
 
-// The buttons after Run presentation test: a theme preview for each theme, a view preview for each view, the pack
+// The buttons after Play announcements: a theme preview for each theme, a view preview for each view, the pack
 // preview and Back to the schedule
 function previewButtonCount() {
   return world.studioLookPreviews.themePreviews.length + world.studioLookPreviews.viewPreviews.length + 2;
@@ -2787,7 +2752,7 @@ function checkSettingsPage() {
   const actions = ['publish', 'discardChanges', 'delete', 'duplicate', 'unpublish'].map(action => ({ action: action }));
   const kept = world.config.document.actions(actions, { schemaType: 'dashboardSettings' }).map(item => item.action).join();
   const others = world.config.document.actions(actions, { schemaType: 'task' }).length;
-  const wanted = 'publish,discardChanges,playDesktop,playRedEyes,playAnnouncements,runPresentationTest,previewThemeOriginal,previewThemeCybertron,previewThemeRetro,previewThemeFoundry,previewViewGeneral,previewViewPrime,previewViewNova,previewViewFamily,previewNextPack,backToSchedule';
+  const wanted = 'publish,discardChanges,playDesktop,playRedEyes,playAnnouncements,previewThemeOriginal,previewThemeCybertron,previewThemeRetro,previewThemeFoundry,previewViewGeneral,previewViewPrime,previewViewNova,previewViewFamily,previewNextPack,backToSchedule';
   if (kept !== wanted) problems.push('the settings page should have these actions: ' + wanted + '. It has: ' + kept);
   if (others !== actions.length) problems.push('other types should keep every action');
 
@@ -2802,15 +2767,15 @@ function checkSettingsPage() {
   // The New menu in the top bar offers the types an editor adds, and not the pages that exist once, the
   // status document that the Teletraan computer writes, the tasks that the computer makes or the types with no line in the
   // sidebar. A place is still offered while a document is open, which is where the Location field of a task
-  // has Create new.
-  const templates = ['task', 'plan', 'presentation', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
+  // has Create new. A booked talk and a meeting day are not offered: they are not used any more.
+  const templates = ['task', 'plan', 'presentation', 'presentationDay', 'dashboardSettings', 'theme', 'demo', 'status', 'calendarStatus', 'frcStatus', 'mondayStatus', 'extraEvent', 'place'].map(name => ({ templateId: name }));
   const offeredIn = creationContext => world.config.document.newDocumentOptions(templates, creationContext === undefined ? {} : { creationContext: creationContext }).map(item => item.templateId).join();
-  const menu = 'plan,presentation';
+  const menu = 'plan';
   if (offeredIn(undefined) !== menu) problems.push('the New menu should offer: ' + menu + '. It offers: ' + offeredIn(undefined));
   if (offeredIn({ type: 'global' }) !== menu) problems.push('the New menu in the top bar should offer: ' + menu + '. It offers: ' + offeredIn({ type: 'global' }));
   if (offeredIn({ type: 'structure', schemaType: 'task' }) !== menu) problems.push('the plus button of a list should offer: ' + menu + '. It offers: ' + offeredIn({ type: 'structure', schemaType: 'task' }));
   const inField = offeredIn({ type: 'document', documentId: 'task-1', schemaType: 'task' });
-  if (inField !== 'plan,presentation,place') problems.push('a reference field should be able to create a place, and nothing is changed for the other types. It offers: ' + inField);
+  if (inField !== 'plan,place') problems.push('a reference field should be able to create a place, and nothing is changed for the other types. It offers: ' + inField);
 
   const named = world.structure.settingsType === 'dashboardSettings' && world.structure.settingsId === 'dashboardSettings';
   need(problems, named, 'structure.js should name the settings type and id dashboardSettings');
@@ -4526,7 +4491,9 @@ function checkStatusBlock() {
   need(problems, type && type.__experimental_omnisearch_visibility === false, 'status should be kept out of Studio search');
   need(problems, input.statusId === 'status-mini', 'the status document should have the fixed id status-mini');
   // The block also shows the last news read (newsAt, written by the job news, tested in tests/news-sync.test.mjs), after the FRC data
-  const shown = wanted.slice(0, 5).concat(['newsAt'], wanted.slice(5));
+  // lastSlidesFetchAt stays in the schema (stored names are never removed) but no job writes it and the block no longer shows it
+  const written = wanted.filter(name => name !== 'lastSlidesFetchAt');
+  const shown = written.slice(0, 4).concat(['newsAt'], written.slice(4));
   need(problems, input.statusLines.map(line => line.field).join() === shown.join(), 'the block should show these fields, in this order: ' + shown.join(', '));
 
   // Editors never find it: no line in the sidebar and no place in the New menu
@@ -4537,7 +4504,7 @@ function checkStatusBlock() {
   // The script on the Teletraan computer writes the same document and fields
   const script = world.statusScript;
   need(problems, script.indexOf("'" + input.statusId + "'") !== -1 || script.indexOf('"' + input.statusId + '"') !== -1 || script.indexOf('=' + input.statusId) !== -1, 'status-write.sh should write the document ' + input.statusId);
-  wanted.concat(build).forEach(name => need(problems, script.indexOf(name) !== -1, 'status-write.sh should write the field ' + name));
+  written.concat(build).forEach(name => need(problems, script.indexOf(name) !== -1, 'status-write.sh should write the field ' + name));
 
   // The build on the wall: a hash and a date, or not yet
   need(problems, input.buildLine({ buildCommit: 'abc1234', buildDate: '2026-10-14' }) === 'On the wall: abc1234 · 2026-10-14', 'the build line should read On the wall: <hash> · <date>');
@@ -4555,9 +4522,9 @@ function checkStatusBlock() {
   need(problems, input.ageText(ago(3 * 24 * 60), now) === '3 days ago', 'an age of three days should read 3 days ago');
   need(problems, [undefined, null, '', 'soon', 5, {}].every(value => input.ageText(value, now) === ''), 'a time that cannot be read should give no words');
   const none = input.describeStatus(null, now);
-  need(problems, none.length === 8 && none.every(line => line.text === 'Not yet'), 'a missing document should give eight lines that all say Not yet');
+  need(problems, none.length === 7 && none.every(line => line.text === 'Not yet'), 'a missing document should give seven lines that all say Not yet');
   const some = input.describeStatus({ lastCalendarSyncAt: ago(5), kioskStartedAt: 'oops' }, now);
-  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[7].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
+  need(problems, some[1].label === 'Last calendar sync' && /^5 minutes ago \(/.test(some[1].text) && some[0].text === 'Not yet' && some[6].text === 'Not yet', 'a line should say its age and its time, and Not yet when the time is missing or unreadable');
   need(problems, JSON.stringify(input.statusView(null, now)).indexOf('Reading the status') !== -1, 'the block should say it is reading while it waits');
   need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: false }, now)).indexOf('No status yet') !== -1, 'the block should say No status yet when the document is missing');
   need(problems, JSON.stringify(input.statusView({ doc: null, unreadable: true }, now)).indexOf('could not be read') !== -1, 'the block should say so when the status cannot be read');
@@ -5041,6 +5008,8 @@ function checkBoardTasks() {
   need(problems, world.structure.oldTasksFolder === undefined, 'structure.js should have no folder of the old lists of tasks');
   need(problems, !world.structure.sidebarEntries.some(entry => entry.title === 'Monday Tasks' || entry.title === 'Monday Boards'), 'the sidebar should have no Monday Tasks or Monday Boards line: the Monday line replaces both');
   need(problems, !world.addTemplates.some(item => item.id === 'pinnedTask' || item.schemaType === 'task'), 'add-templates.js should have no template that makes a task');
+  need(problems, !world.addTemplates.some(item => item.schemaType === 'presentation' || item.schemaType === 'presentationDay'), 'add-templates.js should have no template that makes a booked talk or a meeting day');
+  need(problems, world.config.document.newDocumentOptions([{ templateId: 'presentation' }, { templateId: 'presentationDay' }, { templateId: 'plan' }], {}).map(item => item.templateId).join() === 'plan', 'the New menu should not offer a booked talk or a meeting day');
   const offered = world.config.schema.templates([{ id: 'task' }]).map(item => item.id).join();
   need(problems, offered === ['task'].concat(world.addTemplates.map(item => item.id)).join(), 'sanity.config.js should add the templates of add-templates.js to the templates of the Studio. It gives: ' + offered);
   const choicesIn = creationContext => world.config.document.newDocumentOptions([{ templateId: 'task' }], { creationContext: creationContext }).map(item => item.templateId).join();
@@ -5147,14 +5116,12 @@ function checkListAdds() {
     const names = given && given.map(template => template.serialize().templateId);
     need(problems, (names || []).join() === (pair.entry.add || []).join() && (pair.entry.add === undefined) === (given === undefined), pair.entry.title + ' should give the Studio the templates ' + ((pair.entry.add || []).join() || 'of the plain plus button') + '. It gives: ' + ((names || []).join() || 'none'));
   });
-  // the lists behind the Today page: the agenda, the meeting days and the talks make their own template
+  // the list behind the Today page: the agenda makes its own template
   const today = entries.filter(entry => entry.title === 'Today')[0];
   const behind = today && typeof today.children === 'function' ? today.children(fakeBuilder(), { since: new Date().toISOString(), now: new Date().toISOString() }) : null;
   const opened = id => behind(id).made;
   const templatesOf = pane => (pane.initialValueTemplates || []).map(template => template.serialize().templateId).join();
-  need(problems, behind && templatesOf(opened('agenda')) === 'newPlan' && templatesOf(opened('meetingDays')) === 'newPresentationDay', 'the Today page should open the agenda with a plus button that makes an agenda item and the meeting days with one that makes a meeting day');
-  const talks = behind && opened('presentations');
-  need(problems, talks && talks.id === 'presentations' && talks.items.map(item => item.made.title).join() === 'Upcoming,Past' && talks.menuItems.map(menu => menu.intent.params.template).join() === 'newPresentation', 'the Today page should open the talks as Upcoming and Past, with a plus button that makes a presentation');
+  need(problems, behind && templatesOf(opened('agenda')) === 'newPlan', 'the Today page should open the agenda with a plus button that makes an agenda item');
   const look = entries.filter(entry => entry.title === 'Look')[0];
   const lookBehind = look && typeof look.children === 'function' ? look.children(fakeBuilder(), { since: new Date().toISOString(), now: new Date().toISOString() }) : null;
   need(problems, lookBehind && lookBehind('subthemes').made.type === 'subtheme' && templatesOf(lookBehind('subthemes').made) === 'newSubtheme', 'the Look page should open the subthemes with a plus button that makes a subtheme');
@@ -5168,7 +5135,7 @@ function checkListAdds() {
   need(problems, sameData(given.slice(0, plain.length), plain), 'sanity.config.js should keep the templates the Studio makes for every type, and add its own after them');
   need(problems, given.slice(plain.length).map(template => template.id).join() === templates.map(template => template.id).join(), 'sanity.config.js should add the templates of add-templates.js, and no others');
 
-  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone', 'remoteControl', 'remoteStatus']);
+  const hidden = pageTypes.concat(['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone', 'remoteControl', 'remoteStatus', 'presentation', 'presentationDay']);
   const choicesIn = (list, creationContext) => world.config.document.newDocumentOptions(list, { creationContext: creationContext }).map(item => item.templateId).join();
   const plainChoices = plain.map(template => ({ templateId: template.id }));
   const allChoices = plainChoices.concat(templates.map(template => ({ templateId: template.id })));
@@ -6846,7 +6813,7 @@ async function main() {
   check('the night mode fields agree with dashboard/config.js', checkNightTab);
   check('the hidden transition fields agree with dashboard/config.js and the dashboard registry, and the Play buttons work', checkHiddenTab);
   check('Play announcements has its hidden field, its button and its Demo step', checkPlayAnnouncements);
-  check('Run presentation test has its hidden field and its button', checkRunPresentationTest);
+  check('Run presentation test is gone and its hidden field says it is not used', checkPresentationTestRetired);
   check('the Preview buttons have their hidden field and the list the dashboard has, and each one writes its kind and the time', checkPreviewButtons);
   check('the Start here page has its six blocks in order, a picture of the screen with the areas A to E, the status of the Teletraan computer and three links, and no buttons', checkStartHere);
   results.push({ name: 'the requests of the buttons beside Publish and the client write the same request fields, through screen-requests.js', problems: await checkScreenRequests().catch(error => ['the check stopped: ' + error.message]) });

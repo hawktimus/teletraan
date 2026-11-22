@@ -86,7 +86,7 @@ in, and whether the same panel can also be a row.
   frc-status document the Mini writes, such as Next event: Wake on 12 March 2027: the cards start on 10 March 2027. With no
   event ahead it says No event is coming up: the cards are off.
 - The announcement bar and alerts, which sit on top of everything.
-- Booked talks, which take the whole screen.
+- Presentations: a deck picked from the Google Drive folder takes the whole screen.
 - The small panel on the right, and the banner, countdown and ticker that stay on screen.
 - Season packs and subthemes. They are not panels.
 

@@ -29,7 +29,6 @@ export const statusId = 'status-mini';
 export const statusLines = [
   { field: 'lastContentSeenAt', label: 'Last content update seen' },
   { field: 'lastCalendarSyncAt', label: 'Last calendar sync' },
-  { field: 'lastSlidesFetchAt', label: 'Last slides fetch' },
   { field: 'lastMondaySyncAt', label: 'Last Monday sync' },
   { field: 'lastFrcSyncAt', label: 'Last FRC data sync' },
   { field: 'newsAt', label: 'Last news read' },

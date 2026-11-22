@@ -64,7 +64,7 @@ export function tidyPreviewRequest(raw) {
 }
 
 // The handled request, kept under a name of its own in localStorage, apart from the
-// demo's, the hidden transitions', the announcements' and the presentation test's
+// demo's, the hidden transitions', the announcements'
 export function readHandledPreview(storage) {
   return readHandled(storage, handledKey);
 }

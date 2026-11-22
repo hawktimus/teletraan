@@ -42,8 +42,8 @@ export const otherCards = [
     when: 'While an announcement is live, and when an alert is set in Dashboard Settings.', panels: ['announcement', 'alert'], row: false,
   },
   {
-    id: 'talks', title: 'Booked talks', shows: 'A talk takes the whole screen at its start time: a title card, the slides and a thank you card. The rotation waits until it is over.',
-    when: 'At the start time of a booked talk.', panels: ['talk'], row: false,
+    id: 'talks', title: 'Presentations', shows: 'A deck picked from the Google Drive folder takes the whole screen: a title card, the slides and a thank you card. The rotation waits until it is over.',
+    when: 'When a deck is picked on the TV or on the control page.', panels: ['talk'], row: false,
   },
   {
     id: 'small-panel', title: 'The small panel on the right', shows: 'In the Robotics split layout the small frame plays the Small panel of each row, and otherwise the small panels of the view. The Team tile is the last resort when no other small panel has content.',

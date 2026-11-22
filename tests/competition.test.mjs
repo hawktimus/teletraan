@@ -1201,7 +1201,7 @@ test('requestTimeOf reads the time of the request and nothing else, and the hand
     assert.equal(previewModule.requestTimeOf(settings), '', JSON.stringify(settings));
   });
   assert.equal(previewModule.handledKey, 'teletraan-competition-preview-handled');
-  ['teletraan-demo-handled', 'teletraan-announce-handled', 'teletraan-preview-handled', 'teletraan-presentation-test-handled'].forEach(key => assert.notEqual(previewModule.handledKey, key));
+  ['teletraan-demo-handled', 'teletraan-announce-handled', 'teletraan-preview-handled'].forEach(key => assert.notEqual(previewModule.handledKey, key));
 
   const storage = memoryStorage();
   assert.equal(previewModule.readHandledPreview(storage), '');

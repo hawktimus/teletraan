@@ -1,176 +1,72 @@
 # Presentations
 
-For the coaches who run the talks. A student books a short talk in a Google
-Form. A script saves the booking into Sanity, the talk appears in Studio, and at
-its time the TV shows the student's slides. The script lives in the team's Google
-Apps Script project and is not in this repository. The talks of the day also
-show in the Daily Agenda panel (docs/up-next.md).
+For the coaches and the students who run a meeting. A deck is played on the TV
+from the Google Drive folder of presentations: it is picked on the TV or on the
+control page, and the clicker or the mouse moves the slides. The folder, the list
+and how to set them up are in docs/presentations-drive.md.
 
-A deck can also be played with no booking at all: put it in the Google Drive
-folder of presentations and pick it on the TV or on the control page
-(docs/presentations-drive.md).
+Talks are not booked in the Studio any more. There is no Google Form, no booking
+script, no Presentations or Meeting days list, and the screen does not read talks
+from Sanity. The old Presentation and Meeting day documents stay in the dataset
+and are ignored.
 
-Talk titles and first names are public. The Sanity dataset can be read by anyone
-(docs/laptop-setup.md), so anything a student types as a title or a name can be read
-by anyone. Tell students to use a first name only and a title they are happy for
-anyone to read.
+Deck names show on the TV, so name a file the way you want it read. A deck is not
+stored in Sanity: its pictures are made and kept on the Teletraan computer.
 
-## 1. Which Google account owns the Form
+## On the day
 
-The Form, the sheet behind it and the booking script all belong to one Google
-account. Use a team or coach account: [Google account, added when it is chosen].
-Do not use a student's school account. A school account is closed when the
-student leaves, and the booking stops with it.
+1. Pick the deck: press the play button of the clicker (or F5 or P on a keyboard)
+   to open the list on the TV, or press Play on the TV on the control page,
+   Show, Presentations.
+2. The deck fills the screen on its first slide. While the pictures are not ready
+   yet, a title card says so and waits.
+3. Move with the clicker or the mouse. Most clickers send Page Down and Page Up.
+   These keys work:
 
-## 2. Add a Meeting day
-
-Add one for each meeting that has talks.
-
-1. In Studio open Presentations, then Meeting days, and click the plus button.
-2. Fill in First talk starts, Last talk starts and Length of each talk. Booking
-   closes 30 minutes before a slot, and that is not a field to fill in. The last
-   talk is a slot too, and the talks start one length apart from the first to
-   the last. A first talk at 2:45 PM, a last talk at 4:15 PM and 15 minutes for
-   each talk make 7 talks.
-3. Click Publish.
-
-The Form lists the free slots within 5 minutes. A day with no Meeting day has no
-slots. Turn off Open for booking to close a day without deleting it.
-
-Leave a gap after the announcement. If it plays at 2:30 PM, start the first talk
-at 2:45 PM, so the first title card does not wait behind it. The times of the
-announcements are in the Screen tab of Dashboard Settings.
-
-## 3. The Sanity token
-
-A token is a long secret text that lets a program use a Sanity project. The
-booking script runs on Google's servers, not in Studio. Anyone can read the
-dataset, but saving a booking needs permission, and the token is that
-permission.
-
-1. Go to sanity.io/manage and open the Teletraan project.
-2. Choose API, then Tokens, then Add API token.
-3. Name it, such as Presentation booking, give it Editor access and save. Sanity
-   shows the token once, so copy it before you leave the page.
-
-Put the token in one place only: in the Apps Script project, under Project
-Settings, then Script Properties, as `sanityToken`. The project is made in step
-4, so paste it there. Never put it in the repository, the Form, the script or
-Studio, and do not send it in a message. An Editor token can change anything in
-the project, so treat it like a password.
-
-If the token leaks, delete it in Sanity (API, Tokens), create a new one and
-replace the value of `sanityToken`.
-
-## 4. Set up the script
-
-1. Sign in to the account from step 1, go to script.google.com and click New
-   project.
-2. Delete the code in the editor and paste in the whole of the team's copy of the
-   booking script. Ask the team mentor where it is kept.
-3. Add the token as in step 3.
-4. Pick `setup` in the function list at the top and click Run. Google asks for
-   permission. Approve it. Google may warn that the app is not verified, because
-   the script is the team's own: choose Advanced and carry on.
-5. Open the Execution log. It prints the link to the Form. Send that link to the
-   students.
-
-## 5. Cancel or move a talk
-
-Talks are in Studio under Presentations, then Upcoming.
-
-1. Open the talk.
-2. To cancel it, set Status to Cancelled. To move it, change Starts at to a time
-   no one else has booked.
-3. Click Publish, or use Publish all in the top bar (docs/publish-all.md). The
-   TV and the script only see published talks.
-
-The sheet follows within 5 minutes and the slot reopens. Only a talk with the
-status Scheduled runs on the TV.
-
-## 6. On the day
-
-At the start time of a talk the TV shows a title card with the subteam, the first
-name and the title, and the words "Press the clicker to begin". If the
-announcement is playing, the card waits until it ends. If the talk before is still
-going, it is ended when its slot and the overrun are used up, and then the next
-card comes up.
-
-The first forward key starts the talk. The slides fill the screen, with a gold
-line along the bottom that shows how far through the deck the talk is. For 3
-seconds after each key, a small box at the bottom right shows the first name and
-the slide number, such as 7 / 24. Most clickers send Page Down and Page Up. These
-keys work:
-
-- Next slide, and start the talk: Page Down, Right arrow, Down arrow, Space,
-  Enter, N or F5.
+- Next slide: Page Down, Right arrow, Down arrow, Space, Enter, N or F5.
 - Slide before: Page Up, Left arrow, Up arrow or P.
 - Black screen, on and off: B or the full stop.
 - First slide: Home. Last slide: End.
-- End the talk: Esc twice within 2 seconds. One Esc does nothing.
+- End the deck: Esc. After the last slide the deck ends by itself and the
+  dashboard comes back.
 
 The mouse works too, for a speaker with no clicker. A left click, or a tap on a
-touch screen, does what Page Down does: it starts the talk on the title card,
-moves to the next slide, and on the last slide shows the Thank you card. A right
-click does what Page Up does. The middle button does nothing. A double click moves
-one slide, not two, because a second left click within half a second of the one
-before is left out. While a talk is on the screen the right click does not open
-the browser menu, and the mouse pointer stays hidden. If the card says "Slides are
-not ready", any click on it ends the talk at once and the TV starts its pages
-again from the first one, as when it was switched on.
+touch screen, does what Page Down does. A right click does what Page Up does. The
+middle button does nothing. A double click moves one slide, not two, because a
+second left click within half a second of the one before is left out. While a
+deck is on the screen the right click does not open the browser menu, and the
+mouse pointer stays hidden.
 
-One more forward key on the last slide shows the Thank you card for 5 seconds, and
-then the TV goes back to what it was doing. A talk also ends by itself when its
-slot and the overrun are used up, on whatever slide it is.
+While a deck is on, the TV holds everything else: the pages, the effects, night
+mode and the announcements. What came due during the deck happens after it.
 
-While a talk is on, the TV holds everything else: the pages, the effects, night
-mode and the announcements. What came due during the talk happens after it.
+## The setting
 
-If nobody presses a key while the title card is up, the talk is skipped and the TV
-goes back. A skipped talk does not come back by itself. To run it again, change
-Starts at on the talk to a time that is now or a few minutes ahead and publish.
+The one setting is in the Presentations section of Dashboard Settings (Advanced
+tab):
 
-The one setting is in the Presentations tab of Dashboard Settings:
+- Run presentations: on to start with. Off, the TV starts no deck, and a deck
+  that is on the screen ends at once.
 
-- Run presentations: on to start with. Off, the TV never takes over for a talk, and
-  a talk that is on the screen ends at once. The talks stay in Studio.
+Two numbers are fixed in the code and are not settings: the title card waits 5
+minutes for the first key, and a talk with a slot may run 5 minutes past it
+(`noShowMinutes` and `graceMinutes` in `dashboard/core/constants.js`). A picked
+deck has no slot, so only the speaker ends it, or 4 hours. Dashboard Settings
+still has the two fields (Wait for the speaker and Overrun allowed), hidden, so a
+page saved before they were hidden opens and publishes as it did. The screen does
+not read what they hold.
 
-Two numbers are fixed in the code and are not settings. The title card waits 5
-minutes for the first key. A talk may run 5 minutes past its slot before it is
-ended. They are `noShowMinutes` and `graceMinutes` in `dashboard/core/constants.js`.
-Dashboard Settings still has the two fields (Wait for the speaker and Overrun
-allowed), hidden, so a page saved before they were hidden opens and publishes as
-it did. The screen does not read what they hold.
+## If it does not work
 
-On a Meeting day, the field that says how long before a slot booking closes
-(`closeMinutesBefore`) is hidden too. It starts at 30. The booking script reads it,
-and the dashboard never does.
+The list on the TV and the Presentations section of the control page say what is
+wrong in one line. The table of messages is in docs/presentations-drive.md.
 
-## 7. Try it before the day
-
-1. In Dashboard Settings open the menu next to Publish (the three dots) and click
-   Run presentation test. The TV starts a sample talk with six sample slides, and
-   you press the clicker as at a real talk. It needs no internet and no booked
-   talk (docs/hidden-transitions.md, "Run presentation test").
-2. To try a real deck, share it with Anyone with the link, then run
-   `slides-sync.sh --test` on the Teletraan computer with the deck's link. It prints OK and the
-   number of pages, or FAIL and the reason (docs/rebuilding-the-computer.md, step 11).
-
-## 8. Troubleshooting
-
-- The TV says "Slides are not ready. Ask a coach." The Teletraan computer downloads each deck
-  once the talk is less than 36 hours away, and again when the talk is 20
-  minutes away, so a late edit is included. A failed download is tried again
-  2 minutes later. The usual cause is a deck that is not shared, see the next
-  point. If it is shared and the slides are still not ready after 10 minutes,
-  tell the team mentor: the computer may be off the internet or its slides service
-  may not be running (docs/rebuilding-the-computer.md).
-- The deck is not shared. Open the deck in Google Slides and click Share. Under
-  General access pick Anyone with the link, and set it to Viewer. If that choice
-  is not offered, the account blocks it: ask the team mentor. The Slides link
-  in Studio must also start with `https://docs.google.com/presentation/d/`.
-- The Form has no free slots. Check that the Meeting day exists and is
-  published, not a draft, that Open for booking is on, and that its date is the
-  right one. A slot closes for booking 30 minutes before it, the number the
-  Meeting day starts with. If every slot is taken, move Last talk starts later. After
-  any change, wait 5 minutes for the Form.
+- The TV says "Slides are not ready. Ask a coach." The deck has not been turned
+  into pictures yet, or it is not shared. Any click on the card ends it and the TV
+  starts its pages again from the first one. Wait a minute and pick the deck
+  again. If it is still not ready after 10 minutes, tell the team mentor: the
+  Teletraan computer may be off the internet or the decks service may not be
+  running.
+- The deck is not shared. Share the folder, or the file, with Anyone with the
+  link, as Viewer. If that choice is not offered, the account blocks it: ask the
+  team mentor.

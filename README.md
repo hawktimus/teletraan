@@ -50,7 +50,7 @@ Click the one you want, change it, and press **Publish**. Nothing shows on the T
 - **Publish all**, in the top bar, lists every document that has a draft and publishes the ticked ones in one go. Each is checked first with the same rules as its Publish button, and one that fails is skipped with the reason while the rest are published.
 - **Rotation** is the board the wall plays, top to bottom. Each row is a view, a panel and the time shown, and Show on screen skips a row. **Teams and views** holds the two teams and the arrangement of Robotics, Prime and Nova. **Look** holds the theme of each weekday, the background, the decorations, the motion and the logo (docs/studio-map.md, docs/views-and-themes.md).
 - **Today** holds everything that puts a message on the TV: the alert, the announcements on the bar, and the full screen messages at set times. **Dashboard Settings** holds what is set once, in five tabs: how long each page stays, the countdown dates, the Monday boards, the calendars, and presentations, night mode and hidden transitions under Advanced.
-- Today links to Agenda items, Presentations and Meeting days. Presentations holds the talks students have booked and the ones added by hand, and Meeting days holds the talk slots (docs/presentations.md).
+- Today links to Agenda items. Talks are not booked in Studio any more: a deck is picked from a Google Drive folder on the TV or the control page (docs/presentations.md).
 - Events are not typed in here. They come from the team's BAND calendars, and the Calendars page says how to add or hide one. To get an event on the screen, add it in the calendar app, or ask a coach for an Always show rule. A Calendar filter hides some BAND events, such as a meeting that repeats every week (docs/calendar-filters.md).
 - The old Screens, the Condensed view and Events Calendar are on the Kept data page, the last line of Coaches only. Places and Demo are not in the list on the left. The screen does not read Events Calendar entries. A place is added with Create new in the Location field of a task. The buttons that try the screen are on the control page.
 - The order of the list on the left is one plain list in `studio/structure.js`. To change the order, move a line (docs/reordering-the-sidebar.md).
@@ -91,7 +91,7 @@ It prints one line for each file and a total, and exits with 1 when anything fai
 - Date, time, and weather for Holly Springs
 - Countdown timer to FRC Kickoff (January 9, 2027), then to Rollout
 - Team tasks, which the Teletraan computer makes from the team's Monday boards, each with an optional point of contact, a priority and a due date. A Show on TV switch keeps a task off the screen, and a task typed by hand is never shown
-- The Daily Agenda panel, headed AGENDA: the schedule for today's meeting, with the talks booked for today
+- The Daily Agenda panel, headed AGENDA: the schedule for today's meeting
 - Upcoming events and the next event, from the team's BAND calendars, with Calendar filters that hide or keep events, such as a meeting that repeats every week. The Events panel has two pages of four that it scrolls between, each event has a chip for the kind of its calendar, and a coach can pin an event to page one
 - Sponsors, with sponsor logos and thank-yous
 - Photos, uploaded in Sanity and shown at random or newest first
@@ -124,8 +124,7 @@ It prints one line for each file and a total, and exits with 1 when anything fai
 - Monday boards: the computer reads Robotics Tasks and Completed Tasks as often as How often on the Monday tab says (5 to 120 minutes, 30 to start with, at most 900 reads a day), and keeps each task in Sanity with its department, list (Open or Done), status, team, contact first name, priority, dates and hours. The Monday page of the Studio shows them read only, and Show on TV? set to Hide in Monday keeps one off the screen. The two Monday panels are Department tasks and the TV charts, chosen on the Rotation board (docs/monday.md)
 - A Play announcements button in Studio that plays every announcement that is switched on, once, without waiting for its time. The Status tab of the control page has a Play announcement button too, a box to post a short announcement and requests that hold a panel, show a view or try a theme for a few minutes (docs/control-page.md)
 - A Publish all tool in the Studio's top bar that publishes all the drafts you tick, checking each one first and skipping any that would fail
-- Presentations: a student books a short talk in a Google Form, and the talk appears in Studio. At its time the TV shows a title card, then the student's Google Slides one picture at a time, moved by a clicker, then a thank you card. The computer turns each deck into pictures before the talk (docs/presentations.md)
-- A Run presentation test button in Studio that plays a sample talk with six sample slides, with no internet
+- Presentations: a Google Slides or PowerPoint deck in a Google Drive folder is picked on the TV or the control page and shown one picture at a time, moved by a clicker or the mouse. The computer turns each deck into pictures (docs/presentations.md, docs/presentations-drive.md)
 - Preview buttons in Studio (Prime, Nova, Cybertron, Minimal and the next seasonal pack) that show that look on the TV for 2 minutes and then go back to the saved settings, without changing any setting. `?team=`, `?style=` and `?overlay=` on the address try any combination with the sample content
 - A Start here page in Studio, the first line of the sidebar: a picture of the screen with its five areas, the three steps of every meeting and links to the control page, the Studio on the web and the guides. docs/students.md is the same page in words. What is left of the old demo is in docs/demo.md
 - A calendar check (computer/scripts/check-calendars.sh) that lists the next 30 days of events, says which ones the Calendar filters hide, and gives the Events page and the kind of each one that shows
@@ -167,8 +166,8 @@ The scripts are in `computer/scripts/`, and the units that start them are in `co
 - docs/paths.md and docs/changelog.md: where every file moved to, and what each round changed
 - docs/add-the-nova-team.md: importing the teams and filling in the Nova team
 - docs/team-on-an-item.md: how the Team choice on an item works, and how to add it to another kind of content
-- docs/presentations.md: booking talks, the Sanity token, the clicker keys and what to do when slides are not ready
-- docs/up-next.md: the schedule and the talks in the Daily Agenda panel
+- docs/presentations.md: playing a deck, the clicker keys and what to do when slides are not ready
+- docs/up-next.md: the schedule in the Daily Agenda panel
 - docs/calendar-filters.md: rules that hide or keep BAND events
 - docs/hide-a-repeating-meeting.md: the four steps for hiding the Pre-Season meetings
 - docs/calendar-links.md: adding a BAND calendar or changing its link

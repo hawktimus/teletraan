@@ -165,7 +165,7 @@ The left column is one stack of full width cards. No card sits beside another at
 - Pushed now (the strip, not a card). Every push that is running, with the time left (counted from the clock of the Teletraan computer, once a second) and a Cancel button, and Reset to today's schedule, which ends all of them at once. With nothing pushed it says so in one line.
 - On the wall now (always open). A status line: what plays now and what comes next (from the list on the page and the wall report every 10 seconds), the theme and where it comes from, and what is held with the time left. Edit the rotation scrolls to the Rows. Playback is one row of buttons: Pause rotation (Resume when paused), Next, Back to schedule and Reset to today's schedule. Show a panel is under it: a View (Robotics, Prime, Nova, Condensed), a Panel menu (every panel by its title), the menus of that panel as in the row editor (Department, List and Team for Department tasks, Chart and Team for TV charts, and the roster when the service sends its choices), Hold for (1, 5, 15, 30 or 60 minutes, 15 to start) and Show on the wall. The picture on the right draws the choice first. Nothing is sent until the button. A view and a panel are two pushes (`showView`, `holdPanel`). The panel push carries the row of the picture too (`holdRow`, below), so the wall shows what the picture showed, with the menus you picked. The code for the menus is `tabs/show-panel-fields.js`.
 - Theme (open). The theme on the wall in large letters, where it comes from, four theme buttons, Hold for, Switch to this theme, Preview for 10 minutes and Back to the schedule, and the line of what today's schedule uses. It writes `previewTheme`.
-- Announce and effects (closed to start with, remembered by the browser). The announcement under the banner (text up to 90 characters, Notice or Important, Both teams or one team, Hold for, Post announcement; Post for 2 hours uses the Status request), Messages (Play announcement, Run presentation test and the talks booked in the next day) and Hidden transitions (Desktop reveal and Red eyes, with the Last hidden transition line). It is one published document with the id `push-notice`, replaced by each new one (docs/announcements.md). Allow hidden transitions must be on in Dashboard Settings. A hidden transition has no time left, and Cancel works for 2 minutes.
+- Announce and effects (closed to start with, remembered by the browser). The announcement under the banner (text up to 90 characters, Notice or Important, Both teams or one team, Hold for, Post announcement; Post for 2 hours uses the Status request), Messages (Play announcement) and Hidden transitions (Desktop reveal and Red eyes, with the Last hidden transition line). It is one published document with the id `push-notice`, replaced by each new one (docs/announcements.md). Allow hidden transitions must be on in Dashboard Settings. A hidden transition has no time left, and Cancel works for 2 minutes.
 
 Under those are Rotation (what plays, in order), the Rows, Add a row, Theme rotation (which theme plays each day) and, last, More tools (closed): Quick hide with the Monday rows, and Motion. On a phone there is one column with the Preview and its bar first, then the cards in that order. A bar of Next, Pause and Reset to today's schedule sits at the foot of a phone or tablet, above the tab bar. The Status tab only reads. Display is where things are pushed and edited.
 
@@ -284,12 +284,12 @@ The Studio is the source of truth, and the card shows the same values: Dashboard
 
 ### How the computer decides
 
-`teletraan-reboot.timer` wakes `computer/scripts/scheduled-reboot.sh` every 5 minutes. The script reads the five fields, the time zone of the Look page and what could hold the screen (an alert, an announcement that is up, a booked talk) from Sanity, which is public and needs no key. It keeps the last good setting in `reboot/setting.json` in the data folder, so when Sanity cannot be reached it goes on with the last known setting. When Sanity cannot be asked what is playing, the reboot goes ahead on schedule. `computer/scripts/reboot-plan.mjs` decides, and the script reboots with `sudo systemctl reboot`, the command the helper uses and the sudoers file allows.
+`teletraan-reboot.timer` wakes `computer/scripts/scheduled-reboot.sh` every 5 minutes. The script reads the five fields, the time zone of the Look page and what could hold the screen (an alert, an announcement that is up) from Sanity, which is public and needs no key. It keeps the last good setting in `reboot/setting.json` in the data folder, so when Sanity cannot be reached it goes on with the last known setting. When Sanity cannot be asked what is playing, the reboot goes ahead on schedule. `computer/scripts/reboot-plan.mjs` decides, and the script reboots with `sudo systemctl reboot`, the command the helper uses and the sudoers file allows.
 
 - The slot is the scheduled time of the day on a ticked day, worked out in the time zone of the screen, so the time holds across the days the clocks change.
 - A slot is acted on within 10 minutes of its time. A slot that was missed because the computer was off is not made up.
 - The setting has to have been in effect before the slot. A time published at 03:36 does not reboot for the 03:30 of that day.
-- With the skip rule on, a talk (from 10 minutes before it starts to the end of its minutes plus the wait and the overrun), an alert or an announcement makes the run wait, and it reboots anyway after the wait.
+- With the skip rule on, an alert or an announcement makes the run wait, and it reboots anyway after the wait.
 - Guards: a slot is used once, and the state file is written before the reboot. No reboot within 10 minutes of boot, and none within 6 hours of the last reboot, whoever made it (the uptime counts, so the Sunday reboot of `nightly.sh` is also a gap). A reboot the system refuses is not tried again every 5 minutes.
 - One plain line goes to the journal for each run: `scheduled reboot: rebooting for Tue 03:30.` Read it with `journalctl -u teletraan-reboot.service`.
 - The next and the last reboot go to the document `status-mini` (`nextRebootAt`, `nextRebootText`, `lastRebootAt`, `lastRebootWhy`) by `status-write.sh reboot`, and only when they changed.
@@ -424,7 +424,7 @@ Every button on the Display tab and in Settings shows a line under it: Done in g
 
 - "The control page could not reach the helper on this computer. Run the installer again." The socket `/run/teletraan/control.sock` is missing or the control container cannot use it. Run `sudo computer/install.sh` again (from the Mac tool, choose 1).
 - "Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys." The key is missing the write right, or is wrong.
-- "Run presentations is switched off" means the screen would ignore the test.
+- "Run presentations is switched off" means the screen would not start a deck.
 - "The helper did not finish (failed 1). sudo: a password is required" means the sudoers file does not allow the command. Run the installer again.
 
 Two commands on the Teletraan computer show what happened:
@@ -434,7 +434,7 @@ Two commands on the Teletraan computer show what happened:
 
 The first has one line for each word the helper was asked, and a `failed` line with the reason from `sudo` when a command did not run. The second has what the helper printed to the journal.
 
-The screen sees a request from the control page or the Studio (Run presentation test, Play announcement, Next look now, Hold, Show a view, Preview a theme) within about 10 seconds: it reads only those fields of Dashboard Settings every 10 seconds, besides the full read every 5 minutes and the live change stream. A test request counts for one minute, so a screen that only read every 5 minutes would usually miss it.
+The screen sees a request from the control page or the Studio (Play announcement, Next look now, Hold, Show a view, Preview a theme) within about 10 seconds: it reads only those fields of Dashboard Settings every 10 seconds, besides the full read every 5 minutes and the live change stream. A test request counts for one minute, so a screen that only read every 5 minutes would usually miss it.
 
 ## The PIN
 

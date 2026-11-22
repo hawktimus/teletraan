@@ -539,7 +539,7 @@ test('mirror-status makes nothing, and mirror-watch leaves the folder 755 and th
 });
 
 test('the installer makes the mirror folder with the others', () => {
-  assert.ok(read('computer/install.sh').includes('"$data_dir/slides" "$data_dir/mirror"'));
+  assert.ok(read('computer/install.sh').includes('"$data_dir/decks" "$data_dir/mirror"'));
 });
 
 test('the mirror words take no argument, and the client and the route know them', () => {

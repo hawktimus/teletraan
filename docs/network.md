@@ -35,7 +35,7 @@ It cannot loop:
 - It acts only on the Ethernet port that has a cable, or else the interface of the default route, or else the first Wi-Fi interface. Docker, Tailscale, bridge and veth devices are never touched.
 - A reconnect writes a marker first. If the run is cut short between disconnect and connect, the next run connects the interface again.
 
-A booked talk is not looked at, because nothing can be asked while the network is down. The reboot can therefore come during a talk, but only after 30 minutes of no network at all.
+A deck that is on the screen is not looked at. The reboot can therefore come during a deck, but only after 30 minutes of no network at all.
 
 What it knows is in `/var/lib/teletraan/netwatch.json`: `failures`, `lastCheckAt`, `lastOkAt`, `lastAction` (none, restart_network, bounce_interface or reboot), `lastActionAt` and `lastRebootAt`. `make net-status` prints it. Every action is a line in the log, and a push message goes out when a chat webhook is set (docs/OPERATIONS.md, "Heartbeat and push"). When the network works again it writes the document status-mini in Sanity (`networkLastOkAt`, `networkDownSince`, `networkLastProblemAt`, `networkRecoveries` for the last 24 hours, and `networkLastStep`), at once after a change and otherwise once an hour.
 

@@ -20,7 +20,7 @@ export const sections = {
   },
   links: {
     title: 'The rest of today',
-    says: 'The agenda, the booked talks and the meeting days, where a booked talk takes the whole screen at its start time.',
+    says: 'The agenda for the day.',
   },
 };
 
@@ -48,8 +48,6 @@ export const announcementChildPrefix = 'announcement-';
 
 export const links = [
   { id: 'agenda', label: 'Agenda items', says: 'The plan for the day, headed AGENDA on the screen.' },
-  { id: 'presentations', label: 'Presentations', says: 'Booked talks: upcoming and past.' },
-  { id: 'meetingDays', label: 'Meeting days', says: 'The days talks are given, and the order of the first talk.' },
 ];
 
 // The id a draft and its published document share

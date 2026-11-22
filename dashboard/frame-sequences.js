@@ -113,7 +113,7 @@ export const sequences = {
     'scan':    ['scan', 900],
   },
 
-  // Full screen: the cards of a booked talk, for the title, for slides that are not
+  // Full screen: the cards of a talk, for the title, for slides that are not
   // ready and for the thanks (panels/talk). The slides themselves are not here, since
   // they change at once.
   talk: {

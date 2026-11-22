@@ -6,7 +6,7 @@
 //   rebootEnabled      the switch, off to start with
 //   rebootTime         HH:MM in the time zone of the Look page, 03:30 to start with
 //   rebootDays         the weekdays, 0 is Sunday, every day to start with
-//   rebootSkipBusy     wait while a talk, an alert or an announcement is playing, on to start with
+//   rebootSkipBusy     wait while an alert or an announcement is playing, on to start with
 //   rebootWaitMinutes  how long to wait before rebooting anyway, 1 to 120, 30 to start with
 //
 // The starting values and limits are the same as defaults and waitRange in computer/scripts/reboot-plan.mjs, which is
@@ -83,7 +83,7 @@ export function rebootFields() {
       title: 'Not while something is playing',
       type: 'boolean',
       group: 'advanced',
-      description: 'On: wait while a talk, an alert or an announcement is on the screen, and reboot anyway after the minutes below.',
+      description: 'On: wait while an alert or an announcement is on the screen, and reboot anyway after the minutes below.',
       initialValue: true,
     }),
 

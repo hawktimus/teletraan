@@ -1,8 +1,8 @@
 # Hidden transitions
 
 This page also covers the Play announcements button, which sits beside the two Play
-buttons for the transitions. See "Play announcements" below. The Run presentation test
-button, and the Preview buttons that end the menu, are covered after it.
+buttons for the transitions. See "Play announcements" below. The Preview buttons that end
+the menu are covered after it.
 
 A hidden transition is a rare surprise. Now and then, instead of an ordinary page
 change, the whole screen does something else. There are two:
@@ -165,7 +165,7 @@ can say. The Studio starts a new settings page at 60 hours for both.
 The control page has the same two buttons under Messages on the Display tab, and under them the
 block Last hidden transition, which says what the wall did (see "What the wall reports").
 
-The menu has two more buttons that are not transitions, Play announcements and Run presentation test (see below).
+The menu has one more button that is not a transition, Play announcements (see below).
 Each of the two buttons above writes the kind and the time now into Last push and
 publishes the page for you, so you do not click Publish. Any other change you had not published yet is
 published too.
@@ -257,21 +257,6 @@ What the screen does with it:
 A Demo step can play the same announcements: pick **All announcements** as its screen
 (docs/demo.md).
 
-## Run presentation test
-
-The last button in the menu next to Publish on Dashboard Settings is **Run presentation test**.
-Click it and the TV starts a sample talk within a few seconds: the title card, then six sample
-slides that say SLIDE and a number, then the thank you card. Press the clicker to begin, as at a
-real talk. It needs no internet and no Google deck, because the talk and its slides are in
-`dashboard/data/sample/`. Use it to check the clicker and the screen before a meeting.
-
-The button writes the time now into `presentationTestRequest` and publishes the page for you. It
-follows the same rules as Play announcements: it runs once, only while the request is less than 60
-seconds old, and it waits for an alert, an announcement, a talk, a demo, a hidden transition or the
-night screen to be over. Run presentations in the Presentations tab must be on. While a page
-shows sample content (`?sample=1`) it reads the settings from `dashboard/data/sample/content.json`, so the button
-does nothing. Open the screen without `?sample=1` first.
-
 ## Preview a look
 
 The last ten buttons in the menu next to Publish on Dashboard Settings are **Preview theme: Original**,
@@ -321,7 +306,7 @@ What the screen does with it:
 - It starts once, and only while the request is less than 60 seconds old, the same rule as the demo
   (docs/demo.md). The screen keeps the request it handled last in `localStorage`, under
   `teletraan-preview-handled`, so a computer that restarts never starts it again. This is separate from the
-  demo's, the hidden transitions', the announcements' and the presentation test's own.
+  demo's, the hidden transitions', the announcements' own.
 - It waits for an alert, an announcement, a talk, a demo, a hidden transition or the night screen to be
   over, if that happens inside the minute. Otherwise it is dropped. An alert that comes on while it is
   showing does not end it and does not make it longer.
@@ -533,13 +518,6 @@ chance setting.
 - `dashboard/core/announce-run.js`: gives that runner the real screen, and plays each
   announcement with `runAnnouncement` in `core/takeover.js`. `hiddenPlaying` in
   `core/hidden-run.js` is how it knows a hidden transition has the screen.
-- `dashboard/core/presentation-test.js`: the plain functions behind Run presentation test, with no
-  page in them: tidying `presentationTestRequest` and the runner that applies the guard and waits for
-  the screen (`makePresentationTestRunner`). The tests are in `tests/effects.test.mjs`.
-- `dashboard/core/presentation-test-run.js`: gives that runner the real screen, reads the sample talk
-  from `dashboard/data/sample/content.json` and hands it to `startTestTalk` in
-  `core/presentation-run.js`. Its slides and manifest.json are in
-  `dashboard/data/sample/slides/presentation-sample/`.
 - `dashboard/core/preview.js`: the plain functions behind the Preview buttons, with no page in them: the
   kinds, tidying `previewRequest`, which pack is next (`nextPack`), the saved preview that survives a reload
   (`resumePreview`) and the runner that applies the guard and waits for the screen
@@ -565,10 +543,6 @@ chance setting.
 - `studio/schemas/settingsAnnouncements.js` has the hidden `announceRequest` field
   (`announceRequestField`), and `usePlayAnnouncementsAction` in `studio/tools/actions.js` is the
   button. The starting value is `announceRequest` in `defaultSettings` in
-  `dashboard/config.js`.
-- `studio/schemas/settingsPresentations.js` has the hidden `presentationTestRequest` field
-  (`presentationTestRequestField`), and `useRunPresentationTestAction` in `studio/tools/actions.js` is the
-  button. The starting value is `presentationTestRequest` in `defaultSettings` in
   `dashboard/config.js`.
 - `studio/schemas/settingsPreview.js` has the hidden `previewRequest` field (`previewRequestField`, in the
   Screen tab), `studio/inputs/previews.js` is the Studio's copy of the kinds, and `previewActions` in

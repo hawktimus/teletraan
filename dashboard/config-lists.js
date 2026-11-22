@@ -257,7 +257,7 @@ export const limits = {
   redEyesChance: { min: 0, max: 100 },
   desktopEveryHours: { min: 1, max: 1000 },
   redEyesEveryHours: { min: 1, max: 1000 },
-  // The length of one booked talk, in minutes (the Presentations list in the Studio)
+  // The length of one talk, in minutes (the talk type in the Studio, which is not used any more)
   talkMinutes: { min: 5, max: 30 },
   // The team settings, in minutes: how long each team stays on the screen in Alternate mode
   alternateMinutes: { min: 1, max: 30 },

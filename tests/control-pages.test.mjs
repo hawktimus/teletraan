@@ -62,7 +62,7 @@ check('the three dots and the last reads (Settings, Sync and restart) show the r
   const dots = dotsHtml(data);
   assert.ok(dots.includes('data-color="red"') && dots.includes('bad token'));
   const reads = readsHtml(data, now);
-  ['Content', 'Calendars', 'Slides', 'Monday', 'Competition data', 'FRC news', 'Match13', 'Drive photos'].forEach(label => assert.ok(reads.includes('<dt>' + label + '</dt>'), label));
+  ['Content', 'Calendars', 'Monday', 'Competition data', 'FRC news', 'Match13', 'Drive photos'].forEach(label => assert.ok(reads.includes('<dt>' + label + '</dt>'), label));
   assert.ok(reads.includes('Drive photos</dt><dd>1 hour ago'));
   assert.equal((reads.match(/Match13/g) || []).length, 1, 'the Match13 line is there once');
   assert.ok(dotsHtml(null).includes('did not answer') && readsHtml(null).includes('did not answer'));

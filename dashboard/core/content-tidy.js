@@ -6,7 +6,6 @@ import { tidyTheme } from './theme.js';
 import { tidyDemo } from './demo.js';
 import { chanceFields, hoursFields, tidyHiddenRequest, tidyHours } from './hidden.js';
 import { tidyAnnounceRequest } from './announce.js';
-import { tidyTestRequest } from './presentation-test.js';
 import { tidyPreviewRequest } from './preview.js';
 import { tidyNextLookRequest, tidySchedule } from './screens.js';
 import { showsForTeam } from './teams.js';
@@ -34,7 +33,7 @@ export function visibleItems(list, now = new Date(), teamCode) {
 // whether settings exist.
 export function withDefaults(raw) {
   const source = raw || {};
-  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], presentations: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, news: { lastSyncAt: '', lastError: '', items: [] }, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [], views: [], subthemes: [] }, source);
+  const content = Object.assign({ tasks: [], plan: null, plans: [], teams: [], sponsors: [], tipsAndNews: [], notices: [], subteams: [], people: [], photos: [], customPanels: [], calendarFilters: [], milestones: [], frc: null, news: { lastSyncAt: '', lastError: '', items: [] }, monday: null, mini: { lastCalendarSyncAt: '', calendarErrors: 0 }, screens: [], views: [], subthemes: [] }, source);
   content.team = Object.assign({}, defaultTeam, source.team);
   content.settings = Object.assign({}, defaultSettings, source.settings);
   // The Teletraan computer reads the two Monday blocks and the screen has no use for them
@@ -166,8 +165,6 @@ export function fixSettingValues(settings, saved = settings) {
   settings.hiddenRequest = tidyHiddenRequest(settings.hiddenRequest);
   // The last click of Play announcements (Screen tab, hidden from editors): a time, or empty
   settings.announceRequest = tidyAnnounceRequest(settings.announceRequest);
-  // The last click of Run presentation test (Presentations tab, hidden from editors): a time, or empty
-  settings.presentationTestRequest = tidyTestRequest(settings.presentationTestRequest);
   // The last click of a Preview button (hidden from editors): a kind and a time, or empty
   settings.previewRequest = tidyPreviewRequest(settings.previewRequest);
   // The last click of Next look now and of Preview competition (Start here page, hidden from editors): a time, or empty

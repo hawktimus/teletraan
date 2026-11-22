@@ -7,11 +7,11 @@
 //   rebootEnabled      off to start with
 //   rebootTime         HH:MM in the time zone of the Look page, 03:30 to start with
 //   rebootDays         the weekdays, 0 is Sunday, every day to start with
-//   rebootSkipBusy     wait while a talk, an alert or an announcement is playing
+//   rebootSkipBusy     wait while an alert or an announcement is playing
 //   rebootWaitMinutes  how long to wait before rebooting anyway, 30 to start with
 //
 // How a run decides: the slot is the most recent scheduled time that has passed. It is acted on only within 10 minutes
-// of the slot (longer only while a run is waiting for a talk, an alert or an announcement, up to the wait), only once,
+// of the slot (longer only while a run is waiting for an alert or an announcement, up to the wait), only once,
 // only when the setting was already in effect before the slot, never within 10 minutes of boot and never within 6 hours
 // of the last reboot (this plan's or any other: the uptime counts). A slot that was missed because the computer was off
 // is not made up.
@@ -20,7 +20,6 @@
 
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { graceMinutes, noShowMinutes } from '../../dashboard/core/constants.js';
 
 export const defaults = {
   rebootEnabled: false,
@@ -132,21 +131,13 @@ export function labelOf(ms, zone) {
 
 // ----- is the screen busy -----
 
-// busyData: { alert, announcements, talks } as the timer asks Sanity for them. A talk holds the screen from its start to
-// the end of its minutes plus the wait and the overrun of the dashboard (core/constants.js); a reboot just before it
-// would cut it off, so it counts from 10 minutes before.
+// busyData: { alert, announcements } as the timer asks Sanity for them.
 export function busyReason(busyData, nowMs) {
   if (!busyData || typeof busyData !== 'object') return '';
   const alert = busyData.alert;
   if (alert && alert.on === true && (!alert.until || Date.parse(alert.until) > nowMs)) return 'an alert';
   const live = (Array.isArray(busyData.announcements) ? busyData.announcements : []).some(item => Date.parse(item.start) <= nowMs && Date.parse(item.end) > nowMs);
-  if (live) return 'an announcement';
-  const talk = (Array.isArray(busyData.talks) ? busyData.talks : []).some(item => {
-    const start = Date.parse(item.start);
-    const length = (Number.isFinite(item.minutes) ? item.minutes : 15) + noShowMinutes + graceMinutes;
-    return start - 10 * minute <= nowMs && nowMs < start + length * minute;
-  });
-  return talk ? 'a talk' : '';
+  return live ? 'an announcement' : '';
 }
 
 // ----- the decision -----

@@ -31,9 +31,6 @@ import { liveFolder } from '../config.js';
 // A Photo document is sent the same way, with its id and the time it was
 // created (the underscore names are not kept, so they are asked for under
 // plain ones). Hidden and expired photos stay in the list like the other items.
-// A booked talk is sent the same way, with its id under a plain name. Only
-// published talks come back, so a draft is never on the screen. A talk that is
-// not scheduled stays in the list, and core/presentation.js leaves it out.
 // The Teams come with the rest. Every kind of content that has a Team field is sent
 // with the code of its team, or nothing when it is for both teams. A team that was
 // deleted has no code either. A team's logo is sent like a person's photo.
@@ -113,17 +110,6 @@ export const contentQuery = `{
       crop,
       hotspot
     }
-  },
-  "presentations": *[_type == "presentation"] | order(start asc, _createdAt asc) {
-    "id": _id,
-    name,
-    subteam,
-    topic,
-    start,
-    minutes,
-    deckLink,
-    status,
-    "team": team->code
   },
   "plans": *[_type == "plan"] | order(date asc, _createdAt asc) { ..., "team": team->code },
   "calendarFilters": *[_type == "calendarFilter"] | order(_createdAt asc),

@@ -111,15 +111,15 @@ test('the rows of the large panel are all large panels, the rows of the small pa
 });
 
 // The panels with a team are the ones whose items have the Team field: the query of core/sanity.js sends the code of the team with
-// the items of these lists, and with no others. A panel draws the items of one list (the Daily Agenda panel also lists the
-// booked talks, which have a team too).
+// the items of these lists, and with no others. A panel draws the items of one list (a plan is the only list the Daily Agenda
+// panel draws).
 test('a panel has a team when the list of items it draws has the Team field, and that is the list in config.js', () => {
   const query = read('core/sanity.js');
   const lists = {};
   query.split(/\n  "(?=[A-Za-z]+": \*\[_type == )/).slice(1).forEach(block => {
     lists[block.slice(0, block.indexOf('"'))] = block.includes('"team": team->code');
   });
-  assert.deepEqual(Object.keys(lists).filter(name => lists[name]).sort(), ['customPanels', 'milestones', 'notices', 'people', 'plans', 'presentations', 'sponsors', 'subteams', 'tasks', 'tipsAndNews']);
+  assert.deepEqual(Object.keys(lists).filter(name => lists[name]).sort(), ['customPanels', 'milestones', 'notices', 'people', 'plans', 'sponsors', 'subteams', 'tasks', 'tipsAndNews']);
 
   const drawn = { tasks: 'tasks', tonight: 'plans', spotlight: 'subteams', 'team-leads': 'subteams', roster: 'subteams', leadership: 'people', 'sponsor-feature': 'sponsors', custom: 'customPanels', photo: 'photos', events: null };
   const followTeam = Object.keys(drawn).filter(panel => drawn[panel] && lists[drawn[panel]]).sort();

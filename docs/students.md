@@ -36,7 +36,7 @@ team is on the screen.
 Which panels play, in what order and for how many seconds is the Rotation page. Which theme
 plays each day is the Look page. Ask a coach before you change them. docs/studio-map.md shows the whole sidebar.
 
-Some things cover the whole TV. A booked talk takes the full screen at its time.
+Some things cover the whole TV. A presentation takes the full screen while it plays.
 An alert does too. The night screen is dark from 11:30 pm to 11:30 am.
 
 ## Every meeting
@@ -117,25 +117,22 @@ on your phone before you take a photo. Take it in landscape. Upload only a photo
 may be shown, because anyone who has the address of a photo can open it
 (docs/editing-content.md, "Photos").
 
-## Booking a presentation
+## Playing a presentation
 
-A talk is booked in the Google Form: [link to the Form, added by a coach].
+Talks are not booked in a form any more. A coach puts the deck in the Google Drive
+folder of presentations, and you play it from the TV or the control page
+(docs/presentations-drive.md).
 
-1. Open the Form and pick a free slot. Slots close for booking 30 minutes before they start.
-2. Type your first name, your subteam, a title for the talk and the link to your
-   Google Slides deck. The title and the first name are public, so write what you
-   are happy for anyone to read.
-3. Share the deck with Anyone with the link, set to Viewer. The TV cannot show a deck
-   that is not shared.
-4. On the day, be at the TV at your start time. A title card comes up. Press the
-   clicker (Page Down) to begin. Page Down goes forward and Page Up goes back. A left
-   click works too, and a right click goes back. If nobody presses a key within 5 minutes, the
-   talk is skipped.
-5. After the last slide, one more press shows a thank you card, and the TV goes back
-   to its panels.
-
-To cancel or move a talk, ask a coach. They set the status to Cancelled or change
-Starts at (docs/presentations.md).
+1. Put your Google Slides deck or PowerPoint file in the folder, named the way you
+   want it read on the TV: [link to the folder, added by a coach]. The names of
+   files show on the TV, so use a first name only.
+2. Wait about a minute. The deck is ready when its line on the list shows its
+   number of slides.
+3. At the TV, press the play button of the clicker to open the list, pick your deck
+   and press Page Down. The deck fills the screen on its first slide.
+4. Page Down goes forward and Page Up goes back. A left click works too, and a right
+   click goes back. Esc ends the deck. After the last slide the TV goes back to its
+   panels.
 
 ## Trying the screen
 
@@ -145,7 +142,7 @@ The Start here page has no buttons. A coach can try the screen from the control 
 - **Post an announcement:** puts a short notice in the bar under the banner. It starts now and ends in two hours.
 - Show a view, hold a panel or try a theme for a few minutes. The screen goes back to its normal turn by itself.
 
-To run a sample talk with six sample slides, a coach opens the menu beside Publish on Dashboard Settings (the three dots) and clicks Run presentation test. Press the clicker as at a real talk. To see the screen with sample content, add `?sample=1` to the address of the screen.
+To see the screen with sample content, add `?sample=1` to the address of the screen.
 
 ## Who to ask
 

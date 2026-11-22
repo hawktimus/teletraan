@@ -194,7 +194,7 @@ editors can sign in from anywhere.
                               hidden-pile.js finds the frames that fall at their end and writes where
                               each one lies, and hidden-pictures.js lists their four pictures (in
                               assets/hidden) and which one plays next (docs/hidden-transitions.md),
-                              presentation.js decides when a booked talk shows its title card and its
+                              presentation.js decides when a talk shows its title card and its
                               slides, what each key of the clicker and each button of the mouse does and
                               which talks were skipped, and presentation-run.js puts that on the screen
                               and reads the keys and the mouse (the cards and the slides are drawn by
@@ -207,9 +207,6 @@ editors can sign in from anywhere.
                               Raspberry Pi (next, back, leave, control page), off unless the address says
                               ?keys=console, and step-back.js finds the step the large panel goes back to
                               (computer/pi/README.md),
-                              presentation-test.js decides when the Run presentation test button starts
-                              the sample talk, and presentation-test-run.js starts it
-                              (docs/hidden-transitions.md),
                               preview.js decides when a Preview button holds a team, a style or a seasonal
                               pack on the screen for 2 minutes, and preview-run.js starts it. What it holds is
                               kept by previewStyle in style.js, previewTeam in teams.js and previewPack in
@@ -321,12 +318,11 @@ editors can sign in from anywhere.
                               panels/countdown, as a second rendering of the countdown (docs/layouts.md, "The war clock").
                               stand-in-tile and stand-in-ticker are for the hardware test (?stress) only
       fonts/, assets/         fonts and pictures, all served from here
-      data/sample/            sample content with marked placeholders, and a sample talk with six slides
-                              (slides/presentation-sample)
+      data/sample/            sample content with marked placeholders
       data/live/              files the computer downloads (never committed)
     studio/                   the Sanity editing screen, its sidebar (structure.js: one list with a line
                               for each entry, so changing the order means moving a line,
-                              docs/reordering-the-sidebar.md, docs/studio-map.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons;
+                              docs/reordering-the-sidebar.md, docs/studio-map.md), its buttons (tools/actions.js: the Play buttons of the hidden transitions, Play announcements and the Preview buttons;
                               tools/team-actions.js: Use the standard colors for this team, with its table in tools/team-standard.js),
                               its pages that are not documents (inputs/start-here.js, inputs/rotation-board-view.js, inputs/themes-view.js, inputs/today-view.js, inputs/look-view.js, inputs/competition-view.js, inputs/kept-data-view.js (each with a -parts.js file that needs no Studio), inputs/field-editor.js and draft-fields.js, which the pages share, inputs/team-colors-input.js, inputs/calendars-view.js, whose rows and words are in inputs/calendars-view-parts.js,
                               docs/calendars-page.md, and inputs/monday-page.js, the read only Monday page, with its words and tables in
@@ -340,8 +336,8 @@ editors can sign in from anywhere.
                               the Publish all tool in the top bar (tools/publish-all-tool.js is the page and
                               tools/publish-all.js is its logic, docs/publish-all.md), and tests/schemas.test.mjs.
                               schemas/ has a file for each kind of content. calendarFilter.js is the
-                              Calendar filters (docs/calendar-filters.md), presentationDay.js the Meeting
-                              days, presentation.js the booked talks and settingsPresentations.js the
+                              Calendar filters (docs/calendar-filters.md), presentationDay.js the old Meeting
+                              days, presentation.js the old booked talks (both kept, not used) and settingsPresentations.js the
                               Presentations tab of Dashboard Settings (docs/presentations.md). team.js is the
                               Teams list and settingsTeams.js the team fields of the Look tab, which are hidden now. settingsLook.js is
                               the Weekday schedule and the hidden Styles by day, Monday style, Team order and How the look changes.
@@ -420,8 +416,6 @@ editors can sign in from anywhere.
                               the Events panel they are on and their kind. It needs Node, so it runs on a
                               computer that has it, not on the computer. check-calendars.mjs is the part of it
                               that runs the dashboard's own calendar code.
-                              scripts/slides-sync.sh downloads the slides of the coming talks and turns them
-                              into pictures in the data folder (docs/presentations.md).
                               scripts/status-write.sh writes the time of a job into the status-mini document
                               in Sanity, for the status block in Dashboard Settings (docs/rebuilding-the-computer.md,
                               "Showing what the computer did in Studio").
@@ -464,8 +458,8 @@ editors can sign in from anywhere.
                               docker-compose.yml are the web server, and git/ is the optional bare
                               repository.
                               scripts/install-timers.sh turns on the calendar timer and the pull timer,
-                              install-calendars.sh only the calendar timer and install-slides.sh the slides
-                              timer (docs/rebuilding-the-computer.md, step 11). systemd/ has the unit files they
+                              install-calendars.sh only the calendar timer and install-decks.sh the decks
+                              service (docs/rebuilding-the-computer.md, step 11). systemd/ has the unit files they
                               copy into place.
                               scripts/install-console.sh writes the startup drawing above the old text of
                               /etc/issue and turns on teletraan-console.service, which shows the shutdown
@@ -525,8 +519,7 @@ editors can sign in from anywhere.
                               zip check and tree hash, and the host helper (docs/control-page.md)
       install-sh.test.mjs     checks computer/install.sh: it refuses a tree with deploy/, moves an old tree into
                               releases/1, installs the helper socket and the sudoers file
-      nightly.test.mjs        checks nightly.sh and its units: the 04:00 restart, the Sunday reboot and the skip
-                              when a talk is booked within the hour
+      nightly.test.mjs        checks nightly.sh and its units: the 04:00 restart and the Sunday reboot
       display.test.mjs        checks display.sh with a fake xrandr
       no-old-code.test.mjs    checks that the TV never runs old code after an update (the ?v=<build> on every file)
       dots.test.mjs           checks the three dots (core/dots.js)
@@ -592,7 +585,6 @@ editors can sign in from anywhere.
                               transaction for each, the order, the skipped reasons and the summary
       templates.test.mjs      checks that the CSV templates match the schemas, and the CSV importer
       check-connection.test.mjs  checks for computer/scripts/check-connection.sh, with fake tools
-      slides-sync.test.mjs  checks for computer/scripts/slides-sync.sh and install-slides.sh, with fake tools
       decks-sync.test.mjs   checks for computer/scripts/decks-sync.sh and install-decks.sh, with fake tools
       decks.test.mjs        checks for the list of presentations on the TV and the control routes behind Play on the TV
       install-calendars.test.mjs  checks for computer/scripts/install-calendars.sh: that it stops before it changes
@@ -633,7 +625,6 @@ editors can sign in from anywhere.
                               with a fake curl and a fake browser page list
       notice.test.mjs         checks the announcement bar under the banner (core/notice.js, core/notice-run.js)
       photo-row.test.mjs      checks the Photos row: its count, the seconds of each photo and the total
-      booking.test.mjs        checks the talk booking path with fixtures
       still.test.mjs, previews.test.mjs  check the panel preview address and the Studio side of it;
                               check-preview.mjs checks the list of preview panels against registry.js
       screenshots.test.mjs    checks tools/screenshots.mjs, which takes a picture of every panel
@@ -884,16 +875,6 @@ alone.
   list in `studio/inputs/previews.js`, a copy of `previewKinds` in `dashboard/core/preview.js`). The starting value is
   `previewRequest` in `defaultSettings` in `dashboard/config.js`. `core/preview.js` decides and
   `core/preview-run.js` runs it.
-- **Run presentation test.** The button after Play announcements in the same menu
-  (docs/hidden-transitions.md). It starts the sample talk, with its six sample slides in
-  `dashboard/data/sample/slides/presentation-sample/`, and needs no internet. It writes the hidden
-  `presentationTestRequest` field (`presentationTestRequestField` in
-  `studio/schemas/settingsPresentations.js`, the button is `useRunPresentationTestAction` in
-  `studio/tools/actions.js`). The starting value is `presentationTestRequest` in `defaultSettings` in
-  `dashboard/config.js`. `core/presentation-test.js` decides, `core/presentation-test-run.js` reads the
-  sample talk and `startTestTalk` in `core/presentation-run.js` puts it on the screen. The Start here
-  page has this button too, and both write what `presentationTestRequest` in
-  `studio/tools/screen-requests.js` gives.
 - **Next look now and Preview competition.** Two buttons on the Start here page only. Each writes a hidden
   field of Dashboard Settings, `nextLookRequest` and `competitionPreviewRequest` (`nextLookRequestField` and
   `competitionPreviewRequestField` in `studio/schemas/settingsRequests.js`), through `studio/tools/screen-requests.js`.
@@ -964,7 +945,7 @@ alone.
   so that nothing saved is lost, and the dashboard does not read them.
 - **What the computer last did.** Dashboard Settings, Screen tab, Status of the Teletraan computer.
   The computer writes the document `status-mini` with `computer/scripts/status-write.sh`,
-  which the calendar and slides services and `kiosk.sh` start, and which needs
+  which the calendar service and `kiosk.sh` start, and which needs
   `SANITY_WRITE_TOKEN` in `computer/local.env` (docs/rebuilding-the-computer.md, "Showing
   what the computer did in Studio"). The type is `studio/schemas/status.js` and the block
   is `studio/inputs/status-input.js`. The dashboard never reads it.
@@ -1184,8 +1165,8 @@ alone.
   a swap never happens in the middle of a panel. `teams.css` has the starting colors, and `trim.css` and
   the frames in `core/plate.js` have the trim. Try one
   with `?team=prime|nova|alternate`, or with the Preview Prime and Preview Nova buttons.
-- **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor, talk,
-  meeting day, extra panel and tip or news line (`teamField` in
+- **Which team an item is for.** The Team field of a task, plan, subteam, person, sponsor,
+  extra panel and tip or news line (`teamField` in
   `studio/schemas/fields.js`, the radio in `studio/inputs/team-input.js`). Leave it blank when it is for both teams. The query in
   `core/sanity.js` asks for `team->code`, and every panel takes its items through `visibleItems` in
   `core/content.js`, which asks `showsForTeam` in `core/teams.js`. docs/team-on-an-item.md says
@@ -1248,7 +1229,7 @@ alone.
 
 Run these in the terminal, from this folder. They need Node.js, the same
 version as the Studio (22.12 or newer), and nothing else installed. The
-exceptions are `slides-sync.test.mjs`, `frc-sync.test.mjs`, `monday-sync.test.mjs` and `backup-dataset.test.mjs`, which need `jq`.
+exceptions are `frc-sync.test.mjs`, `monday-sync.test.mjs` and `backup-dataset.test.mjs`, which need `jq`.
 
     node tests/run.mjs             every test, three at a time, and the syntax of every shell file (several minutes)
     node tests/run.mjs --quick     the edit loop: every test but the slow ones, in about half a minute (docs/your-first-change.md, step 7)
@@ -1273,7 +1254,6 @@ A test of a shell script is a Node file that runs the script with fake `curl`, `
     node tests/templates.test.mjs
     node tests/publish-all.test.mjs
     node tests/check-connection.test.mjs
-    node tests/slides-sync.test.mjs
     node tests/install-calendars.test.mjs
     node tests/check-calendars.test.mjs
     node tests/event-pages.test.mjs

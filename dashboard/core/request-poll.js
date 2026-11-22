@@ -1,4 +1,4 @@
-// The requests the control page and the Studio buttons write into Dashboard Settings (Run presentation test, Play
+// The requests the control page and the Studio buttons write into Dashboard Settings (Play
 // announcements, Next look now, Hold this panel and the others) are answered only while they are new: a button
 // press counts for a minute. The full read of the content happens every 5 minutes and when Sanity's change stream
 // says something changed, and if that stream is not working a press is missed. So these fields alone are asked
@@ -7,7 +7,7 @@
 export const requestPollSeconds = 10;
 
 export const requestFields = [
-  'announceRequest', 'presentationTestRequest', 'nextLookRequest', 'competitionPreviewRequest', 'previewRequest', 'hiddenRequest',
+  'announceRequest', 'nextLookRequest', 'competitionPreviewRequest', 'previewRequest', 'hiddenRequest',
   'holdPanel', 'holdRow', 'showView', 'previewTheme', 'pauseRotation', 'hideSubtheme',
 ];
 

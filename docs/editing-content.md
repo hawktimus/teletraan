@@ -45,24 +45,19 @@ last step of every change. See "The Start here page" below.
   announcement, and each card has the start, the end, the team and the level
   (docs/announcements.md). Full screen messages at set times are the cards that play at a
   time of day, such as WHAT TIME IS IT? at 14:30 and 17:00. The page ends with links to the
-  agenda, the booked talks and the meeting days.
+  agenda.
 - Ticker: the lines that run along the bottom of the screen.
 
-### Tasks, agenda and talks
+### Tasks and agenda
 
-The agenda, the talks and the meeting days open from the links at the foot of the Today page.
+The agenda opens from the link at the foot of the Today page.
 
 - Agenda items: the schedule for today's meeting, up to 5 rows. The TV shows the
   first one that is switched on and is dated today or has no date. One from
   another day is skipped, so an old one that is still switched on does not
-  hide today's. The talks booked for today fill the rows the schedule leaves
-  free (docs/up-next.md). The panel is headed AGENDA.
-- Presentations: the talks students book in a Google Form, and the ones a coach
-  adds by hand. They have the same fields, the slides link too, and they are in
-  the same lists. Upcoming and Past are the two lists, where a coach can cancel
-  or move a talk (docs/presentations.md).
-- Meeting days: which days have talk slots and when they start. A day with no
-  Meeting day has no slots.
+  hide today's (docs/up-next.md). The panel is headed AGENDA.
+- Talks are not typed in Studio: a deck is picked from the Google Drive folder on
+  the TV or on the control page (docs/presentations.md).
 - Monday: what the team is working on, from its Monday boards Robotics Tasks and Completed Tasks. The page is
   read only, a table for each department, because the Teletraan computer makes the tasks. Change a task in
   Monday. A department goes on the TV with a Department tasks row on the Rotation board (docs/monday.md).
@@ -159,8 +154,8 @@ functions in `studio/tools/content-check.js`, so the control page can run them l
 Three kinds of content are in the Studio but have no line in the list: Events
 Calendar entries (on Kept data), Places and Demo. They are explained below.
 
-Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips and News, Extra panels,
-Meeting days and booked talks each have a Team choice:
+Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips and News and Extra panels
+each have a Team choice:
 Both, or one of the teams. Both is picked to start with, and the item shows for
 every team. Pick a team to show it only while that team is on the screen
 (docs/team-on-an-item.md).
@@ -186,7 +181,7 @@ The first line of the sidebar. It is a page, not a document, so there is nothing
 5. Links: the control page, the Studio on the web and the guides. A link whose address has not been set is shown as plain words.
 6. Anything under Coaches only is for a coach. A second line says that each team keeps its own colors and how to put the standard ones back.
 
-The buttons that tried the screen (Play announcement, Run presentation test, Next look now, Preview competition and Preview the screen) are not on this page any more. Play announcement is on the Now showing tab of the control page (docs/control-page.md), and the menu beside Publish on Dashboard Settings still has Play announcements, Run presentation test and the Preview buttons. The requests they write are hidden fields of Dashboard Settings that hold the time of the last click: `announceRequest`, `presentationTestRequest`, `nextLookRequest` and `competitionPreviewRequest`. The work is written once in `studio/tools/screen-requests.js`. The page is `studio/inputs/start-here.js`, and its picture and link list are in `studio/inputs/start-here-parts.js`.
+The buttons that tried the screen (Play announcement, Next look now, Preview competition and Preview the screen) are not on this page any more. Play announcement is on the Now showing tab of the control page (docs/control-page.md), and the menu beside Publish on Dashboard Settings still has Play announcements and the Preview buttons. The requests they write are hidden fields of Dashboard Settings that hold the time of the last click: `announceRequest`, `nextLookRequest` and `competitionPreviewRequest`. The hidden field `presentationTestRequest` of the old Run presentation test button is not used any more and is kept only so that stored values are not lost. The work is written once in `studio/tools/screen-requests.js`. The page is `studio/inputs/start-here.js`, and its picture and link list are in `studio/inputs/start-here-parts.js`.
 
 ## Events
 
@@ -972,12 +967,11 @@ now on the page that took them.
 
 ### Presentations
 
-- Presentations: whether the TV takes over for booked talks (docs/presentations.md).
+- Presentations: whether the TV plays a deck picked from the Google Drive folder (docs/presentations.md).
   "Run presentations" is the switch and starts on. The wait for the speaker (the
   title card waits 5 minutes for the first press of the clicker before the talk
   is skipped) and the overrun (a talk may run 5 minutes past its slot) are fixed,
-  and are not shown. "Run presentation test" in the menu next to Publish (the
-  three dots) starts a sample talk.
+  and are not shown.
 
 ### Monday
 

@@ -51,9 +51,9 @@ export const defaultPerson = {
   showPhoto: true,
 };
 
-// Used for a booked talk that has no length or no status in the saved content. The
-// Studio fields start at the same values (studio/schemas/presentation.js), and so
-// does the list of statuses. Only a scheduled talk runs on the screen.
+// The starting length and status of a talk, and the statuses. The Studio fields of the
+// talk type, which the screen does not read any more, start at the same values
+// (studio/schemas/presentation.js). defaultTalk.minutes is the length of a picked deck.
 export const talkStatuses = ['scheduled', 'cancelled', 'done', 'skipped'];
 export const defaultTalk = {
   minutes: 15,

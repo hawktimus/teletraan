@@ -51,12 +51,12 @@ test('Show puts the card of the wall first, then the picture, and fits the pictu
   assert.ok(/aspect-ratio: 16 \/ 9/.test(css) && /\.preview iframe \{[^}]*width: 1920px; height: 1080px/.test(css));
 });
 
-test('port 3229 serves the dashboard like the local server: same root, same manifest rule, and the Studio and control still there', () => {
+test('port 3229 serves the dashboard like the local server: same root, same photo manifest rule, and the Studio and control still there', () => {
   const nginx = read('computer/nginx/nginx.conf');
   const start = nginx.indexOf('listen 3229;');
   const block = nginx.slice(nginx.lastIndexOf('server {', start), nginx.indexOf('\n  server {', start));
   assert.ok(/root \/srv\/web;\s+index index\.html;/.test(block));
-  assert.ok(block.includes('slides/[^/]+/manifest') && block.includes('max-age=10'));
+  assert.ok(block.includes('photos/manifest.json') && block.includes('max-age=10'));
   assert.ok(!nginx.includes('The dashboard is not served here'), 'the old comment is gone');
   assert.ok(!/local\.env|secret/i.test(block), 'nothing secret is mapped');
   const compose = read('computer/docker-compose.yml');

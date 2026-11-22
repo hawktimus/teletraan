@@ -9,8 +9,7 @@
 //   3. anything amber: restart what is wrong (the sync service for a source or a service, the screen for a frozen page), and check again
 //   4. still unhealthy after that: reboot, through the gate (computer/scripts/gate.sh)
 //
-// It never starts while a talk is booked within 30 minutes or a Band event of kind Meetings is on (15 minutes before it is
-// counted as on). It waits, and gives up after 90 minutes past the time, saying why. It is a scheduled reboot as far as
+// It never starts while a Band event of kind Meetings is on (15 minutes before it is counted as on). It waits, and gives up after 90 minutes past the time, saying why. It is a scheduled reboot as far as
 // the budget goes: gate.sh reason "nightly", which is outside the recovery budget but still cannot reboot twice within ten minutes.
 //
 //   node refresh-plan.mjs <input.json>   prints the decision as JSON; writes nothing
@@ -21,9 +20,8 @@ import { pathToFileURL } from 'node:url';
 export const defaults = { refreshEnabled: true, refreshTime: '13:30', refreshDays: [1, 2, 3, 4, 5] };
 export const defaultZone = 'America/New_York';
 export const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
-// How long after the time a refresh may still start, while it waits for a talk or a meeting
+// How long after the time a refresh may still start, while it waits for a meeting
 export const waitMinutes = 90;
-export const talkSoonMinutes = 30;
 export const meetingBeforeMinutes = 15;
 export const meetingAfterMinutes = 10;
 export const maxUptimeDays = 7;
@@ -66,17 +64,10 @@ export function meetingNow(events, nowMs) {
     && nowMs >= event.start - meetingBeforeMinutes * minute && nowMs <= (event.end > event.start ? event.end : event.start) + meetingAfterMinutes * minute);
 }
 
-// Is a talk booked to start inside the next talkSoonMinutes, or one that started and is still on?
-//   talks   [{ start, minutes }]
-export function talkSoon(talks, nowMs) {
-  return (Array.isArray(talks) ? talks : []).some(talk => talk && Number.isFinite(talk.start)
-    && nowMs >= talk.start - talkSoonMinutes * minute && nowMs <= talk.start + ((Number(talk.minutes) || 15) + 5) * minute);
-}
-
 // Should a refresh start now?
-//   input { now (ms), settings, zone, state: { lastSlot }, talks, events }
+//   input { now (ms), settings, zone, state: { lastSlot }, events }
 // Gives { start, slot, reason, wait }: start true means begin; reason is a sentence for the log and the pages; wait is true while a
-// talk or a meeting holds it back
+// meeting holds it back
 export function decideStart(input) {
   const settings = settingsOf(input.settings);
   const zone = zoneOf(input.zone);
@@ -93,7 +84,6 @@ export function decideStart(input) {
   const state = input.state && typeof input.state === 'object' ? input.state : {};
   if (state.lastSlot === clock.date) return none('Already done today.');
 
-  if (talkSoon(input.talks, now)) return { start: false, slot: clock.date, reason: 'Waiting: a talk is booked within 30 minutes.', wait: true };
   if (meetingNow(input.events, now)) return { start: false, slot: clock.date, reason: 'Waiting: a meeting is on.', wait: true };
   return { start: true, slot: clock.date, reason: 'Time for the refresh.', wait: false };
 }

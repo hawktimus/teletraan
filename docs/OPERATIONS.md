@@ -57,7 +57,7 @@ It needs `curl`, `jq` and Node 18 or newer, and does not install them.
 Before an answer from Sanity becomes `content.json` (`computer/scripts/ingest-validate.mjs`):
 
 - An answer that is not an object, has a list that is not a list, has no settings document after one that had it, or is empty after one with rows is refused. The wall keeps its last good content, the Sanity dot says why, and the next read tries again. A first read with an empty dataset is accepted, so a new computer is not stuck.
-- A date and time with no zone (a talk, an announcement, a finished task) is read in the time zone of the Look page and written as an ISO time with a zone. A value that is not a date is left as it is. A Monday task whose department is not one of the nine is listed.
+- A date and time with no zone (an announcement, a finished task, an expiry) is read in the time zone of the Look page and written as an ISO time with a zone. A value that is not a date is left as it is. A Monday task whose department is not one of the nine is listed.
 - Nothing is dropped without a line. `data-problems.json` in the data folder lists every repair and every row left as it is, by source, with the whole count and up to 200 rows. Control, Update shows them under each source and under Content from Sanity; the Studio status document gets the number only (Rows to look at, written by `status-write.sh problems`). The TV never shows them.
 - `sync-status.json` also carries `health`: the names of the health checks that fail, from `health.json`. It is rewritten every 60 seconds.
 - `/etc/tmpfiles.d/teletraan.conf` (from `computer/tmpfiles/teletraan.conf`, installed by `install-sync.sh`) makes the log, state and data folders at every boot, so the web container always has the folder it mounts.
@@ -75,7 +75,7 @@ At 13:30 on weekdays (Dashboard Settings, Advanced, Pre-meeting refresh: on or o
 3. Something amber: it restarts what is wrong, the sync service for a source or a service, the screen for a frozen or heavy page, waits a minute and checks again.
 4. Still not healthy, or up more than 7 days: it reboots, through the gate as a scheduled reboot (`gate.sh allow nightly`), so it is outside the recovery budget and still cannot reboot twice within ten minutes.
 
-It does not start while a talk is booked within 30 minutes or a Band event of kind Meetings is on (counted from 15 minutes before to 10 minutes after), waits, and gives up 90 minutes past the time, saying why. What it decided is in `refresh/last.json` in the data folder and the journal (`refresh.jsonl`), and Control, Computer, shows it as "13:30 refresh: reloaded page only, all green".
+It does not start while a Band event of kind Meetings is on (counted from 15 minutes before to 10 minutes after), waits, and gives up 90 minutes past the time, saying why. What it decided is in `refresh/last.json` in the data folder and the journal (`refresh.jsonl`), and Control, Computer, shows it as "13:30 refresh: reloaded page only, all green".
 
 ### Name servers
 
@@ -274,7 +274,7 @@ has a read token first. Do the steps in this order. Doing step 3 before step 1 b
    address, even in a private dataset. The sync service sends the token with every picture it downloads, so the wall
    keeps its images; the dashboard itself reads only the local copies and needs nothing.
 6. Check again: `check-connection.sh`, a view change on the wall, and the Studio (editors sign in to it anyway). The
-   scripts that read settings from Sanity (scheduled reboot, nightly, the slides and Drive photo syncs, `make
+   scripts that read settings from Sanity (scheduled reboot, the Drive photo sync, `make
    remote-status`) use the same token through `sanity_curl` in `lib.sh`.
 
 To go back, set the dataset to public again in the same place. The token can stay in `local.env`; a public dataset

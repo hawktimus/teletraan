@@ -13,7 +13,7 @@ TV. The dashboard reads what they publish.
     tools/add-templates.js          what the plus button of each folder and list makes: a new document of its type, with the starting values of its group
     inputs/start-here.js            the Start here page, the first line of the sidebar, written as a plain function
     inputs/start-here-parts.js      the picture of the screen, the five buttons and their words, with no Studio in it, so node can test them
-    tools/screen-requests.js        what the request buttons write (Play announcement, Run presentation test, Next look now, Preview competition, the Play and Preview buttons), used by tools/actions.js and the Start here page
+    tools/screen-requests.js        what the request buttons write (Play announcement, Next look now, Preview competition, the Play and Preview buttons), used by tools/actions.js and the Start here page
     inputs/dashboard-address.js     the address that Preview the screen opens on the Start here page, with ?sample=1 for the sample content
     inputs/calendars-view.js        the Calendars page under Events, written as a plain function (docs/calendars-page.md)
     inputs/calendars-view-parts.js  the words and rows of the Calendars page, with no Studio in it, so node can test them
@@ -22,7 +22,7 @@ TV. The dashboard reads what they publish.
     inputs/monday-page-parts.js     the words, the question and the tables of the Monday page, with no Studio in it, so node can test them
     inputs/time-text.js             ages in words and times as the editor's computer writes them, used by inputs/status-input.js and the Calendars page
     inputs/plain-values.js          the two checks the status pages share: is it a record, and a reason as a sentence
-    tools/actions.js                the Play buttons of the hidden transitions, Play announcements, Run presentation test and the Preview buttons on Dashboard Settings
+    tools/actions.js                the Play buttons of the hidden transitions, Play announcements and the Preview buttons on Dashboard Settings
     inputs/themes.js                the list of themes and overlays, a copy of the dashboard's
     inputs/demo-screens.js          the list of screens a demo can show, a copy of the dashboard's
     inputs/hidden-transitions.js    the list of hidden transitions, a copy of the dashboard's
@@ -310,17 +310,6 @@ The Demo page has a step "All announcements" that does the same, which comes fro
 `inputs/demo-screens.js`. Run `npm run deploy` after you change `schemas/settingsAnnouncements.js`, so
 the editors see the button. docs/hidden-transitions.md explains how it works.
 
-## Run presentation test
-
-The last button on Dashboard Settings is "Run presentation test", `useRunPresentationTestAction`
-in `tools/actions.js`. It sets `presentationTestRequest` to the time now and publishes.
-`presentationTestRequest` is a hidden field in the Presentations tab
-(`presentationTestRequestField` in `schemas/settingsPresentations.js`). The screen runs the
-sample talk with its six sample slides, for a request that is under a minute old
-(`dashboard/core/presentation-test.js`). Run `npm run deploy` after you change
-`schemas/settingsPresentations.js`, so the editors see the button. docs/hidden-transitions.md
-explains how it works.
-
 ## Preview buttons
 
 The last buttons on Dashboard Settings are "Preview theme: Original", "Cybertron", "Retro" and "Foundry"
@@ -419,7 +408,7 @@ agrees with `defaultThemeSettings` and needs a start and an end for every rule,
 list of demo screens, the hidden transition fields agree with
 `defaultSettings`, has a working Play button for each hidden transition, and
 `inputs/hidden-transitions.js` matches the dashboard's list, Play announcements has its hidden
-field, its button and its Demo step, Run presentation test has its hidden field and its button,
+field, its button and its Demo step,
 the Preview buttons have their hidden field and a list that matches the dashboard's,
 the sidebar has the headings, folders and icons it should, every kind of
 content has a line or a reason in the check for having none, the New menu offers the

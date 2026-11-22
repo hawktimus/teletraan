@@ -77,7 +77,7 @@ function makePlace() {
 }
 
 function answer(place, setting, extra) {
-  const result = Object.assign({ setting: setting, zone: ny, announcements: [], talks: [] }, extra || {});
+  const result = Object.assign({ setting: setting, zone: ny, announcements: [] }, extra || {});
   fs.writeFileSync(path.join(place.stub, 'answer.json'), JSON.stringify({ ms: 3, query: 'x', result: result }));
   fs.rmSync(path.join(place.stub, 'curl.exit'), { force: true });
 }
@@ -184,7 +184,7 @@ check('the last reboot less than 6 hours ago stops a second reboot', () => {
   assert.deepEqual(run(place, slot + 120).reboots, []);
 });
 
-check('a talk, an alert or an announcement makes it wait, and it reboots anyway after the wait', () => {
+check('an alert or an announcement makes it wait, and it reboots anyway after the wait', () => {
   const place = makePlace();
   ready(place, settingOn, { setting: Object.assign({}, settingOn, { alert: { on: true } }) });
   const waiting = run(place, slot + 120);
@@ -248,7 +248,8 @@ check('it asks Sanity over https for published content only, sends no key, and n
   assert.doesNotMatch(asked, /Authorization|Bearer|skTESTONLY/);
   assert.doesNotMatch(result.text, /skTESTONLY/);
   const query = decodeURIComponent(asked.replace(/\+/g, ' '));
-  ['rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'theme', 'announcement', 'presentation'].forEach(word => assert.ok(query.includes(word), 'the query should ask for ' + word));
+  ['rebootEnabled', 'rebootTime', 'rebootDays', 'rebootSkipBusy', 'rebootWaitMinutes', 'theme', 'announcement'].forEach(word => assert.ok(query.includes(word), 'the query should ask for ' + word));
+  assert.ok(!query.includes('presentation'), 'booked talks are not asked for');
 });
 
 check('status-write.sh reboot sends the next and last reboot to status-mini, and removes a part that is empty', () => {

@@ -224,7 +224,7 @@ export function startPush(root, boxes, hooks) {
     const action = button.dataset.action;
     const forHold = holdWords(draft.hold);
 
-    if (['next', 'pause', 'resume', 'schedule', 'announce', 'presentation-test'].includes(action)) {
+    if (['next', 'pause', 'resume', 'schedule', 'announce'].includes(action)) {
       ask(button, { action: action }).then(worked => {
         if (worked && (action === 'pause' || action === 'resume')) setPaused(action === 'pause');
       });
@@ -293,7 +293,7 @@ export function startPush(root, boxes, hooks) {
 
   return {
     async start() {
-      // The live announcements and the booked talks come with the request route. Without them the card says not known.
+      // The live announcements come with the request route. Without them the card says not known.
       const asked = await api('GET', '/request');
       if (asked.ok && asked.data) request = asked.data;
       await load();

@@ -60,11 +60,9 @@ if ! printf '%s' "$project" | grep -Eq '^[a-z0-9]+$' ||
   exit 1
 fi
 
-# The setting, the zone and what could hold the screen: an alert, announcements that are up now and talks near now
-early=$(iso_at $((now - 21600)))
-late=$(iso_at $((now + 1800)))
+# The setting, the zone and what could hold the screen: an alert and announcements that are up now
 at_now=$(iso_at "$now")
-query="{\"setting\": *[_id == \"dashboardSettings\"][0]{rebootEnabled, rebootTime, rebootDays, rebootSkipBusy, rebootWaitMinutes, alert}, \"zone\": *[_id == \"theme\"][0].timeZone, \"announcements\": *[_type == \"announcement\" && dateTime(start) <= dateTime(\"$at_now\") && dateTime(end) > dateTime(\"$at_now\")]{start, end}, \"talks\": *[_type == \"presentation\" && status == \"scheduled\" && dateTime(start) > dateTime(\"$early\") && dateTime(start) < dateTime(\"$late\")]{start, minutes}}"
+query="{\"setting\": *[_id == \"dashboardSettings\"][0]{rebootEnabled, rebootTime, rebootDays, rebootSkipBusy, rebootWaitMinutes, alert}, \"zone\": *[_id == \"theme\"][0].timeZone, \"announcements\": *[_type == \"announcement\" && dateTime(start) <= dateTime(\"$at_now\") && dateTime(end) > dateTime(\"$at_now\")]{start, end}}"
 
 fetched=0
 status=0
@@ -82,7 +80,7 @@ if [ "$fetched" -eq 1 ]; then
   mv -f "$work/cache.json" "$cache"
   jq -c --argjson now "$((now * 1000))" --argjson up "$uptime_seconds" \
     '{setting: (.result.setting // {} | del(.alert)), zone: .result.zone, nowMs: $now, uptimeSeconds: $up,
-      busyData: {alert: .result.setting.alert, announcements: .result.announcements, talks: .result.talks}}' \
+      busyData: {alert: .result.setting.alert, announcements: .result.announcements}}' \
     "$work/sanity.json" > "$work/input.json"
 elif [ -s "$cache" ] && jq -e 'objects' "$cache" > /dev/null 2>&1; then
   say "Sanity could not be asked, so the last known setting is used."

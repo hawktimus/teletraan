@@ -13,7 +13,7 @@ import { tidyMini } from './dots.js';
 import { isRecord } from './text.js';
 import { customPanelsFrom, normalizeSettings, normalizeTeam, teamsFrom } from './sanity-settings.js';
 import { cleanObject, itemsFrom, milestonesFrom, normalizeTask, showingPlans, withRows, withTeamCode } from './sanity-tasks.js';
-import { filtersFrom, normalizePerson, normalizeSubteam, photosFrom, presentationsFrom } from './sanity-people.js';
+import { filtersFrom, normalizePerson, normalizeSubteam, photosFrom } from './sanity-people.js';
 
 // Turns a query result into content. Hidden and expired items stay in the
 // lists; the panels leave them out with visibleItems(), which leaves out the
@@ -44,7 +44,6 @@ export function normalizeContent(result, now = new Date()) {
     subteams: itemsFrom(data.subteams).map(normalizeSubteam),
     people: itemsFrom(data.people).map(normalizePerson),
     photos: photosFrom(data.photos),
-    presentations: presentationsFrom(data.presentations),
     calendarFilters: filtersFrom(data.calendarFilters),
     customPanels: customPanelsFrom(data.customPanels),
     frc: tidyFrc(data.frc),
@@ -79,7 +78,6 @@ export function normalizeSample(raw) {
   content.subteams = content.subteams.map(normalizeSubteam);
   content.people = content.people.map(normalizePerson);
   content.photos = itemsFrom(data.photos).filter(photo => typeof photo.address === 'string');
-  content.presentations = presentationsFrom(data.presentations);
   content.calendarFilters = filtersFrom(data.calendarFilters);
   content.frc = tidyFrc(data.frc);
   content.news = tidySampleNews(data.news);

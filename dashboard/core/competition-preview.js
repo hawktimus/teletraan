@@ -33,7 +33,7 @@ export function requestTimeOf(settings) {
 }
 
 // The handled request, kept under a name of its own in localStorage, apart from the demo's, the
-// hidden transitions', the announcements', the presentation test's and the looks'
+// hidden transitions', the announcements' and the looks'
 export function readHandledPreview(storage) {
   return readHandled(storage, handledKey);
 }

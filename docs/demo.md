@@ -11,8 +11,6 @@ that try the screen now (docs/editing-content.md, "The Start here page"):
 - Play announcement plays every announcement that is switched on. It does what the
   step All announcements does, and what Play announcements in the menu beside
   Publish on Dashboard Settings does (docs/hidden-transitions.md).
-- Run presentation test starts the sample talk with six sample slides, so you can
-  try the clicker without a booked talk. It is not a demo step.
 - Next look now, Preview competition and Preview the screen are explained on that
   page too.
 

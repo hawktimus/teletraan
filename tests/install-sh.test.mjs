@@ -301,7 +301,7 @@ test('the data folder from local.env is made and given to the login user, also w
   const r = s.run();
   assert.equal(r.status, 0, r.errors);
   assert.ok(fs.statSync(data).isDirectory() && (fs.statSync(data).mode & 0o777) === 0o755);
-  assert.ok(fs.statSync(path.join(data, 'calendars')).isDirectory() && fs.statSync(path.join(data, 'slides')).isDirectory());
+  assert.ok(fs.statSync(path.join(data, 'calendars')).isDirectory() && fs.statSync(path.join(data, 'decks')).isDirectory());
   const group = spawnSync('id', ['-gn'], { encoding: 'utf8' }).stdout.trim();
   const lines = r.calls.split('\n');
   const own = lines.findIndex(line => line === 'chown -R ' + account + ':' + group + ' ' + data);

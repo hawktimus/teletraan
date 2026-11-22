@@ -1,5 +1,5 @@
 // What the pre-meeting refresh needs to know before it decides (computer/scripts/pre-meeting-refresh.sh): the settings and the
-// time zone from the last good copy of the content, the booked talks, and the Band events of kind Meetings of the next day and
+// time zone from the last good copy of the content, and the Band events of kind Meetings of the next day and
 // the last one, read from the calendar files the computer already downloaded. It reads files only and prints one JSON object.
 //
 //   node refresh-context.mjs <data folder> [now in milliseconds]
@@ -25,10 +25,6 @@ export function contextOf(dataFolder, nowMs) {
   const settings = content.settings && typeof content.settings === 'object' ? content.settings : {};
   const zone = content.theme && typeof content.theme.timeZone === 'string' ? content.theme.timeZone : '';
 
-  const talks = (Array.isArray(content.presentations) ? content.presentations : [])
-    .filter(talk => talk && talk.status !== 'done' && typeof talk.start === 'string' && Number.isFinite(Date.parse(talk.start)))
-    .map(talk => ({ start: Date.parse(talk.start), minutes: Number(talk.minutes) || 15 }));
-
   const events = [];
   (Array.isArray(settings.calendars) ? settings.calendars : []).forEach(calendar => {
     if (!calendar || calendar.kind !== 'meetings' || calendar.show === false || !/^[a-z0-9_-]{1,40}$/.test(String(calendar.id))) return;
@@ -42,7 +38,7 @@ export function contextOf(dataFolder, nowMs) {
     }
   });
 
-  return { settings: settings, zone: zone, talks: talks, events: events };
+  return { settings: settings, zone: zone, events: events };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {

@@ -26,7 +26,7 @@ const noticeMinutes = 120;
 export const stayHours = longestMinutes / 60;
 export const noticeLongest = 90;
 
-export const actions = ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'presentation-test', 'post-announcement', 'schedule', 'hidden'];
+export const actions = ['next', 'pause', 'resume', 'hold', 'view', 'theme', 'announce', 'post-announcement', 'schedule', 'hidden'];
 
 // The kinds of hidden transition the wall has: the ids of dashboard/core/hidden-transitions.js
 export const hiddenKinds = Object.keys(hiddenTransitions);
@@ -112,9 +112,6 @@ export function buildRequest(action, input, now = new Date()) {
 
     case 'announce':
       return { set: { announceRequest: { requestedAt: stamp(now) } } };
-
-    case 'presentation-test':
-      return { set: { presentationTestRequest: { requestedAt: stamp(now) } } };
 
     case 'schedule':
       return { set: nothing };

@@ -56,20 +56,20 @@ The important idea: **the Mini is the only machine in the running system that ho
 
 | Source | What it gives | Who reads it | How often | Where it lands |
 |---|---|---|---|---|
-| Sanity Studio (content) | Sponsors, tips, leadership, team leads, photos, agenda, talks, settings, teams, rotation | Dashboard, directly | On change (live stream) and every 5 min | Dashboard memory and `localStorage` |
+| Sanity Studio (content) | Sponsors, tips, leadership, team leads, photos, agenda, settings, teams, rotation | Dashboard, directly | On change (live stream) and every 5 min | Dashboard memory and `localStorage` |
 | BAND calendars (iCal feeds) | Events | `fetch-calendars.sh` | Every 15 min | `.ics` files in the data folder |
 | Monday.com (GraphQL) | Tasks of two boards | `monday-sync.sh` | Wakes every 5 min, reads by setting (5 to 120 min, default 30) | `task` documents and `monday-status` in Sanity |
 | The Blue Alliance v3 and Statbotics v3 | Events, ranks, matches, ratings | `frc-sync.sh` | Wakes every 5 min, works about hourly, about every 5 min during an event | `frc-status` document in Sanity |
 | Match13 | Forecasts | `match13-sync.sh` | Every 30 min while an event is near, every 6 h otherwise | `match13.json` in the data folder, never Sanity |
 | FIRST community blog (RSS) | Headlines | `news-sync.sh` | Every 2 h | `frc-news` document in Sanity |
 | Google Drive (folder of pictures) | Extra photos | `photos-drive-sync.sh` | Every 15 min | Pictures plus a manifest in the data folder |
-| Google Slides (talk decks) | Slides | `slides-sync.sh` | Every 2 min, from 36 h before a talk | One JPEG per slide plus `manifest.json` |
+| Google Drive (folder of presentations) | Decks to play | `decks-sync.sh` | Looks every 20 s, makes pictures for a deck that is new or changed | One picture per slide plus `manifest.json` in `decks/<id>/`, and a list in `decks/manifest.json` |
 | Open-Meteo | Weather | The dashboard itself, no key | Every 15 min | Memory, with a saved reading |
 | GitHub (public repo) | Code | Control page "Update from GitHub" | On a button press | A new release folder |
 
 Calendars deserve a note: `fetch-calendars.sh` accepts only https (`webcal://` is rewritten, `http://` refused), checks for `BEGIN:VCALENDAR`, writes through a temporary file, and records per calendar when it last succeeded and why it last failed, with no address in the record. With Node 18+ on the Mini, `calendar-status.sh` runs the dashboard's own calendar and filter modules to list each calendar's next 40 events as SHOWN or HIDDEN for the Studio's Calendars page, so the page and the TV cannot disagree.
 
-Two sources are written by people rather than polled. A **Google Form and an Apps Script** (outside the repository) book talks and write `presentation` documents into Sanity. The Studio and the control page also write **request fields** (play an announcement, hold a panel, preview a theme) into the Dashboard Settings document.
+Two sources are written by people rather than polled. The Studio and the control page also write **request fields** (play an announcement, hold a panel, preview a theme) into the Dashboard Settings document.
 
 ### 3.2 The flow as a picture
 
@@ -87,7 +87,7 @@ Two sources are written by people rather than polled. A **Google Form and an App
  BAND iCal  --fetch-calendars--> data/calendars/*.ics-+  file reads over
  Match13    --match13-sync-----> data/match13.json ----+  http://localhost:8080
  Drive      --photos-drive-sync-> data/photos/ --------+  /dashboard/data/live/
- Slides     --slides-sync------> data/slides/<id>/ ----+
+ Decks      --decks-sync-------> data/decks/<id>/ -----+
  Mini kiosk.sh -----------------> data/device.json, version.txt
  Weather: the page asks api.open-meteo.com directly (no key)
  Dashboard --POST every 10 s--> control page "Now on the wall" (local only)
@@ -119,7 +119,7 @@ How the code keeps them out of sight:
 - The control page shows a key as its first four characters and dots, validates new values (a calendar link must be `https://`; `webcal://` is rewritten), and writes through the helper socket, which renames a new file over `local.env` and keeps `local.env.previous`.
 - The log download passes every line through `control/lib/redact.js`, which hides named keys, bearer tokens, JWT-shaped strings, calendar links, secret-looking query parameters and any 40+ character run of token characters.
 
-The Mac tool (`tools/teletraan/`) keeps a second copy of the keys at `~/.teletraan/secrets.env` on the owner's Mac and merges them into the Mini's `local.env` over SSH without printing them. The Google Apps Script that books talks holds its own Sanity token in Script Properties, outside the repository.
+The Mac tool (`tools/teletraan/`) keeps a second copy of the keys at `~/.teletraan/secrets.env` on the owner's Mac and merges them into the Mini's `local.env` over SSH without printing them. The Google Apps Script that lists the presentations folder (`computer/apps-script/decks-feed.gs`) holds its secret word and folder in Script Properties, outside the repository.
 
 ## 4. The Teletraan computer
 
@@ -135,7 +135,7 @@ The Mac tool (`tools/teletraan/`) keeps a second copy of the keys at `~/.teletra
   cache/                  npm cache, built Studio modules by lockfile hash
   logs/                   control.log, helper.log
 /var/lib/teletraan/data   written by scripts, mounted read-only into containers
-  calendars/ slides/ photos/ match13.json device.json version.txt mirror/
+  calendars/ decks/ photos/ match13.json device.json version.txt mirror/
   calendar-sync.txt calendar-status.json watchdog-state
 /var/backups/teletraan/   production-<date>.ndjson.gz, newest 14
 /run/teletraan/control.sock   the helper socket
@@ -159,7 +159,7 @@ All units use `/opt/teletraan` and an `ACCOUNT` placeholder that each `install-*
 | Unit | Schedule | What it does |
 |---|---|---|
 | `teletraan-calendars` | 1 min after boot, then every 15 min | Download BAND feeds (https only), then write the Calendars page document |
-| `teletraan-slides` | every 2 min | Turn the Google Slides deck of coming talks into JPEGs |
+| `teletraan-decks` | always on, looks every 20 s | Turn the decks of the Google Drive presentations folder into pictures |
 | `teletraan-monday` | every 5 min | Wake the Monday sync, which reads only when due |
 | `teletraan-frc` | every 5 min | Wake the competition sync |
 | `teletraan-match13` | every 30 min | Match13 forecasts |
@@ -172,7 +172,7 @@ All units use `/opt/teletraan` and an `ACCOUNT` placeholder that each `install-*
 | `teletraan-kiosk` | service, `Restart=always` | X server plus Chromium |
 | `teletraan-control.socket` | socket, `Accept=yes` | Starts `control-helper.sh` once per request |
 
-Every script begins with `#!/bin/bash`, a usage line, `set -euo pipefail` and `. lib.sh`. Long ones are split into parts (`monday-contract.sh`, `-requests.sh`, `-check.sh`, `-programs.sh`, and the same for `frc-*`). The "contract" file of each integration holds every address, id, label number and path into an answer in one place, so a change at the other end is a one-file edit. A script that needs a key and does not find it does nothing and says so in one line. The scripts need `curl`, `jq`, `poppler-utils` (slides), `gzip`, Python 3 (the mirror) and, for the Calendars page document, Node 18+; installing any of them needs the team mentor's yes.
+Every script begins with `#!/bin/bash`, a usage line, `set -euo pipefail` and `. lib.sh`. Long ones are split into parts (`monday-contract.sh`, `-requests.sh`, `-check.sh`, `-programs.sh`, and the same for `frc-*`). The "contract" file of each integration holds every address, id, label number and path into an answer in one place, so a change at the other end is a one-file edit. A script that needs a key and does not find it does nothing and says so in one line. The scripts need `curl`, `jq`, `poppler-utils` (decks), `gzip`, Python 3 (the mirror) and, for the Calendars page document, Node 18+; installing any of them needs the team mentor's yes.
 
 ### 4.4 The kiosk, the display and the watchdog
 
@@ -180,7 +180,7 @@ Every script begins with `#!/bin/bash`, a usage line, `set -euo pipefail` and `.
 
 The **heartbeat** closes the loop. Every 30 seconds the page writes the clock into its own title (`Teletraan I · 14:07`, `dashboard/core/heartbeat.js`). `watchdog.sh` lists the browser's pages at `127.0.0.1:9222/json` and restarts the kiosk service when there is no browser, no page, no time in the title, or the title is more than 3 minutes old. It will not restart a browser younger than 180 seconds, will not restart twice within 600 seconds, and when a third restart would fall inside one hour it stops until the next boot, so a bad deploy cannot loop forever. State is a file written through a temporary file and `mv`, and each restart is reported to Studio.
 
-`nightly.sh` restarts the kiosk at 04:00 and reboots on Sunday at 04:10, and skips either when a talk is booked to start within the next hour or is running. If Sanity cannot be asked, the restart goes ahead.
+`nightly.sh` restarts the kiosk at 04:00 and reboots on Sunday at 04:10, and asks Sanity nothing. A reboot asks the gate first.
 
 `backup-dataset.sh` exports every document through Sanity's export endpoint with `curl` and `gzip`, keeps 14 files, and records the time in `status-mini`. Image files are not in the export. The backups sit on the Mini's own disk.
 
@@ -212,7 +212,7 @@ A grid or ticker panel exports `hasContent(content)` and `mount(host, content)` 
 
 ### 5.3 Content: reading Sanity and surviving outages
 
-`core/sanity-query.js` holds one large GROQ query for the whole content shape (settings, theme, tasks, sponsors, tips, notices, subteams, people, photos, presentations, plans, filters, subthemes, custom panels, teams, screens, views, and the status documents). Details that matter:
+`core/sanity-query.js` holds one large GROQ query for the whole content shape (settings, theme, tasks, sponsors, tips, notices, subteams, people, photos, plans, filters, subthemes, custom panels, teams, screens, views, and the status documents). Details that matter:
 
 - It asks `perspective=published` on the ordinary `api.sanity.io` host, **not** the CDN host, so a publish shows at once.
 - `core/content-source.js` reads on three triggers: Sanity's **live change stream** (`/data/live/events/`; edits within 300 ms join one read), a **poll every 5 minutes**, and a retry **30 s** after a failure. A dropped `EventSource` reconnects by itself; after an error reply the code reopens it after 60 s.
@@ -280,7 +280,7 @@ One flag, `core/busy.js`, says a transition is running; the name glitch, the haw
 
 - **Takeover** (`core/takeover.js`): a full-screen alert, or timed full-screen announcements (the starting ones are set for 14:30 and 17:00), pause the normal panels. `takeoverRunning()` is asked by everything that must not start over a cover.
 - **Bar announcements** (`core/notice.js`): up to 90 characters, with a start, end, optional team and level. An 80 px plate sits under the banner with a 12 px gap and the panels shrink to make room. Two live ones alternate every 12 seconds. This is a different thing from the full-screen announcements.
-- **Talks** (`core/presentation*.js`, `panels/talk`): a booked talk takes the whole screen at its start: a title card (which waits up to `noShowMinutes` = 5 for the speaker's first press), the student's slides one picture at a time, then a thank-you card. A talk may overrun its slot by `graceMinutes` = 5. A clicker (Page Down and Page Up), the keyboard or the mouse (left click forward, right click back) moves the slides; Esc twice ends the talk. Slides are JPEGs made ahead by `slides-sync.sh` from a Google Slides deck exported as PDF and cut with `pdftoppm` (at most 60 pages), so the TV never loads Google.
+- **Talks** (`core/presentation*.js`, `panels/talk`): a deck picked from the Google Drive folder (`core/decks*.js`, `startDeckTalk`) is a talk that starts at once and takes the whole screen. The screen does not read booked talks from Sanity. The state machine still has the title card (which waits up to `noShowMinutes` = 5 for the speaker's first press), a talk's slot and the thank-you card, and a talk may overrun its slot by `graceMinutes` = 5. A clicker (Page Down and Page Up), the keyboard or the mouse (left click forward, right click back) moves the slides; Esc twice ends the talk. Slides are JPEGs made ahead by `slides-sync.sh` from a Google Slides deck exported as PDF and cut with `pdftoppm` (at most 60 pages), so the TV never loads Google.
 - **Night screen** (`core/night*.js`): black with a bouncing logo from 23:30 to 11:30 in the Look page time zone (`core/constants.js`). The picture is never turned off.
 
 ### 5.11 Other panels worth knowing
@@ -307,7 +307,7 @@ The Photo panel asks Sanity's image CDN for a width of at most 1920 (`photoMaxWi
 - **The helper socket**: the container cannot run host commands. It writes one line to `/run/teletraan/control.sock`; systemd starts `control-helper.sh` per connection, as the login user. The helper accepts a fixed list of words (`restart-kiosk`, `restart-services`, `reboot`, `status`, `sync-now <one of six names>`, `monday-check`, `monday-debug <board number>`, `write-env`, `mirror-*`, `log-bundle`) and refuses everything else with one log line. A sudoers drop-in lets that user run only `systemctl restart/start teletraan-*`, `docker restart teletraan-web`, a reboot, and the install wrapper. `write-env` checks that every line is a comment, blank or `NAME=value`, caps the input at 64 KB, keeps the previous file and renames the new one over it.
 - **Update**: Update from GitHub, upload a folder, roll back among 5 releases, with the step-by-step stream described in 4.6.
 - **Now on the wall**: the dashboard POSTs a small report (build, view, theme, layout, team, panel, page) every 10 seconds to `/control/api/now`. This is the one route that needs no PIN; it accepts the call only when `X-Real-IP` is loopback (nginx sets it to `127.0.0.1` for the local server and to the real address for the LAN server, where the route is GET-only), caps the body at 8 KB and cleans it. A report older than 40 seconds means the wall has gone quiet. The control service imports `cleanReport` from `dashboard/core/now-report-parts.js`, so the two sides share one parser.
-- **Controls write to Sanity, not to the wall**: Play announcement, hold a panel, show a view, preview a theme, pause, play a hidden transition and run the presentation test write request fields into Dashboard Settings with the write token; the wall polls them every 10 seconds, so a change normally shows within about 20.
+- **Controls write to Sanity, not to the wall**: Play announcement, hold a panel, show a view, preview a theme, pause, play a hidden transition write request fields into Dashboard Settings with the write token; the wall polls them every 10 seconds, so a change normally shows within about 20.
 - **Display tab**: the Rotation board for a phone, plus the theme of each weekday. It reads Dashboard Settings from Sanity, edits rows (move, copy, delete, undo, quick hide by team or panel), and says per row whether the wall would show or skip it by running the dashboard's own query, `viewSteps` and `hasContent` functions, so the answer is not a second copy of the rules. It saves only changed fields to the draft and publishes with a separate button. Before every save it re-reads the revision and asks before overwriting a newer Studio edit, and the write names the revision it replaces, so Sanity itself catches a race.
 - **Live preview and the mirror**: `mirror.py` (Python 3, standard library) opens the kiosk browser's DevTools socket, requests a screencast (960 by 540, JPEG quality 45) and writes the newest frame to the data folder. Because a screencast can come out black on a kiosk browser, it samples about 400 pixels of a small PNG decoded with zlib and falls back to screenshots (about 4 a second) if the picture is black. It runs only while the tab is open (it stops after 2 minutes without a ping, or 30 minutes). nginx serves the two frame files on 3229. If the mirror cannot start, the page shows a still copy of the dashboard built from the wall's report.
 - **Keys**: a form per key and per calendar (set, keep, clear), with masked display. **Monday** section: check the token, and Monday debug for one board number. **Log**: last lines and a redacted bundle download.

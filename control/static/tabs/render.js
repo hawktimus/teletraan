@@ -427,7 +427,6 @@ export function doneWords(action, body = {}) {
     announce: 'The announcements play within about 10 seconds. They wait if something else has the screen.',
     'post-announcement': 'The announcement is posted for two hours.',
     hidden: 'The wall plays ' + (body.kind === 'redEyes' ? 'red eyes' : 'the desktop reveal') + ' within about 20 seconds. It waits if something else has the screen. Last hidden transition below says what happened.',
-    'presentation-test': 'The test talk starts within about 10 seconds. It waits if something else has the screen.',
     'restart-kiosk': 'The screen is restarting.',
     'restart-services': 'The services restarted.',
     reboot: 'The Teletraan computer is rebooting. This page is back in about a minute.',

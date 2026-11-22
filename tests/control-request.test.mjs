@@ -22,10 +22,9 @@ async function check(name, test) {
 const at = new Date('2026-10-15T12:00:00Z');
 const plus = minutes => new Date(at.getTime() + minutes * 60000).toISOString().replace('.000Z', 'Z');
 
-await check('Next, Play announcement and the presentation test write the time now into their own fields', () => {
+await check('Next and Play announcement write the time now into their own fields', () => {
   assert.deepEqual(buildRequest('next', {}, at).set, { nextLookRequest: { requestedAt: '2026-10-15T12:00:00Z' } });
   assert.deepEqual(buildRequest('announce', {}, at).set, { announceRequest: { requestedAt: '2026-10-15T12:00:00Z' } });
-  assert.deepEqual(buildRequest('presentation-test', {}, at).set, { presentationTestRequest: { requestedAt: '2026-10-15T12:00:00Z' } });
 });
 
 await check('Hold this panel takes a whole number of minutes from 1 to 60 and a panel id, and ends by itself', () => {
@@ -145,7 +144,7 @@ await check('a bad request is refused before Sanity is asked, and Sanity refusin
 });
 
 await check('GET request gives the views with the names of the Team documents, the themes and the panels of the large frame', async () => {
-  const answers = { 'team"': { result: { teams: [{ code: 'prime', name: 'Hawktimus Prime', shortName: 'Prime', number: '3229' }, { code: 'nova', name: 'Hawktimus Nova', shortName: 'Nova', number: '3426' }], live: 2, talks: [{ name: 'Sam', start: '2026-10-15T22:00:00Z' }], requests: null } } };
+  const answers = { 'team"': { result: { teams: [{ code: 'prime', name: 'Hawktimus Prime', shortName: 'Prime', number: '3229' }, { code: 'nova', name: 'Hawktimus Nova', shortName: 'Nova', number: '3426' }], live: 2, requests: null } } };
   const world = await makeWorld([request], { answers: answers });
   const options = (await world.router.call('GET', '/request')).json;
   assert.deepEqual(options.views.map(view => view.key), ['general', 'prime', 'nova', 'family']);
@@ -157,7 +156,7 @@ await check('GET request gives the views with the names of the Team documents, t
   assert.ok(options.panels.includes('tasks') && options.panels.includes('monday-charts'));
   assert.ok(!options.panels.includes('banner'));
   assert.equal(options.liveAnnouncements, 2);
-  assert.equal(options.talks.length, 1);
+  assert.equal(options.talks, undefined, 'booked talks are not listed any more');
   assert.equal(options.canWrite, true);
 });
 
@@ -195,7 +194,7 @@ await check('the theme and the views of today come from the saved schedule in th
 });
 
 await check('GET request gives todayTheme, todayViews and the requests that run now', async () => {
-  const answers = { 'team"': { result: { teams: [], live: 0, talks: [], requests: { showView: { key: 'nova', until: '2026-10-20T16:00:00Z' } }, today: { themeByWeekday: { monday: 'foundry' }, viewOrder: ['prime', 'nova'], timeZone: 'UTC' } } } };
+  const answers = { 'team"': { result: { teams: [], live: 0, requests: { showView: { key: 'nova', until: '2026-10-20T16:00:00Z' } }, today: { themeByWeekday: { monday: 'foundry' }, viewOrder: ['prime', 'nova'], timeZone: 'UTC' } } } };
   const world = await makeWorld([request], { answers: answers });
   const options = (await world.router.call('GET', '/request')).json;
   assert.equal(typeof options.todayTheme, 'string');

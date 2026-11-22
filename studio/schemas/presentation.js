@@ -1,7 +1,6 @@
-// A booked talk. The booking form saves one, and a coach can add or change one
-// under Daily Agenda, with the same fields, the slides link too. Cancel a talk by
-// setting its status to Cancelled, then use Publish all.
-// The dataset is public, so the first name and the title are public too.
+// A booked talk. Not used any more: the screen no longer reads them and the sidebar has no
+// line for them. The type stays so that the documents already typed keep opening
+// (types and stored values are never removed).
 
 import { defineType, defineField } from 'sanity';
 import { teamField, tooLong, titleOf, firstNameOnly } from './fields.js';
@@ -38,6 +37,7 @@ function startWords(isoText) {
 export default defineType({
   name: 'presentation',
   title: 'Presentation',
+  description: 'Not used any more. Talks are not booked in the Studio: a deck is picked from the Google Drive folder on the TV or the control page. Documents already typed are kept and ignored.',
   type: 'document',
   fields: [
     defineField({

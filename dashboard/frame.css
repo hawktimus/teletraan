@@ -1800,7 +1800,7 @@ html:not([data-motion="full"]) .logo[data-act="fly"] .hawk-far-wing { transform:
 [data-motion="none"] .talk .chip { animation: none; }
 
 /* A slide of a picked deck fades in over the one before it (opacity only). The old picture is
-   taken out when the fade is over (presentation-run.js). A booked talk's slides change at once. */
+   taken out when the fade is over (presentation-run.js). A talk's slides change at once. */
 .talk .slide[data-fade="in"] { animation: fade-in var(--time-fade-in) linear backwards; }
 [data-motion="none"] .talk .slide { animation: none; }
 

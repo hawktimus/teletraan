@@ -80,7 +80,6 @@ export function buildStatus(facts, now = new Date()) {
     mini: {
       content: text(mini.lastContentSeenAt),
       calendars: text(mini.lastCalendarSyncAt),
-      slides: text(mini.lastSlidesFetchAt),
       monday: text(mini.lastMondaySyncAt),
       frc: text(mini.lastFrcSyncAt),
       match13: text(mini.match13At),

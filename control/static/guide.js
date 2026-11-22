@@ -34,7 +34,7 @@ export const sentences = {
   display: 'Choose what the wall plays. The four cards at the top act at once. Changes to the rows and the themes reach the wall only after you press Save to draft and then Publish to the wall.',
   'display.onwall': 'What the wall plays now. Pause, Next and Back to schedule move the rotation, and Show on the wall holds a view or a panel for the minutes you choose.',
   'display.theme-card': 'The theme on the wall now. Pick another and press Switch to this theme to hold it for the minutes you choose, then the wall goes back to its schedule.',
-  'display.announce': 'A short announcement under the banner, the announcements and the test talk, and the hidden transitions. You will not need them every day.',
+  'display.announce': 'A short announcement under the banner, the announcements, and the hidden transitions. You will not need them every day.',
   'display.preview': 'A picture of the row you pick. It changes nothing on the wall. The buttons under it save and publish this page.',
   'display.rotation': 'The list the wall plays, top to bottom. Change it here, then press Save to draft and Publish to the wall.',
   'display.rows': 'Each card is one row of the loop. Up and Down move a row. Nothing reaches the wall until you publish.',

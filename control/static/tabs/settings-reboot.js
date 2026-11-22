@@ -39,7 +39,7 @@ export function rebootHtml(page, now = new Date()) {
     switchHtml({ checked: setting.rebootEnabled, label: 'Reboot on a schedule', attrs: 'data-enabled' }) +
     '<label class="pick"><span>Reboot at</span><input type="time" data-time value="' + esc(setting.rebootTime) + '"></label>' +
     '<div class="pick"><span>Reboot on</span>' + days + '</div>' +
-    switchHtml({ checked: setting.rebootSkipBusy, label: 'Not while a talk, an alert or an announcement is playing', attrs: 'data-skip' }) +
+    switchHtml({ checked: setting.rebootSkipBusy, label: 'Not while an alert or an announcement is playing', attrs: 'data-skip' }) +
     '<label class="pick"><span>Wait up to (minutes), then reboot anyway</span><input type="number" inputmode="numeric" min="1" max="120" step="1" data-wait value="' + esc(setting.rebootWaitMinutes) + '"></label>' +
     '<div data-draft></div>' +
     '<p class="note">' + 'The Studio shows the same values in Dashboard Settings, Advanced, Scheduled reboot.' + zone + ' The screen goes dark while the computer restarts.</p>' +

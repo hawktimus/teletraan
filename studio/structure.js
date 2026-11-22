@@ -4,7 +4,7 @@
 // Calendar events are not edited here: they come from the team's BAND
 // calendars, and the Calendars page shows what they bring in. Tasks are not typed
 // here either: they come from the team's Monday boards, and the Monday page shows them, read only. The task and
-// milestone types have no line: nobody changes them in the Studio. The types behind the Today page (the agenda, the talks, the meeting days and the
+// milestone types have no line: nobody changes them in the Studio. The types behind the Today page (the agenda and the
 // announcements), the Look page (the dated rules and the subthemes) and the old Screens have no line of their own: a
 // link on their page opens them (notInSidebar in tests/schemas.test.mjs gives the reason for each). Three types are kept in the schema with no line
 // here, so the documents already typed keep opening: extraEvent (Events Calendar,
@@ -37,7 +37,6 @@
 // '@sanity/icons/Home', because the package no longer lists them in its main file.
 // A new kind of document needs a line here: tests/schemas.test.mjs fails without it.
 
-import { ArchiveIcon } from '@sanity/icons/Archive';
 import { BellIcon } from '@sanity/icons/Bell';
 import { BulbOutlineIcon } from '@sanity/icons/BulbOutline';
 import { CalendarIcon } from '@sanity/icons/Calendar';
@@ -52,13 +51,11 @@ import { FilterIcon } from '@sanity/icons/Filter';
 import { HeartIcon } from '@sanity/icons/Heart';
 import { HomeIcon } from '@sanity/icons/Home';
 import { ImagesIcon } from '@sanity/icons/Images';
-import { MicrophoneIcon } from '@sanity/icons/Microphone';
 import { MoonIcon } from '@sanity/icons/Moon';
 import { PlayIcon } from '@sanity/icons/Play';
 import { RocketIcon } from '@sanity/icons/Rocket';
 import { EditIcon } from '@sanity/icons/Edit';
 import { InfoOutlineIcon } from '@sanity/icons/InfoOutline';
-import { PresentationIcon } from '@sanity/icons/Presentation';
 import { ProjectsIcon } from '@sanity/icons/Projects';
 import { SparkleIcon } from '@sanity/icons/Sparkle';
 import { StackIcon } from '@sanity/icons/Stack';
@@ -122,33 +119,13 @@ const byOrder = { field: 'order', direction: 'asc' };
 const byName = { field: 'name', direction: 'asc' };
 const newestDateFirst = { field: 'date', direction: 'desc' };
 const newestUploadFirst = { field: '_createdAt', direction: 'desc' };
-const byFirstTalk = { field: 'firstSlotAt', direction: 'asc' };
-const soonestStart = { field: 'start', direction: 'asc' };
-const latestStart = { field: 'start', direction: 'desc' };
 
-// What a filter keeps. $since is a day ago and $now is the time the sidebar opened. Both are
-// worked out when the sidebar opens in structure() below: Studio keeps a list live, and a live
-// filter cannot use now(). They are UTC text, like the dates in the documents, so comparing
-// them as text compares the times. A talk with no start yet stays under Upcoming, so it can
-// still be found.
-const startedRecently = '!defined(start) || start >= $since';
-const startedEarlier = 'defined(start) && start < $since';
+// A list entry may carry a filter. The query can use $since (a day ago) and $now (the time the sidebar opened), worked
+// out in structure() below, because a live Studio list cannot use now(). They are UTC text, like the dates in the documents.
 
-// Today and the other pages that open lists in the next pane give their links an id. The agenda, the booked talks
-// and the meeting days sit behind the Today page, and one announcement opens from its card.
+// Today and the other pages that open lists in the next pane give their links an id. The agenda sits behind the
+// Today page, and one announcement opens from its card.
 const agendaList = { kind: 'list', title: 'Agenda items', id: 'agenda', type: 'plan', sort: newestDateFirst, add: ['newPlan'] };
-const meetingDaysList = { kind: 'list', title: 'Meeting days', id: 'meetingDays', type: 'presentationDay', sort: byFirstTalk, add: ['newPresentationDay'] };
-const talksFolder = {
-  kind: 'group',
-  title: 'Presentations',
-  icon: PresentationIcon,
-  id: 'presentations',
-  add: ['newPresentation'],
-  entries: [
-    { kind: 'list', title: 'Upcoming', icon: MicrophoneIcon, id: 'upcomingTalks', type: 'presentation', sort: soonestStart, filter: startedRecently, add: ['newPresentation'] },
-    { kind: 'list', title: 'Past', icon: ArchiveIcon, id: 'pastTalks', type: 'presentation', sort: latestStart, filter: startedEarlier, add: ['newPresentation'] },
-  ],
-};
 export const announcementChild = 'announcement-';
 const subthemesList = { kind: 'list', title: 'Subthemes', id: 'subthemes', type: 'subtheme', sort: byName, add: ['newSubtheme'] };
 
@@ -241,16 +218,14 @@ function photosOf(S, times) {
   return () => paneOf(S, photoList, times);
 }
 
-// What a link on the Today page opens: the agenda, the booked talks, the meeting days, or one announcement in its
+// What a link on the Today page opens: the agenda, or one announcement in its
 // full form. The function it gives back is handed the id of the link.
 function todayChildren(S, times) {
   return childId => {
     if (childId.indexOf(announcementChild) === 0) {
       return S.document().title('Announcement').schemaType('announcement').documentId(childId.slice(announcementChild.length));
     }
-    if (childId === 'agenda') return paneOf(S, agendaList, times);
-    if (childId === 'meetingDays') return paneOf(S, meetingDaysList, times);
-    return groupList(S, talksFolder, times);
+    return paneOf(S, agendaList, times);
   };
 }
 

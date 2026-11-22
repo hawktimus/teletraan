@@ -8,12 +8,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, finish } from './helpers/runner.mjs';
-import { decideRepair, decideStart, meetingNow, settingsOf, talkSoon, words } from '../computer/scripts/refresh-plan.mjs';
+import { decideRepair, decideStart, meetingNow, settingsOf, words } from '../computer/scripts/refresh-plan.mjs';
 
 const zone = 'America/New_York';
 // 2026-11-17 is a Tuesday. 13:30 Eastern is 18:30 UTC in November.
 const at = (hhmm, day = '2026-11-17') => Date.parse(day + 'T' + hhmm + ':00Z');
-const base = { settings: {}, zone: zone, state: {}, talks: [], events: [] };
+const base = { settings: {}, zone: zone, state: {}, events: [] };
 const start = (hhmmUtc, extra = {}, day) => decideStart(Object.assign({}, base, { now: at(hhmmUtc, day) }, extra));
 
 test('the settings start on, at 13:30, on weekdays, and an odd value falls back to that', () => {
@@ -43,18 +43,6 @@ test('it is off when the setting says so, and runs once a day', () => {
   assert.equal(start('18:35', { state: { lastSlot: '2026-11-17' } }).start, false);
   assert.match(start('18:35', { state: { lastSlot: '2026-11-17' } }).reason, /Already done today/);
   assert.equal(start('18:35', { state: { lastSlot: '2026-11-16' } }).start, true, 'yesterday does not count');
-});
-
-test('a booked talk within 30 minutes, or one still on, holds it back; a talk later does not', () => {
-  const talk = start => ({ start: at(start), minutes: 15 });
-  assert.equal(talkSoon([talk('18:50')], at('18:30')), true);
-  assert.equal(talkSoon([talk('19:10')], at('18:30')), false, '40 minutes away');
-  assert.equal(talkSoon([talk('18:20')], at('18:30')), true, 'it started and is still on');
-  assert.equal(talkSoon([talk('18:00')], at('18:30')), false, 'it is over');
-  const held = start('18:30', { talks: [talk('18:50')] });
-  assert.deepEqual([held.start, held.wait], [false, true]);
-  assert.match(held.reason, /talk/);
-  assert.equal(start('19:25', { talks: [talk('18:50')] }).start, true, 'and it starts when the talk is over');
 });
 
 test('a Meetings event holds it back from 15 minutes before to 10 minutes after, and other kinds do not', () => {

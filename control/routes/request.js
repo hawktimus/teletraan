@@ -2,7 +2,7 @@
 // into Dashboard Settings, where the screen reads it (support/requests.js lists the actions and
 // what each one writes). GET /control/api/request gives the tab its choices: the views with the
 // names of the Team documents, the themes, the panels that can be held, the announcements that are
-// live and the talks booked for the next day, the theme the schedule plays today, and the requests that run now.
+// live, the theme the schedule plays today, and the requests that run now.
 
 import { Refusal, mount, readJson, send } from '../support/http.js';
 import { makeSanity } from '../support/sanity.js';
@@ -12,7 +12,6 @@ import { panelNamesOf } from '../support/names.js';
 
 const optionsQuery = '{ "teams": *[_type == "team"] | order(order asc) { code, name, shortName, number }, ' +
   '"live": count(*[_type == "announcement" && dateTime(start) <= dateTime(now()) && dateTime(end) > dateTime(now())]), ' +
-  '"talks": *[_type == "presentation" && status == "scheduled" && dateTime(start) > dateTime(now()) - 14400 && dateTime(start) < dateTime(now()) + 86400] | order(start asc) { name, topic, start }, ' +
   '"requests": *[_id == "dashboardSettings"][0] { holdPanel, showView, previewTheme, pauseRotation, hideSubtheme }, ' +
   '"today": { "themeByWeekday": *[_id == "dashboardSettings"][0].themeByWeekday, "viewOrder": *[_id == "dashboardSettings"][0].viewOrder, "timeZone": *[_id == "theme"][0].timeZone } }';
 
@@ -23,20 +22,6 @@ function viewNames(teams) {
     if (team && typeof team.code === 'string') named[team.code] = team.shortName || team.name || team.code;
   });
   return viewKeys.map(key => ({ key: key, name: named[key] || plainViewNames[key] }));
-}
-
-// The screen ignores the test while Run presentations is off, so the page says so instead of reporting a send that does nothing.
-// A read that fails is not a reason to stop: the write will say what is wrong.
-async function checkPresentationsOn(ctx) {
-  let enabled;
-  try {
-    enabled = await makeSanity(ctx).query('*[_id == "dashboardSettings"][0].presentationsEnabled');
-  } catch (error) {
-    return;
-  }
-  if (enabled === false) {
-    throw new Refusal(409, 'Run presentations is switched off, so the screen would ignore the test. Switch it on under Dashboard Settings, Presentations in the Studio, publish, then press the button again.');
-  }
 }
 
 // The screen ignores a push while Allow hidden transitions is off, so the page says so
@@ -71,7 +56,6 @@ export function register(router, ctx) {
       panels: panels,
       panelNames: panelNamesOf(panels),
       liveAnnouncements: typeof found.live === 'number' ? found.live : null,
-      talks: Array.isArray(found.talks) ? found.talks : [],
       requests: found.requests || null,
       todayTheme: todayThemeOf(found.today, found.today && found.today.timeZone),
       todayViews: todayViewsOf(found.today),
@@ -83,7 +67,6 @@ export function register(router, ctx) {
   mount(router, ctx, 'POST', '/request', async (req, res) => {
     const body = await readJson(req);
     const built = buildRequest(body.action, body, new Date());
-    if (body.action === 'presentation-test') await checkPresentationsOn(ctx);
     if (body.action === 'hidden') await checkHiddenOn(ctx);
     await makeSanity(ctx).mutate(mutationsFor(built));
     const until = (built.set && ((built.set.previewTheme && built.set.previewTheme.until) || (built.set.showView && built.set.showView.until))) || '';

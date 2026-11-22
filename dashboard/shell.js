@@ -171,7 +171,7 @@ async function run() {
       startOptional('./core/subthemes-layer.js', module => module.startSubthemes(getContent));
       startOptional('./core/subtheme-preset-layer.js', module => module.startPresetSubthemes(getContent));
 
-      // A booked talk takes the whole screen when its time comes. After the takeovers, so that an announcement
+      // A talk takes the whole screen when it starts. After the takeovers, so that an announcement
       // that comes due on the same second plays first, and the title card waits for it
       startOptional('./core/presentation-run.js', module => module.startPresentations(getContent));
 
@@ -180,9 +180,6 @@ async function run() {
 
       // The keys of the copy on the Raspberry Pi, only when its launcher asks for them (core/console-keys.js)
       if (consoleKeysOn(window.location.search)) startOptional('./core/console-keys-run.js', module => module.startConsoleKeys());
-
-      // The Run presentation test button in the Studio. After the talk screen, which it starts the sample talk on
-      startOptional('./core/presentation-test-run.js', module => module.startPresentationTestRunner(getContent));
 
       // The Preview buttons in the Studio. After the ones it asks about
       startOptional('./core/preview-run.js', module => module.startPreviewRunner(getContent));

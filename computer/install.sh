@@ -222,11 +222,11 @@ docker run --rm -u "$account_uid:$account_gid" \
   node control/bin/install-tree.js /staging "${install_args[@]}"
 
 # The data folder is mounted by the compose file, which does not create it. Root may own it from an older install, so
-# it is given to the login user, with the folders the calendar and slides timers write into.
+# it is given to the login user, with the folders the calendar and decks jobs write into.
 data_dir=${TELETRAAN_DATA_DIR:-$(sed -n "s/^TELETRAAN_DATA=['\"]\{0,1\}\([^'\"]*\)['\"]\{0,1\}$/\1/p" "$root/local.env" | tail -n 1)}
 data_dir=${data_dir:-/var/lib/teletraan/data}
 step "Make the data folder $data_dir"
-install -d -m 755 "$data_dir" "$data_dir/calendars" "$data_dir/slides" "$data_dir/mirror"
+install -d -m 755 "$data_dir" "$data_dir/calendars" "$data_dir/decks" "$data_dir/mirror"
 chown -R "$account:$group" "$data_dir"
 
 # 5. The containers read through current, so they are made again, and the screen starts on the new build

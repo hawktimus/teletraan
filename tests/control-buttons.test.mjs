@@ -17,7 +17,6 @@ import { createHelper } from '../control/lib/helper-client.js';
 import { actions, buildRequest } from '../control/support/requests.js';
 import { doneWords, outcome } from '../control/static/tabs/render.js';
 import { api, showResult } from '../control/static/tabs/api.js';
-import { makePresentationTestRunner, tidyTestRequest } from '../dashboard/core/presentation-test.js';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const read = name => fs.readFileSync(repo + name, 'utf8');
@@ -57,7 +56,7 @@ test('a helper that answers ok, failed or refused is told apart, and its reason 
   assert.ok(world.logged.some(line => line.includes('(ENOENT)')), 'the log has the code');
 });
 
-test('Run presentation test: a missing key, a refused key, no network and an empty answer each give their own sentence', async () => {
+test('Play announcement: a missing key, a refused key, no network and an empty answer each give their own sentence', async () => {
   const cases = [
     { name: 'no key', env: '', status: 503, words: /SANITY_WRITE_TOKEN is not set/ },
     { name: 'refused', reply: { ok: false, status: 401 }, status_: 502, words: /^Sanity refused the write\. Check SANITY_WRITE_TOKEN in Settings, Keys\.$/ },
@@ -74,51 +73,11 @@ test('Run presentation test: a missing key, a refused key, no network and an emp
       if (item.offline) throw new Error('the network is down');
       return { ok: item.reply.ok, status: item.reply.status, json: async () => ({ results: item.reply.results }) };
     };
-    const answer = await world.router.call('POST', '/request', { body: { action: 'presentation-test' } });
+    const answer = await world.router.call('POST', '/request', { body: { action: 'announce' } });
     assert.equal(answer.status, item.status || item.status_, item.name);
     assert.match(answer.json.error, item.words, item.name);
     assert.ok(!JSON.stringify(answer).includes('skFAKEtoken'), item.name + ': the key is never in the answer');
   }
-});
-
-test('Run presentation test says so when Run presentations is off, and writes nothing then', async () => {
-  const off = await makeWorld([requestRoute], { answers: { presentationsEnabled: { result: false } } });
-  const refused = await off.router.call('POST', '/request', { body: { action: 'presentation-test' } });
-  assert.equal(refused.status, 409);
-  assert.match(refused.json.error, /Run presentations is switched off/);
-  assert.ok(!off.fetched.some(item => item.url.includes('/data/mutate/')), 'nothing was written');
-
-  const on = await makeWorld([requestRoute], { answers: { presentationsEnabled: { result: true } } });
-  assert.equal((await on.router.call('POST', '/request', { body: { action: 'presentation-test' } })).status, 200);
-  assert.ok(on.fetched.some(item => item.url.includes('/data/mutate/')));
-
-  const unknown = await makeWorld([requestRoute], { offline: true });
-  const answer = await unknown.router.call('POST', '/request', { body: { action: 'presentation-test' } });
-  assert.match(answer.json.error, /could not reach Sanity/, 'a read that fails does not hide the real reason');
-});
-
-test('the field the button writes is the field the screen reads, and the screen answers a request that is a few seconds old but not one a minute old', async () => {
-  const now = new Date('2026-10-16T12:00:00Z');
-  const written = buildRequest('presentation-test', {}, now).set.presentationTestRequest;
-  assert.deepEqual(Object.keys(buildRequest('presentation-test', {}, now).set), ['presentationTestRequest']);
-  assert.equal(tidyTestRequest(written).requestedAt, '2026-10-16T12:00:00Z');
-
-  async function run(secondsLater) {
-    const started = [];
-    const runner = makePresentationTestRunner({
-      getContent: () => ({ settings: { presentationsEnabled: true, presentationTestRequest: written } }),
-      storage: null,
-      takeoverRunning: () => false, demoRunning: () => false, nightIsUp: () => false, hiddenPlaying: () => false,
-      loadSampleTalk: async () => ({ id: 'sample' }),
-      startTalk: talk => started.push(talk),
-    });
-    runner.look(new Date(now.getTime() + secondsLater * 1000));
-    await runner.whenStarted();
-    return started.length;
-  }
-  assert.equal(await run(10), 1, 'seen within the 10 second poll');
-  assert.equal(await run(59), 1);
-  assert.equal(await run(90), 0, 'a request a minute old is ignored, which is why the screen polls every 10 seconds and not every 5 minutes');
 });
 
 test('every action and every helper word has words for Done, and a failure shows the reason in red', () => {
@@ -126,7 +85,7 @@ test('every action and every helper word has words for Done, and a failure shows
   ['restart-kiosk', 'restart-services', 'reboot', 'sync-now', 'refresh'].forEach(word => assert.notEqual(doneWords(word, { target: 'frc' }), 'It worked.', word));
   assert.equal(doneWords('hold', { minutes: 1 }).startsWith('The panel is held for 1 minute.'), true);
   assert.deepEqual(outcome({ ok: true }, 'next'), { state: 'done', words: 'Done. ' + doneWords('next') });
-  assert.deepEqual(outcome({ ok: false, error: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' }, 'presentation-test'), { state: 'bad', words: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' });
+  assert.deepEqual(outcome({ ok: false, error: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' }, 'announce'), { state: 'bad', words: 'Sanity refused the write. Check SANITY_WRITE_TOKEN in Settings, Keys.' });
   assert.equal(outcome({ ok: false }, 'next').state, 'bad');
   assert.ok(outcome({ ok: false }, 'next').words.length > 20, 'even a failure with no reason says something');
 });
@@ -136,7 +95,7 @@ test('a reboot or a services restart that cuts the connection says to wait, and 
   assert.equal(outcome(lost, 'reboot').state, 'wait');
   assert.equal(outcome(lost, 'restart-services').state, 'wait');
   assert.equal(outcome(lost, 'restart-kiosk').state, 'bad');
-  assert.equal(outcome(lost, 'presentation-test').state, 'bad');
+  assert.equal(outcome(lost, 'announce').state, 'bad');
   assert.ok(/reload this page/.test(outcome(lost, 'reboot').words));
 });
 

@@ -7,7 +7,7 @@ says which. Leave it blank when it is for both teams. Blank is the Both choice.
 ## The field
 
 These have a Team field: Tasks, Agenda items, Team leads, Leadership, Sponsors, Tips
-and News, Extra panels, Meeting days and booked talks. It is
+and News and Extra panels. It is
 a row of choices: Both, then one for each team that is Active under Teams, with the
 name of the team. Both is picked to start with, and it stores nothing. No team is
 ever required, and a page of things for both teams has no team chip in its header.
@@ -45,14 +45,11 @@ shows for both teams.
   the team on the screen.
 - Daily Agenda shows the first plan that is dated today and is for the team on the screen.
   A plan for the other team is skipped.
-- The talks in Daily Agenda are the ones for the team on the screen. A talk for the other
-  team is not listed there, but it still runs at its start time, whichever team is
-  showing, because a booked talk takes the whole screen.
 - A subteam lead's portrait on Team Leads and Subteam roster is the Photo on the
   Team lead entry. An entry with no photo uses the person in Leadership with the
   same name. If that person is for the other team, the lead shows the silhouette.
-- A Meeting day has the field, but the screen does not read Meeting days, so a team
-  on a Meeting day changes nothing on the screen.
+- Meeting days and booked talks still have the field, but they are not used any more,
+  so a team on one changes nothing on the screen.
 - The look of Nova (the purple metal hawk and the outline on its team number) follows the team on the screen,
   not the Team of an item. An item for Both on the Nova screen is drawn in Nova's colors.
 - A team that has been deleted counts as no team, so its items show for both.

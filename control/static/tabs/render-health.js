@@ -63,7 +63,6 @@ export function readsHtml(data, now = new Date()) {
   return card('Last reads', '<dl>' +
     row('Content', esc(agoText(mini.content, now))) +
     row('Calendars', esc(agoText(mini.calendars, now))) +
-    row('Slides', esc(agoText(mini.slides, now))) +
     row('Monday', esc(agoText(mini.monday, now))) +
     row('Monday reads today', esc(data.mondayCallsToday === null || data.mondayCallsToday === undefined ? 'not known' : data.mondayCallsToday)) +
     row('Competition data', esc(agoText(mini.frc, now))) +

@@ -155,12 +155,11 @@ export function hiddenPartHtml(state, report) {
     '<div class="hidden-run" data-hidden-run>' + hiddenRunHtml(report) + '</div>';
 }
 
-// request is the answer of GET /control/api/request: the announcements that are live and the talks booked for the next day
+// request is the answer of GET /control/api/request: the announcements that are live
 export function announceHtml(state, draft, report, request = {}) {
   const off = state.canWrite ? '' : ' disabled';
   const teams = [{ value: '', title: 'Both teams' }].concat((state.teams || []).map(team => ({ value: team.code, title: team.name })));
   const live = request.liveAnnouncements === null || request.liveAnnouncements === undefined ? 'not known' : request.liveAnnouncements;
-  const talks = (request.talks || []).map(talk => '<li>' + esc(talk.name || talk.topic || 'Talk') + ', ' + esc(talk.start) + '</li>').join('');
 
   return '<details class="more-tools announce-card" data-more="announce"><summary aria-describedby="lead-display-announce">Announce and effects</summary>' + lead('display.announce') +
     '<div class="more-body">' +
@@ -175,9 +174,8 @@ export function announceHtml(state, draft, report, request = {}) {
     '<button type="button" class="act quiet" data-action="post-announcement"' + off + '>Post for 2 hours</button></div></div>' +
 
     '<div><h3>Messages</h3><p class="word" data-live-count>' + esc(live) + ' live now.</p>' +
-    '<div class="buttons"><button type="button" class="act quiet" data-action="announce"' + off + '>Play announcement</button>' +
-    '<button type="button" class="act quiet" data-action="presentation-test"' + off + '>Run presentation test</button></div>' +
-    (talks ? '<ul class="rows">' + talks + '</ul>' : '<p class="word">No talks booked in the next day.</p>') + '</div>' +
+    '<div class="buttons"><button type="button" class="act quiet" data-action="announce"' + off + '>Play announcement</button></div>' +
+    '</div>' +
 
     '<div data-hidden-part>' + hiddenPartHtml(state, report) + '</div>' +
     '</div></details>';

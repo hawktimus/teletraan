@@ -9,7 +9,7 @@
 //      while it is open, so a file dropped in the folder shows without anyone asking.
 //   3. A deck is picked on the TV, or on the control page, which hands the pick to the screen
 //      with the next report of the wall (tidyDeckRequest, shouldPlayDeck).
-//   4. The deck becomes a talk that starts now (deckTalk) and runs like a booked talk: title
+//   4. The deck becomes a talk that starts now (deckTalk) and runs as a talk: title
 //      card, slides, thanks card, the same keys (core/presentation.js).
 
 import { shouldRunDemo } from './demo.js';
@@ -112,7 +112,7 @@ export function checkedText(list, now) {
   return 'Folder checked more than an hour ago';
 }
 
-// A picked deck as a talk that starts now. Its id is not the id of any booked talk, deck names
+// A picked deck as a talk that starts now. Its id starts with deck-, and deck names
 // the folder of its pictures (slidesFolder in presentation-state.js), and its long slot means
 // only the speaker ends it.
 export function deckTalk(deck, now) {

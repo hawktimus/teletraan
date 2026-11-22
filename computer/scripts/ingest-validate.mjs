@@ -5,7 +5,7 @@
 //
 // Pure functions, so tests/ingest-validate.test.mjs can run them.
 
-export const listKeys = ['tasks', 'people', 'subteams', 'sponsors', 'tipsAndNews', 'plans', 'presentations', 'photos', 'teams', 'customPanels', 'calendarFilters', 'subthemes', 'screens', 'views', 'milestones', 'notices'];
+export const listKeys = ['tasks', 'people', 'subteams', 'sponsors', 'tipsAndNews', 'plans', 'photos', 'teams', 'customPanels', 'calendarFilters', 'subthemes', 'screens', 'views', 'milestones', 'notices'];
 // Most rows listed for one source; the count is always the whole number
 export const mostListed = 200;
 
@@ -38,8 +38,8 @@ export function isoInZone(text, zone) {
 }
 
 // Fields that hold a date and time, by kind of row
-const dateTimeFields = { presentation: ['start'], notice: ['start', 'end'], task: ['finishedOn', 'expires'], photo: ['expires'] };
-const listToKind = { presentations: 'presentation', notices: 'notice', tasks: 'task', photos: 'photo' };
+const dateTimeFields = { notice: ['start', 'end'], task: ['finishedOn', 'expires'], photo: ['expires'] };
+const listToKind = { notices: 'notice', tasks: 'task', photos: 'photo' };
 // Fields that hold a plain date
 const plainDateFields = { tasks: ['startDate', 'dueDate', 'completedOn'], plans: ['date'] };
 

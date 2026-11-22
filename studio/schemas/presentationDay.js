@@ -1,6 +1,6 @@
-// A meeting day with presentation slots. Coaches add one for each meeting that
-// has talks. A day with no document here has no slots. The talks that get booked
-// are in presentation.js.
+// A meeting day with presentation slots. Not used any more: nothing reads it and the sidebar has no
+// line for it. The type stays so that the documents already typed keep opening
+// (types and stored values are never removed).
 //
 // A slot starts at the first talk and then every slotMinutes until the last
 // talk, which is a slot itself.
@@ -39,6 +39,7 @@ async function lastTalkFitsDay(value, context) {
 export default defineType({
   name: 'presentationDay',
   title: 'Meeting days',
+  description: 'Not used any more. Meeting days and booked talks are gone: a deck is picked from the Google Drive folder on the TV or the control page. Documents already typed are kept and ignored.',
   type: 'document',
   fields: [
     defineField({

@@ -1,4 +1,4 @@
-// The requests the screen answers: Play announcement, Run presentation test, Next look
+// The requests the screen answers: Play announcement, Next look
 // now, Preview competition, the Play buttons of the hidden transitions and the Preview
 // buttons. Each one is a hidden field of Dashboard Settings that holds the time it was
 // asked for. The screen plays a request that is a minute old at most and that it has not
@@ -19,10 +19,6 @@ export const settingsDocument = { type: 'dashboardSettings', id: 'dashboardSetti
 
 export function announceRequest() {
   return { announceRequest: { requestedAt: new Date().toISOString() } };
-}
-
-export function presentationTestRequest() {
-  return { presentationTestRequest: { requestedAt: new Date().toISOString() } };
 }
 
 export function nextLookRequest() {

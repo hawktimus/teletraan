@@ -21,20 +21,20 @@ test('a zone-less time is read in the zone of the Look page, in winter and in su
   assert.equal(isoInZone('not a time', 'America/New_York'), null);
 });
 
-test('a talk, an announcement and a task with a time of no zone are repaired and listed, and a good one is left alone', () => {
+test('a photo, an announcement and a task with a time of no zone are repaired and listed, and a good one is left alone', () => {
   const answer = Object.assign({}, rich, {
-    presentations: [{ id: 'p1', name: 'Sam', start: '2026-11-17T18:00' }, { id: 'p2', name: 'Lee', start: '2026-11-17T23:00:00.000Z' }],
+    photos: [{ _id: 'p1', expires: '2026-11-17T18:00' }, { _id: 'p2', expires: '2026-11-17T23:00:00.000Z' }],
     notices: [{ _id: 'n1', text: 'Bring the form', start: '2026-11-17T09:00', end: 'tomorrow' }],
   });
   const checked = checkContent(answer, null);
   assert.equal(checked.ok, true);
-  assert.equal(checked.result.presentations[0].start, '2026-11-17T23:00:00.000Z');
-  assert.equal(checked.result.presentations[1].start, '2026-11-17T23:00:00.000Z', 'a time with a zone is not touched');
+  assert.equal(checked.result.photos[0].expires, '2026-11-17T23:00:00.000Z');
+  assert.equal(checked.result.photos[1].expires, '2026-11-17T23:00:00.000Z', 'a time with a zone is not touched');
   assert.equal(checked.result.notices[0].start, '2026-11-17T14:00:00.000Z');
   assert.equal(checked.result.notices[0].end, 'tomorrow', 'what cannot be repaired is left as it is');
-  assert.equal(answer.presentations[0].start, '2026-11-17T18:00', 'the answer that was passed in is not changed');
+  assert.equal(answer.photos[0].expires, '2026-11-17T18:00', 'the answer that was passed in is not changed');
   assert.equal(checked.problems.length, 3);
-  assert.deepEqual(checked.problems.map(problem => problem.action.split(' ')[0]), ['repaired', 'repaired', 'left']);
+  assert.deepEqual(checked.problems.map(problem => problem.action.split(' ')[0]), ['repaired', 'left', 'repaired']);
 });
 
 test('an answer that is empty, not an object, or has a list that is not a list is refused with the reason', () => {
@@ -78,7 +78,7 @@ test('the file has the whole count, the first rows of each source, and no more t
 
 test('the sync service writes data-problems.json, and an empty answer after a good one leaves content.json as it was and counts as a failure', async () => {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-ingest-'));
-  let answer = Object.assign({}, rich, { presentations: [{ id: 'p1', name: 'Sam', start: '2026-11-17T18:00' }] });
+  let answer = Object.assign({}, rich, { photos: [{ _id: 'p1', expires: '2026-11-17T18:00' }] });
   let count = 0;
   const fetchFake = async url => {
     const address = String(url);

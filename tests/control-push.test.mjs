@@ -263,7 +263,7 @@ await check('the top of the page: the strip, three cards, 5 hold lengths with 15
   const names = namesOf(state, { tasks: 'Tasks' });
   const wall = onWallHtml(state, draft, choices, names);
   const theme = themeCardHtml(state, draft, names);
-  const announce = announceHtml(state, draft, null, { liveAnnouncements: 2, talks: [{ name: 'Ada', start: '10:00' }] });
+  const announce = announceHtml(state, draft, null, { liveAnnouncements: 2 });
   const strip = activeHtml(state.pushes, state, names);
   const all = wall + theme + announce + strip;
 
@@ -290,9 +290,10 @@ await check('the top of the page: the strip, three cards, 5 hold lengths with 15
   assert.ok(!/<details/.test(wall + theme), 'the first two cards are not folded');
   assert.match(announce, /<details class="more-tools announce-card" data-more="announce">/);
   assert.ok(!/<details[^>]* open/.test(announce), 'closed to start with');
-  ['push-announcement', 'post-announcement', 'announce', 'presentation-test'].forEach(action => assert.ok(announce.includes('data-action="' + action + '"'), action));
+  ['push-announcement', 'post-announcement', 'announce'].forEach(action => assert.ok(announce.includes('data-action="' + action + '"'), action));
   assert.equal((announce.match(/data-action="push-hidden"/g) || []).length, 2);
-  assert.ok(announce.includes('data-hidden-run') && announce.includes('2 live now') && announce.includes('Ada'));
+  assert.ok(announce.includes('data-hidden-run') && announce.includes('2 live now'));
+  assert.ok(!announce.includes('talks booked') && !announce.includes('Run presentation test'), 'no booked talks and no test button');
   assert.match(announce, /maxlength="90"/);
   assert.ok(!/[–—!]/.test(all.replace(/<[^>]*>/g, '')), 'plain wording');
   assert.ok(activeHtml([], state, names).includes('nothing'));

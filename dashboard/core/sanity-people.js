@@ -1,7 +1,6 @@
-// People, subteams, photos, talks and calendar filters (part of sanity.js).
+// People, subteams, photos and calendar filters (part of sanity.js).
 
-import { defaultFilter, defaultPerson, defaultTalk, filterActions, limits, photoFits, talkStatuses } from '../config.js';
-import { keepInRange } from './content.js';
+import { defaultFilter, defaultPerson, filterActions, photoFits } from '../config.js';
 import { keptSize, photoFocus, screenPhotoUrl, tidyPhoto } from './images.js';
 import { trimText } from './text.js';
 import { cleanObject, objectsIn, plainDate } from './sanity-tasks.js';
@@ -85,44 +84,6 @@ function normalizePhoto(raw) {
 export function photosFrom(list) {
   return objectsIn(list).map(normalizePhoto).filter(photo => photo !== null);
 }
-
-// The same pattern as the Slides link field in studio/schemas/presentation.js
-const deckLinkPattern = /^https:\/\/docs\.google\.com\/presentation\/d\/[A-Za-z0-9_-]+/;
-
-// A talk from Studio becomes { id, name, subteam, topic, start, minutes, deckLink,
-// status }. The name, subteam and title lose the spaces at their ends. The subteam
-// is left out when it is empty, and so is a link that is not a Google Slides link
-// (the link is checked as it is typed, with no trimming). start is a Date and
-// minutes is 5 to 30, 15 when it cannot be used. A status that is not one of the
-// four is scheduled. A talk is for the team in its team field, and for both when there is
-// none. A talk with no id or no start that can be read is dropped, since nothing could find
-// it or say when it runs. A talk that is cancelled, done or skipped stays, and
-// core/presentation.js leaves it out.
-function normalizeTalk(raw) {
-  const start = typeof raw.start === 'string' ? new Date(raw.start) : null;
-  if (typeof raw.id !== 'string' || raw.id === '' || !start || isNaN(start.getTime())) return null;
-
-  const talk = { id: raw.id, name: trimText(raw.name) };
-  const subteam = trimText(raw.subteam);
-  if (subteam !== '') talk.subteam = subteam;
-
-  talk.topic = trimText(raw.topic);
-  talk.start = start;
-  talk.minutes = keepInRange(raw.minutes, limits.talkMinutes, defaultTalk.minutes);
-
-  if (typeof raw.deckLink === 'string' && deckLinkPattern.test(raw.deckLink)) talk.deckLink = raw.deckLink;
-
-  talk.status = talkStatuses.includes(raw.status) ? raw.status : defaultTalk.status;
-
-  const team = trimText(raw.team).toLowerCase();
-  if (team !== '') talk.team = team;
-  return talk;
-}
-
-export function presentationsFrom(list) {
-  return objectsIn(list).map(normalizeTalk).filter(talk => talk !== null);
-}
-
 
 // A rule from the Calendar filters list becomes { name, action, words, days,
 // calendar, fromDate, toDate }, with the show switch and the Hide after time kept

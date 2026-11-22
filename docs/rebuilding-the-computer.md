@@ -38,7 +38,7 @@ said yes.**
 | Docker Engine and the Compose plugin: `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`. They come from Docker's own apt source, so Docker's apt repository and its signing key are added too. Debian's `docker.io` also works if `docker compose version` then runs. | run the web server | 5 |
 | A read-only deploy key for the repository, if it is private | let the computer pull updates | 6 |
 | The `nginx:1.28-alpine` container image, downloaded from Docker Hub by Docker the first time the server starts | the web server itself | 9 |
-| `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the slides of the talks into pictures, and read the list of talks from Sanity | 11 |
+| `poppler-utils` and `jq`. `curl` is already installed in step 4. | turn the decks of the presentations folder into pictures | 11 |
 | `xserver-xorg`, `xinit`, `x11-xserver-utils`, `chromium` | show the dashboard full screen | 12 |
 | `unclutter` (optional) | hide the mouse pointer when testing inside a desktop | 12 |
 | A changed `/etc/issue` (the old text is kept) and the unit `teletraan-console.service`. No package. | show the drawings on the TV while the computer starts and shuts down | 13 |
@@ -106,13 +106,13 @@ Step 6 below is the older way to get the repository onto the Teletraan computer:
    the user, so the group is `hawktimus` too. If `git clone` cannot connect, port 22 may be
    blocked on the school network. Ask the team mentor.
 
-7. **Make the data folder.** The calendars, the slides, `version.txt` and
+7. **Make the data folder.** The calendars, the decks, `version.txt` and
    `device.json` go here, outside the repository.
 
        sudo mkdir -p /var/lib/teletraan/data
        sudo chown hawktimus:hawktimus /var/lib/teletraan/data
 
-   The installer makes this folder again, with `calendars` and `slides` inside, and gives all of it to the login user, so a folder that root made does not stop the timers.
+   The installer makes this folder again, with `calendars` and `decks` inside, and gives all of it to the login user, so a folder that root made does not stop the timers.
 
 8. **Make local.env.** Lock the file before the addresses go in.
 
@@ -168,10 +168,11 @@ Step 6 below is the older way to get the repository onto the Teletraan computer:
     calendar timer, so the Teletraan computer pulls the repository by itself. A computer that
     must not do that skips this step and does step 11.
 
-11. **Turn on the calendar and slides services.** This installs two things
+11. **Turn on the calendar and decks services.** This installs two things
     and nothing else: the calendar service, which downloads the calendars
-    every 15 minutes, and the slides fetcher, which downloads the slides of
-    the talks that are coming up every 2 minutes. It does not turn on the
+    every 15 minutes, and the decks service, which looks at the Google Drive
+    folder of presentations every 20 seconds and makes the pictures of each
+    new or changed deck (docs/presentations-drive.md). It does not turn on the
     pull timer, so this is the step for a computer that must not pull by itself.
     A computer that did step 10 already has the calendar service and leaves out
     `install-calendars.sh` below.
@@ -179,15 +180,15 @@ Step 6 below is the older way to get the repository onto the Teletraan computer:
         sudo apt install poppler-utils curl jq
         /opt/teletraan/computer/scripts/fetch-calendars.sh
         sudo /opt/teletraan/computer/scripts/install-calendars.sh
-        sudo /opt/teletraan/computer/scripts/install-slides.sh
+        sudo /opt/teletraan/computer/scripts/install-decks.sh
 
     The packages need the team mentor's yes first, see the table at the top.
     Each install script says what it will do and waits for Enter. Both use
     the account that owns the repository, so no account name is typed
-    anywhere. `install-slides.sh` does not install the packages: if one is
+    anywhere. `install-decks.sh` does not install the packages: if one is
     missing it stops and prints the `apt install` line above.
 
-    The slides are saved in `slides/` in the data folder from step 7, not in
+    The decks are saved in `decks/` in the data folder from step 7, not in
     `/opt/teletraan`, so replacing the files in `/opt/teletraan` does not
     remove them.
 
@@ -195,14 +196,6 @@ Step 6 below is the older way to get the repository onto the Teletraan computer:
     calendar was downloaded and why a download failed, but no events. With it
     the page lists the next events too (docs/calendars-page.md, and step 19
     below). The install scripts say when Node is missing, and they go on.
-
-    To try the slides fetcher, give it the link of a deck that is shared with
-    Anyone with the link:
-
-        /opt/teletraan/computer/scripts/slides-sync.sh --test '[link of the deck]'
-
-    It prints `OK` and the number of pages, or `FAIL` and the reason, and
-    deletes what it made.
 
     The spare computer needs the same steps. Its `local.env` is its own file, so
     the calendar lines go into it too.
@@ -449,11 +442,10 @@ its settings. The Teletraan computer can keep running.
   lists `teletraan-monday.timer`, and `/opt/teletraan/computer/scripts/monday-sync.sh --check`
   prints `OK` twice. `sudo journalctl -u teletraan-monday.service -n 20` has the lines of the last
   runs, and no `monday:` line on stderr when the last run worked.
-- The slides service runs. `systemctl list-timers 'teletraan-*'` lists
-  `teletraan-slides.timer`. `sudo journalctl -u teletraan-slides.service -n 20`
-  has a line such as `talk [id]: 12 slides saved` for each talk in the next
-  36 hours, and nothing from the script when there is no talk. To prove the
-  download with a real deck, use `slides-sync.sh --test` as in step 11.
+- The decks service runs. `sudo systemctl status teletraan-decks.service` says
+  active, and `sudo journalctl -u teletraan-decks.service -n 20` says how many
+  decks are in the folder. To prove it with a real deck, put one in the folder
+  (docs/presentations-drive.md).
 - The Photo panel shows the photos that are on in the Photos list in Studio
   (docs/editing-content.md, "Photos"). They come with the rest of the content,
   so there is nothing on the computer to set up, and the old `photos.json` file in
@@ -612,8 +604,8 @@ the calendars, use `sudo journalctl -u teletraan-calendars.service -n 20`.
 ## Showing what the Teletraan computer did in Studio
 
 The Screen tab of Dashboard Settings starts with a block that says when the
-computer last saw a change to the content, downloaded the calendars, downloaded the
-slides, read the Monday boards and the FRC data, and started the screen. The
+computer last saw a change to the content, downloaded the
+calendars, read the Monday boards and the FRC data, and started the screen. The
 computer writes those times into one document in Sanity, `status-mini`, with
 `computer/scripts/status-write.sh`. That needs a token that is allowed to write.
 Without one the Teletraan computer works as before and the block says No status yet.
@@ -635,14 +627,13 @@ Without one the Teletraan computer works as before and the block says No status 
    value that still starts with `[`. The tool in `docs/updating-the-computer.md` can
    add the line from a Mac (choice 3, then 1), so the token is not typed on the computer.
 
-3. Run the install scripts again. The calendar and slides services each have
-   a new line in their unit files that runs `status-write.sh` after the job, and
+3. Run the install script again. The calendar service has
+   a new line in its unit file that runs `status-write.sh` after the job, and
    systemd only reads a changed unit file when the script copies it again. The
    calendar service has two more, which run `calendar-status.sh` and
    `status-write.sh calendar-status` for the Calendars page:
 
        sudo /opt/teletraan/computer/scripts/install-calendars.sh
-       sudo /opt/teletraan/computer/scripts/install-slides.sh
 
    A computer that was set up with `install-timers.sh` (step 10) runs that script
    again instead, which copies every unit file.
@@ -654,8 +645,6 @@ Without one the Teletraan computer works as before and the block says No status 
 - `teletraan-calendars.service` also runs `calendar-status.sh` and then
   `status-write.sh calendar-status` after every run, failed or not, to write the
   document the Calendars page shows (docs/calendars-page.md).
-- `teletraan-slides.service` runs it after each slides run, to write the slides
-  time.
 - `kiosk.sh` runs it in the background when the screen starts, to write the
   start time. It never holds the screen back.
 - `frc-sync.sh` runs it itself at the end of each run that worked, to write the
@@ -694,8 +683,7 @@ of the account, and the tasks made from the boards that show on the TV are publi
 (docs/monday.md, "What it writes").
 
 Every job writes a new version of the document, and the screen re-reads its
-content each time Sanity says something changed. The slides service runs every
-2 minutes, so the screen re-reads about that often. Nothing on the screen
+content each time Sanity says something changed. Nothing on the screen
 changes when the content has not.
 
 ## Finding the Teletraan computer on the network
@@ -839,7 +827,7 @@ Start with the log for the part that is wrong.
 | The screen says SANITY UNREACHABLE | Run `check-connection.sh` (see Checking the connection). Its FAIL lines say which part is wrong, and the reason on the screen says which kind of fault it is. |
 | The browser says it cannot connect | `sudo docker compose ps` in `/opt/teletraan/computer`. If it is not running, run step 9 again. |
 | Calendars are old | Open Calendars under Events in Studio: each calendar says when it was last downloaded and why a download failed. Or `sudo journalctl -u teletraan-calendars.service -n 30`. "The server said no" usually means BAND changed the address. Get a new one and edit `CALENDAR_<ID>_URL` in `local.env`, see Adding or changing a calendar. The old file stays on screen until a download works. |
-| The TV says "Slides are not ready. Ask a coach." | `sudo journalctl -u teletraan-slides.service -n 30`. A line such as `talk [id]: no slides, not shared` gives the reason. A deck that is not shared is the usual one, see docs/presentations.md. If there are no lines for the talk at all, check that `sudo systemctl status teletraan-slides.timer` says active, and run step 11 again if it does not. |
+| The TV says "Slides are not ready. Ask a coach." | `sudo journalctl -u teletraan-decks.service -n 30`. The list on the TV and the control page also say what is wrong with a deck. A deck that is not shared is the usual one, see docs/presentations-drive.md. Check that `sudo systemctl status teletraan-decks.service` says active, and run step 11 again if it does not. |
 | A change never arrives | `sudo journalctl -u teletraan-pull.service -n 30`, then see the next three rows. |
 | The pull log says local changes would be overwritten | Someone edited a file on the computer. Look with `git -C /opt/teletraan status`. Ask before throwing those changes away. Files on the computer should never be edited by hand. |
 | The pull log says "Not possible to fast-forward" | Someone force-pushed or rewrote the shared branch. Do not follow git's hint to merge or rebase. After checking that nobody edited files on the computer, run `git -C /opt/teletraan fetch` and then `git -C /opt/teletraan reset --hard '@{u}'`. The next pull updates `version.txt`. |

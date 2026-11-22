@@ -29,7 +29,7 @@ async function check(name, test) {
   console.log('PASS  ' + name);
 }
 
-const requestFields = ['holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'nextLookRequest', 'announceRequest', 'presentationTestRequest', 'competitionPreviewRequest'];
+const requestFields = ['holdPanel', 'showView', 'previewTheme', 'pauseRotation', 'nextLookRequest', 'announceRequest', 'competitionPreviewRequest'];
 const settings = extra => Object.assign({ _id: 'dashboardSettings', _type: 'dashboardSettings' }, extra);
 const at = new Date('2026-10-15T12:00:00Z');
 
@@ -41,7 +41,6 @@ await check('every request the control page writes passes the rules of Dashboard
     buildRequest('view', { key: 'nova', minutes: 30 }, at).set,
     buildRequest('theme', { theme: 'retro' }, at).set,
     buildRequest('announce', {}, at).set,
-    buildRequest('presentation-test', {}, at).set,
   ];
   for (const shape of shapes) assert.deepEqual(await problems(settings(shape), requestFields), []);
 });

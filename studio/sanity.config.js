@@ -8,7 +8,7 @@ import { addTemplates } from './tools/add-templates.js';
 import { screenType } from './inputs/screen-ids.js';
 import { useStandardColorsAction } from './tools/team-actions.js';
 import { remoteActionButtons } from './tools/remote-actions.js';
-import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAction, previewThemeActions, previewViewActions, previewActions, useBackToScheduleAction } from './tools/actions.js';
+import { playHiddenActions, usePlayAnnouncementsAction, previewThemeActions, previewViewActions, previewActions, useBackToScheduleAction } from './tools/actions.js';
 
 // Dashboard Settings, Look and Demo each exist once (singletonTypes in
 // structure.js), and so does each of the three Screens, which are three pages of the type screen, and each of
@@ -16,7 +16,7 @@ import { playHiddenActions, usePlayAnnouncementsAction, useRunPresentationTestAc
 // Their pages are made the long-standing way, by removing the
 // actions that would copy them or take them away, because Sanity's newer
 // singleton option is still in beta. Dashboard Settings also gets a Play button
-// for each hidden transition, Play announcements, Run presentation test, a
+// for each hidden transition, Play announcements, a
 // Preview button for each theme and each view, the pack preview and Back to the schedule (actions.js).
 const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
 // The Remote actions page and the status page beside it exist once too, and are not in singletonTypes because the
@@ -24,7 +24,7 @@ const removedFromSingletons = ['delete', 'duplicate', 'unpublish'];
 const pageTypes = singletonTypes.concat([screenType, viewType, 'remoteControl', 'remoteStatus']);
 
 const buttonsOf = {
-  [settingsType]: playHiddenActions.concat([usePlayAnnouncementsAction, useRunPresentationTestAction], previewThemeActions, previewViewActions, previewActions, [useBackToScheduleAction]),
+  [settingsType]: playHiddenActions.concat([usePlayAnnouncementsAction], previewThemeActions, previewViewActions, previewActions, [useBackToScheduleAction]),
   remoteControl: remoteActionButtons,
 };
 
@@ -40,11 +40,12 @@ function actionsFor(actions, context) {
 // longer reads Events Calendar entries, so they are not offered anywhere. The Teletraan computer writes the
 // status documents (schemas/status.js, calendarStatus.js, frcStatus.js, frcNews.js and mondayStatus.js), so nobody adds one by hand.
 // Nobody adds a task by hand either: the Teletraan computer makes them from the team's Monday boards, and the
-// task documents that exist stay in the dataset under Monday, Items, Old manual tasks.
+// task documents that exist stay in the dataset under Monday, Items, Old manual tasks. Booked talks and meeting days
+// (presentation, presentationDay) are not used any more and are not offered either.
 // A place is offered only while a document is open, which is where the Location field of a task
 // offers Create new, and that is how a place is added now. A template of add-templates.js, such
 // as Agenda item, is offered by the folder or list that names it, and by nothing else.
-const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone', 'remoteControl', 'remoteStatus'].concat(addTemplates.map(template => template.id));
+const notOffered = ['extraEvent', 'status', 'calendarStatus', 'frcStatus', 'frcNews', 'mondayStatus', 'task', 'milestone', 'remoteControl', 'remoteStatus', 'presentation', 'presentationDay'].concat(addTemplates.map(template => template.id));
 const offeredInDocuments = ['place'];
 
 function newDocumentChoices(templates, context) {

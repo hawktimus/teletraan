@@ -42,9 +42,9 @@ The browser cases are in `tests/reliability.test.mjs` (37 cases, skipped when Pl
 | `pull.sh` | Refuses on a git lock, a merge that cannot fast-forward and now on less than 200 MB free. `TimeoutStartSec=3min` ends a hung fetch. `version.txt` written by `mv`. | Fixed disk space (below) |
 | `kiosk.sh` | Waits for the web server (60 s, then systemd starts it again every 10 s), clears stale browser locks, `device.json` and `build.js` written by `mv` | Fine |
 | `fetch-calendars.sh` | 60 s and 20 MB limits per feed, keeps the old file unless the new one is a whole calendar, temporary files cleaned after 10 minutes. No lock: a oneshot timer does not overlap itself, and a second run only renames files | Fine |
-| `monday-sync.sh`, `frc-sync.sh`, `match13-sync.sh`, `news-sync.sh`, `photos-drive-sync.sh`, `slides-sync.sh` | `flock` so two runs never overlap, curl time limits, work folder inside the data folder so the last `mv` is a rename, a leftover work folder removed at the next run, Monday limited to 900 reads a day | Fine |
+| `monday-sync.sh`, `frc-sync.sh`, `match13-sync.sh`, `news-sync.sh`, `photos-drive-sync.sh` | `flock` so two runs never overlap, curl time limits, work folder inside the data folder so the last `mv` is a rename, a leftover work folder removed at the next run, Monday limited to 900 reads a day | Fine |
 | `backup-dataset.sh` | Writes `.partial`, checks it with `gzip -t` and the first line, so a bad export never replaces a good one. Keeps 14. 1 hour limit | Fine |
-| `nightly.sh` | Skips when a talk is near. When Sanity cannot be asked it goes ahead | Fine |
+| `nightly.sh` | Works from the clock only and asks Sanity nothing. A reboot asks the gate first | Fine |
 | systemd units | Every oneshot has `TimeoutStartSec`. Timers use `OnUnitActiveSec`, so a clock jump cannot start a burst of runs | Fine |
 
 ## Fixed
@@ -100,7 +100,7 @@ The owner's TV shows the red banner SANITY UNREACHABLE: NETWORK DOWN most days a
 | The sudo rule is missing | The step is logged as failed and counted as taken, so it does not repeat | n/a | the same |
 | The run is cut between disconnect and connect | A marker file makes the next run connect the interface | Yes | read, not run |
 
-Limits: the watchdog cannot know about a booked talk, because Sanity cannot be asked while the network is down, so step 4 or 5 can restart the screen during a talk after 6 minutes of no network. A restart of NetworkManager can reset the connection for a second or two. `connection.autoconnect-retries = 0` and `ipv4.dhcp-timeout = 2147483647` were written from the NetworkManager manual and not tried on the computer.
+Limits: the watchdog does not know that a deck is playing, so step 4 or 5 can restart the screen during a deck after 6 minutes of no network. A restart of NetworkManager can reset the connection for a second or two. `connection.autoconnect-retries = 0` and `ipv4.dhcp-timeout = 2147483647` were written from the NetworkManager manual and not tried on the computer.
 
 ## What remains
 

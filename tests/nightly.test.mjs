@@ -1,6 +1,5 @@
 // Tests for computer/scripts/nightly.sh and its unit files: the 04:00 restart, the Sunday 04:10
-// reboot and the skip when a presentation is booked within the hour. curl and systemctl are
-// fakes in a temporary folder, so nothing touches a real service.
+// reboot. systemctl and sudo are fakes in a temporary folder, so nothing touches a real service.
 //
 //   node tests/nightly.test.mjs
 
@@ -32,42 +31,29 @@ function writeTool(folder, name, text) {
   fs.writeFileSync(path.join(folder, name), text, { mode: 0o755 });
 }
 
-const fakeCurl = `#!/bin/sh
-echo "curl $*" >> "$STUB_LOG"
-[ -f "$STUB_DIR/curl.exit" ] && exit "$(cat "$STUB_DIR/curl.exit")"
-cat "$STUB_DIR/answer.txt"
-`;
 const fakeSystemctl = `#!/bin/sh
 echo "systemctl $*" >> "$STUB_LOG"
 `;
 
-// booked is the number of talks the fake Sanity says are near, or null for no answer
-function run(when, booked) {
+function run(when) {
   counter += 1;
   const root = path.join(work, 'place' + counter);
   const bin = path.join(root, 'bin');
-  const stub = path.join(root, 'stub');
   fs.mkdirSync(path.join(root, 'computer/scripts'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'dashboard'), { recursive: true });
   fs.mkdirSync(bin);
-  fs.mkdirSync(stub);
   fs.copyFileSync(path.join(repo, 'computer/scripts/nightly.sh'), path.join(root, 'computer/scripts/nightly.sh'));
   fs.copyFileSync(path.join(repo, 'computer/scripts/lib.sh'), path.join(root, 'computer/scripts/lib.sh'));
   // The reboot asks the gate first (computer/scripts/gate.sh), which needs these three and node
   ['gate.sh', 'ledger.mjs', 'supervisor-plan.mjs'].forEach(name => fs.copyFileSync(path.join(repo, 'computer/scripts', name), path.join(root, 'computer/scripts', name)));
   fs.chmodSync(path.join(root, 'computer/scripts/gate.sh'), 0o755);
-  fs.writeFileSync(path.join(root, 'dashboard/config.js'), "export const sanity = {\n  projectId: 'abc123',\n  dataset: 'production',\n  apiVersion: '2024-01-01',\n};\n");
   ['sed', 'head', 'grep', 'date', 'dirname', 'cat', 'node'].forEach(tool => fs.symlinkSync(findTool(tool), path.join(bin, tool)));
-  writeTool(bin, 'curl', fakeCurl);
   writeTool(bin, 'systemctl', fakeSystemctl);
   writeTool(bin, 'sudo', fakeSudo);
   const log = path.join(root, 'calls.log');
   fs.writeFileSync(log, '');
-  if (booked === null) fs.writeFileSync(path.join(stub, 'curl.exit'), '7');
-  else fs.writeFileSync(path.join(stub, 'answer.txt'), '{"ms":3,"query":"x","result":' + booked + '}');
 
   const result = spawnSync('/bin/bash', [path.join(root, 'computer/scripts/nightly.sh')], {
-    env: { PATH: bin, TZ: 'UTC', NIGHTLY_NOW: when, STUB_LOG: log, STUB_DIR: stub, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_LEDGER: path.join(root, 'reboot-ledger.json'), TELETRAAN_UPTIME_SECONDS: String(40 * 3600), NETWATCH_STATE: path.join(root, 'no-netwatch.json') },
+    env: { PATH: bin, TZ: 'UTC', NIGHTLY_NOW: when, STUB_LOG: log, TELETRAAN_SYSTEMCTL: path.join(bin, 'systemctl'), TELETRAAN_LEDGER: path.join(root, 'reboot-ledger.json'), TELETRAAN_UPTIME_SECONDS: String(40 * 3600), NETWATCH_STATE: path.join(root, 'no-netwatch.json') },
     encoding: 'utf8',
   });
   const calls = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
@@ -80,53 +66,30 @@ function check(name, test) {
   console.log('PASS  ' + name);
 }
 
-check('at 04:00 with nothing booked the kiosk is restarted', () => {
-  const result = run('3 0400', 0);
+check('at 04:00 the kiosk is restarted', () => {
+  const result = run('3 0400');
   assert.equal(result.status, 0);
   assert.deepEqual(result.did, ['systemctl restart teletraan-kiosk.service']);
 });
 
 check('a late start of a minute or two still counts as the 04:00 run', () => {
-  assert.deepEqual(run('3 0402', 0).did, ['systemctl restart teletraan-kiosk.service']);
-  assert.deepEqual(run('3 0357', 0).did, ['systemctl restart teletraan-kiosk.service']);
+  assert.deepEqual(run('3 0402').did, ['systemctl restart teletraan-kiosk.service']);
+  assert.deepEqual(run('3 0357').did, ['systemctl restart teletraan-kiosk.service']);
 });
 
-check('at 04:10 on a Sunday with nothing booked the Teletraan computer is rebooted', () => {
-  assert.deepEqual(run('7 0410', 0).did, ['systemctl reboot']);
+check('at 04:10 on a Sunday the Teletraan computer is rebooted', () => {
+  assert.deepEqual(run('7 0410').did, ['systemctl reboot']);
 });
 
 check('04:10 on any other day does nothing', () => {
-  const result = run('2 0410', 0);
+  const result = run('2 0410');
   assert.equal(result.status, 0);
   assert.deepEqual(result.did, []);
   assert.match(result.text, /no reboot except on Sunday/);
 });
 
-check('a talk booked within the hour skips the restart and the reboot, and says so', () => {
-  const kiosk = run('3 0400', 1);
-  assert.deepEqual(kiosk.did, []);
-  assert.match(kiosk.text, /skipped/);
-  const reboot = run('7 0410', 2);
-  assert.deepEqual(reboot.did, []);
-  assert.match(reboot.text, /skipped/);
-});
-
-check('the question to Sanity is about booked talks only, in the hour ahead and the two hours back', () => {
-  const result = run('3 0400', 0);
-  const asked = decodeURIComponent(result.calls.find(line => line.startsWith('curl')).replace(/\+/g, ' '));
-  assert.match(asked, /_type == "presentation"/);
-  assert.match(asked, /status == "scheduled"/);
-  assert.match(asked, /dateTime\(start\) < dateTime\("\d{4}-\d\d-\d\dT[\d:]+Z"\)/);
-  assert.match(asked, /dateTime\(start\) > dateTime\("\d{4}-\d\d-\d\dT[\d:]+Z"\)/);
-  assert.match(asked, /abc123\.apicdn\.sanity\.io\/v2024-01-01\/data\/query\/production/);
-});
-
-check('when Sanity cannot be asked the restart goes ahead', () => {
-  assert.deepEqual(run('3 0400', null).did, ['systemctl restart teletraan-kiosk.service']);
-});
-
-check('any other time of day does nothing and does not ask Sanity', () => {
-  const result = run('3 1300', 0);
+check('any other time of day does nothing', () => {
+  const result = run('3 1300');
   assert.deepEqual(result.calls, []);
 });
 
@@ -140,9 +103,9 @@ check('the timer fires at 04:00 daily and 04:10 on Sundays, is not persistent, a
 });
 
 check('the restart and the reboot go through sudo -n with exactly the commands the sudoers file names', () => {
-  const kiosk = run('3 0400', 0);
+  const kiosk = run('3 0400');
   assert.ok(kiosk.calls.some(line => /^sudo -n .*\/systemctl restart teletraan-kiosk\.service$/.test(line)), kiosk.calls.join('|'));
-  const reboot = run('7 0410', 0);
+  const reboot = run('7 0410');
   assert.ok(reboot.calls.some(line => /^sudo -n .*\/systemctl reboot$/.test(line)), reboot.calls.join('|'));
   const text = fs.readFileSync(path.join(repo, 'computer/scripts/nightly.sh'), 'utf8');
   assert.ok(text.includes('TELETRAAN_SYSTEMCTL:-/usr/bin/systemctl'));

@@ -5,6 +5,9 @@ line says what changed for the people who use the screen, not how it was built.
 
 ## Unreleased
 
+- **The Run presentation test button is gone.** It played a sample talk with six sample slides. Talks are picked from the Google Drive folder on the screen now, so there is nothing to test with it. The hidden field it wrote stays in Dashboard Settings and is not used.
+- **Booked talks are gone.** The screen no longer reads talks from Sanity, the Daily Agenda panel lists only the schedule, and the control page no longer lists talks booked for the next day. Presentations and Meeting days have no line in the Studio sidebar, no plus button and no place in the New menu. A deck picked from the Google Drive folder is the only way a talk plays. The old documents stay in the dataset and are ignored.
+- **The computer no longer waits for booked talks.** The nightly restart, the scheduled reboot and the refresh before the meeting used to hold back while a talk was booked. There are no booked talks now, so they go by the clock, the alert, the announcements and the Meetings calendar only. The Last slides fetch line is gone from the status block on the control page and in Studio, and the old slides downloader is gone from the install list.
 - **Photos shown whole fill the frame better.** A photo whose shape is close to the frame's is now cut to fit, so the purple side bars disappear. A photo that would lose more than a quarter of itself stays whole.
 
 ## 1.3.0 — the audit fixes, the Monday dropdowns and the refresh before the meeting

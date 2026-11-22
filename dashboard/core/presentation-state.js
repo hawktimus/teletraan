@@ -16,7 +16,7 @@ export function canRun(talk) {
 
 // The talk that is due now, or null: the one that started first among the talks
 // that have started, are not over and have not been skipped or finished.
-//   talks     content.presentations
+//   talks     the talks that may run (the deck picked from the Drive folder, as deckTalk)
 //   now       a Date
 //   settings  Dashboard Settings
 //   skipped   a Set of skipKey texts
@@ -44,7 +44,7 @@ export function slidePages(manifest) {
 }
 
 // The address of the folder that holds a talk's manifest.json and its pictures
-// (computer/scripts/slides-sync.sh), with the slash at the end. The sample content has
+// (computer/scripts/decks-sync.sh), with the slash at the end. The sample content has
 // its own folder, like its calendars. A deck picked from the Google Drive folder (deckTalk in
 // decks.js) names its own folder, which decks-sync.sh made, and that is never a sample.
 export function slidesFolder(sample, talk) {
@@ -132,7 +132,7 @@ export function isDeckTalk(talk) {
 }
 
 // True when the picture changes from one slide to another inside a picked deck: that change
-// fades. The first slide comes in with the card, and a booked talk's slides change at once.
+// fades. The first slide comes in with the card, and a talk's slides change at once.
 export function slideFades(talk, from, to) {
   return isDeckTalk(talk) && from !== null && from !== to;
 }

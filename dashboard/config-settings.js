@@ -133,11 +133,7 @@ export const defaultSettings = {
   // The Presentations tab in the Studio: talks that the screen shows full screen from the clicker.
   //   presentationsEnabled  the switch. Off, the screen never starts a talk. How long the title card waits for the
   //                         speaker and how long a talk may run past its slot are fixed (core/constants.js).
-  //   presentationTestRequest  the last click of the "Run presentation test" button (core/presentation-test.js). requestedAt
-  //                            is the time it was clicked and is empty until it has been. The screen plays the sample talk
-  //                            once, for a request that is less than demoWindowSeconds old and is not the one it handled before.
   presentationsEnabled: true,
-  presentationTestRequest: { requestedAt: '' },
   // The team settings in the Studio (Look tab): which team the screen shows.
   //   teamMode          see teamModes above. Prime only to start with, so a screen with no team
   //                     documents looks as it always has.

@@ -8,14 +8,14 @@
 //                            (docs/presentations-drive.md)
 //   noShowMinutes            hidden. The title card always waits 5 minutes (dashboard/core/constants.js)
 //   graceMinutes             hidden. A talk may always run 5 minutes past its slot (dashboard/core/constants.js)
-//   presentationTestRequest  filled in by the Run presentation test button (actions.js), never by editors
+//   presentationTestRequest  hidden. Not used any more: the Run presentation test button is gone. Kept so a stored value is not lost
 //
 // noShowMinutes and graceMinutes stay in the schema so that a page saved with
 // them still opens and publishes, and they keep their starting values. The
 // screen never reads what they hold. They have no rules, because nobody can fix
 // a value in a hidden field. The starting value of the switch is the same as in
 // defaultSettings in dashboard/config.js. tests/schemas.test.mjs fails if they differ.
-// The talks and the meeting days are in presentation.js and presentationDay.js.
+// The old booked talks and meeting days are in presentation.js and presentationDay.js, kept and not used.
 //
 // To take the whole section out later: delete this file, remove its import and
 // the lines that use presentationsFields and presentationTestRequestField in
@@ -33,7 +33,7 @@ export function presentationsFields() {
       title: 'Run presentations',
       type: 'boolean',
       group: 'presentations',
-      description: 'Turn this off and the screen never takes over for a talk. The talks stay in Studio.',
+      description: 'Turn this off and the screen never starts a deck picked from the Google Drive folder.',
       initialValue: true,
     }),
 
@@ -68,11 +68,9 @@ export function presentationsFields() {
   ];
 }
 
-// The Run presentation test button (actions.js) writes the time into this and publishes,
-// and the screen then starts the sample talk, once (dashboard/core/presentation-test.js).
-// Editors never see it: hidden keeps it out of the form, and its value stays in the
-// document. The starting value is the same as defaultSettings.presentationTestRequest in
-// dashboard/config.js, and a missing one means no request.
+// Not used any more. The Run presentation test button wrote the time into this, and nothing
+// writes or reads it now. It stays in the schema because stored values are never removed.
+// Editors never see it: hidden keeps it out of the form, and its value stays in the document.
 export function presentationTestRequestField() {
   return defineField({
     name: 'presentationTestRequest',
@@ -80,14 +78,14 @@ export function presentationTestRequestField() {
     type: 'object',
     group: 'presentations',
     hidden: true,
-    description: 'Filled in by the Run presentation test button beside Publish. The screen runs the sample talk once. Do not edit it.',
+    description: 'Not used any more. The Run presentation test button is gone and the screen ignores this. The stored value is kept. Do not edit it.',
     fields: [
       defineField({
         name: 'requestedAt',
         title: 'Requested at',
         type: 'datetime',
         readOnly: true,
-        description: 'When the button was last clicked. The screen runs a test once, and only for a minute after this time.',
+        description: 'Not used any more. When the old button was last clicked.',
       }),
     ],
   });

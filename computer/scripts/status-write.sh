@@ -1,13 +1,12 @@
 #!/bin/bash
-# Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|sync|supervisor|--print|restart N
+# Usage: status-write.sh content|calendar|monday|frc|kiosk|version|calendar-status|backup|match13|photos-drive|news|reboot|cleanup|network|sync|supervisor|--print|restart N
 # Writes the time of a job that has just finished into the document status-mini
 # in Sanity, so that Dashboard Settings can show what the Teletraan computer last did. The
-# calendar and slides services run it after each job, and kiosk.sh runs it when
+# calendar service runs it after each job, and kiosk.sh runs it when
 # the screen starts. One argument says which job:
 #
 #   status-write.sh content    the newest change to published content that the Teletraan computer can see
 #   status-write.sh calendar   the calendars were downloaded
-#   status-write.sh slides     the slides were downloaded
 #   status-write.sh monday     the Monday boards were read
 #   status-write.sh frc        the FRC data was read
 #   status-write.sh news       the FIRST news headlines were read: sends when and how many (newsAt, newsCount),
@@ -60,7 +59,7 @@ set -euo pipefail
 document=status-mini
 
 usage() {
-  echo "Usage: status-write.sh content|calendar|slides|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|problems|reboot|cleanup|network|sync|restart N" >&2
+  echo "Usage: status-write.sh content|calendar|monday|frc|kiosk|version|calendar-status|--print|backup|match13|photos-drive|news|problems|reboot|cleanup|network|sync|restart N" >&2
   exit 2
 }
 
@@ -76,7 +75,6 @@ fi
 case $1 in
   content) field=lastContentSeenAt ;;
   calendar) field=lastCalendarSyncAt ;;
-  slides) field=lastSlidesFetchAt ;;
   monday) field=lastMondaySyncAt ;;
   frc) field=lastFrcSyncAt ;;
   news) field=newsAt ;;
@@ -229,7 +227,7 @@ time_line() {
 }
 
 if [ "$field" = print ]; then
-  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastSlidesFetchAt, lastMondaySyncAt, lastFrcSyncAt, newsAt, match13At, kioskStartedAt}"
+  query="*[_id == \"$document\"][0]{lastContentSeenAt, lastCalendarSyncAt, lastMondaySyncAt, lastFrcSyncAt, newsAt, match13At, kioskStartedAt}"
   status=0
   answer=$(curl --silent --max-time 20 --connect-timeout 10 --get "$read_host/v$version/data/query/$dataset" \
     --data-urlencode "query=$query" --data-urlencode 'perspective=published' 2> /dev/null) || status=$?
@@ -253,7 +251,6 @@ if [ "$field" = print ]; then
   now=$(date -u +%s)
   time_line lastContentSeenAt 'Last content update seen'
   time_line lastCalendarSyncAt 'Last calendar sync'
-  time_line lastSlidesFetchAt 'Last slides fetch'
   time_line lastMondaySyncAt 'Last Monday sync'
   time_line lastFrcSyncAt 'Last FRC data sync'
   time_line newsAt 'Last news read'

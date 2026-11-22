@@ -31,7 +31,7 @@ services:
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/dashboard:/srv/web/dashboard:ro
       # The Studio built by the last install (control/lib/studio-build.js)
       - ${TELETRAAN_ROOT:-/opt/teletraan}/current/studio-dist:/srv/web/studio:ro
-      # Calendars, slides and version.txt. The scripts on the Teletraan computer write this
+      # Calendars, decks and version.txt. The scripts on the Teletraan computer write this
       # folder, the web server only reads it. Without create_host_path: false,
       # Docker would quietly make a missing folder owned by root, and then the
       # scripts could not write to it.

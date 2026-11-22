@@ -68,10 +68,10 @@ test('the page has the alert, the bar, the full screen messages and the links, e
   Object.values(parts.sections).forEach(section => assert.ok(!/[—–!]/.test(section.title + section.says), 'no dash or exclamation mark'));
 });
 
-test('the links open the agenda, the talks and the meeting days in the next pane', async () => {
+test('the link opens the agenda in the next pane', async () => {
   const { page } = await opened();
   const links = nodesWhere(page.tree(), node => node.type === 'ChildLink').map(node => node.props.childId);
-  assert.deepEqual(links.filter(id => id.indexOf(parts.announcementChildPrefix) !== 0), ['agenda', 'presentations', 'meetingDays']);
+  assert.deepEqual(links.filter(id => id.indexOf(parts.announcementChildPrefix) !== 0), ['agenda']);
   assert.ok(links.indexOf(parts.announcementChildPrefix + 'a1') !== -1, 'a card opens its announcement in the full form');
 });
 

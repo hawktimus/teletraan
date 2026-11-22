@@ -38,7 +38,6 @@ function clean() {
     { _id: 't2', _type: 'tipOrNews', kind: 'news', text: 'Practice moves to the lab on Friday', expires: '2026-12-01T00:00:00Z' },
     { _id: 'a1', _type: 'announcement', text: 'Pizza in the lab at 6', start: new Date(Date.now() - 2 * 3600000).toISOString(), end: new Date(Date.now() + 20 * 3600000).toISOString() },
     { _id: 'pl1', _type: 'plan', heading: 'Build meeting', date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10), location: 'Lab', rows: [{ time: '6:00 PM', text: 'Wiring', lead: 'Sam' }, { time: '7:00 PM', text: 'Cleanup', lead: 'Ana' }] },
-    { _id: 'pr1', _type: 'presentation', name: 'Sam', topic: 'Swerve drive', start: inDays(5), minutes: 10, status: 'scheduled', deckLink: 'https://docs.google.com/presentation/d/abc/edit' },
     { _id: 'p1', _type: 'person', role: 'Coach', name: 'Pat', title: 'Head Coach', photo: picture('image-aaa-800x800-jpg') },
     { _id: 'p2', _type: 'person', role: 'Captain', name: 'Ana', title: 'Co-President', photo: picture('image-bbb-800x800-jpg') },
     { _id: 's1', _type: 'subteam', name: 'Build', lead: 'Sam', photo: picture('image-ccc-800x800-jpg'), members: ['Ana', 'Lee'], spotlight: true, spotlightHeadline: 'New chassis' },
@@ -225,14 +224,11 @@ test('an agenda item with no date, a date that has passed or too many rows is fo
   assert.ok(has('pl2', 'no-date') && has('pl3', 'date-past') && has('pl4', 'plan-rows') && has('pl5', 'plan-no-rows') && has('pl6', 'text-too-long'));
 });
 
-test('a talk with no start time, no slides or long past is found', () => {
+test('a booked talk is not checked any more', () => {
   const found = run(clean().concat([
-    { _id: 'pr2', _type: 'presentation', name: 'Lee', topic: 'Wiring', status: 'scheduled', deckLink: 'https://docs.google.com/presentation/d/x/edit' },
-    { _id: 'pr3', _type: 'presentation', name: 'Lee Walker', topic: 'Wiring', start: '2026-10-30T22:00:00Z', status: 'scheduled' },
-    { _id: 'pr4', _type: 'presentation', name: 'Lee', topic: 'Old talk', start: '2026-09-01T22:00:00Z', minutes: 10, status: 'scheduled', deckLink: 'https://docs.google.com/presentation/d/x/edit' },
+    { _id: 'pr2', _type: 'presentation', name: 'Lee Walker', topic: 'Wiring', status: 'scheduled' },
   ]));
-  const has = (id, code) => found.some(item => item.doc.id === id && item.code === code);
-  assert.ok(has('pr2', 'no-start') && has('pr3', 'no-slides') && has('pr3', 'full-name') && has('pr4', 'talk-past'));
+  assert.ok(!found.some(item => item.doc.id === 'pr2'));
 });
 
 test('a person with no role, no portrait or a full name is found', () => {

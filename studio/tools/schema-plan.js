@@ -47,7 +47,7 @@ const settingsSkip = {
   nextLookRequest: oneTime,
   competitionPreviewRequest: oneTime,
   announceRequest: oneTime,
-  presentationTestRequest: oneTime,
+  presentationTestRequest: 'Not used any more. The Run presentation test button is gone. The stored value is kept and ignored.',
   hiddenRequest: oneTime,
   team: 'A fallback used only while no team is saved. The name, number and colors of a team are edited under Teams.',
 };
@@ -123,8 +123,8 @@ export const plan = {
 export const leftOut = {
   task: 'Tasks are written by the Monday sync. Only the Show on TV switch changes, in the Studio.',
   plan: 'The daily agenda is content for the Studio.',
-  presentationDay: 'Meeting days are content for the Studio.',
-  presentation: 'Talks come from the booking form.',
+  presentationDay: 'Not used any more. Meeting days are kept and ignored.',
+  presentation: 'Not used any more. Booked talks are kept and ignored. A deck is picked from Google Drive.',
   extraEvent: 'Not read by the screen.',
   calendarFilter: 'Calendar filters are content for the Studio.',
   sponsor: 'Sponsors have pictures and are content for the Studio.',

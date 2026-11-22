@@ -34,7 +34,7 @@ export const barSettings = {
   columnGap: 36,
 
   // The main panel is the large frame (grid1). Its header is 120 high. It is the
-  // surface a booked talk uses too (docs/presentations.md)
+  // surface a talk uses too (docs/presentations.md)
   main: { width: 1484, height: 736 },
   headerHeight: 120,
 

@@ -261,14 +261,6 @@
     { "address": "data/sample/photo-3.svg", "caption": "", "size": { "width": 800, "height": 800 } }
   ],
 
-  "presentationDays": [
-    { "firstSlotAt": "2027-03-03T23:45:00.000Z", "lastSlotAt": "2027-03-04T00:15:00.000Z", "slotMinutes": 15, "closeMinutesBefore": 30, "open": true }
-  ],
-
-  "presentations": [
-    { "id": "presentation-sample", "name": "[First name]", "subteam": "[Subteam A]", "topic": "[Title of the talk]", "start": "2027-03-04T00:00:00.000Z", "minutes": 15, "status": "scheduled" }
-  ],
-
   "calendarFilters": [
     { "name": "[Hide Pre-Season Monday and Thursday]", "action": "hide", "words": ["Pre-Season"], "days": [1, 4] },
     { "name": "[Always show Kickoff]", "action": "show", "words": ["Kickoff"] }

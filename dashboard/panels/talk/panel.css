@@ -1,4 +1,4 @@
-/* The layer that holds a booked talk (#talk in index.html). It is empty and hidden
+/* The layer that holds a talk (#talk in index.html). It is empty and hidden
    until a talk starts. It has no colour of its own, so a card comes in over the
    dashboard. After the last slide it is black, for the thanks card. The cursor is
    already hidden on the whole page, and tabindex lets the layer hold focus. */

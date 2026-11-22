@@ -16,8 +16,6 @@ export function announcementStart(now = Date.now()) {
 
 export const addTemplates = [
   { id: 'newPlan', title: 'Agenda item', schemaType: 'plan', value: { show: true } },
-  { id: 'newPresentation', title: 'Presentation', schemaType: 'presentation', value: { status: 'scheduled' } },
-  { id: 'newPresentationDay', title: 'Meeting day', schemaType: 'presentationDay', value: { open: true } },
   { id: 'newTip', title: 'Tip', schemaType: 'tipOrNews', value: { kind: 'tip', show: true } },
   { id: 'newAnnouncement', title: 'Announcement', schemaType: 'announcement', value: () => announcementStart() },
   { id: 'newCalendarFilter', title: 'Calendar filter', schemaType: 'calendarFilter', value: { show: true } },

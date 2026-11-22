@@ -23,8 +23,8 @@ const studioFolder = path.join(path.dirname(fileURLToPath(import.meta.url)), '..
 const defaultOutput = path.join(studioFolder, '..', 'docs', 'content-templates');
 
 // Not rows of content. A photo is a picture that has to be uploaded in Studio,
-// so it has no CSV template. Meeting days, presentations and announcements are added in Studio
-// or by the booking form. Calendar filters have day checkboxes and a list of
+// so it has no CSV template. Announcements are added in Studio. Booked talks and meeting days are not used any
+// more. Calendar filters have day checkboxes and a list of
 // words, which a sheet does not hold well, so they are added in Studio. A team has
 // colors and a logo, so it is added in Studio too (the two starting teams are in
 // docs/seed/teams.ndjson). The status documents are written by the Teletraan computer, so they
