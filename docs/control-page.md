@@ -452,7 +452,7 @@ Before the first update to a build with this rule, check that the line is there:
 - `control/static/display-preview.js` (plain functions), `control/static/tabs/display-preview.js` (the frames), `display-preview-parts.js` (the markup) and `display-patch.js` (keeps the card of a row that stays): the pictures of a row. `dashboard/core/row-preview.js` and `row-preview-guard.js` are the dashboard side. `tests/helpers/display-world.mjs` is the control service on a fake address for browser tests, and `tools/measure-display-pictures.mjs` measures the cost.
 - `control/static/`: the pages. A file named `tab-<name>.js`, and each file in `control/static/tabs/` that calls `registerTab`, is a tab and registers itself.
 - `computer/install.sh`, `computer/git/post-receive`, `computer/sudoers/`, `computer/systemd/teletraan-control.socket` and `teletraan-control@.service`: the installer and the host side.
-- `control/bin/install-tree.js`: the install steps from a folder. The installer and the git hook run it in the Node image.
+- `control/bin/install-tree.js`: the install steps from a folder. The installer and the git hook run it in the Node image. The screen's reports go to the running control service, not to this program, so its wait for the screen reads the control log instead: a page load of the wall after the restart counts as the screen coming up (`control/lib/wall-wait.js`). Before this, an install from here was always rolled back at the wait.
 
 ## The log and the download
 

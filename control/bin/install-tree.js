@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readConfig, createService } from '../server.js';
 import { installRelease } from '../lib/install.js';
+import { makeLogWaiter } from '../lib/wall-wait.js';
 
 const args = process.argv.slice(2);
 const options = { from: 'upload', note: '', commit: '', restart: true, studio: true };
@@ -28,7 +29,19 @@ if (!folder || !fs.existsSync(path.join(folder, 'dashboard'))) {
   process.exit(2);
 }
 
-const { ctx } = await createService(readConfig());
+const config = readConfig();
+const { ctx } = await createService(config);
+
+// This program is not the control service, so the reports of the screen never reach it (they go to the service). Without this the
+// wait for the screen could not end well and every install from here was rolled back. Instead it waits for the screen to load its
+// page again after the restart, which the service writes to the control log (lib/wall-wait.js).
+let restartedAt = 0;
+const helper = ctx.helper;
+ctx.helper = async (...parameters) => {
+  if (parameters[0] === 'restart-kiosk') restartedAt = Date.now();
+  return helper(...parameters);
+};
+ctx.waitForBuild = makeLogWaiter(config.logFile, () => restartedAt);
 try {
   await installRelease(ctx, Object.assign({}, options, {
     dir: path.resolve(folder),

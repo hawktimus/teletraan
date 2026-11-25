@@ -401,7 +401,8 @@ editors can sign in from anywhere.
                               routes share: http.js, keys.js, requests.js, status-parts.js, now-rows.js,
                               env-file.js and sanity.js. static/ is the pages (index.html and one file for each
                               tab) with the browser copy of the tree hash and the fonts. bin/install-tree.js
-                              installs a release from the command line
+                              installs a release from the command line, and lib/wall-wait.js is its wait for
+                              the screen (a page load in the control log after the restart)
     computer/                     how the computer runs it: web server, timers, scripts. scripts/check-connection.sh
                               checks the computer's connection to Sanity, BAND, Docker and the kiosk with one
                               OK or FAIL line each (docs/rebuilding-the-computer.md, "Checking the connection").
