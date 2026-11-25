@@ -14,7 +14,7 @@ const repo = fileURLToPath(new URL('../', import.meta.url));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'teletraan-sync-'));
 process.env.TELETRAAN_LOG_DIR = path.join(work, 'log');
 
-const { createSync, wantedImages, writeFileAtomic, timing, readSanityToken, withStuckNotes } = await import(path.join(repo, 'computer/scripts/sync-service.mjs'));
+const { createSync, wantedImages, writeFileAtomic, timing, readSanityToken, withStuckNotes, withCountdownOverride } = await import(path.join(repo, 'computer/scripts/sync-service.mjs'));
 
 let passed = 0;
 let counter = 0;
@@ -274,6 +274,25 @@ await check('the Stuck notes kept on this computer are put on the tasks of the l
   fs.writeFileSync(notes, 'not json');
   assert.deepEqual(withStuckNotes(result, notes), result, 'a damaged file means no notes');
   assert.equal(withStuckNotes(null, notes), null);
+});
+
+await check('a countdown time kept on this computer replaces the one from Sanity, and anything else in the file changes nothing', async () => {
+  const file = path.join(work, 'countdown-override.json');
+  const result = { settings: { countdown: { kickoff: '2027-01-09T23:00:00.000Z', kickoffLabel: 'GAMEDROP IN' }, speed: 1 }, tasks: [] };
+  assert.deepEqual(withCountdownOverride(result, path.join(work, 'none.json')), result, 'a missing file changes nothing');
+  fs.writeFileSync(file, JSON.stringify({ kickoff: '2027-01-09T17:00:00Z', rollout: 'soon', speed: 9, kickoffLabel: 'X' }));
+  const merged = withCountdownOverride(result, file);
+  assert.equal(merged.settings.countdown.kickoff, '2027-01-09T17:00:00Z');
+  assert.equal(merged.settings.countdown.kickoffLabel, 'GAMEDROP IN', 'only the times can be set');
+  assert.equal(merged.settings.countdown.rollout, undefined, 'a time that makes no sense is ignored');
+  assert.equal(merged.settings.speed, 1);
+  assert.equal(result.settings.countdown.kickoff, '2027-01-09T23:00:00.000Z', 'the answer from Sanity is not changed');
+  fs.writeFileSync(file, JSON.stringify({ kickoff: '2027-01-09T12:00' }));
+  assert.deepEqual(withCountdownOverride(result, file), result, 'a time with no zone is ignored');
+  fs.writeFileSync(file, 'not json');
+  assert.deepEqual(withCountdownOverride(result, file), result, 'a damaged file changes nothing');
+  assert.equal(withCountdownOverride(null, file), null);
+  assert.deepEqual(withCountdownOverride({ tasks: [] }, file), { tasks: [] }, 'no settings, nothing to change');
 });
 
 await check('Monday is read from the file monday-sync.sh leaves, before the Sanity document, and a failure with no good read yet is still a failure', async () => {

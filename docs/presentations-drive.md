@@ -36,6 +36,8 @@ The list on the TV says what is wrong when it is not working: the address is wro
 - Anyone who has the web address still needs the secret, and the script only ever lists and sends the Slides decks of FOLDER_ID. Keep the secret out of chat, notes and the repository.
 - The script runs as you. If you are taken out of the folder, the decks stop updating, and the decks already made stay on the TV.
 - After a change to the script code, choose Deploy, Manage deployments, the pencil, Version: New version, Deploy. The address does not change.
+- Hidden slides: a slide marked Skip slide in Google Slides is left out of the TV. The PDF that Google makes holds every slide, so the script also tells the Teletraan computer which slides are hidden (decks-feed.gs, action skipped) and the computer drops those pictures. To get this into a script that was set up earlier, paste the new decks-feed.gs over Code.gs, Save, run check once and allow the Slides permission when Google asks, then deploy a New version as in the line above. Until then a deck that has to be made again shows as could not be made (the script cannot name the hidden slides), and the pictures from before stay on the TV. A public folder (the Google key way, without the script) cannot tell which slides are hidden, so it shows every slide.
+- Hiding or showing a slide changes the deck, so its pictures are made again within a few minutes.
 - To move to another Google account, do steps 1 to 5 again in that account and put its new address and secret in local.env.
 - A deck needs to fit in one answer from the script, so a very large deck (about 30 MB as a PDF or more) can fail. The list then shows the deck as could not be read.
 

@@ -303,6 +303,55 @@ explain() {
   esac
 }
 
+# Takes the hidden slides (Skip slide in Google Slides) out of the pictures of deck $1 in folder $2.
+# The PDF holds every slide, so the Apps Script says how many slides the deck has and which are hidden,
+# and those pictures are removed and the rest are numbered again. Only a deck read through the script
+# can be checked, so a public folder shows every slide. Returns 1 with the reason in $failure when the
+# script cannot say or the answer does not fit the pictures, so a hidden slide is never shown by
+# mistake and a slide that should show is never dropped by mistake. Leaves the new count in $pages.
+drop_hidden_slides() {
+  [ -n "$script_url" ] || return 0
+
+  ask_script "action=skipped&id=$1&folder=$folder" "$2/skipped.json"
+  if [ "$http_code" != 200 ] || ! jq -e '(.count | type == "number") and (.skipped | type == "array")' "$2/skipped.json" > /dev/null 2>&1; then
+    rm -f "$2/skipped.json"
+    failure="the script cannot name the hidden slides, update it (docs/presentations-drive.md)"
+    return 1
+  fi
+
+  slide_count=$(jq -r '.count | floor' "$2/skipped.json")
+  hidden=$(jq -r '[.skipped[] | numbers | floor | select(. >= 1 and . <= $total)] | unique | .[]' --argjson total "$slide_count" "$2/skipped.json")
+  rm -f "$2/skipped.json"
+  hidden_count=$(printf '%s' "$hidden" | grep -c '[0-9]' || true)
+  [ "$hidden_count" -gt 0 ] || return 0
+
+  expected=$slide_count
+  [ "$expected" -le "$max_pages" ] || expected=$max_pages
+  if [ "$pages" -eq "$expected" ]; then
+    for number in $hidden; do
+      rm -f "$2/$(printf '%03d' "$number").jpg"
+    done
+  elif [ "$slide_count" -le "$max_pages" ] && [ "$pages" -eq $((slide_count - hidden_count)) ]; then
+    # Google already left the hidden slides out of this PDF
+    return 0
+  else
+    failure="the pictures do not match the slides of the deck"
+    return 1
+  fi
+
+  pages=0
+  for picture in "$2"/[0-9][0-9][0-9].jpg; do
+    [ -f "$picture" ] || continue
+    pages=$((pages + 1))
+    target="$2/$(printf '%03d' "$pages").jpg"
+    [ "$picture" = "$target" ] || mv "$picture" "$target"
+  done
+  if [ "$pages" -eq 0 ]; then
+    failure="every slide of the deck is hidden"
+    return 1
+  fi
+}
+
 # Downloads deck $1 as a PDF and turns it into the pictures 001.jpg, 002.jpg and so on in folder
 # $2. Google makes the PDF for a Google Slides deck and for a PowerPoint file alike. Returns 1
 # with the reason in $failure when it can't. Leaves the number of pages in $pages.
@@ -373,6 +422,8 @@ make_deck() {
     failure="the deck has no pages"
     return 1
   fi
+
+  drop_hidden_slides "$1" "$2"
 }
 
 # Says why deck $1, changed at $2, needs making, or nothing if it does not

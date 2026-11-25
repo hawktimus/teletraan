@@ -162,6 +162,26 @@ export function withStuckNotes(result, notesFile) {
   return Object.assign({}, result, { tasks: tasks });
 }
 
+// While Sanity cannot take a write (the plan limit), the Kickoff and Rollout times can be set on this computer instead.
+// countdown-override.json in the data folder holds { "kickoff": "2027-01-09T17:00:00Z", "rollout": "..." }, and a time
+// that is written with its zone and makes sense replaces the one from Sanity in the local copy the screen reads. Delete
+// the file once the time is right in Studio. A missing or damaged file, or any other name in it, changes nothing.
+const zonedTime = /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?(Z|[+-]\d\d:\d\d)$/;
+
+export function withCountdownOverride(result, overrideFile) {
+  if (!result || typeof result !== 'object' || !result.settings || typeof result.settings !== 'object') return result;
+  const override = readJson(overrideFile, {});
+  if (!override || typeof override !== 'object') return result;
+  const changes = {};
+  ['kickoff', 'rollout'].forEach(name => {
+    const value = override[name];
+    if (typeof value === 'string' && zonedTime.test(value) && !isNaN(Date.parse(value))) changes[name] = value;
+  });
+  if (Object.keys(changes).length === 0) return result;
+  const countdown = Object.assign({}, result.settings.countdown, changes);
+  return Object.assign({}, result, { settings: Object.assign({}, result.settings, { countdown: countdown }) });
+}
+
 // ----- the service -----
 
 // options (all optional): dataDir, sanityBase, weatherUrl, now(), fetch, envFile, token
@@ -305,7 +325,7 @@ export function createSync(options = {}) {
         memory.result = checked.result;
         memory.signature = signature;
         memory.lastFullRead = now();
-        writeFileAtomic(path.join(dataDir, 'content.json'), JSON.stringify({ syncedAt: stamp(), result: withStuckNotes(checked.result, path.join(dataDir, 'monday', 'notes.json')) }));
+        writeFileAtomic(path.join(dataDir, 'content.json'), JSON.stringify({ syncedAt: stamp(), result: withCountdownOverride(withStuckNotes(checked.result, path.join(dataDir, 'monday', 'notes.json')), path.join(dataDir, 'countdown-override.json')) }));
         writeFileAtomic(path.join(dataDir, 'data-problems.json'), JSON.stringify(problemsFile(checked.problems, stamp())));
         // The Studio status document gets the number, when it changes
         if (checked.problems.length !== memory.problemCount) {

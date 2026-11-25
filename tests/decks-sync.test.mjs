@@ -82,6 +82,13 @@ case $address in
         id=\${id%%&*}
         if [ -f "$STUB_DIR/$id.b64" ]; then cp "$STUB_DIR/$id.b64" "$output"; else echo '{"error":"not-found"}' > "$output"; fi
         ;;
+      *action=skipped*)
+        id=\${address#*&id=}
+        id=\${id%%&*}
+        # a script that was not updated does not know the word and says bad-action
+        if [ -f "$STUB_DIR/$id.skipped.json" ]; then cp "$STUB_DIR/$id.skipped.json" "$output"; else echo '{"error":"bad-action"}' > "$output"; fi
+        printf 200
+        ;;
     esac
     ;;
   *) exit 6 ;;
@@ -182,6 +189,14 @@ function setup(name, options = {}) {
     // The PDF of a deck as the Apps Script sends it: in base64
     scriptPdf(id, pages) {
       fs.writeFileSync(path.join(stub, id + '.b64'), Buffer.from('%PDF pages=' + pages + '\n').toString('base64'));
+    },
+    // What the Apps Script says of a deck: how many slides it has and which are hidden, counted from 1
+    scriptSkipped(id, count, skipped) {
+      fs.writeFileSync(path.join(stub, id + '.skipped.json'), JSON.stringify({ count, skipped }));
+    },
+    // The text of picture number $number of a deck, which the fake pdftoppm sets to the page it came from
+    picture(id, number) {
+      return fs.readFileSync(path.join(decks, id, String(number).padStart(3, '0') + '.jpg'), 'utf8');
     },
     manifest() {
       return JSON.parse(fs.readFileSync(path.join(decks, 'manifest.json'), 'utf8'));
@@ -401,6 +416,8 @@ function scriptReady(name, options = {}) {
   place.scriptList([drive(deckA, 'Drive train basics'), drive(deckB, 'Safety week', { modifiedTime: '2027-03-02T10:00:00.000Z' })]);
   place.scriptPdf(deckA, 3);
   place.scriptPdf(deckB, 12);
+  place.scriptSkipped(deckA, 3, []);
+  place.scriptSkipped(deckB, 12, []);
   return place;
 }
 
@@ -429,6 +446,69 @@ test('a deck the script cannot send is failed with a reason, and the other decks
   assert.equal(result.status, 1);
   assert.deepEqual(place.manifest().decks.map(deck => deck.state), ['failed', 'ready']);
   assert.equal(place.manifest().decks[0].error, 'the script could not read the deck');
+});
+
+test('hidden slides are left out of the pictures and the rest are numbered again', () => {
+  const place = scriptReady('script-hidden');
+  place.scriptSkipped(deckA, 3, [2]);
+  place.scriptSkipped(deckB, 12, [12, 1, 5, 5, 99, 'x', 0]);
+  const result = place.sync();
+  assert.equal(result.status, 0, result.errors + result.text);
+  assert.deepEqual(place.manifest().decks.map(deck => [deck.id, deck.state, deck.pages]), [[deckB, 'ready', 9], [deckA, 'ready', 2]]);
+  assert.deepEqual(place.deck(deckA).pages, ['001.jpg', '002.jpg']);
+  assert.deepEqual([place.picture(deckA, 1), place.picture(deckA, 2)], ['picture 1', 'picture 3']);
+  assert.deepEqual([1, 2, 3, 4, 5].map(number => place.picture(deckB, number)), ['picture 2', 'picture 3', 'picture 4', 'picture 6', 'picture 7']);
+  assert.equal(place.picture(deckB, 9), 'picture 11');
+  assert.ok(!fs.existsSync(path.join(place.decks, deckB, '010.jpg')), 'no picture is left over');
+  assert.ok(!result.calls.includes(secret), 'the secret is never in the log');
+  const asked = result.calls.split('\n').filter(line => line.startsWith('config-url '));
+  assert.ok(asked.some(line => line.includes('?action=skipped&id=' + deckA + '&folder=' + folderId + '&secret=<secret>')), asked.join('\n'));
+});
+
+test('a PDF that already leaves the hidden slides out is used as it is', () => {
+  const place = scriptReady('script-already-left-out');
+  place.scriptPdf(deckA, 2);
+  place.scriptSkipped(deckA, 3, [2]);
+  place.sync();
+  assert.deepEqual(place.manifest().decks.map(deck => [deck.id, deck.state, deck.pages]), [[deckB, 'ready', 12], [deckA, 'ready', 2]]);
+  assert.deepEqual([place.picture(deckA, 1), place.picture(deckA, 2)], ['picture 1', 'picture 2']);
+});
+
+test('a deck whose pictures do not fit what the script says is failed, and so is one with every slide hidden', () => {
+  const place = scriptReady('script-no-fit');
+  place.scriptPdf(deckA, 5);
+  place.scriptSkipped(deckA, 3, [2]);
+  place.scriptSkipped(deckB, 12, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  const result = place.sync();
+  assert.equal(result.status, 1);
+  assert.deepEqual(place.manifest().decks.map(deck => [deck.id, deck.state]), [[deckB, 'failed'], [deckA, 'failed']]);
+  assert.equal(place.deck(deckB).error, 'every slide of the deck is hidden');
+  assert.equal(place.deck(deckA).error, 'the pictures do not match the slides of the deck');
+});
+
+test('a script that was not updated cannot name the hidden slides, so no deck is shown from it, and the earlier pictures stay', () => {
+  const place = scriptReady('script-old');
+  place.sync();
+  assert.equal(place.manifest().decks.length, 2);
+
+  place.scriptList([drive(deckA, 'Drive train basics', { modifiedTime: '2027-03-05T10:00:00.000Z' }), drive(deckB, 'Safety week', { modifiedTime: '2027-03-02T10:00:00.000Z' })]);
+  fs.rmSync(path.join(place.stub, deckA + '.skipped.json'));
+  const result = place.sync();
+  assert.ok(result.text.includes('the script cannot name the hidden slides'), result.text);
+  assert.equal(place.deck(deckA).ok, true, 'the version from before is kept');
+  assert.equal(place.deck(deckA).modified, '2027-03-01T10:00:00.000Z');
+
+  const fresh = scriptReady('script-old-new-deck');
+  fs.rmSync(path.join(fresh.stub, deckA + '.skipped.json'));
+  fresh.sync();
+  assert.equal(fresh.deck(deckA).error, 'the script cannot name the hidden slides, update it (docs/presentations-drive.md)');
+});
+
+test('a public folder is read as before, with no question about hidden slides', () => {
+  const place = ready('public-no-skipped-question');
+  const result = place.sync();
+  assert.equal(result.status, 0, result.errors + result.text);
+  assert.ok(!result.calls.includes('action=skipped'), result.calls);
 });
 
 test('the script says no, or is not the script, and the decks from before stay', () => {

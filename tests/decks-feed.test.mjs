@@ -31,6 +31,12 @@ const library = [
   file('1DDDDDDDDDDDDDDDDDDDDDDDDDDDD', 'Elsewhere', slides, '2027-03-04T10:00:00Z', other),
 ];
 
+// The slides of a deck, as true when the slide is marked Skip slide
+library[0].slides = [false, true, false];
+library[1].slides = [false, false, false, false];
+library[2].slides = [false];
+library[3].slides = [false, true];
+
 function iterator(items) {
   let index = 0;
   return { hasNext: () => index < items.length, next: () => items[index++] };
@@ -52,7 +58,7 @@ function load(properties) {
     PropertiesService: { getScriptProperties: () => ({ getProperty: name => (name in properties ? properties[name] : null) }) },
     ContentService: {
       MimeType: { JSON: 'JSON', TEXT: 'TEXT' },
-      createTextOutput: text => ({ text, kind: '', setMimeType(kind) { this.kind = kind; return this; } }),
+      createTextOutput: text => ({ text, kind: '', setMimeType(kind) { this.kind = kind; return this; }, getContent() { return this.text; } }),
     },
     MimeType: { GOOGLE_SLIDES: slides, PDF: 'application/pdf' },
     Utilities: { base64Encode: bytes => Buffer.from(bytes).toString('base64') },
@@ -64,9 +70,19 @@ function load(properties) {
         return wrap(found);
       },
     },
+    SlidesApp: {
+      openById: id => {
+        context.opened.push(id);
+        const found = library.find(item => item.id === id);
+        if (!found || !found.slides) throw new Error('Slides cannot open ' + id);
+        return { getSlides: () => found.slides.map(hidden => ({ isSkipped: () => hidden })) };
+      },
+    },
+    opened: [],
+    logged: [],
     Date,
     JSON,
-    Logger: { log() {} },
+    Logger: { log: text => context.logged.push(text) },
   };
   vm.createContext(context);
   vm.runInContext(source, context);
@@ -124,6 +140,30 @@ test('it never sends a file that is not a Slides deck of its folder, or an id th
     assert.equal(ask(script, { action: 'pdf', id, folder, secret }).text, '{"error":"not-found"}', String(id));
   });
   assert.equal(ask(script, { action: 'delete', folder, secret }).text, '{"error":"bad-action"}');
+});
+
+test('it says how many slides a deck has and which are hidden, counted from 1', () => {
+  const script = load(good);
+  assert.deepEqual(JSON.parse(ask(script, { action: 'skipped', id: idA, folder, secret }).text), { count: 3, skipped: [2] });
+  assert.deepEqual(JSON.parse(ask(script, { action: 'skipped', id: idB, folder, secret }).text), { count: 4, skipped: [] });
+  assert.equal(ask(script, { action: 'skipped', id: idA, folder, secret }).kind, 'JSON');
+});
+
+test('it opens only a Slides deck of its own folder to read the hidden slides, and only for the right secret', () => {
+  const script = load(good);
+  ['1CCCCCCCCCCCCCCCCCCCCCCCCCCCC', '1DDDDDDDDDDDDDDDDDDDDDDDDDDDD', '1MissingMissingMissing', '', '../x', undefined].forEach(id => {
+    assert.equal(ask(script, { action: 'skipped', id, folder, secret }).text, '{"error":"not-found"}', String(id));
+  });
+  assert.equal(ask(script, { action: 'skipped', id: idA, folder: other, secret }).text, '{"error":"wrong-folder"}');
+  assert.equal(ask(script, { action: 'skipped', id: idA, folder, secret: 'wrong' }).text, '{"error":"denied"}');
+  assert.deepEqual(script.opened, [], 'no deck outside the folder, and nothing without the secret, is ever opened');
+});
+
+test('check() says how many decks it sees and how many slides of the newest are hidden', () => {
+  const script = load(good);
+  script.check();
+  assert.equal(script.logged[0], 'Decks seen in the folder: 2');
+  assert.ok(script.logged[1].includes('{"count":4,"skipped":[]}'), script.logged[1]);
 });
 
 test('a list answers as JSON, and an error inside Google becomes an error answer, not a crash', () => {
