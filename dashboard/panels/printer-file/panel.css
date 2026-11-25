@@ -11,8 +11,8 @@
   font: 600 var(--size-label)/44px var(--font-display);
 }
 
-/* The name of the file, the bar, and four figures in two rows. They stay clear of the cut corner at the bottom right: the
-   column is 552px wide and ends at 600 of the 656. */
+/* The name of the file, the bar, and three figures in a column: each name and its time are one line, which at the size of a label
+   does not fit two to a row. They stay clear of the cut corner at the bottom right: the column is 552px wide and ends at 600 of the 656. */
 .printer-file .content {
   position: absolute;
   left: 48px;
@@ -24,7 +24,7 @@
   justify-content: space-between;
 }
 .printer-file .job {
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
 }
@@ -34,14 +34,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 700 var(--size-body)/56px var(--font-text);
+  font: 700 var(--size-body)/52px var(--font-text);
 }
 
 .printer-file .meter {
   display: flex;
   align-items: center;
   gap: 20px;
-  height: 52px;
+  height: 48px;
 }
 .printer-file .track {
   flex: 1 1 0;
@@ -60,9 +60,8 @@
 }
 
 .printer-file .numbers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 24px;
+  display: flex;
+  flex-direction: column;
 }
 .printer-file .figure {
   display: flex;
@@ -74,7 +73,7 @@
 .printer-file .key {
   flex: none;
   color: var(--lilac);
-  font: 600 var(--size-label)/52px var(--font-display);
+  font: 600 var(--size-label)/48px var(--font-display);
 }
 .printer-file .value {
   min-width: 0;
@@ -82,7 +81,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--yellow);
-  font: 700 var(--size-label)/52px var(--font-display);
+  font: 700 var(--size-label)/48px var(--font-display);
 }
 .printer-file .empty {
   margin: 0;

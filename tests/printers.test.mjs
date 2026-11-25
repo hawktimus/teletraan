@@ -191,7 +191,7 @@ test('the large page names the file, the printer and the percent, and says when 
   printers.setPrinters(null);
 });
 
-test('the small page has the file, the printer, the time so far, the time left, when it is done and the layer', () => {
+test('the small page has the file, the printer, the time so far, the time left, and when it is done', () => {
   printers.setPrinters(file([entry({})]));
   const markup = smallPanel.markupFor(content, now, { printer: '1' });
   assert.ok(markup.includes('CENTAURI 1'));
@@ -199,7 +199,6 @@ test('the small page has the file, the printer, the time so far, the time left, 
   assert.ok(markup.includes('40M'), 'the time so far');
   assert.ok(markup.includes('1H 50M'), 'the time left');
   assert.ok(markup.includes('1:50 PM'), 'the time of day it will be done');
-  assert.ok(markup.includes('96 / 360'));
   assert.ok(markup.includes('27%'));
   assert.ok(markup.includes('data-slat="label"') && markup.includes('data-slat="content"'));
   printers.setPrinters(null);

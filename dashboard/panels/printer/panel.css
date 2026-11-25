@@ -33,7 +33,7 @@
 }
 .printer .name {
   min-width: 0;
-  max-width: 250px;
+  max-width: 480px;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--lilac);

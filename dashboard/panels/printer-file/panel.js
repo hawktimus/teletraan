@@ -1,5 +1,5 @@
 // PRINTER FILE: what a 3D printer is printing, in the small panel beside the Printer camera: the name of the file, the printer, the
-// time so far, the time left, the time of day it will be done, and the layer. It is for the printer named in its step
+// time so far, the time left and the time of day it will be done. It is for the printer named in its step
 // (page.printer, from sidePage of the step of the large panel, core/views-play.js, pairSide). The numbers run on by the second
 // between the readings of the printer (liveTimes in core/printers.js). docs/printers.md.
 
@@ -12,14 +12,12 @@ export function hasContent(content, page) {
 
 function numbersMarkup(printer, content, now) {
   const times = liveTimes(printer, now);
-  const layers = printer.layer !== null && printer.totalLayer !== null && printer.totalLayer > 0 ? printer.layer + ' / ' + printer.totalLayer : '--';
 
   return `
     <div class="numbers">
       <div class="figure"><span class="key">ELAPSED</span><span class="value" data-elapsed>${escapeHtml(durationWords(times.elapsed))}</span></div>
       <div class="figure"><span class="key">LEFT</span><span class="value" data-left>${escapeHtml(durationWords(times.remaining))}</span></div>
       <div class="figure"><span class="key">DONE</span><span class="value" data-done>${escapeHtml(finishWords(times.etaAt, now, zoneOf(content)))}</span></div>
-      <div class="figure"><span class="key">LAYER</span><span class="value" data-layer>${escapeHtml(layers)}</span></div>
     </div>`;
 }
 
@@ -71,6 +69,5 @@ export function mount(host, content, page) {
     set('data-elapsed', durationWords(times.elapsed));
     set('data-left', durationWords(times.remaining));
     set('data-done', finishWords(times.etaAt, now, zoneOf(content)));
-    set('data-layer', live.layer !== null && live.totalLayer !== null && live.totalLayer > 0 ? live.layer + ' / ' + live.totalLayer : '--');
   }, 1);
 }

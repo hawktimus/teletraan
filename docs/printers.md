@@ -5,7 +5,7 @@ For the coaches and the students who look after the screen. When one of the Eleg
 ## What the screen shows
 
 - **PRINTING** (large frame): the live camera picture of the printer, with the file name, the percent done and a progress bar under it. The tag says LIVE and the printer's name. The picture is a still that is replaced about twice a second. It says WAITING FOR THE CAMERA until the first picture arrives, and PRINT ENDED when the print stops.
-- **Printer name** (small frame): the file being printed, a progress bar and percent, and four figures: ELAPSED, LEFT, DONE (the estimated time it finishes, in the dashboard's time zone) and LAYER.
+- **Printer name** (small frame): the file being printed, a progress bar and percent, and three figures: ELAPSED, LEFT and DONE (the estimated time it finishes, in the dashboard's time zone).
 - Each printer that is printing gets its own turn of **2 minutes**. With two or three printing, the rotation goes through them one after another, each 2 minutes, mixed in with the other panels. A printer that finishes drops out at the end of its turn.
 - Only the file name is shown, never a picture of the model. No thumbnail is fetched on purpose: asking a printer for a command it does not know can stop a print.
 
