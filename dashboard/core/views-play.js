@@ -207,6 +207,7 @@ export function resetViews() {
   heldPanel = '';
   heldRow = null;
   paired.panel = '';
+  paired.page = undefined;
 }
 
 // The panel the control page holds on the screen, or ''. While one is held the large panel plays that panel only.
@@ -255,7 +256,7 @@ export function viewPlaylist(content, now = new Date()) {
 
 // The small panel a row of the rotation pairs with the panel of the large frame (the side of the row), while that row is on
 // the screen. views-run.js notes it each time a step of the large panel is chosen.
-const paired = { panel: '', seconds: 0 };
+const paired = { panel: '', seconds: 0, page: undefined };
 
 // A step of the large panel has been chosen. Returns true when the small panel has to change with it: the step has a side, or
 // the one before it did. The side stays longer than the step, because the next step moves it on.
@@ -265,6 +266,8 @@ export function pairSide(step, layout = 'standard') {
   const moves = side !== '' || paired.panel !== '';
 
   paired.panel = side;
+  // A step that is put in by the wall (the printers, core/printers.js) says which page its small panel draws
+  paired.page = side !== '' && step && step.sidePage !== undefined ? step.sidePage : undefined;
   paired.seconds = (step && step.seconds ? step.seconds : 20) + 120;
   return moves;
 }
@@ -273,7 +276,11 @@ export function pairSide(step, layout = 'standard') {
 // one on the screen. The clock may be on the next view for a moment before its first page comes, and the small panel does not
 // change before the swap.
 export function viewSidePlaylist(content) {
-  if (paired.panel !== '') return [{ panel: paired.panel, show: true, seconds: paired.seconds, paired: true }];
+  if (paired.panel !== '') {
+    const step = { panel: paired.panel, show: true, seconds: paired.seconds, paired: true };
+    if (paired.page !== undefined) step.page = paired.page;
+    return [step];
+  }
 
   return viewSideSteps(content, heldView() !== '' ? heldView() : listedView(content));
 }

@@ -23,6 +23,7 @@ import { resumePreview } from './core/preview.js';
 import { mountPanel, updatePanel } from './core/panels.js';
 import { withPages, withStandIns } from './core/panel-order.js';
 import { withCompetition } from './core/competition.js';
+import { withPrinters } from './core/printers.js';
 import { currentTeam, frameTrim, recordTrim, trimNow, useTeams } from './core/teams.js';
 import { refreshPagesInPlace } from './core/page-refresh.js';
 import { showPagesNow, startRotation, startRotationForLayouts, startTicker, startTogether } from './core/schedule.js';
@@ -316,8 +317,9 @@ export function startWhatComesAndGoes() {
   // The large panel plays the rows of the view that is on the screen, and the small panel its side rows
   // (core/views.js). A panel that says it has pages in registry.js is a step for each page (withPages). None does now: the
   // Events panel draws both of its pages and scrolls from the first to the next (core/schedule.js, scrollPages).
-  // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js)
-  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()))), getContent);
+  // The competition cards that are due are mixed into the large panel's list each time it is read (core/competition.js), and
+  // so is the camera of each 3D printer that is printing (core/printers.js)
+  startRotation('grid1', () => (onlyTasks ? [{ panel: 'tasks', show: true, seconds: 12 }] : withPages(withPrinters(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()), shellState.content, new Date()))), getContent);
   if (!onlyTasks) {
     startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(shellState.content))), getContent); // waits while the layout has no small frame
 

@@ -56,6 +56,9 @@ export const panels = [
   { id: 'roster', region: 'grid1', topic: 'subteams' },
   { id: 'driveHours', region: 'grid1', topic: 'subteams', rotationOnly: true },
   { id: 'frc-news', region: 'grid1', topic: 'news', rotationOnly: true },
+  // The 3D printer camera and its file card. core/printers.js puts them in the rotation by itself while a printer is printing
+  // (docs/printers.md), so they are in no list of the Studio.
+  { id: 'printer', region: 'grid1', topic: 'printer', rotationOnly: true },
   { id: 'custom', region: 'grid1', topic: 'custom' },
   // placeholders: a title and a dashed frame, to be designed (core/placeholder.js)
   { id: 'robotStatus', region: 'grid1', topic: 'robot', placeholder: true },
@@ -87,6 +90,7 @@ export const panels = [
   // rotationOnly: only a row of the rotation names it (as the side of a row). It is never a spare stand-in for the small frame.
   { id: 'miniIdea1', region: 'grid2', topic: 'mini', placeholder: true, rotationOnly: true },
   { id: 'qrParts', region: 'grid2', topic: 'parts', rotationOnly: true },
+  { id: 'printer-file', region: 'grid2', topic: 'printer', rotationOnly: true },
 
   { id: 'alert', region: 'overlay' },
   { id: 'announcement', region: 'overlay' },

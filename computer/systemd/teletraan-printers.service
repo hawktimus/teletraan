@@ -1,0 +1,27 @@
+[Unit]
+Description=Watch the 3D printers and write their status and camera picture for the Teletraan dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# ACCOUNT is replaced by install-printers.sh with the account that owns the repository. The data folder is the one in
+# TELETRAAN_DATA of local.env, which install-printers.sh writes on the Environment line when it is not the usual one. The
+# service writes only <data>/printers and reads the printers file. It reads no key and nothing in local.env.
+User=ACCOUNT
+Environment=TELETRAAN_DATA=/var/lib/teletraan/data
+Environment=TELETRAAN_PRINTERS_FILE=/var/lib/teletraan/printers.json
+UMask=0022
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+ExecStart=/usr/bin/env node /opt/teletraan/computer/scripts/printer-sync.mjs
+# A service that stops is started again after 10 seconds, whatever the reason. The printers are only ever asked for their status.
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

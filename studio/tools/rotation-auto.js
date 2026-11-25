@@ -42,6 +42,10 @@ export const otherCards = [
     when: 'While an announcement is live, and when an alert is set in Dashboard Settings.', panels: ['announcement', 'alert'], row: false,
   },
   {
+    id: 'printers', title: '3D printers: camera and file', shows: 'The live camera of a printer in the large panel, and in the small panel the file that is printing, the printer, the time so far, the time left and the time of day it will be done. Each printer that is printing has its turn of 2 minutes among the other panels.',
+    when: 'While a printer is printing. While none is, nothing is added and the rotation is as it was.', panels: ['printer', 'printer-file'], row: false,
+  },
+  {
     id: 'talks', title: 'Presentations', shows: 'A deck picked from the Google Drive folder takes the whole screen: a title card, the slides and a thank you card. The rotation waits until it is over.',
     when: 'When a deck is picked on the TV or on the control page.', panels: ['talk'], row: false,
   },

@@ -339,7 +339,7 @@ test('the page holds the Screen of the day before it draws, starts the Screens a
 test('the lists come from the Screen on the screen, and the name effect and the hawk follow its minutes', () => {
   const shell = read('shell.js');
 
-  assert.ok(shell.includes("withPages(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
+  assert.ok(shell.includes("withPages(withPrinters(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()), shellState.content, new Date()))"), 'the competition cards are mixed in first and then every panel with more than one page becomes its steps');
   assert.ok(shell.includes("startRotationForLayouts('grid2', () => withStandIns(withPages(viewSidePlaylist(shellState.content))), getContent);"), 'the small frame has its list in every layout, with its spares and its last resort');
   assert.ok(shell.includes('frame.setHawk(settings.logoHawk, cadence.hawkEverySeconds, settings.logoHawkDuration);'));
   assert.ok(shell.includes('frame.setNameEffect(settings.nameTransform, cadence.nameEverySeconds, settings.nameDuration);'));

@@ -21,6 +21,7 @@ export const panelTopics = {
   roster: ['subteams', 'grid1'],
   driveHours: ['subteams', 'grid1'],
   'frc-news': ['news', 'grid1'],
+  printer: ['printer', 'grid1'],
   custom: ['custom', 'grid1'],
   robotStatus: ['robot', 'grid1'],
   wireframe: ['wireframe', 'grid1'],
@@ -35,6 +36,7 @@ export const panelTopics = {
   'sponsor-logo': ['sponsors', 'grid2'],
   miniIdea1: ['mini', 'grid2'],
   qrParts: ['parts', 'grid2'],
+  'printer-file': ['printer', 'grid2'],
 };
 
 // The panels of the Robotics view that use the wide layout, which has no small panel (wideRoboticsPanels in rotation-board.js)

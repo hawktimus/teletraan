@@ -1,0 +1,121 @@
+/* The header sits on top of the two header plates of the area's frame. At the right end are the word LIVE and the name of the printer. */
+.printer .header {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  box-sizing: border-box;
+  width: 1152px;
+  height: 116px;
+  padding: 0 40px 0 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.printer .title {
+  flex: none;
+  margin: 0;
+  font: 700 var(--size-heading)/96px var(--font-display);
+}
+.printer .tag {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.printer .live {
+  flex: none;
+  padding: 0 14px;
+  color: var(--ground);
+  background: var(--stale);
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+.printer .name {
+  min-width: 0;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--lilac);
+  white-space: nowrap;
+  font: 600 var(--size-label)/52px var(--font-display);
+}
+
+/* The camera picture is 16 to 9, drawn 940px wide and 528px high (the boxes of every style start at 136 and end at 664): it fills the page
+   under the header, clear of the frame and of the cut corner at the bottom right. Under it, on the picture itself, the name of the file, the percent and the bar. */
+.printer .stage {
+  position: absolute;
+  left: 106px;
+  top: 136px;
+  width: 940px;
+  height: 528px;
+  overflow: hidden;
+  background: var(--ground);
+}
+.printer .picture {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  visibility: hidden;
+}
+.printer.has-picture .picture { visibility: visible; }
+.printer .waiting {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 200px;
+  text-align: center;
+  color: var(--lilac);
+  font: 600 var(--size-body)/72px var(--font-display);
+}
+.printer.has-picture .waiting { display: none; }
+.printer.has-picture.ended .waiting { display: block; top: 20px; padding: 0 14px; width: max-content; left: 20px; right: auto; color: var(--ground); background: var(--stale); font: 700 var(--size-label)/52px var(--font-display); }
+
+.printer .caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  height: 84px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: color-mix(in srgb, var(--ground) 78%, transparent);
+}
+.printer .file {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 var(--size-label)/52px var(--font-text);
+}
+.printer .percent {
+  flex: none;
+  color: var(--yellow);
+  font: 700 var(--size-label)/52px var(--font-display);
+}
+.printer .meter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  background: var(--lilac);
+  opacity: 0.35;
+}
+.printer .meter .fill {
+  height: 100%;
+  background: var(--yellow);
+}
+.printer .empty {
+  margin: 0;
+  padding: 140px 76px;
+  color: var(--lilac);
+  font: 500 var(--size-body)/64px var(--font-text);
+}

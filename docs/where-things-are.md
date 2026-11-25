@@ -433,6 +433,10 @@ editors can sign in from anywhere.
                               scripts/news-sync.sh reads the FIRST community blog feed (news-rss.awk is its
                               awk reader) and writes the newest headlines into the frc-news document in
                               Sanity, and install-news.sh turns on its timer (docs/frc-news.md).
+                              scripts/printer-sync.mjs (with printer-ws.mjs, a small WebSocket client) is the
+                              service that watches the 3D printers and writes printers/status.json and the
+                              camera picture; install-printers.sh turns it on (docs/printers.md). The dashboard
+                              side is core/printers.js and the panels printer and printer-file.
                               scripts/lib.sh is read by every script: the folders, the local.env reader
                               (setting) and the config.js reader (config_value). Every script starts with
                               bash, a usage line, set -euo pipefail and lib.sh.

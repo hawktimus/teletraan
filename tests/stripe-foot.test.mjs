@@ -146,6 +146,12 @@ const panels = {
     const height = pixels(valueIn(style, panelCss('frc-news'), '.frc-news .rows', 'height'));
     return { bottom: top + height, box: top + height, top: top };
   },
+  // The printer camera is one picture in a stage
+  printer: style => {
+    const top = pixels(valueIn(style, panelCss('printer'), '.printer .stage', 'top'));
+    const height = pixels(valueIn(style, panelCss('printer'), '.printer .stage', 'height'));
+    return { bottom: top + height, box: top + height, top: top };
+  },
   custom: style => {
     const top = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'top'));
     const height = pixels(valueIn(style, panelCss('custom'), '.custom .blocks', 'height'));

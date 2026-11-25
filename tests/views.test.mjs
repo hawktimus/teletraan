@@ -729,7 +729,7 @@ test('the shell starts the views in place of the Screens, holds the first view b
   assert.ok(shell.includes("startOptional('./core/views-run.js', module => module.startViews(getContent, params.has('style') || params.has('team')));"));
   assert.ok(!shell.includes('screens-run'));
   assert.ok(shell.includes('holdBootView(savedContent(), new Date());'));
-  assert.ok(shell.includes('withPages(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()))'));
+  assert.ok(shell.includes('withPages(withPrinters(withCompetition(viewPlaylist(shellState.content, new Date()), shellState.content, new Date()), shellState.content, new Date()))'));
   assert.ok(shell.includes('withStandIns(withPages(viewSidePlaylist(shellState.content)))'));
   assert.ok(/function showDecorations\(look\) \{\s*useLayout\(look\);\s*useStyle\(look\);\s*useView\(look\);/.test(shell));
   assert.ok(shell.indexOf("'./core/views-run.js'") > shell.indexOf("'./core/team-run.js'"), 'after the ones it asks about');

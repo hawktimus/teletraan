@@ -69,6 +69,10 @@ export async function startExtras() {
   // The Match13 forecasts, written by the Teletraan computer into the data folder (docs/match13.md). Never stops the screen.
   ready.push(startOptional('./core/match13.js', module => module.startMatch13(fetch.bind(window), shellState.showingSample)));
 
+  // The 3D printers, written by the Teletraan computer into the data folder (docs/printers.md). While one prints, its camera and
+  // its file join the rotation (core/printers.js). Never stops the screen.
+  ready.push(startOptional('./core/printers.js', module => module.startPrinters(fetch.bind(window), shellState.showingSample)));
+
   // An event that has finished must leave the list even when nothing else
   // changes, and a new day starts at midnight in the Look time zone
   setInterval(() => {
