@@ -488,7 +488,7 @@ export function startService(options) {
 }
 
 // Run as a service
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
   const dataDir = process.env.TELETRAAN_DATA || '/var/lib/teletraan/data';
   const printersFile = process.env.TELETRAAN_PRINTERS_FILE || '/var/lib/teletraan/printers.json';
   const service = startService({ dataDir: dataDir, printersFile: printersFile });
