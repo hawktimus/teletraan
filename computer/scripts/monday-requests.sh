@@ -43,6 +43,17 @@ helpers='
 def plain: explode | map(if . < 32 or . == 127 then 32 else . end) | implode | gsub(" +"; " ") | sub("^ "; "") | sub(" $"; "");
 def safe_text: plain | gsub("[^A-Za-z0-9 ,.:()\u0027_-]"; " ") | gsub(" +"; " ") | sub("^ "; "") | sub(" $"; "") | .[0:120];
 def whole_text($limit): if type == "string" then plain | .[0:$limit] | sub(" $"; "") else "" end;
+# A title that is too long is cut at the last whole word that fits and ends with an ellipsis, so the screen never shows
+# half a word such as "(if it is he". A single word longer than the limit is cut inside the word.
+def title_text($limit):
+  if type != "string" then ""
+  else plain as $text
+    | if ($text | length) <= $limit then $text
+      else ($text | .[0:($limit - 1)]) as $cut
+        | ($cut | sub(" [^ ]*$"; "") | sub("[ ,;:.(–—&+/-]+$"; "")) as $words
+        | (if ($words | length) >= (($limit - 1) / 2) then $words else ($cut | sub(" $"; "")) end) + "…"
+      end
+  end;
 def column_name: if type == "string" and test("\\A[A-Za-z0-9_-]{1,50}\\z") then . else null end;
 def first_name($limit):
   if type != "string" then null

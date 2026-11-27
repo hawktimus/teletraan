@@ -118,6 +118,21 @@ export function cleanHealth(health, supervisor) {
   };
 }
 
+// printers/status.json from the printer service (computer/scripts/printer-sync.mjs), which writes it every 2 seconds.
+// Only its age and how many printers it lists are passed on. A missing file means the service is not installed.
+export function cleanPrinters(raw, now = new Date()) {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.printers)) return { present: false };
+  const written = Date.parse(raw.updatedAt);
+  const age = Number.isFinite(written) ? Math.max(0, Math.round((now.getTime() - written) / 1000)) : null;
+  return {
+    present: true,
+    updatedAt: text(raw.updatedAt, 40) || null,
+    ageSeconds: age,
+    count: raw.printers.length,
+    online: raw.printers.filter(item => item && item.online === true).length,
+  };
+}
+
 export function cleanRemoteLast(raw) {
   if (!raw) return { present: false };
   return { present: true, action: text(raw.action, 60), requestedBy: text(raw.requestedBy, 40), handledAt: text(raw.handledAt, 40) || null, result: text(raw.result, 200), via: text(raw.via, 20) || 'sanity' };
@@ -165,6 +180,7 @@ export function register(router, ctx) {
       health: cleanHealth(readJsonFile(stateFile('health.json')), readJsonFile(stateFile('supervisor.json'))),
       buildVersion: typeof ctx.buildVersion === 'string' ? ctx.buildVersion : '',
       remoteLast: cleanRemoteLast(readJsonFile(path.join(ctx.dataDir, 'remote-last.json'))),
+      printers: cleanPrinters(readJsonFile(path.join(ctx.dataDir, 'printers', 'status.json')), now),
       wall: wallFacts(ctx, now),
       // So that the Screen dot can say not known, not late, in the first seconds after this service starts
       serviceUptimeSeconds: Math.round(process.uptime()),

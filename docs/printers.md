@@ -44,7 +44,7 @@ A printer allows 5 connections in all. The service keeps one per printer and nev
 | No printer panel while a print is running | The computer cannot reach the printer (different network), the address is wrong, or `status.json` is missing. Run `journalctl -u teletraan-printers -n 50` and look at `/var/lib/teletraan/data/printers/status.json` |
 | The panel shows WAITING FOR THE CAMERA | The print is seen but the camera picture is not coming. The service asks the printer for its camera address once and tries that. Open `http://<ip>:3031/video` in a browser on the same network to check the camera itself |
 | Times look wrong by a large factor | The printer reports times in a unit the service did not guess right. The service treats a very large number as milliseconds. Tell the team mentor, with one line of `status.json` |
-| The service is not running | `systemctl status teletraan-printers`. It restarts itself after 10 seconds. Run the install script again after an update of the files |
+| The service is not running | `systemctl status teletraan-printers`. It restarts itself after 10 seconds. Run the install script again after an update of the files. The control page says so too: when `status.json` has not been written for two minutes, the Attention list on Now has a line about the printer service (never the TV) |
 
 ## What is checked
 

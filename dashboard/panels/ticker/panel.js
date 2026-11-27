@@ -7,6 +7,7 @@ import { visibleItems } from '../../core/content.js';
 import { prefixFor } from '../../core/pack-extras.js';
 import { packExtras } from '../../core/theme.js';
 import { newsTickerLines } from '../../core/news.js';
+import { lineDatePassed } from '../../core/line-dates.js';
 
 // Longer words need a wider tag. The word is centred on the tag, and the
 // slanted ends of the tag leave about 50px less room than its width.
@@ -20,12 +21,14 @@ const tags = {
 // The kinds an editor can choose for a tip or news entry
 const noteKinds = ['tip', 'news', 'reminder'];
 
-// Tips, news and reminders in the order they are stored, then a thank you
+// Tips, news and reminders in the order they are stored (a line with no Expires that names a date
+// that has passed is left out, core/line-dates.js), then a thank you
 // from each sponsor that has one, then the newest FIRST headlines when Show news in the ticker is on
 // (core/news.js). An entry with no kind is shown as news.
 export function items(content) {
   const notes = visibleItems(content.tipsAndNews)
     .filter(note => hasText(note.text))
+    .filter(note => hasText(note.expires) || !lineDatePassed(note.text))
     .map(note => ({ kind: noteKinds.includes(note.kind) ? note.kind : 'news', text: String(note.text).trim() }));
 
   const thanks = visibleItems(content.sponsors)

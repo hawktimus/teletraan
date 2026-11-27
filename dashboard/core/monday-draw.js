@@ -31,7 +31,7 @@ const wordsSize = 44;
 
 // The header: the title at the left and, at the right end, the team the row names (PRIME or NOVA, nothing for both teams),
 // how long ago the board was read and the slashes. When the board has not been read for twice the read interval, or Sanity
-// cannot be reached, an amber chip STALE · N MIN stands in the place of the age. The title room ends at the slanted end of
+// cannot be reached, an amber chip STALE · N MIN (HRS or DAYS when older, core/monday.js) stands in the place of the age. The title room ends at the slanted end of
 // the tab, so the team is not part of the title: PROGRAMMING TASKS · PRIME would not fit there.
 export function boardHeader(title, team, content, now) {
   const status = content ? content.monday : null;

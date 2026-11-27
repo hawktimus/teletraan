@@ -527,22 +527,24 @@ test('the real answer of Robotics Tasks becomes open tasks of Build, Electrical 
   assert.deepEqual([set('13278121733').department, set('13278121733').list], ['electrical', 'done'], 'the Done group takes the Department column');
 });
 
-test('the Short name of a task is its title on the screen, cut to 22 characters; an empty one leaves the name', () => {
+test('the Short name of a task is its title on the screen, cut at a whole word inside 24 characters; an empty one leaves the name', () => {
   const place = setup('short-name', { tools: true });
   world(place, {
     items: [
       item('1101', 'Drive base and Black Tote selection for the kit', [col.state(5), col.shortName('Drive base and Black Tote selection')], 'Build'),
       item('1102', 'Pick the wheels', [col.state(5), col.shortName('Wheels')], 'Build'),
       item('1103', 'Order the battery cart', [col.state(5), col.shortName('   ')], 'Build'),
+      item('1104', '3229 WCP Elevator kit build (if it is here before the 15th)', [col.state(5)], 'Build'),
     ],
     doneItems: [],
   });
   const result = place.run();
   assert.equal(result.status, 0, result.errors);
   const docs = documentsOf(place);
-  assert.equal(docs['task-monday-1101'].set.title, 'Drive base and Black Tot', 'cut at 24 characters');
+  assert.equal(docs['task-monday-1101'].set.title, 'Drive base and Black\u2026', 'cut at the last whole word inside 24 characters, with an ellipsis');
   assert.equal(docs['task-monday-1102'].set.title, 'Wheels');
   assert.equal(docs['task-monday-1103'].set.title, 'Order the battery cart', 'blank Short name keeps the name');
+  assert.equal(docs['task-monday-1104'].set.title, '3229 WCP Elevator kit build (if it is\u2026', 'a long name is cut at a whole word inside 40 characters, never in the middle of one');
 });
 
 test('department: the group when it is a department, else the Department column, else the task is left out', () => {

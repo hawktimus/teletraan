@@ -267,4 +267,23 @@ test('the last network repair reads in words, and the compose file lets the cont
   assert.match(compose, /target: \/var\/lib\/teletraan-state\n\s+read_only: true/);
 });
 
+test('a printer service that has stopped writing is one warning on Now, and a missing or fresh file is nothing', () => {
+  const fresh = overview({ printers: { present: true, updatedAt: at(0), ageSeconds: 4, count: 3, online: 0 } });
+  assert.deepEqual(buildProblems(fresh, now), []);
+  assert.deepEqual(buildProblems(overview({ printers: { present: false } }), now), []);
+  assert.deepEqual(buildProblems(overview({ printers: { present: true, ageSeconds: 900, count: 0, online: 0 } }), now), [], 'no printers listed means nothing to warn about');
+  const stopped = buildProblems(overview({ printers: { present: true, updatedAt: at(15), ageSeconds: 900, count: 3, online: 0 } }), now);
+  assert.deepEqual(stopped.map(item => item.id + ':' + item.severity), ['printers:warn']);
+  assert.equal(stopped[0].message, "The printer service hasn't written for 15 minutes.");
+});
+
+test('cleanPrinters keeps only the age and the counts of the printers file', () => {
+  const when = new Date('2026-11-27T06:00:10Z');
+  const clean = overviewRoute.cleanPrinters({ updatedAt: '2026-11-27T06:00:00Z', printers: [{ online: true, ip: '10.0.0.1' }, { online: false }] }, when);
+  assert.deepEqual(clean, { present: true, updatedAt: '2026-11-27T06:00:00Z', ageSeconds: 10, count: 2, online: 1 });
+  assert.deepEqual(overviewRoute.cleanPrinters(null, when), { present: false });
+  assert.deepEqual(overviewRoute.cleanPrinters({ printers: 'x' }, when), { present: false });
+  assert.equal(overviewRoute.cleanPrinters({ printers: [] }, when).ageSeconds, null);
+});
+
 await finish();

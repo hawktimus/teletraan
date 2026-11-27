@@ -276,14 +276,15 @@ await check('the Stuck notes kept on this computer are put on the tasks of the l
   assert.equal(withStuckNotes(null, notes), null);
 });
 
-await check('a countdown time kept on this computer replaces the one from Sanity, and anything else in the file changes nothing', async () => {
+await check('a countdown time or title kept on this computer replaces the one from Sanity, and anything else in the file changes nothing', async () => {
   const file = path.join(work, 'countdown-override.json');
   const result = { settings: { countdown: { kickoff: '2027-01-09T23:00:00.000Z', kickoffLabel: 'GAMEDROP IN' }, speed: 1 }, tasks: [] };
   assert.deepEqual(withCountdownOverride(result, path.join(work, 'none.json')), result, 'a missing file changes nothing');
-  fs.writeFileSync(file, JSON.stringify({ kickoff: '2027-01-09T17:00:00Z', rollout: 'soon', speed: 9, kickoffLabel: 'X' }));
+  fs.writeFileSync(file, JSON.stringify({ kickoff: '2027-01-09T17:00:00Z', rollout: 'soon', speed: 9, kickoffLabel: '  KICKOFF   IN ', rolloutLabel: 'R'.repeat(41) }));
   const merged = withCountdownOverride(result, file);
   assert.equal(merged.settings.countdown.kickoff, '2027-01-09T17:00:00Z');
-  assert.equal(merged.settings.countdown.kickoffLabel, 'GAMEDROP IN', 'only the times can be set');
+  assert.equal(merged.settings.countdown.kickoffLabel, 'KICKOFF IN', 'a title is set, with its spaces tidied');
+  assert.equal(merged.settings.countdown.rolloutLabel, undefined, 'a title over 40 characters is ignored');
   assert.equal(merged.settings.countdown.rollout, undefined, 'a time that makes no sense is ignored');
   assert.equal(merged.settings.speed, 1);
   assert.equal(result.settings.countdown.kickoff, '2027-01-09T23:00:00.000Z', 'the answer from Sanity is not changed');

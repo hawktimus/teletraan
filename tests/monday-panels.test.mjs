@@ -515,6 +515,11 @@ test('the header says how old the board is, and an amber chip says STALE when it
   const header = draw.boardHeader('BUILD TASKS', 'PRIME', old, now);
   assert.ok(header.includes('<span class="stale-chip">STALE · 120 MIN</span>'), header);
   assert.ok(header.includes('<span class="ago">PRIME</span>'), 'the team stays when the board is stale');
+  const ago = minutes => ({ lastSyncAt: new Date(now.getTime() - minutes * 60000).toISOString() });
+  assert.equal(monday.staleWords(ago(179), now), 'STALE · 179 MIN');
+  assert.equal(monday.staleWords(ago(180), now), 'STALE · 3 HRS', 'from three hours the chip counts hours');
+  assert.equal(monday.staleWords(ago(10429), now), 'STALE · 7 DAYS', 'from two days it counts days, so it never reads 10429 MIN');
+  assert.equal(monday.staleWords(null, now), 'STALE');
   assert.equal(monday.stale(monday.markUnreachable(fresh).monday, now, 30), true, 'out of reach is stale');
   assert.equal(monday.stale({ sample: true }, now), false);
 });

@@ -164,7 +164,8 @@ export function withStuckNotes(result, notesFile) {
 
 // While Sanity cannot take a write (the plan limit), the Kickoff and Rollout times can be set on this computer instead.
 // countdown-override.json in the data folder holds { "kickoff": "2027-01-09T17:00:00Z", "rollout": "..." }, and a time
-// that is written with its zone and makes sense replaces the one from Sanity in the local copy the screen reads. Delete
+// that is written with its zone and makes sense replaces the one from Sanity in the local copy the screen reads.
+// "kickoffLabel" and "rolloutLabel" replace the titles the same way, up to 40 characters. Delete
 // the file once the time is right in Studio. A missing or damaged file, or any other name in it, changes nothing.
 const zonedTime = /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?(Z|[+-]\d\d:\d\d)$/;
 
@@ -176,6 +177,11 @@ export function withCountdownOverride(result, overrideFile) {
   ['kickoff', 'rollout'].forEach(name => {
     const value = override[name];
     if (typeof value === 'string' && zonedTime.test(value) && !isNaN(Date.parse(value))) changes[name] = value;
+  });
+  // The titles, such as "kickoffLabel": "KICKOFF IN", with the same 40 character limit as in Studio
+  ['kickoffLabel', 'rolloutLabel'].forEach(name => {
+    const value = typeof override[name] === 'string' ? override[name].replace(/\s+/g, ' ').trim() : '';
+    if (value !== '' && value.length <= 40) changes[name] = value;
   });
   if (Object.keys(changes).length === 0) return result;
   const countdown = Object.assign({}, result.settings.countdown, changes);

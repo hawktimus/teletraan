@@ -19,6 +19,7 @@ export const syncSources = [
 
 // The screen reports about every ten seconds; until this service has been up for this long, no report means not known yet
 const screenReportGraceSeconds = 30;
+const printerQuietSeconds = 120;
 const colorToState = { green: 'ok', amber: 'warn', red: 'bad', grey: 'unknown' };
 
 function later(a, b) {
@@ -163,6 +164,18 @@ export function buildProblems(overview, now = new Date()) {
       problems.push(Object.assign({ id: key }, plainProblem({ source: key, reason: one.lastFailureReason, lastGoodAt: one.lastSuccessAt }, now), { severity: 'warn' }));
     }
   });
+
+  // The printer service writes its file every 2 seconds. Two minutes without a write means it has stopped, and then the
+  // printer frame cannot come on the TV. This is only ever said here, never on the TV.
+  const printers = overview.printers || {};
+  if (printers.present && printers.count > 0 && printers.ageSeconds !== null && printers.ageSeconds > printerQuietSeconds) {
+    problems.push({
+      id: 'printers', source: 'printers', kind: 'late', severity: 'warn',
+      message: "The printer service hasn't written for " + Math.round(printers.ageSeconds / 60) + ' minutes.',
+      still: 'The printer frame will not come on the TV until it runs again. The rest of the dashboard is not affected.',
+      fixes: [], where: 'teletraan-printers service', raw: 'printers/status.json last written ' + (printers.updatedAt || 'at an unknown time'),
+    });
+  }
 
   if (state('screen') === 'bad' || state('screen') === 'warn') {
     const dot = dots.find(item => item.id === 'screen');

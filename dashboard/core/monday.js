@@ -125,10 +125,14 @@ export function stale(status, now, everyMinutes = defaultEveryMinutes) {
   return minutes === null || minutes > everyMinutes * 2;
 }
 
-// The words of the amber chip: STALE · 75 MIN, or STALE alone when the age is not known
+// The words of the amber chip: STALE · 75 MIN, STALE · 5 HRS from 3 hours, STALE · 7 DAYS from 2 days, or STALE alone
+// when the age is not known. A number such as 10429 MIN cannot be read from across the room.
 export function staleWords(status, now) {
   const minutes = minutesSince(status, now);
-  return minutes === null ? 'STALE' : 'STALE · ' + minutes + ' MIN';
+  if (minutes === null) return 'STALE';
+  if (minutes >= 2 * 24 * 60) return 'STALE · ' + Math.floor(minutes / (24 * 60)) + ' DAYS';
+  if (minutes >= 3 * 60) return 'STALE · ' + Math.floor(minutes / 60) + ' HRS';
+  return 'STALE · ' + minutes + ' MIN';
 }
 
 // The content with its Monday status marked as read from the saved copy while Sanity cannot be reached. content.js
